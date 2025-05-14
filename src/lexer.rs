@@ -83,6 +83,7 @@ pub fn lexer_tokenize_whit_errors(input: &str, file_path_str: &str) -> (Vec<Toke
 //src/lexer/test.rs
 #[cfg(test)]
 mod tests {
+    use crate::tokens;
     use crate::tokens::token_kind::TokenKind::Eof;
     use super::*;
 
@@ -156,17 +157,17 @@ mod tests {
             tokens,
             vec![
                 TokenKind::Number(Integer(123)),
-                TokenKind::Number(Float(45.67)),
-                TokenKind::Number(Float(9.01)),
-                TokenKind::Number(Scientific(1.0, 5)),
-                TokenKind::Number(Scientific(2.0, -3)),
-                TokenKind::Number(Scientific(1.2, 3)),
-                TokenKind::Number(Float(123.0)),
-                TokenKind::Number(Float(0.456)),
-                TokenKind::Number(Scientific(10.0, 5)),
-                TokenKind::Number(Scientific(3.4, 5)),
-                TokenKind::Number(Scientific(5.0, 0)),
-                TokenKind::Number(Scientific(0.0, 0)),
+                TokenKind::Number(Float64(45.67)),
+                TokenKind::Number(Float64(9.01)),
+                TokenKind::Number(Scientific64(1.0, 5)),
+                TokenKind::Number(Scientific64(2.0, -3)),
+                TokenKind::Number(Scientific64(1.2, 3)),
+                TokenKind::Number(Float64(123.0)),
+                TokenKind::Number(Float64(0.456)),
+                TokenKind::Number(Scientific64(10.0, 5)),
+                TokenKind::Number(Scientific64(3.4, 5)),
+                TokenKind::Number(Scientific64(5.0, 0)),
+                TokenKind::Number(Scientific64(0.0, 0)),
                 TokenKind::Eof
             ]
         );
@@ -181,15 +182,15 @@ mod tests {
         assert_eq!(
             tokens,
             vec![
-                Binary(10),
-                Octal(511),
-                Hexadecimal(31),
-                Binary(0),
-                Octal(0),
-                Hexadecimal(0),
-                Binary(255),
-                Octal(255),
-                Hexadecimal(0xdeadbeef),
+                Binary(tokens::number::Number::Integer(10)),
+                Octal(tokens::number::Number::Integer(511)),
+                Hexadecimal(tokens::number::Number::Integer(31)),
+                Binary(tokens::number::Number::Integer(0)),
+                Octal(tokens::number::Number::Integer(0)),
+                Hexadecimal(tokens::number::Number::Integer(0)),
+                Binary(tokens::number::Number::Integer(255)),
+                Octal(tokens::number::Number::Integer(255)),
+                Hexadecimal(tokens::number::Number::Integer(0xdeadbeef)),
                 Eof
             ]
         );
@@ -202,13 +203,13 @@ mod tests {
         let tokens = lex_kinds(input);
         let tokens: Vec<TokenKind> = tokens.into_iter().map(|t| t.unwrap()).collect();
         let expected = i64::MAX; // Use i64::MAX constant directly
-        assert_eq!(tokens, vec![TokenKind::Binary(expected), Eof]);
+        assert_eq!(tokens, vec![TokenKind::Binary(tokens::number::Number::Integer(expected)), Eof]);
 
         // Max i64 value using hex
         let input = "#x7FFFFFFFFFFFFFFF";
         let tokens = lex_kinds(input);
         let tokens: Vec<TokenKind> = tokens.into_iter().map(|t| t.unwrap()).collect();
-        assert_eq!(tokens, vec![TokenKind::Hexadecimal(i64::MAX), Eof]);
+        assert_eq!(tokens, vec![TokenKind::Hexadecimal(tokens::number::Number::Integer(i64::MAX)), Eof]);
 
         // Test binary overflow with 64 bits
         let input = "#b1111111111111111111111111111111111111111111111111111111111111111";
@@ -367,7 +368,7 @@ mod tests {
                 TokenKind::OpenParen,
                 TokenKind::IdentifierAscii("y".to_string()),
                 TokenKind::Star,
-                TokenKind::Number(Number::Float(3.14)),
+                TokenKind::Number(Number::Float64(3.14)),
                 TokenKind::CloseParen,
                 TokenKind::Eof
             ]

@@ -23,7 +23,7 @@ fn parse_scientific(slice: &str) -> Option<Number> {
     let (base_str, exp_str) = slice.split_at(pos);
     let base = base_str.parse::<f64>().ok()?;
     let exp = exp_str[1..].parse::<i32>().ok()?; // Skip 'e' or 'E'
-    Some(Number::Scientific(base, exp))
+    Some(Number::Scientific64(base, exp))
 }
 
 fn parse_integer(slice: &str) -> Option<Number> {
@@ -31,22 +31,39 @@ fn parse_integer(slice: &str) -> Option<Number> {
 }
 
 fn parse_float(slice: &str) -> Option<Number> {
-    slice.parse::<f64>().ok().map(Number::Float)
+    slice.parse::<f64>().ok().map(Number::Float64)
 }
 
-fn parse_binary(lex: &mut logos::Lexer<TokenKind>) -> Option<i64> {
-    let num_str = &lex.slice()[2..]; // Skip "#b"
-    i64::from_str_radix(num_str, 2).ok()
+// Generic parser for base-specific numbers
+fn parse_base_number(radix: u32, lex: &mut logos::Lexer<TokenKind>) -> Option<Number> {
+    let slice = lex.slice();
+    let (_, num_part) = slice.split_at(2);  // Split off "#b", "#o", or "#x"
+    let (num_str, suffix) = match num_part.chars().last() {
+        Some('u') | Some('U') => (&num_part[..num_part.len()-1], true),
+        _ => (num_part, false),
+    };
+
+    if suffix {
+        u64::from_str_radix(num_str, radix)
+            .ok()
+            .map(Number::UnsignedInteger)
+    } else {
+        i64::from_str_radix(num_str, radix)
+            .ok()
+            .map(Number::Integer)
+    }
 }
 
-fn parse_octal(lex: &mut logos::Lexer<TokenKind>) -> Option<i64> {
-    let num_str = &lex.slice()[2..]; // Skip "#o"
-    i64::from_str_radix(num_str, 8).ok()
+fn parse_binary(lex: &mut logos::Lexer<TokenKind>) -> Option<Number> {
+    parse_base_number(2, lex)
 }
 
-fn parse_hex(lex: &mut logos::Lexer<TokenKind>) -> Option<i64> {
-    let num_str = &lex.slice()[2..]; // Skip "#x" prefix
-    i64::from_str_radix(num_str, 16).ok()
+fn parse_octal(lex: &mut logos::Lexer<TokenKind>) -> Option<Number> {
+    parse_base_number(8, lex)
+}
+
+fn parse_hex(lex: &mut logos::Lexer<TokenKind>) -> Option<Number> {
+    parse_base_number(16, lex)
 }
 
 #[derive(Logos, Debug, PartialEq, Clone)]
@@ -156,15 +173,15 @@ pub enum TokenKind {
     #[regex(r"(\d+\.?\d*|\.\d+)([eE][+-]?\d+)?", parse_number, priority = 4)]
     Number(Number),
 
-    #[regex(r"#b[01]+", parse_binary, priority = 3)]
-    Binary(i64),
+    #[regex(r"#b[01]+[uU]?", parse_binary, priority = 3)]
+    Binary(Number),
 
-    #[regex(r"#o[0-7]+", parse_octal, priority = 3)]
-    Octal(i64),
+    #[regex(r"#o[0-7]+[uU]?", parse_octal, priority = 3)]
+    Octal(Number),
 
     // Hexadecimal numbers (medium priority)
-    #[regex(r"#x[0-9a-fA-F]+", parse_hex, priority = 2)]
-    Hexadecimal(i64),
+    #[regex(r"#x[0-9a-fA-F]+[uU]?", parse_hex, priority = 2)]
+    Hexadecimal(Number),
 
     #[regex(r#""([^"\\]|\\.)*""#, |lex| lex.slice()[1..lex.slice().len()-1].to_string())]
     StringLiteral(String),
