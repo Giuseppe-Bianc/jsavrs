@@ -39,5 +39,5 @@ jobs:
         with:
           files: coverage.xml
           token: ${{ secrets.CODECOV_TOKEN }}
-          flags: ${{ matrix.os }},rust-${{ matrix.toolchain }}
+          flags: ${{ matrix.os }}-rust-${{ matrix.toolchain }}
           verbose: true
