@@ -197,6 +197,29 @@ mod tests {
     }
 
     #[test]
+    fn base_specific_numbers_unsinged() {
+        use TokenKind::*;
+        let input = "#b1010u #o777u #x1fu #b0u #o0u #x0u #b11111111u #o377u #xdeadBEEFu";
+        let tokens = lex_kinds(input);
+        let tokens: Vec<TokenKind> = tokens.into_iter().map(|t| t.unwrap()).collect();
+        assert_eq!(
+            tokens,
+            vec![
+                Binary(tokens::number::Number::UnsignedInteger(10)),
+                Octal(tokens::number::Number::UnsignedInteger(511)),
+                Hexadecimal(tokens::number::Number::UnsignedInteger(31)),
+                Binary(tokens::number::Number::UnsignedInteger(0)),
+                Octal(tokens::number::Number::UnsignedInteger(0)),
+                Hexadecimal(tokens::number::Number::UnsignedInteger(0)),
+                Binary(tokens::number::Number::UnsignedInteger(255)),
+                Octal(tokens::number::Number::UnsignedInteger(255)),
+                Hexadecimal(tokens::number::Number::UnsignedInteger(0xdeadbeef)),
+                Eof
+            ]
+        );
+    }
+
+    #[test]
     fn number_edge_cases() {
         // Max i64 value using binary (63 ones)
         let input = "#b111111111111111111111111111111111111111111111111111111111111111";
