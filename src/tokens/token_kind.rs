@@ -43,10 +43,10 @@ fn handle_unsigned_suffix(numeric_part: &str) -> Option<Number> {
 }
 
 /// Validates numeric part for unsigned integers
+/// Validates numeric part for unsigned integers
 fn is_valid_unsigned(numeric_part: &str) -> bool {
-    !numeric_part.contains(|c: char| c == '.' || c == 'e' || c == 'E')
+    !numeric_part.contains(&['.', 'e', 'E'])
 }
-
 /// Handles float suffix case
 fn handle_float_suffix(numeric_part: &str) -> Option<Number> {
     parse_scientific(numeric_part, true)
