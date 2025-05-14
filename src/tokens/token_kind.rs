@@ -228,7 +228,7 @@ pub enum TokenKind {
     #[regex(r"[\p{Letter}\p{Mark}_][\p{Letter}\p{Mark}\p{Number}_]*", |lex| lex.slice().to_string(), priority = 1)]
     IdentifierUnicode(String),
 
-    #[regex(r"(\d+\.?\d*|\.\d+)([eE][+-]?\d+)?", parse_number, priority = 4)]
+    #[regex(r"(\d+\.?\d*|\.\d+)([eE][+-]?\d+)?[ufdUF]?", parse_number, priority = 4)]
     Number(Number),
 
     #[regex(r"#b[01]+[uU]?", parse_binary, priority = 3)]
@@ -301,4 +301,91 @@ pub enum TokenKind {
     )]
     Whitespace,
     Eof,
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+    use logos::Logos;
+    //use crate::error::compile_error::CompileError;
+
+    #[test]
+    fn test_parse_integer() {
+        let input = "123";
+        let mut lex = TokenKind::lexer(input);
+        assert_eq!(lex.next().unwrap(),Ok(TokenKind::Number(Number::Integer(123))));
+    }
+
+    #[test]
+    fn test_parse_unsigned_integer() {
+        let input = "123u";
+        let mut lex = TokenKind::lexer(input);
+        assert_eq!(lex.next().unwrap(), Ok(TokenKind::Number(Number::UnsignedInteger(123))));
+    }
+
+    #[test]
+    fn test_parse_float_suffix() {
+        let input = "45.67f";
+        let mut lex = TokenKind::lexer(input);
+        assert_eq!(lex.next().unwrap(),Ok(TokenKind::Number(Number::Float32(45.67))));
+    }
+
+    #[test]
+    fn test_parse_double_suffix() {
+        let input = "89.01d";
+        let mut lex = TokenKind::lexer(input);
+        assert_eq!(
+            lex.next().unwrap(),
+            Ok(TokenKind::Number(Number::Float64(89.01)))
+        );
+    }
+
+    #[test]
+    fn test_parse_scientific_float() {
+        let input = "1.2e3f";
+        let mut lex = TokenKind::lexer(input);
+        assert_eq!(lex.next().unwrap(),  Ok(TokenKind::Number(Number::Scientific32(1.2, 3))));
+    }
+
+    #[test]
+    fn test_parse_scientific_double() {
+        let input = "3.4e5";
+        let mut lex = TokenKind::lexer(input);
+        assert_eq!(lex.next().unwrap(), Ok(TokenKind::Number(Number::Scientific64(3.4, 5))));
+    }
+
+    /*#[test]
+    fn test_invalid_unsigned_with_decimal() {
+        let input = "12.3u";
+        let mut lex = TokenKind::lexer(input);
+        // Should fail to parse as unsigned due to decimal point
+        assert_eq!(lex.next().unwrap(),
+            Err(CompileError)
+        );
+    }*/
+
+    #[test]
+    fn test_number_with_invalid_suffix() {
+        let input = "123x";
+        let mut lex = TokenKind::lexer(input);
+        // 'x' is not a valid suffix, should parse as number then identifier
+        assert_eq!(lex.next().unwrap(), Ok(TokenKind::Number(Number::Integer(123))));
+        assert_eq!(lex.next().unwrap(), Ok(TokenKind::IdentifierAscii("x".to_string())));
+    }
+
+    #[test]
+    fn test_decimal_starting_with_dot() {
+        let input = ".456";
+        let mut lex = TokenKind::lexer(input);
+        assert_eq!(lex.next().unwrap(),Ok(TokenKind::Number(Number::Float64(0.456))));
+    }
+
+    #[test]
+    fn test_invalid_scientific_notation() {
+        let input = "1e2e3"; // Invalid multiple exponents
+        let mut lex = TokenKind::lexer(input);
+        // Should parse first '1e2' then 'e3' as separate tokens
+        assert_eq!(lex.next().unwrap(), Ok(TokenKind::Number(Number::Scientific64(1.0, 2))));
+        assert_eq!(lex.next().unwrap(), Ok(TokenKind::IdentifierAscii("e3".to_string())));
+    }
 }
