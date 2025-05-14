@@ -1,4 +1,5 @@
-
+codecov:
+  provider: github  # Set to your VCS provider (github/gitlab/bitbucket)
 
 # ref: https://docs.codecov.com/docs/codecovyml-reference
 coverage:
