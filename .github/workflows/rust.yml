@@ -1,0 +1,112 @@
+name: Rust CI
+
+on:
+  push:
+    branches: [ main, master ]
+    tags: [ '*' ]
+  pull_request:
+    branches: [ main, master ]
+
+env:
+  CARGO_TERM_COLOR: always
+  RUST_BACKTRACE: 1
+
+jobs:
+  build:
+    name: Build and Test
+    runs-on: ${{ matrix.os }}
+    strategy:
+      matrix:
+        os: [ubuntu-latest, macOS-latest, windows-latest]
+        rust: [stable, beta, nightly]
+        include:
+          - os: windows-latest
+            rust: stable
+            target: x86_64-pc-windows-msvc
+          - os: macOS-latest
+            rust: stable
+            target: x86_64-apple-darwin
+          - os: ubuntu-latest
+            rust: stable
+            target: x86_64-unknown-linux-gnu
+      fail-fast: false
+
+    steps:
+    - name: Checkout repository
+      uses: actions/checkout@v4
+
+    - name: Install Rust Toolchain
+      uses: actions-rs/toolchain@v1
+      with:
+        profile: minimal
+        toolchain: ${{ matrix.rust }}
+        targets: ${{ matrix.target }}
+        components: rustfmt, clippy
+        override: true
+
+    - name: Cache dependencies
+      uses: actions/cache@v4
+      with:
+        path: |
+          ~/.cargo/registry
+          ~/.cargo/git
+          target
+        key: ${{ runner.os }}-cargo-${{ matrix.rust }}-${{ hashFiles('**/Cargo.lock') }}
+        restore-keys: |
+          ${{ runner.os }}-cargo-${{ matrix.rust }}-
+          ${{ runner.os }}-cargo-
+
+    - name: Cargo Check
+      uses: actions-rs/cargo@v1
+      with:
+        command: check
+        args: --all-features --verbose
+
+    - name: Run Tests
+      uses: actions-rs/cargo@v1
+      with:
+        command: test
+        args: --all-features --verbose
+
+ #   - name: Check Formatting
+ #     run: cargo fmt --all -- --check
+
+    - name: Clippy Lints
+      uses: actions-rs/cargo@v1
+      with:
+        command: clippy
+        args: --all-features --verbose -- -D warnings
+
+#    - name: Build Release
+#      if: matrix.rust == 'stable'
+#      uses: actions-rs/cargo@v1
+#      with:
+#        command: build
+#        args: --release --verbose
+
+ #   - name: Upload Artifacts
+ #     if: matrix.rust == 'stable' && github.event_name == 'push' && matrix.os == 'ubuntu-latest'
+ #     uses: actions/upload-artifact@v3
+ #     with:
+ #       name: release-binaries
+ #       path: target/release
+
+#    - name: Run Coverage with Tarpaulin
+#      uses: actions-rs/tarpaulin@v0.1
+#      with:
+#        # generate XML report in Cobertura format
+#        args: '--out Xml'
+#        version: 0.32.4
+#    - name: Upload Coverage to Codecov
+#      uses: codecov/codecov-action@v5
+#      with:
+#        # fail the job if upload fails
+#        fail_ci_if_error: true
+#        # point at the Cobertura XML output
+#        files: 'cobertura.xml'
+#        # use the token from Secrets
+#        token: ${{ secrets.CODECOV_TOKEN }}
+#        verbose: true
+#      env:
+#        # ensure color/logging isn’t broken
+#        CI: true
