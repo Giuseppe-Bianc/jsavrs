@@ -1,7 +1,7 @@
 # jsavrs
 
 [![Rust CI](https://github.com/Giuseppe-Bianc/jsavrs/actions/workflows/rust.yml/badge.svg)](https://github.com/Giuseppe-Bianc/jsavrs/actions/workflows/rust.yml)
-
+[![codecov](https://codecov.io/gh/Giuseppe-Bianc/jsavrs/graph/badge.svg?token=5EIG6IbpPa)](https://codecov.io/gh/Giuseppe-Bianc/jsavrs)
 
 ## Introduction
 
