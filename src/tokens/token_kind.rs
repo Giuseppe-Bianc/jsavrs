@@ -3,29 +3,86 @@ use crate::tokens::number::Number;
 
 fn parse_number(lex: &mut logos::Lexer<TokenKind>) -> Option<Number> {
     let slice = lex.slice();
-
-    if let Some(num) = parse_scientific(slice) {
-        return Some(num);
-    }
-
-    if let Some(num) = parse_integer(slice) {
-        return Some(num);
-    }
-
-    if let Some(num) = parse_float(slice) {
-        return Some(num);
-    }
-    None
+    let (numeric_part, suffix) = split_numeric_and_suffix(slice);
+    handle_suffix(numeric_part, suffix)
 }
 
-fn parse_scientific(slice: &str) -> Option<Number> {
-    let pos = slice.find(['e', 'E'])?;
-    let (base_str, exp_str) = slice.split_at(pos);
-    let base = base_str.parse::<f64>().ok()?;
-    let exp = exp_str[1..].parse::<i32>().ok()?; // Skip 'e' or 'E'
-    Some(Number::Scientific64(base, exp))
+/// Splits the input string into numeric part and possible suffix
+fn split_numeric_and_suffix(slice: &str) -> (&str, Option<String>) {
+    if slice.is_empty() {
+        return (slice, None);
+    }
+
+    let last_char = slice.chars().last().unwrap();
+    match last_char {
+        'u' | 'U' | 'f' | 'F' | 'd' | 'D' => {
+            let (num_part, suffix_part) = slice.split_at(slice.len() - 1);
+            (num_part, Some(suffix_part.to_ascii_lowercase()))
+        }
+        _ => (slice, None),
+    }
 }
 
+/// Main suffix handling router
+fn handle_suffix(numeric_part: &str, suffix: Option<String>) -> Option<Number> {
+    match suffix.as_deref() {
+        Some("u") => handle_unsigned_suffix(numeric_part),
+        Some("f") => handle_float_suffix(numeric_part),
+        Some("d") | None => handle_default_suffix(numeric_part),
+        _ => None,
+    }
+}
+
+/// Handles unsigned integer suffix case
+fn handle_unsigned_suffix(numeric_part: &str) -> Option<Number> {
+    if is_valid_unsigned(numeric_part) {
+        numeric_part.parse().ok().map(Number::UnsignedInteger)
+    } else {
+        None
+    }
+}
+
+/// Validates numeric part for unsigned integers
+fn is_valid_unsigned(numeric_part: &str) -> bool {
+    !numeric_part.contains(|c: char| c == '.' || c == 'e' || c == 'E')
+}
+
+/// Handles float suffix case
+fn handle_float_suffix(numeric_part: &str) -> Option<Number> {
+    parse_scientific(numeric_part, true)
+        .or_else(|| numeric_part.parse().ok().map(Number::Float32))
+}
+
+/// Handles default suffix cases (double or no suffix)
+fn handle_default_suffix(numeric_part: &str) -> Option<Number> {
+    parse_scientific(numeric_part, false)
+        .or_else(|| handle_non_scientific(numeric_part))
+}
+
+/// Handles non-scientific notation numbers
+fn handle_non_scientific(numeric_part: &str) -> Option<Number> {
+    if numeric_part.contains('.') {
+        numeric_part.parse().ok().map(Number::Float64)
+    } else {
+        numeric_part.parse().ok().map(Number::Integer)
+    }
+}
+
+fn parse_scientific(s: &str, is_f32: bool) -> Option<Number> {
+    let pos = s.find(['e', 'E'])?;
+    let (base_str, exp_str) = s.split_at(pos);
+    let exp = exp_str[1..].parse::<i32>().ok()?;
+
+    if is_f32 {
+        let base = base_str.parse::<f32>().ok()?;
+        Some(Number::Scientific32(base, exp))
+    } else {
+        let base = base_str.parse::<f64>().ok()?;
+        Some(Number::Scientific64(base, exp))
+    }
+}
+
+/*
 fn parse_integer(slice: &str) -> Option<Number> {
     slice.parse::<i64>().ok().map(Number::Integer)
 }
@@ -33,6 +90,7 @@ fn parse_integer(slice: &str) -> Option<Number> {
 fn parse_float(slice: &str) -> Option<Number> {
     slice.parse::<f64>().ok().map(Number::Float64)
 }
+*/
 
 // Generic parser for base-specific numbers
 fn parse_base_number(radix: u32, lex: &mut logos::Lexer<TokenKind>) -> Option<Number> {
