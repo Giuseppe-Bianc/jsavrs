@@ -2,11 +2,10 @@
 use std::{env, fs, path::Path, sync::Arc};
 
 pub mod error;
+pub mod lexer;
 pub mod location;
 pub mod tokens;
-pub mod lexer;
 // mod parser;*/
-
 use error::compile_error::CompileError;
 
 fn main() -> Result<(), CompileError> {

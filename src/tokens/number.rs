@@ -4,6 +4,6 @@ pub enum Number {
     UnsignedInteger(u64),
     Float32(f32),
     Float64(f64),
-    Scientific32(f32, i32),  // Base (f32), exponent (i32)
-    Scientific64(f64, i32),  // Base (f64), exponent (i32)
+    Scientific32(f32, i32), // Base (f32), exponent (i32)
+    Scientific64(f64, i32), // Base (f64), exponent (i32)
 }

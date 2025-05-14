@@ -1,5 +1,5 @@
-use thiserror::Error;
 use crate::location::source_span::SourceSpan;
+use thiserror::Error;
 
 #[derive(Debug, Error)]
 pub enum CompileError {

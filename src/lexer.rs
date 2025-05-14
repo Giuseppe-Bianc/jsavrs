@@ -59,7 +59,10 @@ impl Iterator for Lexer<'_> {
     }
 }
 
-pub fn lexer_tokenize_whit_errors(input: &str, file_path_str: &str) -> (Vec<Token>, Vec<CompileError>) {
+pub fn lexer_tokenize_whit_errors(
+    input: &str,
+    file_path_str: &str,
+) -> (Vec<Token>, Vec<CompileError>) {
     let mut lexer = Lexer::new(file_path_str, input);
     let mut tokens: Vec<Token> = Vec::new();
     let mut errors: Vec<CompileError> = Vec::new();
@@ -73,19 +76,18 @@ pub fn lexer_tokenize_whit_errors(input: &str, file_path_str: &str) -> (Vec<Toke
             }
             Err(e) => {
                 errors.push(e);
-            },
+            }
         }
     }
     (tokens, errors)
 }
 
-
 //src/lexer/test.rs
 #[cfg(test)]
 mod tests {
+    use super::*;
     use crate::tokens;
     use crate::tokens::token_kind::TokenKind::Eof;
-    use super::*;
 
     // Helper function to lex input and return TokenKinds
     fn lex_kinds(input: &str) -> Vec<Result<TokenKind, CompileError>> {
@@ -226,13 +228,25 @@ mod tests {
         let tokens = lex_kinds(input);
         let tokens: Vec<TokenKind> = tokens.into_iter().map(|t| t.unwrap()).collect();
         let expected = i64::MAX; // Use i64::MAX constant directly
-        assert_eq!(tokens, vec![TokenKind::Binary(tokens::number::Number::Integer(expected)), Eof]);
+        assert_eq!(
+            tokens,
+            vec![
+                TokenKind::Binary(tokens::number::Number::Integer(expected)),
+                Eof
+            ]
+        );
 
         // Max i64 value using hex
         let input = "#x7FFFFFFFFFFFFFFF";
         let tokens = lex_kinds(input);
         let tokens: Vec<TokenKind> = tokens.into_iter().map(|t| t.unwrap()).collect();
-        assert_eq!(tokens, vec![TokenKind::Hexadecimal(tokens::number::Number::Integer(i64::MAX)), Eof]);
+        assert_eq!(
+            tokens,
+            vec![
+                TokenKind::Hexadecimal(tokens::number::Number::Integer(i64::MAX)),
+                Eof
+            ]
+        );
 
         // Test binary overflow with 64 bits
         let input = "#b1111111111111111111111111111111111111111111111111111111111111111";
@@ -372,7 +386,10 @@ mod tests {
         let input = "  \t\n\u{00A0}x"; // Various whitespace chars
         let tokens = lex_kinds(input);
         let tokens: Vec<TokenKind> = tokens.into_iter().map(|t| t.unwrap()).collect();
-        assert_eq!(tokens, vec![TokenKind::IdentifierAscii("x".to_string()), Eof]);
+        assert_eq!(
+            tokens,
+            vec![TokenKind::IdentifierAscii("x".to_string()), Eof]
+        );
     }
 
     #[test]
@@ -404,7 +421,10 @@ mod tests {
 
         let input = "42 + x";
         let lexer = Lexer::new("test", input);
-        let tokens: Vec<TokenKind> = lexer.map(|res| res.map(|t| t.kind)).map(|t| t.unwrap()).collect();
+        let tokens: Vec<TokenKind> = lexer
+            .map(|res| res.map(|t| t.kind))
+            .map(|t| t.unwrap())
+            .collect();
         assert_eq!(
             tokens,
             vec![
@@ -431,7 +451,10 @@ mod tests {
         assert_eq!(tokens.len(), 1);
         assert_eq!(errors.len(), 1);
         assert_eq!(tokens[0].kind, TokenKind::Eof);
-        assert_eq!(errors[0].to_string(), "Invalid token: \"@\" at test:1:1-1:2");
+        assert_eq!(
+            errors[0].to_string(),
+            "Invalid token: \"@\" at test:1:1-1:2"
+        );
     }
 
     #[test]
@@ -440,11 +463,15 @@ mod tests {
         assert_eq!(tokens.len(), 1);
         assert_eq!(errors.len(), 2);
         assert_eq!(tokens[0].kind, TokenKind::Eof);
-        assert_eq!(errors[0].to_string(), "Invalid token: \"@\" at test:1:1-1:2");
-        assert_eq!(errors[1].to_string(), "Invalid token: \"$\" at test:1:3-1:4");
+        assert_eq!(
+            errors[0].to_string(),
+            "Invalid token: \"@\" at test:1:1-1:2"
+        );
+        assert_eq!(
+            errors[1].to_string(),
+            "Invalid token: \"$\" at test:1:3-1:4"
+        );
     }
-
-
 
     #[test]
     fn iterator_mixed_valid_invalid_valid() {
@@ -454,7 +481,10 @@ mod tests {
         assert_eq!(tokens[0].kind, TokenKind::IdentifierAscii("a".to_string()));
         assert_eq!(tokens[1].kind, TokenKind::IdentifierAscii("b".to_string()));
         assert_eq!(tokens[2].kind, TokenKind::Eof);
-        assert_eq!(errors[0].to_string(), "Invalid token: \"@\" at test:1:3-1:4");
+        assert_eq!(
+            errors[0].to_string(),
+            "Invalid token: \"@\" at test:1:3-1:4"
+        );
     }
 
     #[test]
@@ -476,6 +506,9 @@ mod tests {
         assert_eq!(tokens[0].kind, TokenKind::Number(Number::Integer(123)));
         assert_eq!(tokens[1].kind, TokenKind::Number(Number::Integer(456)));
         assert_eq!(tokens[2].kind, TokenKind::Eof);
-        assert_eq!(errors[0].to_string(), "Invalid token: \"@\" at test:2:1-2:2");
+        assert_eq!(
+            errors[0].to_string(),
+            "Invalid token: \"@\" at test:2:1-2:2"
+        );
     }
 }

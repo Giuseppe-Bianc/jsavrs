@@ -1,6 +1,6 @@
+use crate::location::source_location::SourceLocation;
 use std::path::{Path, PathBuf};
 use std::sync::Arc;
-use crate::location::source_location::SourceLocation;
 
 #[derive(Debug, Clone, PartialEq, Eq)]
 pub struct SourceSpan {
@@ -111,8 +111,16 @@ mod tests {
     fn same_line() {
         let span = SourceSpan::new(
             Arc::from("project/src/main.vn"),
-            SourceLocation { line: 5, column: 3, absolute_pos: 20 },
-            SourceLocation { line: 5, column: 10, absolute_pos: 30 },
+            SourceLocation {
+                line: 5,
+                column: 3,
+                absolute_pos: 20,
+            },
+            SourceLocation {
+                line: 5,
+                column: 10,
+                absolute_pos: 30,
+            },
         );
         #[cfg(unix)]
         assert_eq!(span.to_string(), "../src/main.vn:5:3-5:10");
@@ -124,8 +132,16 @@ mod tests {
     fn different_lines() {
         let span = SourceSpan::new(
             Arc::from("src/module/file.vn"),
-            SourceLocation { line: 2, column: 1, absolute_pos: 0 },
-            SourceLocation { line: 4, column: 5, absolute_pos: 5 },
+            SourceLocation {
+                line: 2,
+                column: 1,
+                absolute_pos: 0,
+            },
+            SourceLocation {
+                line: 4,
+                column: 5,
+                absolute_pos: 5,
+            },
         );
         #[cfg(unix)]
         assert_eq!(span.to_string(), "../module/file.vn:2:1-4:5");
@@ -137,8 +153,16 @@ mod tests {
     fn single_component_path() {
         let span = SourceSpan::new(
             Arc::from("file.vn"),
-            SourceLocation { line: 1, column: 1, absolute_pos: 0 },
-            SourceLocation { line: 1, column: 1, absolute_pos: 0 },
+            SourceLocation {
+                line: 1,
+                column: 1,
+                absolute_pos: 0,
+            },
+            SourceLocation {
+                line: 1,
+                column: 1,
+                absolute_pos: 0,
+            },
         );
         #[cfg(unix)]
         assert_eq!(span.to_string(), "file.vn:1:1-1:1");
@@ -150,8 +174,16 @@ mod tests {
     fn same_start_end() {
         let span = SourceSpan::new(
             Arc::from("a/b/c/d/file.vn"),
-            SourceLocation { line: 3, column: 2 , absolute_pos: 10 },
-            SourceLocation { line: 3, column: 2, absolute_pos: 10 },
+            SourceLocation {
+                line: 3,
+                column: 2,
+                absolute_pos: 10,
+            },
+            SourceLocation {
+                line: 3,
+                column: 2,
+                absolute_pos: 10,
+            },
         );
         #[cfg(unix)]
         assert_eq!(span.to_string(), "../d/file.vn:3:2-3:2");
@@ -163,8 +195,16 @@ mod tests {
     fn minimal_coordinates() {
         let span = SourceSpan::new(
             Arc::from("f.vn"),
-            SourceLocation { line: 0, column: 0, absolute_pos: 0 },
-            SourceLocation { line: 0, column: 0, absolute_pos: 0 },
+            SourceLocation {
+                line: 0,
+                column: 0,
+                absolute_pos: 0,
+            },
+            SourceLocation {
+                line: 0,
+                column: 0,
+                absolute_pos: 0,
+            },
         );
         #[cfg(unix)]
         assert_eq!(span.to_string(), "f.vn:0:0-0:0");
@@ -174,15 +214,22 @@ mod tests {
 
     #[test]
     fn absolute_path_span() {
-
         #[cfg(unix)]
-        let path :Arc<str> = Arc::from("/usr/project/src/main.vn");
+        let path: Arc<str> = Arc::from("/usr/project/src/main.vn");
         #[cfg(windows)]
-        let path :Arc<str> = Arc::from("C:\\project\\src\\main.vn");
+        let path: Arc<str> = Arc::from("C:\\project\\src\\main.vn");
         let span = SourceSpan::new(
             path,
-            SourceLocation { line: 5, column: 3, absolute_pos: 20 },
-            SourceLocation { line: 5, column: 10, absolute_pos: 30 },
+            SourceLocation {
+                line: 5,
+                column: 3,
+                absolute_pos: 20,
+            },
+            SourceLocation {
+                line: 5,
+                column: 10,
+                absolute_pos: 30,
+            },
         );
         #[cfg(unix)]
         assert_eq!(span.to_string(), "../src/main.vn:5:3-5:10");

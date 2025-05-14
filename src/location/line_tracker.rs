@@ -1,8 +1,5 @@
+use crate::location::{source_location::SourceLocation, source_span::SourceSpan};
 use std::sync::Arc;
-use crate::location::{
-    source_location::SourceLocation,
-    source_span::SourceSpan
-};
 
 /// Precompute line start positions for efficient lookups
 #[allow(dead_code)]
@@ -22,14 +19,13 @@ impl LineTracker {
                 line_starts.push(i + c.len_utf8());
             }
         }
-        
+
         Self {
             line_starts,
             file_path: Arc::from(file_path),
             source,
         }
     }
-    
 
     /// Returns the line and column for a given offset in the source code.
     pub fn location_for(&self, offset: usize) -> SourceLocation {
@@ -54,7 +50,7 @@ impl LineTracker {
             }
         }
     }
-    
+
     /// Returns a `SourceSpan` for the given range of offsets.
     pub fn span_for(&self, range: std::ops::Range<usize>) -> SourceSpan {
         SourceSpan::new(
@@ -64,7 +60,6 @@ impl LineTracker {
         )
     }
 }
-
 
 #[cfg(test)]
 mod tests {
@@ -242,7 +237,7 @@ mod tests {
     fn file_path_correct() {
         let source = "abc".to_string();
         let file = "test.txt";
-        let file_arc:Arc<str> = Arc::from(file);
+        let file_arc: Arc<str> = Arc::from(file);
         let tracker = LineTracker::new(file, source);
         let span = tracker.span_for(0..1);
         assert_eq!(span.file_path, file_arc);

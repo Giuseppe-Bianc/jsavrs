@@ -1,3 +1,3 @@
 pub mod number;
-pub mod token_kind;
 pub mod token;
+pub mod token_kind;
