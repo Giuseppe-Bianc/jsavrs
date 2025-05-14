@@ -39,4 +39,5 @@ jobs:
         with:
           files: coverage.xml
           token: ${{ secrets.CODECOV_TOKEN }}
-          verbose: true  # Optional: detailed logs
+          flags: ${{ matrix.os }},rust-${{ matrix.toolchain }}
+          verbose: true
