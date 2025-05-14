@@ -2,10 +2,6 @@
 
 [![Rust CI](https://github.com/Giuseppe-Bianc/jsavrs/actions/workflows/rust.yml/badge.svg)](https://github.com/Giuseppe-Bianc/jsavrs/actions/workflows/rust.yml)
 
-[//]: # ([![Rust CI]&#40;https://github.com/Giuseppe-Bianc/Jsavrs/actions/workflows/rust.yml/badge.svg&#41;]&#40;https://github.com/Giuseppe-Bianc/Jsavrs/actions/workflows/rust.yml&#41;)
-
-[//]: # ([![codecov]&#40;https://codecov.io/github/Giuseppe-Bianc/Jsavrs/graph/badge.svg?token=CpU2YJeVu3&#41;]&#40;https://codecov.io/github/Giuseppe-Bianc/Jsavrs&#41;)
-
 
 ## Introduction
 
