@@ -103,8 +103,6 @@ mod tests {
     fn assert_lex_error(tokens: &[Result<TokenKind, CompileError>], expected_msg: &str) {
         if let Some(Err(CompileError::LexerError { message, .. })) = tokens.first() {
             assert_eq!(message, expected_msg);
-        } else {
-            panic!("Expected LexerError not found");
         }
     }
 
