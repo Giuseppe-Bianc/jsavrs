@@ -315,6 +315,29 @@ mod tests {
     }
 
     #[test]
+    fn test_empty_slice_for_split_numeric_and_suffix(){
+        let input = "";
+        let (num_part, suffix) = split_numeric_and_suffix(input);
+        assert_eq!(num_part, "");
+        assert_eq!(suffix, None);
+    }
+
+    #[test]
+    fn tets_unknown_suffix_for_handle_suffix(){
+        let numeric_part = "123";
+        let suffix = Some("x".to_string());
+        let result = handle_suffix(numeric_part, suffix);
+        assert_eq!(result, None);
+    }
+
+    #[test]
+    fn tets_malformed_numeri_part_handle_unsigned_suffix(){
+        let numeric_part = "123.45";
+        let result = handle_unsigned_suffix(numeric_part);
+        assert_eq!(result, None);
+    }
+
+    #[test]
     fn test_parse_unsigned_integer() {
         let input = "123u";
         let mut lex = TokenKind::lexer(input);
@@ -363,16 +386,6 @@ mod tests {
             Ok(TokenKind::Number(Number::Scientific64(3.4, 5)))
         );
     }
-
-    /*#[test]
-    fn test_invalid_unsigned_with_decimal() {
-        let input = "12.3u";
-        let mut lex = TokenKind::lexer(input);
-        // Should fail to parse as unsigned due to decimal point
-        assert_eq!(lex.next().unwrap(),
-            Err(CompileError)
-        );
-    }*/
 
     #[test]
     fn test_number_with_invalid_suffix() {
