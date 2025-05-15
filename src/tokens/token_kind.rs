@@ -315,7 +315,7 @@ mod tests {
     }
 
     #[test]
-    fn test_empty_slice_for_split_numeric_and_suffix(){
+    fn test_empty_slice_for_split_numeric_and_suffix() {
         let input = "";
         let (num_part, suffix) = split_numeric_and_suffix(input);
         assert_eq!(num_part, "");
@@ -323,7 +323,7 @@ mod tests {
     }
 
     #[test]
-    fn tets_unknown_suffix_for_handle_suffix(){
+    fn tets_unknown_suffix_for_handle_suffix() {
         let numeric_part = "123";
         let suffix = Some("x".to_string());
         let result = handle_suffix(numeric_part, suffix);
@@ -331,7 +331,7 @@ mod tests {
     }
 
     #[test]
-    fn tets_malformed_numeri_part_handle_unsigned_suffix(){
+    fn tets_malformed_numeri_part_handle_unsigned_suffix() {
         let numeric_part = "123.45";
         let result = handle_unsigned_suffix(numeric_part);
         assert_eq!(result, None);

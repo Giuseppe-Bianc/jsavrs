@@ -1,8 +1,9 @@
 use crate::location::source_location::SourceLocation;
+use std::cmp::PartialOrd;
 use std::path::{Path, PathBuf};
 use std::sync::Arc;
 
-#[derive(Debug, Clone, PartialEq, Eq)]
+#[derive(Debug, Clone, PartialEq, Eq, PartialOrd, Ord)]
 pub struct SourceSpan {
     pub file_path: Arc<str>,
     pub start: SourceLocation,
@@ -17,8 +18,24 @@ impl SourceSpan {
             end,
         }
     }
-}
 
+    // Versione esistente che modifica in-place
+    pub fn merge(&mut self, other: &SourceSpan) {
+        if self.file_path == other.file_path {
+            self.start = self.clone().start.min(other.start.clone());
+            self.end = self.clone().end.max(other.end.clone());
+        }
+    }
+
+    // Nuova versione che restituisce un nuovo span
+    pub fn merged(&self, other: &SourceSpan) -> Option<Self> {
+        (self.file_path == other.file_path).then(|| Self {
+            file_path: self.file_path.clone(),
+            start: self.clone().start.min(other.start.clone()),
+            end: self.clone().end.max(other.end.clone()),
+        })
+    }
+}
 impl std::fmt::Display for SourceSpan {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
         // Attempt to truncate the path if it's long
@@ -235,5 +252,161 @@ mod tests {
         assert_eq!(span.to_string(), "../src/main.vn:5:3-5:10");
         #[cfg(windows)]
         assert_eq!(span.to_string(), "..\\src\\main.vn:5:3-5:10");
+    }
+
+    fn create_span(
+        file_path: &str,
+        start_line: usize,
+        start_col: usize,
+        end_line: usize,
+        end_col: usize,
+    ) -> SourceSpan {
+        SourceSpan {
+            file_path: Arc::from(file_path),
+            start: SourceLocation {
+                line: start_line,
+                column: start_col,
+                absolute_pos: 0,
+            },
+            end: SourceLocation {
+                line: end_line,
+                column: end_col,
+                absolute_pos: 0,
+            },
+        }
+    }
+
+    #[test]
+    fn merge_same_file_expands_span() {
+        let mut span1 = create_span("file.vn", 2, 3, 5, 10);
+        let span2 = create_span("file.vn", 1, 1, 6, 5);
+        span1.merge(&span2);
+        assert_eq!(
+            span1.start,
+            SourceLocation {
+                line: 1,
+                column: 1,
+                absolute_pos: 0
+            }
+        );
+        assert_eq!(
+            span1.end,
+            SourceLocation {
+                line: 6,
+                column: 5,
+                absolute_pos: 0
+            }
+        );
+    }
+
+    #[test]
+    fn merge_different_files_no_change() {
+        let mut span1 = create_span("file1.vn", 1, 1, 2, 2);
+        let span2 = create_span("file2.vn", 3, 3, 4, 4);
+        span1.merge(&span2);
+        assert_eq!(
+            span1.start,
+            SourceLocation {
+                line: 1,
+                column: 1,
+                absolute_pos: 0
+            }
+        );
+        assert_eq!(
+            span1.end,
+            SourceLocation {
+                line: 2,
+                column: 2,
+                absolute_pos: 0
+            }
+        );
+    }
+
+    #[test]
+    fn merged_same_file_returns_combined() {
+        let span1 = create_span("file.vn", 2, 3, 5, 10);
+        let span2 = create_span("file.vn", 1, 1, 6, 5);
+        let merged = span1.merged(&span2).unwrap();
+        assert_eq!(
+            merged.start,
+            SourceLocation {
+                line: 1,
+                column: 1,
+                absolute_pos: 0
+            }
+        );
+        assert_eq!(
+            merged.end,
+            SourceLocation {
+                line: 6,
+                column: 5,
+                absolute_pos: 0
+            }
+        );
+    }
+
+    #[test]
+    fn merged_different_files_returns_none() {
+        let span1 = create_span("file1.vn", 1, 1, 2, 2);
+        let span2 = create_span("file2.vn", 3, 3, 4, 4);
+        assert!(span1.merged(&span2).is_none());
+    }
+
+    #[test]
+    fn merged_other_within_span() {
+        let span1 = create_span("file.vn", 1, 1, 5, 10);
+        let span2 = create_span("file.vn", 2, 2, 4, 8);
+        let merged = span1.merged(&span2).unwrap();
+        assert_eq!(merged.start, span1.start);
+        assert_eq!(merged.end, span1.end);
+    }
+
+    #[test]
+    fn merged_overlapping_spans() {
+        let span1 = create_span("file.vn", 3, 5, 8, 9);
+        let span2 = create_span("file.vn", 5, 2, 10, 3);
+        let merged = span1.merged(&span2).unwrap();
+        assert_eq!(
+            merged.start,
+            SourceLocation {
+                line: 3,
+                column: 5,
+                absolute_pos: 0
+            }
+        );
+        assert_eq!(
+            merged.end,
+            SourceLocation {
+                line: 10,
+                column: 3,
+                absolute_pos: 0
+            }
+        );
+    }
+
+    #[test]
+    fn merged_other_before() {
+        let span1 = create_span("file.vn", 5, 5, 6, 6);
+        let span2 = create_span("file.vn", 3, 3, 4, 4);
+        let merged = span1.merged(&span2).unwrap();
+        assert_eq!(merged.start, span2.start);
+        assert_eq!(merged.end, span1.end);
+    }
+
+    #[test]
+    fn merged_other_after() {
+        let span1 = create_span("file.vn", 3, 3, 4, 4);
+        let span2 = create_span("file.vn", 5, 5, 6, 6);
+        let merged = span1.merged(&span2).unwrap();
+        assert_eq!(merged.start, span1.start);
+        assert_eq!(merged.end, span2.end);
+    }
+
+    #[test]
+    fn merged_with_self() {
+        let span = create_span("file.vn", 1, 1, 2, 2);
+        let merged = span.merged(&span).unwrap();
+        assert_eq!(merged.start, span.start);
+        assert_eq!(merged.end, span.end);
     }
 }

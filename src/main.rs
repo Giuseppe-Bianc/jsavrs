@@ -29,7 +29,7 @@ fn main() -> Result<(), CompileError> {
         ))
     })?;
 
-    let (tokens, errors) = lexer::lexer_tokenize_whit_errors(input.as_str(), file_path_str);
+    let (tokens, errors) = lexer::lexer_tokenize_with_errors(input.as_str(), file_path_str);
 
     if !errors.is_empty() {
         for error in errors {
