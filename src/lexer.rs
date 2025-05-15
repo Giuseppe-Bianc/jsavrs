@@ -99,13 +99,6 @@ mod tests {
         tokens
     }
 
-    // Helper to check error messages
-    fn assert_lex_error(tokens: &[Result<TokenKind, CompileError>], expected_msg: &str) {
-        if let Some(Err(CompileError::LexerError { message, .. })) = tokens.first() {
-            assert_eq!(message, expected_msg);
-        }
-    }
-
     #[test]
     fn operators() {
         use TokenKind::*;
@@ -248,24 +241,32 @@ mod tests {
 
         // Test binary overflow with 64 bits
         let input = "#b1111111111111111111111111111111111111111111111111111111111111111";
-        let tokens = lex_kinds(input);
-        assert_lex_error(
-            &tokens,
-            "Invalid token: \"#b1111111111111111111111111111111111111111111111111111111111111111\"",
-        );
+        let (tokens, errors) = lexer_tokenize_whit_errors(input, "test");
+        assert_eq!(tokens.len(), 1);
+        assert_eq!(errors.len(), 1);
+        assert_eq!(tokens[0].kind, TokenKind::Eof);
+        assert_eq!(
+            errors[0].to_string(),
+            "Invalid token: \"#b1111111111111111111111111111111111111111111111111111111111111111\" at test:1:1-1:67");
     }
 
     #[test]
     fn empty_base_numbers() {
         let cases = vec![
-            ("#b", "Invalid token: \"#\""),
-            ("#o", "Invalid token: \"#\""),
-            ("#x", "Invalid token: \"#\""),
+            ("#b", TokenKind::IdentifierAscii("b".to_string()), "Invalid token: \"#\" at test:1:1-1:2"),
+            ("#o", TokenKind::IdentifierAscii("o".to_string()), "Invalid token: \"#\" at test:1:1-1:2"),
+            ("#x", TokenKind::IdentifierAscii("x".to_string()), "Invalid token: \"#\" at test:1:1-1:2"),
         ];
 
-        for (input, expected_msg) in cases {
-            let tokens = lex_kinds(input);
-            assert_lex_error(&tokens, expected_msg);
+        for (input, token_kind, expected_msg) in cases {
+            let (tokens, errors) = lexer_tokenize_whit_errors(input, "test");
+            assert_eq!(tokens.len(), 2);
+            assert_eq!(errors.len(), 1);
+            assert_eq!(tokens[0].kind, token_kind);
+            assert_eq!(tokens[1].kind, Eof);
+            assert_eq!(
+                errors[0].to_string(),
+                expected_msg);
         }
     }
 
@@ -368,14 +369,19 @@ mod tests {
     #[test]
     fn invalid_tokens() {
         let cases = vec![
-            ("@", "Invalid token: \"@\""),
-            ("`", "Invalid token: \"`\""),
-            ("~", "Invalid token: \"~\""),
+            ("@", "Invalid token: \"@\" at test:1:1-1:2"),
+            ("`", "Invalid token: \"`\" at test:1:1-1:2"),
+            ("~", "Invalid token: \"~\" at test:1:1-1:2"),
         ];
 
         for (input, expected) in cases {
-            let tokens = lex_kinds(input);
-            assert_lex_error(&tokens, expected);
+            let (tokens, errors) = lexer_tokenize_whit_errors(input, "test");
+            assert_eq!(tokens.len(), 1);
+            assert_eq!(errors.len(), 1);
+            assert_eq!(tokens[0].kind, Eof);
+            assert_eq!(
+                errors[0].to_string(),
+                expected);
         }
     }
 
