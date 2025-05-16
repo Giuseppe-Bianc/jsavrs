@@ -1,22 +1,14 @@
-name: Rust
-
+name: Build
 on:
   push:
-    tags: [ '*' ]
+    branches:
+      - main
   pull_request:
-   types: [opened, synchronize, reopened]
-
-env:
-  CARGO_TERM_COLOR: always
-  RUST_BACKTRACE: 1
-
+    types: [opened, synchronize, reopened]
 jobs:
   sonarqube:
     name: SonarQube
-    runs-on: ${{ matrix.os }}
-    strategy:
-      matrix:
-        os: [ubuntu-latest, macOS-latest, windows-latest]
+    runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
         with:
