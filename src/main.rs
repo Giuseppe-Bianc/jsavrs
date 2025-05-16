@@ -11,10 +11,9 @@ use error::compile_error::CompileError;
 fn main() -> Result<(), CompileError> {
     /*let args: Vec<String> = env::args().collect();
     if args.len() < 2 {
-        eprintln!("Usage: {} <input-file>", args[0]);
+        eprintln!("Usage: {args[0]} <input-file>");
         std::process::exit(1);
     }
-
     let file_path = &args[1];*/
     let file_path = Path::new("C:/dev/visualStudio/transpiler/Vandior/input.vn");
     let input = fs::read_to_string(file_path);
