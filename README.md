@@ -2,6 +2,7 @@
 
 [![Rust CI](https://github.com/Giuseppe-Bianc/jsavrs/actions/workflows/rust.yml/badge.svg)](https://github.com/Giuseppe-Bianc/jsavrs/actions/workflows/rust.yml)
 [![codecov](https://codecov.io/gh/Giuseppe-Bianc/jsavrs/graph/badge.svg?token=5EIG6IbpPa)](https://codecov.io/gh/Giuseppe-Bianc/jsavrs)
+![CodeRabbit Pull Request Reviews](https://img.shields.io/coderabbit/prs/github/Giuseppe-Bianc/jsavrs?utm_source=oss&utm_medium=github&utm_campaign=Giuseppe-Bianc%2Fjsavrs&labelColor=171717&color=FF570A&link=https%3A%2F%2Fcoderabbit.ai&label=CodeRabbit+Reviews)
 
 ## Introduction
 
