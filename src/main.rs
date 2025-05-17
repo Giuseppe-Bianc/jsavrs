@@ -1,7 +1,7 @@
-#[allow(unused_imports)]
-use std::{env, fs, path::Path, sync::Arc};
 use jsavrs::error::compile_error::CompileError;
 use jsavrs::lexer::lexer_tokenize_with_errors;
+#[allow(unused_imports)]
+use std::{env, fs, path::Path, sync::Arc};
 
 fn main() -> Result<(), CompileError> {
     /*let args: Vec<String> = env::args().collect();
