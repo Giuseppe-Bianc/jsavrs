@@ -1,14 +1,14 @@
 use crate::tokens::number::Number;
 use logos::Logos;
 
-fn parse_number(lex: &mut logos::Lexer<TokenKind>) -> Option<Number> {
+pub fn parse_number(lex: &mut logos::Lexer<TokenKind>) -> Option<Number> {
     let slice = lex.slice();
     let (numeric_part, suffix) = split_numeric_and_suffix(slice);
     handle_suffix(numeric_part, suffix)
 }
 
 /// Splits the input string into numeric part and possible suffix
-fn split_numeric_and_suffix(slice: &str) -> (&str, Option<String>) {
+pub fn split_numeric_and_suffix(slice: &str) -> (&str, Option<String>) {
     if slice.is_empty() {
         return (slice, None);
     }
@@ -24,7 +24,7 @@ fn split_numeric_and_suffix(slice: &str) -> (&str, Option<String>) {
 }
 
 /// Main suffix handling router
-fn handle_suffix(numeric_part: &str, suffix: Option<String>) -> Option<Number> {
+pub fn handle_suffix(numeric_part: &str, suffix: Option<String>) -> Option<Number> {
     match suffix.as_deref() {
         Some("u") => handle_unsigned_suffix(numeric_part),
         Some("f") => handle_float_suffix(numeric_part),
@@ -34,7 +34,7 @@ fn handle_suffix(numeric_part: &str, suffix: Option<String>) -> Option<Number> {
 }
 
 /// Handles unsigned integer suffix case
-fn handle_unsigned_suffix(numeric_part: &str) -> Option<Number> {
+pub fn handle_unsigned_suffix(numeric_part: &str) -> Option<Number> {
     if is_valid_unsigned(numeric_part) {
         numeric_part
             .parse::<u64>()
@@ -46,22 +46,22 @@ fn handle_unsigned_suffix(numeric_part: &str) -> Option<Number> {
 }
 
 /// Validates numeric part for unsigned integers
-fn is_valid_unsigned(numeric_part: &str) -> bool {
+pub fn is_valid_unsigned(numeric_part: &str) -> bool {
     !numeric_part.contains(['.', 'e', 'E'])
 }
 /// Handles float suffix case
-fn handle_float_suffix(numeric_part: &str) -> Option<Number> {
+pub fn handle_float_suffix(numeric_part: &str) -> Option<Number> {
     parse_scientific(numeric_part, true)
         .or_else(|| numeric_part.parse::<f32>().ok().map(Number::Float32))
 }
 
 /// Handles default suffix cases (double or no suffix)
-fn handle_default_suffix(numeric_part: &str) -> Option<Number> {
+pub fn handle_default_suffix(numeric_part: &str) -> Option<Number> {
     parse_scientific(numeric_part, false).or_else(|| handle_non_scientific(numeric_part))
 }
 
 /// Handles non-scientific notation numbers
-fn handle_non_scientific(numeric_part: &str) -> Option<Number> {
+pub fn handle_non_scientific(numeric_part: &str) -> Option<Number> {
     if numeric_part.contains('.') {
         numeric_part.parse::<f64>().ok().map(Number::Float64)
     } else {
@@ -69,7 +69,7 @@ fn handle_non_scientific(numeric_part: &str) -> Option<Number> {
     }
 }
 
-fn parse_scientific(s: &str, is_f32: bool) -> Option<Number> {
+pub fn parse_scientific(s: &str, is_f32: bool) -> Option<Number> {
     let pos = s.find(['e', 'E'])?;
     let (base_str, exp_str) = s.split_at(pos);
     let exp = exp_str[1..].parse::<i32>().ok()?;
@@ -84,7 +84,7 @@ fn parse_scientific(s: &str, is_f32: bool) -> Option<Number> {
 }
 
 // Generic parser for base-specific numbers
-fn parse_base_number(radix: u32, lex: &mut logos::Lexer<TokenKind>) -> Option<Number> {
+pub fn parse_base_number(radix: u32, lex: &mut logos::Lexer<TokenKind>) -> Option<Number> {
     let slice = lex.slice();
     let (_, num_part) = slice.split_at(2); // Split off "#b", "#o", or "#x"
     let (num_str, suffix) = match num_part.chars().last() {
@@ -103,15 +103,15 @@ fn parse_base_number(radix: u32, lex: &mut logos::Lexer<TokenKind>) -> Option<Nu
     }
 }
 
-fn parse_binary(lex: &mut logos::Lexer<TokenKind>) -> Option<Number> {
+pub fn parse_binary(lex: &mut logos::Lexer<TokenKind>) -> Option<Number> {
     parse_base_number(2, lex)
 }
 
-fn parse_octal(lex: &mut logos::Lexer<TokenKind>) -> Option<Number> {
+pub fn parse_octal(lex: &mut logos::Lexer<TokenKind>) -> Option<Number> {
     parse_base_number(8, lex)
 }
 
-fn parse_hex(lex: &mut logos::Lexer<TokenKind>) -> Option<Number> {
+pub fn parse_hex(lex: &mut logos::Lexer<TokenKind>) -> Option<Number> {
     parse_base_number(16, lex)
 }
 
@@ -224,7 +224,7 @@ pub enum TokenKind {
         parse_number,
         priority = 4
     )]
-    Number(Number),
+    Numeric(Number),
 
     #[regex(r"#b[01]+[uU]?", parse_binary, priority = 3)]
     Binary(Number),
@@ -291,7 +291,7 @@ pub enum TokenKind {
 
     // Whitespace (including Unicode spaces)
     #[regex(
-        r"[ \t\n\f\u{00A0}\u{1680}\u{2000}-\u{200A}\u{202F}\u{205F}\u{3000}]+",
+        r"[ \t\r\n\f\u{00A0}\u{1680}\u{2000}-\u{200A}\u{202F}\u{205F}\u{3000}]+",
         logos::skip
     )]
     Whitespace,
@@ -310,7 +310,7 @@ mod tests {
         let mut lex = TokenKind::lexer(input);
         assert_eq!(
             lex.next().unwrap(),
-            Ok(TokenKind::Number(Number::Integer(123)))
+            Ok(TokenKind::Numeric(Number::Integer(123)))
         );
     }
 
@@ -343,7 +343,7 @@ mod tests {
         let mut lex = TokenKind::lexer(input);
         assert_eq!(
             lex.next().unwrap(),
-            Ok(TokenKind::Number(Number::UnsignedInteger(123)))
+            Ok(TokenKind::Numeric(Number::UnsignedInteger(123)))
         );
     }
 
@@ -353,7 +353,7 @@ mod tests {
         let mut lex = TokenKind::lexer(input);
         assert_eq!(
             lex.next().unwrap(),
-            Ok(TokenKind::Number(Number::Float32(45.67)))
+            Ok(TokenKind::Numeric(Number::Float32(45.67)))
         );
     }
 
@@ -363,7 +363,7 @@ mod tests {
         let mut lex = TokenKind::lexer(input);
         assert_eq!(
             lex.next().unwrap(),
-            Ok(TokenKind::Number(Number::Float64(89.01)))
+            Ok(TokenKind::Numeric(Number::Float64(89.01)))
         );
     }
 
@@ -373,7 +373,7 @@ mod tests {
         let mut lex = TokenKind::lexer(input);
         assert_eq!(
             lex.next().unwrap(),
-            Ok(TokenKind::Number(Number::Scientific32(1.2, 3)))
+            Ok(TokenKind::Numeric(Number::Scientific32(1.2, 3)))
         );
     }
 
@@ -383,7 +383,7 @@ mod tests {
         let mut lex = TokenKind::lexer(input);
         assert_eq!(
             lex.next().unwrap(),
-            Ok(TokenKind::Number(Number::Scientific64(3.4, 5)))
+            Ok(TokenKind::Numeric(Number::Scientific64(3.4, 5)))
         );
     }
 
@@ -394,7 +394,7 @@ mod tests {
         // 'x' is not a valid suffix, should parse as number then identifier
         assert_eq!(
             lex.next().unwrap(),
-            Ok(TokenKind::Number(Number::Integer(123)))
+            Ok(TokenKind::Numeric(Number::Integer(123)))
         );
         assert_eq!(
             lex.next().unwrap(),
@@ -408,7 +408,7 @@ mod tests {
         let mut lex = TokenKind::lexer(input);
         assert_eq!(
             lex.next().unwrap(),
-            Ok(TokenKind::Number(Number::Float64(0.456)))
+            Ok(TokenKind::Numeric(Number::Float64(0.456)))
         );
     }
 
@@ -419,7 +419,7 @@ mod tests {
         // Should parse first '1e2' then 'e3' as separate tokens
         assert_eq!(
             lex.next().unwrap(),
-            Ok(TokenKind::Number(Number::Scientific64(1.0, 2)))
+            Ok(TokenKind::Numeric(Number::Scientific64(1.0, 2)))
         );
         assert_eq!(
             lex.next().unwrap(),

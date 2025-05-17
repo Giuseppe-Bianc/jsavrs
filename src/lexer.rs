@@ -142,18 +142,18 @@ mod tests {
         assert_eq!(
             tokens,
             vec![
-                TokenKind::Number(Integer(123)),
-                TokenKind::Number(Float64(45.67)),
-                TokenKind::Number(Float64(9.01)),
-                TokenKind::Number(Scientific64(1.0, 5)),
-                TokenKind::Number(Scientific64(2.0, -3)),
-                TokenKind::Number(Scientific64(1.2, 3)),
-                TokenKind::Number(Float64(123.0)),
-                TokenKind::Number(Float64(0.456)),
-                TokenKind::Number(Scientific64(10.0, 5)),
-                TokenKind::Number(Scientific64(3.4, 5)),
-                TokenKind::Number(Scientific64(5.0, 0)),
-                TokenKind::Number(Scientific64(0.0, 0)),
+                TokenKind::Numeric(Integer(123)),
+                TokenKind::Numeric(Float64(45.67)),
+                TokenKind::Numeric(Float64(9.01)),
+                TokenKind::Numeric(Scientific64(1.0, 5)),
+                TokenKind::Numeric(Scientific64(2.0, -3)),
+                TokenKind::Numeric(Scientific64(1.2, 3)),
+                TokenKind::Numeric(Float64(123.0)),
+                TokenKind::Numeric(Float64(0.456)),
+                TokenKind::Numeric(Scientific64(10.0, 5)),
+                TokenKind::Numeric(Scientific64(3.4, 5)),
+                TokenKind::Numeric(Scientific64(5.0, 0)),
+                TokenKind::Numeric(Scientific64(0.0, 0)),
                 TokenKind::Eof
             ]
         );
@@ -409,12 +409,12 @@ mod tests {
             vec![
                 TokenKind::IdentifierAscii("x".to_string()),
                 TokenKind::Equal,
-                TokenKind::Number(Number::Integer(42)),
+                TokenKind::Numeric(Number::Integer(42)),
                 TokenKind::Plus,
                 TokenKind::OpenParen,
                 TokenKind::IdentifierAscii("y".to_string()),
                 TokenKind::Star,
-                TokenKind::Number(Number::Float64(3.14)),
+                TokenKind::Numeric(Number::Float64(3.14)),
                 TokenKind::CloseParen,
                 TokenKind::Eof
             ]
@@ -434,7 +434,7 @@ mod tests {
         assert_eq!(
             tokens,
             vec![
-                TokenKind::Number(Number::Integer(42)),
+                TokenKind::Numeric(Number::Integer(42)),
                 TokenKind::Plus,
                 TokenKind::IdentifierAscii("x".to_string()),
                 TokenKind::Eof,
@@ -509,8 +509,8 @@ mod tests {
         let (tokens, errors) = lexer_tokenize_with_errors(input, "test");
         assert_eq!(tokens.len(), 3);
         assert_eq!(errors.len(), 1);
-        assert_eq!(tokens[0].kind, TokenKind::Number(Number::Integer(123)));
-        assert_eq!(tokens[1].kind, TokenKind::Number(Number::Integer(456)));
+        assert_eq!(tokens[0].kind, TokenKind::Numeric(Number::Integer(123)));
+        assert_eq!(tokens[1].kind, TokenKind::Numeric(Number::Integer(456)));
         assert_eq!(tokens[2].kind, TokenKind::Eof);
         assert_eq!(
             errors[0].to_string(),

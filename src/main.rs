@@ -1,12 +1,7 @@
 #[allow(unused_imports)]
 use std::{env, fs, path::Path, sync::Arc};
-
-pub mod error;
-pub mod lexer;
-pub mod location;
-pub mod tokens;
-// mod parser;*/
-use error::compile_error::CompileError;
+use jsavrs::error::compile_error::CompileError;
+use jsavrs::lexer::lexer_tokenize_with_errors;
 
 fn main() -> Result<(), CompileError> {
     /*let args: Vec<String> = env::args().collect();
@@ -28,7 +23,7 @@ fn main() -> Result<(), CompileError> {
         ))
     })?;
 
-    let (tokens, errors) = lexer::lexer_tokenize_with_errors(input.as_str(), file_path_str);
+    let (tokens, errors) = lexer_tokenize_with_errors(input.as_str(), file_path_str);
 
     if !errors.is_empty() {
         for error in errors {
