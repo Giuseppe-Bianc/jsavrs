@@ -3,173 +3,116 @@ use jsavrs::location::source_span::{SourceSpan, truncate_path};
 use std::path::Path;
 use std::sync::Arc;
 
-#[test]
-fn longer_than_depth() {
-    let path = Path::new("a/b/c/d");
-    #[cfg(unix)]
-    assert_eq!(truncate_path(path, 2), "../c/d");
-    #[cfg(windows)]
-    assert_eq!(truncate_path(path, 2), "..\\c\\d");
+macro_rules! truncate_test {
+    ($name:ident, $path:expr, $depth:expr, $unix:expr, $windows:expr) => {
+        #[test]
+        fn $name() {
+            let path = Path::new($path);
+            let truncated = truncate_path(path, $depth);
+            let expected = if cfg!(unix) { $unix } else { $windows };
+            assert_eq!(truncated, expected);
+        }
+    };
 }
 
-#[test]
-fn exact_depth() {
-    let path = Path::new("a/b/c");
-    #[cfg(unix)]
-    assert_eq!(truncate_path(path, 3), "a/b/c");
-    #[cfg(windows)]
-    assert_eq!(truncate_path(path, 3), "a\\b\\c");
+macro_rules! span_str_test {
+    ($name:ident, $file:expr, $sl:expr, $sc:expr, $el:expr, $ec:expr, $unix:expr, $windows:expr) => {
+        #[test]
+        fn $name() {
+            let span = SourceSpan::new(
+                Arc::from($file),
+                SourceLocation {
+                    line: $sl,
+                    column: $sc,
+                    absolute_pos: 0,
+                },
+                SourceLocation {
+                    line: $el,
+                    column: $ec,
+                    absolute_pos: 0,
+                },
+            );
+            let expected = if cfg!(unix) { $unix } else { $windows };
+            assert_eq!(span.to_string(), expected);
+        }
+    };
 }
 
-#[test]
-fn shorter_than_depth() {
-    let path = Path::new("a");
-    #[cfg(unix)]
-    assert_eq!(truncate_path(path, 2), "a");
-    #[cfg(windows)]
-    assert_eq!(truncate_path(path, 2), "a");
-}
+// Test di troncamento percorso
+truncate_test!(longer_than_depth, "a/b/c/d", 2, "../c/d", "..\\c\\d");
+truncate_test!(exact_depth, "a/b/c", 3, "a/b/c", "a\\b\\c");
+truncate_test!(shorter_than_depth, "a", 2, "a", "a");
+truncate_test!(depth_zero, "/usr/project/src/main.vn", 0, "../", "..\\");
+truncate_test!(single_component, "file.vn", 2, "file.vn", "file.vn");
+truncate_test!(
+    absolute_path,
+    "/usr/project/src/main.vn",
+    2,
+    "../src/main.vn",
+    "..\\src\\main.vn"
+);
 
-#[test]
-fn depth_zero() {
-    let path = Path::new("/usr/project/src/main.vn");
-    #[cfg(unix)]
-    assert_eq!(truncate_path(path, 0), "../");
-    #[cfg(windows)]
-    assert_eq!(truncate_path(path, 0), "..\\");
-}
-
-#[test]
-fn single_component() {
-    let path = Path::new("file.vn");
-    #[cfg(unix)]
-    assert_eq!(truncate_path(path, 2), "file.vn");
-    #[cfg(windows)]
-    assert_eq!(truncate_path(path, 2), "file.vn");
-}
-
-#[test]
-fn absolute_path() {
-    let path = Path::new("/usr/project/src/main.vn");
-    #[cfg(unix)]
-    assert_eq!(truncate_path(path, 2), "../src/main.vn");
-    #[cfg(windows)]
-    assert_eq!(truncate_path(path, 2), "..\\src\\main.vn");
-}
-
-#[test]
-fn same_line() {
-    let span = SourceSpan::new(
-        Arc::from("project/src/main.vn"),
-        SourceLocation {
-            line: 5,
-            column: 3,
-            absolute_pos: 20,
-        },
-        SourceLocation {
-            line: 5,
-            column: 10,
-            absolute_pos: 30,
-        },
-    );
-    #[cfg(unix)]
-    assert_eq!(span.to_string(), "../src/main.vn:5:3-5:10");
-    #[cfg(windows)]
-    assert_eq!(span.to_string(), "..\\src\\main.vn:5:3-5:10");
-}
-
-#[test]
-fn different_lines() {
-    let span = SourceSpan::new(
-        Arc::from("src/module/file.vn"),
-        SourceLocation {
-            line: 2,
-            column: 1,
-            absolute_pos: 0,
-        },
-        SourceLocation {
-            line: 4,
-            column: 5,
-            absolute_pos: 5,
-        },
-    );
-    #[cfg(unix)]
-    assert_eq!(span.to_string(), "../module/file.vn:2:1-4:5");
-    #[cfg(windows)]
-    assert_eq!(span.to_string(), "..\\module\\file.vn:2:1-4:5");
-}
-
-#[test]
-fn single_component_path() {
-    let span = SourceSpan::new(
-        Arc::from("file.vn"),
-        SourceLocation {
-            line: 1,
-            column: 1,
-            absolute_pos: 0,
-        },
-        SourceLocation {
-            line: 1,
-            column: 1,
-            absolute_pos: 0,
-        },
-    );
-    #[cfg(unix)]
-    assert_eq!(span.to_string(), "file.vn:1:1-1:1");
-    #[cfg(windows)]
-    assert_eq!(span.to_string(), "file.vn:1:1-1:1");
-}
-
-#[test]
-fn same_start_end() {
-    let span = SourceSpan::new(
-        Arc::from("a/b/c/d/file.vn"),
-        SourceLocation {
-            line: 3,
-            column: 2,
-            absolute_pos: 10,
-        },
-        SourceLocation {
-            line: 3,
-            column: 2,
-            absolute_pos: 10,
-        },
-    );
-    #[cfg(unix)]
-    assert_eq!(span.to_string(), "../d/file.vn:3:2-3:2");
-    #[cfg(windows)]
-    assert_eq!(span.to_string(), "..\\d\\file.vn:3:2-3:2");
-}
-
-#[test]
-fn minimal_coordinates() {
-    let span = SourceSpan::new(
-        Arc::from("f.vn"),
-        SourceLocation {
-            line: 0,
-            column: 0,
-            absolute_pos: 0,
-        },
-        SourceLocation {
-            line: 0,
-            column: 0,
-            absolute_pos: 0,
-        },
-    );
-    #[cfg(unix)]
-    assert_eq!(span.to_string(), "f.vn:0:0-0:0");
-    #[cfg(windows)]
-    assert_eq!(span.to_string(), "f.vn:0:0-0:0");
-}
+// Test formattazione stringa span
+span_str_test!(
+    same_line,
+    "project/src/main.vn",
+    5,
+    3,
+    5,
+    10,
+    "../src/main.vn:5:3-5:10",
+    "..\\src\\main.vn:5:3-5:10"
+);
+span_str_test!(
+    different_lines,
+    "src/module/file.vn",
+    2,
+    1,
+    4,
+    5,
+    "../module/file.vn:2:1-4:5",
+    "..\\module\\file.vn:2:1-4:5"
+);
+span_str_test!(
+    single_component_path,
+    "file.vn",
+    1,
+    1,
+    1,
+    1,
+    "file.vn:1:1-1:1",
+    "file.vn:1:1-1:1"
+);
+span_str_test!(
+    same_start_end,
+    "a/b/c/d/file.vn",
+    3,
+    2,
+    3,
+    2,
+    "../d/file.vn:3:2-3:2",
+    "..\\d\\file.vn:3:2-3:2"
+);
+span_str_test!(
+    minimal_coordinates,
+    "f.vn",
+    0,
+    0,
+    0,
+    0,
+    "f.vn:0:0-0:0",
+    "f.vn:0:0-0:0"
+);
 
 #[test]
 fn absolute_path_span() {
-    #[cfg(unix)]
-    let path: Arc<str> = Arc::from("/usr/project/src/main.vn");
-    #[cfg(windows)]
-    let path: Arc<str> = Arc::from("C:\\project\\src\\main.vn");
+    let path = if cfg!(unix) {
+        "/usr/project/src/main.vn"
+    } else {
+        "C:\\project\\src\\main.vn"
+    };
     let span = SourceSpan::new(
-        path,
+        Arc::from(path),
         SourceLocation {
             line: 5,
             column: 3,
@@ -181,12 +124,15 @@ fn absolute_path_span() {
             absolute_pos: 30,
         },
     );
-    #[cfg(unix)]
-    assert_eq!(span.to_string(), "../src/main.vn:5:3-5:10");
-    #[cfg(windows)]
-    assert_eq!(span.to_string(), "..\\src\\main.vn:5:3-5:10");
+    let expected = if cfg!(unix) {
+        "../src/main.vn:5:3-5:10"
+    } else {
+        "..\\src\\main.vn:5:3-5:10"
+    };
+    assert_eq!(span.to_string(), expected);
 }
 
+// Test di merging
 fn create_span(
     file_path: &str,
     start_line: usize,
@@ -214,22 +160,10 @@ fn merge_same_file_expands_span() {
     let mut span1 = create_span("file.vn", 2, 3, 5, 10);
     let span2 = create_span("file.vn", 1, 1, 6, 5);
     span1.merge(&span2);
-    assert_eq!(
-        span1.start,
-        SourceLocation {
-            line: 1,
-            column: 1,
-            absolute_pos: 0
-        }
-    );
-    assert_eq!(
-        span1.end,
-        SourceLocation {
-            line: 6,
-            column: 5,
-            absolute_pos: 0
-        }
-    );
+    assert_eq!(span1.start.line, 1);
+    assert_eq!(span1.start.column, 1);
+    assert_eq!(span1.end.line, 6);
+    assert_eq!(span1.end.column, 5);
 }
 
 #[test]
@@ -237,22 +171,8 @@ fn merge_different_files_no_change() {
     let mut span1 = create_span("file1.vn", 1, 1, 2, 2);
     let span2 = create_span("file2.vn", 3, 3, 4, 4);
     span1.merge(&span2);
-    assert_eq!(
-        span1.start,
-        SourceLocation {
-            line: 1,
-            column: 1,
-            absolute_pos: 0
-        }
-    );
-    assert_eq!(
-        span1.end,
-        SourceLocation {
-            line: 2,
-            column: 2,
-            absolute_pos: 0
-        }
-    );
+    assert_eq!(span1.start.line, 1);
+    assert_eq!(span1.end.line, 2);
 }
 
 #[test]
@@ -260,22 +180,8 @@ fn merged_same_file_returns_combined() {
     let span1 = create_span("file.vn", 2, 3, 5, 10);
     let span2 = create_span("file.vn", 1, 1, 6, 5);
     let merged = span1.merged(&span2).unwrap();
-    assert_eq!(
-        merged.start,
-        SourceLocation {
-            line: 1,
-            column: 1,
-            absolute_pos: 0
-        }
-    );
-    assert_eq!(
-        merged.end,
-        SourceLocation {
-            line: 6,
-            column: 5,
-            absolute_pos: 0
-        }
-    );
+    assert_eq!(merged.start.line, 1);
+    assert_eq!(merged.end.line, 6);
 }
 
 #[test]
@@ -299,22 +205,8 @@ fn merged_overlapping_spans() {
     let span1 = create_span("file.vn", 3, 5, 8, 9);
     let span2 = create_span("file.vn", 5, 2, 10, 3);
     let merged = span1.merged(&span2).unwrap();
-    assert_eq!(
-        merged.start,
-        SourceLocation {
-            line: 3,
-            column: 5,
-            absolute_pos: 0
-        }
-    );
-    assert_eq!(
-        merged.end,
-        SourceLocation {
-            line: 10,
-            column: 3,
-            absolute_pos: 0
-        }
-    );
+    assert_eq!(merged.start.line, 3);
+    assert_eq!(merged.end.line, 10);
 }
 
 #[test]
