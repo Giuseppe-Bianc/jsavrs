@@ -24,12 +24,14 @@ fn test_empty_slice_for_split_numeric_and_suffix() {
 }
 
 #[test]
-fn test_unknown_suffix_for_handle_suffix() {  // Fixed typo in test name
+fn test_unknown_suffix_for_handle_suffix() {
+    // Fixed typo in test name
     assert!(handle_suffix("123", Some("x".into())).is_none());
 }
 
 #[test]
-fn test_malformed_numeric_part_handle_unsigned_suffix() {  // Fixed typo in test name
+fn test_malformed_numeric_part_handle_unsigned_suffix() {
+    // Fixed typo in test name
     assert!(handle_unsigned_suffix("123.45").is_none());
 }
 
