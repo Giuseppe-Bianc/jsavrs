@@ -2,6 +2,13 @@
 name = "jsavrs"
 version = "0.1.0"
 edition = "2024"
+authors = ["Giuseppe Bianconi(Giuseppe-Bianc) <bianconig6@gmail.com>"]
+description = "Un transpiler scritto in Rust che utilizza Logos per il lexing."
+license = "Apache-2.0"
+repository = "https://github.com/Giuseppe-Bianc/jsavrs"
+readme = "README.md"
+keywords = ["rust", "logos", "lexer"]
+categories = ["compilers", "parsing"]
 
 [lib]
 name = "jsavrs"
