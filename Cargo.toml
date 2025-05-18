@@ -3,7 +3,7 @@ name = "jsavrs"
 version = "0.1.0"
 edition = "2024"
 authors = ["Giuseppe Bianconi(Giuseppe-Bianc) <bianconig6@gmail.com>"]
-description = "Un transpiler scritto in Rust che utilizza Logos per il lexing."
+description = "A transpiler written in Rust that uses Logos for lexing."
 license = "Apache-2.0"
 repository = "https://github.com/Giuseppe-Bianc/jsavrs"
 readme = "README.md"
@@ -19,5 +19,13 @@ name = "jsavrs"
 path = "src/main.rs"
 
 [dependencies]
+clap = { version = "4.5.38", features = ["cargo", "derive"] }
+console = "0.15.11"
 logos = "0.15.0"
 thiserror = "2.0.12"
+
+
+[dev-dependencies]
+assert_cmd = "2.0.12"
+#predicates = "3.0.3"
+#tempfile = "3.8.0"

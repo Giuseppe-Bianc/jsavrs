@@ -1,3 +1,4 @@
+//src/location/source_location.rs
 #[derive(Debug, Clone, PartialEq, Eq, Ord, PartialOrd)]
 pub struct SourceLocation {
     pub line: usize,

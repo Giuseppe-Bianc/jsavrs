@@ -1,3 +1,4 @@
+//src/error/compile_error.rs
 use crate::location::source_span::SourceSpan;
 use thiserror::Error;
 
