@@ -66,7 +66,7 @@ fn main() -> Result<(), CompileError> {
             "{} {}: {}",
             style("ERROR:").red().bold(),
             style("I/O").red(),
-            style(format!("{}", e)).yellow() // Use formatted string instead of moving `e`
+            style(format!("{e}")).yellow()
         );
         e
     })?;
