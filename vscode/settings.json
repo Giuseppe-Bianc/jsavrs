@@ -1,0 +1,7 @@
+{
+	"github.copilot.chat.commitMessageGeneration.instructions": [
+		{
+			"text": "Generate commit messages with extreme detail, explicitly describing each file modification, addition, or removal, including function or class names where applicable. Clearly state the rationale behind every change, referencing issues, bug fixes, performance improvements, or refactoring efforts. Use the English language with proper grammar and adhere strictly to the Conventional Commit format (e.g., `feat:`, `fix:`, `chore:`, etc.). Ensure messages are concise yet informative, facilitating clear version control history and aiding code review."
+		}
+	],
+}
