@@ -1,8 +1,12 @@
+use std::collections::{HashMap, HashSet};
 //src/lexer.rs
 use crate::{
     error::compile_error::CompileError,
-    location::line_tracker::LineTracker,
-    tokens::{token::Token, token_kind::TokenKind},
+    location:: {
+        source_span::SourceSpan,
+        line_tracker::LineTracker
+    },
+    tokens::{token::Token, token_kind::TokenKind}
 };
 use logos::Logos;
 
@@ -73,5 +77,101 @@ pub fn lexer_tokenize_with_errors(
             Err(e) => errors.push(e),
         }
     }
+    post_process_tokens(tokens, errors)
+}
+
+
+pub fn post_process_tokens(
+    tokens: Vec<Token>,
+    errors: Vec<CompileError>,
+) -> (Vec<Token>, Vec<CompileError>) {
+    let (error_replacements, tokens_to_remove) = collect_error_updates(&errors, &tokens);
+    let errors = apply_error_replacements(errors, error_replacements);
+    let tokens = filter_removed_tokens(tokens, tokens_to_remove);
     (tokens, errors)
+}
+
+type Updates = (HashMap<usize, CompileError>, HashSet<usize>);
+
+fn collect_error_updates(errors: &[CompileError], tokens: &[Token]) -> Updates {
+    let mut replacements = HashMap::new();
+    let mut to_remove = HashSet::new();
+    let token_map = create_position_map(tokens);
+
+    for (eidx, error) in errors.iter().enumerate() {
+        if let CompileError::LexerError { message, span } = error {
+            if message == "Invalid token: \"#\"" {
+                process_hashtag_error(eidx, span, tokens, &token_map, &mut replacements, &mut to_remove);
+            }
+        }
+    }
+
+    (replacements, to_remove)
+}
+
+fn create_position_map(tokens: &[Token]) -> HashMap<(usize, usize), usize> {
+    tokens
+        .iter()
+        .enumerate()
+        .map(|(i, t)| ((t.span.start.line, t.span.start.column), i))
+        .collect()
+}
+
+fn process_hashtag_error(
+    eidx: usize,
+    span: &SourceSpan,
+    tokens: &[Token],
+    token_map: &HashMap<(usize, usize), usize>,
+    replacements: &mut HashMap<usize, CompileError>,
+    to_remove: &mut HashSet<usize>,
+) {
+    let end_pos = (span.end.line, span.end.column);
+
+    if let Some(&tidx) = token_map.get(&end_pos) {
+        let token = &tokens[tidx];
+
+        if let TokenKind::IdentifierAscii(s) = &token.kind {
+            if s.len() == 1 {
+                if let Some(msg) = get_error_message(s) {
+                    if let Some(merged) = span.merged(&token.span) {
+                        replacements.insert(eidx, CompileError::LexerError {
+                            message: msg.to_string(),
+                            span: merged,
+                        });
+                        to_remove.insert(tidx);
+                    }
+                }
+            }
+        }
+    }
+}
+
+fn get_error_message(s: &str) -> Option<&'static str> {
+    match s {
+        "b" => Some("Malformed binary number: \"#b\""),
+        "o" => Some("Malformed octal number: \"#o\""),
+        "x" => Some("Malformed hexadecimal number: \"#x\""),
+        _ => None,
+    }
+}
+
+fn apply_error_replacements(
+    mut errors: Vec<CompileError>,
+    mut replacements: HashMap<usize, CompileError>,
+) -> Vec<CompileError> {
+    for (i, error) in errors.iter_mut().enumerate() {
+        if let Some(new_err) = replacements.remove(&i) {
+            *error = new_err;
+        }
+    }
+    errors
+}
+
+fn filter_removed_tokens(tokens: Vec<Token>, to_remove: HashSet<usize>) -> Vec<Token> {
+    tokens
+        .into_iter()
+        .enumerate()
+        .filter(|(i, _)| !to_remove.contains(i))
+        .map(|(_, t)| t)
+        .collect()
 }

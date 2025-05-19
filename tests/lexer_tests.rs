@@ -156,27 +156,23 @@ fn empty_base_numbers() {
     let cases = vec![
         (
             "#b",
-            IdentifierAscii("b".to_string()),
-            "Invalid token: \"#\" at test:1:1-1:2",
+            "Malformed binary number: \"#b\" at test:1:1-1:3",
         ),
         (
             "#o",
-            IdentifierAscii("o".to_string()),
-            "Invalid token: \"#\" at test:1:1-1:2",
+            "Malformed octal number: \"#o\" at test:1:1-1:3",
         ),
         (
             "#x",
-            IdentifierAscii("x".to_string()),
-            "Invalid token: \"#\" at test:1:1-1:2",
+            "Malformed hexadecimal number: \"#x\" at test:1:1-1:3",
         ),
     ];
 
-    for (input, token_kind, expected_msg) in cases {
+    for (input, expected_msg) in cases {
         let (tokens, errors) = lexer_tokenize_with_errors(input, "test");
-        assert_eq!(tokens.len(), 2);
+        assert_eq!(tokens.len(), 1);
         assert_eq!(errors.len(), 1);
-        assert_eq!(tokens[0].kind, token_kind);
-        assert_eq!(tokens[1].kind, Eof);
+        assert_eq!(tokens[0].kind, Eof);
         assert_eq!(errors[0].to_string(), expected_msg);
     }
 }
