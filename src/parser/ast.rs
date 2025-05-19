@@ -1,9 +1,6 @@
 use crate::{
     location::source_span::SourceSpan,
-    tokens::{
-        number::Number,
-        token_kind::TokenKind,
-    }
+    tokens::{number::Number, token_kind::TokenKind},
 };
 
 #[derive(Debug, Clone, PartialEq)]
@@ -67,7 +64,9 @@ pub fn pratt_binding_power(op: &TokenKind) -> Option<(u8, u8)> {
         // Bitwise shifts (left-associative)
         TokenKind::ShiftLeft | TokenKind::ShiftRight => Some((18, 19)),
         // Relational comparisons (left-associative)
-        TokenKind::Less | TokenKind::LessEqual | TokenKind::Greater | TokenKind::GreaterEqual => Some((12, 13)),
+        TokenKind::Less | TokenKind::LessEqual | TokenKind::Greater | TokenKind::GreaterEqual => {
+            Some((12, 13))
+        }
         // Equality comparisons (left-associative)
         TokenKind::EqualEqual | TokenKind::NotEqual => Some((11, 12)),
         // Bitwise AND (left-associative)
@@ -79,7 +78,11 @@ pub fn pratt_binding_power(op: &TokenKind) -> Option<(u8, u8)> {
         // Logical OR (left-associative)
         TokenKind::OrOr => Some((6, 7)),
         // Assignment operators (right-associative)
-        TokenKind::Equal | TokenKind::PlusEqual | TokenKind::MinusEqual | TokenKind::PercentEqual | TokenKind::XorEqual => Some((2, 1)),
+        TokenKind::Equal
+        | TokenKind::PlusEqual
+        | TokenKind::MinusEqual
+        | TokenKind::PercentEqual
+        | TokenKind::XorEqual => Some((2, 1)),
         _ => None,
     }
 }

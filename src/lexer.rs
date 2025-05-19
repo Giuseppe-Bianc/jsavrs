@@ -2,11 +2,8 @@ use std::collections::{HashMap, HashSet};
 //src/lexer.rs
 use crate::{
     error::compile_error::CompileError,
-    location:: {
-        source_span::SourceSpan,
-        line_tracker::LineTracker
-    },
-    tokens::{token::Token, token_kind::TokenKind}
+    location::{line_tracker::LineTracker, source_span::SourceSpan},
+    tokens::{token::Token, token_kind::TokenKind},
 };
 use logos::Logos;
 
@@ -80,7 +77,6 @@ pub fn lexer_tokenize_with_errors(
     post_process_tokens(tokens, errors)
 }
 
-
 pub fn post_process_tokens(
     tokens: Vec<Token>,
     errors: Vec<CompileError>,
@@ -101,11 +97,17 @@ fn collect_error_updates(errors: &[CompileError], tokens: &[Token]) -> Updates {
     for (eidx, error) in errors.iter().enumerate() {
         match error {
             CompileError::LexerError { message, span } if message == "Invalid token: \"#\"" => {
-                process_hashtag_error(eidx, span, tokens, &token_map, &mut replacements, &mut to_remove);
+                process_hashtag_error(
+                    eidx,
+                    span,
+                    tokens,
+                    &token_map,
+                    &mut replacements,
+                    &mut to_remove,
+                );
             }
-            _ => {continue}
+            _ => continue,
         }
-
     }
 
     (replacements, to_remove)
@@ -137,10 +139,13 @@ pub fn process_hashtag_error(
             if s.len() == 1 {
                 if let Some(msg) = get_error_message(s) {
                     if let Some(merged) = span.merged(&token.span) {
-                        replacements.insert(eidx, CompileError::LexerError {
-                            message: msg.to_string(),
-                            span: merged,
-                        });
+                        replacements.insert(
+                            eidx,
+                            CompileError::LexerError {
+                                message: msg.to_string(),
+                                span: merged,
+                            },
+                        );
                         to_remove.insert(tidx);
                     }
                 }

@@ -7,9 +7,12 @@
 
 ## Introduction
 
-`jsavrs` is a Rust-based project designed to be an OS-independent compiler. It aims to provide a robust, high-performance solution for compiling code across multiple platforms. The project leverages Rust's safety and concurrency features to ensure reliability and efficiency.
+`jsavrs` is a Rust-based project designed to be an OS-independent compiler. It aims to provide a robust,
+high-performance solution for compiling code across multiple platforms. The project leverages Rust's safety and
+concurrency features to ensure reliability and efficiency.
 
-Whether you're a developer looking for a customizable compiler or someone interested in exploring Rust's capabilities, `jsavrs` offers a modular and extensible framework to meet your needs.
+Whether you're a developer looking for a customizable compiler or someone interested in exploring Rust's capabilities,
+`jsavrs` offers a modular and extensible framework to meet your needs.
 
 ## Features
 
@@ -25,8 +28,8 @@ Whether you're a developer looking for a customizable compiler or someone intere
 - [Features](#features)
 - [Installation](#installation)
 - [Usage](#usage)
-  - [Basic Usage](#basic-usage)
-  - [Advanced Usage](#advanced-usage)
+    - [Basic Usage](#basic-usage)
+    - [Advanced Usage](#advanced-usage)
 - [Testing](#testing)
 - [Contributing](#contributing)
 - [License](#license)
@@ -85,13 +88,15 @@ You can customize the behavior of `jsavrs` using command-line flags:
   ```
 
 For a full list of options, run:
+
 ```bash
 ./jsavrs --help
 ```
 
 ## Testing
 
-`jsavrs` includes a comprehensive suite of tests to ensure reliability and correctness. To run the tests, use the following command:
+`jsavrs` includes a comprehensive suite of tests to ensure reliability and correctness. To run the tests, use the
+following command:
 
 ```bash
 cargo test
@@ -99,9 +104,11 @@ cargo test
 
 ### Adding New Tests
 
-If you add new features or fix bugs, ensure you write corresponding tests. Tests are located in the `tests` directory and follow Rust's standard testing conventions.
+If you add new features or fix bugs, ensure you write corresponding tests. Tests are located in the `tests` directory
+and follow Rust's standard testing conventions.
 
 Example of a unit test:
+
 ```rust
 #[test]
 fn test_example() {
@@ -130,6 +137,7 @@ Contributions are welcome! If you have suggestions or improvements, please open 
 ### Code Style
 
 Please follow Rust's standard formatting guidelines. You can format your code using `rustfmt`:
+
 ```bash
 cargo fmt
 ```
@@ -140,4 +148,5 @@ This project is licensed under the Apache-2.0 License. See the [LICENSE](LICENSE
 
 ## Contact
 
-For questions, feature requests, or to report bugs, open an issue on [GitHub](https://github.com/Giuseppe-Bianc/jsavrs/issues).
+For questions, feature requests, or to report bugs, open an issue on 
+[GitHub](https://github.com/Giuseppe-Bianc/jsavrs/issues).

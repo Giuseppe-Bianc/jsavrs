@@ -3,7 +3,7 @@ name: Coverage
 on:
   push:
     branches: [ '*' ]   # Scatta su qualsiasi branch
-    tags:     [ '*' ]   # Scatta su qualsiasi tag
+    tags: [ '*' ]   # Scatta su qualsiasi tag
   pull_request:
     branches: [ '*' ]   # Scatta su PR verso qualsiasi branch
 
@@ -13,8 +13,8 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        os: [ubuntu-latest, macos-latest, windows-latest]
-        toolchain: [stable, beta, nightly]
+        os: [ ubuntu-latest, macos-latest, windows-latest ]
+        toolchain: [ stable, beta, nightly ]
 
     env:
       CARGO_TERM_COLOR: always

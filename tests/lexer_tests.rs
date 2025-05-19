@@ -1,13 +1,14 @@
-use std::collections::{HashMap, HashSet};
-use std::sync::Arc;
-use jsavrs::error::compile_error::CompileError;
-use jsavrs::lexer::*;
-use jsavrs::location::source_location::SourceLocation;
-use jsavrs::location::source_span::SourceSpan;
-use jsavrs::tokens::number::Number::*;
-use jsavrs::tokens::token::Token;
-use jsavrs::tokens::token_kind::TokenKind;
-use jsavrs::tokens::token_kind::TokenKind::*;
+use jsavrs::{
+    error::compile_error::CompileError,
+    lexer::*,
+    location::{source_location::SourceLocation, source_span::SourceSpan},
+    tokens::{number::Number::*, token::Token, token_kind::TokenKind, token_kind::TokenKind::*},
+};
+
+use std::{
+    collections::{HashMap, HashSet},
+    sync::Arc,
+};
 
 // Helper function to lex input and return TokenKinds
 fn lex_kinds(input: &str) -> Vec<Result<TokenKind, CompileError>> {
@@ -281,9 +282,18 @@ fn types() {
 #[test]
 fn invalid_tokens() {
     let cases = vec![
-        ("@", "Invalid token: \"@\" at test:line 1:column 1 - line 1:column 2"),
-        ("`", "Invalid token: \"`\" at test:line 1:column 1 - line 1:column 2"),
-        ("~", "Invalid token: \"~\" at test:line 1:column 1 - line 1:column 2"),
+        (
+            "@",
+            "Invalid token: \"@\" at test:line 1:column 1 - line 1:column 2",
+        ),
+        (
+            "`",
+            "Invalid token: \"`\" at test:line 1:column 1 - line 1:column 2",
+        ),
+        (
+            "~",
+            "Invalid token: \"~\" at test:line 1:column 1 - line 1:column 2",
+        ),
     ];
 
     for (input, expected) in cases {
@@ -419,7 +429,6 @@ fn iterator_multiline_span_tracking() {
     );
 }
 
-
 #[test]
 fn test_malformed_binary_error() {
     let input = "b";
@@ -466,10 +475,7 @@ fn test_uppercase_input() {
 }
 
 /// Helper to create a SourceSpan from (start_line, start_col) to (end_line, end_col).
-fn make_span(
-    start_line: usize, start_col: usize,
-    end_line: usize, end_col: usize,
-) -> SourceSpan {
+fn make_span(start_line: usize, start_col: usize, end_line: usize, end_col: usize) -> SourceSpan {
     SourceSpan::new(
         Arc::from("test_file.vn"),
         SourceLocation::new(start_line, start_col, 0),
@@ -504,11 +510,26 @@ fn test_no_token_in_map() {
     let mut to_remove: HashSet<usize> = HashSet::new();
 
     // Call:
-    process_hashtag_error(eidx, &span, &tokens, &token_map, &mut replacements, &mut to_remove);
+    process_hashtag_error(
+        eidx,
+        &span,
+        &tokens,
+        &token_map,
+        &mut replacements,
+        &mut to_remove,
+    );
 
     // Neither replacements nor to_remove should have changed:
-    assert!(replacements.is_empty(), "Expected no replacements, got {:?}", replacements);
-    assert!(to_remove.is_empty(), "Expected no removals, got {:?}", to_remove);
+    assert!(
+        replacements.is_empty(),
+        "Expected no replacements, got {:?}",
+        replacements
+    );
+    assert!(
+        to_remove.is_empty(),
+        "Expected no removals, got {:?}",
+        to_remove
+    );
 }
 
 /// Test 2: If the token kind is not IdentifierAscii, no change should occur.
@@ -533,11 +554,24 @@ fn test_non_identifier_token() {
     let mut replacements: HashMap<usize, CompileError> = HashMap::new();
     let mut to_remove: HashSet<usize> = HashSet::new();
 
-    process_hashtag_error(eidx, &span, &tokens, &token_map, &mut replacements, &mut to_remove);
+    process_hashtag_error(
+        eidx,
+        &span,
+        &tokens,
+        &token_map,
+        &mut replacements,
+        &mut to_remove,
+    );
 
     // Because TokenKind != IdentifierAscii, nothing should happen:
-    assert!(replacements.is_empty(), "Expected no replacements for non‐identifier token");
-    assert!(to_remove.is_empty(), "Expected no removal for non‐identifier token");
+    assert!(
+        replacements.is_empty(),
+        "Expected no replacements for non‐identifier token"
+    );
+    assert!(
+        to_remove.is_empty(),
+        "Expected no removal for non‐identifier token"
+    );
 }
 
 /// Test 3: If the token is IdentifierAscii but length > 1, still nothing should change.
@@ -560,11 +594,24 @@ fn test_identifier_length_gt_one() {
     let mut replacements = HashMap::new();
     let mut to_remove = HashSet::new();
 
-    process_hashtag_error(eidx, &span, &tokens, &token_map, &mut replacements, &mut to_remove);
+    process_hashtag_error(
+        eidx,
+        &span,
+        &tokens,
+        &token_map,
+        &mut replacements,
+        &mut to_remove,
+    );
 
     // Because the identifier length != 1, get_error_message is never even called:
-    assert!(replacements.is_empty(), "Expected no replacements when identifier length > 1");
-    assert!(to_remove.is_empty(), "Expected no removal when identifier length > 1");
+    assert!(
+        replacements.is_empty(),
+        "Expected no replacements when identifier length > 1"
+    );
+    assert!(
+        to_remove.is_empty(),
+        "Expected no removal when identifier length > 1"
+    );
 }
 
 /// Test 4: If get_error_message returns None for a single‐character identifier, nothing changes.
@@ -590,14 +637,29 @@ fn test_get_error_message_none() {
     let mut to_remove = HashSet::new();
 
     // Sanity check: get_error_message("z") should be None
-    assert!(get_error_message("z").is_none(),
-            "This test assumes get_error_message(\"z\") → None");
+    assert!(
+        get_error_message("z").is_none(),
+        "This test assumes get_error_message(\"z\") → None"
+    );
 
-    process_hashtag_error(eidx, &span, &tokens, &token_map, &mut replacements, &mut to_remove);
+    process_hashtag_error(
+        eidx,
+        &span,
+        &tokens,
+        &token_map,
+        &mut replacements,
+        &mut to_remove,
+    );
 
     // Since get_error_message returned None, we should still have no changes.
-    assert!(replacements.is_empty(), "Expected no replacements when get_error_message() is None");
-    assert!(to_remove.is_empty(), "Expected no removal when get_error_message() is None");
+    assert!(
+        replacements.is_empty(),
+        "Expected no replacements when get_error_message() is None"
+    );
+    assert!(
+        to_remove.is_empty(),
+        "Expected no removal when get_error_message() is None"
+    );
 }
 
 /// Test 5: Adjacent spans that can be merged (edge case)
@@ -606,11 +668,11 @@ fn test_adjacent_spans_merging() {
     let eidx = 1;
     // Error span ends where token span starts
     let error_span = make_span(4, 0, 4, 1);
-    let token_span = make_span(4, 1, 4, 2);  // <-- This is our original span
+    let token_span = make_span(4, 1, 4, 2); // <-- This is our original span
 
     let token = Token {
         kind: TokenKind::IdentifierAscii("b".into()),
-        span: token_span.clone(),  // <-- CLONE HERE to avoid move
+        span: token_span.clone(), // <-- CLONE HERE to avoid move
     };
     let tokens = vec![token];
 

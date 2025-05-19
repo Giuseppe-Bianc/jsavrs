@@ -1,18 +1,21 @@
 // run --package jsavrs --bin jsavrs -- -i C:/dev/visualStudio/transpiler/Vandior/input.vn -v
-use clap::Parser;
-use clap::builder::{
-    PathBufValueParser, Styles,
-    styling::{AnsiColor, Effects},
+use clap::{
+    Parser,
+    builder::{
+        PathBufValueParser, Styles,
+        styling::{AnsiColor, Effects},
+    },
 };
 use console::style;
-use jsavrs::error::compile_error::CompileError;
-use jsavrs::lexer::lexer_tokenize_with_errors;
+use jsavrs::{
+    error::compile_error::CompileError, lexer::lexer_tokenize_with_errors,
+    location::source_span::SourceSpan,
+};
 use std::{
     fs,
     path::{Path, PathBuf},
     process,
 };
-use jsavrs::location::source_span::SourceSpan;
 
 const HELP_STR: &str = r#"
 {before-help}{name} {version}
@@ -21,7 +24,6 @@ const HELP_STR: &str = r#"
 {usage-heading} {usage}
 
 {all-args}{after-help}"#;
-
 
 #[derive(Parser, Debug)]
 #[command(
