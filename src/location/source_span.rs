@@ -36,7 +36,27 @@ impl SourceSpan {
             end: self.clone().end.max(other.end.clone()),
         })
     }
+
+    /// Creates a dummy span for error recovery
+    pub fn dummy() -> Self {
+        Self {
+            file_path: Arc::from(""),
+            start: SourceLocation::new(0, 0, 0),
+            end: SourceLocation::new(0, 0, 0),
+        }
+    }
 }
+
+impl Default for SourceSpan {
+    fn default() -> Self {
+        SourceSpan {
+            file_path: Arc::from(""),
+            start: SourceLocation::default(),
+            end: SourceLocation::default(),
+        }
+    }
+}
+
 impl std::fmt::Display for SourceSpan {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
         // Attempt to truncate the path if it's long

@@ -298,3 +298,26 @@ pub enum TokenKind {
     Whitespace,
     Eof,
 }
+
+
+// src/tokens/token_kind.rs
+impl TokenKind {
+    pub fn is_type(&self) -> bool {
+        matches!(
+            self,
+            TokenKind::TypeI8 |
+            TokenKind::TypeI16 |
+            TokenKind::TypeI32 |
+            TokenKind::TypeI64 |
+            TokenKind::TypeU8 |
+            TokenKind::TypeU16 |
+            TokenKind::TypeU32 |
+            TokenKind::TypeU64 |
+            TokenKind::TypeF32 |
+            TokenKind::TypeF64 |
+            TokenKind::TypeChar |
+            TokenKind::TypeString |
+            TokenKind::TypeBool
+        )
+    }
+}

@@ -1,3 +1,4 @@
+// src/parser/ast.rs
 use crate::{
     location::source_span::SourceSpan,
     tokens::{number::Number, token_kind::TokenKind},
@@ -24,6 +25,20 @@ pub enum Expr {
         value: Box<Expr>,
         span: SourceSpan,
     },
+}
+
+// src/parser/ast.rs
+impl Expr {
+    pub fn span(&self) -> &SourceSpan {
+        match self {
+            Expr::Literal(_, span) => span,
+            Expr::Variable(_, span) => span,
+            Expr::BinaryOp { span, .. } => span,
+            Expr::UnaryOp { span, .. } => span,
+            Expr::Grouping(_, span) => span,
+            Expr::Assignment { span, .. } => span,
+        }
+    }
 }
 
 #[derive(Debug, Clone, PartialEq)]
