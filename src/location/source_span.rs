@@ -45,7 +45,7 @@ impl std::fmt::Display for SourceSpan {
 
         write!(
             f,
-            "{}:{}:{}-{}:{}",
+            "{}:line {}:column {} - line {}:column {}",
             truncated_path, self.start.line, self.start.column, self.end.line, self.end.column
         )
     }

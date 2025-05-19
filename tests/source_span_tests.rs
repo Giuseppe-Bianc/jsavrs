@@ -60,8 +60,8 @@ span_str_test!(
     3,
     5,
     10,
-    "../src/main.vn:5:3-5:10",
-    "..\\src\\main.vn:5:3-5:10"
+    "../src/main.vn:line 5:column 3 - line 5:column 10",
+    "..\\src\\main.vn:line 5:column 3 - line 5:column 10"
 );
 span_str_test!(
     different_lines,
@@ -70,8 +70,8 @@ span_str_test!(
     1,
     4,
     5,
-    "../module/file.vn:2:1-4:5",
-    "..\\module\\file.vn:2:1-4:5"
+    "../module/file.vn:line 2:column 1 - line 4:column 5",
+    "..\\module\\file.vn:line 2:column 1 - line 4:column 5"
 );
 span_str_test!(
     single_component_path,
@@ -80,8 +80,8 @@ span_str_test!(
     1,
     1,
     1,
-    "file.vn:1:1-1:1",
-    "file.vn:1:1-1:1"
+    "file.vn:line 1:column 1 - line 1:column 1",
+    "file.vn:line 1:column 1 - line 1:column 1"
 );
 span_str_test!(
     same_start_end,
@@ -90,8 +90,8 @@ span_str_test!(
     2,
     3,
     2,
-    "../d/file.vn:3:2-3:2",
-    "..\\d\\file.vn:3:2-3:2"
+    "../d/file.vn:line 3:column 2 - line 3:column 2",
+    "..\\d\\file.vn:line 3:column 2 - line 3:column 2"
 );
 span_str_test!(
     minimal_coordinates,
@@ -100,8 +100,8 @@ span_str_test!(
     0,
     0,
     0,
-    "f.vn:0:0-0:0",
-    "f.vn:0:0-0:0"
+    "f.vn:line 0:column 0 - line 0:column 0",
+    "f.vn:line 0:column 0 - line 0:column 0"
 );
 
 #[test]
@@ -125,9 +125,9 @@ fn absolute_path_span() {
         },
     );
     let expected = if cfg!(unix) {
-        "../src/main.vn:5:3-5:10"
+        "../src/main.vn:line 5:column 3 - line 5:column 10"
     } else {
-        "..\\src\\main.vn:5:3-5:10"
+        "..\\src\\main.vn:line 5:column 3 - line 5:column 10"
     };
     assert_eq!(span.to_string(), expected);
 }

@@ -1,4 +1,4 @@
-//src/error/compile_error.rs
+// src/error/compile_error.rs
 use crate::location::source_span::SourceSpan;
 use thiserror::Error;
 
@@ -7,38 +7,46 @@ pub enum CompileError {
     #[error("{message} at {span}")]
     LexerError { message: String, span: SourceSpan },
 
+    #[error("Syntax error: {message} at {span}")]
+    SyntaxError { message: String, span: SourceSpan },
+
     #[error("I/O error: {0}")]
     IoError(#[from] std::io::Error),
 }
 
 impl CompileError {
-    /// Get the error message if this is a LexerError
+    // Existing methods updated to handle SyntaxError
     pub fn message(&self) -> Option<&str> {
         match self {
             CompileError::LexerError { message, .. } => Some(message),
+            CompileError::SyntaxError { message, .. } => Some(message),
             _ => None,
         }
     }
 
-    /// Get the source span if this is a LexerError
     pub fn span(&self) -> Option<&SourceSpan> {
         match self {
             CompileError::LexerError { span, .. } => Some(span),
+            CompileError::SyntaxError { span, .. } => Some(span),
             _ => None,
         }
     }
 
-    /// Update the error message for LexerError variants
+    /// Aggiorna il messaggio di errore per le varianti LexerError e SyntaxError
     pub fn set_message(&mut self, new_message: String) {
-        if let CompileError::LexerError { message, .. } = self {
-            *message = new_message;
+        match self {
+            CompileError::LexerError { message, .. } => *message = new_message,
+            CompileError::SyntaxError { message, .. } => *message = new_message,
+            _ => {}
         }
     }
 
-    /// Update the source span for LexerError variants
+    /// Aggiorna lo span per le varianti LexerError e SyntaxError
     pub fn set_span(&mut self, new_span: SourceSpan) {
-        if let CompileError::LexerError { span, .. } = self {
-            *span = new_span;
+        match self {
+            CompileError::LexerError { span, .. } => *span = new_span,
+            CompileError::SyntaxError { span, .. } => *span = new_span,
+            _ => {}
         }
     }
 }

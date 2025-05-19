@@ -12,6 +12,7 @@ use std::{
     path::{Path, PathBuf},
     process,
 };
+use jsavrs::location::source_span::SourceSpan;
 
 const HELP_STR: &str = r#"
 {before-help}{name} {version}
@@ -80,31 +81,8 @@ fn main() -> Result<(), CompileError> {
             ))
         })?,
     );
-
     if !errors.is_empty() {
-        // Print styled error messages
-        for error in errors {
-            match error {
-                CompileError::LexerError { message, span } => {
-                    eprintln!(
-                        "{} {}: {}\n{} {}",
-                        style("ERROR:").red().bold(),
-                        style("LEX").red(),
-                        style(message).yellow(),
-                        style("Location:").blue(),
-                        style(span).cyan()
-                    );
-                }
-                CompileError::IoError(e) => {
-                    eprintln!(
-                        "{} {}: {}",
-                        style("ERROR:").red().bold(),
-                        style("I/O").red(),
-                        style(e).yellow()
-                    );
-                }
-            }
-        }
+        report_errors(errors);
         process::exit(1);
     }
 
@@ -122,4 +100,32 @@ fn main() -> Result<(), CompileError> {
     }
 
     Ok(())
+}
+
+fn report_errors(errors: Vec<CompileError>) {
+    for error in errors {
+        match error {
+            CompileError::LexerError { message, span } => print_error("LEX", &message, &span),
+            CompileError::SyntaxError { message, span } => print_error("SYNTAX", &message, &span),
+            CompileError::IoError(e) => {
+                eprintln!(
+                    "{} {}: {}",
+                    style("ERROR:").red().bold(),
+                    style("I/O").red(),
+                    style(e).yellow()
+                );
+            }
+        }
+    }
+}
+
+fn print_error(category: &str, message: &str, span: &SourceSpan) {
+    eprintln!(
+        "{} {}: {}\n{} {}",
+        style("ERROR").red().bold(),
+        style(category).red(),
+        style(message).yellow(),
+        style("Location:").blue(),
+        style(span).cyan()
+    );
 }

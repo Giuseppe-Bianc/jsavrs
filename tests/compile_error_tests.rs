@@ -22,7 +22,7 @@ fn test_lexer_error_display() {
     };
     assert_eq!(
         format!("{}", error),
-        "Unexpected token \"@\" at test_file:1:1-1:2"
+        "Unexpected token \"@\" at test_file:line 1:column 1 - line 1:column 2"
     );
 }
 

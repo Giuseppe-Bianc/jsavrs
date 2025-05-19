@@ -3,4 +3,4 @@ pub mod error;
 pub mod lexer;
 pub mod location;
 pub mod tokens;
-// mod parser;*/
+pub mod parser;
