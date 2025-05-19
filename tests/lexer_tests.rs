@@ -413,3 +413,49 @@ fn iterator_multiline_span_tracking() {
         "Invalid token: \"@\" at test:2:1-2:2"
     );
 }
+
+
+#[test]
+fn test_malformed_binary_error() {
+    let input = "b";
+    let expected = Some("Malformed binary number: \"#b\"");
+    let result = get_error_message(input);
+    assert_eq!(result, expected);
+}
+
+#[test]
+fn test_malformed_octal_error() {
+    let input = "o";
+    let expected = Some("Malformed octal number: \"#o\"");
+    let result = get_error_message(input);
+    assert_eq!(result, expected);
+}
+
+#[test]
+fn test_malformed_hexadecimal_error() {
+    let input = "x";
+    let expected = Some("Malformed hexadecimal number: \"#x\"");
+    let result = get_error_message(input);
+    assert_eq!(result, expected);
+}
+
+#[test]
+fn test_unrecognized_prefix() {
+    let input = "z";
+    let result = get_error_message(input);
+    assert!(result.is_none());
+}
+
+#[test]
+fn test_empty_string() {
+    let input = "";
+    let result = get_error_message(input);
+    assert!(result.is_none());
+}
+
+#[test]
+fn test_uppercase_input() {
+    let input = "B";
+    let result = get_error_message(input);
+    assert!(result.is_none());
+}

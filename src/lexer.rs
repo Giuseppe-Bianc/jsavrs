@@ -149,7 +149,7 @@ fn process_hashtag_error(
     }
 }
 
-fn get_error_message(s: &str) -> Option<&'static str> {
+pub fn get_error_message(s: &str) -> Option<&'static str> {
     match s {
         "b" => Some("Malformed binary number: \"#b\""),
         "o" => Some("Malformed octal number: \"#o\""),
