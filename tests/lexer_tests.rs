@@ -472,24 +472,24 @@ fn make_span(
 ) -> SourceSpan {
     SourceSpan::new(
         Arc::from("test_file.vn"),
-        SourceLocation::new(start_line, end_line, 0),
-        SourceLocation::new(end_line, end_line, 1),
+        SourceLocation::new(start_line, start_col, 0),
+        SourceLocation::new(end_line, end_col, 1),
     )
 }
 
-/// A dummy “no‐merge” span: merged() will return None because they don’t overlap.
+/*/// A dummy “no‐merge” span: merged() will return None because they don’t overlap.
 fn make_non_overlapping_span() -> (SourceSpan, SourceSpan) {
     let a = make_span(1, 1, 1, 2);
     let b = make_span(2, 5, 2, 6);
     (a, b)
-}
+}*/
 
-/// A dummy “overlapping” span: merged() will return Some(…) because end == start.
+/*/// A dummy “overlapping” span: merged() will return Some(…) because end == start.
 fn make_overlapping_span() -> (SourceSpan, SourceSpan) {
     // both spans share the exact same endpoints → merged() yields that same span
     let s = make_span(3, 3, 3, 4);
     (s.clone(), s)
-}
+}*/
 
 /// Test 1: If token_map has no entry for (span.end.line, span.end.column), then
 ///         neither `replacements` nor `to_remove` should be modified.
@@ -598,4 +598,42 @@ fn test_get_error_message_none() {
     // Since get_error_message returned None, we should still have no changes.
     assert!(replacements.is_empty(), "Expected no replacements when get_error_message() is None");
     assert!(to_remove.is_empty(), "Expected no removal when get_error_message() is None");
+}
+
+/// Test 5: Adjacent spans that can be merged (edge case)
+#[test]
+fn test_adjacent_spans_merging() {
+    let eidx = 1;
+    // Error span ends where token span starts
+    let error_span = make_span(4, 0, 4, 1);
+    let token_span = make_span(4, 1, 4, 2);  // <-- This is our original span
+
+    let token = Token {
+        kind: TokenKind::IdentifierAscii("b".into()),
+        span: token_span.clone(),  // <-- CLONE HERE to avoid move
+    };
+    let tokens = vec![token];
+
+    let mut token_map = HashMap::new();
+    token_map.insert((4, 1), 0);
+
+    let mut replacements = HashMap::new();
+    let mut to_remove = HashSet::new();
+
+    process_hashtag_error(
+        eidx,
+        &error_span,
+        &tokens,
+        &token_map,
+        &mut replacements,
+        &mut to_remove,
+    );
+
+    // Now we can safely use token_span here
+    if let Some(_merged_span) = error_span.merged(&token_span) {
+        assert_eq!(replacements.len(), 1, "Should merge adjacent spans");
+        assert_eq!(to_remove.len(), 1, "Should remove merged token");
+    } else {
+        panic!("This test assumes adjacent spans can be merged");
+    }
 }
