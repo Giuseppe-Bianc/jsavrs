@@ -132,6 +132,7 @@ fn process_hashtag_error(
     if let Some(&tidx) = token_map.get(&end_pos) {
         let token = &tokens[tidx];
 
+        #[allow(clippy::collapsible_if)]
         if let TokenKind::IdentifierAscii(s) = &token.kind {
             if s.len() == 1 {
                 if let Some(msg) = get_error_message(s) {
