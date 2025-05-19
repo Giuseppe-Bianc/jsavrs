@@ -1,6 +1,11 @@
+use std::collections::{HashMap, HashSet};
+use std::sync::Arc;
 use jsavrs::error::compile_error::CompileError;
 use jsavrs::lexer::*;
+use jsavrs::location::source_location::SourceLocation;
+use jsavrs::location::source_span::SourceSpan;
 use jsavrs::tokens::number::Number::*;
+use jsavrs::tokens::token::Token;
 use jsavrs::tokens::token_kind::TokenKind;
 use jsavrs::tokens::token_kind::TokenKind::*;
 
@@ -458,4 +463,139 @@ fn test_uppercase_input() {
     let input = "B";
     let result = get_error_message(input);
     assert!(result.is_none());
+}
+
+/// Helper to create a SourceSpan from (start_line, start_col) to (end_line, end_col).
+fn make_span(
+    start_line: usize, start_col: usize,
+    end_line: usize, end_col: usize,
+) -> SourceSpan {
+    SourceSpan::new(
+        Arc::from("test_file.vn"),
+        SourceLocation::new(start_line, end_line, 0),
+        SourceLocation::new(end_line, end_line, 1),
+    )
+}
+
+/// A dummy “no‐merge” span: merged() will return None because they don’t overlap.
+fn make_non_overlapping_span() -> (SourceSpan, SourceSpan) {
+    let a = make_span(1, 1, 1, 2);
+    let b = make_span(2, 5, 2, 6);
+    (a, b)
+}
+
+/// A dummy “overlapping” span: merged() will return Some(…) because end == start.
+fn make_overlapping_span() -> (SourceSpan, SourceSpan) {
+    // both spans share the exact same endpoints → merged() yields that same span
+    let s = make_span(3, 3, 3, 4);
+    (s.clone(), s)
+}
+
+/// Test 1: If token_map has no entry for (span.end.line, span.end.column), then
+///         neither `replacements` nor `to_remove` should be modified.
+#[test]
+fn test_no_token_in_map() {
+    // Setup:
+    let eidx = 0;
+    let span = make_span(10, 10, 10, 11);
+    let tokens: Vec<Token> = vec![];
+    let token_map: HashMap<(usize, usize), usize> = HashMap::new();
+    let mut replacements: HashMap<usize, CompileError> = HashMap::new();
+    let mut to_remove: HashSet<usize> = HashSet::new();
+
+    // Call:
+    process_hashtag_error(eidx, &span, &tokens, &token_map, &mut replacements, &mut to_remove);
+
+    // Neither replacements nor to_remove should have changed:
+    assert!(replacements.is_empty(), "Expected no replacements, got {:?}", replacements);
+    assert!(to_remove.is_empty(), "Expected no removals, got {:?}", to_remove);
+}
+
+/// Test 2: If the token kind is not IdentifierAscii, no change should occur.
+#[test]
+fn test_non_identifier_token() {
+    let eidx = 1;
+    // Span that ends at (5, 5).
+    let span = make_span(5, 4, 5, 5);
+
+    // Create a single token of kind NumberLiteral at exactly that position.
+    let token_span = make_span(5, 5, 5, 6);
+    let tok = Token {
+        kind: TokenKind::Numeric(Integer(42)), // Not an identifier
+        span: token_span.clone(),
+    };
+    let tokens = vec![tok];
+
+    // token_map: maps (5, 5) → index 0
+    let mut token_map = HashMap::new();
+    token_map.insert((5, 5), 0);
+
+    let mut replacements: HashMap<usize, CompileError> = HashMap::new();
+    let mut to_remove: HashSet<usize> = HashSet::new();
+
+    process_hashtag_error(eidx, &span, &tokens, &token_map, &mut replacements, &mut to_remove);
+
+    // Because TokenKind != IdentifierAscii, nothing should happen:
+    assert!(replacements.is_empty(), "Expected no replacements for non‐identifier token");
+    assert!(to_remove.is_empty(), "Expected no removal for non‐identifier token");
+}
+
+/// Test 3: If the token is IdentifierAscii but length > 1, still nothing should change.
+#[test]
+fn test_identifier_length_gt_one() {
+    let eidx = 2;
+    let span = make_span(7, 7, 7, 8);
+
+    // A two‐character identifier, e.g. "ab"
+    let token_span = make_span(7, 8, 7, 10);
+    let tok = Token {
+        kind: TokenKind::IdentifierAscii("ab".into()),
+        span: token_span.clone(),
+    };
+    let tokens = vec![tok];
+
+    let mut token_map = HashMap::new();
+    token_map.insert((7, 8), 0);
+
+    let mut replacements = HashMap::new();
+    let mut to_remove = HashSet::new();
+
+    process_hashtag_error(eidx, &span, &tokens, &token_map, &mut replacements, &mut to_remove);
+
+    // Because the identifier length != 1, get_error_message is never even called:
+    assert!(replacements.is_empty(), "Expected no replacements when identifier length > 1");
+    assert!(to_remove.is_empty(), "Expected no removal when identifier length > 1");
+}
+
+/// Test 4: If get_error_message returns None for a single‐character identifier, nothing changes.
+#[test]
+fn test_get_error_message_none() {
+    let eidx = 3;
+    let span = make_span(8, 8, 8, 9);
+
+    // Choose a single‐character identifier that we know get_error_message will return None for.
+    // Typically get_error_message returns Some(...) only for certain “illegal” single chars—
+    // here we pick "z" assuming it’s not in your error map.
+    let token_span = make_span(8, 9, 8, 10);
+    let tok = Token {
+        kind: TokenKind::IdentifierAscii("z".into()),
+        span: token_span.clone(),
+    };
+    let tokens = vec![tok];
+
+    let mut token_map = HashMap::new();
+    token_map.insert((8, 9), 0);
+
+    let mut replacements = HashMap::new();
+    let mut to_remove = HashSet::new();
+
+    // Sanity check: get_error_message("z") should be None
+    assert!(get_error_message("z").is_none(),
+            "This test assumes get_error_message(\"z\") → None");
+
+    process_hashtag_error(eidx, &span, &tokens, &token_map, &mut replacements, &mut to_remove);
+
+    // Since get_error_message returned None, we should still have no changes.
+    assert!(replacements.is_empty(), "Expected no replacements when get_error_message() is None");
+    assert!(to_remove.is_empty(), "Expected no removal when get_error_message() is None");
 }

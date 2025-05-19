@@ -119,7 +119,7 @@ fn create_position_map(tokens: &[Token]) -> HashMap<(usize, usize), usize> {
         .collect()
 }
 
-fn process_hashtag_error(
+pub fn process_hashtag_error(
     eidx: usize,
     span: &SourceSpan,
     tokens: &[Token],
