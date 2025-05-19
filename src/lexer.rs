@@ -99,11 +99,13 @@ fn collect_error_updates(errors: &[CompileError], tokens: &[Token]) -> Updates {
     let token_map = create_position_map(tokens);
 
     for (eidx, error) in errors.iter().enumerate() {
-        if let CompileError::LexerError { message, span } = error {
-            if message == "Invalid token: \"#\"" {
+        match error {
+            CompileError::LexerError { message, span } if message == "Invalid token: \"#\"" => {
                 process_hashtag_error(eidx, span, tokens, &token_map, &mut replacements, &mut to_remove);
             }
+            _ => {continue}
         }
+
     }
 
     (replacements, to_remove)
