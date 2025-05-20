@@ -36,15 +36,6 @@ impl SourceSpan {
             end: self.clone().end.max(other.end.clone()),
         })
     }
-
-    /// Creates a dummy span for error recovery
-    pub fn dummy() -> Self {
-        Self {
-            file_path: Arc::from(""),
-            start: SourceLocation::new(0, 0, 0),
-            end: SourceLocation::new(0, 0, 0),
-        }
-    }
 }
 
 impl Default for SourceSpan {

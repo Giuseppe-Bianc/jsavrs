@@ -234,3 +234,12 @@ fn merged_with_self() {
     assert_eq!(merged.start, span.start);
     assert_eq!(merged.end, span.end);
 }
+
+
+#[test]
+fn test_source_location_default() {
+    let loc = SourceLocation::default();
+    assert_eq!(loc.line, 0);
+    assert_eq!(loc.column, 0);
+    assert_eq!(loc.absolute_pos, 0);
+}
