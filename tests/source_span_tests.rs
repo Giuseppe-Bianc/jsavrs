@@ -235,11 +235,14 @@ fn merged_with_self() {
     assert_eq!(merged.end, span.end);
 }
 
-
 #[test]
-fn test_source_location_default() {
-    let loc = SourceLocation::default();
-    assert_eq!(loc.line, 0);
-    assert_eq!(loc.column, 0);
-    assert_eq!(loc.absolute_pos, 0);
+fn source_span_default() {
+    let span = SourceSpan::default();
+    assert_eq!(span.file_path, Arc::from(""));
+    assert_eq!(span.start.line, 0);
+    assert_eq!(span.start.column, 0);
+    assert_eq!(span.start.absolute_pos, 0);
+    assert_eq!(span.end.line, 0);
+    assert_eq!(span.end.column, 0);
+    assert_eq!(span.end.absolute_pos, 0);
 }
