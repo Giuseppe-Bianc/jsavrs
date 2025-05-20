@@ -74,7 +74,7 @@ fn main() -> Result<(), CompileError> {
         e
     })?;
 
-    let (tokens, errors) = lexer_tokenize_with_errors(
+    let (tokens, lexer_errors) = lexer_tokenize_with_errors(
         &input,
         file_path.to_str().ok_or_else(|| {
             CompileError::IoError(std::io::Error::new(
@@ -83,14 +83,14 @@ fn main() -> Result<(), CompileError> {
             ))
         })?,
     );
-    if !errors.is_empty() {
-        report_errors(errors);
+    if !lexer_errors.is_empty() {
+        report_errors(lexer_errors);
         process::exit(1);
     }
 
     // Print tokens with color if verbose
     if args.verbose {
-        for token in tokens {
+        for token in tokens.clone() {
             println!(
                 "{} {}",
                 style(format!("{:?}", token.kind)).green(),
@@ -100,6 +100,13 @@ fn main() -> Result<(), CompileError> {
     } else {
         println!("{} tokens found", tokens.len());
     }
+
+    /*let parse = CParser::new(tokens);
+    let (statements, parer_errors) = parse.parse();
+    if !parer_errors.is_empty() {
+        report_errors(parer_errors);
+        process::exit(1);
+    }*/
 
     Ok(())
 }

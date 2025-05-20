@@ -40,6 +40,19 @@ fn test_lexer_error_message() {
     assert_eq!(error.message(), Some("Unexpected token \"@\""));
 }
 #[test]
+fn test_parser_error_message() {
+    let span = SourceSpan::new(
+        Arc::from("test_file"),
+        SourceLocation::new(2, 1, 0),
+        SourceLocation::new(2, 2, 1),
+    );
+    let error = CompileError::SyntaxError {
+        message: "Unexpected token \"@\"".to_string(),
+        span,
+    };
+    assert_eq!(error.message(), Some("Unexpected token \"@\""));
+}
+#[test]
 fn test_lexer_error_span() {
     let span = SourceSpan::new(
         Arc::from("test_file"),
@@ -59,6 +72,25 @@ fn test_lexer_error_span() {
 }
 
 #[test]
+fn test_parser_error_span() {
+    let span = SourceSpan::new(
+        Arc::from("test_file"),
+        SourceLocation::new(2, 1, 0),
+        SourceLocation::new(2, 2, 1),
+    );
+    let error = CompileError::SyntaxError {
+        message: "Unexpected token \"@\"".to_string(),
+        span,
+    };
+    assert_eq!(error.span().unwrap().start.line, 2);
+    assert_eq!(error.span().unwrap().end.line, 2);
+    assert_eq!(error.span().unwrap().start.column, 1);
+    assert_eq!(error.span().unwrap().end.column, 2);
+    assert_eq!(error.span().unwrap().start.absolute_pos, 0);
+    assert_eq!(error.span().unwrap().end.absolute_pos, 1);
+}
+
+#[test]
 fn test_set_message() {
     let span = SourceSpan::new(
         Arc::from("test_file"),
@@ -66,6 +98,21 @@ fn test_set_message() {
         SourceLocation::new(1, 2, 1),
     );
     let mut error = CompileError::LexerError {
+        message: "Unexpected token \"@\"".to_string(),
+        span,
+    };
+    error.set_message("New message".to_string());
+    assert_eq!(error.message(), Some("New message"));
+}
+
+#[test]
+fn test_set_message_parser() {
+    let span = SourceSpan::new(
+        Arc::from("test_file"),
+        SourceLocation::new(2, 1, 0),
+        SourceLocation::new(2, 2, 1),
+    );
+    let mut error = CompileError::SyntaxError {
         message: "Unexpected token \"@\"".to_string(),
         span,
     };
@@ -97,6 +144,32 @@ fn test_set_span() {
     assert_eq!(error.span().unwrap().start.absolute_pos, 2);
     assert_eq!(error.span().unwrap().end.absolute_pos, 3);
 }
+
+#[test]
+fn test_set_span_parser() {
+    let span1 = SourceSpan::new(
+        Arc::from("test_file"),
+        SourceLocation::new(2, 1, 0),
+        SourceLocation::new(2, 2, 1),
+    );
+    let span2 = SourceSpan::new(
+        Arc::from("test_file"),
+        SourceLocation::new(3, 1, 2),
+        SourceLocation::new(3, 2, 3),
+    );
+    let mut error = CompileError::SyntaxError {
+        message: "Unexpected token \"@\"".to_string(),
+        span: span1,
+    };
+    error.set_span(span2);
+    assert_eq!(error.span().unwrap().start.line, 3);
+    assert_eq!(error.span().unwrap().end.line, 3);
+    assert_eq!(error.span().unwrap().start.column, 1);
+    assert_eq!(error.span().unwrap().end.column, 2);
+    assert_eq!(error.span().unwrap().start.absolute_pos, 2);
+    assert_eq!(error.span().unwrap().end.absolute_pos, 3);
+}
+
 #[test]
 fn test_set_message_not_lexer_error() {
     let io_error = std::io::Error::new(std::io::ErrorKind::NotFound, "File not found");
