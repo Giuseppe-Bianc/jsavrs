@@ -78,3 +78,54 @@ fn test_invalid_scientific_notation() {
     assert_eq!(lex.next().unwrap(), Ok(Numeric(Scientific64(1.0, 2))));
     assert_eq!(lex.next().unwrap(), Ok(IdentifierAscii("e3".into())));
 }
+
+#[test]
+fn returns_true_for_all_type_tokens() {
+    assert!(TypeI8.is_type());
+    assert!(TypeI16.is_type());
+    assert!(TypeI32.is_type());
+    assert!(TypeI64.is_type());
+    assert!(TypeU8.is_type());
+    assert!(TypeU16.is_type());
+    assert!(TypeU32.is_type());
+    assert!(TypeU64.is_type());
+    assert!(TypeF32.is_type());
+    assert!(TypeF64.is_type());
+    assert!(TypeChar.is_type());
+    assert!(TypeString.is_type());
+    assert!(TypeBool.is_type());
+}
+
+#[test]
+fn returns_false_for_non_type_tokens() {
+    assert!(!Plus.is_type());
+    assert!(!Minus.is_type());
+    assert!(!KeywordFun.is_type());
+    assert!(!KeywordIf.is_type());
+    assert!(!IdentifierAscii("abc".to_string()).is_type());
+    assert!(!Numeric(Integer(42)).is_type());
+    assert!(!StringLiteral("test".to_string()).is_type());
+    assert!(!CharLiteral("a".to_string()).is_type());
+    assert!(!Whitespace.is_type());
+    assert!(!Eof.is_type());
+}
+
+#[test]
+fn returns_false_for_edge_case_similar_names() {
+    // Assicura che token con nomi simili ma non tipi non siano considerati tipi
+    assert!(!KeywordVar.is_type());
+    assert!(!KeywordConst.is_type());
+    assert!(!KeywordBool(true).is_type());
+    assert!(!KeywordBool(false).is_type());
+}
+
+#[test]
+fn returns_false_for_structurally_similar_tokens() {
+    // Token che hanno struttura simile ma non sono tipi
+    assert!(!OpenParen.is_type());
+    assert!(!CloseParen.is_type());
+    assert!(!OpenBracket.is_type());
+    assert!(!CloseBracket.is_type());
+    assert!(!OpenBrace.is_type());
+    assert!(!CloseBrace.is_type());
+}
