@@ -14,8 +14,10 @@ use jsavrs::{
 use std::{
     fs,
     path::{Path, PathBuf},
-    process,
+    //process,
 };
+use jsavrs::parser::ast::pretty_print;
+use jsavrs::parser::parser::JsavParser;
 
 const HELP_STR: &str = r#"
 {before-help}{name} {version}
@@ -85,7 +87,7 @@ fn main() -> Result<(), CompileError> {
     );
     if !lexer_errors.is_empty() {
         report_errors(lexer_errors);
-        process::exit(1);
+        ()
     }
 
     // Print tokens with color if verbose
@@ -101,12 +103,19 @@ fn main() -> Result<(), CompileError> {
         println!("{} tokens found", tokens.len());
     }
 
-    /*let parse = CParser::new(tokens);
+    let parse = JsavParser::new(tokens);
     let (statements, parer_errors) = parse.parse();
     if !parer_errors.is_empty() {
         report_errors(parer_errors);
-        process::exit(1);
-    }*/
+        ()
+    }
+
+    // Print statements with color if verbose
+    if args.verbose {
+        println!("{}", pretty_print(&statements.unwrap()));
+    } else {
+        println!("{} statements found", statements.iter().len());
+    }
 
     Ok(())
 }

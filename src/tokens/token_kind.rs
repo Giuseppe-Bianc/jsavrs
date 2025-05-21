@@ -296,6 +296,10 @@ pub enum TokenKind {
         logos::skip
     )]
     Whitespace,
+    /// Matches both single-line and multi-line comments
+    #[regex(r"//[^\n\r]*",logos::skip)]
+    #[regex(r"/\*([^*]|\*[^/])*\*/",logos::skip)]
+    Comment,
     Eof,
 }
 
