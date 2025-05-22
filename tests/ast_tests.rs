@@ -359,6 +359,19 @@ fn test_multiple_unary_ops() {
 }
 
 #[test]
+fn test_for_char_literal() {
+    let expr = Expr::Literal {
+        value: LiteralValue::CharLit("\'".to_string()),
+        span: dummy_span(),
+    };
+
+    let output = pretty_print(&expr);
+    let stripped = strip_ansi_codes(&output);
+
+    assert_eq!(stripped.trim(), "└── Literal '''");
+}
+
+#[test]
 fn test_edge_case_special_chars() {
     let expr = Expr::Literal {
         value: LiteralValue::StringLit("hello\nworld".to_string()),
@@ -370,3 +383,4 @@ fn test_edge_case_special_chars() {
 
     assert_eq!(stripped.trim(), "└── Literal \"hello\nworld\"");
 }
+
