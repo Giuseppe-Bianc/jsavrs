@@ -313,6 +313,7 @@ fn whitespace_handling() {
     assert_eq!(tokens, vec![IdentifierAscii("x".to_string()), Eof]);
 }
 
+#[allow(clippy::approx_constant)]
 #[test]
 fn mixed_expression() {
     let input = "x = 42 + (y * 3.14)";
