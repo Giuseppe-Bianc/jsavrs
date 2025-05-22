@@ -191,7 +191,7 @@ fn test_variable_assignment() {
     assert_eq!(stripped.trim(), expected);
 }
 
-/*#[test]
+#[test]
 fn test_function_call() {
     let callee = Expr::Variable {
         name: "foo".to_string(),
@@ -229,16 +229,16 @@ fn test_function_call() {
     ├── Callee:
     │   └── Variable 'foo'
     └── Arguments:
-        ├── Arg:
-        │   └── Literal 1
-        └── Arg:
-            └── BinaryOp Add
-                ├── Left:
-                │   └── Literal 2
-                └── Right:
-                    └── Literal 3";
+            ├── Arg:
+            │   └── Literal 1
+            └── Arg:
+                └── BinaryOp Add
+                    ├── Left:
+                    │   └── Literal 2
+                    └── Right:
+                        └── Literal 3";
     assert_eq!(stripped.trim(), expected);
-}*/
+}
 
 #[test]
 fn test_array_access() {

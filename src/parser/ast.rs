@@ -1,5 +1,5 @@
-use console::Style;
 //src/parser/ast.rs
+use console::Style;
 use crate::location::source_span::SourceSpan;
 use crate::tokens::number::Number;
 
@@ -150,7 +150,7 @@ pub enum Type {
 
 pub fn pretty_print(expr: &Expr) -> String {
     let mut output = String::new();
-    print_expr(expr, "", true,&mut output);
+    print_expr(expr, "", true, &mut output);
     output
 }
 
