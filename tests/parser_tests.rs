@@ -1,6 +1,7 @@
 use jsavrs::location::source_span::SourceSpan;
-use jsavrs::parser::ast::{BinaryOp, Expr, LiteralValue, UnaryOp};
+use jsavrs::parser::ast::*;
 use jsavrs::parser::jsav_parser::JsavParser;
+use jsavrs::parser::precedence::unary_binding_power;
 use jsavrs::tokens::number::Number;
 use jsavrs::tokens::token::Token;
 use jsavrs::tokens::token_kind::TokenKind;
@@ -571,4 +572,13 @@ fn test_all_binary_operators() {
             "Failed for {:?}", token_kind
         );
     }
+}
+
+#[test]
+fn test_unary_operators_bp() {
+    let token = Token {
+        kind: TokenKind::Dot,
+        span: dummy_span(),
+    };
+    assert_eq!(unary_binding_power(&token),(0,0))
 }
