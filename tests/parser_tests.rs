@@ -61,6 +61,36 @@ fn test_literal_nullptr() {
 }
 
 #[test]
+fn test_literal_string() {
+    let tokens = create_tokens(vec![TokenKind::StringLiteral("assssss".to_string()), TokenKind::Eof]);
+    let parser = JsavParser::new(tokens);
+    let (expr, errors) = parser.parse();
+    assert!(errors.is_empty());
+    assert_eq!(
+        expr,
+        Some(Expr::Literal {
+            value: LiteralValue::StringLit("assssss".to_string()),
+            span: dummy_span(),
+        })
+    );
+}
+
+#[test]
+fn test_literal_char() {
+    let tokens = create_tokens(vec![TokenKind::CharLiteral("a".to_string()), TokenKind::Eof]);
+    let parser = JsavParser::new(tokens);
+    let (expr, errors) = parser.parse();
+    assert!(errors.is_empty());
+    assert_eq!(
+        expr,
+        Some(Expr::Literal {
+            value: LiteralValue::CharLit("a".to_string()),
+            span: dummy_span(),
+        })
+    );
+}
+
+#[test]
 fn test_unary_negation() {
     let tokens = create_tokens(vec![
         TokenKind::Minus,
