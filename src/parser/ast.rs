@@ -163,7 +163,7 @@ fn print_expr(expr: &Expr, indent: &str, is_last: bool, output: &mut String) {
 
     match expr {
         Expr::Binary { left, op, right, .. } => {
-            append_line(output, indent, is_last, operator_style, &format!("BinaryOp {:?}", op));
+            append_line(output, indent, is_last, operator_style, &format!("BinaryOp {op:?}"));
 
             // Left child
             let left_indent = get_indent(indent, is_last);
@@ -178,7 +178,7 @@ fn print_expr(expr: &Expr, indent: &str, is_last: bool, output: &mut String) {
             print_expr(right, &right_child_indent, true, output);
         }
         Expr::Unary { op, expr, .. } => {
-            append_line(output, indent, is_last, operator_style, &format!("UnaryOp {:?}", op));
+            append_line(output, indent, is_last, operator_style, &format!("UnaryOp {op:?}"));
             let new_indent = get_indent(indent, is_last);
             append_line(output, &new_indent, true, structure_style.clone(), "Expr:");
             let expr_indent = get_indent(new_indent.as_str(), true);
@@ -193,19 +193,19 @@ fn print_expr(expr: &Expr, indent: &str, is_last: bool, output: &mut String) {
         }
         Expr::Literal { value, .. } => {
             let val_str = match value {
-                LiteralValue::Number(n) => format!("{}", n),
-                LiteralValue::StringLit(s) => format!("\"{}\"", s),
-                LiteralValue::CharLit(c) => format!("'{}'", c),
-                LiteralValue::Bool(b) => format!("{}", b),
+                LiteralValue::Number(n) => format!("{n}"),
+                LiteralValue::StringLit(s) => format!("\"{s}\""),
+                LiteralValue::CharLit(c) => format!("'{c}'"),
+                LiteralValue::Bool(b) => format!("{b}"),
                 LiteralValue::Nullptr => "nullptr".to_string(),
             };
-            append_line(output, indent, is_last, literal_style, &format!("Literal {}", val_str));
+            append_line(output, indent, is_last, literal_style, &format!("Literal {val_str}"));
         }
         Expr::Variable { name, .. } => {
-            append_line(output, indent, is_last, variable_style, &format!("Variable '{}'", name));
+            append_line(output, indent, is_last, variable_style, &format!("Variable '{name}'"));
         }
         Expr::Assign { name, value, .. } => {
-            append_line(output, indent, is_last, variable_style, &format!("Assign to '{}'", name));
+            append_line(output, indent, is_last, variable_style, &format!("Assign to '{name}'"));
             let new_indent = get_indent(indent, is_last);
             append_line(output, &new_indent, true, structure_style.clone(), "Value:");
             let value_indent = get_indent(new_indent.as_str(), true);
