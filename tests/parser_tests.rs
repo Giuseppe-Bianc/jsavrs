@@ -376,6 +376,34 @@ fn test_array_access() {
     );
 }
 
+#[test]
+fn test_array_access_empty_index() {
+    let tokens = create_tokens(vec![
+        TokenKind::IdentifierAscii("arr".into()),
+        TokenKind::OpenBracket,
+        TokenKind::CloseBracket,
+        TokenKind::Eof,
+    ]);
+    let parser = JsavParser::new(tokens);
+    let (expr, errors) = parser.parse();
+    assert!(!errors.is_empty());
+    assert_eq!(
+        expr,
+        Some(Expr::ArrayAccess {
+            array: Box::new(Expr::Variable {
+                name: "arr".into(),
+                span: dummy_span(),
+            }),
+            index: Box::new(Expr::Literal {
+                value: LiteralValue::Nullptr,
+                span: dummy_span(),
+            }),
+            span: dummy_span(),
+        })
+    );
+    assert_eq!(errors[0].message().unwrap(), "Unexpected token: CloseBracket");
+}
+
 
 #[test]
 fn test_unclosed_parenthesis() {
