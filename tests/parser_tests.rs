@@ -174,6 +174,45 @@ fn test_binary_precedence() {
     );
 }
 
+
+#[test]
+fn test_binary_precedence_minus() {
+    let tokens = create_tokens(vec![
+        TokenKind::Numeric(Number::Integer(3)),
+        TokenKind::Minus,
+        TokenKind::Numeric(Number::Integer(5)),
+        TokenKind::Star,
+        TokenKind::Numeric(Number::Integer(2)),
+        TokenKind::Eof,
+    ]);
+    let parser = JsavParser::new(tokens);
+    let (expr, errors) = parser.parse();
+    assert!(errors.is_empty());
+    assert_eq!(
+        expr,
+        Some(Expr::Binary {
+            left: Box::new(Expr::Literal {
+                value: LiteralValue::Number(Number::Integer(3)),
+                span: dummy_span(),
+            }),
+            op: BinaryOp::Subtract,
+            right: Box::new(Expr::Binary {
+                left: Box::new(Expr::Literal {
+                    value: LiteralValue::Number(Number::Integer(5)),
+                    span: dummy_span(),
+                }),
+                op: BinaryOp::Multiply,
+                right: Box::new(Expr::Literal {
+                    value: LiteralValue::Number(Number::Integer(2)),
+                    span: dummy_span(),
+                }),
+                span: dummy_span(),
+            }),
+            span: dummy_span(),
+        })
+    );
+}
+
 #[test]
 fn test_grouping() {
     let tokens = create_tokens(vec![
