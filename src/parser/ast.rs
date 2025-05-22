@@ -181,7 +181,7 @@ fn print_expr(expr: &Expr, indent: &str, is_last: bool, output: &mut String) {
             append_line(output, indent, is_last, operator_style, &format!("UnaryOp {:?}", op));
             let new_indent = get_indent(indent, is_last);
             append_line(output, &new_indent, true, structure_style.clone(), "Expr:");
-            let expr_indent = get_indent(new_indent.as_str(), false);
+            let expr_indent = get_indent(new_indent.as_str(), true);
             print_expr(expr, &expr_indent, true, output);
         }
         Expr::Grouping { expr, .. } => {
@@ -223,11 +223,12 @@ fn print_expr(expr: &Expr, indent: &str, is_last: bool, output: &mut String) {
             // Arguments
             append_line(output, &new_indent, true, structure_style.clone(), "Arguments:");
             let args_indent = get_indent(new_indent.as_str(), true);
+
             for (i, arg) in arguments.iter().enumerate() {
                 let is_last_arg = i == arguments.len() - 1;
-                let arg_indent = get_indent(args_indent.as_str(), is_last);
+                let arg_indent = get_indent(&args_indent, is_last); // FIX: Use is_last_arg
                 append_line(output, &arg_indent, is_last_arg, structure_style.clone(), "Arg:");
-                let child_indent = get_indent(arg_indent.as_str(), is_last);
+                let child_indent = get_indent(&arg_indent, is_last_arg); // FIX: Use is_last_arg
                 print_expr(arg, &child_indent, true, output);
             }
         }

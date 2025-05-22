@@ -26,6 +26,7 @@ thiserror = "2.0.12"
 
 
 [dev-dependencies]
+regex = "1.11.1"
 assert_cmd = "2.0.12"
 #predicates = "3.0.3"
 #tempfile = "3.8.0"
