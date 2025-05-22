@@ -256,5 +256,5 @@ fn get_indent(indent: &str, is_last: bool) -> String {
 fn append_line(output: &mut String, indent: &str, is_last: bool, style: Style, text: &str) {
     let branch = if is_last { "└── " } else { "├── " };
     let styled_text = style.apply_to(text);
-    output.push_str(&format!("{}{}{}\n", indent, branch, styled_text));
+    output.push_str(&format!("{indent}{branch}{styled_text}\n"));
 }

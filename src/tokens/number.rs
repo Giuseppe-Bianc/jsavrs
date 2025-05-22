@@ -14,12 +14,12 @@ pub enum Number {
 impl fmt::Display for Number {
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
         match self {
-            Number::Integer(i) => write!(f, "{}", i),
-            Number::UnsignedInteger(u) => write!(f, "{}", u),
-            Number::Float32(flt) => write!(f, "{}", flt),
-            Number::Float64(flt) => write!(f, "{}", flt),
-            Number::Scientific32(base, exp) => write!(f, "{}e{}", base, exp),
-            Number::Scientific64(base, exp) => write!(f, "{}e{}", base, exp),
+            Number::Integer(i) => write!(f, "{i}"),
+            Number::UnsignedInteger(u) => write!(f, "{u}"),
+            Number::Float32(flt) => write!(f, "{flt}"),
+            Number::Float64(flt) => write!(f, "{flt}"),
+            Number::Scientific32(base, exp) => write!(f, "{base}e{exp}"),
+            Number::Scientific64(base, exp) => write!(f, "{base}e{exp}"),
         }
     }
 }
