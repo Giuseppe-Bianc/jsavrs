@@ -61,6 +61,7 @@ fn custom_styles() -> Styles {
         .usage(AnsiColor::BrightCyan.on_default() | Effects::BOLD | Effects::UNDERLINE)
 }
 
+#[allow(clippy::unused_unit)]
 fn main() -> Result<(), CompileError> {
     let args = Args::parse();
     let file_path: &Path = args.input.as_path();
