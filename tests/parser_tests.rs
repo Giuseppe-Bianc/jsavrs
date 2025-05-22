@@ -582,3 +582,136 @@ fn test_unary_operators_bp() {
     };
     assert_eq!(unary_binding_power(&token),(0,0))
 }
+
+// Test for line 128-132: Variable with Unicode identifier
+#[test]
+fn test_variable_unicode_identifier() {
+    let tokens = create_tokens(vec![
+        TokenKind::IdentifierUnicode("変数".into()),
+        TokenKind::Eof,
+    ]);
+    let parser = JsavParser::new(tokens);
+    let (expr, errors) = parser.parse();
+    assert!(errors.is_empty());
+    assert_eq!(
+        expr,
+        Some(Expr::Variable {
+            name: "変数".into(),
+            span: dummy_span(),
+        })
+    );
+}
+
+// Test for lines 143-144: Unary operator precedence
+#[test]
+fn test_unary_precedence() {
+    let tokens = create_tokens(vec![
+        TokenKind::Minus,
+        TokenKind::Numeric(Number::Integer(5)),
+        TokenKind::Star,
+        TokenKind::Numeric(Number::Integer(3)),
+        TokenKind::Eof,
+    ]);
+    let parser = JsavParser::new(tokens);
+    let (expr, errors) = parser.parse();
+    assert!(errors.is_empty());
+    assert_eq!(
+        expr,
+        Some(Expr::Binary {
+            left: Box::new(Expr::Unary {
+                op: UnaryOp::Negate,
+                expr: Box::new(Expr::Literal {
+                    value: LiteralValue::Number(Number::Integer(5)),
+                    span: dummy_span(),
+                }),
+                span: dummy_span(),
+            }),
+            op: BinaryOp::Multiply,
+            right: Box::new(Expr::Literal {
+                value: LiteralValue::Number(Number::Integer(3)),
+                span: dummy_span(),
+            }),
+            span: dummy_span(),
+        })
+    );
+}
+
+// Test for line 170: Assignment with invalid target (function call)
+#[test]
+fn test_assignment_invalid_target_function_call() {
+    let tokens = create_tokens(vec![
+        TokenKind::IdentifierAscii("foo".into()),
+        TokenKind::OpenParen,
+        TokenKind::CloseParen,
+        TokenKind::Equal,
+        TokenKind::Numeric(Number::Integer(5)),
+        TokenKind::Eof,
+    ]);
+    let parser = JsavParser::new(tokens);
+    let (expr, errors) = parser.parse();
+    assert!(!errors.is_empty());
+    assert_eq!(errors[0].message().unwrap(), "Invalid assignment target");
+    if let Some(Expr::Call { .. }) = expr {
+    } else {
+        panic!("Expected call expression");
+    }
+}
+
+// Test for lines 178-179: Function call with zero arguments
+#[test]
+fn test_function_call_zero_arguments() {
+    let tokens = create_tokens(vec![
+        TokenKind::IdentifierAscii("foo".into()),
+        TokenKind::OpenParen,
+        TokenKind::CloseParen,
+        TokenKind::Eof,
+    ]);
+    let parser = JsavParser::new(tokens);
+    let (expr, errors) = parser.parse();
+    assert!(errors.is_empty());
+    assert_eq!(
+        expr,
+        Some(Expr::Call {
+            callee: Box::new(Expr::Variable {
+                name: "foo".into(),
+                span: dummy_span(),
+            }),
+            arguments: vec![],
+            span: dummy_span(),
+        })
+    );
+}
+
+// Test for lines 178-179: Unclosed function call
+#[test]
+fn test_function_call_unclosed_paren() {
+    let tokens = create_tokens(vec![
+        TokenKind::IdentifierAscii("foo".into()),
+        TokenKind::OpenParen,
+        TokenKind::Numeric(Number::Integer(1)),
+        TokenKind::Eof,
+    ]);
+    let parser = JsavParser::new(tokens);
+    let (expr, errors) = parser.parse();
+    assert!(!errors.is_empty());
+    assert_eq!(errors[0].message().unwrap(), "Unclosed function call");
+    assert!(matches!(expr, Some(Expr::Call { .. })));
+}
+
+// Test for line 170: Assignment with binary expr target
+#[test]
+fn test_assignment_invalid_target_binary() {
+    let tokens = create_tokens(vec![
+        TokenKind::Numeric(Number::Integer(3)),
+        TokenKind::Plus,
+        TokenKind::Numeric(Number::Integer(5)),
+        TokenKind::Equal,
+        TokenKind::Numeric(Number::Integer(10)),
+        TokenKind::Eof,
+    ]);
+    let parser = JsavParser::new(tokens);
+    let (expr, errors) = parser.parse();
+    assert!(!errors.is_empty());
+    assert_eq!(errors[0].message().unwrap(), "Invalid assignment target");
+    assert!(matches!(expr, Some(Expr::Binary { .. })));
+}
