@@ -3,7 +3,7 @@ use console::Style;
 use crate::location::source_span::SourceSpan;
 use crate::tokens::number::Number;
 
-#[derive(Debug, Clone)]
+#[derive(Debug, Clone, PartialEq)]
 pub enum Expr {
     Binary {
         left: Box<Expr>, op: BinaryOp, right: Box<Expr>, span: SourceSpan,
@@ -32,7 +32,7 @@ pub enum Expr {
     // Additional expressions as needed
 }
 
-#[derive(Debug, Clone)]
+#[derive(Debug, Clone, PartialEq)]
 pub enum BinaryOp {
     Add,
     Subtract,
@@ -54,13 +54,13 @@ pub enum BinaryOp {
     ShiftRight,
 }
 
-#[derive(Debug, Clone)]
+#[derive(Debug, Clone, PartialEq)]
 pub enum UnaryOp {
     Negate,
     Not,
 }
 
-#[derive(Debug, Clone)]
+#[derive(Debug, Clone, PartialEq)]
 pub enum LiteralValue {
     Number(Number),
     StringLit(String),
@@ -69,7 +69,7 @@ pub enum LiteralValue {
     Nullptr,
 }
 
-#[derive(Debug, Clone)]
+#[derive(Debug, Clone, PartialEq)]
 pub enum Stmt {
     Expression {
         expr: Expr,
@@ -121,14 +121,14 @@ impl Stmt {
     }
 }
 
-#[derive(Debug, Clone)]
+#[derive(Debug, Clone, PartialEq)]
 pub struct Parameter {
     pub name: String,
     pub type_annotation: Type,
     pub span: SourceSpan,
 }
 
-#[derive(Debug, Clone)]
+#[derive(Debug, Clone, PartialEq)]
 pub enum Type {
     I8,
     I16,
