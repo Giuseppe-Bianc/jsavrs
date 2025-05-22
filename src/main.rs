@@ -17,7 +17,7 @@ use std::{
     //process,
 };
 use jsavrs::parser::ast::pretty_print;
-use jsavrs::parser::parser::JsavParser;
+use jsavrs::parser::jsav_parser::JsavParser;
 
 const HELP_STR: &str = r#"
 {before-help}{name} {version}

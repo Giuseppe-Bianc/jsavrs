@@ -1,5 +1,6 @@
 use crate::error::compile_error::CompileError;
 use crate::parser::ast::{BinaryOp, Expr, LiteralValue, UnaryOp};
+use crate::parser::precedence::{binding_power, unary_binding_power};
 use crate::tokens::token::Token;
 use crate::tokens::token_kind::TokenKind;
 
@@ -18,56 +19,6 @@ impl JsavParser {
         }
     }
 
-    fn binding_power(&self, token: &Token) -> (u8, u8) {
-        match token.kind {
-            // Assignment (right-associative)
-            TokenKind::Equal => (2, 1),
-
-            // Logical OR (left-associative)
-            TokenKind::OrOr => (4, 3),
-
-            // Logical AND (left-associative)
-            TokenKind::AndAnd => (6, 5),
-
-            // Equality (left-associative)
-            TokenKind::EqualEqual | TokenKind::NotEqual => (8, 7),
-
-            // Comparison (left-associative)
-            TokenKind::Less | TokenKind::LessEqual
-            | TokenKind::Greater | TokenKind::GreaterEqual => (10, 9),
-
-            // Bitwise OR (left-associative)
-            TokenKind::Or => (12, 11),
-
-            // Bitwise XOR (left-associative)
-            TokenKind::Xor => (14, 13),
-
-            // Bitwise AND (left-associative)
-            TokenKind::And => (16, 15),
-
-            // Shift (left-associative)
-            TokenKind::ShiftLeft | TokenKind::ShiftRight => (18, 17),
-
-            // Add/Subtract (left-associative)
-            TokenKind::Plus | TokenKind::Minus => (20, 19),
-
-            // Multiply/Divide/Mod (left-associative)
-            TokenKind::Star | TokenKind::Slash | TokenKind::Percent => (22, 21),
-
-            // Function call, array access
-            TokenKind::OpenParen | TokenKind::OpenBracket => (27, 26),
-
-            _ => (0, 0),
-        }
-    }
-
-    fn unary_binding_power(&self, token: &Token) -> (u8, u8) {
-        match token.kind {
-            TokenKind::Not | TokenKind::Minus => (24, 23),
-            _ => (0, 0),
-        }
-    }
-
     pub fn parse(mut self) -> (Option<Expr>, Vec<CompileError>) {
         let expr = self.parse_expr(0);
         (expr, self.errors)
@@ -77,7 +28,7 @@ impl JsavParser {
         let mut left = self.nud()?;
 
         while let Some(token) = self.peek() {
-            let (lbp, _) = self.binding_power(token);
+            let (lbp, _) = binding_power(token);
             if lbp <= min_bp {
                 break;
             }
@@ -184,7 +135,7 @@ impl JsavParser {
     }
 
     fn parse_unary(&mut self, op: UnaryOp, token: Token) -> Expr {
-        let (_, rbp) = self.unary_binding_power(&token);
+        let (_, rbp) = unary_binding_power(&token);
         let expr = self.parse_expr(rbp);
         Expr::Unary {
             op,
@@ -219,7 +170,7 @@ impl JsavParser {
             _ => unreachable!(),
         };
 
-        let right = self.parse_expr(self.binding_power(&token).1);
+        let right = self.parse_expr(binding_power(&token).1);
         Expr::Binary {
             left: Box::new(left),
             op,

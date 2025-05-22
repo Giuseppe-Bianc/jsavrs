@@ -1,6 +1,6 @@
 use jsavrs::location::source_span::SourceSpan;
 use jsavrs::parser::ast::{BinaryOp, Expr, LiteralValue, UnaryOp};
-use jsavrs::parser::parser::JsavParser;
+use jsavrs::parser::jsav_parser::JsavParser;
 use jsavrs::tokens::number::Number;
 use jsavrs::tokens::token::Token;
 use jsavrs::tokens::token_kind::TokenKind;
