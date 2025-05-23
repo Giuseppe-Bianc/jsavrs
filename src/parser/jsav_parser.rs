@@ -139,10 +139,7 @@ impl JsavParser {
         let expr = self.parse_expr(rbp);
         Expr::Unary {
             op,
-            expr: Box::new(expr.unwrap_or_else(|| Expr::Literal {
-                value: LiteralValue::Nullptr,
-                span: token.span.clone(),
-            })),
+            expr: Box::new(expr.unwrap_or_else(||Expr::new_nullptr(token.span.clone()))),
             span: token.span,
         }
     }
