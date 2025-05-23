@@ -1,6 +1,6 @@
 use crate::error::compile_error::CompileError;
-use crate::parser::ast::{BinaryOp, Expr, LiteralValue, UnaryOp};
-use crate::parser::precedence::{binding_power, unary_binding_power};
+use crate::parser::ast::*;
+use crate::parser::precedence::*;
 use crate::tokens::token::Token;
 use crate::tokens::token_kind::TokenKind;
 
@@ -174,10 +174,7 @@ impl JsavParser {
         Expr::Binary {
             left: Box::new(left),
             op,
-            right: Box::new(right.unwrap_or_else(|| Expr::Literal {
-                value: LiteralValue::Nullptr,
-                span: token.span.clone(),
-            })),
+            right: Box::new(right.unwrap_or_else(|| Expr::new_nullptr(token.span.clone()))),
             span: token.span,
         }
     }
@@ -196,10 +193,7 @@ impl JsavParser {
         if let Expr::Variable { name, span } = left {
             Expr::Assign {
                 name,
-                value: Box::new(value.unwrap_or_else(|| Expr::Literal {
-                    value: LiteralValue::Nullptr,
-                    span: token.span.clone(),
-                })),
+                value: Box::new(value.unwrap_or_else(|| Expr::new_nullptr(token.span.clone()))),
                 span: span.merged(&token.span).unwrap_or(span),
             }
         } else {
@@ -234,10 +228,7 @@ impl JsavParser {
         self.expect(TokenKind::CloseBracket, "Unclosed array access");
         Expr::ArrayAccess {
             array: Box::new(array),
-            index: Box::new(index.unwrap_or_else(|| Expr::Literal {
-                value: LiteralValue::Nullptr,
-                span: start_token.span.clone(),
-            })),
+            index: Box::new(index.unwrap_or_else(||Expr::new_nullptr(start_token.span.clone()))),
             span: start_token.span.merged(&self.previous().unwrap().span).unwrap_or(start_token.span),
         }
     }

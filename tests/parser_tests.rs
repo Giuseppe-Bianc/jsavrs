@@ -15,6 +15,12 @@ fn create_tokens(kinds: Vec<TokenKind>) -> Vec<Token> {
     kinds.into_iter().map(|k| Token { kind: k, span: dummy_span() }).collect()
 }
 
+fn num_token(n: f64) -> Token {
+    Token {
+        kind: TokenKind::Numeric(Number::Float64(n)),
+        span: dummy_span(),
+    }
+}
 
 #[test]
 fn test_literal_number() {
@@ -522,13 +528,6 @@ fn test_deep_nesting() {
             span: dummy_span(),
         })
     );
-}
-
-fn num_token(n: f64) -> Token {
-    Token {
-        kind: TokenKind::Numeric(Number::Float64(n)),
-        span: SourceSpan::default(),
-    }
 }
 
 // Test all binary operators
