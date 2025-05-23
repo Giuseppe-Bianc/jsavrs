@@ -3,8 +3,9 @@ use crate::tokens::token_kind::TokenKind;
 
 pub fn binding_power(token: &Token) -> (u8, u8) {
     match token.kind {
-        // Assignment (right-associative)
-        TokenKind::Equal => (2, 1),
+        // Assignment operators (right-associative)
+        TokenKind::Equal | TokenKind::PlusEqual | TokenKind::MinusEqual |
+        TokenKind::PercentEqual | TokenKind::XorEqual => (2, 1),
 
         // Logical OR (left-associative)
         TokenKind::OrOr => (4, 3),
@@ -37,13 +38,12 @@ pub fn binding_power(token: &Token) -> (u8, u8) {
         // Multiply/Divide/Mod (left-associative)
         TokenKind::Star | TokenKind::Slash | TokenKind::Percent => (22, 21),
 
-        // Function call, array access
-        TokenKind::OpenParen | TokenKind::OpenBracket => (27, 26),
+        // Function call, array access, member access
+        TokenKind::OpenParen | TokenKind::OpenBracket | TokenKind::Dot => (27, 26),
 
         _ => (0, 0),
     }
 }
-
 pub fn unary_binding_power(token: &Token) -> (u8, u8) {
     match token.kind {
         TokenKind::Not | TokenKind::Minus => (24, 23),

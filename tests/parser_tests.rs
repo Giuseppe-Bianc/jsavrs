@@ -835,3 +835,18 @@ fn test_nested_parsing_errors() {
     assert!(!errors.is_empty());
     assert_eq!(errors[0].message().unwrap(), "Unexpected token: Star");
 }
+
+// Test per errori di parsing in contesti annidati
+#[test]
+fn test_nested_unkown_binding_power() {
+    let tokens = create_tokens(vec![
+        TokenKind::IdentifierAscii("assssss".to_string()),
+        TokenKind::PlusEqual,
+        TokenKind::Numeric(Number::Integer(5)),
+        TokenKind::Eof,
+    ]);
+    let parser = JsavParser::new(tokens);
+    let (_expr, errors) = parser.parse();
+    assert!(!errors.is_empty());
+    assert_eq!(errors[0].message().unwrap(), "Unexpected operator: PlusEqual");
+}
