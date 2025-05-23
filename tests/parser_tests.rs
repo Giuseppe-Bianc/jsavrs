@@ -12,7 +12,13 @@ fn dummy_span() -> SourceSpan {
 }
 
 fn create_tokens(kinds: Vec<TokenKind>) -> Vec<Token> {
-    kinds.into_iter().map(|k| Token { kind: k, span: dummy_span() }).collect()
+    kinds
+        .into_iter()
+        .map(|k| Token {
+            kind: k,
+            span: dummy_span(),
+        })
+        .collect()
 }
 
 fn num_token(n: f64) -> Token {
@@ -22,19 +28,114 @@ fn num_token(n: f64) -> Token {
     }
 }
 
+// Helper functions per costruire AST
+fn num_lit(n: i64) -> Expr {
+    Expr::Literal {
+        value: LiteralValue::Number(Number::Integer(n)),
+        span: dummy_span(),
+    }
+}
+
+fn float_lit(n: f64) -> Expr {
+    Expr::Literal {
+        value: LiteralValue::Number(Number::Float64(n)),
+        span: dummy_span(),
+    }
+}
+
+fn bool_lit(b: bool) -> Expr {
+    Expr::Literal {
+        value: LiteralValue::Bool(b),
+        span: dummy_span(),
+    }
+}
+
+fn nullptr_lit() -> Expr {
+    Expr::Literal {
+        value: LiteralValue::Nullptr,
+        span: dummy_span(),
+    }
+}
+
+fn string_lit(s: &str) -> Expr {
+    Expr::Literal {
+        value: LiteralValue::StringLit(s.to_string()),
+        span: dummy_span(),
+    }
+}
+
+fn char_lit(c: &str) -> Expr {
+    Expr::Literal {
+        value: LiteralValue::CharLit(c.to_string()),
+        span: dummy_span(),
+    }
+}
+
+fn binary_expr(left: Expr, op: BinaryOp, right: Expr) -> Expr {
+    Expr::Binary {
+        left: Box::new(left),
+        op,
+        right: Box::new(right),
+        span: dummy_span(),
+    }
+}
+
+fn unary_expr(op: UnaryOp, expr: Expr) -> Expr {
+    Expr::Unary {
+        op,
+        expr: Box::new(expr),
+        span: dummy_span(),
+    }
+}
+
+fn grouping_expr(expr: Expr) -> Expr {
+    Expr::Grouping {
+        expr: Box::new(expr),
+        span: dummy_span(),
+    }
+}
+
+fn assign_expr(name: &str, value: Expr) -> Expr {
+    Expr::Assign {
+        name: name.into(),
+        value: Box::new(value),
+        span: dummy_span(),
+    }
+}
+
+fn variable_expr(name: &str) -> Expr {
+    Expr::Variable {
+        name: name.into(),
+        span: dummy_span(),
+    }
+}
+
+fn call_expr(callee: Expr, arguments: Vec<Expr>) -> Expr {
+    Expr::Call {
+        callee: Box::new(callee),
+        arguments,
+        span: dummy_span(),
+    }
+}
+
+fn array_access_expr(array: Expr, index: Expr) -> Expr {
+    Expr::ArrayAccess {
+        array: Box::new(array),
+        index: Box::new(index),
+        span: dummy_span(),
+    }
+}
+
 #[test]
 fn test_literal_number() {
-    let tokens = create_tokens(vec![TokenKind::Numeric(Number::Integer(42)), TokenKind::Eof]);
+    let tokens = create_tokens(vec![
+        TokenKind::Numeric(Number::Integer(42)),
+        TokenKind::Eof,
+    ]);
     let parser = JsavParser::new(tokens);
     let (expr, errors) = parser.parse();
     assert!(errors.is_empty());
-    assert_eq!(
-        expr,
-        Some(Expr::Literal {
-            value: LiteralValue::Number(Number::Integer(42)),
-            span: dummy_span(),
-        })
-    );
+    assert_eq!(expr, Some(num_lit(42)));
 }
 
 #[test]
@@ -43,13 +144,7 @@ fn test_literal_bool() {
     let parser = JsavParser::new(tokens);
     let (expr, errors) = parser.parse();
     assert!(errors.is_empty());
-    assert_eq!(
-        expr,
-        Some(Expr::Literal {
-            value: LiteralValue::Bool(true),
-            span: dummy_span(),
-        })
-    );
+    assert_eq!(expr, Some(bool_lit(true)));
 }
 
 #[test]
@@ -58,43 +153,31 @@ fn test_literal_nullptr() {
     let parser = JsavParser::new(tokens);
     let (expr, errors) = parser.parse();
     assert!(errors.is_empty());
-    assert_eq!(
-        expr,
-        Some(Expr::Literal {
-            value: LiteralValue::Nullptr,
-            span: dummy_span(),
-        })
-    );
+    assert_eq!(expr, Some(nullptr_lit()));
 }
 
 #[test]
 fn test_literal_string() {
-    let tokens = create_tokens(vec![TokenKind::StringLiteral("assssss".to_string()), TokenKind::Eof]);
+    let tokens = create_tokens(vec![
+        TokenKind::StringLiteral("assssss".to_string()),
+        TokenKind::Eof,
+    ]);
     let parser = JsavParser::new(tokens);
     let (expr, errors) = parser.parse();
     assert!(errors.is_empty());
-    assert_eq!(
-        expr,
-        Some(Expr::Literal {
-            value: LiteralValue::StringLit("assssss".to_string()),
-            span: dummy_span(),
-        })
-    );
+    assert_eq!(expr, Some(string_lit("assssss")));
 }
 
 #[test]
 fn test_literal_char() {
-    let tokens = create_tokens(vec![TokenKind::CharLiteral("a".to_string()), TokenKind::Eof]);
+    let tokens = create_tokens(vec![
+        TokenKind::CharLiteral("a".to_string()),
+        TokenKind::Eof,
+    ]);
     let parser = JsavParser::new(tokens);
     let (expr, errors) = parser.parse();
     assert!(errors.is_empty());
-    assert_eq!(
-        expr,
-        Some(Expr::Literal {
-            value: LiteralValue::CharLit("a".to_string()),
-            span: dummy_span(),
-        })
-    );
+    assert_eq!(expr, Some(char_lit("a")));
 }
 
 #[test]
@@ -107,17 +190,7 @@ fn test_unary_negation() {
     let parser = JsavParser::new(tokens);
     let (expr, errors) = parser.parse();
     assert!(errors.is_empty());
-    assert_eq!(
-        expr,
-        Some(Expr::Unary {
-            op: UnaryOp::Negate,
-            expr: Box::new(Expr::Literal {
-                value: LiteralValue::Number(Number::Integer(5)),
-                span: dummy_span(),
-            }),
-            span: dummy_span(),
-        })
-    );
+    assert_eq!(expr, Some(unary_expr(UnaryOp::Negate, num_lit(5))));
 }
 
 #[test]
@@ -130,17 +203,7 @@ fn test_unary_not() {
     let parser = JsavParser::new(tokens);
     let (expr, errors) = parser.parse();
     assert!(errors.is_empty());
-    assert_eq!(
-        expr,
-        Some(Expr::Unary {
-            op: UnaryOp::Not,
-            expr: Box::new(Expr::Literal {
-                value: LiteralValue::Bool(true),
-                span: dummy_span(),
-            }),
-            span: dummy_span(),
-        })
-    );
+    assert_eq!(expr, Some(unary_expr(UnaryOp::Not, bool_lit(true))));
 }
 
 #[test]
@@ -158,29 +221,13 @@ fn test_binary_precedence() {
     assert!(errors.is_empty());
     assert_eq!(
         expr,
-        Some(Expr::Binary {
-            left: Box::new(Expr::Literal {
-                value: LiteralValue::Number(Number::Integer(3)),
-                span: dummy_span(),
-            }),
-            op: BinaryOp::Add,
-            right: Box::new(Expr::Binary {
-                left: Box::new(Expr::Literal {
-                    value: LiteralValue::Number(Number::Integer(5)),
-                    span: dummy_span(),
-                }),
-                op: BinaryOp::Multiply,
-                right: Box::new(Expr::Literal {
-                    value: LiteralValue::Number(Number::Integer(2)),
-                    span: dummy_span(),
-                }),
-                span: dummy_span(),
-            }),
-            span: dummy_span(),
-        })
+        Some(binary_expr(
+            num_lit(3),
+            BinaryOp::Add,
+            binary_expr(num_lit(5), BinaryOp::Multiply, num_lit(2))
+        ))
     );
 }
-
 
 #[test]
 fn test_binary_precedence_minus() {
@@ -197,26 +244,11 @@ fn test_binary_precedence_minus() {
     assert!(errors.is_empty());
     assert_eq!(
         expr,
-        Some(Expr::Binary {
-            left: Box::new(Expr::Literal {
-                value: LiteralValue::Number(Number::Integer(3)),
-                span: dummy_span(),
-            }),
-            op: BinaryOp::Subtract,
-            right: Box::new(Expr::Binary {
-                left: Box::new(Expr::Literal {
-                    value: LiteralValue::Number(Number::Integer(5)),
-                    span: dummy_span(),
-                }),
-                op: BinaryOp::Multiply,
-                right: Box::new(Expr::Literal {
-                    value: LiteralValue::Number(Number::Integer(2)),
-                    span: dummy_span(),
-                }),
-                span: dummy_span(),
-            }),
-            span: dummy_span(),
-        })
+        Some(binary_expr(
+            num_lit(3),
+            BinaryOp::Subtract,
+            binary_expr(num_lit(5), BinaryOp::Multiply, num_lit(2))
+        ))
     );
 }
 
@@ -237,29 +269,11 @@ fn test_grouping() {
     assert!(errors.is_empty());
     assert_eq!(
         expr,
-        Some(Expr::Binary {
-            left: Box::new(Expr::Grouping {
-                expr: Box::new(Expr::Binary {
-                    left: Box::new(Expr::Literal {
-                        value: LiteralValue::Number(Number::Integer(3)),
-                        span: dummy_span(),
-                    }),
-                    op: BinaryOp::Add,
-                    right: Box::new(Expr::Literal {
-                        value: LiteralValue::Number(Number::Integer(5)),
-                        span: dummy_span(),
-                    }),
-                    span: dummy_span(),
-                }),
-                span: dummy_span(),
-            }),
-            op: BinaryOp::Multiply,
-            right: Box::new(Expr::Literal {
-                value: LiteralValue::Number(Number::Integer(2)),
-                span: dummy_span(),
-            }),
-            span: dummy_span(),
-        })
+        Some(binary_expr(
+            grouping_expr(binary_expr(num_lit(3), BinaryOp::Add, num_lit(5))),
+            BinaryOp::Multiply,
+            num_lit(2)
+        ))
     );
 }
 
@@ -274,17 +288,7 @@ fn test_assignment_valid() {
     let parser = JsavParser::new(tokens);
     let (expr, errors) = parser.parse();
     assert!(errors.is_empty());
-    assert_eq!(
-        expr,
-        Some(Expr::Assign {
-            name: "x".into(),
-            value: Box::new(Expr::Literal {
-                value: LiteralValue::Number(Number::Integer(5)),
-                span: dummy_span(),
-            }),
-            span: dummy_span(),
-        })
-    );
+    assert_eq!(expr, Some(assign_expr("x", num_lit(5))));
 }
 
 #[test]
@@ -300,21 +304,7 @@ fn test_assignment_chained() {
     let parser = JsavParser::new(tokens);
     let (expr, errors) = parser.parse();
     assert!(errors.is_empty());
-    assert_eq!(
-        expr,
-        Some(Expr::Assign {
-            name: "x".into(),
-            value: Box::new(Expr::Assign {
-                name: "y".into(),
-                value: Box::new(Expr::Literal {
-                    value: LiteralValue::Number(Number::Integer(5)),
-                    span: dummy_span(),
-                }),
-                span: dummy_span(),
-            }),
-            span: dummy_span(),
-        })
-    );
+    assert_eq!(expr, Some(assign_expr("x", assign_expr("y", num_lit(5)))));
 }
 
 #[test]
@@ -329,13 +319,7 @@ fn test_assignment_invalid_target() {
     let (expr, errors) = parser.parse();
     assert!(!errors.is_empty());
     assert_eq!(errors[0].message().unwrap(), "Invalid assignment target");
-    assert_eq!(
-        expr,
-        Some(Expr::Literal {
-            value: LiteralValue::Number(Number::Integer(5)),
-            span: dummy_span(),
-        })
-    );
+    assert_eq!(expr, Some(num_lit(5)));
 }
 
 #[test]
@@ -356,31 +340,13 @@ fn test_function_call() {
     assert!(errors.is_empty());
     assert_eq!(
         expr,
-        Some(Expr::Call {
-            callee: Box::new(Expr::Variable {
-                name: "foo".into(),
-                span: dummy_span(),
-            }),
-            arguments: vec![
-                Expr::Literal {
-                    value: LiteralValue::Number(Number::Integer(1)),
-                    span: dummy_span(),
-                },
-                Expr::Binary {
-                    left: Box::new(Expr::Literal {
-                        value: LiteralValue::Number(Number::Integer(2)),
-                        span: dummy_span(),
-                    }),
-                    op: BinaryOp::Add,
-                    right: Box::new(Expr::Literal {
-                        value: LiteralValue::Number(Number::Integer(3)),
-                        span: dummy_span(),
-                    }),
-                    span: dummy_span(),
-                },
-            ],
-            span: dummy_span(),
-        })
+        Some(call_expr(
+            variable_expr("foo"),
+            vec![
+                num_lit(1),
+                binary_expr(num_lit(2), BinaryOp::Add, num_lit(3)),
+            ]
+        ))
     );
 }
 
@@ -400,25 +366,10 @@ fn test_array_access() {
     assert!(errors.is_empty());
     assert_eq!(
         expr,
-        Some(Expr::ArrayAccess {
-            array: Box::new(Expr::Variable {
-                name: "arr".into(),
-                span: dummy_span(),
-            }),
-            index: Box::new(Expr::Binary {
-                left: Box::new(Expr::Literal {
-                    value: LiteralValue::Number(Number::Integer(0)),
-                    span: dummy_span(),
-                }),
-                op: BinaryOp::Add,
-                right: Box::new(Expr::Literal {
-                    value: LiteralValue::Number(Number::Integer(1)),
-                    span: dummy_span(),
-                }),
-                span: dummy_span(),
-            }),
-            span: dummy_span(),
-        })
+        Some(array_access_expr(
+            variable_expr("arr"),
+            binary_expr(num_lit(0), BinaryOp::Add, num_lit(1))
+        ))
     );
 }
 
@@ -435,21 +386,13 @@ fn test_array_access_empty_index() {
     assert!(!errors.is_empty());
     assert_eq!(
         expr,
-        Some(Expr::ArrayAccess {
-            array: Box::new(Expr::Variable {
-                name: "arr".into(),
-                span: dummy_span(),
-            }),
-            index: Box::new(Expr::Literal {
-                value: LiteralValue::Nullptr,
-                span: dummy_span(),
-            }),
-            span: dummy_span(),
-        })
+        Some(array_access_expr(variable_expr("arr"), nullptr_lit()))
     );
-    assert_eq!(errors[0].message().unwrap(), "Unexpected token: CloseBracket");
+    assert_eq!(
+        errors[0].message().unwrap(),
+        "Unexpected token: CloseBracket"
+    );
 }
-
 
 #[test]
 fn test_unclosed_parenthesis() {
@@ -462,16 +405,7 @@ fn test_unclosed_parenthesis() {
     let (expr, errors) = parser.parse();
     assert!(!errors.is_empty());
     assert_eq!(errors[0].message().unwrap(), "Unclosed parenthesis");
-    assert_eq!(
-        expr,
-        Some(Expr::Grouping {
-            expr: Box::new(Expr::Literal {
-                value: LiteralValue::Number(Number::Integer(5)),
-                span: dummy_span(),
-            }),
-            span: dummy_span(),
-        })
-    );
+    assert_eq!(expr, Some(grouping_expr(num_lit(5))));
 }
 
 #[test]
@@ -514,19 +448,7 @@ fn test_deep_nesting() {
     assert!(errors.is_empty());
     assert_eq!(
         expr,
-        Some(Expr::Grouping {
-            expr: Box::new(Expr::Grouping {
-                expr: Box::new(Expr::Grouping {
-                    expr: Box::new(Expr::Literal {
-                        value: LiteralValue::Number(Number::Integer(5)),
-                        span: dummy_span(),
-                    }),
-                    span: dummy_span(),
-                }),
-                span: dummy_span(),
-            }),
-            span: dummy_span(),
-        })
+        Some(grouping_expr(grouping_expr(grouping_expr(num_lit(5)))))
     );
 }
 
@@ -557,9 +479,15 @@ fn test_all_binary_operators() {
     for (token_kind, op) in test_cases {
         let tokens: Vec<Token> = vec![
             crate::num_token(3.0),
-            Token { kind: token_kind.clone(), span: dummy_span() },
+            Token {
+                kind: token_kind.clone(),
+                span: dummy_span(),
+            },
             crate::num_token(4.0),
-            Token { kind: TokenKind::Eof, span: dummy_span() },
+            Token {
+                kind: TokenKind::Eof,
+                span: dummy_span(),
+            },
         ];
         let parser = JsavParser::new(tokens);
         let (expr, errors) = parser.parse();
@@ -567,8 +495,9 @@ fn test_all_binary_operators() {
         assert!(errors.is_empty(), "Failed for {:?}", token_kind);
         assert_eq!(
             expr.unwrap(),
-            Expr::Binary { left: Box::new(Expr::Literal{ value: LiteralValue::Number(Number::Float64(3.0)), span: dummy_span() }), op, right: Box::new(Expr::Literal{ value: LiteralValue::Number(Number::Float64(4.0)), span: dummy_span() }),span: dummy_span() },
-            "Failed for {:?}", token_kind
+            binary_expr(float_lit(3.0), op, float_lit(4.0)),
+            "Failed for {:?}",
+            token_kind
         );
     }
 }
@@ -579,7 +508,7 @@ fn test_unary_operators_bp() {
         kind: TokenKind::Dot,
         span: dummy_span(),
     };
-    assert_eq!(unary_binding_power(&token),(0,0))
+    assert_eq!(unary_binding_power(&token), (0, 0))
 }
 
 // Test for line 128-132: Variable with Unicode identifier
@@ -592,13 +521,7 @@ fn test_variable_unicode_identifier() {
     let parser = JsavParser::new(tokens);
     let (expr, errors) = parser.parse();
     assert!(errors.is_empty());
-    assert_eq!(
-        expr,
-        Some(Expr::Variable {
-            name: "変数".into(),
-            span: dummy_span(),
-        })
-    );
+    assert_eq!(expr, Some(variable_expr("変数")));
 }
 
 // Test for lines 143-144: Unary operator precedence
@@ -616,22 +539,11 @@ fn test_unary_precedence() {
     assert!(errors.is_empty());
     assert_eq!(
         expr,
-        Some(Expr::Binary {
-            left: Box::new(Expr::Unary {
-                op: UnaryOp::Negate,
-                expr: Box::new(Expr::Literal {
-                    value: LiteralValue::Number(Number::Integer(5)),
-                    span: dummy_span(),
-                }),
-                span: dummy_span(),
-            }),
-            op: BinaryOp::Multiply,
-            right: Box::new(Expr::Literal {
-                value: LiteralValue::Number(Number::Integer(3)),
-                span: dummy_span(),
-            }),
-            span: dummy_span(),
-        })
+        Some(binary_expr(
+            unary_expr(UnaryOp::Negate, num_lit(5)),
+            BinaryOp::Multiply,
+            num_lit(3)
+        ))
     );
 }
 
@@ -670,14 +582,7 @@ fn test_function_call_zero_arguments() {
     assert!(errors.is_empty());
     assert_eq!(
         expr,
-        Some(Expr::Call {
-            callee: Box::new(Expr::Variable {
-                name: "foo".into(),
-                span: dummy_span(),
-            }),
-            arguments: vec![],
-            span: dummy_span(),
-        })
+        Some(call_expr(variable_expr("foo"), vec![]))
     );
 }
 
