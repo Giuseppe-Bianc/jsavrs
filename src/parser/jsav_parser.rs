@@ -1,6 +1,8 @@
 use crate::error::compile_error::CompileError;
+use crate::location::source_span::SourceSpan;
 use crate::parser::ast::*;
 use crate::parser::precedence::*;
+use crate::tokens::number::Number;
 use crate::tokens::token::Token;
 use crate::tokens::token_kind::TokenKind;
 
@@ -41,31 +43,13 @@ impl JsavParser {
 
     fn nud(&mut self) -> Option<Expr> {
         let token = self.advance()?.clone();
-        let token_kind = token.kind.clone();
-        let token_span = token.span.clone();
-
-        match &token_kind {
+        match token.kind {
             // Literals
-            TokenKind::Numeric(n) => Some(Expr::Literal {
-                value: LiteralValue::Number(n.clone()),
-                span: token_span,
-            }),
-            TokenKind::KeywordBool(b) => Some(Expr::Literal {
-                value: LiteralValue::Bool(*b),
-                span: token_span,
-            }),
-            TokenKind::KeywordNullptr => Some(Expr::Literal {
-                value: LiteralValue::Nullptr,
-                span: token_span,
-            }),
-            TokenKind::StringLiteral(s) => Some(Expr::Literal {
-                value: LiteralValue::StringLit(s.clone()),
-                span: token_span,
-            }),
-            TokenKind::CharLiteral(c) => Some(Expr::Literal {
-                value: LiteralValue::CharLit(c.clone()),
-                span: token_span,
-            }),
+            TokenKind::Numeric(n) => self.new_number_literal(n, token.span),
+            TokenKind::KeywordBool(b) => self.new_bool_literal(b, token.span),
+            TokenKind::KeywordNullptr => self.new_nullptr_literal(token.span),
+            TokenKind::StringLiteral(s) => self.new_string_literal(s, token.span),
+            TokenKind::CharLiteral(c) => self.new_char_literal(c, token.span),
 
             // Unary operators
             TokenKind::Minus => Some(self.parse_unary(UnaryOp::Negate, token)),
@@ -77,23 +61,24 @@ impl JsavParser {
             // Variables
             TokenKind::IdentifierAscii(name) | TokenKind::IdentifierUnicode(name) => {
                 Some(Expr::Variable {
-                    name: name.clone(),
-                    span: token_span,
+                    name,
+                    span: token.span,
                 })
             }
 
             _ => {
-                self.errors.push(CompileError::SyntaxError {
-                    message: format!("Unexpected token: {:?}", token.kind),
-                    span: token.span,
-                });
+                self.syntax_error("Unexpected token", &token);
                 None
             }
         }
     }
 
     fn led(&mut self, left: Expr) -> Expr {
-        let token = self.advance().expect("Expected operator").clone();
+        let token = match self.advance() {
+            Some(t) => t.clone(),
+            None => return left, // Early return if no token
+        };
+
         match token.kind {
             // Binary operators
             TokenKind::Plus
@@ -117,48 +102,82 @@ impl JsavParser {
 
             // Assignment
             TokenKind::Equal => self.parse_assignment(left, token),
-
             // Function call
             TokenKind::OpenParen => self.parse_call(left, token),
-
             // Array access
             TokenKind::OpenBracket => self.parse_array_access(left, token),
 
             _ => {
-                self.errors.push(CompileError::SyntaxError {
-                    message: format!("Unexpected operator: {:?}", token.kind),
-                    span: token.span,
-                });
+                self.syntax_error("Unexpected operator", &token);
                 left
             }
         }
     }
 
+    // Helper methods for literals
+    fn new_number_literal(&self, value: Number, span: SourceSpan) -> Option<Expr> {
+        Some(Expr::Literal {
+            value: LiteralValue::Number(value),
+            span,
+        })
+    }
+
+    fn new_bool_literal(&self, value: bool, span: SourceSpan) -> Option<Expr> {
+        Some(Expr::Literal {
+            value: LiteralValue::Bool(value),
+            span,
+        })
+    }
+
+    fn new_nullptr_literal(&self, span: SourceSpan) -> Option<Expr> {
+        Some(Expr::Literal {
+            value: LiteralValue::Nullptr,
+            span,
+        })
+    }
+
+    fn new_string_literal(&self, value: String, span: SourceSpan) -> Option<Expr> {
+        Some(Expr::Literal {
+            value: LiteralValue::StringLit(value),
+            span,
+        })
+    }
+
+    fn new_char_literal(&self, value: String, span: SourceSpan) -> Option<Expr> {
+        Some(Expr::Literal {
+            value: LiteralValue::CharLit(value),
+            span,
+        })
+    }
+
+    // Parsing operations
     fn parse_unary(&mut self, op: UnaryOp, token: Token) -> Expr {
         let (_, rbp) = unary_binding_power(&token);
-        let expr = self.parse_expr(rbp);
+        let expr = self.parse_expr(rbp).unwrap_or_else(|| self.null_expr(token.span.clone()));
         Expr::Unary {
             op,
-            expr: Box::new(expr.unwrap_or_else(||Expr::new_nullptr(token.span.clone()))),
+            expr: Box::new(expr),
             span: token.span,
         }
     }
 
     fn parse_binary(&mut self, left: Expr, token: Token) -> Expr {
-        match BinaryOp::get_op(&token) {
-            Ok(op) => {
-                let right = self.parse_expr(binding_power(&token).1);
-                Expr::Binary {
-                    left: Box::new(left),
-                    op,
-                    right: Box::new(right.unwrap_or_else(|| Expr::new_nullptr(token.span.clone()))),
-                    span: token.span,
-                }
+        let op = match BinaryOp::get_op(&token) {
+            Ok(op) => op,
+            Err(e) => {
+                self.errors.push(e);
+                return left;
             }
-            Err(error) => {
-                self.errors.push(error);
-                left
-            }
+        };
+
+        let right = self.parse_expr(binding_power(&token).1)
+            .unwrap_or_else(|| self.null_expr(token.span.clone()));
+
+        Expr::Binary {
+            left: Box::new(left),
+            op,
+            right: Box::new(right),
+            span: token.span,
         }
     }
 
@@ -167,24 +186,25 @@ impl JsavParser {
         self.expect(TokenKind::CloseParen, "Unclosed parenthesis");
         Some(Expr::Grouping {
             expr: Box::new(expr?),
-            span: start_token.span.merged(&self.previous().unwrap().span).unwrap_or(start_token.span),
+            span: self.merged_span(&start_token),
         })
     }
 
     fn parse_assignment(&mut self, left: Expr, token: Token) -> Expr {
-        let value = self.parse_expr(1);
-        if let Expr::Variable { name, span } = left {
-            Expr::Assign {
-                name,
-                value: Box::new(value.unwrap_or_else(|| Expr::new_nullptr(token.span.clone()))),
-                span: span.merged(&token.span).unwrap_or(span),
+        match left {
+            Expr::Variable { name, span } => {
+                let value = self.parse_expr(1)
+                    .unwrap_or_else(|| self.null_expr(token.span.clone()));
+                Expr::Assign {
+                    name,
+                    value: Box::new(value),
+                    span: span.merged(&token.span).unwrap_or(span),
+                }
             }
-        } else {
-            self.errors.push(CompileError::SyntaxError {
-                message: "Invalid assignment target".to_string(),
-                span: token.span,
-            });
-            left
+            _ => {
+                self.syntax_error("Invalid assignment target", &token);
+                left
+            }
         }
     }
 
@@ -202,20 +222,43 @@ impl JsavParser {
         Expr::Call {
             callee: Box::new(callee),
             arguments,
-            span: start_token.span.merged(&self.previous().unwrap().span).unwrap_or(start_token.span),
+            span: self.merged_span(&start_token),
         }
     }
 
     fn parse_array_access(&mut self, array: Expr, start_token: Token) -> Expr {
-        let index = self.parse_expr(0);
+        let index = self.parse_expr(0)
+            .unwrap_or_else(|| self.null_expr(start_token.span.clone()));
         self.expect(TokenKind::CloseBracket, "Unclosed array access");
         Expr::ArrayAccess {
             array: Box::new(array),
-            index: Box::new(index.unwrap_or_else(||Expr::new_nullptr(start_token.span.clone()))),
-            span: start_token.span.merged(&self.previous().unwrap().span).unwrap_or(start_token.span),
+            index: Box::new(index),
+            span: self.merged_span(&start_token),
         }
     }
 
+    // Utility methods
+    fn merged_span(&self, start_token: &Token) -> SourceSpan {
+        self.previous()
+            .and_then(|end| start_token.span.merged(&end.span))
+            .unwrap_or(start_token.span.clone())
+    }
+
+    fn null_expr(&self, span: SourceSpan) -> Expr {
+        Expr::Literal {
+            value: LiteralValue::Nullptr,
+            span,
+        }
+    }
+
+    fn syntax_error(&mut self, message: &str, token: &Token) {
+        self.errors.push(CompileError::SyntaxError {
+            message: format!("{}: {:?}", message, token.kind),
+            span: token.span.clone(),
+        });
+    }
+
+    // Token management
     fn advance(&mut self) -> Option<&Token> {
         if !self.is_at_end() {
             self.current += 1;
@@ -224,11 +267,7 @@ impl JsavParser {
     }
 
     fn previous(&self) -> Option<&Token> {
-        if self.current > 0 {
-            self.tokens.get(self.current - 1)
-        } else {
-            None
-        }
+        self.tokens.get(self.current.saturating_sub(1))
     }
 
     fn peek(&self) -> Option<&Token> {
@@ -239,10 +278,13 @@ impl JsavParser {
         self.peek().map(|t| t.kind == kind).unwrap_or(false)
     }
 
-    fn expect(&mut self, kind: TokenKind, message: &str) {
-        if !self.match_token(kind) {
+    fn expect(&mut self, kind: TokenKind, context: &str) {
+        if !self.match_token(kind.clone()) {
+            let found = self.peek()
+                .map(|t| format!("{:?}", t.kind))
+                .unwrap_or_else(|| "end of input".to_string());
             self.errors.push(CompileError::SyntaxError {
-                message: message.to_string(),
+                message: format!("{}: Expected '{:?}' but found {}", context, kind, found),
                 span: self.peek().map(|t| t.span.clone()).unwrap_or_default(),
             });
         }

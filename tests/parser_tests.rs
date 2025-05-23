@@ -319,7 +319,7 @@ fn test_assignment_invalid_target() {
     let parser = JsavParser::new(tokens);
     let (expr, errors) = parser.parse();
     assert!(!errors.is_empty());
-    assert_eq!(errors[0].message().unwrap(), "Invalid assignment target");
+    assert_eq!(errors[0].message().unwrap(), "Invalid assignment target: Equal");
     assert_eq!(expr, Some(num_lit(5)));
 }
 
@@ -405,7 +405,7 @@ fn test_unclosed_parenthesis() {
     let parser = JsavParser::new(tokens);
     let (expr, errors) = parser.parse();
     assert!(!errors.is_empty());
-    assert_eq!(errors[0].message().unwrap(), "Unclosed parenthesis");
+    assert_eq!(errors[0].message().unwrap(), "Unclosed parenthesis: Expected 'CloseParen' but found Eof");
     assert_eq!(expr, Some(grouping_expr(num_lit(5))));
 }
 
@@ -428,7 +428,8 @@ fn test_empty_input() {
     let tokens = create_tokens(vec![TokenKind::Eof]);
     let parser = JsavParser::new(tokens);
     let (expr, errors) = parser.parse();
-    assert!(errors.is_empty());
+    assert_eq!(errors.len(), 1);
+    assert_eq!(errors[0].message().unwrap(), "Unexpected token: Eof");
     assert_eq!(expr, None);
 }
 
@@ -562,7 +563,7 @@ fn test_assignment_invalid_target_function_call() {
     let parser = JsavParser::new(tokens);
     let (expr, errors) = parser.parse();
     assert!(!errors.is_empty());
-    assert_eq!(errors[0].message().unwrap(), "Invalid assignment target");
+    assert_eq!(errors[0].message().unwrap(), "Invalid assignment target: Equal");
     if let Some(Expr::Call { .. }) = expr {
     } else {
         panic!("Expected call expression");
@@ -599,7 +600,7 @@ fn test_function_call_unclosed_paren() {
     let parser = JsavParser::new(tokens);
     let (expr, errors) = parser.parse();
     assert!(!errors.is_empty());
-    assert_eq!(errors[0].message().unwrap(), "Unclosed function call");
+    assert_eq!(errors[0].message().unwrap(), "Unclosed function call: Expected 'CloseParen' but found Eof");
     assert!(matches!(expr, Some(Expr::Call { .. })));
 }
 
@@ -617,7 +618,7 @@ fn test_assignment_invalid_target_binary() {
     let parser = JsavParser::new(tokens);
     let (expr, errors) = parser.parse();
     assert!(!errors.is_empty());
-    assert_eq!(errors[0].message().unwrap(), "Invalid assignment target");
+    assert_eq!(errors[0].message().unwrap(), "Invalid assignment target: Equal");
     assert!(matches!(expr, Some(Expr::Binary { .. })));
 }
 
@@ -657,4 +658,180 @@ fn test_invalid_binary_operator() {
             _ => panic!("Unexpected error type for token: {:?}", kind),
         }
     }
+}
+
+// Test per identificatori Unicode in assegnazioni
+#[test]
+fn test_assignment_unicode_variable() {
+    let tokens = create_tokens(vec![
+        TokenKind::IdentifierUnicode("変数".into()),
+        TokenKind::Equal,
+        TokenKind::Numeric(Number::Integer(5)),
+        TokenKind::Eof,
+    ]);
+    let parser = JsavParser::new(tokens);
+    let (expr, errors) = parser.parse();
+    assert!(errors.is_empty());
+    assert_eq!(expr, Some(assign_expr("変数", num_lit(5))));
+}
+
+// Test per accessi ad array concatenati
+#[test]
+fn test_chained_array_access() {
+    let tokens = create_tokens(vec![
+        TokenKind::IdentifierAscii("arr".into()),
+        TokenKind::OpenBracket,
+        TokenKind::Numeric(Number::Integer(1)),
+        TokenKind::CloseBracket,
+        TokenKind::OpenBracket,
+        TokenKind::Numeric(Number::Integer(2)),
+        TokenKind::CloseBracket,
+        TokenKind::Eof,
+    ]);
+    let parser = JsavParser::new(tokens);
+    let (expr, errors) = parser.parse();
+    assert!(errors.is_empty());
+    assert_eq!(
+        expr,
+        Some(array_access_expr(
+            array_access_expr(variable_expr("arr"), num_lit(1)),
+            num_lit(2)
+        ))
+    );
+}
+
+// Test per operatore unario non valido
+#[test]
+fn test_invalid_unary_operator() {
+    let tokens = create_tokens(vec![
+        TokenKind::Star,
+        TokenKind::Numeric(Number::Integer(5)),
+        TokenKind::Eof,
+    ]);
+    let parser = JsavParser::new(tokens);
+    let (expr, errors) = parser.parse();
+    assert!(!errors.is_empty());
+    assert_eq!(errors[0].message().unwrap(), "Unexpected token: Star");
+    assert_eq!(expr, None);
+}
+
+// Test per chiamate a funzione annidate
+#[test]
+fn test_nested_function_calls() {
+    let tokens = create_tokens(vec![
+        TokenKind::IdentifierAscii("foo".into()),
+        TokenKind::OpenParen,
+        TokenKind::IdentifierAscii("bar".into()),
+        TokenKind::OpenParen,
+        TokenKind::CloseParen,
+        TokenKind::CloseParen,
+        TokenKind::Eof,
+    ]);
+    let parser = JsavParser::new(tokens);
+    let (expr, errors) = parser.parse();
+    assert!(errors.is_empty());
+    assert_eq!(
+        expr,
+        Some(call_expr(
+            variable_expr("foo"),
+            vec![call_expr(variable_expr("bar"), vec![])]
+        ))
+    );
+}
+
+// Test per errori multipli in un'espressione
+#[test]
+fn test_multiple_errors_in_expression() {
+    let tokens = create_tokens(vec![
+        TokenKind::Plus,
+        TokenKind::Equal,
+        TokenKind::Numeric(Number::Integer(5)),
+        TokenKind::Eof,
+    ]);
+    let parser = JsavParser::new(tokens);
+    let (_expr, errors) = parser.parse();
+    assert_eq!(errors.len(), 1);
+    assert_eq!(errors[0].message().unwrap(), "Unexpected token: Plus");
+}
+
+// Test per tipi misti di letterali in chiamate a funzione
+#[test]
+fn test_mixed_literals_function_call() {
+    let tokens = create_tokens(vec![
+        TokenKind::IdentifierAscii("test".into()),
+        TokenKind::OpenParen,
+        TokenKind::Numeric(Number::Integer(1)),
+        TokenKind::Comma,
+        TokenKind::StringLiteral("due".into()),
+        TokenKind::Comma,
+        TokenKind::KeywordBool(true),
+        TokenKind::CloseParen,
+        TokenKind::Eof,
+    ]);
+    let parser = JsavParser::new(tokens);
+    let (expr, errors) = parser.parse();
+    assert!(errors.is_empty());
+    assert_eq!(
+        expr,
+        Some(call_expr(
+            variable_expr("test"),
+            vec![num_lit(1), string_lit("due"), bool_lit(true)]
+        ))
+    );
+}
+
+// Test per errori di annidamento complessi
+#[test]
+fn test_complex_nesting_errors() {
+    let tokens = create_tokens(vec![
+        TokenKind::OpenParen,
+        TokenKind::OpenBracket,
+        TokenKind::Numeric(Number::Integer(1)),
+        TokenKind::CloseParen,
+        TokenKind::Eof,
+    ]);
+    let parser = JsavParser::new(tokens);
+    let (_expr, errors) = parser.parse();
+    assert!(!errors.is_empty());
+    assert_eq!(errors[0].message().unwrap(), "Unexpected token: OpenBracket");
+}
+
+#[test]
+fn test_bitwise_operator_precedence() {
+    let tokens = create_tokens(vec![
+        TokenKind::Numeric(Number::Integer(1)),
+        TokenKind::Or,
+        TokenKind::Numeric(Number::Integer(2)),
+        TokenKind::And,
+        TokenKind::Numeric(Number::Integer(3)),
+        TokenKind::Eof,
+    ]);
+    let parser = JsavParser::new(tokens);
+    let (expr, errors) = parser.parse();
+    assert!(errors.is_empty());
+    assert_eq!(
+        expr,
+        Some(binary_expr(
+            num_lit(1),
+            BinaryOp::BitwiseOr,
+            binary_expr(num_lit(2), BinaryOp::BitwiseAnd, num_lit(3))
+        ))
+    );
+}
+
+// Test per errori di parsing in contesti annidati
+#[test]
+fn test_nested_parsing_errors() {
+    let tokens = create_tokens(vec![
+        TokenKind::OpenParen,
+        TokenKind::Minus,
+        TokenKind::Star,
+        TokenKind::Numeric(Number::Integer(5)),
+        TokenKind::CloseParen,
+        TokenKind::Eof,
+    ]);
+    let parser = JsavParser::new(tokens);
+    let (_expr, errors) = parser.parse();
+    assert!(!errors.is_empty());
+    assert_eq!(errors[0].message().unwrap(), "Unexpected token: Star");
 }

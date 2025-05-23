@@ -108,13 +108,6 @@ impl Expr {
             Expr::ArrayAccess { span, .. } => span,
         }
     }
-
-    pub fn new_nullptr(span: SourceSpan) -> Self {
-        Expr::Literal {
-            value: LiteralValue::Nullptr,
-            span,
-        }
-    }
 }
 
 
