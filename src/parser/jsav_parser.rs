@@ -145,34 +145,20 @@ impl JsavParser {
     }
 
     fn parse_binary(&mut self, left: Expr, token: Token) -> Expr {
-        let op = match token.kind {
-            TokenKind::Plus => BinaryOp::Add,
-            TokenKind::Minus => BinaryOp::Subtract,
-            TokenKind::Star => BinaryOp::Multiply,
-            TokenKind::Slash => BinaryOp::Divide,
-            TokenKind::Percent => BinaryOp::Modulo,
-            TokenKind::EqualEqual => BinaryOp::Equal,
-            TokenKind::NotEqual => BinaryOp::NotEqual,
-            TokenKind::Less => BinaryOp::Less,
-            TokenKind::LessEqual => BinaryOp::LessEqual,
-            TokenKind::Greater => BinaryOp::Greater,
-            TokenKind::GreaterEqual => BinaryOp::GreaterEqual,
-            TokenKind::AndAnd => BinaryOp::And,
-            TokenKind::OrOr => BinaryOp::Or,
-            TokenKind::And => BinaryOp::BitwiseAnd,
-            TokenKind::Or => BinaryOp::BitwiseOr,
-            TokenKind::Xor => BinaryOp::BitwiseXor,
-            TokenKind::ShiftLeft => BinaryOp::ShiftLeft,
-            TokenKind::ShiftRight => BinaryOp::ShiftRight,
-            _ => unreachable!(),
-        };
-
-        let right = self.parse_expr(binding_power(&token).1);
-        Expr::Binary {
-            left: Box::new(left),
-            op,
-            right: Box::new(right.unwrap_or_else(|| Expr::new_nullptr(token.span.clone()))),
-            span: token.span,
+        match BinaryOp::get_op(&token) {
+            Ok(op) => {
+                let right = self.parse_expr(binding_power(&token).1);
+                Expr::Binary {
+                    left: Box::new(left),
+                    op,
+                    right: Box::new(right.unwrap_or_else(|| Expr::new_nullptr(token.span.clone()))),
+                    span: token.span,
+                }
+            }
+            Err(error) => {
+                self.errors.push(error);
+                left
+            }
         }
     }
 

@@ -1,7 +1,10 @@
 //src/parser/ast.rs
 use console::Style;
+use crate::error::compile_error::CompileError;
 use crate::location::source_span::SourceSpan;
 use crate::tokens::number::Number;
+use crate::tokens::token::Token;
+use crate::tokens::token_kind::TokenKind;
 
 #[derive(Debug, Clone, PartialEq)]
 pub enum Expr {
@@ -105,7 +108,7 @@ impl Expr {
             Expr::ArrayAccess { span, .. } => span,
         }
     }
-    
+
     pub fn new_nullptr(span: SourceSpan) -> Self {
         Expr::Literal {
             value: LiteralValue::Nullptr,
@@ -125,6 +128,36 @@ impl Stmt {
             Stmt::Block { span, .. } => span,
             Stmt::Return { span, .. } => span,
         }
+    }
+}
+
+impl BinaryOp {
+    pub fn get_op(token: &Token) -> Result<BinaryOp, CompileError> {
+        let op = match token.kind {
+            TokenKind::Plus => BinaryOp::Add,
+            TokenKind::Minus => BinaryOp::Subtract,
+            TokenKind::Star => BinaryOp::Multiply,
+            TokenKind::Slash => BinaryOp::Divide,
+            TokenKind::Percent => BinaryOp::Modulo,
+            TokenKind::EqualEqual => BinaryOp::Equal,
+            TokenKind::NotEqual => BinaryOp::NotEqual,
+            TokenKind::Less => BinaryOp::Less,
+            TokenKind::LessEqual => BinaryOp::LessEqual,
+            TokenKind::Greater => BinaryOp::Greater,
+            TokenKind::GreaterEqual => BinaryOp::GreaterEqual,
+            TokenKind::AndAnd => BinaryOp::And,
+            TokenKind::OrOr => BinaryOp::Or,
+            TokenKind::And => BinaryOp::BitwiseAnd,
+            TokenKind::Or => BinaryOp::BitwiseOr,
+            TokenKind::Xor => BinaryOp::BitwiseXor,
+            TokenKind::ShiftLeft => BinaryOp::ShiftLeft,
+            TokenKind::ShiftRight => BinaryOp::ShiftRight,
+            _ => return Err(CompileError::SyntaxError {
+                message: format!("Invalid binary operator: {:?}", token.kind),
+                span: token.clone().span,
+            }),
+        };
+        Ok(op)
     }
 }
 
