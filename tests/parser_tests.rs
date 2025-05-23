@@ -1,3 +1,4 @@
+use jsavrs::error::compile_error::CompileError;
 use jsavrs::location::source_span::SourceSpan;
 use jsavrs::parser::ast::*;
 use jsavrs::parser::jsav_parser::JsavParser;
@@ -618,4 +619,42 @@ fn test_assignment_invalid_target_binary() {
     assert!(!errors.is_empty());
     assert_eq!(errors[0].message().unwrap(), "Invalid assignment target");
     assert!(matches!(expr, Some(Expr::Binary { .. })));
+}
+
+
+#[test]
+fn test_invalid_binary_operator() {
+    // List of token kinds that are not valid binary operators
+    let invalid_kinds = vec![
+        TokenKind::Comma,
+        TokenKind::Dot,
+        TokenKind::KeywordIf,
+        TokenKind::PlusEqual,    // Compound assignment
+    ];
+
+    for kind in invalid_kinds {
+        let token = Token {
+            kind: kind.clone(),
+            span: dummy_span(), // Dummy span
+            // Include other required fields for Token if any
+        };
+
+        let result = BinaryOp::get_op(&token);
+        assert!(result.is_err(), "Expected error for token: {:?}", kind);
+
+        // Verify error details
+        let err = result.unwrap_err();
+        match err {
+            CompileError::SyntaxError { message, span } => {
+                assert_eq!(
+                    message,
+                    format!("Invalid binary operator: {:?}", kind),
+                    "Incorrect message for token: {:?}",
+                    kind
+                );
+                assert_eq!(span, token.span, "Incorrect span for token: {:?}", kind);
+            }
+            _ => panic!("Unexpected error type for token: {:?}", kind),
+        }
+    }
 }
