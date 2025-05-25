@@ -301,7 +301,11 @@ macro_rules! test_binary_precedence {
 }
 
 test_binary_precedence!(test_binary_precedence_plus, TokenKind::Plus, BinaryOp::Add);
-test_binary_precedence!(test_binary_precedence_minus, TokenKind::Minus, BinaryOp::Subtract);
+test_binary_precedence!(
+    test_binary_precedence_minus,
+    TokenKind::Minus,
+    BinaryOp::Subtract
+);
 
 #[test]
 fn test_grouping() {
@@ -331,25 +335,73 @@ fn test_grouping() {
     );
 }
 
-#[test]
-fn test_assignment_valid() {
-    let tokens = create_tokens(vec![
+macro_rules! assignment_test {
+    (
+        $name:ident,
+        // the list of TokenKind-expressions to feed into `create_tokens(...)`
+        [$($tok:expr),* $(,)?],
+        // did we expect errors?
+        $expect_err:expr,
+        // how many Stmt expressions we expect, and what they are
+        [$($expected_stmt:expr),* $(,)?],
+        // if `$expect_err` is true, match this exact message against `errors[0].message().unwrap()`
+        $err_msg:expr
+    ) => {
+        #[test]
+        fn $name() {
+            // build the token vector
+            let tokens = create_tokens(vec![$($tok),*]);
+            let parser = JsavParser::new(tokens);
+            let (stmts, errors) = parser.parse();
+
+            if $expect_err {
+                // ensure we got at least one error with the exact message
+                assert!(!errors.is_empty(), "expected at least one parse‐error");
+                assert_eq!(
+                    errors[0].message().unwrap(),
+                    $err_msg,
+                    "wrong error message"
+                );
+            } else {
+                assert!(
+                    errors.is_empty(),
+                    "expected no parse‐errors but found: {:?}",
+                    errors
+                );
+            }
+
+            // check the number of statements matches
+            let expected_vec: Vec<Stmt> = vec![$($expected_stmt),*];
+            assert_eq!(
+                stmts.len(),
+                expected_vec.len(),
+                "expected {} statements, got {}",
+                expected_vec.len(),
+                stmts.len()
+            );
+
+            // check each statement
+            for (i, exp) in expected_vec.into_iter().enumerate() {
+                assert_eq!(stmts[i], exp, "mismatch at stmt index {}", i);
+            }
+        }
+    };
+}
+
+assignment_test!(
+    test_assignment_valid,
+    [
         TokenKind::IdentifierAscii("x".into()),
         TokenKind::Equal,
         TokenKind::Numeric(Number::Integer(5)),
         TokenKind::Eof,
-    ]);
-    let parser = JsavParser::new(tokens);
-    let (expr, errors) = parser.parse();
-    assert!(errors.is_empty());
-    assert_eq!(expr.len(), 1);
-    assert_eq!(
-        expr[0],
-        Stmt::Expression {
-            expr: assign_expr("x", num_lit(5))
-        }
-    );
-}
+    ],
+    false,
+    [Stmt::Expression {
+        expr: assign_expr("x", num_lit(5)),
+    },],
+    "" // (unused because `expect_err = false`)
+);
 
 #[test]
 fn test_assignment_chained() {
@@ -373,25 +425,21 @@ fn test_assignment_chained() {
     )
 }
 
-#[test]
-fn test_assignment_invalid_target() {
-    let tokens = create_tokens(vec![
+assignment_test!(
+    test_assignment_invalid_target,
+    [
         TokenKind::Numeric(Number::Integer(5)),
         TokenKind::Equal,
         TokenKind::Numeric(Number::Integer(10)),
         TokenKind::Eof,
-    ]);
-    let parser = JsavParser::new(tokens);
-    let (expr, errors) = parser.parse();
-    assert!(!errors.is_empty());
-    assert_eq!(
-        errors[0].message().unwrap(),
-        "Invalid assignment target: Equal"
-    );
-    assert_eq!(expr.len(), 2);
-    assert_eq!(expr[0], Stmt::Expression { expr: num_lit(5) });
-    assert_eq!(expr[1], Stmt::Expression { expr: num_lit(10) });
-}
+    ],
+    true,
+    [
+        Stmt::Expression { expr: num_lit(5) },
+        Stmt::Expression { expr: num_lit(10) },
+    ],
+    "Invalid assignment target: Equal"
+);
 
 #[test]
 fn test_function_call() {
