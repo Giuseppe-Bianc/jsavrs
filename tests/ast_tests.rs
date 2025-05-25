@@ -979,7 +979,7 @@ fn test_edge_case_multiple_parameters() {
 }
 
 
-macro_rules! test_int_type_output {
+macro_rules! test_type_output {
     ($name:ident, $typ:expr, $type_str:expr) => {
 #[test]
         fn $name() {
@@ -1007,17 +1007,18 @@ macro_rules! test_int_type_output {
     };
 }
 
-test_int_type_output!(test_i8_output, Type::I8, "i8");
-test_int_type_output!(test_i16_output, Type::I16, "i16");
-test_int_type_output!(test_i32_output, Type::I32, "i32");
-test_int_type_output!(test_i64_output, Type::I64, "i64");
-test_int_type_output!(test_u8_output, Type::U8, "u8");
-test_int_type_output!(test_u16_output, Type::U16, "u16");
-test_int_type_output!(test_u32_output, Type::U32, "u32");
-test_int_type_output!(test_u64_output, Type::U64, "u64");
-test_int_type_output!(test_f32_output, Type::F32, "f32");
-test_int_type_output!(test_char_output, Type::Char, "char");
-test_int_type_output!(test_string_output, Type::String, "string");
+test_type_output!(test_i8_output, Type::I8, "i8");
+test_type_output!(test_i16_output, Type::I16, "i16");
+test_type_output!(test_i32_output, Type::I32, "i32");
+test_type_output!(test_i64_output, Type::I64, "i64");
+test_type_output!(test_u8_output, Type::U8, "u8");
+test_type_output!(test_u16_output, Type::U16, "u16");
+test_type_output!(test_u32_output, Type::U32, "u32");
+test_type_output!(test_u64_output, Type::U64, "u64");
+test_type_output!(test_f32_output, Type::F32, "f32");
+test_type_output!(test_char_output, Type::Char, "char");
+test_type_output!(test_string_output, Type::String, "string");
+test_type_output!(test_bool_output, Type::Bool, "bool");
 
 #[test]
 fn test_corner_case_deeply_nested_if() {
