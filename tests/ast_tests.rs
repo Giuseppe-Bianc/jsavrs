@@ -562,6 +562,21 @@ fn test_stmt_block_span() {
 }
 
 #[test]
+fn test_stmt_while_span() {
+    let span = dummy_span();
+    let stmt = Stmt::While {
+        condition: Expr::Literal {
+            value: LiteralValue::Bool(true),
+            span: dummy_span(),
+        },
+        body: vec![],
+        span: span.clone(),
+    };
+    assert_eq!(stmt.span(), &span);
+}
+
+
+#[test]
 fn test_stmt_return_span() {
     let span = dummy_span();
     let stmt = Stmt::Return {
