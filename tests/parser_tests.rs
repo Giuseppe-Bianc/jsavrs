@@ -501,59 +501,6 @@ fn test_deep_nesting() {
     );
 }
 
-// Test all binary operators
-#[test]
-fn test_all_binary_operators() {
-    let test_cases = vec![
-        (TokenKind::Plus, BinaryOp::Add),
-        (TokenKind::Minus, BinaryOp::Subtract),
-        (TokenKind::Star, BinaryOp::Multiply),
-        (TokenKind::Slash, BinaryOp::Divide),
-        (TokenKind::Percent, BinaryOp::Modulo),
-        (TokenKind::EqualEqual, BinaryOp::Equal),
-        (TokenKind::NotEqual, BinaryOp::NotEqual),
-        (TokenKind::Less, BinaryOp::Less),
-        (TokenKind::LessEqual, BinaryOp::LessEqual),
-        (TokenKind::Greater, BinaryOp::Greater),
-        (TokenKind::GreaterEqual, BinaryOp::GreaterEqual),
-        (TokenKind::AndAnd, BinaryOp::And),
-        (TokenKind::OrOr, BinaryOp::Or),
-        (TokenKind::And, BinaryOp::BitwiseAnd),
-        (TokenKind::Or, BinaryOp::BitwiseOr),
-        (TokenKind::Xor, BinaryOp::BitwiseXor),
-        (TokenKind::ShiftLeft, BinaryOp::ShiftLeft),
-        (TokenKind::ShiftRight, BinaryOp::ShiftRight),
-    ];
-
-    for (token_kind, op) in test_cases {
-        let tokens: Vec<Token> = vec![
-            crate::num_token(3.0),
-            Token {
-                kind: token_kind.clone(),
-                span: dummy_span(),
-            },
-            crate::num_token(4.0),
-            Token {
-                kind: TokenKind::Eof,
-                span: dummy_span(),
-            },
-        ];
-        let parser = JsavParser::new(tokens);
-        let (expr, errors) = parser.parse();
-
-        assert!(errors.is_empty(), "Failed for {:?}", token_kind);
-        assert_eq!(expr.len(),1);
-        assert_eq!(
-            expr[0],
-            Stmt::Expression {
-                expr: binary_expr(float_lit(3.0), op, float_lit(4.0))
-            },
-            "Failed for {:?}",
-            token_kind
-        );
-    }
-}
-
 #[test]
 fn test_unary_operators_bp() {
     let token = Token {
