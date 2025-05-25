@@ -994,3 +994,18 @@ fn test_unicode_function_name() {
     let (_statements, errors) = parser.parse();
     assert!(!errors.is_empty());
 }
+
+
+#[test]
+fn test_block_stmt() {
+    let tokens = create_tokens(vec![
+        TokenKind::OpenBrace,
+        TokenKind::CloseBrace,
+        TokenKind::Eof,
+    ]);
+    let parser = JsavParser::new(tokens);
+    let (statements, errors) = parser.parse();
+    assert!(errors.is_empty());
+    assert_eq!(statements.len(), 1);
+    assert_eq!(statements[0], Stmt::Block { statements: vec![], span: dummy_span() });
+}
