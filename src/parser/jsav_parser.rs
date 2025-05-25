@@ -601,7 +601,7 @@ impl JsavParser {
                 .unwrap_or_default();
 
             self.errors.push(CompileError::SyntaxError {
-                message: format!("{}: Expected '{:?}' but found {}", context, kind, found),
+                message: format!("{context}: Expected '{kind:?}' but found {found}"),
                 span,
             });
         }
