@@ -1,3 +1,5 @@
+// src/parser/jsav_parser.rs
+
 use crate::error::compile_error::CompileError;
 use crate::location::source_span::SourceSpan;
 use crate::parser::ast::*;
@@ -21,10 +23,354 @@ impl JsavParser {
         }
     }
 
-    pub fn parse(mut self) -> (Option<Expr>, Vec<CompileError>) {
-        let expr = self.parse_expr(0);
-        (expr, self.errors)
+    /// Entry point: parse a sequence of statements until EOF
+    pub fn parse(mut self) -> (Vec<Stmt>, Vec<CompileError>) {
+        let mut statements = Vec::new();
+        while !self.is_at_end() {
+            if let Some(stmt) = self.parse_statement() {
+                statements.push(stmt);
+            } else {
+                // Synchronize on error: skip one token
+                self.advance();
+            }
+        }
+        (statements, self.errors)
     }
+
+    /// Parse a single statement (recursive descent)
+    fn parse_statement(&mut self) -> Option<Stmt> {
+        match self.peek().map(|t| &t.kind) {
+            Some(TokenKind::KeywordFun) => self.parse_function(),
+            Some(TokenKind::KeywordIf) => self.parse_if(),
+            Some(TokenKind::KeywordWhile) => self.parse_while(),
+            Some(TokenKind::KeywordFor) => self.parse_for(),
+            Some(TokenKind::KeywordReturn) => self.parse_return(),
+            Some(TokenKind::OpenBrace) => self.parse_block(),
+            Some(TokenKind::KeywordVar) => self.parse_var_declaration(),
+            _ => self.parse_expression_stmt(),
+        }
+    }
+
+    /// Parse a function definition:
+    /// fun <name>(<params>) [: <return_type>] { <body> }
+    fn parse_function(&mut self) -> Option<Stmt> {
+        // consume 'fun'
+        let fun_token = self.advance().unwrap().clone();
+
+        // require identifier
+        let (name, name_span) = if let Some(Token {
+                                                kind: TokenKind::IdentifierAscii(s),
+                                                span,
+                                                ..
+                                            }) = self.advance()
+        {
+            (s.clone(), span.clone())
+        } else {
+            self.syntax_error("Expected function name", &fun_token);
+            return None;
+        };
+
+        // parameters
+        self.expect(TokenKind::OpenParen, "Expected '(' after function name");
+        let mut parameters = Vec::new();
+        if !self.check(TokenKind::CloseParen) {
+            loop {
+                // param name
+                let (param_name, param_span) = if let Some(Token {
+                                                               kind: TokenKind::IdentifierAscii(s),
+                                                               span,
+                                                               ..
+                                                           }) = self.advance()
+                {
+                    (s.clone(), span.clone())
+                } else {
+                    self.syntax_error("Expected parameter name", &fun_token);
+                    return None;
+                };
+                // colon
+                self.expect(TokenKind::Colon, "Expected ':' after parameter name");
+                // type
+                let type_annotation = self.parse_type().unwrap_or(Type::Void);
+
+                parameters.push(Parameter {
+                    name: param_name,
+                    type_annotation,
+                    span: param_span,
+                });
+
+                if !self.match_token(TokenKind::Comma) {
+                    break;
+                }
+            }
+        }
+        self.expect(TokenKind::CloseParen, "Expected ')' after parameters");
+
+        // optional return type
+        let return_type = if self.match_token(TokenKind::Colon) {
+            self.parse_type().unwrap_or(Type::Void)
+        } else {
+            Type::Void
+        };
+
+        // body block
+        let body_start_span = if let Some(Token { span, .. }) = self.peek() {
+            span.clone()
+        } else {
+            fun_token.span.clone()
+        };
+        let body = if let Some(Stmt::Block { statements, .. }) = self.parse_block() {
+            statements
+        } else {
+            Vec::new()
+        };
+
+        Some(Stmt::Function {
+            name,
+            parameters,
+            return_type,
+            body,
+            span: name_span.merged(&body_start_span).unwrap_or(name_span),
+        })
+    }
+
+    /// Parse an if statement:
+    /// if (<condition>) { <then_branch> } [else { <else_branch> }]
+    fn parse_if(&mut self) -> Option<Stmt> {
+        let if_token = self.advance().unwrap().clone();
+        self.expect(TokenKind::OpenParen, "Expected '(' after 'if'");
+        let condition = self.parse_expr(0)?;
+        self.expect(TokenKind::CloseParen, "Expected ')' after if condition");
+        let then_branch = if let Some(Stmt::Block { statements, span: _then_span }) = self.parse_block() {
+            statements
+        } else {
+            Vec::new()
+        };
+
+        let else_branch = if self.match_token(TokenKind::KeywordElse) {
+            if let Some(Stmt::Block { statements, .. }) = self.parse_block() {
+                Some(statements)
+            } else {
+                Some(Vec::new())
+            }
+        } else {
+            None
+        };
+
+        Some(Stmt::If {
+            condition,
+            then_branch,
+            else_branch,
+            span: if_token.span.clone(),
+        })
+    }
+
+    /// Parse a while loop:
+    /// while (<condition>) { <body> }
+    fn parse_while(&mut self) -> Option<Stmt> {
+        let while_token = self.advance().unwrap().clone();
+        self.expect(TokenKind::OpenParen, "Expected '(' after 'while'");
+        let condition = self.parse_expr(0)?;
+        self.expect(TokenKind::CloseParen, "Expected ')' after while condition");
+        let body = if let Some(Stmt::Block { statements, .. }) = self.parse_block() {
+            statements
+        } else {
+            Vec::new()
+        };
+        let span = while_token.span.clone();
+        Some(Stmt::While {
+            condition,
+            body,
+            span,
+        })
+    }
+
+    /// Parse a for loop (desugared):
+    /// for (<init>; <cond>; <increment>) { <body> }
+    fn parse_for(&mut self) -> Option<Stmt> {
+        let for_token = self.advance().unwrap().clone();
+        self.expect(TokenKind::OpenParen, "Expected '(' after 'for'");
+
+        // parse initializer expression if any
+        let init_expr = if !self.check(TokenKind::CloseParen) && !self.check(TokenKind::Semicolon) {
+            Some(self.parse_expr(0)?)
+        } else {
+            None
+        };
+        self.expect(TokenKind::Semicolon, "Expected ';' after for initializer");
+
+        // parse condition expression if any
+        let condition = if !self.check(TokenKind::Semicolon) {
+            self.parse_expr(0)?
+        } else {
+            // default to true if omitted
+            Expr::Literal {
+                value: LiteralValue::Bool(true),
+                span: for_token.span.clone(),
+            }
+        };
+        self.expect(TokenKind::Semicolon, "Expected ';' after for condition");
+
+        // parse increment expression if any
+        let increment_expr = if !self.check(TokenKind::CloseParen) {
+            Some(self.parse_expr(0)?)
+        } else {
+            None
+        };
+        self.expect(TokenKind::CloseParen, "Expected ')' after for clauses");
+
+        let body_stmts = if let Some(Stmt::Block { statements, .. }) = self.parse_block() {
+            statements
+        } else {
+            Vec::new()
+        };
+
+        // Desugar: init; while (cond) { body; incr; }
+        let mut stmts: Vec<Stmt> = Vec::new();
+        if let Some(init) = init_expr {
+            stmts.push(Stmt::Expression { expr: init });
+        }
+
+        let mut while_body = body_stmts.clone();
+        if let Some(incr) = increment_expr {
+            while_body.push(Stmt::Expression { expr: incr });
+        }
+
+        stmts.push(Stmt::While {
+            condition,
+            body: while_body,
+            span: for_token.span.clone(),
+        });
+
+        Some(Stmt::Block {
+            statements: stmts,
+            span: for_token.span.clone(),
+        })
+    }
+
+    /// Parse a return statement:
+    /// return [<expr>]
+    fn parse_return(&mut self) -> Option<Stmt> {
+        let return_token = self.advance().unwrap().clone();
+        let value = if self.check_expression_start() {
+            Some(self.parse_expr(0)?)
+        } else {
+            None
+        };
+        Some(Stmt::Return {
+            value,
+            span: return_token.span.clone(),
+        })
+    }
+
+    /// Parse a block: { <statements> }
+    fn parse_block(&mut self) -> Option<Stmt> {
+        let start_token = self.advance().unwrap().clone(); // consume '{'
+        let mut statements = Vec::new();
+        while !self.check(TokenKind::CloseBrace) && !self.is_at_end() {
+            if let Some(stmt) = self.parse_statement() {
+                statements.push(stmt);
+            } else {
+                self.advance();
+            }
+        }
+        self.expect(TokenKind::CloseBrace, "Expected '}' after block");
+        Some(Stmt::Block {
+            statements,
+            span: start_token.span.clone(),
+        })
+    }
+
+    /// Parse a variable declaration:
+    /// var <name> : <type> [= <initializer>]
+    fn parse_var_declaration(&mut self) -> Option<Stmt> {
+        let var_token = self.advance().unwrap().clone(); // consume 'var'
+
+        // parse variable name
+        let (name, name_span) = if let Some(Token {
+                                                kind: TokenKind::IdentifierAscii(s),
+                                                span,
+                                                ..
+                                            }) = self.advance()
+        {
+            (s.clone(), span.clone())
+        } else {
+            self.syntax_error("Expected variable name", &var_token);
+            return None;
+        };
+
+        // colon
+        self.expect(TokenKind::Colon, "Expected ':' after variable name");
+        // parse type
+        let type_annotation = self.parse_type().unwrap_or(Type::Void);
+
+        // initializer (optional)
+        let mut initializers = Vec::new();
+        if self.match_token(TokenKind::Equal) {
+            let init_expr = self.parse_expr(0)?;
+            initializers.push(init_expr);
+        }
+
+        Some(Stmt::VarDeclaration {
+            variables: vec![name],
+            type_annotation,
+            initializers,
+            span: name_span,
+        })
+    }
+
+    /// Parse an expression statement (just an Expr wrapped in Stmt::Expression)
+    fn parse_expression_stmt(&mut self) -> Option<Stmt> {
+        let expr = self.parse_expr(0)?;
+        Some(Stmt::Expression { expr })
+    }
+
+    /// Helpers to detect start of an expression
+    fn check_expression_start(&self) -> bool {
+        matches!(
+            self.peek().map(|t| &t.kind),
+            Some(TokenKind::Minus)
+                | Some(TokenKind::Not)
+                | Some(TokenKind::OpenParen)
+                | Some(TokenKind::IdentifierAscii(_))
+                | Some(TokenKind::IdentifierUnicode(_))
+                | Some(TokenKind::Numeric(_))
+                | Some(TokenKind::KeywordBool(_))
+                | Some(TokenKind::KeywordNullptr)
+                | Some(TokenKind::StringLiteral(_))
+                | Some(TokenKind::CharLiteral(_))
+        )
+    }
+
+    /// Parse a type annotation (TypeI8, TypeI16, etc.)
+    fn parse_type(&mut self) -> Option<Type> {
+        let token = match self.advance() {
+            Some(t) => t.clone(),
+            None => return None,
+        };
+
+        match token.kind {
+            TokenKind::TypeI8 => Some(Type::I8),
+            TokenKind::TypeI16 => Some(Type::I16),
+            TokenKind::TypeI32 => Some(Type::I32),
+            TokenKind::TypeI64 => Some(Type::I64),
+            TokenKind::TypeU8 => Some(Type::U8),
+            TokenKind::TypeU16 => Some(Type::U16),
+            TokenKind::TypeU32 => Some(Type::U32),
+            TokenKind::TypeU64 => Some(Type::U64),
+            TokenKind::TypeF32 => Some(Type::F32),
+            TokenKind::TypeF64 => Some(Type::F64),
+            TokenKind::TypeChar => Some(Type::Char),
+            TokenKind::TypeString => Some(Type::String),
+            TokenKind::TypeBool => Some(Type::Bool),
+            _ => {
+                self.syntax_error("Expected type annotation but found", &token);
+                None
+            }
+        }
+    }
+
+    // ------------------------------------------------------------------------
+    // Expression parsing (Pratt) from the existing JsavParser
 
     fn parse_expr(&mut self, min_bp: u8) -> Option<Expr> {
         let mut left = self.nud()?;
@@ -34,7 +380,6 @@ impl JsavParser {
             if lbp <= min_bp {
                 break;
             }
-
             left = self.led(left);
         }
 
@@ -76,7 +421,7 @@ impl JsavParser {
     fn led(&mut self, left: Expr) -> Expr {
         let token = match self.advance() {
             Some(t) => t.clone(),
-            None => return left, // Early return if no token
+            None => return left,
         };
 
         match token.kind {
@@ -102,8 +447,10 @@ impl JsavParser {
 
             // Assignment
             TokenKind::Equal => self.parse_assignment(left, token),
+
             // Function call
             TokenKind::OpenParen => self.parse_call(left, token),
+
             // Array access
             TokenKind::OpenBracket => self.parse_array_access(left, token),
 
@@ -114,7 +461,7 @@ impl JsavParser {
         }
     }
 
-    // Helper methods for literals
+    // Literal helpers
     fn new_number_literal(&self, value: Number, span: SourceSpan) -> Option<Expr> {
         Some(Expr::Literal {
             value: LiteralValue::Number(value),
@@ -227,7 +574,8 @@ impl JsavParser {
     }
 
     fn parse_array_access(&mut self, array: Expr, start_token: Token) -> Expr {
-        let index = self.parse_expr(0)
+        let index = self
+            .parse_expr(0)
             .unwrap_or_else(|| self.null_expr(start_token.span.clone()));
         self.expect(TokenKind::CloseBracket, "Unclosed array access");
         Expr::ArrayAccess {
@@ -280,7 +628,8 @@ impl JsavParser {
 
     fn expect(&mut self, kind: TokenKind, context: &str) {
         if !self.match_token(kind.clone()) {
-            let found = self.peek()
+            let found = self
+                .peek()
                 .map(|t| format!("{:?}", t.kind))
                 .unwrap_or_else(|| "end of input".to_string());
             self.errors.push(CompileError::SyntaxError {

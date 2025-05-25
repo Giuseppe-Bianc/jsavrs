@@ -16,7 +16,7 @@ use std::{
     path::{Path, PathBuf},
     //process,
 };
-use jsavrs::parser::ast::pretty_print;
+use jsavrs::parser::ast::pretty_print_stmt;
 use jsavrs::parser::jsav_parser::JsavParser;
 
 const HELP_STR: &str = r#"
@@ -113,7 +113,10 @@ fn main() -> Result<(), CompileError> {
 
     // Print statements with color if verbose
     if args.verbose {
-        println!("{}", pretty_print(&statements.unwrap()));
+        //println!("{}", pretty_print(&statements.unwrap()));
+        for stat in &statements {
+            println!("{}", pretty_print_stmt(stat));
+        }
     } else {
         println!("{} statements found", statements.iter().len());
     }

@@ -295,6 +295,8 @@ pub enum TokenKind {
         r"[ \t\r\n\f\u{00A0}\u{1680}\u{2000}-\u{200A}\u{202F}\u{205F}\u{3000}]+",
         logos::skip
     )]
+    #[regex(r";")]
+    Semicolon,
     Whitespace,
     /// Matches both single-line and multi-line comments
     #[regex(r"//[^\n\r]*",logos::skip)]
