@@ -29,6 +29,17 @@ macro_rules! expr_span_test {
     };
 }
 
+macro_rules! stmt_span_test {
+    ($test_name:ident, $stmt_constructor:expr) => {
+        #[test]
+        fn $test_name() {
+            let span = dummy_span();
+            let stmt = $stmt_constructor(span.clone());
+            assert_eq!(stmt.span(), &span);
+        }
+    };
+}
+
 
 #[test]
 fn test_simple_binary_expr() {
@@ -482,81 +493,50 @@ fn test_stmt_expression_span() {
     assert_eq!(stmt.span(), &expr_span);
 }
 
-#[test]
-fn test_stmt_var_declaration_span() {
-    let span = dummy_span();
-    let stmt = Stmt::VarDeclaration {
-        variables: vec!["x".to_string()],
-        type_annotation: Type::I32,
-        initializers: vec![],
-        span: span.clone(),
-    };
-    assert_eq!(stmt.span(), &span);
-}
+stmt_span_test!(test_stmt_var_declaration_span, |s| Stmt::VarDeclaration {
+    variables: vec!["x".to_string()],
+    type_annotation: Type::I32,
+    initializers: vec![],
+    span: s,
+});
 
-#[test]
-fn test_stmt_function_span() {
-    let span = dummy_span();
-    let stmt = Stmt::Function {
-        name: "foo".to_string(),
-        parameters: vec![],
-        return_type: Type::Void,
-        body: vec![],
-        span: span.clone(),
-    };
-    assert_eq!(stmt.span(), &span);
-}
+stmt_span_test!(test_stmt_function_span, |s| Stmt::Function {
+    name: "foo".to_string(),
+    parameters: vec![],
+    return_type: Type::Void,
+    body: vec![],
+    span: s,
+});
 
-#[test]
-fn test_stmt_if_span() {
-    let span = dummy_span();
-    let condition = Expr::Literal {
+
+stmt_span_test!(test_stmt_if_span, |s| Stmt::If {
+    condition: Expr::Literal {
         value: LiteralValue::Bool(true),
         span: dummy_span(),
-    };
-    let stmt = Stmt::If {
-        condition,
-        then_branch: vec![],
-        else_branch: None,
-        span: span.clone(),
-    };
-    assert_eq!(stmt.span(), &span);
-}
+    },
+    then_branch: vec![],
+    else_branch: None,
+    span: s,
+});
 
-#[test]
-fn test_stmt_block_span() {
-    let span = dummy_span();
-    let stmt = Stmt::Block {
-        statements: vec![],
-        span: span.clone(),
-    };
-    assert_eq!(stmt.span(), &span);
-}
+stmt_span_test!(test_stmt_block_span, |s| Stmt::Block {
+    statements: vec![],
+    span: s,
+});
 
-#[test]
-fn test_stmt_while_span() {
-    let span = dummy_span();
-    let stmt = Stmt::While {
-        condition: Expr::Literal {
-            value: LiteralValue::Bool(true),
-            span: dummy_span(),
-        },
-        body: vec![],
-        span: span.clone(),
-    };
-    assert_eq!(stmt.span(), &span);
-}
+stmt_span_test!(test_stmt_while_span, |s| Stmt::While {
+    condition: Expr::Literal {
+        value: LiteralValue::Bool(true),
+        span: dummy_span(),
+    },
+    body: vec![],
+    span: s,
+});
 
-
-#[test]
-fn test_stmt_return_span() {
-    let span = dummy_span();
-    let stmt = Stmt::Return {
-        value: None,
-        span: span.clone(),
-    };
-    assert_eq!(stmt.span(), &span);
-}
+stmt_span_test!(test_stmt_return_span, |s| Stmt::Return {
+    value: None,
+    span: s,
+});
 
 #[test]
 fn test_zero_length_span() {
