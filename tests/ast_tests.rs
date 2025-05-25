@@ -18,6 +18,18 @@ fn strip_ansi_codes(s: &str) -> String {
     re.replace_all(s, "").to_string()
 }
 
+macro_rules! expr_span_test {
+    ($test_name:ident, $expr_constructor:expr) => {
+        #[test]
+        fn $test_name() {
+            let span = dummy_span();
+            let expr = $expr_constructor(span.clone());
+            assert_eq!(expr.span(), &span);
+        }
+    };
+}
+
+
 #[test]
 fn test_simple_binary_expr() {
     let expr = Expr::Binary {
@@ -386,118 +398,78 @@ fn test_edge_case_special_chars() {
     assert_eq!(stripped.trim(), "└── Literal \"hello\nworld\"");
 }
 
-#[test]
-fn test_expr_binary_span() {
-    let span = dummy_span();
-    let expr = Expr::Binary {
-        left: Box::new(Expr::Literal {
-            value: LiteralValue::Number(Number::Integer(1)),
-            span: dummy_span(),
-        }),
-        op: BinaryOp::Add,
-        right: Box::new(Expr::Literal {
-            value: LiteralValue::Number(Number::Integer(2)),
-            span: dummy_span(),
-        }),
-        span: span.clone(),
-    };
-    assert_eq!(expr.span(), &span);
-}
 
-#[test]
-fn test_expr_unary_span() {
-    let span = dummy_span();
-    let expr = Expr::Unary {
-        op: UnaryOp::Negate,
-        expr: Box::new(Expr::Literal {
-            value: LiteralValue::Number(Number::Integer(5)),
-            span: dummy_span(),
-        }),
-        span: span.clone(),
-    };
-    assert_eq!(expr.span(), &span);
-}
-
-#[test]
-fn test_expr_grouping_span() {
-    let span = dummy_span();
-    let expr = Expr::Grouping {
-        expr: Box::new(Expr::Literal {
-            value: LiteralValue::Bool(true),
-            span: dummy_span(),
-        }),
-        span: span.clone(),
-    };
-    assert_eq!(expr.span(), &span);
-}
-
-#[test]
-fn test_expr_literal_span() {
-    let span = dummy_span();
-    let expr = Expr::Literal {
-        value: LiteralValue::Nullptr,
-        span: span.clone(),
-    };
-    assert_eq!(expr.span(), &span);
-}
-
-#[test]
-fn test_expr_variable_span() {
-    let span = dummy_span();
-    let expr = Expr::Variable {
-        name: "x".to_string(),
-        span: span.clone(),
-    };
-    assert_eq!(expr.span(), &span);
-}
-
-#[test]
-fn test_expr_assign_span() {
-    let span = dummy_span();
-    let expr = Expr::Assign {
-        name: "x".to_string(),
-        value: Box::new(Expr::Literal {
-            value: LiteralValue::Number(Number::Integer(3)),
-            span: dummy_span(),
-        }),
-        span: span.clone(),
-    };
-    assert_eq!(expr.span(), &span);
-}
-
-#[test]
-fn test_expr_call_span() {
-    let span = dummy_span();
-    let callee = Expr::Variable {
-        name: "func".to_string(),
+////////////////
+expr_span_test!(test_expr_binary_span, |s| Expr::Binary {
+    left: Box::new(Expr::Literal {
+        value: LiteralValue::Number(Number::Integer(1)),
         span: dummy_span(),
-    };
-    let expr = Expr::Call {
-        callee: Box::new(callee),
-        arguments: vec![],
-        span: span.clone(),
-    };
-    assert_eq!(expr.span(), &span);
-}
+    }),
+    op: BinaryOp::Add,
+    right: Box::new(Expr::Literal {
+        value: LiteralValue::Number(Number::Integer(2)),
+        span: dummy_span(),
+    }),
+    span: s,
+});
 
-#[test]
-fn test_expr_array_access_span() {
-    let span = dummy_span();
-    let array = Expr::Variable {
+expr_span_test!(test_expr_unary_span, |s| Expr::Unary {
+    op: UnaryOp::Negate,
+    expr: Box::new(Expr::Literal {
+        value: LiteralValue::Number(Number::Integer(5)),
+        span: dummy_span(),
+    }),
+    span: s,
+});
+
+expr_span_test!(test_expr_grouping_span, |s| Expr::Grouping {
+    expr: Box::new(Expr::Literal {
+        value: LiteralValue::Bool(true),
+        span: dummy_span(),
+    }),
+    span: s,
+});
+
+expr_span_test!(test_expr_literal_span, |s| Expr::Literal {
+        value: LiteralValue::Nullptr,
+        span: s,
+    }
+);
+
+
+expr_span_test!(test_expr_variable_span, |s| Expr::Variable {
+    name: "x".to_string(),
+    span: s,
+});
+expr_span_test!(test_expr_assign_span, |s| Expr::Assign {
+    name: "x".to_string(),
+    value: Box::new(Expr::Literal {
+        value: LiteralValue::Number(Number::Integer(3)),
+        span: dummy_span(),
+    }),
+    span: s,
+});
+
+expr_span_test!(test_expr_call_span, |s| Expr::Call {
+    callee: Box::new(Expr::Variable {
+        name: "foo".to_string(),
+        span: dummy_span(),
+    }),
+    arguments: vec![],
+    span: s,
+});
+
+expr_span_test!(test_expr_array_access_span, |s| Expr::ArrayAccess {
+    array: Box::new(Expr::Variable {
         name: "arr".to_string(),
         span: dummy_span(),
-    };
-    let index = Expr::Literal {
+    }),
+    index: Box::new(Expr::Literal {
         value: LiteralValue::Number(Number::Integer(0)),
         span: dummy_span(),
-    };
-    let expr = Expr::ArrayAccess {
-        array: Box::new(array),
-        index: Box::new(index),
-        span: span.clone(),
-    };
-    assert_eq!(expr.span(), &span);
-}
+    }),
+    span: s,
+});
 
 #[test]
 fn test_stmt_expression_span() {
