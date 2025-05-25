@@ -620,10 +620,6 @@ fn test_assignment_invalid_target_function_call() {
     assert!(!errors.is_empty());
     assert_eq!(errors[0].message().unwrap(), "Invalid assignment target: Equal");
     assert_eq!(expr.len(),2);
-    /*if let Some(Expr::Call { .. }) = expr {
-    } else {
-        panic!("Expected call expression");
-    }*/
     assert_eq!(expr[0], Stmt::Expression {
         expr: call_expr(variable_expr("foo"), vec![])
     });
@@ -708,7 +704,6 @@ fn test_invalid_binary_operator() {
         let token = Token {
             kind: kind.clone(),
             span: dummy_span(), // Dummy span
-            // Include other required fields for Token if any
         };
 
         let result = BinaryOp::get_op(&token);
@@ -731,7 +726,6 @@ fn test_invalid_binary_operator() {
     }
 }
 
-// Test per identificatori Unicode in assegnazioni
 #[test]
 fn test_assignment_unicode_variable() {
     let tokens = create_tokens(vec![
@@ -775,7 +769,6 @@ fn test_chained_array_access() {
     );
 }
 
-// Test per operatore unario non valido
 #[test]
 fn test_invalid_unary_operator() {
     let tokens = create_tokens(vec![
@@ -788,10 +781,8 @@ fn test_invalid_unary_operator() {
     assert!(!errors.is_empty());
     assert_eq!(errors[0].message().unwrap(), "Unexpected token: Star");
     assert_eq!(expr.len(),0);
-    //assert_eq!(expr, None);
 }
 
-// Test per chiamate a funzione annidate
 #[test]
 fn test_nested_function_calls() {
     let tokens = create_tokens(vec![
@@ -818,7 +809,6 @@ fn test_nested_function_calls() {
     );
 }
 
-// Test per errori multipli in un'espressione
 #[test]
 fn test_multiple_errors_in_expression() {
     let tokens = create_tokens(vec![
@@ -833,7 +823,6 @@ fn test_multiple_errors_in_expression() {
     assert_eq!(errors[0].message().unwrap(), "Unexpected token: Plus");
 }
 
-// Test per tipi misti di letterali in chiamate a funzione
 #[test]
 fn test_mixed_literals_function_call() {
     let tokens = create_tokens(vec![
@@ -862,7 +851,6 @@ fn test_mixed_literals_function_call() {
     );
 }
 
-// Test per errori di annidamento complessi
 #[test]
 fn test_complex_nesting_errors() {
     let tokens = create_tokens(vec![
@@ -904,7 +892,6 @@ fn test_bitwise_operator_precedence() {
     );
 }
 
-// Test per errori di parsing in contesti annidati
 #[test]
 fn test_nested_parsing_errors() {
     let tokens = create_tokens(vec![
@@ -921,7 +908,6 @@ fn test_nested_parsing_errors() {
     assert_eq!(errors[0].message().unwrap(), "Unexpected token: Star");
 }
 
-// Test per errori di parsing in contesti annidati
 #[test]
 fn test_nested_unkown_binding_power() {
     let tokens = create_tokens(vec![
@@ -935,105 +921,6 @@ fn test_nested_unkown_binding_power() {
     assert!(!errors.is_empty());
     assert_eq!(errors[0].message().unwrap(), "Unexpected operator: PlusEqual");
 }
-
-// Existing imports and helper functions remain unchanged
-
-/*#[test]
-fn test_function_declaration() {
-    let tokens = create_tokens(vec![
-        TokenKind::KeywordFun,
-        TokenKind::IdentifierAscii("add".into()),
-        TokenKind::OpenParen,
-        TokenKind::IdentifierAscii("a".into()),
-        TokenKind::Colon,
-        TokenKind::TypeI32,
-        TokenKind::Comma,
-        TokenKind::IdentifierAscii("b".into()),
-        TokenKind::Colon,
-        TokenKind::TypeI32,
-        TokenKind::CloseParen,
-        TokenKind::Colon,
-        TokenKind::TypeI32,
-        TokenKind::OpenBrace,
-        TokenKind::KeywordReturn,
-        TokenKind::IdentifierAscii("a".into()),
-        TokenKind::Plus,
-        TokenKind::IdentifierAscii("b".into()),
-        TokenKind::Semicolon,
-        TokenKind::CloseBrace,
-        TokenKind::Eof,
-    ]);
-    let parser = JsavParser::new(tokens);
-    let (statements, errors) = parser.parse();
-
-    assert!(!errors.is_empty());
-    assert_eq!(statements.len(), 0);
-
-    if let Stmt::Function {
-        name,
-        parameters,
-        return_type,
-        body,
-        ..
-    } = &statements[0] {
-        assert_eq!(name, "add");
-        assert_eq!(parameters.len(), 2);
-        assert_eq!(parameters[0].name, "a");
-        assert_eq!(parameters[0].type_annotation, Type::I32);
-        assert_eq!(parameters[1].name, "b");
-        assert_eq!(parameters[1].type_annotation, Type::I32);
-        assert_eq!(*return_type, Type::I32);
-        assert_eq!(body.len(), 1);
-
-        if let Stmt::Return { value, .. } = &body[0] {
-            assert!(value.is_some());
-            if let Expr::Binary { left, op, right, .. } = value.as_ref().unwrap() {
-                assert_eq!(**left, variable_expr("a"));
-                assert_eq!(*op, BinaryOp::Add);
-                assert_eq!(**right, variable_expr("b"));
-            } else {
-                panic!("Expected binary expression in return");
-            }
-        } else {
-            panic!("Expected return statement");
-        }
-    } else {
-        panic!("Expected function declaration");
-    }
-}*/
-
-/*#[test]
-fn test_variable_declaration_with_type() {
-    let tokens = create_tokens(vec![
-        TokenKind::KeywordVar,
-        TokenKind::IdentifierAscii("count".into()),
-        TokenKind::Colon,
-        TokenKind::TypeU64,
-        TokenKind::Equal,
-        TokenKind::Numeric(Number::Integer(100)),
-        TokenKind::Semicolon,
-        TokenKind::Eof,
-    ]);
-    let parser = JsavParser::new(tokens);
-    let (statements, errors) = parser.parse();
-
-    assert!(errors.is_empty());
-    assert_eq!(statements.len(), 1);
-
-    if let Stmt::VarDeclaration {
-        variables,
-        type_annotation,
-        initializers,
-        ..
-    } = &statements[0] {
-        assert_eq!(variables, &vec!["count"]);
-        assert_eq!(*type_annotation, Type::U64);
-        assert_eq!(initializers.len(), 1);
-        assert_eq!(initializers[0], num_lit(100));
-    } else {
-        panic!("Expected variable declaration");
-    }
-}*/
 
 #[test]
 fn test_nested_if_statements() {
@@ -1086,94 +973,6 @@ fn test_nested_if_statements() {
     }
 }
 
-/*#[test]
-fn test_for_loop_desugaring() {
-    let tokens = create_tokens(vec![
-        TokenKind::KeywordFor,
-        TokenKind::OpenParen,
-        TokenKind::KeywordVar,
-        TokenKind::IdentifierAscii("i".into()),
-        TokenKind::Colon,
-        TokenKind::TypeI32,
-        TokenKind::Equal,
-        TokenKind::Numeric(Number::Integer(0)),
-        TokenKind::Semicolon,
-        TokenKind::IdentifierAscii("i".into()),
-        TokenKind::Less,
-        TokenKind::Numeric(Number::Integer(10)),
-        TokenKind::Semicolon,
-        TokenKind::IdentifierAscii("i".into()),
-        TokenKind::Equal,
-        TokenKind::IdentifierAscii("i".into()),
-        TokenKind::Plus,
-        TokenKind::Numeric(Number::Integer(1)),
-        TokenKind::CloseParen,
-        TokenKind::OpenBrace,
-        TokenKind::CloseBrace,
-        TokenKind::Eof,
-    ]);
-    let parser = JsavParser::new(tokens);
-    let (statements, errors) = parser.parse();
-
-    assert!(!errors.is_empty());
-    assert_eq!(statements.len(), 0);
-
-    if let Stmt::Block { statements: block_stmts, .. } = &statements[0] {
-        assert_eq!(block_stmts.len(), 2);
-
-        // Check init statement
-        if let Stmt::VarDeclaration { variables, .. } = &block_stmts[0] {
-            assert_eq!(variables, &vec!["i"]);
-        } else {
-            panic!("Expected var declaration in init");
-        }
-
-        // Check while loop
-        if let Stmt::While { condition, body, .. } = &block_stmts[1] {
-            assert_eq!(*condition, binary_expr(
-                variable_expr("i"),
-                BinaryOp::Less,
-                num_lit(10)
-            ));
-
-            // Body should include both the empty block and increment
-            assert_eq!(body.len(), 1);
-            if let Stmt::Expression { expr } = &body[0] {
-                assert_eq!(*expr, assign_expr(
-                    "i",
-                    binary_expr(
-                        variable_expr("i"),
-                        BinaryOp::Add,
-                        num_lit(1)
-                    )
-                ));
-            }
-        } else {
-            panic!("Expected while loop");
-        }
-    } else {
-        panic!("Expected block statement");
-    }
-}*/
-
-/*#[test]
-fn test_type_parsing() {
-    let test_cases = vec![
-        (TokenKind::TypeI8, Type::I8),
-        (TokenKind::TypeU16, Type::U16),
-        (TokenKind::TypeF32, Type::F32),
-        (TokenKind::TypeString, Type::String),
-        (TokenKind::TypeBool, Type::Bool),
-    ];
-
-    for (token_kind, expected_type) in test_cases {
-        let tokens = create_tokens(vec![token_kind, TokenKind::Eof]);
-        let mut parser = JsavParser::new(tokens);
-        let parsed_type = parser.parse_type().unwrap();
-        assert_eq!(parsed_type, expected_type);
-    }
-}*/
-
 #[test]
 fn test_invalid_type_error() {
     let tokens = create_tokens(vec![
@@ -1190,10 +989,7 @@ fn test_invalid_type_error() {
     let (_, errors) = parser.parse();
 
     assert!(!errors.is_empty());
-    assert_eq!(
-        errors[0].message().unwrap(),
-        "Expected type annotation but found: IdentifierAscii(\"invalid\")"
-    );
+    assert_eq!(errors[0].message().unwrap(), "Expected type annotation but found: IdentifierAscii(\"invalid\")");
 }
 
 #[test]
@@ -1249,11 +1045,5 @@ fn test_unicode_function_name() {
     ]);
     let parser = JsavParser::new(tokens);
     let (_statements, errors) = parser.parse();
-
     assert!(!errors.is_empty());
-    /*if let Stmt::Function { name, .. } = &statements[0] {
-        assert_eq!(name, "こんにちは");
-    } else {
-        panic!("Expected function declaration");
-    }*/
 }
