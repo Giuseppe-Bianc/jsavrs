@@ -171,8 +171,9 @@ fn print_stmt(stmt: &Stmt, indent: &str, is_last: bool, output: &mut String, sty
             // Initializers
             append_line(output, &new_indent, true, styles.structure.clone(), "Initializers:");
             let init_indent = get_indent(&new_indent, true);
-            for init in initializers {
-                print_expr(init, &init_indent, true, output, styles);
+            for (i, init) in initializers.iter().enumerate() {
+                let is_last = i == initializers.len() - 1;
+                print_expr(init, &init_indent, is_last, output, styles);
             }
         }
         Stmt::Function { name, parameters, return_type, body, span: _span } => {
