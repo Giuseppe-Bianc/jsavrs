@@ -633,7 +633,7 @@ impl JsavParser {
                 .map(|t| format!("{:?}", t.kind))
                 .unwrap_or_else(|| "end of input".to_string());
             self.errors.push(CompileError::SyntaxError {
-                message: format!("{}: Expected '{:?}' but found {}", context, kind, found),
+                message: format!("{context}: Expected '{kind:?}' but found {found}"),
                 span: self.peek().map(|t| t.span.clone()).unwrap_or_default(),
             });
         }

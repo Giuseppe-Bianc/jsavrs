@@ -477,11 +477,11 @@ fn format_type(ty: &Type) -> String {
         Type::Bool => "bool".to_string(),
         Type::Array(inner, _size_expr) => {
             let inner_type = format_type(inner);
-            format!("[{}; <expr>]", inner_type)
+            format!("[{inner_type}; <expr>]")
         }
         Type::Vector(inner) => {
             let inner_type = format_type(inner);
-            format!("Vector<{}>", inner_type)
+            format!("Vector<{inner_type}>")
         }
         Type::Void => "void".to_string(),
     }
