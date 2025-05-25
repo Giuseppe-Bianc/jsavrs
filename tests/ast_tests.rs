@@ -3,6 +3,7 @@ use jsavrs::location::source_span::SourceSpan;
 use regex::Regex;
 use jsavrs::location::source_location::SourceLocation;
 use jsavrs::parser::ast::*;
+use jsavrs::parser::ast_printer::pretty_print;
 use jsavrs::tokens::number::Number;
 
 // src/parser/ast_test.rs

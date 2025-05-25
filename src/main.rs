@@ -16,7 +16,7 @@ use std::{
     path::{Path, PathBuf},
     //process,
 };
-use jsavrs::parser::ast::pretty_print_stmt;
+use jsavrs::parser::ast_printer::pretty_print_stmt;
 use jsavrs::parser::jsav_parser::JsavParser;
 
 const HELP_STR: &str = r#"
