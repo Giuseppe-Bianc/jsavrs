@@ -403,27 +403,24 @@ assignment_test!(
     "" // (unused because `expect_err = false`)
 );
 
-#[test]
-fn test_assignment_chained() {
-    let tokens = create_tokens(vec![
-        TokenKind::IdentifierAscii("x".into()),
+assignment_test!(
+    test_assignment_cained,
+    [
+         TokenKind::IdentifierAscii("x".into()),
         TokenKind::Equal,
         TokenKind::IdentifierAscii("y".into()),
         TokenKind::Equal,
         TokenKind::Numeric(Number::Integer(5)),
         TokenKind::Eof,
-    ]);
-    let parser = JsavParser::new(tokens);
-    let (expr, errors) = parser.parse();
-    assert!(errors.is_empty());
-    assert_eq!(expr.len(), 1);
-    assert_eq!(
-        expr[0],
+    ],
+    false,
+    [
         Stmt::Expression {
             expr: assign_expr("x", assign_expr("y", num_lit(5))),
-        }
-    )
-}
+        },
+    ],
+    ""
+);
 
 assignment_test!(
     test_assignment_invalid_target,
