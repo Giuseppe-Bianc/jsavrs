@@ -270,57 +270,38 @@ unary_op_test!(
     bool_lit(true)
 );
 
-#[test]
-fn test_binary_precedence() {
-    let tokens = create_tokens(vec![
-        TokenKind::Numeric(Number::Integer(3)),
-        TokenKind::Plus,
-        TokenKind::Numeric(Number::Integer(5)),
-        TokenKind::Star,
-        TokenKind::Numeric(Number::Integer(2)),
-        TokenKind::Eof,
-    ]);
-    let parser = JsavParser::new(tokens);
-    let (expr, errors) = parser.parse();
-    assert!(errors.is_empty());
-    assert_eq!(expr.len(), 1);
-    assert_eq!(
-        expr[0],
-        Stmt::Expression {
-            expr: binary_expr(
-                num_lit(3),
-                BinaryOp::Add,
-                binary_expr(num_lit(5), BinaryOp::Multiply, num_lit(2))
-            )
+macro_rules! test_binary_precedence {
+    ($test_name:ident, $first_op:expr, $binary_op:expr) => {
+        #[test]
+        fn $test_name() {
+            let tokens = create_tokens(vec![
+                TokenKind::Numeric(Number::Integer(3)),
+                $first_op,
+                TokenKind::Numeric(Number::Integer(5)),
+                TokenKind::Star,
+                TokenKind::Numeric(Number::Integer(2)),
+                TokenKind::Eof,
+            ]);
+            let parser = JsavParser::new(tokens);
+            let (expr, errors) = parser.parse();
+            assert!(errors.is_empty());
+            assert_eq!(expr.len(), 1);
+            assert_eq!(
+                expr[0],
+                Stmt::Expression {
+                    expr: binary_expr(
+                        num_lit(3),
+                        $binary_op,
+                        binary_expr(num_lit(5), BinaryOp::Multiply, num_lit(2))
+                    )
+                }
+            );
         }
-    );
+    };
 }
 
-#[test]
-fn test_binary_precedence_minus() {
-    let tokens = create_tokens(vec![
-        TokenKind::Numeric(Number::Integer(3)),
-        TokenKind::Minus,
-        TokenKind::Numeric(Number::Integer(5)),
-        TokenKind::Star,
-        TokenKind::Numeric(Number::Integer(2)),
-        TokenKind::Eof,
-    ]);
-    let parser = JsavParser::new(tokens);
-    let (expr, errors) = parser.parse();
-    assert!(errors.is_empty());
-    assert_eq!(expr.len(), 1);
-    assert_eq!(
-        expr[0],
-        Stmt::Expression {
-            expr: binary_expr(
-                num_lit(3),
-                BinaryOp::Subtract,
-                binary_expr(num_lit(5), BinaryOp::Multiply, num_lit(2))
-            )
-        }
-    );
-}
+test_binary_precedence!(test_binary_precedence_plus, TokenKind::Plus, BinaryOp::Add);
+test_binary_precedence!(test_binary_precedence_minus, TokenKind::Minus, BinaryOp::Subtract);
 
 #[test]
 fn test_grouping() {
