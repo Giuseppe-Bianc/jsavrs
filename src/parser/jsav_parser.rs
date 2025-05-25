@@ -246,12 +246,10 @@ impl JsavParser {
 
         let mut variables = Vec::new();
         // Parse comma-separated variable names
-        loop {
-            match self.consume_identifier() {
-                Some(name) => variables.push(name),
-                None => break,
-            }
+        while let Some(name) = self.consume_identifier() {
+            variables.push(name);
 
+            // Check for comma separator
             if !self.match_token(TokenKind::Comma) {
                 break;
             }
