@@ -1,4 +1,4 @@
-fun a(num1: i8, num2: i8) i8 {
+fun a(num1: i8, num2: i8): i8 {
 }
 // single line comment
 //main {
@@ -11,8 +11,17 @@ fun a(num1: i8, num2: i8) i8 {
 	var a: i8 = 1 + 4 - (12 + 3) / 3
 	(1 + 4 + (12 + 3) * 3)
 	if (a == 1 + (1 + 2)) {
-		//break
+		break
+	} else if (a == 2) {
+        a = 2
+    } else {
+        a = 3
+    }
+	{
 	}
-//	{
-//	}
+	if (true) {
+	    if(false) {
+            return
+        }
+	}
 //}

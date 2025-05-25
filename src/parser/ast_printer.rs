@@ -258,6 +258,12 @@ fn print_stmt(stmt: &Stmt, indent: &str, is_last: bool, output: &mut String, sty
                 append_line(output, &new_indent, true, styles.clone().literal, "void");
             }
         }
+        Stmt::Break { span: _span } => {
+            append_line(output, indent, is_last, styles.clone().keyword, "Break");
+        }
+        Stmt::Continue { span: _span } => {
+            append_line(output, indent, is_last, styles.clone().keyword, "Continue");
+        }
     }
 }
 
@@ -277,6 +283,7 @@ fn format_type(ty: &Type) -> String {
         Type::Char => "char".to_string(),
         Type::String => "string".to_string(),
         Type::Bool => "bool".to_string(),
+        Type::Custom(type_s) => type_s.clone(),
         Type::Array(inner, _size_expr) => {
             let inner_type = format_type(inner);
             format!("[{inner_type}; <expr>]")

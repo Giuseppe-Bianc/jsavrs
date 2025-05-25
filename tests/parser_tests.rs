@@ -893,50 +893,32 @@ fn test_nested_if_statements() {
 
     assert!(!errors.is_empty());
     assert_eq!(statements.len(), 1);
-
-    if let Stmt::If {
-        condition,
-        then_branch,
-        else_branch: _else_branch,
-        ..
-    } = &statements[0] {
-        assert_eq!(*condition, bool_lit(true));
-        assert_eq!(then_branch.len(), 1);
-
-        if let Stmt::If {
-            condition: nested_cond,
-            then_branch: nested_then,
-            else_branch: nested_else,
-            ..
-        } = &then_branch[0] {
-            assert_eq!(*nested_cond, bool_lit(false));
-            assert_eq!(nested_then.len(), 1);
-            assert!(nested_else.is_none());
-        } else {
-            panic!("Expected nested if statement");
+    assert_eq!(
+        statements[0],
+        Stmt::If {
+            condition: grouping_expr(bool_lit(true)),
+            then_branch: vec![
+                Stmt::Block {
+                    statements: vec![
+                        Stmt::If {
+                            condition: grouping_expr(bool_lit(false)),
+                            then_branch: vec![
+                                Stmt::Block {
+                                    statements: vec![Stmt::Return { value: None, span: dummy_span() }],
+                                    span: dummy_span(),
+                                }
+                            ],
+                            else_branch: None,
+                            span: dummy_span(),
+                        }
+                    ],
+                    span: dummy_span(),
+                }
+            ],
+            else_branch: None,
+            span: dummy_span(),
         }
-    } else {
-        panic!("Expected if statement");
-    }
-}
-
-#[test]
-fn test_invalid_type_error() {
-    let tokens = create_tokens(vec![
-        TokenKind::KeywordVar,
-        TokenKind::IdentifierAscii("x".into()),
-        TokenKind::Colon,
-        TokenKind::IdentifierAscii("invalid".into()), // Not a valid type
-        TokenKind::Equal,
-        TokenKind::Numeric(Number::Integer(42)),
-        TokenKind::Semicolon,
-        TokenKind::Eof,
-    ]);
-    let parser = JsavParser::new(tokens);
-    let (_, errors) = parser.parse();
-
-    assert!(!errors.is_empty());
-    assert_eq!(errors[0].message().unwrap(), "Expected type annotation but found: IdentifierAscii(\"invalid\")");
+    );
 }
 
 #[test]
@@ -991,8 +973,23 @@ fn test_unicode_function_name() {
         TokenKind::Eof,
     ]);
     let parser = JsavParser::new(tokens);
-    let (_statements, errors) = parser.parse();
-    assert!(!errors.is_empty());
+    let (statements, errors) = parser.parse();
+    assert!(errors.is_empty());
+    assert_eq!(statements.len(), 1);
+    assert_eq!(statements[0],
+    Stmt::Function {
+            name: "こんにちは".into(),
+            parameters: vec![],
+            return_type: Type::Void,
+            body: vec![
+                Stmt::Block {
+                    statements: vec![],
+                    span: dummy_span(),
+                }
+            ],
+            span: dummy_span(),
+        }
+    );
 }
 
 

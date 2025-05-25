@@ -91,6 +91,8 @@ pub enum Stmt {
     Return {
         value: Option<Expr>, span: SourceSpan,
     },
+    Break { span: SourceSpan },
+    Continue { span: SourceSpan },
 }
 
 impl Expr {
@@ -118,6 +120,8 @@ impl Stmt {
             Stmt::If { span, .. } => span,
             Stmt::Block { span, .. } => span,
             Stmt::Return { span, .. } => span,
+            Stmt::Break { span, .. } => span,
+            Stmt::Continue { span, .. } => span
         }
     }
 }
@@ -174,6 +178,7 @@ pub enum Type {
     Char,
     String,
     Bool,
+    Custom(String),
     Array(Box<Type>, Box<Expr>),
     Vector(Box<Type>),
     Void,

@@ -111,7 +111,9 @@ fn main() -> Result<(), CompileError> {
         ()
     }
 
-    // Print statements with color if verbose
+    println!("parsing done");
+
+    //Print statements with color if verbose
     if args.verbose {
         //println!("{}", pretty_print(&statements.unwrap()));
         for stat in &statements {
