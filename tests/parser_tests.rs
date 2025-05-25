@@ -127,92 +127,105 @@ fn array_access_expr(array: Expr, index: Expr) -> Expr {
     }
 }
 
-#[test]
-fn test_literal_number() {
-    let tokens = create_tokens(vec![
-        TokenKind::Numeric(Number::Integer(42)),
-        TokenKind::Eof,
-    ]);
-    let parser = JsavParser::new(tokens);
-    let (expr, errors) = parser.parse();
-    assert!(errors.is_empty());
-    assert_eq!(expr.len(),1);
-    assert_eq!(expr[0],  Stmt::Expression { expr: num_lit(42) });
+macro_rules! literal_test {
+    ($name:ident, $token:expr, $expected_expr:expr) => {
+        #[test]
+        fn $name() {
+            let tokens = create_tokens(vec![$token, TokenKind::Eof]);
+            let parser = JsavParser::new(tokens);
+            let (expr, errors) = parser.parse();
+            assert!(errors.is_empty());
+            assert_eq!(expr.len(), 1);
+            assert_eq!(expr[0], Stmt::Expression { expr: $expected_expr });
+        }
+    };
 }
 
-#[test]
-fn test_literal_bool() {
-    let tokens = create_tokens(vec![TokenKind::KeywordBool(true), TokenKind::Eof]);
-    let parser = JsavParser::new(tokens);
-    let (expr, errors) = parser.parse();
-    assert!(errors.is_empty());
-    assert_eq!(expr.len(),1);
-    assert_eq!(expr[0], Stmt::Expression {expr: bool_lit(true)});
+// Macro per test operatori binari
+macro_rules! binary_op_test {
+    ($name:ident, $token_kind:expr, $op:expr) => {
+        #[test]
+        fn $name() {
+            let tokens = vec![
+                num_token(3.0),
+                Token {
+                    kind: $token_kind.clone(),
+                    span: dummy_span(),
+                },
+                num_token(4.0),
+                Token {
+                    kind: TokenKind::Eof,
+                    span: dummy_span(),
+                },
+            ];
+            let parser = JsavParser::new(tokens);
+            let (expr, errors) = parser.parse();
+            assert!(errors.is_empty(), "Failed for {:?}", $token_kind);
+            assert_eq!(expr.len(), 1);
+            assert_eq!(
+                expr[0],
+                Stmt::Expression {
+                    expr: binary_expr(float_lit(3.0), $op, float_lit(4.0))
+                },
+                "Failed for {:?}",
+                $token_kind
+            );
+        }
+    };
 }
 
-#[test]
-fn test_literal_nullptr() {
-    let tokens = create_tokens(vec![TokenKind::KeywordNullptr, TokenKind::Eof]);
-    let parser = JsavParser::new(tokens);
-    let (expr, errors) = parser.parse();
-    assert!(errors.is_empty());
-    assert_eq!(expr.len(),1);
-    assert_eq!(expr[0], Stmt::Expression {expr: nullptr_lit()});
+// Macro per test operatori unari
+macro_rules! unary_op_test {
+    ($name:ident, $token_kind:expr, $op:expr, $operand:expr, $expected_expr:expr) => {
+        #[test]
+        fn $name() {
+            let tokens = create_tokens(vec![$token_kind, $operand, TokenKind::Eof]);
+            let parser = JsavParser::new(tokens);
+            let (expr, errors) = parser.parse();
+            assert!(errors.is_empty());
+            assert_eq!(expr.len(), 1);
+            assert_eq!(
+                expr[0],
+                Stmt::Expression {
+                    expr: unary_expr($op, $expected_expr)
+                }
+            );
+        }
+    };
 }
 
-#[test]
-fn test_literal_string() {
-    let tokens = create_tokens(vec![
-        TokenKind::StringLiteral("assssss".to_string()),
-        TokenKind::Eof,
-    ]);
-    let parser = JsavParser::new(tokens);
-    let (expr, errors) = parser.parse();
-    assert!(errors.is_empty());
-    assert_eq!(expr.len(),1);
-    assert_eq!(expr[0], Stmt::Expression {expr: string_lit("assssss")});
-}
 
-#[test]
-fn test_literal_char() {
-    let tokens = create_tokens(vec![
-        TokenKind::CharLiteral("a".to_string()),
-        TokenKind::Eof,
-    ]);
-    let parser = JsavParser::new(tokens);
-    let (expr, errors) = parser.parse();
-    assert!(errors.is_empty());
-    assert_eq!(expr.len(),1);
-    assert_eq!(expr[0], Stmt::Expression {expr: char_lit("a")});
-}
+// Test per letterali usando la macro
+literal_test!(test_literal_number, TokenKind::Numeric(Number::Integer(42)), num_lit(42));
+literal_test!(test_literal_bool, TokenKind::KeywordBool(true), bool_lit(true));
+literal_test!(test_literal_nullptr, TokenKind::KeywordNullptr, nullptr_lit());
+literal_test!(test_literal_string, TokenKind::StringLiteral("assssss".to_string()), string_lit("assssss"));
+literal_test!(test_literal_char, TokenKind::CharLiteral("a".to_string()), char_lit("a"));
 
-#[test]
-fn test_unary_negation() {
-    let tokens = create_tokens(vec![
-        TokenKind::Minus,
-        TokenKind::Numeric(Number::Integer(5)),
-        TokenKind::Eof,
-    ]);
-    let parser = JsavParser::new(tokens);
-    let (expr, errors) = parser.parse();
-    assert!(errors.is_empty());
-    assert_eq!(expr.len(),1);
-    assert_eq!(expr[0], Stmt::Expression {expr: unary_expr(UnaryOp::Negate, num_lit(5))});
-}
 
-#[test]
-fn test_unary_not() {
-    let tokens = create_tokens(vec![
-        TokenKind::Not,
-        TokenKind::KeywordBool(true),
-        TokenKind::Eof,
-    ]);
-    let parser = JsavParser::new(tokens);
-    let (expr, errors) = parser.parse();
-    assert!(errors.is_empty());
-    assert_eq!(expr.len(),1);
-    assert_eq!(expr[0], Stmt::Expression {expr: unary_expr(UnaryOp::Not, bool_lit(true))});
-}
+// Test per operatori binari usando la macro
+binary_op_test!(test_add, TokenKind::Plus, BinaryOp::Add);
+binary_op_test!(test_subtract, TokenKind::Minus, BinaryOp::Subtract);
+binary_op_test!(test_multiply, TokenKind::Star, BinaryOp::Multiply);
+binary_op_test!(test_divide, TokenKind::Slash, BinaryOp::Divide);
+binary_op_test!(test_modulo, TokenKind::Percent, BinaryOp::Modulo);
+binary_op_test!(test_equal, TokenKind::EqualEqual, BinaryOp::Equal);
+binary_op_test!(test_not_equal, TokenKind::NotEqual, BinaryOp::NotEqual);
+binary_op_test!(test_less, TokenKind::Less, BinaryOp::Less);
+binary_op_test!(test_less_equal, TokenKind::LessEqual, BinaryOp::LessEqual);
+binary_op_test!(test_greater, TokenKind::Greater, BinaryOp::Greater);
+binary_op_test!(test_greater_equal, TokenKind::GreaterEqual, BinaryOp::GreaterEqual);
+binary_op_test!(test_and, TokenKind::AndAnd, BinaryOp::And);
+binary_op_test!(test_or, TokenKind::OrOr, BinaryOp::Or);
+binary_op_test!(test_bitwise_and, TokenKind::And, BinaryOp::BitwiseAnd);
+binary_op_test!(test_bitwise_or, TokenKind::Or, BinaryOp::BitwiseOr);
+binary_op_test!(test_bitwise_xor, TokenKind::Xor, BinaryOp::BitwiseXor);
+binary_op_test!(test_shift_left, TokenKind::ShiftLeft, BinaryOp::ShiftLeft);
+binary_op_test!(test_shift_right, TokenKind::ShiftRight, BinaryOp::ShiftRight);
+
+// Test per operatori unari usando la macro
+unary_op_test!(test_unary_negation, TokenKind::Minus, UnaryOp::Negate, TokenKind::Numeric(Number::Integer(5)), num_lit(5));
+unary_op_test!(test_unary_not, TokenKind::Not, UnaryOp::Not, TokenKind::KeywordBool(true), bool_lit(true));
 
 #[test]
 fn test_binary_precedence() {
