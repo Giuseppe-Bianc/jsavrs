@@ -136,7 +136,12 @@ macro_rules! literal_test {
             let (expr, errors) = parser.parse();
             assert!(errors.is_empty());
             assert_eq!(expr.len(), 1);
-            assert_eq!(expr[0], Stmt::Expression { expr: $expected_expr });
+            assert_eq!(
+                expr[0],
+                Stmt::Expression {
+                    expr: $expected_expr
+                }
+            );
         }
     };
 }
@@ -194,14 +199,32 @@ macro_rules! unary_op_test {
     };
 }
 
-
 // Test per letterali usando la macro
-literal_test!(test_literal_number, TokenKind::Numeric(Number::Integer(42)), num_lit(42));
-literal_test!(test_literal_bool, TokenKind::KeywordBool(true), bool_lit(true));
-literal_test!(test_literal_nullptr, TokenKind::KeywordNullptr, nullptr_lit());
-literal_test!(test_literal_string, TokenKind::StringLiteral("assssss".to_string()), string_lit("assssss"));
-literal_test!(test_literal_char, TokenKind::CharLiteral("a".to_string()), char_lit("a"));
-
+literal_test!(
+    test_literal_number,
+    TokenKind::Numeric(Number::Integer(42)),
+    num_lit(42)
+);
+literal_test!(
+    test_literal_bool,
+    TokenKind::KeywordBool(true),
+    bool_lit(true)
+);
+literal_test!(
+    test_literal_nullptr,
+    TokenKind::KeywordNullptr,
+    nullptr_lit()
+);
+literal_test!(
+    test_literal_string,
+    TokenKind::StringLiteral("assssss".to_string()),
+    string_lit("assssss")
+);
+literal_test!(
+    test_literal_char,
+    TokenKind::CharLiteral("a".to_string()),
+    char_lit("a")
+);
 
 // Test per operatori binari usando la macro
 binary_op_test!(test_add, TokenKind::Plus, BinaryOp::Add);
@@ -214,18 +237,38 @@ binary_op_test!(test_not_equal, TokenKind::NotEqual, BinaryOp::NotEqual);
 binary_op_test!(test_less, TokenKind::Less, BinaryOp::Less);
 binary_op_test!(test_less_equal, TokenKind::LessEqual, BinaryOp::LessEqual);
 binary_op_test!(test_greater, TokenKind::Greater, BinaryOp::Greater);
-binary_op_test!(test_greater_equal, TokenKind::GreaterEqual, BinaryOp::GreaterEqual);
+binary_op_test!(
+    test_greater_equal,
+    TokenKind::GreaterEqual,
+    BinaryOp::GreaterEqual
+);
 binary_op_test!(test_and, TokenKind::AndAnd, BinaryOp::And);
 binary_op_test!(test_or, TokenKind::OrOr, BinaryOp::Or);
 binary_op_test!(test_bitwise_and, TokenKind::And, BinaryOp::BitwiseAnd);
 binary_op_test!(test_bitwise_or, TokenKind::Or, BinaryOp::BitwiseOr);
 binary_op_test!(test_bitwise_xor, TokenKind::Xor, BinaryOp::BitwiseXor);
 binary_op_test!(test_shift_left, TokenKind::ShiftLeft, BinaryOp::ShiftLeft);
-binary_op_test!(test_shift_right, TokenKind::ShiftRight, BinaryOp::ShiftRight);
+binary_op_test!(
+    test_shift_right,
+    TokenKind::ShiftRight,
+    BinaryOp::ShiftRight
+);
 
 // Test per operatori unari usando la macro
-unary_op_test!(test_unary_negation, TokenKind::Minus, UnaryOp::Negate, TokenKind::Numeric(Number::Integer(5)), num_lit(5));
-unary_op_test!(test_unary_not, TokenKind::Not, UnaryOp::Not, TokenKind::KeywordBool(true), bool_lit(true));
+unary_op_test!(
+    test_unary_negation,
+    TokenKind::Minus,
+    UnaryOp::Negate,
+    TokenKind::Numeric(Number::Integer(5)),
+    num_lit(5)
+);
+unary_op_test!(
+    test_unary_not,
+    TokenKind::Not,
+    UnaryOp::Not,
+    TokenKind::KeywordBool(true),
+    bool_lit(true)
+);
 
 #[test]
 fn test_binary_precedence() {
@@ -240,14 +283,16 @@ fn test_binary_precedence() {
     let parser = JsavParser::new(tokens);
     let (expr, errors) = parser.parse();
     assert!(errors.is_empty());
-    assert_eq!(expr.len(),1);
+    assert_eq!(expr.len(), 1);
     assert_eq!(
         expr[0],
-        Stmt::Expression {expr: binary_expr(
-            num_lit(3),
-            BinaryOp::Add,
-            binary_expr(num_lit(5), BinaryOp::Multiply, num_lit(2))
-        )}
+        Stmt::Expression {
+            expr: binary_expr(
+                num_lit(3),
+                BinaryOp::Add,
+                binary_expr(num_lit(5), BinaryOp::Multiply, num_lit(2))
+            )
+        }
     );
 }
 
@@ -264,14 +309,16 @@ fn test_binary_precedence_minus() {
     let parser = JsavParser::new(tokens);
     let (expr, errors) = parser.parse();
     assert!(errors.is_empty());
-    assert_eq!(expr.len(),1);
+    assert_eq!(expr.len(), 1);
     assert_eq!(
         expr[0],
-        Stmt::Expression {expr: binary_expr(
-            num_lit(3),
-            BinaryOp::Subtract,
-            binary_expr(num_lit(5), BinaryOp::Multiply, num_lit(2))
-        )}
+        Stmt::Expression {
+            expr: binary_expr(
+                num_lit(3),
+                BinaryOp::Subtract,
+                binary_expr(num_lit(5), BinaryOp::Multiply, num_lit(2))
+            )
+        }
     );
 }
 
@@ -290,14 +337,16 @@ fn test_grouping() {
     let parser = JsavParser::new(tokens);
     let (expr, errors) = parser.parse();
     assert!(errors.is_empty());
-    assert_eq!(expr.len(),1);
+    assert_eq!(expr.len(), 1);
     assert_eq!(
         expr[0],
-        Stmt::Expression {expr: binary_expr(
-            grouping_expr(binary_expr(num_lit(3), BinaryOp::Add, num_lit(5))),
-            BinaryOp::Multiply,
-            num_lit(2)
-        )}
+        Stmt::Expression {
+            expr: binary_expr(
+                grouping_expr(binary_expr(num_lit(3), BinaryOp::Add, num_lit(5))),
+                BinaryOp::Multiply,
+                num_lit(2)
+            )
+        }
     );
 }
 
@@ -312,8 +361,13 @@ fn test_assignment_valid() {
     let parser = JsavParser::new(tokens);
     let (expr, errors) = parser.parse();
     assert!(errors.is_empty());
-    assert_eq!(expr.len(),1);
-    assert_eq!(expr[0], Stmt::Expression {expr: assign_expr("x", num_lit(5))});
+    assert_eq!(expr.len(), 1);
+    assert_eq!(
+        expr[0],
+        Stmt::Expression {
+            expr: assign_expr("x", num_lit(5))
+        }
+    );
 }
 
 #[test]
@@ -329,10 +383,13 @@ fn test_assignment_chained() {
     let parser = JsavParser::new(tokens);
     let (expr, errors) = parser.parse();
     assert!(errors.is_empty());
-    assert_eq!(expr.len(),1);
-    assert_eq!(expr[0], Stmt::Expression {
-        expr: assign_expr("x", assign_expr("y", num_lit(5))),
-    })
+    assert_eq!(expr.len(), 1);
+    assert_eq!(
+        expr[0],
+        Stmt::Expression {
+            expr: assign_expr("x", assign_expr("y", num_lit(5))),
+        }
+    )
 }
 
 #[test]
@@ -346,14 +403,13 @@ fn test_assignment_invalid_target() {
     let parser = JsavParser::new(tokens);
     let (expr, errors) = parser.parse();
     assert!(!errors.is_empty());
-    assert_eq!(errors[0].message().unwrap(), "Invalid assignment target: Equal");
-    assert_eq!(expr.len(),2);
-    assert_eq!(expr[0], Stmt::Expression {
-        expr: num_lit(5)
-    });
-    assert_eq!(expr[1], Stmt::Expression {
-        expr: num_lit(10)
-    });
+    assert_eq!(
+        errors[0].message().unwrap(),
+        "Invalid assignment target: Equal"
+    );
+    assert_eq!(expr.len(), 2);
+    assert_eq!(expr[0], Stmt::Expression { expr: num_lit(5) });
+    assert_eq!(expr[1], Stmt::Expression { expr: num_lit(10) });
 }
 
 #[test]
@@ -372,7 +428,7 @@ fn test_function_call() {
     let parser = JsavParser::new(tokens);
     let (expr, errors) = parser.parse();
     assert!(errors.is_empty());
-    assert_eq!(expr.len(),1);
+    assert_eq!(expr.len(), 1);
     assert_eq!(
         expr[0],
         Stmt::Expression {
@@ -401,7 +457,7 @@ fn test_array_access() {
     let parser = JsavParser::new(tokens);
     let (expr, errors) = parser.parse();
     assert!(errors.is_empty());
-    assert_eq!(expr.len(),1);
+    assert_eq!(expr.len(), 1);
     assert_eq!(
         expr[0],
         Stmt::Expression {
@@ -424,7 +480,7 @@ fn test_array_access_empty_index() {
     let parser = JsavParser::new(tokens);
     let (expr, errors) = parser.parse();
     assert!(!errors.is_empty());
-    assert_eq!(expr.len(),1);
+    assert_eq!(expr.len(), 1);
     assert_eq!(
         expr[0],
         Stmt::Expression {
@@ -447,9 +503,17 @@ fn test_unclosed_parenthesis() {
     let parser = JsavParser::new(tokens);
     let (expr, errors) = parser.parse();
     assert!(!errors.is_empty());
-    assert_eq!(errors[0].message().unwrap(), "Unclosed parenthesis: Expected 'CloseParen' but found Eof");
-    assert_eq!(expr.len(),1);
-    assert_eq!(expr[0], Stmt::Expression { expr: grouping_expr(num_lit(5))});
+    assert_eq!(
+        errors[0].message().unwrap(),
+        "Unclosed parenthesis: Expected 'CloseParen' but found Eof"
+    );
+    assert_eq!(expr.len(), 1);
+    assert_eq!(
+        expr[0],
+        Stmt::Expression {
+            expr: grouping_expr(num_lit(5))
+        }
+    );
 }
 
 #[test]
@@ -463,7 +527,7 @@ fn test_unexpected_token() {
     let (expr, errors) = parser.parse();
     assert!(!errors.is_empty());
     assert_eq!(errors[0].message().unwrap(), "Unexpected token: Plus");
-    assert_eq!(expr.len(),0);
+    assert_eq!(expr.len(), 0);
 }
 
 #[test]
@@ -473,7 +537,7 @@ fn test_empty_input() {
     let (expr, errors) = parser.parse();
     assert_eq!(errors.len(), 0);
     //assert_eq!(errors[0].message().unwrap(), "Unexpected token: Eof");
-    assert_eq!(expr.len(),0);
+    assert_eq!(expr.len(), 0);
     //assert_eq!(expr, None);
 }
 
@@ -492,7 +556,7 @@ fn test_deep_nesting() {
     let parser = JsavParser::new(tokens);
     let (expr, errors) = parser.parse();
     assert!(errors.is_empty());
-    assert_eq!(expr.len(),1);
+    assert_eq!(expr.len(), 1);
     assert_eq!(
         expr,
         vec![Stmt::Expression {
@@ -520,9 +584,13 @@ fn test_variable_unicode_identifier() {
     let parser = JsavParser::new(tokens);
     let (expr, errors) = parser.parse();
     assert!(errors.is_empty());
-    assert_eq!(expr.len(),1);
-    assert_eq!(expr[0], Stmt::Expression {
-               expr: variable_expr("変数")});
+    assert_eq!(expr.len(), 1);
+    assert_eq!(
+        expr[0],
+        Stmt::Expression {
+            expr: variable_expr("変数")
+        }
+    );
 }
 
 // Test for lines 143-144: Unary operator precedence
@@ -538,7 +606,7 @@ fn test_unary_precedence() {
     let parser = JsavParser::new(tokens);
     let (expr, errors) = parser.parse();
     assert!(errors.is_empty());
-    assert_eq!(expr.len(),1);
+    assert_eq!(expr.len(), 1);
     assert_eq!(
         expr[0],
         Stmt::Expression {
@@ -565,14 +633,18 @@ fn test_assignment_invalid_target_function_call() {
     let parser = JsavParser::new(tokens);
     let (expr, errors) = parser.parse();
     assert!(!errors.is_empty());
-    assert_eq!(errors[0].message().unwrap(), "Invalid assignment target: Equal");
-    assert_eq!(expr.len(),2);
-    assert_eq!(expr[0], Stmt::Expression {
-        expr: call_expr(variable_expr("foo"), vec![])
-    });
-    assert_eq!(expr[1], Stmt::Expression {
-        expr: num_lit(5)
-    });
+    assert_eq!(
+        errors[0].message().unwrap(),
+        "Invalid assignment target: Equal"
+    );
+    assert_eq!(expr.len(), 2);
+    assert_eq!(
+        expr[0],
+        Stmt::Expression {
+            expr: call_expr(variable_expr("foo"), vec![])
+        }
+    );
+    assert_eq!(expr[1], Stmt::Expression { expr: num_lit(5) });
 }
 
 // Test for lines 178-179: Function call with zero arguments
@@ -587,7 +659,7 @@ fn test_function_call_zero_arguments() {
     let parser = JsavParser::new(tokens);
     let (expr, errors) = parser.parse();
     assert!(errors.is_empty());
-    assert_eq!(expr.len(),1);
+    assert_eq!(expr.len(), 1);
     assert_eq!(
         expr[0],
         Stmt::Expression {
@@ -608,11 +680,17 @@ fn test_function_call_unclosed_paren() {
     let parser = JsavParser::new(tokens);
     let (expr, errors) = parser.parse();
     assert!(!errors.is_empty());
-    assert_eq!(errors[0].message().unwrap(), "Unclosed function call: Expected 'CloseParen' but found Eof");
-    assert_eq!(expr.len(),1);
-    assert!(matches!(expr[0], Stmt::Expression {
-        expr: Expr::Call { .. }
-    }));
+    assert_eq!(
+        errors[0].message().unwrap(),
+        "Unclosed function call: Expected 'CloseParen' but found Eof"
+    );
+    assert_eq!(expr.len(), 1);
+    assert!(matches!(
+        expr[0],
+        Stmt::Expression {
+            expr: Expr::Call { .. }
+        }
+    ));
 }
 
 // Test for line 170: Assignment with binary expr target
@@ -629,13 +707,18 @@ fn test_assignment_invalid_target_binary() {
     let parser = JsavParser::new(tokens);
     let (expr, errors) = parser.parse();
     assert!(!errors.is_empty());
-    assert_eq!(errors[0].message().unwrap(), "Invalid assignment target: Equal");
-    assert_eq!(expr.len(),2);
-    assert!(matches!(expr[0], Stmt::Expression {
-        expr: Expr::Binary { .. }
-    }));
+    assert_eq!(
+        errors[0].message().unwrap(),
+        "Invalid assignment target: Equal"
+    );
+    assert_eq!(expr.len(), 2);
+    assert!(matches!(
+        expr[0],
+        Stmt::Expression {
+            expr: Expr::Binary { .. }
+        }
+    ));
 }
-
 
 #[test]
 fn test_invalid_binary_operator() {
@@ -644,7 +727,7 @@ fn test_invalid_binary_operator() {
         TokenKind::Comma,
         TokenKind::Dot,
         TokenKind::KeywordIf,
-        TokenKind::PlusEqual,    // Compound assignment
+        TokenKind::PlusEqual, // Compound assignment
     ];
 
     for kind in invalid_kinds {
@@ -684,8 +767,13 @@ fn test_assignment_unicode_variable() {
     let parser = JsavParser::new(tokens);
     let (expr, errors) = parser.parse();
     assert!(errors.is_empty());
-    assert_eq!(expr.len(),1);
-    assert_eq!(expr[0],  Stmt::Expression { expr: assign_expr("変数", num_lit(5))});
+    assert_eq!(expr.len(), 1);
+    assert_eq!(
+        expr[0],
+        Stmt::Expression {
+            expr: assign_expr("変数", num_lit(5))
+        }
+    );
 }
 
 // Test per accessi ad array concatenati
@@ -704,7 +792,7 @@ fn test_chained_array_access() {
     let parser = JsavParser::new(tokens);
     let (expr, errors) = parser.parse();
     assert!(errors.is_empty());
-    assert_eq!(expr.len(),1);
+    assert_eq!(expr.len(), 1);
     assert_eq!(
         expr[0],
         Stmt::Expression {
@@ -727,7 +815,7 @@ fn test_invalid_unary_operator() {
     let (expr, errors) = parser.parse();
     assert!(!errors.is_empty());
     assert_eq!(errors[0].message().unwrap(), "Unexpected token: Star");
-    assert_eq!(expr.len(),0);
+    assert_eq!(expr.len(), 0);
 }
 
 #[test]
@@ -744,7 +832,7 @@ fn test_nested_function_calls() {
     let parser = JsavParser::new(tokens);
     let (expr, errors) = parser.parse();
     assert!(errors.is_empty());
-    assert_eq!(expr.len(),1);
+    assert_eq!(expr.len(), 1);
     assert_eq!(
         expr[0],
         Stmt::Expression {
@@ -786,7 +874,7 @@ fn test_mixed_literals_function_call() {
     let parser = JsavParser::new(tokens);
     let (expr, errors) = parser.parse();
     assert!(errors.is_empty());
-    assert_eq!(expr.len(),1);
+    assert_eq!(expr.len(), 1);
     assert_eq!(
         expr[0],
         Stmt::Expression {
@@ -810,7 +898,10 @@ fn test_complex_nesting_errors() {
     let parser = JsavParser::new(tokens);
     let (_expr, errors) = parser.parse();
     assert!(!errors.is_empty());
-    assert_eq!(errors[0].message().unwrap(), "Unexpected token: OpenBracket");
+    assert_eq!(
+        errors[0].message().unwrap(),
+        "Unexpected token: OpenBracket"
+    );
 }
 
 #[test]
@@ -826,7 +917,7 @@ fn test_bitwise_operator_precedence() {
     let parser = JsavParser::new(tokens);
     let (expr, errors) = parser.parse();
     assert!(errors.is_empty());
-    assert_eq!(expr.len(),1);
+    assert_eq!(expr.len(), 1);
     assert_eq!(
         expr[0],
         Stmt::Expression {
@@ -866,7 +957,10 @@ fn test_nested_unkown_binding_power() {
     let parser = JsavParser::new(tokens);
     let (_expr, errors) = parser.parse();
     assert!(!errors.is_empty());
-    assert_eq!(errors[0].message().unwrap(), "Unexpected operator: PlusEqual");
+    assert_eq!(
+        errors[0].message().unwrap(),
+        "Unexpected operator: PlusEqual"
+    );
 }
 
 #[test]
@@ -897,24 +991,21 @@ fn test_nested_if_statements() {
         statements[0],
         Stmt::If {
             condition: grouping_expr(bool_lit(true)),
-            then_branch: vec![
-                Stmt::Block {
-                    statements: vec![
-                        Stmt::If {
-                            condition: grouping_expr(bool_lit(false)),
-                            then_branch: vec![
-                                Stmt::Block {
-                                    statements: vec![Stmt::Return { value: None, span: dummy_span() }],
-                                    span: dummy_span(),
-                                }
-                            ],
-                            else_branch: None,
-                            span: dummy_span(),
-                        }
-                    ],
+            then_branch: vec![Stmt::Block {
+                statements: vec![Stmt::If {
+                    condition: grouping_expr(bool_lit(false)),
+                    then_branch: vec![Stmt::Block {
+                        statements: vec![Stmt::Return {
+                            value: None,
+                            span: dummy_span()
+                        }],
+                        span: dummy_span(),
+                    }],
+                    else_branch: None,
                     span: dummy_span(),
-                }
-            ],
+                }],
+                span: dummy_span(),
+            }],
             else_branch: None,
             span: dummy_span(),
         }
@@ -958,7 +1049,11 @@ fn test_function_parameter_errors() {
     let (_, errors) = parser.parse();
 
     assert!(!errors.is_empty());
-    assert!(errors.iter().any(|e| e.message().unwrap().contains("Expected ':' after parameter name")));
+    assert!(errors.iter().any(|e| {
+        e.message()
+            .unwrap()
+            .contains("Expected ':' after parameter name")
+    }));
 }
 
 #[test]
@@ -976,22 +1071,20 @@ fn test_unicode_function_name() {
     let (statements, errors) = parser.parse();
     assert!(errors.is_empty());
     assert_eq!(statements.len(), 1);
-    assert_eq!(statements[0],
-    Stmt::Function {
+    assert_eq!(
+        statements[0],
+        Stmt::Function {
             name: "こんにちは".into(),
             parameters: vec![],
             return_type: Type::Void,
-            body: vec![
-                Stmt::Block {
-                    statements: vec![],
-                    span: dummy_span(),
-                }
-            ],
+            body: vec![Stmt::Block {
+                statements: vec![],
+                span: dummy_span(),
+            }],
             span: dummy_span(),
         }
     );
 }
-
 
 #[test]
 fn test_block_stmt() {
@@ -1004,12 +1097,18 @@ fn test_block_stmt() {
     let (statements, errors) = parser.parse();
     assert!(errors.is_empty());
     assert_eq!(statements.len(), 1);
-    assert_eq!(statements[0], Stmt::Block { statements: vec![], span: dummy_span() });
+    assert_eq!(
+        statements[0],
+        Stmt::Block {
+            statements: vec![],
+            span: dummy_span()
+        }
+    );
 }
 
 #[test]
 fn test_break_statement_in_if() {
-// TokenKind::KeywordIf
+    // TokenKind::KeywordIf
     let tokens = create_tokens(vec![
         TokenKind::KeywordIf,
         TokenKind::OpenParen,
@@ -1028,12 +1127,10 @@ fn test_break_statement_in_if() {
         statements[0],
         Stmt::If {
             condition: grouping_expr(bool_lit(true)),
-            then_branch: vec![
-                Stmt::Block {
-                    statements: vec![Stmt::Break { span: dummy_span() }],
-                    span: dummy_span(),
-                }
-            ],
+            then_branch: vec![Stmt::Block {
+                statements: vec![Stmt::Break { span: dummy_span() }],
+                span: dummy_span(),
+            }],
             else_branch: None,
             span: dummy_span(),
         }
@@ -1061,12 +1158,10 @@ fn test_continue_statement_in_if() {
         statements[0],
         Stmt::If {
             condition: grouping_expr(bool_lit(true)),
-            then_branch: vec![
-                Stmt::Block {
-                    statements: vec![Stmt::Continue { span: dummy_span() }],
-                    span: dummy_span(),
-                }
-            ],
+            then_branch: vec![Stmt::Block {
+                statements: vec![Stmt::Continue { span: dummy_span() }],
+                span: dummy_span(),
+            }],
             else_branch: None,
             span: dummy_span(),
         }

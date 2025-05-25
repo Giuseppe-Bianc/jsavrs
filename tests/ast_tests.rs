@@ -1,10 +1,10 @@
-use std::sync::Arc;
-use jsavrs::location::source_span::SourceSpan;
-use regex::Regex;
 use jsavrs::location::source_location::SourceLocation;
+use jsavrs::location::source_span::SourceSpan;
 use jsavrs::parser::ast::*;
 use jsavrs::parser::ast_printer::{pretty_print, pretty_print_stmt};
 use jsavrs::tokens::number::Number;
+use regex::Regex;
+use std::sync::Arc;
 
 // src/parser/ast_test.rs
 // Helper to create a dummy SourceSpan
@@ -39,7 +39,6 @@ macro_rules! stmt_span_test {
         }
     };
 }
-
 
 #[test]
 fn test_simple_binary_expr() {
@@ -409,7 +408,6 @@ fn test_edge_case_special_chars() {
     assert_eq!(stripped.trim(), "└── Literal \"hello\nworld\"");
 }
 
-
 ////////////////
 expr_span_test!(test_expr_binary_span, |s| Expr::Binary {
     left: Box::new(Expr::Literal {
@@ -442,11 +440,9 @@ expr_span_test!(test_expr_grouping_span, |s| Expr::Grouping {
 });
 
 expr_span_test!(test_expr_literal_span, |s| Expr::Literal {
-        value: LiteralValue::Nullptr,
-        span: s,
-    }
-);
-
+    value: LiteralValue::Nullptr,
+    span: s,
+});
 
 expr_span_test!(test_expr_variable_span, |s| Expr::Variable {
     name: "x".to_string(),
@@ -508,7 +504,6 @@ stmt_span_test!(test_stmt_function_span, |s| Stmt::Function {
     span: s,
 });
 
-
 stmt_span_test!(test_stmt_if_span, |s| Stmt::If {
     condition: Expr::Literal {
         value: LiteralValue::Bool(true),
@@ -528,6 +523,9 @@ stmt_span_test!(test_stmt_return_span, |s| Stmt::Return {
     value: None,
     span: s,
 });
+
+stmt_span_test!(test_stmt_break_span, |s| Stmt::Break { span: s });
+stmt_span_test!(test_stmt_continue_span, |s| Stmt::Continue { span: s });
 
 #[test]
 fn test_zero_length_span() {
@@ -640,23 +638,21 @@ fn test_function_with_parameters() {
             },
         ],
         return_type: Type::I32,
-        body: vec![
-            Stmt::Return {
-                value: Some(Expr::Binary {
-                    left: Box::new(Expr::Variable {
-                        name: "a".to_string(),
-                        span: dummy_span(),
-                    }),
-                    op: BinaryOp::Add,
-                    right: Box::new(Expr::Variable {
-                        name: "b".to_string(),
-                        span: dummy_span(),
-                    }),
+        body: vec![Stmt::Return {
+            value: Some(Expr::Binary {
+                left: Box::new(Expr::Variable {
+                    name: "a".to_string(),
+                    span: dummy_span(),
+                }),
+                op: BinaryOp::Add,
+                right: Box::new(Expr::Variable {
+                    name: "b".to_string(),
                     span: dummy_span(),
                 }),
                 span: dummy_span(),
-            },
-        ],
+            }),
+            span: dummy_span(),
+        }],
         span: dummy_span(),
     };
 
@@ -745,19 +741,15 @@ fn test_empty_block_stmt() {
 #[test]
 fn test_nested_block_stmt() {
     let stmt = Stmt::Block {
-        statements: vec![
-            Stmt::Block {
-                statements: vec![
-                    Stmt::Expression {
-                        expr: Expr::Literal {
-                            value: LiteralValue::Number(Number::Integer(42)),
-                            span: dummy_span(),
-                        },
-                    },
-                ],
-                span: dummy_span(),
-            },
-        ],
+        statements: vec![Stmt::Block {
+            statements: vec![Stmt::Expression {
+                expr: Expr::Literal {
+                    value: LiteralValue::Number(Number::Integer(42)),
+                    span: dummy_span(),
+                },
+            }],
+            span: dummy_span(),
+        }],
         span: dummy_span(),
     };
 
@@ -797,12 +789,13 @@ fn test_return_stmt_with_value() {
 fn test_complex_type_declaration() {
     let stmt = Stmt::VarDeclaration {
         variables: vec!["matrix".to_string()],
-        type_annotation: Type::Array(Box::new(Type::F64), Box::new(
-            Expr::Literal {
+        type_annotation: Type::Array(
+            Box::new(Type::F64),
+            Box::new(Expr::Literal {
                 value: LiteralValue::Nullptr,
                 span: dummy_span(),
-            }
-        )),
+            }),
+        ),
         initializers: vec![],
         span: dummy_span(),
     };
@@ -853,7 +846,7 @@ fn test_edge_case_multiple_parameters() {
                 type_annotation: Type::I32,
                 span: dummy_span(),
             },
-            Parameter  {
+            Parameter {
                 name: "b".to_string(),
                 type_annotation: Type::I32,
                 span: dummy_span(),
@@ -889,32 +882,33 @@ fn test_edge_case_multiple_parameters() {
     assert_eq!(stripped.trim(), expected);
 }
 
-
 macro_rules! test_type_output {
     ($name:ident, $typ:expr, $type_str:expr) => {
-#[test]
+        #[test]
         fn $name() {
-    let stmt = Stmt::Function {
-        name: "func".to_string(),
-        parameters: vec![],
+            let stmt = Stmt::Function {
+                name: "func".to_string(),
+                parameters: vec![],
                 return_type: $typ,
-        body: vec![],
-        span: dummy_span(),
-    };
+                body: vec![],
+                span: dummy_span(),
+            };
 
-    let output = pretty_print_stmt(&stmt);
-    let stripped = strip_ansi_codes(&output);
+            let output = pretty_print_stmt(&stmt);
+            let stripped = strip_ansi_codes(&output);
 
             let expected = format!(
-"└── Function
+                "└── Function
     ├── Name:
     │   └── func
     ├── Parameters:
     ├── Return Type:
     │   └── {}
-    └── Body:", $type_str);
-    assert_eq!(stripped.trim(), expected);
-}
+    └── Body:",
+                $type_str
+            );
+            assert_eq!(stripped.trim(), expected);
+        }
     };
 }
 
@@ -983,11 +977,12 @@ fn test_corner_case_complex_return_type() {
     let stmt = Stmt::Function {
         name: "getVector".to_string(),
         parameters: vec![],
-        return_type: Type::Vector(Box::new(Type::Array(Box::new(Type::I32),
+        return_type: Type::Vector(Box::new(Type::Array(
+            Box::new(Type::I32),
             Box::new(Expr::Literal {
                 value: LiteralValue::Nullptr,
                 span: dummy_span(),
-            })
+            }),
         ))),
         body: vec![],
         span: dummy_span(),
@@ -1009,9 +1004,7 @@ fn test_corner_case_complex_return_type() {
 
 #[test]
 fn test_break_stmt() {
-    let stmt = Stmt::Break {
-        span: dummy_span(),
-    };
+    let stmt = Stmt::Break { span: dummy_span() };
 
     let output = pretty_print_stmt(&stmt);
     let stripped = strip_ansi_codes(&output);
@@ -1020,9 +1013,7 @@ fn test_break_stmt() {
 }
 #[test]
 fn test_continue_stmt() {
-    let stmt = Stmt::Continue {
-        span: dummy_span(),
-    };
+    let stmt = Stmt::Continue { span: dummy_span() };
 
     let output = pretty_print_stmt(&stmt);
     let stripped = strip_ansi_codes(&output);

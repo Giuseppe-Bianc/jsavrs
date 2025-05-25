@@ -13,7 +13,10 @@ fn test_integer_display() {
 fn test_unsigned_integer_display() {
     assert_eq!(Number::UnsignedInteger(0).to_string(), "0");
     assert_eq!(Number::UnsignedInteger(42).to_string(), "42");
-    assert_eq!(Number::UnsignedInteger(u64::MAX).to_string(), u64::MAX.to_string());
+    assert_eq!(
+        Number::UnsignedInteger(u64::MAX).to_string(),
+        u64::MAX.to_string()
+    );
 }
 
 #[allow(clippy::approx_constant)]
@@ -50,7 +53,10 @@ fn test_scientific32_display() {
 
 #[test]
 fn test_scientific64_display() {
-    assert_eq!(Number::Scientific64(1.23456789, 5).to_string(), "1.23456789e5");
+    assert_eq!(
+        Number::Scientific64(1.23456789, 5).to_string(),
+        "1.23456789e5"
+    );
     assert_eq!(Number::Scientific64(9.87, -3).to_string(), "9.87e-3");
     assert_eq!(Number::Scientific64(0.0, 0).to_string(), "0e0");
     assert_eq!(Number::Scientific64(-0.0, 0).to_string(), "-0e0");
@@ -63,14 +69,23 @@ fn test_extreme_scientific_values() {
     assert_eq!(num.to_string(), format!("{}e{}", f64::MAX, i32::MAX));
 
     let num = Number::Scientific64(f64::MIN_POSITIVE, i32::MIN);
-    assert_eq!(num.to_string(), format!("{}e{}", f64::MIN_POSITIVE, i32::MIN));
+    assert_eq!(
+        num.to_string(),
+        format!("{}e{}", f64::MIN_POSITIVE, i32::MIN)
+    );
 }
 
 #[test]
 fn test_extreme_float_values() {
     assert_eq!(Number::Float64(f64::MAX).to_string(), f64::MAX.to_string());
-    assert_eq!(Number::Float64(f64::MIN_POSITIVE).to_string(), f64::MIN_POSITIVE.to_string());
-    assert_eq!(Number::Float64(f64::EPSILON).to_string(), f64::EPSILON.to_string());
+    assert_eq!(
+        Number::Float64(f64::MIN_POSITIVE).to_string(),
+        f64::MIN_POSITIVE.to_string()
+    );
+    assert_eq!(
+        Number::Float64(f64::EPSILON).to_string(),
+        f64::EPSILON.to_string()
+    );
 }
 
 #[test]
