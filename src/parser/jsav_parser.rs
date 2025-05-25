@@ -225,6 +225,7 @@ impl JsavParser {
         }
 
         // Gestione vector: vector<i32>
+        #[allow(clippy::collapsible_if)]
         if let Type::Custom(name) = &type_ {
             if name == "vector" && self.match_token(TokenKind::Less) {
                 let inner_type = self.parse_type()?;
