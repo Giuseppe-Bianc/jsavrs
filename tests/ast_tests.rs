@@ -524,15 +524,6 @@ stmt_span_test!(test_stmt_block_span, |s| Stmt::Block {
     span: s,
 });
 
-stmt_span_test!(test_stmt_while_span, |s| Stmt::While {
-    condition: Expr::Literal {
-        value: LiteralValue::Bool(true),
-        span: dummy_span(),
-    },
-    body: vec![],
-    span: s,
-});
-
 stmt_span_test!(test_stmt_return_span, |s| Stmt::Return {
     value: None,
     span: s,
@@ -799,38 +790,6 @@ fn test_return_stmt_with_value() {
 └── Return
     └── Value:
         └── Literal 42";
-    assert_eq!(stripped.trim(), expected);
-}
-
-#[test]
-fn test_while_stmt_with_body() {
-    let stmt = Stmt::While {
-        condition: Expr::Literal {
-            value: LiteralValue::Bool(true),
-            span: dummy_span(),
-        },
-        body: vec![
-            Stmt::Expression {
-                expr: Expr::Literal {
-                    value: LiteralValue::Number(Number::Integer(1)),
-                    span: dummy_span(),
-                },
-            },
-        ],
-        span: dummy_span(),
-    };
-
-    let output = pretty_print_stmt(&stmt);
-    let stripped = strip_ansi_codes(&output);
-
-    let expected = "\
-└── While
-    ├── Condition:
-    │   └── Literal true
-    └── Body:
-        └── Expression
-            └── Expr:
-                └── Literal 1";
     assert_eq!(stripped.trim(), expected);
 }
 

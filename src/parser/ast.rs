@@ -91,8 +91,6 @@ pub enum Stmt {
     Return {
         value: Option<Expr>, span: SourceSpan,
     },
-    // Additional statements as needed
-    While { condition: Expr, body: Vec<Stmt>, span: SourceSpan },
 }
 
 impl Expr {
@@ -120,7 +118,6 @@ impl Stmt {
             Stmt::If { span, .. } => span,
             Stmt::Block { span, .. } => span,
             Stmt::Return { span, .. } => span,
-            Stmt::While { span, .. } => span,
         }
     }
 }

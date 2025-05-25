@@ -42,8 +42,6 @@ impl JsavParser {
         match self.peek().map(|t| &t.kind) {
             Some(TokenKind::KeywordFun) => self.parse_function(),
             Some(TokenKind::KeywordIf) => self.parse_if(),
-            Some(TokenKind::KeywordWhile) => self.parse_while(),
-            Some(TokenKind::KeywordFor) => self.parse_for(),
             Some(TokenKind::KeywordReturn) => self.parse_return(),
             Some(TokenKind::OpenBrace) => self.parse_block(),
             Some(TokenKind::KeywordVar) => self.parse_var_declaration(),
@@ -161,89 +159,6 @@ impl JsavParser {
             then_branch,
             else_branch,
             span: if_token.span.clone(),
-        })
-    }
-
-    /// Parse a while loop:
-    /// while (<condition>) { <body> }
-    fn parse_while(&mut self) -> Option<Stmt> {
-        let while_token = self.advance().unwrap().clone();
-        self.expect(TokenKind::OpenParen, "Expected '(' after 'while'");
-        let condition = self.parse_expr(0)?;
-        self.expect(TokenKind::CloseParen, "Expected ')' after while condition");
-        let body = if let Some(Stmt::Block { statements, .. }) = self.parse_block() {
-            statements
-        } else {
-            Vec::new()
-        };
-        let span = while_token.span.clone();
-        Some(Stmt::While {
-            condition,
-            body,
-            span,
-        })
-    }
-
-    /// Parse a for loop (desugared):
-    /// for (<init>; <cond>; <increment>) { <body> }
-    fn parse_for(&mut self) -> Option<Stmt> {
-        let for_token = self.advance().unwrap().clone();
-        self.expect(TokenKind::OpenParen, "Expected '(' after 'for'");
-
-        // parse initializer expression if any
-        let init_expr = if !self.check(TokenKind::CloseParen) && !self.check(TokenKind::Semicolon) {
-            Some(self.parse_expr(0)?)
-        } else {
-            None
-        };
-        self.expect(TokenKind::Semicolon, "Expected ';' after for initializer");
-
-        // parse condition expression if any
-        let condition = if !self.check(TokenKind::Semicolon) {
-            self.parse_expr(0)?
-        } else {
-            // default to true if omitted
-            Expr::Literal {
-                value: LiteralValue::Bool(true),
-                span: for_token.span.clone(),
-            }
-        };
-        self.expect(TokenKind::Semicolon, "Expected ';' after for condition");
-
-        // parse increment expression if any
-        let increment_expr = if !self.check(TokenKind::CloseParen) {
-            Some(self.parse_expr(0)?)
-        } else {
-            None
-        };
-        self.expect(TokenKind::CloseParen, "Expected ')' after for clauses");
-
-        let body_stmts = if let Some(Stmt::Block { statements, .. }) = self.parse_block() {
-            statements
-        } else {
-            Vec::new()
-        };
-
-        // Desugar: init; while (cond) { body; incr; }
-        let mut stmts: Vec<Stmt> = Vec::new();
-        if let Some(init) = init_expr {
-            stmts.push(Stmt::Expression { expr: init });
-        }
-
-        let mut while_body = body_stmts.clone();
-        if let Some(incr) = increment_expr {
-            while_body.push(Stmt::Expression { expr: incr });
-        }
-
-        stmts.push(Stmt::While {
-            condition,
-            body: while_body,
-            span: for_token.span.clone(),
-        });
-
-        Some(Stmt::Block {
-            statements: stmts,
-            span: for_token.span.clone(),
         })
     }
 
