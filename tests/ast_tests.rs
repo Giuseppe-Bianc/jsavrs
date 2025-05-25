@@ -930,6 +930,8 @@ test_type_output!(test_f32_output, Type::F32, "f32");
 test_type_output!(test_char_output, Type::Char, "char");
 test_type_output!(test_string_output, Type::String, "string");
 test_type_output!(test_bool_output, Type::Bool, "bool");
+test_type_output!(test_void_output, Type::Void, "void");
+test_type_output!(test_custom_output, Type::Custom("inin".to_string()), "inin");
 
 #[test]
 fn test_corner_case_deeply_nested_if() {
@@ -1003,4 +1005,27 @@ fn test_corner_case_complex_return_type() {
     │   └── Vector<[i32; <expr>]>
     └── Body:";
     assert_eq!(stripped.trim(), expected);
+}
+
+#[test]
+fn test_break_stmt() {
+    let stmt = Stmt::Break {
+        span: dummy_span(),
+    };
+
+    let output = pretty_print_stmt(&stmt);
+    let stripped = strip_ansi_codes(&output);
+
+    assert_eq!(stripped.trim(), "└── Break");
+}
+#[test]
+fn test_continue_stmt() {
+    let stmt = Stmt::Continue {
+        span: dummy_span(),
+    };
+
+    let output = pretty_print_stmt(&stmt);
+    let stripped = strip_ansi_codes(&output);
+
+    assert_eq!(stripped.trim(), "└── Continue");
 }

@@ -1006,3 +1006,69 @@ fn test_block_stmt() {
     assert_eq!(statements.len(), 1);
     assert_eq!(statements[0], Stmt::Block { statements: vec![], span: dummy_span() });
 }
+
+#[test]
+fn test_break_statement_in_if() {
+// TokenKind::KeywordIf
+    let tokens = create_tokens(vec![
+        TokenKind::KeywordIf,
+        TokenKind::OpenParen,
+        TokenKind::KeywordBool(true),
+        TokenKind::CloseParen,
+        TokenKind::OpenBrace,
+        TokenKind::KeywordBreak,
+        TokenKind::CloseBrace,
+        TokenKind::Eof,
+    ]);
+    let parser = JsavParser::new(tokens);
+    let (statements, errors) = parser.parse();
+    assert!(errors.is_empty());
+    assert_eq!(statements.len(), 1);
+    assert_eq!(
+        statements[0],
+        Stmt::If {
+            condition: grouping_expr(bool_lit(true)),
+            then_branch: vec![
+                Stmt::Block {
+                    statements: vec![Stmt::Break { span: dummy_span() }],
+                    span: dummy_span(),
+                }
+            ],
+            else_branch: None,
+            span: dummy_span(),
+        }
+    );
+}
+
+#[test]
+fn test_continue_statement_in_if() {
+    // TokenKind::KeywordIf
+    let tokens = create_tokens(vec![
+        TokenKind::KeywordIf,
+        TokenKind::OpenParen,
+        TokenKind::KeywordBool(true),
+        TokenKind::CloseParen,
+        TokenKind::OpenBrace,
+        TokenKind::KeywordContinue,
+        TokenKind::CloseBrace,
+        TokenKind::Eof,
+    ]);
+    let parser = JsavParser::new(tokens);
+    let (statements, errors) = parser.parse();
+    assert!(errors.is_empty());
+    assert_eq!(statements.len(), 1);
+    assert_eq!(
+        statements[0],
+        Stmt::If {
+            condition: grouping_expr(bool_lit(true)),
+            then_branch: vec![
+                Stmt::Block {
+                    statements: vec![Stmt::Continue { span: dummy_span() }],
+                    span: dummy_span(),
+                }
+            ],
+            else_branch: None,
+            span: dummy_span(),
+        }
+    );
+}
