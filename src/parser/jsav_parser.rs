@@ -476,7 +476,16 @@ impl JsavParser {
 
     fn parse_array_literal(&mut self, start_token: Token) -> Option<Expr> {
         let mut elements = Vec::new();
-        while !self.check(TokenKind::CloseBrace) && !self.is_at_end() {
+        self.extract_elements(TokenKind::CloseBrace,&mut elements);
+        self.expect(TokenKind::CloseBrace, "Expected '}' after array elements");
+        Some(Expr::ArrayLiteral {
+            elements,
+            span: self.merged_span(&start_token),
+        })
+    }
+
+    fn extract_elements(&mut self, kind: TokenKind, elements: &mut Vec<Expr>) {
+        while !self.check(kind.clone()) && !self.is_at_end() {
             if let Some(expr) = self.parse_expr(0) {
                 elements.push(expr);
             }
@@ -484,11 +493,6 @@ impl JsavParser {
                 break;
             }
         }
-        self.expect(TokenKind::CloseBrace, "Expected '}' after array elements");
-        Some(Expr::ArrayLiteral {
-            elements,
-            span: self.merged_span(&start_token),
-        })
     }
 
     fn parse_binary(&mut self, left: Expr, token: Token) -> Expr {
@@ -540,14 +544,7 @@ impl JsavParser {
 
     fn parse_call(&mut self, callee: Expr, start_token: Token) -> Expr {
         let mut arguments = Vec::new();
-        while !self.check(TokenKind::CloseParen) && !self.is_at_end() {
-            if let Some(arg) = self.parse_expr(0) {
-                arguments.push(arg);
-            }
-            if !self.match_token(TokenKind::Comma) {
-                break;
-            }
-        }
+        self.extract_elements(TokenKind::CloseParen, &mut arguments);
         self.expect(TokenKind::CloseParen, "Unclosed function call");
         Expr::Call {
             callee: Box::new(callee),
