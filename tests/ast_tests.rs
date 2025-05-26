@@ -1036,7 +1036,7 @@ fn test_continue_stmt() {
     assert_eq!(stripped.trim(), "└── Continue");
 }
 
-
+#[test]
 fn test_array_literal_output() {
     let input = "var arr: i8[5] = {1, 2, 3, 4, 5}";
     let (tokens, _lex_errors) = lexer_tokenize_with_errors(input, "test.vn");
@@ -1060,7 +1060,6 @@ fn test_array_literal_output() {
                 ├── Literal 2
                 ├── Literal 3
                 ├── Literal 4
-                └── Literal 5
-";
+                └── Literal 5";
     assert_eq!(stripped.trim(), expected);
 }
