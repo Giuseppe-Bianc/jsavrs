@@ -1552,3 +1552,37 @@ fn array_declaration() {
         }
     );
 }
+
+
+#[test]
+fn test_function_inputs() {
+    let input = "fun a(num1: i8, num2: i8): i8 { }";
+    let (tokens, _lex_errors) = lexer_tokenize_with_errors(input, "test.vn");
+    let parser = JsavParser::new(tokens);
+    let (expr, errors) = parser.parse();
+    assert!(errors.is_empty());
+    assert_eq!(expr.len(), 1);
+    assert_eq!(expr[0],
+        Stmt::Function {
+            name: "a".into(),
+            parameters: vec![
+                Parameter {
+                    name: "num1".into(),
+                    type_annotation: Type::I8,
+                    span: test_span(1, 7, 6, 1, 15, 14)
+                },
+                Parameter {
+                    name: "num2".into(),
+                    type_annotation: Type::I8,
+                    span: test_span(1, 17, 16, 1, 25, 24)
+                }
+            ],
+            return_type: Type::I8,
+            body: vec![Stmt::Block {
+                statements: vec![],
+                span: test_span(1, 31, 30, 1, 34, 33)
+            }],
+            span: test_span(1, 1, 0, 1, 34, 33)
+        }
+    );
+}
