@@ -1442,6 +1442,19 @@ test_var_decl!(
     1, 20, 19                   // end:   riga 1, col 14, offset 13
 );
 
+test_var_decl!(
+    test_bool_decl,
+    "var b: bool = true",            // input
+    "b",                          // var_name
+    Type::Bool,                   // tipo atteso,
+    LiteralValue::Bool(true),    // valore letterale
+    // span
+    1, 15, 14,                  // start: riga 1, col 13, offset 12
+    1, 19, 18,                  // end:   riga 1, col 14, offset 13
+    // span of the entire declaration
+    1,  1,  0,                  // start: riga 1, col 1,  offset 0
+    1, 19, 18                   // end:   riga 1, col 14, offset 13
+);
 
 
 
