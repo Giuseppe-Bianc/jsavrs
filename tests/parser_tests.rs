@@ -1197,35 +1197,240 @@ fn test_continue_statement_in_if() {
     );
 }
 
-#[test]
-fn test_variable_declaration() {
-    let input = "var b: i8 = 5";
-    let (tokens, lexerrrors) = lexer_tokenize_with_errors(input, "test.vn");
-    let parser = JsavParser::new(tokens);
-    let (statements, errors) = parser.parse();
-    assert!(errors.is_empty());
-    assert_eq!(statements.len(), 1);
-    assert_eq!(
-        statements[0],
-        Stmt::VarDeclaration {
-            variables: vec!["b".to_string()],
-            type_annotation: Type::I8,
-            initializers: vec![
-                Expr::Literal {
-                    value: LiteralValue::Number(Number::Integer(5)),
-                    span: SourceSpan {
-                        file_path: Arc::from("test.vn"),
-                        start: SourceLocation::new(1, 13, 12),
-                        end: SourceLocation::new(1, 14, 13),
-                    }
-                }
-            ],
-            span: SourceSpan{
+/// Macro per generare automaticamente un test di dichiarazione di variabile.
+///
+/// Parametri:
+/// - `$test_name`: identificatore del test (es. `test_b_i8_5`)
+/// - `$input`: stringa di sorgente da passare al lexer (es. `"var b: i8 = 5"`)
+/// - `$var_name`: nome della variabile come stringa (es. `"b"`)
+/// - `$type`: tipo atteso, come variante di `Type` (es. `Type::I8`)
+/// - `$lit_val`: valore letterale intero atteso (es. `5`)
+/// - `$lit_start_line`, `$lit_start_col`, `$lit_start_off`: posizione di inizio del literal (linea, colonna, offset)
+/// - `$lit_end_line`,   `$lit_end_col`,   `$lit_end_off`: posizione di fine del literal (linea, colonna, offset)
+/// - `$full_start_line`, `$full_start_col`, `$full_start_off`: posizione di inizio dell’intera dichiarazione
+/// - `$full_end_line`,   `$full_end_col`,   `$full_end_off`: posizione di fine dell’intera dichiarazione
+///
+/// Nota: se non vuoi passare esplicitamente tutti gli span, puoi farne un overload o fissarli a `0`, ma in questo esempio
+/// vengono esplicitati per riflettere esattamente ciò che hai nel test originale.
+macro_rules! test_var_decl {
+    (
+        $test_name:ident,
+        $input:expr,
+        $var_name:expr,
+        $type:expr,
+        $lit:expr,
+        // span del literal
+        $lit_start_line:expr, $lit_start_col:expr, $lit_start_off:expr,
+        $lit_end_line:expr,   $lit_end_col:expr,   $lit_end_off:expr,
+        // span dell’intera dichiarazione
+        $full_start_line:expr, $full_start_col:expr, $full_start_off:expr,
+        $full_end_line:expr,   $full_end_col:expr,   $full_end_off:expr
+    ) => {
+        #[test]
+        fn $test_name() {
+            // 1) Tokenizzazione
+            let input = $input;
+            let (tokens, lex_errors) = lexer_tokenize_with_errors(input, "test.vn");
+            assert!(
+                lex_errors.is_empty(),
+                "Errori di lexing in test `{}`: {:?}",
+                stringify!($test_name),
+                lex_errors
+            );
+
+            // 2) Parsing
+            let parser = JsavParser::new(tokens);
+            let (statements, parse_errors) = parser.parse();
+            assert!(
+                parse_errors.is_empty(),
+                "Errori di parsing in test `{}`: {:?}",
+                stringify!($test_name),
+                parse_errors
+            );
+            assert_eq!(
+                statements.len(),
+                1,
+                "Si attende esattamente 1 statement, ma ne sono stati prodotti {}",
+                statements.len()
+            );
+
+            // 3) Costruzione dello span per il literal
+            let lit_span = SourceSpan {
                 file_path: Arc::from("test.vn"),
-                start: SourceLocation::new(1,1,0),
-                end: SourceLocation::new(1,14,13),
-            },
+                start: SourceLocation::new($lit_start_line, $lit_start_col, $lit_start_off),
+                end:   SourceLocation::new($lit_end_line,   $lit_end_col,   $lit_end_off),
+            };
+
+            // 4) Costruzione dello span per l’intera dichiarazione
+            let full_span = SourceSpan {
+                file_path: Arc::from("test.vn"),
+                start: SourceLocation::new($full_start_line, $full_start_col, $full_start_off),
+                end:   SourceLocation::new($full_end_line,   $full_end_col,   $full_end_off),
+            };
+
+            // 5) Asserzione finale: confronto con il `Stmt::VarDeclaration`
+            assert_eq!(
+                statements[0],
+                Stmt::VarDeclaration {
+                    variables: vec![$var_name.to_string()],
+                    type_annotation: $type,
+                    initializers: vec![
+                        Expr::Literal {
+                            value: LiteralValue::Number($lit),
+                            span: lit_span.clone(),
+                        }
+                    ],
+                    span: full_span.clone(),
+                }
+            );
         }
-    );
+    };
 }
 
+// ===== Esempio di utilizzo =====
+
+test_var_decl!(
+    test_b_u8_5,
+    "var b: u8 = 5u",            // input
+    "b",                        // var_name
+    Type::U8,                   // tipo atteso
+    Number::UnsignedInteger(5), // valore letterale
+    // span
+    1, 13, 12,                  // start: riga 1, col 13, offset 12
+    1, 15, 14,                  // end:   riga 1, col 14, offset 13
+    // span of the entire declaration
+    1,  1,  0,                  // start: riga 1, col 1,  offset 0
+    1, 15, 14                   // end:   riga 1, col 14, offset 13
+);
+
+test_var_decl!(
+    test_b_u16_5,
+    "var b: u16 = 5u",           // input
+    "b",                         // var_name
+    Type::U16,                   // tipo atteso
+    Number::UnsignedInteger(5),  // valore letterale
+    // span
+    1, 14, 13,                  // start: riga 1, col 13, offset 12
+    1, 16, 15,                  // end:   riga 1, col 14, offset 13
+    // span of the entire declaration
+    1,  1,  0,                  // start: riga 1, col 1,  offset 0
+    1, 16, 15                   // end:   riga 1, col 14, offset 13
+);
+
+test_var_decl!(
+    test_b_u32_5,
+    "var b: u32 = 5u",            // input
+    "b",                        // var_name
+    Type::U32,                   // tipo atteso
+    Number::UnsignedInteger(5),         // valore letterale
+    // span
+    1, 14, 13,                  // start: riga 1, col 13, offset 12
+    1, 16, 15,                  // end:   riga 1, col 14, offset 13
+    // span of the entire declaration
+    1,  1,  0,                  // start: riga 1, col 1,  offset 0
+    1, 16, 15                   // end:   riga 1, col 14, offset 13
+);
+
+test_var_decl!(
+    test_b_u64_5,
+    "var b: u64 = 5u",            // input
+    "b",                         // var_name
+    Type::U64,                   // tipo atteso
+    Number::UnsignedInteger(5),  // valore letterale
+    // span
+    1, 14, 13,                  // start: riga 1, col 13, offset 12
+    1, 16, 15,                  // end:   riga 1, col 14, offset 13
+    // span of the entire declaration
+    1,  1,  0,                  // start: riga 1, col 1,  offset 0
+    1, 16, 15                   // end:   riga 1, col 14, offset 13
+);
+
+test_var_decl!(
+    test_b_i8_5,
+    "var b: i8 = 5",            // input
+    "b",                        // var_name
+    Type::I8,                   // tipo atteso
+    Number::Integer(5),         // valore letterale
+    // span
+    1, 13, 12,                  // start: riga 1, col 13, offset 12
+    1, 14, 13,                  // end:   riga 1, col 14, offset 13
+    // span of the entire declaration
+    1,  1,  0,                  // start: riga 1, col 1,  offset 0
+    1, 14, 13                   // end:   riga 1, col 14, offset 13
+);
+
+test_var_decl!(
+    test_b_i16_5,
+    "var b: i16 = 5",            // input
+    "b",                        // var_name
+    Type::I16,                   // tipo atteso
+    Number::Integer(5),         // valore letterale
+    // span
+    1, 14, 13,                  // start: riga 1, col 13, offset 12
+    1, 15, 14,                  // end:   riga 1, col 14, offset 13
+    // span of the entire declaration
+    1,  1,  0,                  // start: riga 1, col 1,  offset 0
+    1, 15, 14                   // end:   riga 1, col 14, offset 13
+);
+
+test_var_decl!(
+    test_b_i32_5,
+    "var b: i32 = 5",            // input
+    "b",                        // var_name
+    Type::I32,                   // tipo atteso
+    Number::Integer(5),         // valore letterale
+    // span
+    1, 14, 13,                  // start: riga 1, col 13, offset 12
+    1, 15, 14,                  // end:   riga 1, col 14, offset 13
+    // span of the entire declaration
+    1,  1,  0,                  // start: riga 1, col 1,  offset 0
+    1, 15, 14                   // end:   riga 1, col 14, offset 13
+);
+
+test_var_decl!(
+    test_b_i64_5,
+    "var b: i64 = 5",            // input
+    "b",                        // var_name
+    Type::I64,                   // tipo atteso
+    Number::Integer(5),         // valore letterale
+    // span
+    1, 14, 13,                  // start: riga 1, col 13, offset 12
+    1, 15, 14,                  // end:   riga 1, col 14, offset 13
+    // span of the entire declaration
+    1,  1,  0,                  // start: riga 1, col 1,  offset 0
+    1, 15, 14                   // end:   riga 1, col 14, offset 13
+);
+
+
+
+test_var_decl!(
+    test_b_f32_3_14,            // nome del test
+    "var b: f32 = 3.14f",       // input
+    "b",                        // var_name
+    Type::F32,                  // tipo atteso
+    Number::Float32(3.14),      // valore letterale (3.14 in f32)
+
+    // span del literal "3.14" in `"var b: f32 = 3.14"`
+    1, 14, 13,                  // start: riga 1, col 13, offset 12
+    1, 19, 18,                  // end:   riga 1, col 18, offset 17
+
+    // span dell’intera dichiarazione "var b: f32 = 3.14"
+    1,  1,  0,                  // start: riga 1, col 1, offset 0
+    1, 19, 18                   // end:   riga 1, col 18, offset 17
+);
+
+test_var_decl!(
+    test_b_f64_3_14,            // nome del test
+    "var b: f64 = 3.14",       // input
+    "b",                        // var_name
+    Type::F64,                  // tipo atteso
+    Number::Float64(3.14),      // valore letterale (3.14 in f32)
+
+    // span del literal "3.14" in `"var b: f32 = 3.14"`
+    1, 14, 13,                  // start: riga 1, col 13, offset 12
+    1, 18, 17,                  // end:   riga 1, col 18, offset 17
+
+    // span dell’intera dichiarazione "var b: f32 = 3.14"
+    1,  1,  0,                  // start: riga 1, col 1, offset 0
+    1, 18, 17                   // end:   riga 1, col 18, offset 17
+);
