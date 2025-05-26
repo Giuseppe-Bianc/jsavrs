@@ -26,4 +26,5 @@ fun a(num1: i8, num2: i8): i8 {
             return
         }
 	}
+	var arr: i8[5] = {1, 2, 3, 4, 5}
 //}

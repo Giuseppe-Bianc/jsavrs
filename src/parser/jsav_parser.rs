@@ -368,6 +368,7 @@ impl JsavParser {
             TokenKind::Not => Some(self.parse_unary(UnaryOp::Not, token)),
 
             // Grouping
+            TokenKind::OpenBrace => self.parse_array_literal(token),
             TokenKind::OpenParen => self.parse_grouping(token),
 
             // Variables
@@ -471,6 +472,23 @@ impl JsavParser {
             expr: Box::new(expr),
             span: token.span,
         }
+    }
+
+    fn parse_array_literal(&mut self, start_token: Token) -> Option<Expr> {
+        let mut elements = Vec::new();
+        while !self.check(TokenKind::CloseBrace) && !self.is_at_end() {
+            if let Some(expr) = self.parse_expr(0) {
+                elements.push(expr);
+            }
+            if !self.match_token(TokenKind::Comma) {
+                break;
+            }
+        }
+        self.expect(TokenKind::CloseBrace, "Expected '}' after array elements");
+        Some(Expr::ArrayLiteral {
+            elements,
+            span: self.merged_span(&start_token),
+        })
     }
 
     fn parse_binary(&mut self, left: Expr, token: Token) -> Expr {

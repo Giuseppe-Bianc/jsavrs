@@ -14,6 +14,19 @@ use jsavrs::tokens::token_kind::TokenKind;
 fn dummy_span() -> SourceSpan {
     SourceSpan::default()
 }
+/*SourceSpan {
+file_path: Arc::from("test.vn"),
+start: SourceLocation::new(1, 18, 17),
+end: SourceLocation::new(1, 33, 32)
+}*/
+
+fn test_span(sline: usize, scolon:usize, spos:usize, eline: usize, ecolon:usize, epos:usize) -> SourceSpan {
+    SourceSpan::new(
+        Arc::from("test.vn"),
+        SourceLocation::new(sline, scolon, spos),
+        SourceLocation::new(eline, ecolon, epos),
+    )
+}
 
 fn create_tokens(kinds: Vec<TokenKind>) -> Vec<Token> {
     kinds
@@ -1490,3 +1503,52 @@ test_var_decl!(
     1,  1,  0,                  // start: riga 1, col 1, offset 0
     1, 18, 17                   // end:   riga 1, col 18, offset 17
 );
+
+#[test]
+fn array_declaration() {
+    let input = "var arr: i8[5] = {1, 2, 3, 4, 5}";
+    let (tokens, _lex_errors) = lexer_tokenize_with_errors(input, "test.vn");
+    let parser = JsavParser::new(tokens);
+    let (expr, errors) = parser.parse();
+    assert!(errors.is_empty());
+    assert_eq!(expr.len(), 1);
+    assert_eq!(
+        expr[0],
+        Stmt::VarDeclaration {
+            variables: vec!["arr".into()],
+            type_annotation: Type::Array(Box::new(Type::I8), Box::from(
+                Expr::Literal {
+                    value: LiteralValue::Number(Number::Integer(5)),
+                    span: test_span(1, 13, 12, 1, 14, 13)
+                }
+            )),
+            initializers: vec![Expr::ArrayLiteral {
+                elements: vec![
+                    Expr::Literal {
+                        value: LiteralValue::Number(Number::Integer(1)),
+                        span: test_span(1,19,18, 1,20,19)
+                    },
+                    Expr::Literal {
+                        value: LiteralValue::Number(Number::Integer(2)),
+                        span:  test_span(1,22,21, 1,23,22)
+                    },
+                    Expr::Literal {
+                        value: LiteralValue::Number(Number::Integer(3)),
+                        span: test_span(1,25,24, 1,26,25)
+                    },
+                    Expr::Literal {
+                        value: LiteralValue::Number(Number::Integer(4)),
+                        span:  test_span(1,28,27, 1,29,28)
+                    },
+                    Expr::Literal {
+                        value: LiteralValue::Number(Number::Integer(5)),
+                        span: test_span(1,31,30, 1,32,31)
+                    }
+                ],
+                span: test_span(1,18,17, 1,33,32)
+
+            }],
+            span: test_span(1, 1, 0, 1, 33, 32)
+        }
+    );
+}

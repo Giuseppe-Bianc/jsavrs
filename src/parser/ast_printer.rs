@@ -120,6 +120,17 @@ fn print_expr(expr: &Expr, indent: &str, is_last: bool, output: &mut String, sty
             let index_indent = get_indent(new_indent.as_str(), true);
             print_expr(index, &index_indent, true, output, styles);
         }
+        Expr::ArrayLiteral { elements, .. } => {
+            append_line(output, indent, is_last, styles.clone().punctuation, "Array Literal");
+            let new_indent = get_indent(indent, is_last);
+            append_line(output, &new_indent, true, styles.structure.clone(), "Elements:");
+
+            for (i, elem) in elements.iter().enumerate() {
+                let is_last_elem = i == elements.len() - 1;
+                let elem_indent = get_indent(&new_indent, true);
+                print_expr(elem, &elem_indent, is_last_elem, output, styles);
+            }
+        }
     }
 }
 

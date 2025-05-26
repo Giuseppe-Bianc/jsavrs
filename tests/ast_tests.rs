@@ -5,6 +5,8 @@ use jsavrs::parser::ast_printer::{pretty_print, pretty_print_stmt};
 use jsavrs::tokens::number::Number;
 use regex::Regex;
 use std::sync::Arc;
+use jsavrs::lexer::lexer_tokenize_with_errors;
+use jsavrs::parser::jsav_parser::JsavParser;
 
 // src/parser/ast_test.rs
 // Helper to create a dummy SourceSpan
@@ -422,6 +424,20 @@ expr_span_test!(test_expr_binary_span, |s| Expr::Binary {
     span: s,
 });
 
+expr_span_test!(test_expr_array_literal_span, |s| Expr::ArrayLiteral {
+    elements: vec![
+        Expr::Literal {
+            value: LiteralValue::Number(Number::Integer(1)),
+            span: dummy_span(),
+        },
+        Expr::Literal {
+            value: LiteralValue::Number(Number::Integer(2)),
+            span: dummy_span(),
+        },
+    ],
+    span: s,
+});
+
 expr_span_test!(test_expr_unary_span, |s| Expr::Unary {
     op: UnaryOp::Negate,
     expr: Box::new(Expr::Literal {
@@ -526,7 +542,6 @@ stmt_span_test!(test_stmt_return_span, |s| Stmt::Return {
 
 stmt_span_test!(test_stmt_break_span, |s| Stmt::Break { span: s });
 stmt_span_test!(test_stmt_continue_span, |s| Stmt::Continue { span: s });
-
 #[test]
 fn test_zero_length_span() {
     // Assuming SourceSpan can be constructed with specific positions
@@ -1019,4 +1034,33 @@ fn test_continue_stmt() {
     let stripped = strip_ansi_codes(&output);
 
     assert_eq!(stripped.trim(), "└── Continue");
+}
+
+
+fn test_array_literal_output() {
+    let input = "var arr: i8[5] = {1, 2, 3, 4, 5}";
+    let (tokens, _lex_errors) = lexer_tokenize_with_errors(input, "test.vn");
+    let parser = JsavParser::new(tokens);
+    let (expr, errors) = parser.parse();
+    assert!(errors.is_empty());
+    assert_eq!(expr.len(), 1);
+
+    let output = pretty_print_stmt(&expr[0]);
+    let stripped = strip_ansi_codes(&output);
+    let expected = "\
+└── VarDeclaration
+    ├── Variables:
+    │   └── arr
+    ├── Type:
+    │   └── [i8; <expr>]
+    └── Initializers:
+        └── Array Literal
+            └── Elements:
+                ├── Literal 1
+                ├── Literal 2
+                ├── Literal 3
+                ├── Literal 4
+                └── Literal 5
+";
+    assert_eq!(stripped.trim(), expected);
 }

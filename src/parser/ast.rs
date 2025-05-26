@@ -19,6 +19,12 @@ pub enum Expr {
     Literal {
         value: LiteralValue, span: SourceSpan,
     },
+    
+    ArrayLiteral {
+        elements: Vec<Expr>,
+        span: SourceSpan,
+    },
+    
     Variable {
         name: String, span: SourceSpan,
     },
@@ -106,6 +112,7 @@ impl Expr {
             Expr::Assign { span, .. } => span,
             Expr::Call { span, .. } => span,
             Expr::ArrayAccess { span, .. } => span,
+            Expr::ArrayLiteral { span, .. } => span,
         }
     }
 }
