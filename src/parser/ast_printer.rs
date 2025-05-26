@@ -254,8 +254,6 @@ fn print_stmt(stmt: &Stmt, indent: &str, is_last: bool, output: &mut String, sty
             if let Some(expr) = value {
                 append_line(output, &new_indent, true, styles.structure.clone(), "Value:");
                 print_expr(expr, &get_indent(&new_indent, true), true, output, styles);
-            } else {
-                append_line(output, &new_indent, true, styles.clone().literal, "void");
             }
         }
         Stmt::Break { span: _span } => {
