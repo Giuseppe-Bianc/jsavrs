@@ -1,4 +1,7 @@
+use std::sync::Arc;
 use jsavrs::error::compile_error::CompileError;
+use jsavrs::lexer::lexer_tokenize_with_errors;
+use jsavrs::location::source_location::SourceLocation;
 use jsavrs::location::source_span::SourceSpan;
 use jsavrs::parser::ast::*;
 use jsavrs::parser::jsav_parser::JsavParser;
@@ -1193,3 +1196,36 @@ fn test_continue_statement_in_if() {
         }
     );
 }
+
+#[test]
+fn test_variable_declaration() {
+    let input = "var b: i8 = 5";
+    let (tokens, lexerrrors) = lexer_tokenize_with_errors(input, "test.vn");
+    let parser = JsavParser::new(tokens);
+    let (statements, errors) = parser.parse();
+    assert!(errors.is_empty());
+    assert_eq!(statements.len(), 1);
+    assert_eq!(
+        statements[0],
+        Stmt::VarDeclaration {
+            variables: vec!["b".to_string()],
+            type_annotation: Type::I8,
+            initializers: vec![
+                Expr::Literal {
+                    value: LiteralValue::Number(Number::Integer(5)),
+                    span: SourceSpan {
+                        file_path: Arc::from("test.vn"),
+                        start: SourceLocation::new(1, 13, 12),
+                        end: SourceLocation::new(1, 14, 13),
+                    }
+                }
+            ],
+            span: SourceSpan{
+                file_path: Arc::from("test.vn"),
+                start: SourceLocation::new(1,1,0),
+                end: SourceLocation::new(1,14,13),
+            },
+        }
+    );
+}
+
