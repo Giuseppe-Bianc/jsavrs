@@ -9,7 +9,8 @@ fun a(num1: i8, num2: i8): i8 {
 	//var arr2: i8[3] = {1, 2, 3} // array
 	//var a, b: i8 = (1 + 4 + (12 + 3) * 3), 12
 	var a: i8 = 1 + 4 - (12 + 3) / 3
-	var b: i8
+	var b: i8 = 12
+	var c: char = 'a'
 	//(1 + 4 + (12 + 3) * 3)
 	if (a == 1 + (1 + 2)) {
 		break

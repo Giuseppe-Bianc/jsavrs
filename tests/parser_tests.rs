@@ -1276,7 +1276,7 @@ macro_rules! test_var_decl {
                     type_annotation: $type,
                     initializers: vec![
                         Expr::Literal {
-                            value: LiteralValue::Number($lit),
+                            value: $lit,
                             span: lit_span.clone(),
                         }
                     ],
@@ -1287,14 +1287,12 @@ macro_rules! test_var_decl {
     };
 }
 
-// ===== Esempio di utilizzo =====
-
 test_var_decl!(
     test_b_u8_5,
     "var b: u8 = 5u",            // input
     "b",                        // var_name
     Type::U8,                   // tipo atteso
-    Number::UnsignedInteger(5), // valore letterale
+    LiteralValue::Number(Number::UnsignedInteger(5)), // valore letterale
     // span
     1, 13, 12,                  // start: riga 1, col 13, offset 12
     1, 15, 14,                  // end:   riga 1, col 14, offset 13
@@ -1308,7 +1306,7 @@ test_var_decl!(
     "var b: u16 = 5u",           // input
     "b",                         // var_name
     Type::U16,                   // tipo atteso
-    Number::UnsignedInteger(5),  // valore letterale
+    LiteralValue::Number(Number::UnsignedInteger(5)),  // valore letterale
     // span
     1, 14, 13,                  // start: riga 1, col 13, offset 12
     1, 16, 15,                  // end:   riga 1, col 14, offset 13
@@ -1322,7 +1320,7 @@ test_var_decl!(
     "var b: u32 = 5u",            // input
     "b",                        // var_name
     Type::U32,                   // tipo atteso
-    Number::UnsignedInteger(5),         // valore letterale
+    LiteralValue::Number(Number::UnsignedInteger(5)),         // valore letterale
     // span
     1, 14, 13,                  // start: riga 1, col 13, offset 12
     1, 16, 15,                  // end:   riga 1, col 14, offset 13
@@ -1336,7 +1334,7 @@ test_var_decl!(
     "var b: u64 = 5u",            // input
     "b",                         // var_name
     Type::U64,                   // tipo atteso
-    Number::UnsignedInteger(5),  // valore letterale
+    LiteralValue::Number(Number::UnsignedInteger(5)),  // valore letterale
     // span
     1, 14, 13,                  // start: riga 1, col 13, offset 12
     1, 16, 15,                  // end:   riga 1, col 14, offset 13
@@ -1350,7 +1348,7 @@ test_var_decl!(
     "var b: i8 = 5",            // input
     "b",                        // var_name
     Type::I8,                   // tipo atteso
-    Number::Integer(5),         // valore letterale
+    LiteralValue::Number(Number::Integer(5)),         // valore letterale
     // span
     1, 13, 12,                  // start: riga 1, col 13, offset 12
     1, 14, 13,                  // end:   riga 1, col 14, offset 13
@@ -1364,7 +1362,7 @@ test_var_decl!(
     "var b: i16 = 5",            // input
     "b",                        // var_name
     Type::I16,                   // tipo atteso
-    Number::Integer(5),         // valore letterale
+    LiteralValue::Number(Number::Integer(5)),         // valore letterale
     // span
     1, 14, 13,                  // start: riga 1, col 13, offset 12
     1, 15, 14,                  // end:   riga 1, col 14, offset 13
@@ -1378,7 +1376,7 @@ test_var_decl!(
     "var b: i32 = 5",            // input
     "b",                        // var_name
     Type::I32,                   // tipo atteso
-    Number::Integer(5),         // valore letterale
+    LiteralValue::Number(Number::Integer(5)),         // valore letterale
     // span
     1, 14, 13,                  // start: riga 1, col 13, offset 12
     1, 15, 14,                  // end:   riga 1, col 14, offset 13
@@ -1392,7 +1390,7 @@ test_var_decl!(
     "var b: i64 = 5",            // input
     "b",                        // var_name
     Type::I64,                   // tipo atteso
-    Number::Integer(5),         // valore letterale
+    LiteralValue::Number(Number::Integer(5)),         // valore letterale
     // span
     1, 14, 13,                  // start: riga 1, col 13, offset 12
     1, 15, 14,                  // end:   riga 1, col 14, offset 13
@@ -1402,13 +1400,58 @@ test_var_decl!(
 );
 
 
+test_var_decl!(
+    test_char_decl,
+    "var b: char = 'a'",            // input
+    "b",                          // var_name
+    Type::Char,                   // tipo atteso,
+    LiteralValue::CharLit("a".to_string()),    // valore letterale
+    // span
+    1, 15, 14,                  // start: riga 1, col 13, offset 12
+    1, 18, 17,                  // end:   riga 1, col 14, offset 13
+    // span of the entire declaration
+    1,  1,  0,                  // start: riga 1, col 1,  offset 0
+    1, 18, 17                   // end:   riga 1, col 14, offset 13
+);
+
+test_var_decl!(
+    test_custom_decl,
+    "var b: string = \"a\"",            // input
+    "b",                          // var_name
+    Type::String,                   // tipo atteso,
+    LiteralValue::StringLit("a".to_string()),    // valore letterale
+    // span
+    1, 17, 16,                  // start: riga 1, col 13, offset 12
+    1, 20, 19,                  // end:   riga 1, col 14, offset 13
+    // span of the entire declaration
+    1,  1,  0,                  // start: riga 1, col 1,  offset 0
+    1, 20, 19                   // end:   riga 1, col 14, offset 13
+);
+
+test_var_decl!(
+    test_string_decl,
+    "var b: custom = \"a\"",            // input
+    "b",                          // var_name
+    Type::Custom("custom".to_string()),                   // tipo atteso,
+    LiteralValue::StringLit("a".to_string()),    // valore letterale
+    // span
+    1, 17, 16,                  // start: riga 1, col 13, offset 12
+    1, 20, 19,                  // end:   riga 1, col 14, offset 13
+    // span of the entire declaration
+    1,  1,  0,                  // start: riga 1, col 1,  offset 0
+    1, 20, 19                   // end:   riga 1, col 14, offset 13
+);
+
+
+
+
 
 test_var_decl!(
     test_b_f32_3_14,            // nome del test
     "var b: f32 = 3.14f",       // input
     "b",                        // var_name
     Type::F32,                  // tipo atteso
-    Number::Float32(3.14),      // valore letterale (3.14 in f32)
+    LiteralValue::Number(Number::Float32(3.14)),      // valore letterale (3.14 in f32)
 
     // span del literal "3.14" in `"var b: f32 = 3.14"`
     1, 14, 13,                  // start: riga 1, col 13, offset 12
@@ -1424,7 +1467,7 @@ test_var_decl!(
     "var b: f64 = 3.14",       // input
     "b",                        // var_name
     Type::F64,                  // tipo atteso
-    Number::Float64(3.14),      // valore letterale (3.14 in f32)
+    LiteralValue::Number(Number::Float64(3.14)),      // valore letterale (3.14 in f32)
 
     // span del literal "3.14" in `"var b: f32 = 3.14"`
     1, 14, 13,                  // start: riga 1, col 13, offset 12
