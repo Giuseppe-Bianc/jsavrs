@@ -10,6 +10,8 @@ on:
 env:
   CARGO_TERM_COLOR: always
   RUST_BACKTRACE: 1
+  INSTA_UPDATE: no  # Global override for snapshot testing
+
 
 jobs:
   build:
@@ -32,8 +34,6 @@ jobs:
       fail-fast: false
 
     steps:
-      - name: Set CI=true
-        run: echo "CI=true" >> $GITHUB_ENV
       - name: Checkout repository
         uses: actions/checkout@v4
 
