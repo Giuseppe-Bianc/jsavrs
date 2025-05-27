@@ -32,6 +32,8 @@ jobs:
       fail-fast: false
 
     steps:
+      - name: Set CI=true
+        run: echo "CI=true" >> $GITHUB_ENV
       - name: Checkout repository
         uses: actions/checkout@v4
 
@@ -90,23 +92,3 @@ jobs:
 #      with:
 #        name: release-binaries
 #        path: target/release
-
-#    - name: Run Coverage with Tarpaulin
-#      uses: actions-rs/tarpaulin@v0.1
-#      with:
-#        # generate XML report in Cobertura format
-#        args: '--out Xml'
-#        version: 0.32.4
-#    - name: Upload Coverage to Codecov
-#      uses: codecov/codecov-action@v5
-#      with:
-#        # fail the job if upload fails
-#        fail_ci_if_error: true
-#        # point at the Cobertura XML output
-#        files: 'cobertura.xml'
-#        # use the token from Secrets
-#        token: ${{ secrets.CODECOV_TOKEN }}
-#        verbose: true
-#      env:
-#        # ensure color/logging isn’t broken
-#        CI: true
