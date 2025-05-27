@@ -4,7 +4,7 @@ use jsavrs::{
     error::compile_error::CompileError,
     lexer::*,
     location::{source_location::SourceLocation, source_span::SourceSpan},
-    tokens::{number::Number::*, token::Token, token_kind::TokenKind, token_kind::TokenKind::*},
+    tokens::{number::Number::*, token::Token, token_kind::TokenKind},
 };
 use std::{
     collections::{HashMap, HashSet},
