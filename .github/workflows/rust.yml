@@ -10,7 +10,7 @@ on:
 env:
   CARGO_TERM_COLOR: always
   RUST_BACKTRACE: 1
-  INSTA_UPDATE: no  # Global override for snapshot testing
+  CI: true  # Global override for snapshot testing
 
 
 jobs:
