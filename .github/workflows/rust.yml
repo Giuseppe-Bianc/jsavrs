@@ -10,7 +10,7 @@ on:
 env:
   CARGO_TERM_COLOR: always
   RUST_BACKTRACE: 1
-  CI: true  # Global override for snapshot testing
+
 
 
 jobs:
@@ -66,11 +66,14 @@ jobs:
 
       - name: Run Tests
         uses: actions-rs/cargo@v1
+        env:
+          INSTA_UPDATE: no
         with:
           command: test
           args: --all-features --verbose
+      
 
-#         - name: Check Formatting
+      #         - name: Check Formatting
 #           run: cargo fmt --all -- --check
 
       - name: Clippy Lints
