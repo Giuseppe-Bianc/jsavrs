@@ -484,20 +484,6 @@ fn make_span(start_line: usize, start_col: usize, end_line: usize, end_col: usiz
     )
 }
 
-/*/// A dummy “no‐merge” span: merged() will return None because they don’t overlap.
-fn make_non_overlapping_span() -> (SourceSpan, SourceSpan) {
-    let a = make_span(1, 1, 1, 2);
-    let b = make_span(2, 5, 2, 6);
-    (a, b)
-}*/
-
-/*/// A dummy “overlapping” span: merged() will return Some(…) because end == start.
-fn make_overlapping_span() -> (SourceSpan, SourceSpan) {
-    // both spans share the exact same endpoints → merged() yields that same span
-    let s = make_span(3, 3, 3, 4);
-    (s.clone(), s)
-}*/
-
 /// Test 1: If token_map has no entry for (span.end.line, span.end.column), then
 ///         neither `replacements` nor `to_remove` should be modified.
 #[test]

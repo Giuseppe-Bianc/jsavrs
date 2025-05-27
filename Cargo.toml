@@ -28,5 +28,12 @@ thiserror = "2.0.12"
 [dev-dependencies]
 regex = "1.11.1"
 assert_cmd = "2.0.12"
+insta = { version = "1.43.1", features = ["yaml"] }
 #predicates = "3.0.3"
 #tempfile = "3.8.0"
+
+[profile.dev.package.insta]
+opt-level = 3
+
+[profile.dev.package.similar]
+opt-level = 3
