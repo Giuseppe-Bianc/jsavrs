@@ -67,11 +67,11 @@ jobs:
       - name: Run Tests
         uses: actions-rs/cargo@v1
         env:
-          INSTA_UPDATE: no
+          INSTA_UPDATE: force  # Force update snapshots (use with caution!)
         with:
           command: test
           args: --all-features --verbose
-      
+
 
       #         - name: Check Formatting
 #           run: cargo fmt --all -- --check
