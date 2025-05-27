@@ -1,25 +1,5 @@
-use jsavrs::location::line_tracker::LineTracker;
-use std::sync::Arc;
 use insta::assert_snapshot;
-
-/*#[test]
-fn snapshot_all_offsets_locations() {
-    let source = "a\nbc\ndef\n";
-    let tracker = LineTracker::new("snapshot.txt", source.to_string());
-
-    let locations: Vec<_> = (0..=source.len())
-        .map(|offset| {
-            let loc = tracker.location_for(offset);
-            (
-                offset,
-                format!("line {:?}, column {:?}, pos {:?}", loc.line, loc.column, loc.absolute_pos),
-            )
-        })
-        .collect();
-    
-
-    assert_snapshot!(locations);
-}*/
+use jsavrs::location::line_tracker::LineTracker;
 
 #[test]
 fn snapshot_full_span_basic() {

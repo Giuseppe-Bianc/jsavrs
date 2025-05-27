@@ -1,15 +1,15 @@
 //cargo insta test --review
+use insta::assert_snapshot;
 use jsavrs::{
     error::compile_error::CompileError,
     lexer::*,
     location::{source_location::SourceLocation, source_span::SourceSpan},
     tokens::{number::Number::*, token::Token, token_kind::TokenKind, token_kind::TokenKind::*},
 };
-use insta::assert_snapshot;
 use std::{
     collections::{HashMap, HashSet},
-    sync::Arc,
     fmt::Write,
+    sync::Arc,
 };
 
 // Helper to lex input and return formatted kinds or errors
@@ -77,12 +77,12 @@ fn number_edge_cases_snapshot() {
     let input1 = "#b111111111111111111111111111111111111111111111111111111111111111";
     let snap1 = snapshot_lex(input1);
     assert_snapshot!(snap1);
-    
+
     // Valid max i64 in hex
     let input2 = "#x7FFFFFFFFFFFFFFF";
     let snap2 = snapshot_lex(input2);
     assert_snapshot!(snap2);
-    
+
     // Overflow binary
     let input3 = "#b1111111111111111111111111111111111111111111111111111111111111111";
     let (tok_out, err_out) = snapshot_errors(input3);
@@ -160,7 +160,7 @@ fn mixed_expression_snapshot() {
 #[test]
 fn iterator_collects_all_tokens_snapshot() {
     let input = "42 + x";
-    let mut lexer = Lexer::new("test", input);
+    let lexer = Lexer::new("test", input);
     let mut out = String::new();
     for res in lexer {
         match res {
@@ -168,7 +168,6 @@ fn iterator_collects_all_tokens_snapshot() {
             Err(err) => writeln!(&mut out, "Error: {}", err).unwrap(),
         }
     }
-    out.push_str("Eof\n");
     assert_snapshot!(out);
 }
 
@@ -298,7 +297,12 @@ fn test_no_token_in_map_snapshot() {
         &mut to_remove,
     );
     let mut out = String::new();
-    writeln!(&mut out, "Replacements: {:?}\nToRemove: {:?}", replacements, to_remove).unwrap();
+    writeln!(
+        &mut out,
+        "Replacements: {:?}\nToRemove: {:?}",
+        replacements, to_remove
+    )
+    .unwrap();
     assert_snapshot!(out);
 }
 
@@ -326,7 +330,12 @@ fn test_non_identifier_token_snapshot() {
         &mut to_remove,
     );
     let mut out = String::new();
-    writeln!(&mut out, "Replacements: {:?}\nToRemove: {:?}", replacements, to_remove).unwrap();
+    writeln!(
+        &mut out,
+        "Replacements: {:?}\nToRemove: {:?}",
+        replacements, to_remove
+    )
+    .unwrap();
     assert_snapshot!(out);
 }
 
@@ -353,7 +362,12 @@ fn test_identifier_length_gt_one_snapshot() {
         &mut to_remove,
     );
     let mut out = String::new();
-    writeln!(&mut out, "Replacements: {:?}\nToRemove: {:?}", replacements, to_remove).unwrap();
+    writeln!(
+        &mut out,
+        "Replacements: {:?}\nToRemove: {:?}",
+        replacements, to_remove
+    )
+    .unwrap();
     assert_snapshot!(out);
 }
 
@@ -380,7 +394,12 @@ fn test_get_error_message_none_snapshot() {
         &mut to_remove,
     );
     let mut out = String::new();
-    writeln!(&mut out, "Replacements: {:?}\nToRemove: {:?}", replacements, to_remove).unwrap();
+    writeln!(
+        &mut out,
+        "Replacements: {:?}\nToRemove: {:?}",
+        replacements, to_remove
+    )
+    .unwrap();
     assert_snapshot!(out);
 }
 
@@ -408,6 +427,13 @@ fn test_adjacent_spans_merging_snapshot() {
     );
     let can_merge = error_span.merged(&token_span).is_some();
     let mut out = String::new();
-    writeln!(&mut out, "CanMerge: {}\nReplacements count: {}\nToRemove count: {}", can_merge, replacements.len(), to_remove.len()).unwrap();
+    writeln!(
+        &mut out,
+        "CanMerge: {}\nReplacements count: {}\nToRemove count: {}",
+        can_merge,
+        replacements.len(),
+        to_remove.len()
+    )
+    .unwrap();
     assert_snapshot!(out);
 }
