@@ -23,10 +23,10 @@ clap = { version = "4.5.38", features = ["cargo", "derive"] }
 console = "0.15.11"
 logos = "0.15.0"
 thiserror = "2.0.12"
+regex = "1.11.1"
 
 
 [dev-dependencies]
-regex = "1.11.1"
 assert_cmd = "2.0.12"
 insta = { version = "1.43.1", features = ["yaml"] }
 #predicates = "3.0.3"
