@@ -1,3 +1,4 @@
+// tests/ast_snapshot_test.rs
 use jsavrs::lexer::lexer_tokenize_with_errors;
 use jsavrs::location::source_span::SourceSpan;
 use jsavrs::parser::ast::*;
@@ -7,7 +8,6 @@ use jsavrs::tokens::number::Number;
 use regex::Regex;
 use insta::{assert_debug_snapshot, assert_snapshot};
 
-// src/parser/ast_test.rs
 // Helper to create a dummy SourceSpan
 fn dummy_span() -> SourceSpan {
     SourceSpan::default()
