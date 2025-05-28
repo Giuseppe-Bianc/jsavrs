@@ -994,7 +994,7 @@ fn test_nested_parsing_errors() {
 }
 
 #[test]
-fn test_nested_unkown_binding_power() {
+fn test_nested_unknown_binding_power() {
     let tokens = create_tokens(vec![
         TokenKind::IdentifierAscii("assssss".to_string()),
         TokenKind::PlusEqual,
@@ -1244,6 +1244,7 @@ macro_rules! test_var_decl {
         $full_start_line:expr, $full_start_col:expr, $full_start_off:expr,
         $full_end_line:expr,   $full_end_col:expr,   $full_end_off:expr
     ) => {
+        #[allow(clippy::approx_constant)]
         #[test]
         fn $test_name() {
             // 1) Tokenizzazione

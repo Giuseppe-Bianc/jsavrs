@@ -150,7 +150,7 @@ fn number_edge_cases() {
     let (tokens, errors) = lexer_tokenize_with_errors(input, "test");
     assert_eq!(tokens.len(), 1);
     assert_eq!(errors.len(), 1);
-    assert_eq!(tokens[0].kind, TokenKind::Eof);
+    assert_eq!(tokens[0].kind, Eof);
     assert_eq!(
         errors[0].to_string(),
         "Invalid token: \"#b1111111111111111111111111111111111111111111111111111111111111111\" at test:line 1:column 1 - line 1:column 67"
