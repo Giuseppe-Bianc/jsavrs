@@ -85,13 +85,6 @@ pub fn grouping_expr(expr: Expr) -> Expr {
     }
 }
 
-pub fn var_expr(name: &str) -> Expr {
-    Expr::Variable {
-        name: name.to_string(),
-        span: dummy_span(),
-    }
-}
-
 pub fn assign_expr(name: &str, value: Expr) -> Expr {
     Expr::Assign {
         name: name.to_string(),
