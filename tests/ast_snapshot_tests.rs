@@ -1,12 +1,10 @@
 use jsavrs::lexer::lexer_tokenize_with_errors;
-use jsavrs::location::source_location::SourceLocation;
 use jsavrs::location::source_span::SourceSpan;
 use jsavrs::parser::ast::*;
 use jsavrs::parser::ast_printer::{pretty_print, pretty_print_stmt};
 use jsavrs::parser::jsav_parser::JsavParser;
 use jsavrs::tokens::number::Number;
 use regex::Regex;
-use std::sync::Arc;
 use insta::{assert_debug_snapshot, assert_snapshot};
 
 // src/parser/ast_test.rs
@@ -493,7 +491,7 @@ macro_rules! test_type_output {
             let output = pretty_print_stmt(&stmt);
             let stripped = strip_ansi_codes(&output);
 
-        assert_snapshot!(stripped.trim());
+            assert_snapshot!(stripped.trim());
         }
     };
 }
@@ -512,3 +510,38 @@ test_type_output!(test_string_output, Type::String);
 test_type_output!(test_bool_output, Type::Bool);
 test_type_output!(test_void_output, Type::Void);
 test_type_output!(test_custom_output, Type::Custom("inin".to_string()));
+
+#[test]
+fn test_break_stmt() {
+    let stmt = Stmt::Break { span: dummy_span() };
+
+    let output = pretty_print_stmt(&stmt);
+    let stripped = strip_ansi_codes(&output);
+
+    assert_snapshot!(stripped.trim());
+}
+
+#[test]
+fn test_continue_stmt() {
+    let stmt = Stmt::Continue { span: dummy_span() };
+
+    let output = pretty_print_stmt(&stmt);
+    let stripped = strip_ansi_codes(&output);
+
+    assert_snapshot!(stripped.trim());
+}
+
+#[test]
+fn test_array_literal_output() {
+    let input = "var arr: i8[5] = {1, 2, 3, 4, 5}";
+    let (tokens, _lex_errors) = lexer_tokenize_with_errors(input, "test.vn");
+    let parser = JsavParser::new(tokens);
+    let (expr, errors) = parser.parse();
+    assert!(errors.is_empty());
+    assert_eq!(expr.len(), 1);
+
+    let output = pretty_print_stmt(&expr[0]);
+    let stripped = strip_ansi_codes(&output);
+
+    assert_snapshot!(stripped.trim());
+}
