@@ -1,4 +1,5 @@
 // tests/ast_snapshot_test.rs
+use insta::{assert_debug_snapshot, assert_snapshot};
 use jsavrs::lexer::lexer_tokenize_with_errors;
 use jsavrs::location::source_span::SourceSpan;
 use jsavrs::parser::ast::*;
@@ -6,7 +7,6 @@ use jsavrs::parser::ast_printer::{pretty_print, pretty_print_stmt};
 use jsavrs::parser::jsav_parser::JsavParser;
 use jsavrs::tokens::number::Number;
 use regex::Regex;
-use insta::{assert_debug_snapshot, assert_snapshot};
 
 // Helper to create a dummy SourceSpan
 fn dummy_span() -> SourceSpan {
@@ -18,7 +18,6 @@ fn strip_ansi_codes(s: &str) -> String {
     let re = Regex::new(r"\x1B\[[0-?]*[ -/]*[@-~]").unwrap();
     re.replace_all(s, "").to_string()
 }
-
 
 // Helper functions per costruire AST
 fn num_lit(n: i64) -> Expr {
@@ -142,11 +141,7 @@ fn test_grouping_expr() {
 
 #[test]
 fn test_literal_values() {
-    let cases = vec![
-        string_lit("test"),
-        bool_lit(true),
-        nullptr_lit()
-    ];
+    let cases = vec![string_lit("test"), bool_lit(true), nullptr_lit()];
 
     let mut snapshot_cases: Vec<(Expr, String)> = Vec::new();
 
@@ -162,7 +157,6 @@ fn test_literal_values() {
 #[test]
 fn test_variable_assignment() {
     let expr = assign_expr("x", num_lit(3));
-
 
     let output = pretty_print(&expr);
     let stripped = strip_ansi_codes(&output);
@@ -201,29 +195,19 @@ fn test_function_call() {
     assert_snapshot!(stripped.trim());
 }
 
-#[test]
-fn test_array_access() {
-    let array = Expr::Variable {
-        name: "arr".to_string(),
-        span: dummy_span(),
-    };
-    let index = Expr::Binary {
-        left: Box::new(Expr::Variable {
-            name: "i".to_string(),
-            span: dummy_span(),
-        }),
-        op: BinaryOp::Add,
-        right: Box::new(Expr::Literal {
-            value: LiteralValue::Number(Number::Integer(1)),
-            span: dummy_span(),
-        }),
-        span: dummy_span(),
-    };
-    let expr = Expr::ArrayAccess {
+fn array_access_expr(array: Expr, index: Expr) -> Expr {
+    Expr::ArrayAccess {
         array: Box::new(array),
         index: Box::new(index),
         span: dummy_span(),
-    };
+    }
+}
+
+#[test]
+fn test_array_access() {
+    let array = variable_expr("arr");
+    let index = binary_expr(variable_expr("i"), BinaryOp::Add, num_lit(1));
+    let expr = array_access_expr(array, index);
 
     let output = pretty_print(&expr);
     let stripped = strip_ansi_codes(&output);
@@ -233,34 +217,15 @@ fn test_array_access() {
 
 #[test]
 fn test_deeply_nested_binary() {
-    let expr = Expr::Binary {
-        left: Box::new(Expr::Binary {
-            left: Box::new(Expr::Binary {
-                left: Box::new(Expr::Literal {
-                    value: LiteralValue::Number(Number::Integer(1)),
-                    span: dummy_span(),
-                }),
-                op: BinaryOp::Add,
-                right: Box::new(Expr::Literal {
-                    value: LiteralValue::Number(Number::Integer(2)),
-                    span: dummy_span(),
-                }),
-                span: dummy_span(),
-            }),
-            op: BinaryOp::Add,
-            right: Box::new(Expr::Literal {
-                value: LiteralValue::Number(Number::Integer(3)),
-                span: dummy_span(),
-            }),
-            span: dummy_span(),
-        }),
-        op: BinaryOp::Add,
-        right: Box::new(Expr::Literal {
-            value: LiteralValue::Number(Number::Integer(4)),
-            span: dummy_span(),
-        }),
-        span: dummy_span(),
-    };
+    let expr = binary_expr(
+        binary_expr(
+            binary_expr(num_lit(1), BinaryOp::Add, num_lit(2)),
+            BinaryOp::Add,
+            num_lit(3),
+        ),
+        BinaryOp::Add,
+        num_lit(4),
+    );
 
     let output = pretty_print(&expr);
     let stripped = strip_ansi_codes(&output);
@@ -270,18 +235,7 @@ fn test_deeply_nested_binary() {
 
 #[test]
 fn test_multiple_unary_ops() {
-    let expr = Expr::Unary {
-        op: UnaryOp::Not,
-        expr: Box::new(Expr::Unary {
-            op: UnaryOp::Not,
-            expr: Box::new(Expr::Literal {
-                value: LiteralValue::Bool(true),
-                span: dummy_span(),
-            }),
-            span: dummy_span(),
-        }),
-        span: dummy_span(),
-    };
+    let expr = unary_expr(UnaryOp::Not, unary_expr(UnaryOp::Not, bool_lit(true)));
 
     let output = pretty_print(&expr);
     let stripped = strip_ansi_codes(&output);
@@ -291,34 +245,34 @@ fn test_multiple_unary_ops() {
 
 #[test]
 fn test_stmt_expression() {
-    let expr = Expr::Literal {
-        value: LiteralValue::Number(Number::Integer(42)),
-        span: dummy_span(),
-    };
-    let stmt = Stmt::Expression { expr };
+    let stmt = Stmt::Expression { expr: num_lit(42) };
     let output = pretty_print_stmt(&stmt);
     let stripped = strip_ansi_codes(&output);
 
     assert_snapshot!(stripped.trim());
 }
 
+fn var_declaration(
+    variables: Vec<String>,
+    type_annotation: Type,
+    initializers: Vec<Expr>,
+) -> Stmt {
+    Stmt::VarDeclaration {
+        variables,
+        type_annotation,
+        initializers,
+        span: dummy_span(),
+    }
+}
+
 #[test]
 fn test_var_declaration_multiple_vars() {
-    let stmt = Stmt::VarDeclaration {
-        variables: vec!["x".to_string(), "y".to_string()],
-        type_annotation: Type::I32,
-        initializers: vec![
-            Expr::Literal {
-                value: LiteralValue::Number(Number::Integer(1)),
-                span: dummy_span(),
-            },
-            Expr::Literal {
-                value: LiteralValue::Number(Number::Integer(2)),
-                span: dummy_span(),
-            },
-        ],
-        span: dummy_span(),
-    };
+    let stmt = var_declaration(
+        vec!["x".to_string(), "y".to_string()],
+        Type::I32,
+        vec![num_lit(1), num_lit(2)],
+    );
+    
 
     let output = pretty_print_stmt(&stmt);
     let stripped = strip_ansi_codes(&output);
@@ -368,21 +322,12 @@ fn test_function_with_parameters() {
 
 #[test]
 fn test_if_stmt_with_else() {
-    let condition = Expr::Literal {
-        value: LiteralValue::Bool(true),
-        span: dummy_span(),
-    };
+    let condition = bool_lit(true);
     let then_branch = vec![Stmt::Expression {
-        expr: Expr::Literal {
-            value: LiteralValue::Number(Number::Integer(1)),
-            span: dummy_span(),
-        },
+        expr: num_lit(1)
     }];
     let else_branch = vec![Stmt::Expression {
-        expr: Expr::Literal {
-            value: LiteralValue::Number(Number::Integer(2)),
-            span: dummy_span(),
-        },
+        expr: num_lit(2)
     }];
 
     let stmt = Stmt::If {
