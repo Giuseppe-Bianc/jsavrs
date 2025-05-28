@@ -251,10 +251,7 @@ expr_span_test!(test_expr_binary_span, |s| Expr::Binary {
 });
 
 expr_span_test!(test_expr_array_literal_span, |s| Expr::ArrayLiteral {
-    elements: vec![
-        num_lit(1),
-        num_lit(2),
-    ],
+    elements: vec![num_lit(1), num_lit(2),],
     span: s,
 });
 
@@ -532,10 +529,7 @@ fn test_return_stmt_with_value() {
 fn test_complex_type_declaration() {
     let stmt = var_declaration(
         vec!["matrix".to_string()],
-        Type::Array(
-            Box::new(Type::F64),
-            Box::new(nullptr_lit()),
-        ),
+        Type::Array(Box::new(Type::F64), Box::new(nullptr_lit())),
         vec![],
     );
 

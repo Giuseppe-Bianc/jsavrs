@@ -9,6 +9,7 @@ fn test_empty_slice_for_split_numeric_and_suffix() {
     assert_debug_snapshot!("empty_slice_for_split_numeric_and_suffix", result);
 }
 /// Helper function to tokenize input into a Vec<TokenKind>
+#[allow(clippy::while_let_on_iterator)]
 fn tokenize(input: &str) -> Vec<Result<TokenKind, ()>> {
     let mut lex = TokenKind::lexer(input);
     let mut tokens = Vec::new();

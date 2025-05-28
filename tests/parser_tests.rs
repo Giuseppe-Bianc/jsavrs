@@ -8,17 +8,8 @@ use jsavrs::parser::precedence::unary_binding_power;
 use jsavrs::tokens::number::Number;
 use jsavrs::tokens::token::Token;
 use jsavrs::tokens::token_kind::TokenKind;
+use jsavrs::utils::*;
 use std::sync::Arc;
-
-// Helper to create tokens with dummy spans
-fn dummy_span() -> SourceSpan {
-    SourceSpan::default()
-}
-/*SourceSpan {
-file_path: Arc::from("test.vn"),
-start: SourceLocation::new(1, 18, 17),
-end: SourceLocation::new(1, 33, 32)
-}*/
 
 fn test_span(
     sline: usize,
@@ -33,121 +24,6 @@ fn test_span(
         SourceLocation::new(sline, scolon, spos),
         SourceLocation::new(eline, ecolon, epos),
     )
-}
-
-fn create_tokens(kinds: Vec<TokenKind>) -> Vec<Token> {
-    kinds
-        .into_iter()
-        .map(|k| Token {
-            kind: k,
-            span: dummy_span(),
-        })
-        .collect()
-}
-
-fn num_token(n: f64) -> Token {
-    Token {
-        kind: TokenKind::Numeric(Number::Float64(n)),
-        span: dummy_span(),
-    }
-}
-
-// Helper functions per costruire AST
-fn num_lit(n: i64) -> Expr {
-    Expr::Literal {
-        value: LiteralValue::Number(Number::Integer(n)),
-        span: dummy_span(),
-    }
-}
-
-fn float_lit(n: f64) -> Expr {
-    Expr::Literal {
-        value: LiteralValue::Number(Number::Float64(n)),
-        span: dummy_span(),
-    }
-}
-
-fn bool_lit(b: bool) -> Expr {
-    Expr::Literal {
-        value: LiteralValue::Bool(b),
-        span: dummy_span(),
-    }
-}
-
-fn nullptr_lit() -> Expr {
-    Expr::Literal {
-        value: LiteralValue::Nullptr,
-        span: dummy_span(),
-    }
-}
-
-fn string_lit(s: &str) -> Expr {
-    Expr::Literal {
-        value: LiteralValue::StringLit(s.to_string()),
-        span: dummy_span(),
-    }
-}
-
-fn char_lit(c: &str) -> Expr {
-    Expr::Literal {
-        value: LiteralValue::CharLit(c.to_string()),
-        span: dummy_span(),
-    }
-}
-
-fn binary_expr(left: Expr, op: BinaryOp, right: Expr) -> Expr {
-    Expr::Binary {
-        left: Box::new(left),
-        op,
-        right: Box::new(right),
-        span: dummy_span(),
-    }
-}
-
-fn unary_expr(op: UnaryOp, expr: Expr) -> Expr {
-    Expr::Unary {
-        op,
-        expr: Box::new(expr),
-        span: dummy_span(),
-    }
-}
-
-fn grouping_expr(expr: Expr) -> Expr {
-    Expr::Grouping {
-        expr: Box::new(expr),
-        span: dummy_span(),
-    }
-}
-
-fn assign_expr(name: &str, value: Expr) -> Expr {
-    Expr::Assign {
-        name: name.into(),
-        value: Box::new(value),
-        span: dummy_span(),
-    }
-}
-
-fn variable_expr(name: &str) -> Expr {
-    Expr::Variable {
-        name: name.into(),
-        span: dummy_span(),
-    }
-}
-
-fn call_expr(callee: Expr, arguments: Vec<Expr>) -> Expr {
-    Expr::Call {
-        callee: Box::new(callee),
-        arguments,
-        span: dummy_span(),
-    }
-}
-
-fn array_access_expr(array: Expr, index: Expr) -> Expr {
-    Expr::ArrayAccess {
-        array: Box::new(array),
-        index: Box::new(index),
-        span: dummy_span(),
-    }
 }
 
 macro_rules! literal_test {
@@ -171,9 +47,9 @@ macro_rules! literal_test {
 
 // Macro per test operatori binari
 macro_rules! binary_op_test {
-    ($name:ident, $token_kind:expr, $op:expr) => {
+    ($test_name:ident, $token_kind:expr, $op:expr) => {
         #[test]
-        fn $name() {
+        fn $test_name() {
             let tokens = vec![
                 num_token(3.0),
                 Token {

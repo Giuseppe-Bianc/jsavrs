@@ -50,46 +50,11 @@ truncate_test!(single_component, "file.vn", 2);
 truncate_test!(absolute_path, "/usr/project/src/main.vn", 2);
 
 // Test formattazione stringa span
-span_str_test!(
-    same_line,
-    "project/src/main.vn",
-    5,
-    3,
-    5,
-    10
-);
-span_str_test!(
-    different_lines,
-    "src/module/file.vn",
-    2,
-    1,
-    4,
-    5
-);
-span_str_test!(
-    single_component_path,
-    "file.vn",
-    1,
-    1,
-    1,
-    1
-);
-span_str_test!(
-    same_start_end,
-    "a/b/c/d/file.vn",
-    3,
-    2,
-    3,
-    2
-);
-span_str_test!(
-    minimal_coordinates,
-    "f.vn",
-    0,
-    0,
-    0,
-    0
-);
+span_str_test!(same_line, "project/src/main.vn", 5, 3, 5, 10);
+span_str_test!(different_lines, "src/module/file.vn", 2, 1, 4, 5);
+span_str_test!(single_component_path, "file.vn", 1, 1, 1, 1);
+span_str_test!(same_start_end, "a/b/c/d/file.vn", 3, 2, 3, 2);
+span_str_test!(minimal_coordinates, "f.vn", 0, 0, 0, 0);
 
 #[test]
 fn absolute_path_span() {

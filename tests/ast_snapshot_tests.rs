@@ -1,14 +1,10 @@
 // tests/ast_snapshot_test.rs
 use insta::{assert_debug_snapshot, assert_snapshot};
 use jsavrs::lexer::lexer_tokenize_with_errors;
-use jsavrs::location::source_span::SourceSpan;
 use jsavrs::parser::ast::*;
 use jsavrs::parser::ast_printer::{pretty_print, pretty_print_stmt};
 use jsavrs::parser::jsav_parser::JsavParser;
-use jsavrs::tokens::number::Number;
-use regex::Regex;
 use jsavrs::utils::*;
-
 
 #[test]
 fn test_simple_binary_expr() {

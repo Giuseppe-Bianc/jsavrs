@@ -2,6 +2,8 @@ use regex::Regex;
 use crate::location::source_span::SourceSpan;
 use crate::parser::ast::{BinaryOp, Expr, LiteralValue, Parameter, Stmt, Type, UnaryOp};
 use crate::tokens::number::Number;
+use crate::tokens::token::Token;
+use crate::tokens::token_kind::TokenKind;
 
 // Helper to create a dummy SourceSpan
 pub fn dummy_span() -> SourceSpan {
@@ -137,6 +139,23 @@ pub fn array_access_expr(array: Expr, index: Expr) -> Expr {
     Expr::ArrayAccess {
         array: Box::new(array),
         index: Box::new(index),
+        span: dummy_span(),
+    }
+}
+
+pub fn create_tokens(kinds: Vec<TokenKind>) -> Vec<Token> {
+    kinds
+        .into_iter()
+        .map(|k| Token {
+            kind: k,
+            span: dummy_span(),
+        })
+        .collect()
+}
+
+pub fn num_token(n: f64) -> Token {
+    Token {
+        kind: TokenKind::Numeric(Number::Float64(n)),
         span: dummy_span(),
     }
 }
