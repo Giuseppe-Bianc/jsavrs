@@ -101,6 +101,43 @@ fn assign_expr(name: &str, value: Expr) -> Expr {
     }
 }
 
+fn variable_expr(name: &str) -> Expr {
+    Expr::Variable {
+        name: name.into(),
+        span: dummy_span(),
+    }
+}
+
+fn call_expr(callee: Expr, arguments: Vec<Expr>) -> Expr {
+    Expr::Call {
+        callee: Box::new(callee),
+        arguments,
+        span: dummy_span(),
+    }
+}
+fn var_declaration(variables: Vec<String>, type_annotation: Type, initializers: Vec<Expr>) -> Stmt {
+    Stmt::VarDeclaration {
+        variables,
+        type_annotation,
+        initializers,
+        span: dummy_span(),
+    }
+}
+fn function_declaration(
+    name: String,
+    parameters: Vec<Parameter>,
+    return_type: Type,
+    body: Vec<Stmt>,
+) -> Stmt {
+    Stmt::Function {
+        name,
+        parameters,
+        return_type,
+        body,
+        span: dummy_span(),
+    }
+}
+
 #[test]
 fn test_simple_binary_expr() {
     let expr = binary_expr(num_lit(1), BinaryOp::Add, num_lit(2));
@@ -162,21 +199,6 @@ fn test_variable_assignment() {
     let stripped = strip_ansi_codes(&output);
 
     assert_snapshot!(stripped.trim());
-}
-
-fn variable_expr(name: &str) -> Expr {
-    Expr::Variable {
-        name: name.into(),
-        span: dummy_span(),
-    }
-}
-
-fn call_expr(callee: Expr, arguments: Vec<Expr>) -> Expr {
-    Expr::Call {
-        callee: Box::new(callee),
-        arguments,
-        span: dummy_span(),
-    }
 }
 
 #[test]
@@ -252,19 +274,6 @@ fn test_stmt_expression() {
     assert_snapshot!(stripped.trim());
 }
 
-fn var_declaration(
-    variables: Vec<String>,
-    type_annotation: Type,
-    initializers: Vec<Expr>,
-) -> Stmt {
-    Stmt::VarDeclaration {
-        variables,
-        type_annotation,
-        initializers,
-        span: dummy_span(),
-    }
-}
-
 #[test]
 fn test_var_declaration_multiple_vars() {
     let stmt = var_declaration(
@@ -280,9 +289,9 @@ fn test_var_declaration_multiple_vars() {
 }
 #[test]
 fn test_function_with_parameters() {
-    let stmt = Stmt::Function {
-        name: "sum".to_string(),
-        parameters: vec![
+    let stmt = function_declaration(
+        "sum".to_string(),
+        vec![
             Parameter {
                 name: "a".to_string(),
                 type_annotation: Type::I32,
@@ -294,24 +303,16 @@ fn test_function_with_parameters() {
                 span: dummy_span(),
             },
         ],
-        return_type: Type::I32,
-        body: vec![Stmt::Return {
-            value: Some(Expr::Binary {
-                left: Box::new(Expr::Variable {
-                    name: "a".to_string(),
-                    span: dummy_span(),
-                }),
-                op: BinaryOp::Add,
-                right: Box::new(Expr::Variable {
-                    name: "b".to_string(),
-                    span: dummy_span(),
-                }),
-                span: dummy_span(),
-            }),
+        Type::I32,
+        vec![Stmt::Return {
+            value: Some(binary_expr(
+                variable_expr("a"),
+                BinaryOp::Add,
+                variable_expr("b"),
+            )),
             span: dummy_span(),
         }],
-        span: dummy_span(),
-    };
+    );
 
     let output = pretty_print_stmt(&stmt);
     let stripped = strip_ansi_codes(&output);
@@ -322,12 +323,8 @@ fn test_function_with_parameters() {
 #[test]
 fn test_if_stmt_with_else() {
     let condition = bool_lit(true);
-    let then_branch = vec![Stmt::Expression {
-        expr: num_lit(1)
-    }];
-    let else_branch = vec![Stmt::Expression {
-        expr: num_lit(2)
-    }];
+    let then_branch = vec![Stmt::Expression { expr: num_lit(1) }];
+    let else_branch = vec![Stmt::Expression { expr: num_lit(2) }];
 
     let stmt = Stmt::If {
         condition,
@@ -359,12 +356,7 @@ fn test_empty_block_stmt() {
 fn test_nested_block_stmt() {
     let stmt = Stmt::Block {
         statements: vec![Stmt::Block {
-            statements: vec![Stmt::Expression {
-                expr: Expr::Literal {
-                    value: LiteralValue::Number(Number::Integer(42)),
-                    span: dummy_span(),
-                },
-            }],
+            statements: vec![Stmt::Expression { expr: num_lit(42) }],
             span: dummy_span(),
         }],
         span: dummy_span(),
@@ -379,10 +371,7 @@ fn test_nested_block_stmt() {
 #[test]
 fn test_return_stmt_with_value() {
     let stmt = Stmt::Return {
-        value: Some(Expr::Literal {
-            value: LiteralValue::Number(Number::Integer(42)),
-            span: dummy_span(),
-        }),
+        value: Some(num_lit(42)),
         span: dummy_span(),
     };
 
@@ -431,13 +420,7 @@ macro_rules! test_type_output {
     ($name:ident, $typ:expr) => {
         #[test]
         fn $name() {
-            let stmt = Stmt::Function {
-                name: "func".to_string(),
-                parameters: vec![],
-                return_type: $typ,
-                body: vec![],
-                span: dummy_span(),
-            };
+            let stmt = function_declaration("func".to_string(), vec![], $typ, vec![]);
 
             let output = pretty_print_stmt(&stmt);
             let stripped = strip_ansi_codes(&output);
