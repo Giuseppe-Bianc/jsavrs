@@ -2,6 +2,7 @@ use jsavrs::location::source_location::SourceLocation;
 use jsavrs::location::source_span::{SourceSpan, truncate_path};
 use std::path::Path;
 use std::sync::Arc;
+use jsavrs::utils::create_span;
 
 macro_rules! truncate_test {
     ($name:ident, $path:expr, $depth:expr) => {
@@ -23,19 +24,7 @@ macro_rules! span_str_test {
     ($name:ident, $file:expr, $sl:expr, $sc:expr, $el:expr, $ec:expr) => {
         #[test]
         fn $name() {
-            let span = SourceSpan::new(
-                Arc::from($file),
-                SourceLocation {
-                    line: $sl,
-                    column: $sc,
-                    absolute_pos: 0,
-                },
-                SourceLocation {
-                    line: $el,
-                    column: $ec,
-                    absolute_pos: 0,
-                },
-            );
+            let span = create_span($file, $sl, $sc, $el, $ec);
             insta::assert_snapshot!(span.to_string());
         }
     };
@@ -82,29 +71,6 @@ fn absolute_path_span() {
         "absolute_path_span_windows"
     };
     insta::assert_snapshot!(snapshot_name, span.to_string());
-}
-
-// Test di merging
-fn create_span(
-    file_path: &str,
-    start_line: usize,
-    start_col: usize,
-    end_line: usize,
-    end_col: usize,
-) -> SourceSpan {
-    SourceSpan {
-        file_path: Arc::from(file_path),
-        start: SourceLocation {
-            line: start_line,
-            column: start_col,
-            absolute_pos: 0,
-        },
-        end: SourceLocation {
-            line: end_line,
-            column: end_col,
-            absolute_pos: 0,
-        },
-    }
 }
 
 #[test]

@@ -2,6 +2,7 @@ use jsavrs::location::source_location::SourceLocation;
 use jsavrs::location::source_span::{SourceSpan, truncate_path};
 use std::path::Path;
 use std::sync::Arc;
+use jsavrs::utils::create_span;
 
 macro_rules! truncate_test {
     ($name:ident, $path:expr, $depth:expr, $unix:expr, $windows:expr) => {
@@ -19,19 +20,7 @@ macro_rules! span_str_test {
     ($name:ident, $file:expr, $sl:expr, $sc:expr, $el:expr, $ec:expr, $unix:expr, $windows:expr) => {
         #[test]
         fn $name() {
-            let span = SourceSpan::new(
-                Arc::from($file),
-                SourceLocation {
-                    line: $sl,
-                    column: $sc,
-                    absolute_pos: 0,
-                },
-                SourceLocation {
-                    line: $el,
-                    column: $ec,
-                    absolute_pos: 0,
-                },
-            );
+            let span = create_span($file, $sl, $sc, $el, $ec);
             let expected = if cfg!(unix) { $unix } else { $windows };
             assert_eq!(span.to_string(), expected);
         }
@@ -113,16 +102,8 @@ fn absolute_path_span() {
     };
     let span = SourceSpan::new(
         Arc::from(path),
-        SourceLocation {
-            line: 5,
-            column: 3,
-            absolute_pos: 20,
-        },
-        SourceLocation {
-            line: 5,
-            column: 10,
-            absolute_pos: 30,
-        },
+        SourceLocation::new(5, 3, 20),
+        SourceLocation::new(5, 10, 30)
     );
     let expected = if cfg!(unix) {
         "../src/main.vn:line 5:column 3 - line 5:column 10"
@@ -130,29 +111,6 @@ fn absolute_path_span() {
         "..\\src\\main.vn:line 5:column 3 - line 5:column 10"
     };
     assert_eq!(span.to_string(), expected);
-}
-
-// Test di merging
-fn create_span(
-    file_path: &str,
-    start_line: usize,
-    start_col: usize,
-    end_line: usize,
-    end_col: usize,
-) -> SourceSpan {
-    SourceSpan {
-        file_path: Arc::from(file_path),
-        start: SourceLocation {
-            line: start_line,
-            column: start_col,
-            absolute_pos: 0,
-        },
-        end: SourceLocation {
-            line: end_line,
-            column: end_col,
-            absolute_pos: 0,
-        },
-    }
 }
 
 #[test]

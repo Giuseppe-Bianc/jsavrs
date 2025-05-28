@@ -1,11 +1,11 @@
-use std::sync::Arc;
-use regex::Regex;
 use crate::location::source_location::SourceLocation;
 use crate::location::source_span::SourceSpan;
 use crate::parser::ast::{BinaryOp, Expr, LiteralValue, Parameter, Stmt, Type, UnaryOp};
 use crate::tokens::number::Number;
 use crate::tokens::token::Token;
 use crate::tokens::token_kind::TokenKind;
+use regex::Regex;
+use std::sync::Arc;
 
 // Helper to create a dummy SourceSpan
 pub fn dummy_span() -> SourceSpan {
@@ -107,7 +107,11 @@ pub fn call_expr(callee: Expr, arguments: Vec<Expr>) -> Expr {
         span: dummy_span(),
     }
 }
-pub fn var_declaration(variables: Vec<String>, type_annotation: Type, initializers: Vec<Expr>) -> Stmt {
+pub fn var_declaration(
+    variables: Vec<String>,
+    type_annotation: Type,
+    initializers: Vec<Expr>,
+) -> Stmt {
     Stmt::VarDeclaration {
         variables,
         type_annotation,
@@ -155,13 +159,24 @@ pub fn num_token(n: f64) -> Token {
     }
 }
 
+// Test di merging
+pub fn create_span(
+    file_path: &str,
+    start_line: usize,
+    start_col: usize,
+    end_line: usize,
+    end_col: usize,
+) -> SourceSpan {
+    SourceSpan::new(
+        Arc::from(file_path),
+        SourceLocation::new(start_line, start_col, 0),
+        SourceLocation::new(end_line, end_col, 1),
+    )
+}
+
 /// Helper function to create a `SourceSpan` for a given line.
 pub fn t_span(line: usize) -> SourceSpan {
-    SourceSpan::new(
-        Arc::from("test_file"),
-        SourceLocation::new(line, 1, 0),
-        SourceLocation::new(line, 2, 1),
-    )
+    create_span("test_file", line, 1, line, 2)
 }
 
 /// Helper macro to construct a `CompileError::<Variant>` instance, optionally mutable, with a default message and span.

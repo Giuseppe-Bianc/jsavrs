@@ -529,7 +529,7 @@ fn test_non_identifier_token() {
     // Create a single token of kind NumberLiteral at exactly that position.
     let token_span = make_span(5, 5, 5, 6);
     let tok = Token {
-        kind: TokenKind::Numeric(Integer(42)), // Not an identifier
+        kind: Numeric(Integer(42)), // Not an identifier
         span: token_span.clone(),
     };
     let tokens = vec![tok];
@@ -570,7 +570,7 @@ fn test_identifier_length_gt_one() {
     // A two‐character identifier, e.g. "ab"
     let token_span = make_span(7, 8, 7, 10);
     let tok = Token {
-        kind: TokenKind::IdentifierAscii("ab".into()),
+        kind: IdentifierAscii("ab".into()),
         span: token_span.clone(),
     };
     let tokens = vec![tok];
@@ -612,7 +612,7 @@ fn test_get_error_message_none() {
     // here we pick "z" assuming it’s not in your error map.
     let token_span = make_span(8, 9, 8, 10);
     let tok = Token {
-        kind: TokenKind::IdentifierAscii("z".into()),
+        kind: IdentifierAscii("z".into()),
         span: token_span.clone(),
     };
     let tokens = vec![tok];
@@ -658,7 +658,7 @@ fn test_adjacent_spans_merging() {
     let token_span = make_span(4, 1, 4, 2); // <-- This is our original span
 
     let token = Token {
-        kind: TokenKind::IdentifierAscii("b".into()),
+        kind: IdentifierAscii("b".into()),
         span: token_span.clone(), // <-- CLONE HERE to avoid move
     };
     let tokens = vec![token];
