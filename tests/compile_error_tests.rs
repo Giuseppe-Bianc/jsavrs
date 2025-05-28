@@ -1,6 +1,8 @@
 use jsavrs::error::compile_error::CompileError;
 use jsavrs::location::{source_location::SourceLocation, source_span::SourceSpan};
 use std::sync::Arc;
+use jsavrs::utils::t_span;
+use jsavrs::make_error;
 
 #[test]
 fn test_io_error_display() {
@@ -13,21 +15,14 @@ macro_rules! generate_display_test {
     ($test_name:ident, $error_type:ident, $line:expr) => {
         #[test]
         fn $test_name() {
-            let span = SourceSpan::new(
-                Arc::from("test_file"),
-                SourceLocation::new($line, 1, 0),
-                SourceLocation::new($line, 2, 1),
+            make_error!(error, $error_type, $line);
+            let expected = format!(
+                "Unexpected token \"@\" at test_file:line {}:column 1 - line {}:column 2",
+                $line, $line
             );
-            let error = CompileError::$error_type {
-                message: "Unexpected token \"@\"".to_string(),
-                span,
-            };
             assert_eq!(
                 format!("{} at {}", error.message().unwrap(), error.span().unwrap()),
-                format!(
-                    "Unexpected token \"@\" at test_file:line {}:column 1 - line {}:column 2",
-                    $line, $line
-                )
+                expected
             );
         }
     };
@@ -40,15 +35,7 @@ macro_rules! generate_message_test {
     ($test_name:ident, $error_type:ident, $line:expr) => {
         #[test]
         fn $test_name() {
-            let span = SourceSpan::new(
-                Arc::from("test_file"),
-                SourceLocation::new($line, 1, 0),
-                SourceLocation::new($line, 2, 1),
-            );
-            let error = CompileError::$error_type {
-                message: "Unexpected token \"@\"".to_string(),
-                span,
-            };
+            make_error!(error, $error_type, $line);
             assert_eq!(error.message(), Some("Unexpected token \"@\""));
         }
     };
@@ -61,21 +48,14 @@ macro_rules! generate_span_test {
     ($test_name:ident, $error_type:ident, $line:expr) => {
         #[test]
         fn $test_name() {
-            let span = SourceSpan::new(
-                Arc::from("test_file"),
-                SourceLocation::new($line, 1, 0),
-                SourceLocation::new($line, 2, 1),
-            );
-            let error = CompileError::$error_type {
-                message: "Unexpected token \"@\"".to_string(),
-                span,
-            };
-            assert_eq!(error.span().unwrap().start.line, $line);
-            assert_eq!(error.span().unwrap().end.line, $line);
-            assert_eq!(error.span().unwrap().start.column, 1);
-            assert_eq!(error.span().unwrap().end.column, 2);
-            assert_eq!(error.span().unwrap().start.absolute_pos, 0);
-            assert_eq!(error.span().unwrap().end.absolute_pos, 1);
+            make_error!(error, $error_type, $line);
+            let span = error.span().unwrap();
+            assert_eq!(span.start.line, $line);
+            assert_eq!(span.start.column, 1);
+            assert_eq!(span.start.absolute_pos, 0);
+            assert_eq!(span.end.line, $line);
+            assert_eq!(span.end.column, 2);
+            assert_eq!(span.end.absolute_pos, 1);
         }
     };
 }
@@ -87,15 +67,7 @@ macro_rules! generate_set_message_test {
     ($test_name:ident, $error_type:ident, $line:expr) => {
         #[test]
         fn $test_name() {
-            let span = SourceSpan::new(
-                Arc::from("test_file"),
-                SourceLocation::new($line, 1, 0),
-                SourceLocation::new($line, 2, 1),
-            );
-            let mut error = CompileError::$error_type {
-                message: "Unexpected token \"@\"".to_string(),
-                span,
-            };
+            make_error!(mut error, $error_type, $line);
             error.set_message("New message".to_string());
             assert_eq!(error.message(), Some("New message"));
         }
@@ -109,30 +81,26 @@ macro_rules! generate_set_span_test {
     ($test_name:ident, $error_type:ident, $initial_line:expr, $new_line:expr) => {
         #[test]
         fn $test_name() {
-            let span1 = SourceSpan::new(
-                Arc::from("test_file"),
-                SourceLocation::new($initial_line, 1, 0),
-                SourceLocation::new($initial_line, 2, 1),
-            );
-            let span2 = SourceSpan::new(
+            make_error!(mut error, $error_type, $initial_line);
+
+            let new_span = SourceSpan::new(
                 Arc::from("test_file"),
                 SourceLocation::new($new_line, 1, 2),
                 SourceLocation::new($new_line, 2, 3),
             );
-            let mut error = CompileError::$error_type {
-                message: "Unexpected token \"@\"".to_string(),
-                span: span1,
-            };
-            error.set_span(span2);
-            assert_eq!(error.span().unwrap().start.line, $new_line);
-            assert_eq!(error.span().unwrap().end.line, $new_line);
-            assert_eq!(error.span().unwrap().start.column, 1);
-            assert_eq!(error.span().unwrap().end.column, 2);
-            assert_eq!(error.span().unwrap().start.absolute_pos, 2);
-            assert_eq!(error.span().unwrap().end.absolute_pos, 3);
+            error.set_span(new_span);
+
+            let span = error.span().unwrap();
+            assert_eq!(span.start.line, $new_line);
+            assert_eq!(span.start.column, 1);
+            assert_eq!(span.start.absolute_pos, 2);
+            assert_eq!(span.end.line, $new_line);
+            assert_eq!(span.end.column, 2);
+            assert_eq!(span.end.absolute_pos, 3);
         }
     };
 }
+
 
 generate_set_span_test!(test_set_span, LexerError, 1, 2);
 generate_set_span_test!(test_set_span_parser, SyntaxError, 2, 3);
@@ -149,11 +117,7 @@ fn test_set_message_not_lexer_error() {
 fn test_set_span_not_lexer_error() {
     let io_error = std::io::Error::new(std::io::ErrorKind::NotFound, "File not found");
     let mut error: CompileError = io_error.into();
-    let span = SourceSpan::new(
-        Arc::from("test_file"),
-        SourceLocation::new(1, 1, 0),
-        SourceLocation::new(1, 2, 1),
-    );
+    let span = t_span(1);
     error.set_span(span);
     assert_eq!(error.span(), None);
 }

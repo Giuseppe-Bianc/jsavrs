@@ -1,4 +1,6 @@
+use std::sync::Arc;
 use regex::Regex;
+use crate::location::source_location::SourceLocation;
 use crate::location::source_span::SourceSpan;
 use crate::parser::ast::{BinaryOp, Expr, LiteralValue, Parameter, Stmt, Type, UnaryOp};
 use crate::tokens::number::Number;
@@ -158,4 +160,32 @@ pub fn num_token(n: f64) -> Token {
         kind: TokenKind::Numeric(Number::Float64(n)),
         span: dummy_span(),
     }
+}
+
+/// Helper function to create a `SourceSpan` for a given line.
+pub fn t_span(line: usize) -> SourceSpan {
+    SourceSpan::new(
+        Arc::from("test_file"),
+        SourceLocation::new(line, 1, 0),
+        SourceLocation::new(line, 2, 1),
+    )
+}
+
+/// Helper macro to construct a `CompileError::<Variant>` instance, optionally mutable, with a default message and span.
+#[macro_export]
+macro_rules! make_error {
+    // Immutable binding
+    ($var:ident, $error_type:ident, $line:expr) => {
+        let $var = CompileError::$error_type {
+            message: "Unexpected token \"@\"".to_string(),
+            span: t_span($line),
+        };
+    };
+    // Mutable binding
+    (mut $var:ident, $error_type:ident, $line:expr) => {
+        let mut $var = CompileError::$error_type {
+            message: "Unexpected token \"@\"".to_string(),
+            span: t_span($line),
+        };
+    };
 }
