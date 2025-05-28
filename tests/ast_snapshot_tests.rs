@@ -272,7 +272,6 @@ fn test_var_declaration_multiple_vars() {
         Type::I32,
         vec![num_lit(1), num_lit(2)],
     );
-    
 
     let output = pretty_print_stmt(&stmt);
     let stripped = strip_ansi_codes(&output);
@@ -395,18 +394,17 @@ fn test_return_stmt_with_value() {
 
 #[test]
 fn test_complex_type_declaration() {
-    let stmt = Stmt::VarDeclaration {
-        variables: vec!["matrix".to_string()],
-        type_annotation: Type::Array(
+    let stmt = var_declaration(
+        vec!["matrix".to_string()],
+        Type::Array(
             Box::new(Type::F64),
             Box::new(Expr::Literal {
                 value: LiteralValue::Nullptr,
                 span: dummy_span(),
             }),
         ),
-        initializers: vec![],
-        span: dummy_span(),
-    };
+        vec![],
+    );
 
     let output = pretty_print_stmt(&stmt);
     let stripped = strip_ansi_codes(&output);
@@ -417,10 +415,7 @@ fn test_complex_type_declaration() {
 #[test]
 fn test_edge_case_empty_then_branch() {
     let stmt = Stmt::If {
-        condition: Expr::Literal {
-            value: LiteralValue::Bool(true),
-            span: dummy_span(),
-        },
+        condition: bool_lit(true),
         then_branch: vec![],
         else_branch: None,
         span: dummy_span(),
