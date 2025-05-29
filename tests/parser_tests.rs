@@ -332,7 +332,7 @@ assignment_test!(
         Stmt::Expression { expr: num_lit(5) },
         Stmt::Expression { expr: num_lit(10) },
     ],
-    "Invalid assignment target: Equal"
+    "Invalid assignment target: '='"
 );
 
 #[test]
@@ -412,7 +412,7 @@ fn test_array_access_empty_index() {
     );
     assert_eq!(
         errors[0].message().unwrap(),
-        "Unexpected token: CloseBracket"
+        "Unexpected token: ']'"
     );
 }
 
@@ -428,7 +428,7 @@ fn test_unclosed_parenthesis() {
     assert!(!errors.is_empty());
     assert_eq!(
         errors[0].message().unwrap(),
-        "Unclosed parenthesis: Expected 'CloseParen' but found Eof"
+        "Expected ')' but found end of file"
     );
     assert_eq!(expr.len(), 1);
     assert_eq!(
@@ -449,7 +449,7 @@ fn test_unexpected_token() {
     let parser = JsavParser::new(tokens);
     let (expr, errors) = parser.parse();
     assert!(!errors.is_empty());
-    assert_eq!(errors[0].message().unwrap(), "Unexpected token: Plus");
+    assert_eq!(errors[0].message().unwrap(), "Unexpected token: '+'");
     assert_eq!(expr.len(), 0);
 }
 
@@ -558,7 +558,7 @@ fn test_assignment_invalid_target_function_call() {
     assert!(!errors.is_empty());
     assert_eq!(
         errors[0].message().unwrap(),
-        "Invalid assignment target: Equal"
+        "Invalid assignment target: '='"
     );
     assert_eq!(expr.len(), 2);
     assert_eq!(
@@ -605,7 +605,7 @@ fn test_function_call_unclosed_paren() {
     assert!(!errors.is_empty());
     assert_eq!(
         errors[0].message().unwrap(),
-        "Unclosed function call: Expected 'CloseParen' but found Eof"
+        "Expected ')' but found end of file"
     );
     assert_eq!(expr.len(), 1);
     assert!(matches!(
@@ -632,7 +632,7 @@ fn test_assignment_invalid_target_binary() {
     assert!(!errors.is_empty());
     assert_eq!(
         errors[0].message().unwrap(),
-        "Invalid assignment target: Equal"
+        "Invalid assignment target: '='"
     );
     assert_eq!(expr.len(), 2);
     assert!(matches!(
@@ -737,7 +737,7 @@ fn test_invalid_unary_operator() {
     let parser = JsavParser::new(tokens);
     let (expr, errors) = parser.parse();
     assert!(!errors.is_empty());
-    assert_eq!(errors[0].message().unwrap(), "Unexpected token: Star");
+    assert_eq!(errors[0].message().unwrap(), "Unexpected token: '*'");
     assert_eq!(expr.len(), 0);
 }
 
@@ -778,7 +778,7 @@ fn test_multiple_errors_in_expression() {
     let parser = JsavParser::new(tokens);
     let (_expr, errors) = parser.parse();
     assert_eq!(errors.len(), 1);
-    assert_eq!(errors[0].message().unwrap(), "Unexpected token: Plus");
+    assert_eq!(errors[0].message().unwrap(), "Unexpected token: '+'");
 }
 
 #[test]
@@ -823,7 +823,7 @@ fn test_complex_nesting_errors() {
     assert!(!errors.is_empty());
     assert_eq!(
         errors[0].message().unwrap(),
-        "Unexpected token: OpenBracket"
+        "Unexpected token: '['"
     );
 }
 
@@ -866,7 +866,7 @@ fn test_nested_parsing_errors() {
     let parser = JsavParser::new(tokens);
     let (_expr, errors) = parser.parse();
     assert!(!errors.is_empty());
-    assert_eq!(errors[0].message().unwrap(), "Unexpected token: Star");
+    assert_eq!(errors[0].message().unwrap(), "Unexpected token: '*'");
 }
 
 #[test]
@@ -882,7 +882,7 @@ fn test_nested_unknown_binding_power() {
     assert!(!errors.is_empty());
     assert_eq!(
         errors[0].message().unwrap(),
-        "Unexpected operator: PlusEqual"
+        "Unexpected operator: '+='"
     );
 }
 
@@ -972,11 +972,12 @@ fn test_function_parameter_errors() {
     let (_, errors) = parser.parse();
 
     assert!(!errors.is_empty());
-    assert!(errors.iter().any(|e| {
+    /*assert!(errors.iter().any(|e| {
         e.message()
             .unwrap()
             .contains("Expected ':' after parameter name")
-    }));
+    }));*/
+    assert_eq!(errors[0].message().unwrap(), "Expected ':' but found ','");
 }
 
 #[test]
@@ -1773,7 +1774,7 @@ fn test_var_no_name() {
     let parser = JsavParser::new(tokens);
     let (_expr, errors) = parser.parse();
     assert!(!errors.is_empty());
-    assert_eq!(errors[0].message().unwrap(), "Expected identifier after the 'var' or 'const': Eof");
+    assert_eq!(errors[0].message().unwrap(), "Expected identifier after the 'var' or 'const': end of file");
 }
 
 #[test]
@@ -1783,7 +1784,7 @@ fn test_var_no_initializer() {
     let parser = JsavParser::new(tokens);
     let (_expr, errors) = parser.parse();
     assert!(!errors.is_empty());
-    assert_eq!(errors[0].message().unwrap(), "Expected '=' after type annotation: Expected 'Equal' but found Eof");
+    assert_eq!(errors[0].message().unwrap(), "Expected '=' but found end of file");
 }
 
 #[test]
@@ -1793,5 +1794,5 @@ fn test_var_invaild_type() {
     let parser = JsavParser::new(tokens);
     let (_expr, errors) = parser.parse();
     assert!(!errors.is_empty());
-    assert_eq!(errors[0].message().unwrap(), "Invalid type: Numeric(Integer(5))");
+    assert_eq!(errors[0].message().unwrap(), "Invalid type: number 'Integer(5)'");
 }

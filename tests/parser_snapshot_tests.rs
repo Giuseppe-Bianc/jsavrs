@@ -274,19 +274,7 @@ fn test_array_access_empty_index() {
         TokenKind::Eof,
     ]);
     let parser = JsavParser::new(tokens);
-    let (expr, errors) = parser.parse();
-    assert!(!errors.is_empty());
-    assert_eq!(expr.len(), 1);
-    assert_eq!(
-        expr[0],
-        Stmt::Expression {
-            expr: array_access_expr(variable_expr("arr"), nullptr_lit())
-        }
-    );
-    assert_eq!(
-        errors[0].message().unwrap(),
-        "Unexpected token: CloseBracket"
-    );
+    assert_debug_snapshot!(parser.parse());
 }
 
 #[test]
@@ -297,19 +285,7 @@ fn test_unclosed_parenthesis() {
         TokenKind::Eof,
     ]);
     let parser = JsavParser::new(tokens);
-    let (expr, errors) = parser.parse();
-    assert!(!errors.is_empty());
-    assert_eq!(
-        errors[0].message().unwrap(),
-        "Unclosed parenthesis: Expected 'CloseParen' but found Eof"
-    );
-    assert_eq!(expr.len(), 1);
-    assert_eq!(
-        expr[0],
-        Stmt::Expression {
-            expr: grouping_expr(num_lit(5))
-        }
-    );
+    assert_debug_snapshot!(parser.parse());
 }
 
 #[test]
@@ -320,21 +296,14 @@ fn test_unexpected_token() {
         TokenKind::Eof,
     ]);
     let parser = JsavParser::new(tokens);
-    let (expr, errors) = parser.parse();
-    assert!(!errors.is_empty());
-    assert_eq!(errors[0].message().unwrap(), "Unexpected token: Plus");
-    assert_eq!(expr.len(), 0);
+    assert_debug_snapshot!(parser.parse());
 }
 
 #[test]
 fn test_empty_input() {
     let tokens = create_tokens(vec![TokenKind::Eof]);
     let parser = JsavParser::new(tokens);
-    let (expr, errors) = parser.parse();
-    assert_eq!(errors.len(), 0);
-    //assert_eq!(errors[0].message().unwrap(), "Unexpected token: Eof");
-    assert_eq!(expr.len(), 0);
-    //assert_eq!(expr, None);
+    assert_debug_snapshot!(parser.parse());
 }
 
 #[test]
@@ -350,15 +319,7 @@ fn test_deep_nesting() {
         TokenKind::Eof,
     ]);
     let parser = JsavParser::new(tokens);
-    let (expr, errors) = parser.parse();
-    assert!(errors.is_empty());
-    assert_eq!(expr.len(), 1);
-    assert_eq!(
-        expr,
-        vec![Stmt::Expression {
-            expr: grouping_expr(grouping_expr(grouping_expr(num_lit(5))))
-        }]
-    );
+    assert_debug_snapshot!(parser.parse());
 }
 
 #[test]
@@ -367,7 +328,7 @@ fn test_unary_operators_bp() {
         kind: TokenKind::Dot,
         span: dummy_span(),
     };
-    assert_eq!(unary_binding_power(&token), (0, 0))
+    assert_debug_snapshot!(unary_binding_power(&token));
 }
 
 // Test for line 128-132: Variable with Unicode identifier
@@ -378,15 +339,7 @@ fn test_variable_unicode_identifier() {
         TokenKind::Eof,
     ]);
     let parser = JsavParser::new(tokens);
-    let (expr, errors) = parser.parse();
-    assert!(errors.is_empty());
-    assert_eq!(expr.len(), 1);
-    assert_eq!(
-        expr[0],
-        Stmt::Expression {
-            expr: variable_expr("変数")
-        }
-    );
+    assert_debug_snapshot!(parser.parse());
 }
 
 // Test for lines 143-144: Unary operator precedence
@@ -400,19 +353,7 @@ fn test_unary_precedence() {
         TokenKind::Eof,
     ]);
     let parser = JsavParser::new(tokens);
-    let (expr, errors) = parser.parse();
-    assert!(errors.is_empty());
-    assert_eq!(expr.len(), 1);
-    assert_eq!(
-        expr[0],
-        Stmt::Expression {
-            expr: binary_expr(
-                unary_expr(UnaryOp::Negate, num_lit(5)),
-                BinaryOp::Multiply,
-                num_lit(3)
-            )
-        }
-    );
+    assert_debug_snapshot!(parser.parse());
 }
 
 // Test for line 170: Assignment with invalid target (function call)
@@ -427,20 +368,7 @@ fn test_assignment_invalid_target_function_call() {
         TokenKind::Eof,
     ]);
     let parser = JsavParser::new(tokens);
-    let (expr, errors) = parser.parse();
-    assert!(!errors.is_empty());
-    assert_eq!(
-        errors[0].message().unwrap(),
-        "Invalid assignment target: Equal"
-    );
-    assert_eq!(expr.len(), 2);
-    assert_eq!(
-        expr[0],
-        Stmt::Expression {
-            expr: call_expr(variable_expr("foo"), vec![])
-        }
-    );
-    assert_eq!(expr[1], Stmt::Expression { expr: num_lit(5) });
+    assert_debug_snapshot!(parser.parse());
 }
 
 // Test for lines 178-179: Function call with zero arguments
@@ -474,19 +402,7 @@ fn test_function_call_unclosed_paren() {
         TokenKind::Eof,
     ]);
     let parser = JsavParser::new(tokens);
-    let (expr, errors) = parser.parse();
-    assert!(!errors.is_empty());
-    assert_eq!(
-        errors[0].message().unwrap(),
-        "Unclosed function call: Expected 'CloseParen' but found Eof"
-    );
-    assert_eq!(expr.len(), 1);
-    assert!(matches!(
-        expr[0],
-        Stmt::Expression {
-            expr: Expr::Call { .. }
-        }
-    ));
+    assert_debug_snapshot!(parser.parse());
 }
 
 // Test for line 170: Assignment with binary expr target
@@ -501,19 +417,7 @@ fn test_assignment_invalid_target_binary() {
         TokenKind::Eof,
     ]);
     let parser = JsavParser::new(tokens);
-    let (expr, errors) = parser.parse();
-    assert!(!errors.is_empty());
-    assert_eq!(
-        errors[0].message().unwrap(),
-        "Invalid assignment target: Equal"
-    );
-    assert_eq!(expr.len(), 2);
-    assert!(matches!(
-        expr[0],
-        Stmt::Expression {
-            expr: Expr::Binary { .. }
-        }
-    ));
+    assert_debug_snapshot!(parser.parse());
 }
 
 #[test]
@@ -533,22 +437,7 @@ fn test_invalid_binary_operator() {
         };
 
         let result = BinaryOp::get_op(&token);
-        assert!(result.is_err(), "Expected error for token: {:?}", kind);
-
-        // Verify error details
-        let err = result.unwrap_err();
-        match err {
-            CompileError::SyntaxError { message, span } => {
-                assert_eq!(
-                    message,
-                    format!("Invalid binary operator: {:?}", kind),
-                    "Incorrect message for token: {:?}",
-                    kind
-                );
-                assert_eq!(span, token.span, "Incorrect span for token: {:?}", kind);
-            }
-            _ => panic!("Unexpected error type for token: {:?}", kind),
-        }
+        assert_debug_snapshot!(result);
     }
 }
 
@@ -561,15 +450,7 @@ fn test_assignment_unicode_variable() {
         TokenKind::Eof,
     ]);
     let parser = JsavParser::new(tokens);
-    let (expr, errors) = parser.parse();
-    assert!(errors.is_empty());
-    assert_eq!(expr.len(), 1);
-    assert_eq!(
-        expr[0],
-        Stmt::Expression {
-            expr: assign_expr("変数", num_lit(5))
-        }
-    );
+    assert_debug_snapshot!(parser.parse());
 }
 
 // Test per accessi ad array concatenati
@@ -586,18 +467,7 @@ fn test_chained_array_access() {
         TokenKind::Eof,
     ]);
     let parser = JsavParser::new(tokens);
-    let (expr, errors) = parser.parse();
-    assert!(errors.is_empty());
-    assert_eq!(expr.len(), 1);
-    assert_eq!(
-        expr[0],
-        Stmt::Expression {
-            expr: array_access_expr(
-                array_access_expr(variable_expr("arr"), num_lit(1)),
-                num_lit(2)
-            )
-        }
-    );
+    assert_debug_snapshot!(parser.parse());
 }
 
 #[test]
@@ -608,10 +478,7 @@ fn test_invalid_unary_operator() {
         TokenKind::Eof,
     ]);
     let parser = JsavParser::new(tokens);
-    let (expr, errors) = parser.parse();
-    assert!(!errors.is_empty());
-    assert_eq!(errors[0].message().unwrap(), "Unexpected token: Star");
-    assert_eq!(expr.len(), 0);
+    assert_debug_snapshot!(parser.parse());
 }
 
 #[test]
@@ -626,18 +493,7 @@ fn test_nested_function_calls() {
         TokenKind::Eof,
     ]);
     let parser = JsavParser::new(tokens);
-    let (expr, errors) = parser.parse();
-    assert!(errors.is_empty());
-    assert_eq!(expr.len(), 1);
-    assert_eq!(
-        expr[0],
-        Stmt::Expression {
-            expr: call_expr(
-                variable_expr("foo"),
-                vec![call_expr(variable_expr("bar"), vec![])]
-            )
-        }
-    );
+    assert_debug_snapshot!(parser.parse());
 }
 
 #[test]
@@ -649,9 +505,7 @@ fn test_multiple_errors_in_expression() {
         TokenKind::Eof,
     ]);
     let parser = JsavParser::new(tokens);
-    let (_expr, errors) = parser.parse();
-    assert_eq!(errors.len(), 1);
-    assert_eq!(errors[0].message().unwrap(), "Unexpected token: Plus");
+    assert_debug_snapshot!(parser.parse());
 }
 
 #[test]
@@ -668,18 +522,7 @@ fn test_mixed_literals_function_call() {
         TokenKind::Eof,
     ]);
     let parser = JsavParser::new(tokens);
-    let (expr, errors) = parser.parse();
-    assert!(errors.is_empty());
-    assert_eq!(expr.len(), 1);
-    assert_eq!(
-        expr[0],
-        Stmt::Expression {
-            expr: call_expr(
-                variable_expr("test"),
-                vec![num_lit(1), string_lit("due"), bool_lit(true)]
-            )
-        }
-    );
+    assert_debug_snapshot!(parser.parse());
 }
 
 #[test]
@@ -692,12 +535,7 @@ fn test_complex_nesting_errors() {
         TokenKind::Eof,
     ]);
     let parser = JsavParser::new(tokens);
-    let (_expr, errors) = parser.parse();
-    assert!(!errors.is_empty());
-    assert_eq!(
-        errors[0].message().unwrap(),
-        "Unexpected token: OpenBracket"
-    );
+    assert_debug_snapshot!(parser.parse());
 }
 
 #[test]
@@ -711,19 +549,7 @@ fn test_bitwise_operator_precedence() {
         TokenKind::Eof,
     ]);
     let parser = JsavParser::new(tokens);
-    let (expr, errors) = parser.parse();
-    assert!(errors.is_empty());
-    assert_eq!(expr.len(), 1);
-    assert_eq!(
-        expr[0],
-        Stmt::Expression {
-            expr: binary_expr(
-                num_lit(1),
-                BinaryOp::BitwiseOr,
-                binary_expr(num_lit(2), BinaryOp::BitwiseAnd, num_lit(3))
-            )
-        }
-    );
+    assert_debug_snapshot!(parser.parse());
 }
 
 #[test]
@@ -737,9 +563,7 @@ fn test_nested_parsing_errors() {
         TokenKind::Eof,
     ]);
     let parser = JsavParser::new(tokens);
-    let (_expr, errors) = parser.parse();
-    assert!(!errors.is_empty());
-    assert_eq!(errors[0].message().unwrap(), "Unexpected token: Star");
+    assert_debug_snapshot!(parser.parse());
 }
 
 #[test]
@@ -751,12 +575,7 @@ fn test_nested_unknown_binding_power() {
         TokenKind::Eof,
     ]);
     let parser = JsavParser::new(tokens);
-    let (_expr, errors) = parser.parse();
-    assert!(!errors.is_empty());
-    assert_eq!(
-        errors[0].message().unwrap(),
-        "Unexpected operator: PlusEqual"
-    );
+    assert_debug_snapshot!(parser.parse());
 }
 
 #[test]
@@ -779,53 +598,7 @@ fn test_nested_if_statements() {
         TokenKind::Eof,
     ]);
     let parser = JsavParser::new(tokens);
-    let (statements, errors) = parser.parse();
-
-    assert!(!errors.is_empty());
-    assert_eq!(statements.len(), 1);
-    assert_eq!(
-        statements[0],
-        Stmt::If {
-            condition: grouping_expr(bool_lit(true)),
-            then_branch: vec![Stmt::Block {
-                statements: vec![Stmt::If {
-                    condition: grouping_expr(bool_lit(false)),
-                    then_branch: vec![Stmt::Block {
-                        statements: vec![Stmt::Return {
-                            value: None,
-                            span: dummy_span()
-                        }],
-                        span: dummy_span(),
-                    }],
-                    else_branch: None,
-                    span: dummy_span(),
-                }],
-                span: dummy_span(),
-            }],
-            else_branch: None,
-            span: dummy_span(),
-        }
-    );
-}
-
-#[test]
-fn test_error_recovery_after_invalid_statement() {
-    let tokens = create_tokens(vec![
-        TokenKind::KeywordReturn, // Invalid without function
-        TokenKind::Numeric(Number::Integer(42)),
-        TokenKind::Semicolon,
-        TokenKind::KeywordVar,
-        TokenKind::IdentifierAscii("valid".into()),
-        TokenKind::Colon,
-        TokenKind::TypeI32,
-        TokenKind::Semicolon,
-        TokenKind::Eof,
-    ]);
-    let parser = JsavParser::new(tokens);
-    let (statements, errors) = parser.parse();
-
-    assert!(!errors.is_empty());
-    assert_eq!(statements.len(), 2); // Should parse the valid var declaration
+    assert_debug_snapshot!(parser.parse());
 }
 
 #[test]
@@ -842,14 +615,7 @@ fn test_function_parameter_errors() {
         TokenKind::Eof,
     ]);
     let parser = JsavParser::new(tokens);
-    let (_, errors) = parser.parse();
-
-    assert!(!errors.is_empty());
-    assert!(errors.iter().any(|e| {
-        e.message()
-            .unwrap()
-            .contains("Expected ':' after parameter name")
-    }));
+    assert_debug_snapshot!(parser.parse());
 }
 
 #[test]
@@ -864,22 +630,7 @@ fn test_unicode_function_name() {
         TokenKind::Eof,
     ]);
     let parser = JsavParser::new(tokens);
-    let (statements, errors) = parser.parse();
-    assert!(errors.is_empty());
-    assert_eq!(statements.len(), 1);
-    assert_eq!(
-        statements[0],
-        Stmt::Function {
-            name: "こんにちは".into(),
-            parameters: vec![],
-            return_type: Type::Void,
-            body: vec![Stmt::Block {
-                statements: vec![],
-                span: dummy_span(),
-            }],
-            span: dummy_span(),
-        }
-    );
+    assert_debug_snapshot!(parser.parse());
 }
 
 #[test]
@@ -890,16 +641,7 @@ fn test_block_stmt() {
         TokenKind::Eof,
     ]);
     let parser = JsavParser::new(tokens);
-    let (statements, errors) = parser.parse();
-    assert!(errors.is_empty());
-    assert_eq!(statements.len(), 1);
-    assert_eq!(
-        statements[0],
-        Stmt::Block {
-            statements: vec![],
-            span: dummy_span()
-        }
-    );
+    assert_debug_snapshot!(parser.parse());
 }
 
 #[test]
@@ -916,21 +658,7 @@ fn test_break_statement_in_if() {
         TokenKind::Eof,
     ]);
     let parser = JsavParser::new(tokens);
-    let (statements, errors) = parser.parse();
-    assert!(errors.is_empty());
-    assert_eq!(statements.len(), 1);
-    assert_eq!(
-        statements[0],
-        Stmt::If {
-            condition: grouping_expr(bool_lit(true)),
-            then_branch: vec![Stmt::Block {
-                statements: vec![Stmt::Break { span: dummy_span() }],
-                span: dummy_span(),
-            }],
-            else_branch: None,
-            span: dummy_span(),
-        }
-    );
+    assert_debug_snapshot!(parser.parse());
 }
 
 #[test]
@@ -947,21 +675,7 @@ fn test_continue_statement_in_if() {
         TokenKind::Eof,
     ]);
     let parser = JsavParser::new(tokens);
-    let (statements, errors) = parser.parse();
-    assert!(errors.is_empty());
-    assert_eq!(statements.len(), 1);
-    assert_eq!(
-        statements[0],
-        Stmt::If {
-            condition: grouping_expr(bool_lit(true)),
-            then_branch: vec![Stmt::Block {
-                statements: vec![Stmt::Continue { span: dummy_span() }],
-                span: dummy_span(),
-            }],
-            else_branch: None,
-            span: dummy_span(),
-        }
-    );
+    assert_debug_snapshot!(parser.parse());
 }
 
 /// Macro per generare automaticamente un test di dichiarazione di variabile.

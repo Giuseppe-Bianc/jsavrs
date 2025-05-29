@@ -79,7 +79,7 @@ impl JsavParser {
             }
         }
 
-        self.expect(TokenKind::CloseBrace, "Expected '}' after block");
+        self.expect(TokenKind::CloseBrace);
         Some(Stmt::Block {
             statements,
             span: self.merged_span(&start_token), // Now uses cloned token
@@ -120,7 +120,7 @@ impl JsavParser {
         let _name_span = self.previous()?.span.clone();
 
         // Parametri
-        self.expect(TokenKind::OpenParen, "Expected '(' after function name");
+        self.expect(TokenKind::OpenParen);
         let mut params = Vec::new();
         while !self.check(TokenKind::CloseParen) && !self.is_at_end() {
             let param_start = self.peek()?.clone();
@@ -130,7 +130,7 @@ impl JsavParser {
             let name_span = self.previous()?.span.clone();
 
             // Parse type annotation
-            self.expect(TokenKind::Colon, "Expected ':' after parameter name");
+            self.expect(TokenKind::Colon);
             let type_ann = self.parse_type()?;
             let type_span = self.previous()?.span.clone();
 
@@ -149,7 +149,7 @@ impl JsavParser {
                 break;
             }
         }
-        self.expect(TokenKind::CloseParen, "Expected ')' after parameters");
+        self.expect(TokenKind::CloseParen);
 
         // Tipo di ritorno
         let return_type = if self.match_token(TokenKind::Colon) {
@@ -224,7 +224,7 @@ impl JsavParser {
         // Gestione array: i32[10][20]
         while self.match_token(TokenKind::OpenBracket) {
             let size_expr = self.parse_expr(0)?;
-            self.expect(TokenKind::CloseBracket, "Expected ']' after array size");
+            self.expect(TokenKind::CloseBracket);
             type_ = Type::Array(Box::new(type_), Box::new(size_expr));
         }
 
@@ -233,7 +233,7 @@ impl JsavParser {
         if let Type::Custom(name) = &type_ {
             if name == "vector" && self.match_token(TokenKind::Less) {
                 let inner_type = self.parse_type()?;
-                self.expect(TokenKind::Greater, "Expected '>' after vector type");
+                self.expect(TokenKind::Greater);
                 type_ = Type::Vector(Box::new(inner_type));
             }
         }
@@ -267,7 +267,7 @@ impl JsavParser {
         }
 
         // Parse type annotation
-        self.expect(TokenKind::Colon, "Expected ':' after variable names");
+        self.expect(TokenKind::Colon);
         let type_ann = match self.parse_type() {
             Some(t) => t,
             None => {
@@ -280,7 +280,7 @@ impl JsavParser {
         };
 
         // Parse initializer
-        self.expect(TokenKind::Equal, "Expected '=' after type annotation");
+        self.expect(TokenKind::Equal);
         let mut initializers = Vec::new();
         loop {
             match self.parse_expr(0) {
@@ -470,7 +470,7 @@ impl JsavParser {
     fn parse_array_literal(&mut self, start_token: Token) -> Option<Expr> {
         let mut elements = Vec::new();
         self.extract_elements(TokenKind::CloseBrace, &mut elements);
-        self.expect(TokenKind::CloseBrace, "Expected '}' after array elements");
+        self.expect(TokenKind::CloseBrace);
         Some(Expr::ArrayLiteral {
             elements,
             span: self.merged_span(&start_token),
@@ -511,7 +511,7 @@ impl JsavParser {
 
     fn parse_grouping(&mut self, start_token: Token) -> Option<Expr> {
         let expr = self.parse_expr(0);
-        self.expect(TokenKind::CloseParen, "Unclosed parenthesis");
+        self.expect(TokenKind::CloseParen);
         Some(Expr::Grouping {
             expr: Box::new(expr?),
             span: self.merged_span(&start_token),
@@ -540,7 +540,7 @@ impl JsavParser {
     fn parse_call(&mut self, callee: Expr, start_token: Token) -> Expr {
         let mut arguments = Vec::new();
         self.extract_elements(TokenKind::CloseParen, &mut arguments);
-        self.expect(TokenKind::CloseParen, "Unclosed function call");
+        self.expect(TokenKind::CloseParen);
         Expr::Call {
             callee: Box::new(callee),
             arguments,
@@ -552,7 +552,7 @@ impl JsavParser {
         let index = self
             .parse_expr(0)
             .unwrap_or_else(|| self.null_expr(start_token.span.clone()));
-        self.expect(TokenKind::CloseBracket, "Unclosed array access");
+        self.expect(TokenKind::CloseBracket);
         Expr::ArrayAccess {
             array: Box::new(array),
             index: Box::new(index),
@@ -576,7 +576,7 @@ impl JsavParser {
 
     fn syntax_error(&mut self, message: &str, token: &Token) {
         self.errors.push(CompileError::SyntaxError {
-            message: format!("{}: {:?}", message, token.kind),
+            message: format!("{}: {}", message, self.token_kind_to_string(&token.kind)),
             span: token.span.clone(),
         });
     }
@@ -601,21 +601,102 @@ impl JsavParser {
         self.peek().map(|t| t.kind == kind).unwrap_or(false)
     }
 
-    fn expect(&mut self, kind: TokenKind, context: &str) {
+    fn token_kind_to_string(&self, kind: &TokenKind) -> String {
+        match kind {
+            TokenKind::Eof => "end of file".to_string(),
+            TokenKind::IdentifierAscii(s) => format!("identifier '{s}'"),
+            TokenKind::IdentifierUnicode(s) => format!("identifier '{s}'"),
+            TokenKind::Numeric(n) => format!("number '{n:?}'"),
+            TokenKind::StringLiteral(s) => format!("string literal \"{s}\""),
+            TokenKind::CharLiteral(c) => format!("character literal '{c}'"),
+            TokenKind::KeywordBool(b) => format!("boolean '{b}'"),
+            TokenKind::KeywordNullptr => "nullptr".to_string(),
+
+            // Keywords
+            TokenKind::KeywordFun => "'fun'".to_string(),
+            TokenKind::KeywordIf => "'if'".to_string(),
+            TokenKind::KeywordElse => "'else'".to_string(),
+            TokenKind::KeywordVar => "'var'".to_string(),
+            TokenKind::KeywordConst => "'const'".to_string(),
+            TokenKind::KeywordReturn => "'return'".to_string(),
+            TokenKind::KeywordWhile => "'while'".to_string(),
+            TokenKind::KeywordFor => "'for'".to_string(),
+            TokenKind::KeywordBreak => "'break'".to_string(),
+            TokenKind::KeywordContinue => "'continue'".to_string(),
+
+            // Types
+            TokenKind::TypeI8 => "'i8'".to_string(),
+            TokenKind::TypeI16 => "'i16'".to_string(),
+            TokenKind::TypeI32 => "'i32'".to_string(),
+            TokenKind::TypeI64 => "'i64'".to_string(),
+            TokenKind::TypeU8 => "'u8'".to_string(),
+            TokenKind::TypeU16 => "'u16'".to_string(),
+            TokenKind::TypeU32 => "'u32'".to_string(),
+            TokenKind::TypeU64 => "'u64'".to_string(),
+            TokenKind::TypeF32 => "'f32'".to_string(),
+            TokenKind::TypeF64 => "'f64'".to_string(),
+            TokenKind::TypeChar => "'char'".to_string(),
+            TokenKind::TypeString => "'string'".to_string(),
+            TokenKind::TypeBool => "'bool'".to_string(),
+
+            // Punctuation
+            TokenKind::OpenParen => "'('".to_string(),
+            TokenKind::CloseParen => "')'".to_string(),
+            TokenKind::OpenBrace => "'{{'".to_string(),
+            TokenKind::CloseBrace => "'}}'".to_string(),
+            TokenKind::OpenBracket => "'['".to_string(),
+            TokenKind::CloseBracket => "']'".to_string(),
+            TokenKind::Semicolon => "';'".to_string(),
+            TokenKind::Colon => "':'".to_string(),
+            TokenKind::Comma => "','".to_string(),
+            TokenKind::Dot => "'.'".to_string(),
+
+            // Operators
+            TokenKind::Plus => "'+'".to_string(),
+            TokenKind::PlusPlus => "'++'".to_string(),
+            TokenKind::MinusMinus => "'--'".to_string(),
+            TokenKind::PlusEqual => "'+='".to_string(),
+            TokenKind::Minus => "'-'".to_string(),
+            TokenKind::Star => "'*'".to_string(),
+            TokenKind::Slash => "'/'".to_string(),
+            TokenKind::Percent => "'%'".to_string(),
+            TokenKind::Equal => "'='".to_string(),
+            TokenKind::EqualEqual => "'=='".to_string(),
+            TokenKind::NotEqual => "'!='".to_string(),
+            TokenKind::Less => "'<'".to_string(),
+            TokenKind::LessEqual => "'<='".to_string(),
+            TokenKind::Greater => "'>'".to_string(),
+            TokenKind::GreaterEqual => "'>='".to_string(),
+            TokenKind::AndAnd => "'&&'".to_string(),
+            TokenKind::OrOr => "'||'".to_string(),
+            TokenKind::Not => "'!'".to_string(),
+            TokenKind::And => "'&'".to_string(),
+            TokenKind::Or => "'|'".to_string(),
+            TokenKind::Xor => "'^'".to_string(),
+            TokenKind::ShiftLeft => "'<<'".to_string(),
+            TokenKind::ShiftRight => "'>>'".to_string(),
+
+            // Fallback for any unhandled variants
+            _ => format!("'{kind:?}'"),
+        }
+    }
+
+    fn expect(&mut self, kind: TokenKind) {
         if !self.match_token(kind.clone()) {
-            // Capture the current token once and clone it to avoid holding the reference
             let current_token = self.peek().cloned();
-            let found = current_token
+            let expected_str = self.token_kind_to_string(&kind);
+            let found_str = current_token
                 .as_ref()
-                .map(|t| format!("{:?}", t.kind))
+                .map(|t| self.token_kind_to_string(&t.kind))
                 .unwrap_or_else(|| "end of input".to_string());
+
             let span = current_token
                 .as_ref()
                 .map(|t| t.span.clone())
                 .unwrap_or_default();
 
             self.errors.push(CompileError::SyntaxError {
-                message: format!("{context}: Expected '{kind:?}' but found {found}"),
+                message: format!("Expected {expected_str} but found {found_str}"),
                 span,
             });
         }
@@ -635,4 +716,5 @@ impl JsavParser {
             .map(|t| t.kind == TokenKind::Eof)
             .unwrap_or(true)
     }
+
 }
