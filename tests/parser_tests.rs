@@ -1785,3 +1785,13 @@ fn test_var_no_initializer() {
     assert!(!errors.is_empty());
     assert_eq!(errors[0].message().unwrap(), "Expected '=' after type annotation: Expected 'Equal' but found Eof");
 }
+
+#[test]
+fn test_var_invaild_type() {
+    let input = "var eee: 5";
+    let (tokens, _lex_errors) = lexer_tokenize_with_errors(input, "test.vn");
+    let parser = JsavParser::new(tokens);
+    let (_expr, errors) = parser.parse();
+    assert!(!errors.is_empty());
+    assert_eq!(errors[0].message().unwrap(), "Invalid type: Numeric(Integer(5))");
+}
