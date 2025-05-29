@@ -1091,6 +1091,43 @@ fn test_continue_statement_in_if() {
     );
 }
 
+#[test]
+fn if_whit_else_brach() {
+    let input = "if (true) { continue } else { break }";
+    let (tokens, _lerrors) = lexer_tokenize_with_errors(input, "test.vn");
+    let parser = JsavParser::new(tokens);
+    let (statements, errors) = parser.parse();
+    assert!(errors.is_empty());
+    assert_eq!(statements.len(), 1);
+
+    // Calculate expected spans based on input string
+    assert_eq!(
+        statements[0],
+        Stmt::If {
+            condition: Expr::Grouping {
+                expr: Box::from(Expr::Literal {
+                    value: LiteralValue::Bool(true),
+                    span: test_span(1, 5, 4, 1, 9, 8)
+                }),
+                span: test_span(1, 4, 3, 1, 10, 9)
+            },
+            then_branch: vec![Stmt::Block {
+                statements: vec![Stmt::Continue {
+                    span: test_span(1, 13, 12, 1, 21, 20)
+                }],
+                span: test_span(1, 11, 10, 1, 23, 22)
+            }],
+            else_branch: Some(vec![Stmt::Block {
+                statements: vec![Stmt::Break {
+                    span: test_span(1, 31, 30, 1, 36, 35)
+                }],
+                span: test_span(1, 29, 28, 1, 38, 37)
+            }]),
+            span: test_span(1, 1, 0, 1, 38, 37)
+        }
+    );
+}
+
 /// Macro per generare automaticamente un test di dichiarazione di variabile.
 ///
 /// Parametri:
