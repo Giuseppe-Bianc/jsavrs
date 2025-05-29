@@ -319,20 +319,7 @@ impl JsavParser {
             }
         }
     }
-
-    /*fn synchronize(&mut self) {
-        while !self.is_at_end() {
-            match self.peek().unwrap().kind {
-                TokenKind::KeywordFun
-                | TokenKind::KeywordIf
-                | TokenKind::KeywordVar
-                | TokenKind::KeywordConst
-                | TokenKind::KeywordReturn => return,
-                _ => {self.advance();},
-            }
-        }
-    }*/
-
+    
     fn parse_expression_stmt(&mut self) -> Option<Stmt> {
         let expr = self.parse_expr(0)?;
         Some(Stmt::Expression { expr })
