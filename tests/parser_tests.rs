@@ -1775,3 +1775,13 @@ fn test_var_no_name() {
     assert!(!errors.is_empty());
     assert_eq!(errors[0].message().unwrap(), "Expected identifier after the 'var' or 'const': Eof");
 }
+
+#[test]
+fn test_var_no_initializer() {
+    let input = "var eee: i32";
+    let (tokens, _lex_errors) = lexer_tokenize_with_errors(input, "test.vn");
+    let parser = JsavParser::new(tokens);
+    let (_expr, errors) = parser.parse();
+    assert!(!errors.is_empty());
+    assert_eq!(errors[0].message().unwrap(), "Expected '=' after type annotation: Expected 'Equal' but found Eof");
+}
