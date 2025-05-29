@@ -1,5 +1,4 @@
 use insta::assert_debug_snapshot;
-use jsavrs::error::compile_error::CompileError;
 use jsavrs::lexer::lexer_tokenize_with_errors;
 use jsavrs::parser::ast::*;
 use jsavrs::parser::jsav_parser::JsavParser;
