@@ -1,8 +1,8 @@
 use jsavrs::location::source_location::SourceLocation;
 use jsavrs::location::source_span::{SourceSpan, truncate_path};
+use jsavrs::utils::create_span;
 use std::path::Path;
 use std::sync::Arc;
-use jsavrs::utils::create_span;
 
 macro_rules! truncate_test {
     ($name:ident, $path:expr, $depth:expr) => {

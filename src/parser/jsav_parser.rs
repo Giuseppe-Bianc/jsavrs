@@ -100,18 +100,18 @@ impl JsavParser {
     }
 
     fn is_end_of_statement(&self) -> bool {
-        matches!(self.peek().map(|t| t.kind.clone()),
-            Some(TokenKind::CloseBrace) |
-            Some(TokenKind::Eof) |
-            Some(TokenKind::Semicolon))
+        matches!(
+            self.peek().map(|t| t.kind.clone()),
+            Some(TokenKind::CloseBrace) | Some(TokenKind::Eof) | Some(TokenKind::Semicolon)
+        )
     }
 
     fn calculate_return_span(&self, start: &Token, value: &Option<Expr>) -> SourceSpan {
-        value.as_ref()
+        value
+            .as_ref()
             .and_then(|v| start.span.merged(v.span()))
             .unwrap_or_else(|| start.span.clone())
     }
-
 
     fn parse_function(&mut self) -> Option<Stmt> {
         let start_token = self.advance()?.clone(); // 'fun'
@@ -134,7 +134,8 @@ impl JsavParser {
             let type_span = self.previous()?.span.clone();
 
             // Combine spans from name and type
-            let param_span = name_span.merged(&type_span)
+            let param_span = name_span
+                .merged(&type_span)
                 .unwrap_or_else(|| param_start.span.clone());
 
             params.push(Parameter {
@@ -162,7 +163,9 @@ impl JsavParser {
 
         // Calculate total function span
         let end_span = body.span();
-        let function_span = start_token.span.merged(end_span)
+        let function_span = start_token
+            .span
+            .merged(end_span)
             .unwrap_or_else(|| start_token.span.clone());
 
         Some(Stmt::Function {
@@ -319,7 +322,7 @@ impl JsavParser {
             }
         }
     }
-    
+
     fn parse_expression_stmt(&mut self) -> Option<Stmt> {
         let expr = self.parse_expr(0)?;
         Some(Stmt::Expression { expr })
@@ -453,7 +456,9 @@ impl JsavParser {
     // Parsing operations
     fn parse_unary(&mut self, op: UnaryOp, token: Token) -> Expr {
         let (_, rbp) = unary_binding_power(&token);
-        let expr = self.parse_expr(rbp).unwrap_or_else(|| self.null_expr(token.span.clone()));
+        let expr = self
+            .parse_expr(rbp)
+            .unwrap_or_else(|| self.null_expr(token.span.clone()));
         Expr::Unary {
             op,
             expr: Box::new(expr),
@@ -463,7 +468,7 @@ impl JsavParser {
 
     fn parse_array_literal(&mut self, start_token: Token) -> Option<Expr> {
         let mut elements = Vec::new();
-        self.extract_elements(TokenKind::CloseBrace,&mut elements);
+        self.extract_elements(TokenKind::CloseBrace, &mut elements);
         self.expect(TokenKind::CloseBrace, "Expected '}' after array elements");
         Some(Expr::ArrayLiteral {
             elements,
@@ -491,7 +496,8 @@ impl JsavParser {
             }
         };
 
-        let right = self.parse_expr(binding_power(&token).1)
+        let right = self
+            .parse_expr(binding_power(&token).1)
             .unwrap_or_else(|| self.null_expr(token.span.clone()));
 
         Expr::Binary {
@@ -514,7 +520,8 @@ impl JsavParser {
     fn parse_assignment(&mut self, left: Expr, token: Token) -> Expr {
         match left {
             Expr::Variable { name, span } => {
-                let value = self.parse_expr(1)
+                let value = self
+                    .parse_expr(1)
                     .unwrap_or_else(|| self.null_expr(token.span.clone()));
                 Expr::Assign {
                     name,
@@ -541,7 +548,8 @@ impl JsavParser {
     }
 
     fn parse_array_access(&mut self, array: Expr, start_token: Token) -> Expr {
-        let index = self.parse_expr(0)
+        let index = self
+            .parse_expr(0)
             .unwrap_or_else(|| self.null_expr(start_token.span.clone()));
         self.expect(TokenKind::CloseBracket, "Unclosed array access");
         Expr::ArrayAccess {
@@ -596,10 +604,12 @@ impl JsavParser {
         if !self.match_token(kind.clone()) {
             // Capture the current token once and clone it to avoid holding the reference
             let current_token = self.peek().cloned();
-            let found = current_token.as_ref()
+            let found = current_token
+                .as_ref()
                 .map(|t| format!("{:?}", t.kind))
                 .unwrap_or_else(|| "end of input".to_string());
-            let span = current_token.as_ref()
+            let span = current_token
+                .as_ref()
                 .map(|t| t.span.clone())
                 .unwrap_or_default();
 
@@ -620,6 +630,8 @@ impl JsavParser {
     }
 
     fn is_at_end(&self) -> bool {
-        self.peek().map(|t| t.kind == TokenKind::Eof).unwrap_or(true)
+        self.peek()
+            .map(|t| t.kind == TokenKind::Eof)
+            .unwrap_or(true)
     }
 }

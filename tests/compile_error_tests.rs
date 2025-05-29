@@ -1,8 +1,8 @@
 use jsavrs::error::compile_error::CompileError;
 use jsavrs::location::{source_location::SourceLocation, source_span::SourceSpan};
-use std::sync::Arc;
-use jsavrs::utils::t_span;
 use jsavrs::make_error;
+use jsavrs::utils::t_span;
+use std::sync::Arc;
 
 #[test]
 fn test_io_error_display() {
@@ -100,7 +100,6 @@ macro_rules! generate_set_span_test {
         }
     };
 }
-
 
 generate_set_span_test!(test_set_span, LexerError, 1, 2);
 generate_set_span_test!(test_set_span_parser, SyntaxError, 2, 3);

@@ -7,6 +7,8 @@ use clap::{
     },
 };
 use console::style;
+use jsavrs::parser::ast_printer::pretty_print_stmt;
+use jsavrs::parser::jsav_parser::JsavParser;
 use jsavrs::{
     error::compile_error::CompileError, lexer::lexer_tokenize_with_errors,
     location::source_span::SourceSpan,
@@ -16,8 +18,6 @@ use std::{
     path::{Path, PathBuf},
     //process,
 };
-use jsavrs::parser::ast_printer::pretty_print_stmt;
-use jsavrs::parser::jsav_parser::JsavParser;
 
 const HELP_STR: &str = r#"
 {before-help}{name} {version}

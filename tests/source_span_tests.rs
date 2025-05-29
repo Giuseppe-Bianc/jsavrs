@@ -1,8 +1,8 @@
 use jsavrs::location::source_location::SourceLocation;
 use jsavrs::location::source_span::{SourceSpan, truncate_path};
+use jsavrs::utils::create_span;
 use std::path::Path;
 use std::sync::Arc;
-use jsavrs::utils::create_span;
 
 macro_rules! truncate_test {
     ($name:ident, $path:expr, $depth:expr, $unix:expr, $windows:expr) => {
@@ -103,7 +103,7 @@ fn absolute_path_span() {
     let span = SourceSpan::new(
         Arc::from(path),
         SourceLocation::new(5, 3, 20),
-        SourceLocation::new(5, 10, 30)
+        SourceLocation::new(5, 10, 30),
     );
     let expected = if cfg!(unix) {
         "../src/main.vn:line 5:column 3 - line 5:column 10"

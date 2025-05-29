@@ -1538,6 +1538,49 @@ fn array_declaration() {
 }
 
 #[test]
+fn vector_declaration() {
+    let input = "var arr: vector<i8> = {1, 2, 3, 4, 5}";
+    let (tokens, _lex_errors) = lexer_tokenize_with_errors(input, "test.vn");
+    let parser = JsavParser::new(tokens);
+    let (expr, errors) = parser.parse();
+    assert!(errors.is_empty());
+    assert_eq!(expr.len(), 1);
+    assert_eq!(
+        expr[0],
+        Stmt::VarDeclaration {
+            variables: vec!["arr".into()],
+            type_annotation: Type::Vector(Box::new(Type::I8),),
+            initializers: vec![Expr::ArrayLiteral {
+                elements: vec![
+                    Expr::Literal {
+                        value: LiteralValue::Number(Number::Integer(1)),
+                        span: test_span(1, 24, 23, 1, 25, 24)
+                    },
+                    Expr::Literal {
+                        value: LiteralValue::Number(Number::Integer(2)),
+                        span: test_span(1, 27, 26, 1, 28, 27)
+                    },
+                    Expr::Literal {
+                        value: LiteralValue::Number(Number::Integer(3)),
+                        span: test_span(1, 30, 29, 1, 31, 30)
+                    },
+                    Expr::Literal {
+                        value: LiteralValue::Number(Number::Integer(4)),
+                        span: test_span(1, 33, 32, 1, 34, 33)
+                    },
+                    Expr::Literal {
+                        value: LiteralValue::Number(Number::Integer(5)),
+                        span: test_span(1, 36, 35, 1, 37, 36)
+                    }
+                ],
+                span: test_span(1, 23, 22, 1, 38, 37)
+            }],
+            span: test_span(1, 1, 0, 1, 38, 37)
+        }
+    );
+}
+
+#[test]
 fn test_function_inputs() {
     let input = "fun a(num1: i8, num2: i8): i8 { }";
     let (tokens, _lex_errors) = lexer_tokenize_with_errors(input, "test.vn");

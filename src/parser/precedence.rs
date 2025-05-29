@@ -4,8 +4,11 @@ use crate::tokens::token_kind::TokenKind;
 pub fn binding_power(token: &Token) -> (u8, u8) {
     match token.kind {
         // Assignment operators (right-associative)
-        TokenKind::Equal | TokenKind::PlusEqual | TokenKind::MinusEqual |
-        TokenKind::PercentEqual | TokenKind::XorEqual => (2, 1),
+        TokenKind::Equal
+        | TokenKind::PlusEqual
+        | TokenKind::MinusEqual
+        | TokenKind::PercentEqual
+        | TokenKind::XorEqual => (2, 1),
 
         // Logical OR (left-associative)
         TokenKind::OrOr => (4, 3),
@@ -17,8 +20,10 @@ pub fn binding_power(token: &Token) -> (u8, u8) {
         TokenKind::EqualEqual | TokenKind::NotEqual => (8, 7),
 
         // Comparison (left-associative)
-        TokenKind::Less | TokenKind::LessEqual
-        | TokenKind::Greater | TokenKind::GreaterEqual => (10, 9),
+        TokenKind::Less 
+        | TokenKind::LessEqual
+        | TokenKind::Greater 
+        | TokenKind::GreaterEqual => (10, 9),
 
         // Bitwise OR (left-associative)
         TokenKind::Or => (12, 11),

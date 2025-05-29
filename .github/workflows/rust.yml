@@ -74,7 +74,7 @@ jobs:
 
 
       #         - name: Check Formatting
-#           run: cargo fmt --all -- --check
+      #           run: cargo fmt --all -- --check
 
       - name: Clippy Lints
         uses: actions-rs/cargo@v1

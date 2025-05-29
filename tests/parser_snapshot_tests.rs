@@ -1117,6 +1117,14 @@ fn array_declaration() {
 }
 
 #[test]
+fn vector_declaration() {
+    let input = "var arr: vector<i8> = {1, 2, 3, 4, 5}";
+    let (tokens, _lex_errors) = lexer_tokenize_with_errors(input, "test.vn");
+    let parser = JsavParser::new(tokens);
+    assert_debug_snapshot!(parser.parse());
+}
+
+#[test]
 fn test_function_inputs() {
     let input = "fun a(num1: i8, num2: i8): i8 { }";
     let (tokens, _lex_errors) = lexer_tokenize_with_errors(input, "test.vn");

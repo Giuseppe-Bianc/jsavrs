@@ -10,7 +10,6 @@ pub enum Number {
     Scientific64(f64, i32), // Base (f64), exponent (i32)
 }
 
-
 impl fmt::Display for Number {
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
         match self {

@@ -8,34 +8,48 @@ use crate::tokens::token_kind::TokenKind;
 #[derive(Debug, Clone, PartialEq)]
 pub enum Expr {
     Binary {
-        left: Box<Expr>, op: BinaryOp, right: Box<Expr>, span: SourceSpan,
+        left: Box<Expr>,
+        op: BinaryOp,
+        right: Box<Expr>,
+        span: SourceSpan,
     },
     Unary {
-        op: UnaryOp, expr: Box<Expr>, span: SourceSpan,
+        op: UnaryOp,
+        expr: Box<Expr>,
+        span: SourceSpan,
     },
     Grouping {
-        expr: Box<Expr>, span: SourceSpan,
+        expr: Box<Expr>,
+        span: SourceSpan,
     },
     Literal {
-        value: LiteralValue, span: SourceSpan,
+        value: LiteralValue,
+        span: SourceSpan,
     },
-    
+
     ArrayLiteral {
         elements: Vec<Expr>,
         span: SourceSpan,
     },
-    
+
     Variable {
-        name: String, span: SourceSpan,
+        name: String,
+        span: SourceSpan,
     },
     Assign {
-        name: String, value: Box<Expr>, span: SourceSpan,
+        name: String,
+        value: Box<Expr>,
+        span: SourceSpan,
     },
     Call {
-        callee: Box<Expr>, arguments: Vec<Expr>, span: SourceSpan,
+        callee: Box<Expr>,
+        arguments: Vec<Expr>,
+        span: SourceSpan,
     },
     ArrayAccess {
-        array: Box<Expr>, index: Box<Expr>, span: SourceSpan,
+        array: Box<Expr>,
+        index: Box<Expr>,
+        span: SourceSpan,
     },
     // Additional expressions as needed
 }
@@ -83,22 +97,38 @@ pub enum Stmt {
         expr: Expr,
     },
     VarDeclaration {
-        variables: Vec<String>, type_annotation: Type, initializers: Vec<Expr>, span: SourceSpan,
+        variables: Vec<String>,
+        type_annotation: Type,
+        initializers: Vec<Expr>,
+        span: SourceSpan,
     },
     Function {
-        name: String, parameters: Vec<Parameter>, return_type: Type, body: Vec<Stmt>, span: SourceSpan,
+        name: String,
+        parameters: Vec<Parameter>,
+        return_type: Type,
+        body: Vec<Stmt>,
+        span: SourceSpan,
     },
     If {
-        condition: Expr, then_branch: Vec<Stmt>, else_branch: Option<Vec<Stmt>>, span: SourceSpan,
+        condition: Expr,
+        then_branch: Vec<Stmt>,
+        else_branch: Option<Vec<Stmt>>,
+        span: SourceSpan,
     },
     Block {
-        statements: Vec<Stmt>, span: SourceSpan,
+        statements: Vec<Stmt>,
+        span: SourceSpan,
     },
     Return {
-        value: Option<Expr>, span: SourceSpan,
+        value: Option<Expr>,
+        span: SourceSpan,
     },
-    Break { span: SourceSpan },
-    Continue { span: SourceSpan },
+    Break {
+        span: SourceSpan,
+    },
+    Continue {
+        span: SourceSpan,
+    },
 }
 
 impl Expr {
@@ -117,7 +147,6 @@ impl Expr {
     }
 }
 
-
 impl Stmt {
     pub fn span(&self) -> &SourceSpan {
         match self {
@@ -128,7 +157,7 @@ impl Stmt {
             Stmt::Block { span, .. } => span,
             Stmt::Return { span, .. } => span,
             Stmt::Break { span, .. } => span,
-            Stmt::Continue { span, .. } => span
+            Stmt::Continue { span, .. } => span,
         }
     }
 }
@@ -154,10 +183,12 @@ impl BinaryOp {
             TokenKind::Xor => BinaryOp::BitwiseXor,
             TokenKind::ShiftLeft => BinaryOp::ShiftLeft,
             TokenKind::ShiftRight => BinaryOp::ShiftRight,
-            _ => return Err(CompileError::SyntaxError {
-                message: format!("Invalid binary operator: {:?}", token.kind),
-                span: token.clone().span,
-            }),
+            _ => {
+                return Err(CompileError::SyntaxError {
+                    message: format!("Invalid binary operator: {:?}", token.kind),
+                    span: token.clone().span,
+                });
+            }
         };
         Ok(op)
     }

@@ -2,9 +2,9 @@ use insta::assert_debug_snapshot;
 use insta::assert_snapshot;
 use jsavrs::error::compile_error::CompileError;
 use jsavrs::location::{source_location::SourceLocation, source_span::SourceSpan};
-use std::sync::Arc;
-use jsavrs::utils::t_span;
 use jsavrs::make_error;
+use jsavrs::utils::t_span;
+use std::sync::Arc;
 
 #[test]
 fn test_io_error_display() {

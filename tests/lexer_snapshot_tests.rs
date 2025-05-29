@@ -29,7 +29,13 @@ fn run_hashtag_error(
         &mut to_remove,
     );
     let mut out = String::new();
-    writeln!(&mut out, "Replacements count: {}\nToRemove count: {}", replacements.len(), to_remove.len()).unwrap();
+    writeln!(
+        &mut out,
+        "Replacements count: {}\nToRemove count: {}",
+        replacements.len(),
+        to_remove.len()
+    )
+    .unwrap();
     out
 }
 
@@ -104,7 +110,12 @@ fn test_adjacent_spans_merging_snapshot() {
     let mut merged = String::new();
     let can_merge = error_span.merged(&token.span).is_some();
     writeln!(&mut merged, "CanMerge: {}", can_merge).unwrap();
-    let replacements = run_hashtag_error(1, error_span.clone(), vec![token.clone()], token_map.clone());
+    let replacements = run_hashtag_error(
+        1,
+        error_span.clone(),
+        vec![token.clone()],
+        token_map.clone(),
+    );
     writeln!(&mut merged, "{}", replacements).unwrap();
     assert_snapshot!(merged);
 }
