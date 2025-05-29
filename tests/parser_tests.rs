@@ -1650,3 +1650,118 @@ fn test_function_inputs() {
         }
     );
 }
+
+// Add these tests to the existing test module
+
+// Test for line 259: peek() in parse_stmt
+#[test]
+fn test_peek_in_parse_stmt() {
+    let tokens = create_tokens(vec![TokenKind::Eof]);
+    let parser = JsavParser::new(tokens);
+    let (stmts, errors) = parser.parse();
+    assert!(errors.is_empty());
+    assert!(stmts.is_empty());
+}
+
+// Tests for lines 264-265: var/const declarations
+#[test]
+fn test_var_declaration() {
+    let tokens = create_tokens(vec![
+        TokenKind::KeywordVar,
+        TokenKind::IdentifierAscii("x".into()),
+        TokenKind::Colon,
+        TokenKind::TypeI32,
+        TokenKind::Equal,
+        TokenKind::Numeric(Number::Integer(5)),
+        TokenKind::Eof,
+    ]);
+    let parser = JsavParser::new(tokens);
+    let (stmts, errors) = parser.parse();
+    assert!(errors.is_empty());
+    assert_eq!(stmts.len(), 1);
+    assert!(matches!(stmts[0], Stmt::VarDeclaration { .. }));
+}
+
+#[test]
+fn test_const_declaration() {
+    let tokens = create_tokens(vec![
+        TokenKind::KeywordConst,
+        TokenKind::IdentifierAscii("x".into()),
+        TokenKind::Colon,
+        TokenKind::TypeI32,
+        TokenKind::Equal,
+        TokenKind::Numeric(Number::Integer(5)),
+        TokenKind::Eof,
+    ]);
+    let parser = JsavParser::new(tokens);
+    let (stmts, errors) = parser.parse();
+    assert!(errors.is_empty());
+    assert_eq!(stmts.len(), 1);
+    assert!(matches!(stmts[0], Stmt::VarDeclaration { .. }));
+}
+
+// Tests for lines 273-277: break statement
+#[test]
+fn test_break_statement() {
+    let tokens = create_tokens(vec![TokenKind::KeywordBreak, TokenKind::Eof]);
+    let parser = JsavParser::new(tokens);
+    let (stmts, errors) = parser.parse();
+    assert!(errors.is_empty());
+    assert_eq!(stmts.len(), 1);
+    assert!(matches!(stmts[0], Stmt::Break { .. }));
+}
+
+// Tests for lines 288-292: continue statement
+#[test]
+fn test_continue_statement() {
+    let tokens = create_tokens(vec![TokenKind::KeywordContinue, TokenKind::Eof]);
+    let parser = JsavParser::new(tokens);
+    let (stmts, errors) = parser.parse();
+    assert!(errors.is_empty());
+    assert_eq!(stmts.len(), 1);
+    assert!(matches!(stmts[0], Stmt::Continue { .. }));
+}
+
+// Tests for line 298: block statement
+#[test]
+fn test_block_statement() {
+    let tokens = create_tokens(vec![
+        TokenKind::OpenBrace,
+        TokenKind::KeywordBreak,
+        TokenKind::KeywordContinue,
+        TokenKind::CloseBrace,
+        TokenKind::Eof,
+    ]);
+    let parser = JsavParser::new(tokens);
+    let (stmts, errors) = parser.parse();
+    assert!(errors.is_empty());
+    assert_eq!(stmts.len(), 1);
+
+    if let Stmt::Block { statements, .. } = &stmts[0] {
+        assert_eq!(statements.len(), 2);
+        assert!(matches!(statements[0], Stmt::Break { .. }));
+        assert!(matches!(statements[1], Stmt::Continue { .. }));
+    } else {
+        panic!("Expected Block statement");
+    }
+}
+
+// Test for line 298 with empty block
+#[test]
+fn test_empty_block_statement() {
+    let tokens = create_tokens(vec![
+        TokenKind::OpenBrace,
+        TokenKind::CloseBrace,
+        TokenKind::Eof,
+    ]);
+    let parser = JsavParser::new(tokens);
+    let (stmts, errors) = parser.parse();
+    assert!(errors.is_empty());
+    assert_eq!(stmts.len(), 1);
+
+    if let Stmt::Block { statements, .. } = &stmts[0] {
+        assert!(statements.is_empty());
+    } else {
+        panic!("Expected Block statement");
+    }
+}
