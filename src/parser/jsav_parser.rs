@@ -318,7 +318,7 @@ impl JsavParser {
             }
             _ => {
                 // Use captured token instead of new peek()
-                self.syntax_error("Expected identifier", &token);
+                self.syntax_error("Expected identifier after the 'var' or 'const'", &token);
                 None
             }
         }

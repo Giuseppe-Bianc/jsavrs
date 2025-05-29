@@ -1765,3 +1765,13 @@ fn test_empty_block_statement() {
         panic!("Expected Block statement");
     }
 }
+
+#[test]
+fn test_var_no_name() {
+    let input = "var ";
+    let (tokens, _lex_errors) = lexer_tokenize_with_errors(input, "test.vn");
+    let parser = JsavParser::new(tokens);
+    let (_expr, errors) = parser.parse();
+    assert!(!errors.is_empty());
+    assert_eq!(errors[0].message().unwrap(), "Expected identifier after the 'var' or 'const': Eof");
+}
