@@ -12,8 +12,13 @@
 /// - `absolute_pos`: 0-indexed byte offset from start of source
 ///
 /// # Ordering
-/// Implements total ordering based on absolute byte offset (`Ord`, `PartialOrd`),
-/// with secondary consideration of line/column for human-readable comparisons.
+/// Implements lexicographic ordering based on:
+/// 1. Line number
+/// 2. Column number
+/// 3. Byte offset
+///
+/// This ordering matches how humans read source code (top-to-bottom, left-to-right)
+/// while maintaining consistency with the derived implementations of `PartialOrd`/`Ord`.
 #[derive(Debug, Clone, PartialEq, Eq, Ord, PartialOrd, Default)]
 pub struct SourceLocation {
     /// Line number in source file (1-indexed)
