@@ -44,6 +44,8 @@ impl CompileError {
     ///
     /// # Examples
     /// ```
+    /// use jsavrs::error::compile_error::CompileError;
+    /// use jsavrs::location::source_span::SourceSpan;
     /// let err = CompileError::LexerError {
     ///     message: "Invalid token".to_string(),
     ///     span: SourceSpan::default(),
@@ -66,7 +68,11 @@ impl CompileError {
     ///
     /// # Examples
     /// ```
-    /// let span = SourceSpan::new(0, 5);
+    /// use std::sync::Arc;
+    /// use jsavrs::error::compile_error::CompileError;
+    /// use jsavrs::location::source_location::SourceLocation;
+    /// use jsavrs::location::source_span::SourceSpan;
+    /// let span = SourceSpan::new(Arc::from("file"), SourceLocation::new(1,1,1), SourceLocation::new(1,1,1));
     /// let err = CompileError::SyntaxError {
     ///     message: "Unexpected token".to_string(),
     ///     span: span.clone(),
@@ -90,6 +96,8 @@ impl CompileError {
     ///
     /// # Examples
     /// ```
+    /// use jsavrs::error::compile_error::CompileError;
+    /// use jsavrs::location::source_span::SourceSpan;
     /// let mut err = CompileError::LexerError {
     ///     message: "Old message".to_string(),
     ///     span: SourceSpan::default(),
@@ -114,11 +122,15 @@ impl CompileError {
     ///
     /// # Examples
     /// ```
+    /// use std::sync::Arc;
+    /// use jsavrs::error::compile_error::CompileError;
+    /// use jsavrs::location::source_location::SourceLocation;
+    /// use jsavrs::location::source_span::SourceSpan;
     /// let mut err = CompileError::SyntaxError {
     ///     message: String::new(),
-    ///     span: SourceSpan::new(0, 5),
+    ///     span: SourceSpan::new(Arc::from("file"), SourceLocation::new(1,1,1), SourceLocation::new(1,1,1)),
     /// };
-    /// let new_span = SourceSpan::new(10, 15);
+    /// let new_span = SourceSpan::new(Arc::from("file"), SourceLocation::new(1,2,1), SourceLocation::new(1,2,1));
     /// err.set_span(new_span.clone());
     /// assert_eq!(err.span(), Some(&new_span));
     /// ```
