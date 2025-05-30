@@ -428,7 +428,7 @@ fn test_unclosed_parenthesis() {
     assert!(!errors.is_empty());
     assert_eq!(
         errors[0].message().unwrap(),
-        "Expected ')' but found end of file"
+        "Expected ')' in end of grouping but found end of file"
     );
     assert_eq!(expr.len(), 1);
     assert_eq!(
@@ -605,7 +605,7 @@ fn test_function_call_unclosed_paren() {
     assert!(!errors.is_empty());
     assert_eq!(
         errors[0].message().unwrap(),
-        "Expected ')' but found end of file"
+        "Expected ')' in end of function call arguments but found end of file"
     );
     assert_eq!(expr.len(), 1);
     assert!(matches!(
@@ -972,12 +972,7 @@ fn test_function_parameter_errors() {
     let (_, errors) = parser.parse();
 
     assert!(!errors.is_empty());
-    /*assert!(errors.iter().any(|e| {
-        e.message()
-            .unwrap()
-            .contains("Expected ':' after parameter name")
-    }));*/
-    assert_eq!(errors[0].message().unwrap(), "Expected ':' but found ','");
+    assert_eq!(errors[0].message().unwrap(), "Expected ':' in after parameter name but found ','");
 }
 
 #[test]
@@ -1784,7 +1779,7 @@ fn test_var_no_initializer() {
     let parser = JsavParser::new(tokens);
     let (_expr, errors) = parser.parse();
     assert!(!errors.is_empty());
-    assert_eq!(errors[0].message().unwrap(), "Expected '=' but found end of file");
+    assert_eq!(errors[0].message().unwrap(), "Expected '=' in after type annotation but found end of file");
 }
 
 #[test]

@@ -67,7 +67,7 @@ impl JsavParser {
 
     fn parse_block_stmt(&mut self) -> Option<Stmt> {
         // Clone the token to avoid holding a mutable reference
-        let start_token = self.advance()?.clone(); // <-- Add .clone() here
+        let start_token = self.advance()?.clone(); // '{'
         let mut statements = Vec::new();
 
         // Now self can be borrowed immutably here
@@ -79,15 +79,16 @@ impl JsavParser {
             }
         }
 
-        self.expect(TokenKind::CloseBrace);
+        // Expect a '}' to close the block
+        self.expect(TokenKind::CloseBrace, "end of block");
         Some(Stmt::Block {
             statements,
-            span: self.merged_span(&start_token), // Now uses cloned token
+            span: self.merged_span(&start_token),
         })
     }
 
     fn parse_return(&mut self) -> Option<Stmt> {
-        let start_token = self.advance()?.clone(); // Consuma 'return'
+        let start_token = self.advance()?.clone(); // 'return'
         let return_value = if !self.is_end_of_statement() {
             Some(self.parse_expr(0)?)
         } else {
@@ -119,8 +120,8 @@ impl JsavParser {
         let name = self.consume_identifier()?;
         let _name_span = self.previous()?.span.clone();
 
-        // Parametri
-        self.expect(TokenKind::OpenParen);
+        // Parameters: expect '('
+        self.expect(TokenKind::OpenParen, "after function name");
         let mut params = Vec::new();
         while !self.check(TokenKind::CloseParen) && !self.is_at_end() {
             let param_start = self.peek()?.clone();
@@ -129,8 +130,8 @@ impl JsavParser {
             let name = self.consume_identifier()?;
             let name_span = self.previous()?.span.clone();
 
-            // Parse type annotation
-            self.expect(TokenKind::Colon);
+            // Parse type annotation: expect ':'
+            self.expect(TokenKind::Colon, "after parameter name");
             let type_ann = self.parse_type()?;
             let type_span = self.previous()?.span.clone();
 
@@ -149,9 +150,10 @@ impl JsavParser {
                 break;
             }
         }
-        self.expect(TokenKind::CloseParen);
+        // Expect ')'
+        self.expect(TokenKind::CloseParen, "after parameter list");
 
-        // Tipo di ritorno
+        // Return type annotation: optional ':'
         let return_type = if self.match_token(TokenKind::Colon) {
             let type_ann = self.parse_type()?;
             Some(type_ann)
@@ -159,7 +161,7 @@ impl JsavParser {
             None
         };
 
-        // Parse function body
+        // Parse function body: a block
         let body = self.parse_block_stmt()?;
 
         // Calculate total function span
@@ -177,11 +179,15 @@ impl JsavParser {
             span: function_span,
         })
     }
+
     fn parse_if(&mut self) -> Option<Stmt> {
         let start_token = self.advance()?.clone(); // 'if'
+        // Parse the condition expression (we expect something like `(cond)` or directly `cond`)
         let condition = self.parse_expr(0)?;
+        // Parse the then-branch as a block
         let then_branch = self.parse_block_stmt()?;
 
+        // Optional else-branch
         let else_branch = if self.match_token(TokenKind::KeywordElse) {
             Some(vec![self.parse_stmt()?])
         } else {
@@ -221,19 +227,21 @@ impl JsavParser {
             }
         };
 
-        // Gestione array: i32[10][20]
+        // Array types, e.g. i32[10][20]
         while self.match_token(TokenKind::OpenBracket) {
+            // Parse the size expression inside the brackets
             let size_expr = self.parse_expr(0)?;
-            self.expect(TokenKind::CloseBracket);
+            // Expect a closing ']'
+            self.expect(TokenKind::CloseBracket, "after array size");
             type_ = Type::Array(Box::new(type_), Box::new(size_expr));
         }
 
-        // Gestione vector: vector<i32>
+        // Generic vector types, e.g. vector<i32>
         #[allow(clippy::collapsible_if)]
         if let Type::Custom(name) = &type_ {
             if name == "vector" && self.match_token(TokenKind::Less) {
                 let inner_type = self.parse_type()?;
-                self.expect(TokenKind::Greater);
+                self.expect(TokenKind::Greater, "after vector inner type");
                 type_ = Type::Vector(Box::new(inner_type));
             }
         }
@@ -266,8 +274,8 @@ impl JsavParser {
             return None;
         }
 
-        // Parse type annotation
-        self.expect(TokenKind::Colon);
+        // Expect a ':' before the type annotation
+        self.expect(TokenKind::Colon, "after variable name(s)");
         let type_ann = match self.parse_type() {
             Some(t) => t,
             None => {
@@ -279,8 +287,8 @@ impl JsavParser {
             }
         };
 
-        // Parse initializer
-        self.expect(TokenKind::Equal);
+        // Expect '=' before initializers
+        self.expect(TokenKind::Equal, "after type annotation");
         let mut initializers = Vec::new();
         loop {
             match self.parse_expr(0) {
@@ -470,7 +478,7 @@ impl JsavParser {
     fn parse_array_literal(&mut self, start_token: Token) -> Option<Expr> {
         let mut elements = Vec::new();
         self.extract_elements(TokenKind::CloseBrace, &mut elements);
-        self.expect(TokenKind::CloseBrace);
+        self.expect(TokenKind::CloseBrace, "end of array literal");
         Some(Expr::ArrayLiteral {
             elements,
             span: self.merged_span(&start_token),
@@ -511,7 +519,7 @@ impl JsavParser {
 
     fn parse_grouping(&mut self, start_token: Token) -> Option<Expr> {
         let expr = self.parse_expr(0);
-        self.expect(TokenKind::CloseParen);
+        self.expect(TokenKind::CloseParen, "end of grouping");
         Some(Expr::Grouping {
             expr: Box::new(expr?),
             span: self.merged_span(&start_token),
@@ -540,7 +548,7 @@ impl JsavParser {
     fn parse_call(&mut self, callee: Expr, start_token: Token) -> Expr {
         let mut arguments = Vec::new();
         self.extract_elements(TokenKind::CloseParen, &mut arguments);
-        self.expect(TokenKind::CloseParen);
+        self.expect(TokenKind::CloseParen, "end of function call arguments");
         Expr::Call {
             callee: Box::new(callee),
             arguments,
@@ -552,7 +560,7 @@ impl JsavParser {
         let index = self
             .parse_expr(0)
             .unwrap_or_else(|| self.null_expr(start_token.span.clone()));
-        self.expect(TokenKind::CloseBracket);
+        self.expect(TokenKind::CloseBracket, "end of array access");
         Expr::ArrayAccess {
             array: Box::new(array),
             index: Box::new(index),
@@ -581,7 +589,42 @@ impl JsavParser {
         });
     }
 
-    // Token management
+    /// Modified `expect` to take an extra `context` string.
+    /// The `context` should describe where in the grammar we were expecting `kind`.
+    fn expect(&mut self, kind: TokenKind, context: &str) {
+        if !self.match_token(kind.clone()) {
+            let current_token = self.peek().cloned();
+            let expected_str = self.token_kind_to_string(&kind);
+            let found_str = current_token
+                .as_ref()
+                .map(|t| self.token_kind_to_string(&t.kind))
+                .unwrap_or_else(|| "end of input".to_string());
+
+            let span = current_token
+                .as_ref()
+                .map(|t| t.span.clone())
+                .unwrap_or_default();
+
+            let error_message = format!(
+                "Expected {} in {} but found {}",
+                expected_str, context, found_str
+            );
+            self.errors.push(CompileError::SyntaxError {
+                message: error_message,
+                span,
+            });
+        }
+    }
+
+    fn match_token(&mut self, kind: TokenKind) -> bool {
+        if self.check(kind) {
+            self.advance();
+            true
+        } else {
+            false
+        }
+    }
+
     fn advance(&mut self) -> Option<&Token> {
         if !self.is_at_end() {
             self.current += 1;
@@ -642,8 +685,8 @@ impl JsavParser {
             // Punctuation
             TokenKind::OpenParen => "'('".to_string(),
             TokenKind::CloseParen => "')'".to_string(),
-            TokenKind::OpenBrace => "'{{'".to_string(),
-            TokenKind::CloseBrace => "'}}'".to_string(),
+            TokenKind::OpenBrace => "'{'".to_string(),
+            TokenKind::CloseBrace => "'}'".to_string(),
             TokenKind::OpenBracket => "'['".to_string(),
             TokenKind::CloseBracket => "']'".to_string(),
             TokenKind::Semicolon => "';'".to_string(),
@@ -681,40 +724,9 @@ impl JsavParser {
         }
     }
 
-    fn expect(&mut self, kind: TokenKind) {
-        if !self.match_token(kind.clone()) {
-            let current_token = self.peek().cloned();
-            let expected_str = self.token_kind_to_string(&kind);
-            let found_str = current_token
-                .as_ref()
-                .map(|t| self.token_kind_to_string(&t.kind))
-                .unwrap_or_else(|| "end of input".to_string());
-
-            let span = current_token
-                .as_ref()
-                .map(|t| t.span.clone())
-                .unwrap_or_default();
-
-            self.errors.push(CompileError::SyntaxError {
-                message: format!("Expected {expected_str} but found {found_str}"),
-                span,
-            });
-        }
-    }
-
-    fn match_token(&mut self, kind: TokenKind) -> bool {
-        if self.check(kind) {
-            self.advance();
-            true
-        } else {
-            false
-        }
-    }
-
     fn is_at_end(&self) -> bool {
         self.peek()
             .map(|t| t.kind == TokenKind::Eof)
             .unwrap_or(true)
     }
-
 }
