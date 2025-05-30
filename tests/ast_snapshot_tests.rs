@@ -61,7 +61,7 @@ fn test_literal_values() {
 
 #[test]
 fn test_variable_assignment() {
-    let expr = assign_expr("x", num_lit(3));
+    let expr = assign_expr(variable_expr("x"), num_lit(3));
 
     let output = pretty_print(&expr);
     let stripped = strip_ansi_codes(&output);

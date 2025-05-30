@@ -486,26 +486,31 @@ impl JsavParser {
         })
     }
 
+    //src/parser/jsav_parser.rs
     fn parse_assignment(&mut self, left: Expr, token: Token) -> Expr {
-        match left {
-            Expr::Variable { name, span } => {
-                let value = self
-                    .parse_expr(1)
-                    .unwrap_or_else(|| self.null_expr(token.span.clone()));
-                Expr::Assign {
-                    name,
-                    value: Box::new(value),
-                    span: span.merged(&token.span).unwrap_or(span),
-                }
-            }
-            _ => {
-                // Improved error: target the LHS expression instead of '=' token
-                self.errors.push(CompileError::SyntaxError {
-                    message: "Invalid left-hand side in assignment".to_string(),
-                    span: left.span().clone(), // Use the span of the problematic expression
-                });
-                left
-            }
+        let value = self
+            .parse_expr(1)
+            .unwrap_or_else(|| self.null_expr(token.span.clone()));
+
+        let span = left.span().merged(&value.span()).unwrap_or(token.span.clone());
+
+        // Check if left is valid l-value (variable or array access)
+        let valid = match &left {
+            Expr::Variable { .. } | Expr::ArrayAccess { .. } => true,
+            _ => false,
+        };
+
+        if !valid {
+            self.errors.push(CompileError::SyntaxError {
+                message: "Invalid left-hand side in assignment".to_string(),
+                span: left.span().clone(),
+            });
+        }
+
+        Expr::Assign {
+            target: Box::new(left),
+            value: Box::new(value),
+            span,
         }
     }
 

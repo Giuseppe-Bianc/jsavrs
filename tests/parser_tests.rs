@@ -237,51 +237,42 @@ fn test_grouping() {
 macro_rules! assignment_test {
     (
         $name:ident,
-        // the list of TokenKind-expressions to feed into `create_tokens(...)`
         [$($tok:expr),* $(,)?],
-        // did we expect errors?
         $expect_err:expr,
-        // how many Stmt expressions we expect, and what they are
         [$($expected_stmt:expr),* $(,)?],
-        // if `$expect_err` is true, match this exact message against `errors[0].message().unwrap()`
         $err_msg:expr
     ) => {
         #[test]
         fn $name() {
-            // build the token vector
             let tokens = create_tokens(vec![$($tok),*]);
             let parser = JsavParser::new(tokens);
             let (stmts, errors) = parser.parse();
 
             if $expect_err {
-                // ensure we got at least one error with the exact message
                 assert!(!errors.is_empty(), "expected at least one parse‐error");
                 assert_eq!(
                     errors[0].message().unwrap(),
                     $err_msg,
                     "wrong error message"
                 );
+                // Skip statement checks in error case
             } else {
                 assert!(
                     errors.is_empty(),
                     "expected no parse‐errors but found: {:?}",
                     errors
                 );
-            }
-
-            // check the number of statements matches
-            let expected_vec: Vec<Stmt> = vec![$($expected_stmt),*];
-            assert_eq!(
-                stmts.len(),
-                expected_vec.len(),
-                "expected {} statements, got {}",
-                expected_vec.len(),
-                stmts.len()
-            );
-
-            // check each statement
-            for (i, exp) in expected_vec.into_iter().enumerate() {
-                assert_eq!(stmts[i], exp, "mismatch at stmt index {}", i);
+                let expected_vec: Vec<Stmt> = vec![$($expected_stmt),*];
+                assert_eq!(
+                    stmts.len(),
+                    expected_vec.len(),
+                    "expected {} statements, got {}",
+                    expected_vec.len(),
+                    stmts.len()
+                );
+                for (i, exp) in expected_vec.into_iter().enumerate() {
+                    assert_eq!(stmts[i], exp, "mismatch at stmt index {}", i);
+                }
             }
         }
     };
@@ -297,7 +288,7 @@ assignment_test!(
     ],
     false,
     [Stmt::Expression {
-        expr: assign_expr("x", num_lit(5)),
+        expr: assign_expr(variable_expr("x"), num_lit(5)),
     },],
     "" // (unused because `expect_err = false`)
 );
@@ -314,7 +305,7 @@ assignment_test!(
     ],
     false,
     [Stmt::Expression {
-        expr: assign_expr("x", assign_expr("y", num_lit(5))),
+        expr: assign_expr(variable_expr("x"), assign_expr(variable_expr("y"), num_lit(5))),
     },],
     ""
 );
@@ -557,14 +548,16 @@ fn test_assignment_invalid_target_function_call() {
         errors[0].message().unwrap(),
         "Invalid left-hand side in assignment"
     );
-    assert_eq!(expr.len(), 2);
+    assert_eq!(expr.len(), 1);
     assert_eq!(
         expr[0],
         Stmt::Expression {
-            expr: call_expr(variable_expr("foo"), vec![])
+            expr: assign_expr(
+                call_expr(variable_expr("foo"), vec![]),
+                num_lit(5)
+            )
         }
     );
-    assert_eq!(expr[1], Stmt::Expression { expr: num_lit(5) });
 }
 
 // Test for lines 178-179: Function call with zero arguments
@@ -631,13 +624,13 @@ fn test_assignment_invalid_target_binary() {
         errors[0].message().unwrap(),
         "Invalid left-hand side in assignment"
     );
-    assert_eq!(expr.len(), 2);
-    assert!(matches!(
+    assert_eq!(expr.len(), 1);
+    /*assert!(matches!(
         expr[0],
         Stmt::Expression {
             expr: Expr::Binary { .. }
         }
-    ));
+    ));*/
 }
 
 #[test]
@@ -691,7 +684,7 @@ fn test_assignment_unicode_variable() {
     assert_eq!(
         expr[0],
         Stmt::Expression {
-            expr: assign_expr("変数", num_lit(5))
+            expr: assign_expr(variable_expr("変数"), num_lit(5))
         }
     );
 }

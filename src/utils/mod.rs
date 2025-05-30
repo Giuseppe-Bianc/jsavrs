@@ -85,9 +85,9 @@ pub fn grouping_expr(expr: Expr) -> Expr {
     }
 }
 
-pub fn assign_expr(name: &str, value: Expr) -> Expr {
+pub fn assign_expr(target: Expr, value: Expr) -> Expr {
     Expr::Assign {
-        name: name.to_string(),
+        target: Box::new(target),
         value: Box::new(value),
         span: dummy_span(),
     }

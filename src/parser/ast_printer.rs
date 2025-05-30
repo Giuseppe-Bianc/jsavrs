@@ -127,15 +127,28 @@ fn print_expr(
                 &format!("Variable '{name}'"),
             );
         }
-        Expr::Assign { name, value, .. } => {
+        Expr::Assign { target, value, .. } => {
             append_line(
                 output,
                 indent,
                 is_last,
                 styles.clone().variable,
-                &format!("Assign to '{name}'"),
+                "Assignment",
             );
             let new_indent = get_indent(indent, is_last);
+
+            // Target
+            append_line(
+                output,
+                &new_indent,
+                false,
+                styles.structure.clone(),
+                "Target:",
+            );
+            let target_indent = get_indent(new_indent.as_str(), false);
+            print_expr(target, &target_indent, true, output, styles);
+
+            // Value
             append_line(
                 output,
                 &new_indent,

@@ -112,13 +112,15 @@ fn test_literal_values() {
 
 #[test]
 fn test_variable_assignment() {
-    let expr = assign_expr("x", num_lit(3));
+    let expr = assign_expr(variable_expr("x"), num_lit(3));
 
     let output = pretty_print(&expr);
     let stripped = strip_ansi_codes(&output);
 
     let expected = "\
-└── Assign to 'x'
+└── Assignment
+    ├── Target:
+    │   └── Variable 'x'
     └── Value:
         └── Literal 3";
     assert_eq!(stripped.trim(), expected);
@@ -276,7 +278,7 @@ expr_span_test!(test_expr_variable_span, |s| Expr::Variable {
     span: s,
 });
 expr_span_test!(test_expr_assign_span, |s| Expr::Assign {
-    name: "x".to_string(),
+    target: Box::new(variable_expr("x")),
     value: Box::new(num_lit(3)),
     span: s,
 });

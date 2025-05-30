@@ -37,7 +37,7 @@ pub enum Expr {
         span: SourceSpan,
     },
     Assign {
-        name: String,
+        target: Box<Expr>,
         value: Box<Expr>,
         span: SourceSpan,
     },
