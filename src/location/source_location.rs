@@ -1,12 +1,47 @@
-//src/location/source_location.rs
+// src/location/source_location.rs
+
+/// Represents a specific position in source code with line/column information.
+///
+/// Stores both human-readable (line/column) and machine-oriented (byte offset)
+/// positioning data. Useful for error reporting, debugging information, and
+/// source mapping.
+///
+/// # Indexing Conventions
+/// - `line`: 1-indexed line number (first line is line 1)
+/// - `column`: 1-indexed column number (first character in line is column 1)
+/// - `absolute_pos`: 0-indexed byte offset from start of source
+///
+/// # Ordering
+/// Implements total ordering based on absolute byte offset (`Ord`, `PartialOrd`),
+/// with secondary consideration of line/column for human-readable comparisons.
 #[derive(Debug, Clone, PartialEq, Eq, Ord, PartialOrd, Default)]
 pub struct SourceLocation {
+    /// Line number in source file (1-indexed)
     pub line: usize,
+
+    /// Column position in line (1-indexed)
     pub column: usize,
+
+    /// Absolute byte offset from start of source (0-indexed)
     pub absolute_pos: usize,
 }
 
 impl SourceLocation {
+    /// Creates a new source location with specified position data.
+    ///
+    /// # Arguments
+    /// * `line` - 1-indexed line number
+    /// * `column` - 1-indexed column number
+    /// * `absolute_pos` - 0-indexed byte offset
+    ///
+    /// # Examples
+    /// ```
+    /// use jsavrs::location::source_location::SourceLocation;
+    /// let loc = SourceLocation::new(3, 5, 20);
+    /// assert_eq!(loc.line, 3);
+    /// assert_eq!(loc.column, 5);
+    /// assert_eq!(loc.absolute_pos, 20);
+    /// ```
     pub fn new(line: usize, column: usize, absolute_pos: usize) -> Self {
         Self {
             line,
