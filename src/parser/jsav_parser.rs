@@ -28,7 +28,7 @@ impl JsavParser {
             if let Some(stmt) = self.parse_stmt() {
                 statements.push(stmt);
             } else {
-                // Ripristino da errore
+                // Error recovery: skip the problematic token
                 self.advance();
             }
         }
@@ -66,11 +66,9 @@ impl JsavParser {
     }
 
     fn parse_block_stmt(&mut self) -> Option<Stmt> {
-        // Clone the token to avoid holding a mutable reference
         let start_token = self.advance()?.clone(); // '{'
         let mut statements = Vec::new();
 
-        // Now self can be borrowed immutably here
         while !self.check(TokenKind::CloseBrace) && !self.is_at_end() {
             if let Some(stmt) = self.parse_stmt() {
                 statements.push(stmt);
@@ -79,7 +77,6 @@ impl JsavParser {
             }
         }
 
-        // Expect a '}' to close the block
         self.expect(TokenKind::CloseBrace, "end of block");
         Some(Stmt::Block {
             statements,
@@ -120,40 +117,29 @@ impl JsavParser {
         let name = self.consume_identifier()?;
         let _name_span = self.previous()?.span.clone();
 
-        // Parameters: expect '('
         self.expect(TokenKind::OpenParen, "after function name");
         let mut params = Vec::new();
         while !self.check(TokenKind::CloseParen) && !self.is_at_end() {
             let param_start = self.peek()?.clone();
-
-            // Parse parameter name
             let name = self.consume_identifier()?;
             let name_span = self.previous()?.span.clone();
-
-            // Parse type annotation: expect ':'
             self.expect(TokenKind::Colon, "after parameter name");
             let type_ann = self.parse_type()?;
             let type_span = self.previous()?.span.clone();
-
-            // Combine spans from name and type
             let param_span = name_span
                 .merged(&type_span)
                 .unwrap_or_else(|| param_start.span.clone());
-
             params.push(Parameter {
                 name,
                 type_annotation: type_ann,
                 span: param_span,
             });
-
             if !self.match_token(TokenKind::Comma) {
                 break;
             }
         }
-        // Expect ')'
         self.expect(TokenKind::CloseParen, "after parameter list");
 
-        // Return type annotation: optional ':'
         let return_type = if self.match_token(TokenKind::Colon) {
             let type_ann = self.parse_type()?;
             Some(type_ann)
@@ -161,10 +147,7 @@ impl JsavParser {
             None
         };
 
-        // Parse function body: a block
         let body = self.parse_block_stmt()?;
-
-        // Calculate total function span
         let end_span = body.span();
         let function_span = start_token
             .span
@@ -182,12 +165,9 @@ impl JsavParser {
 
     fn parse_if(&mut self) -> Option<Stmt> {
         let start_token = self.advance()?.clone(); // 'if'
-        // Parse the condition expression (we expect something like `(cond)` or directly `cond`)
         let condition = self.parse_expr(0)?;
-        // Parse the then-branch as a block
         let then_branch = self.parse_block_stmt()?;
 
-        // Optional else-branch
         let else_branch = if self.match_token(TokenKind::KeywordElse) {
             Some(vec![self.parse_stmt()?])
         } else {
@@ -227,16 +207,12 @@ impl JsavParser {
             }
         };
 
-        // Array types, e.g. i32[10][20]
         while self.match_token(TokenKind::OpenBracket) {
-            // Parse the size expression inside the brackets
             let size_expr = self.parse_expr(0)?;
-            // Expect a closing ']'
             self.expect(TokenKind::CloseBracket, "after array size");
             type_ = Type::Array(Box::new(type_), Box::new(size_expr));
         }
 
-        // Generic vector types, e.g. vector<i32>
         #[allow(clippy::collapsible_if)]
         if let Type::Custom(name) = &type_ {
             if name == "vector" && self.match_token(TokenKind::Less) {
@@ -250,31 +226,25 @@ impl JsavParser {
     }
 
     fn parse_var_declaration(&mut self) -> Option<Stmt> {
-        // First consume the declaration keyword
         let is_const = self.match_token(TokenKind::KeywordConst);
         if !is_const {
-            self.match_token(TokenKind::KeywordVar); // Ensure we consume 'var' if not const
+            self.match_token(TokenKind::KeywordVar);
         }
         let start_token = self.previous()?.clone();
 
         let mut variables = Vec::new();
-        // Parse comma-separated variable names
         while let Some(name) = self.consume_identifier() {
             variables.push(name);
-
-            // Check for comma separator
             if !self.match_token(TokenKind::Comma) {
                 break;
             }
         }
 
-        // Handle missing variables case
         if variables.is_empty() {
             self.syntax_error("Expected at least one variable name", &start_token);
             return None;
         }
 
-        // Expect a ':' before the type annotation
         self.expect(TokenKind::Colon, "after variable name(s)");
         let type_ann = match self.parse_type() {
             Some(t) => t,
@@ -283,11 +253,10 @@ impl JsavParser {
                 if let Some(t) = &err_token {
                     self.syntax_error("Invalid type specification", t);
                 }
-                Type::Void // Fallback type
+                Type::Void
             }
         };
 
-        // Expect '=' before initializers
         self.expect(TokenKind::Equal, "after type annotation");
         let mut initializers = Vec::new();
         loop {
@@ -301,7 +270,6 @@ impl JsavParser {
                     break;
                 }
             }
-
             if !self.match_token(TokenKind::Comma) {
                 break;
             }
@@ -321,11 +289,10 @@ impl JsavParser {
 
         match &token.kind {
             TokenKind::IdentifierAscii(s) | TokenKind::IdentifierUnicode(s) => {
-                self.advance(); // Consume the identifier
+                self.advance();
                 Some(s.clone())
             }
             _ => {
-                // Use captured token instead of new peek()
                 self.syntax_error("Expected identifier after the 'var' or 'const'", &token);
                 None
             }
@@ -345,7 +312,6 @@ impl JsavParser {
             if lbp <= min_bp {
                 break;
             }
-
             left = self.led(left);
         }
 
@@ -361,15 +327,12 @@ impl JsavParser {
             TokenKind::KeywordNullptr => self.new_nullptr_literal(token.span),
             TokenKind::StringLiteral(s) => self.new_string_literal(s, token.span),
             TokenKind::CharLiteral(c) => self.new_char_literal(c, token.span),
-
             // Unary operators
             TokenKind::Minus => Some(self.parse_unary(UnaryOp::Negate, token)),
             TokenKind::Not => Some(self.parse_unary(UnaryOp::Not, token)),
-
             // Grouping
             TokenKind::OpenBrace => self.parse_array_literal(token),
             TokenKind::OpenParen => self.parse_grouping(token),
-
             // Variables
             TokenKind::IdentifierAscii(name) | TokenKind::IdentifierUnicode(name) => {
                 Some(Expr::Variable {
@@ -377,7 +340,6 @@ impl JsavParser {
                     span: token.span,
                 })
             }
-
             _ => {
                 self.syntax_error("Unexpected token", &token);
                 None
@@ -388,7 +350,7 @@ impl JsavParser {
     fn led(&mut self, left: Expr) -> Expr {
         let token = match self.advance() {
             Some(t) => t.clone(),
-            None => return left, // Early return if no token
+            None => return left,
         };
 
         match token.kind {
@@ -418,7 +380,6 @@ impl JsavParser {
             TokenKind::OpenParen => self.parse_call(left, token),
             // Array access
             TokenKind::OpenBracket => self.parse_array_access(left, token),
-
             _ => {
                 self.syntax_error("Unexpected operator", &token);
                 left
@@ -508,7 +469,6 @@ impl JsavParser {
         let right = self
             .parse_expr(binding_power(&token).1)
             .unwrap_or_else(|| self.null_expr(token.span.clone()));
-
         Expr::Binary {
             left: Box::new(left),
             op,
@@ -568,7 +528,6 @@ impl JsavParser {
         }
     }
 
-    // Utility methods
     fn merged_span(&self, start_token: &Token) -> SourceSpan {
         self.previous()
             .and_then(|end| start_token.span.merged(&end.span))
@@ -582,6 +541,7 @@ impl JsavParser {
         }
     }
 
+    // Improved syntax_error for clearer messages
     fn syntax_error(&mut self, message: &str, token: &Token) {
         self.errors.push(CompileError::SyntaxError {
             message: format!("{}: {}", message, self.token_kind_to_string(&token.kind)),
@@ -589,8 +549,7 @@ impl JsavParser {
         });
     }
 
-    /// Modified `expect` to take an extra `context` string.
-    /// The `context` should describe where in the grammar we were expecting `kind`.
+    /// Improved `expect` to provide more context about expected vs found tokens
     fn expect(&mut self, kind: TokenKind, context: &str) {
         if !self.match_token(kind.clone()) {
             let current_token = self.peek().cloned();
@@ -654,7 +613,6 @@ impl JsavParser {
             TokenKind::CharLiteral(c) => format!("character literal '{c}'"),
             TokenKind::KeywordBool(b) => format!("boolean '{b}'"),
             TokenKind::KeywordNullptr => "nullptr".to_string(),
-
             // Keywords
             TokenKind::KeywordFun => "'fun'".to_string(),
             TokenKind::KeywordIf => "'if'".to_string(),
@@ -666,7 +624,6 @@ impl JsavParser {
             TokenKind::KeywordFor => "'for'".to_string(),
             TokenKind::KeywordBreak => "'break'".to_string(),
             TokenKind::KeywordContinue => "'continue'".to_string(),
-
             // Types
             TokenKind::TypeI8 => "'i8'".to_string(),
             TokenKind::TypeI16 => "'i16'".to_string(),
@@ -681,7 +638,6 @@ impl JsavParser {
             TokenKind::TypeChar => "'char'".to_string(),
             TokenKind::TypeString => "'string'".to_string(),
             TokenKind::TypeBool => "'bool'".to_string(),
-
             // Punctuation
             TokenKind::OpenParen => "'('".to_string(),
             TokenKind::CloseParen => "')'".to_string(),
