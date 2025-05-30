@@ -844,3 +844,197 @@ fn test_function_inputs() {
     let parser = JsavParser::new(tokens);
     assert_debug_snapshot!(parser.parse());
 }
+
+#[test]
+fn test_eof() {
+    let parser = JsavParser::new(vec![]);
+    assert_debug_snapshot!(parser.token_kind_to_string(&TokenKind::Eof));
+}
+
+#[test]
+fn test_identifier_ascii_normal() {
+    let parser = JsavParser::new(vec![]);
+    let ident = "foo".to_string();
+    assert_debug_snapshot!(parser.token_kind_to_string(&TokenKind::IdentifierAscii(ident.clone())));
+}
+
+#[test]
+fn test_identifier_ascii_empty() {
+    let parser = JsavParser::new(vec![]);
+    let ident = "".to_string();
+    assert_debug_snapshot!(parser.token_kind_to_string(&TokenKind::IdentifierAscii(ident.clone())));
+}
+
+#[test]
+fn test_identifier_unicode() {
+    let parser = JsavParser::new(vec![]);
+    let ident = "προεδομή".to_string(); // qualche stringa Unicode
+    assert_debug_snapshot!(parser.token_kind_to_string(&TokenKind::IdentifierUnicode(ident.clone())));
+}
+
+#[test]
+fn test_numeric_integer() {
+    let parser = JsavParser::new(vec![]);
+    // Qui assumiamo che Number::Integer(i64) sia un modo valido per costruire un Number
+    let num = Number::Integer(123);
+    assert_debug_snapshot!(parser.token_kind_to_string(&TokenKind::Numeric(num)));
+}
+
+#[test]
+fn test_string_literal_simple() {
+    let parser = JsavParser::new(vec![]);
+    let s = "hello".to_string();
+    assert_debug_snapshot!(parser.token_kind_to_string(&TokenKind::StringLiteral(s.clone())));
+}
+
+#[test]
+fn test_string_literal_with_quotes_inside() {
+    let parser = JsavParser::new(vec![]);
+    // Anche se normalmente le virgolette interne verrebbero escape-ate prima di arrivare a TokenKind,
+    // qui verifichiamo comunque il formato base.
+    let s = "he said \"ciao\"".to_string();
+    assert_debug_snapshot!(parser.token_kind_to_string(&TokenKind::StringLiteral(s.clone())));
+}
+
+#[test]
+fn test_char_literal_simple() {
+    let parser = JsavParser::new(vec![]);
+    let c = "x".to_string();
+    assert_debug_snapshot!(parser.token_kind_to_string(&TokenKind::CharLiteral(c.clone())));
+}
+
+#[test]
+fn test_char_literal_unicode() {
+    let parser = JsavParser::new(vec![]);
+    let c = "ψ".to_string();
+    assert_debug_snapshot!(parser.token_kind_to_string(&TokenKind::CharLiteral(c.clone())));
+}
+
+#[test]
+fn test_keyword_bool_true_false() {
+    let parser = JsavParser::new(vec![]);
+    assert_debug_snapshot!(parser.token_kind_to_string(&TokenKind::KeywordBool(true)));
+    assert_debug_snapshot!(parser.token_kind_to_string(&TokenKind::KeywordBool(false)));
+}
+
+#[test]
+fn test_keyword_nullptr() {
+    let parser = JsavParser::new(vec![]);
+    assert_debug_snapshot!(parser.token_kind_to_string(&TokenKind::KeywordNullptr));
+}
+
+// ——— Test per tutte le keyword principali ———
+#[test]
+fn test_all_keywords() {
+    let parser = JsavParser::new(vec![]);
+    let mapping = vec![
+        TokenKind::KeywordFun,
+        TokenKind::KeywordIf,
+        TokenKind::KeywordElse,
+        TokenKind::KeywordVar,
+        TokenKind::KeywordConst,
+        TokenKind::KeywordReturn,
+        TokenKind::KeywordWhile,
+        TokenKind::KeywordFor,
+        TokenKind::KeywordBreak,
+        TokenKind::KeywordContinue,
+    ];
+
+    let input_result : Vec<(TokenKind,String)> = mapping
+        .iter()
+        .map(|kind| (kind.clone(), parser.token_kind_to_string(kind)))
+        .collect();
+
+    assert_debug_snapshot!(input_result);
+}
+
+// ——— Test per tutti i tipi primari ———
+#[test]
+fn test_all_primitive_types() {
+    let parser = JsavParser::new(vec![]);
+    let mapping = vec![
+        TokenKind::TypeI8,
+        TokenKind::TypeI16,
+        TokenKind::TypeI32,
+        TokenKind::TypeI64,
+        TokenKind::TypeU8,
+        TokenKind::TypeU16,
+        TokenKind::TypeU32,
+        TokenKind::TypeU64,
+        TokenKind::TypeF32,
+        TokenKind::TypeF64,
+        TokenKind::TypeChar,
+        TokenKind::TypeString ,
+        TokenKind::TypeBool,
+    ];
+
+    let input_result : Vec<(TokenKind,String)> = mapping
+        .iter()
+        .map(|kind| (kind.clone(), parser.token_kind_to_string(kind)))
+        .collect();
+
+    assert_debug_snapshot!(input_result);
+}
+
+// ——— Test per punteggiatura e simboli singoli ———
+#[test]
+fn test_punctuation() {
+    let parser = JsavParser::new(vec![]);
+    let mapping = vec![
+        TokenKind::OpenParen,
+        TokenKind::CloseParen,
+        TokenKind::OpenBrace,
+        TokenKind::CloseBrace,
+        TokenKind::OpenBracket,
+        TokenKind::CloseBracket,
+        TokenKind::Semicolon,
+        TokenKind::Colon,
+        TokenKind::Comma,
+        TokenKind::Dot,
+    ];
+
+    let input_result : Vec<(TokenKind,String)> = mapping
+        .iter()
+        .map(|kind| (kind.clone(), parser.token_kind_to_string(kind)))
+        .collect();
+
+    assert_debug_snapshot!(input_result);
+}
+
+// ——— Test per operatori semplici e composti ———
+#[test]
+fn test_operators_single_and_multi_char() {
+    let parser = JsavParser::new(vec![]);
+    let mapping = vec![
+        TokenKind::Plus,
+        TokenKind::PlusPlus,
+        TokenKind::MinusMinus,
+        TokenKind::PlusEqual,
+        TokenKind::Minus,
+        TokenKind::Star,
+        TokenKind::Slash,
+        TokenKind::Percent,
+        TokenKind::Equal,
+        TokenKind::EqualEqual,
+        TokenKind::NotEqual,
+        TokenKind::Less,
+        TokenKind::LessEqual,
+        TokenKind::Greater,
+        TokenKind::GreaterEqual,
+        TokenKind::AndAnd,
+        TokenKind::OrOr,
+        TokenKind::Not,
+        TokenKind::And,
+        TokenKind::Or,
+        TokenKind::Xor,
+        TokenKind::ShiftLeft,
+        TokenKind::ShiftRight,
+    ];
+
+    let input_result : Vec<(TokenKind,String)> = mapping
+        .iter()
+        .map(|kind| (kind.clone(), parser.token_kind_to_string(kind)))
+        .collect();
+
+    assert_debug_snapshot!(input_result);
+}

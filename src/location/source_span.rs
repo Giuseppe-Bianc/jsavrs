@@ -37,7 +37,7 @@ impl SourceSpan {
     /// Should panic if:
     /// - `start` and `end` are from different files
     /// - `end` comes before `start`
-    /// (Currently not enforced in implementation)
+    ///   (Currently not enforced in implementation)
     ///
     /// # Examples
     /// ```
@@ -138,11 +138,7 @@ impl std::fmt::Display for SourceSpan {
         write!(
             f,
             "{}:line {}:column {} - line {}:column {}",
-            truncated_path,
-            self.start.line,
-            self.start.column,
-            self.end.line,
-            self.end.column
+            truncated_path, self.start.line, self.start.column, self.end.line, self.end.column
         )
     }
 }

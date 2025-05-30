@@ -603,12 +603,12 @@ impl JsavParser {
         self.peek().map(|t| t.kind == kind).unwrap_or(false)
     }
 
-    fn token_kind_to_string(&self, kind: &TokenKind) -> String {
+    pub fn token_kind_to_string(&self, kind: &TokenKind) -> String {
         match kind {
             TokenKind::Eof => "end of file".to_string(),
             TokenKind::IdentifierAscii(s) => format!("identifier '{s}'"),
             TokenKind::IdentifierUnicode(s) => format!("identifier '{s}'"),
-            TokenKind::Numeric(n) => format!("number '{n:?}'"),
+            TokenKind::Numeric(n) => format!("number '{n}'"),
             TokenKind::StringLiteral(s) => format!("string literal \"{s}\""),
             TokenKind::CharLiteral(c) => format!("character literal '{c}'"),
             TokenKind::KeywordBool(b) => format!("boolean '{b}'"),

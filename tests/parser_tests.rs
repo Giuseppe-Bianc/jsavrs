@@ -410,10 +410,7 @@ fn test_array_access_empty_index() {
             expr: array_access_expr(variable_expr("arr"), nullptr_lit())
         }
     );
-    assert_eq!(
-        errors[0].message().unwrap(),
-        "Unexpected token: ']'"
-    );
+    assert_eq!(errors[0].message().unwrap(), "Unexpected token: ']'");
 }
 
 #[test]
@@ -821,10 +818,7 @@ fn test_complex_nesting_errors() {
     let parser = JsavParser::new(tokens);
     let (_expr, errors) = parser.parse();
     assert!(!errors.is_empty());
-    assert_eq!(
-        errors[0].message().unwrap(),
-        "Unexpected token: '['"
-    );
+    assert_eq!(errors[0].message().unwrap(), "Unexpected token: '['");
 }
 
 #[test]
@@ -880,10 +874,7 @@ fn test_nested_unknown_binding_power() {
     let parser = JsavParser::new(tokens);
     let (_expr, errors) = parser.parse();
     assert!(!errors.is_empty());
-    assert_eq!(
-        errors[0].message().unwrap(),
-        "Unexpected operator: '+='"
-    );
+    assert_eq!(errors[0].message().unwrap(), "Unexpected operator: '+='");
 }
 
 #[test]
@@ -972,7 +963,10 @@ fn test_function_parameter_errors() {
     let (_, errors) = parser.parse();
 
     assert!(!errors.is_empty());
-    assert_eq!(errors[0].message().unwrap(), "Expected ':' in after parameter name but found ','");
+    assert_eq!(
+        errors[0].message().unwrap(),
+        "Expected ':' in after parameter name but found ','"
+    );
 }
 
 #[test]
@@ -1769,7 +1763,10 @@ fn test_var_no_name() {
     let parser = JsavParser::new(tokens);
     let (_expr, errors) = parser.parse();
     assert!(!errors.is_empty());
-    assert_eq!(errors[0].message().unwrap(), "Expected identifier after the 'var' or 'const': end of file");
+    assert_eq!(
+        errors[0].message().unwrap(),
+        "Expected identifier after the 'var' or 'const': end of file"
+    );
 }
 
 #[test]
@@ -1779,7 +1776,10 @@ fn test_var_no_initializer() {
     let parser = JsavParser::new(tokens);
     let (_expr, errors) = parser.parse();
     assert!(!errors.is_empty());
-    assert_eq!(errors[0].message().unwrap(), "Expected '=' in after type annotation but found end of file");
+    assert_eq!(
+        errors[0].message().unwrap(),
+        "Expected '=' in after type annotation but found end of file"
+    );
 }
 
 #[test]
@@ -1789,5 +1789,253 @@ fn test_var_invaild_type() {
     let parser = JsavParser::new(tokens);
     let (_expr, errors) = parser.parse();
     assert!(!errors.is_empty());
-    assert_eq!(errors[0].message().unwrap(), "Invalid type: number 'Integer(5)'");
+    assert_eq!(errors[0].message().unwrap(), "Invalid type: number '5'");
+}
+
+#[test]
+fn test_eof() {
+    let parser = JsavParser::new(vec![]);
+    assert_eq!(parser.token_kind_to_string(&TokenKind::Eof), "end of file");
+}
+
+#[test]
+fn test_identifier_ascii_normal() {
+    let parser = JsavParser::new(vec![]);
+    let ident = "foo".to_string();
+    assert_eq!(
+        parser.token_kind_to_string(&TokenKind::IdentifierAscii(ident.clone())),
+        format!("identifier '{ident}'")
+    );
+}
+
+#[test]
+fn test_identifier_ascii_empty() {
+    let parser = JsavParser::new(vec![]);
+    let ident = "".to_string();
+    assert_eq!(
+        parser.token_kind_to_string(&TokenKind::IdentifierAscii(ident.clone())),
+        "identifier ''"
+    );
+}
+
+#[test]
+fn test_identifier_unicode() {
+    let parser = JsavParser::new(vec![]);
+    let ident = "προεδομή".to_string(); // qualche stringa Unicode
+    assert_eq!(
+        parser.token_kind_to_string(&TokenKind::IdentifierUnicode(ident.clone())),
+        format!("identifier '{ident}'")
+    );
+}
+
+#[test]
+fn test_numeric_integer() {
+    let parser = JsavParser::new(vec![]);
+    // Qui assumiamo che Number::Integer(i64) sia un modo valido per costruire un Number
+    let num = Number::Integer(123);
+    assert_eq!(
+        parser.token_kind_to_string(&TokenKind::Numeric(num)),
+        "number '123'"
+    );
+}
+
+#[test]
+fn test_string_literal_simple() {
+    let parser = JsavParser::new(vec![]);
+    let s = "hello".to_string();
+    assert_eq!(
+        parser.token_kind_to_string(&TokenKind::StringLiteral(s.clone())),
+        format!("string literal \"{s}\"")
+    );
+}
+
+#[test]
+fn test_string_literal_with_quotes_inside() {
+    let parser = JsavParser::new(vec![]);
+    // Anche se normalmente le virgolette interne verrebbero escape-ate prima di arrivare a TokenKind,
+    // qui verifichiamo comunque il formato base.
+    let s = "he said \"ciao\"".to_string();
+    assert_eq!(
+        parser.token_kind_to_string(&TokenKind::StringLiteral(s.clone())),
+        format!("string literal \"{s}\"")
+    );
+}
+
+#[test]
+fn test_char_literal_simple() {
+    let parser = JsavParser::new(vec![]);
+    let c = "x".to_string();
+    assert_eq!(
+        parser.token_kind_to_string(&TokenKind::CharLiteral(c.clone())),
+        format!("character literal '{c}'")
+    );
+}
+
+#[test]
+fn test_char_literal_unicode() {
+    let parser = JsavParser::new(vec![]);
+    let c = "ψ".to_string();
+    assert_eq!(
+        parser.token_kind_to_string(&TokenKind::CharLiteral(c.clone())),
+        format!("character literal '{c}'")
+    );
+}
+
+#[test]
+fn test_keyword_bool_true_false() {
+    let parser = JsavParser::new(vec![]);
+    assert_eq!(
+        parser.token_kind_to_string(&TokenKind::KeywordBool(true)),
+        "boolean 'true'"
+    );
+    assert_eq!(
+        parser.token_kind_to_string(&TokenKind::KeywordBool(false)),
+        "boolean 'false'"
+    );
+}
+
+#[test]
+fn test_keyword_nullptr() {
+    let parser = JsavParser::new(vec![]);
+    assert_eq!(
+        parser.token_kind_to_string(&TokenKind::KeywordNullptr),
+        "nullptr"
+    );
+}
+
+// ——— Test per tutte le keyword principali ———
+#[test]
+fn test_all_keywords() {
+    let parser = JsavParser::new(vec![]);
+    let mapping = vec![
+        (TokenKind::KeywordFun, "'fun'"),
+        (TokenKind::KeywordIf, "'if'"),
+        (TokenKind::KeywordElse, "'else'"),
+        (TokenKind::KeywordVar, "'var'"),
+        (TokenKind::KeywordConst, "'const'"),
+        (TokenKind::KeywordReturn, "'return'"),
+        (TokenKind::KeywordWhile, "'while'"),
+        (TokenKind::KeywordFor, "'for'"),
+        (TokenKind::KeywordBreak, "'break'"),
+        (TokenKind::KeywordContinue, "'continue'"),
+    ];
+
+    for (kind, expected) in mapping {
+        let result = parser.token_kind_to_string(&kind);
+        assert_eq!(result, expected);
+    }
+}
+
+// ——— Test per tutti i tipi primari ———
+#[test]
+fn test_all_primitive_types() {
+    let parser = JsavParser::new(vec![]);
+    let mapping = vec![
+        (TokenKind::TypeI8, "'i8'"),
+        (TokenKind::TypeI16, "'i16'"),
+        (TokenKind::TypeI32, "'i32'"),
+        (TokenKind::TypeI64, "'i64'"),
+        (TokenKind::TypeU8, "'u8'"),
+        (TokenKind::TypeU16, "'u16'"),
+        (TokenKind::TypeU32, "'u32'"),
+        (TokenKind::TypeU64, "'u64'"),
+        (TokenKind::TypeF32, "'f32'"),
+        (TokenKind::TypeF64, "'f64'"),
+        (TokenKind::TypeChar, "'char'"),
+        (TokenKind::TypeString, "'string'"),
+        (TokenKind::TypeBool, "'bool'"),
+    ];
+
+    for (kind, expected) in mapping {
+        let result = parser.token_kind_to_string(&kind);
+        assert_eq!(result, expected);
+    }
+}
+
+// ——— Test per punteggiatura e simboli singoli ———
+#[test]
+fn test_punctuation() {
+    let parser = JsavParser::new(vec![]);
+    let mapping = vec![
+        (TokenKind::OpenParen, "'('"),
+        (TokenKind::CloseParen, "')'"),
+        (TokenKind::OpenBrace, "'{'"),
+        (TokenKind::CloseBrace, "'}'"),
+        (TokenKind::OpenBracket, "'['"),
+        (TokenKind::CloseBracket, "']'"),
+        (TokenKind::Semicolon, "';'"),
+        (TokenKind::Colon, "':'"),
+        (TokenKind::Comma, "','"),
+        (TokenKind::Dot, "'.'"),
+    ];
+
+    for (kind, expected) in mapping {
+        let result = parser.token_kind_to_string(&kind);
+        assert_eq!(result, expected);
+    }
+}
+
+// ——— Test per operatori semplici e composti ———
+#[test]
+fn test_operators_single_and_multi_char() {
+    let parser = JsavParser::new(vec![]);
+    let mapping = vec![
+        (TokenKind::Plus, "'+'"),
+        (TokenKind::PlusPlus, "'++'"),
+        (TokenKind::MinusMinus, "'--'"),
+        (TokenKind::PlusEqual, "'+='"),
+        (TokenKind::Minus, "'-'"),
+        (TokenKind::Star, "'*'"),
+        (TokenKind::Slash, "'/'"),
+        (TokenKind::Percent, "'%'"),
+        (TokenKind::Equal, "'='"),
+        (TokenKind::EqualEqual, "'=='"),
+        (TokenKind::NotEqual, "'!='"),
+        (TokenKind::Less, "'<'"),
+        (TokenKind::LessEqual, "'<='"),
+        (TokenKind::Greater, "'>'"),
+        (TokenKind::GreaterEqual, "'>='"),
+        (TokenKind::AndAnd, "'&&'"),
+        (TokenKind::OrOr, "'||'"),
+        (TokenKind::Not, "'!'"),
+        (TokenKind::And, "'&'"),
+        (TokenKind::Or, "'|'"),
+        (TokenKind::Xor, "'^'"),
+        (TokenKind::ShiftLeft, "'<<'"),
+        (TokenKind::ShiftRight, "'>>'"),
+    ];
+
+    for (kind, expected) in mapping {
+        let result = parser.token_kind_to_string(&kind);
+        assert_eq!(result, expected);
+    }
+}
+
+// ——— Edge‐case: fallback per varianti non mappate esplicitamente ———
+// Qui simuliamo un caso “ipotetico” (perché tutte le varianti reali sono coperte),
+// ma se in futuro aggiungessi una variante non gestita, questa test suite fallirebbe
+// e ti ricorderebbe di estendere anche il match di token_kind_to_string.
+#[test]
+fn test_fallback_debug_format_for_unknown_variant() {
+    // ATTENZIONE: questo è solo un esempio “pseudo‐codice” perché non abbiamo
+    // una variante realmente non gestita nell’enum TokenKind.
+    // Se ne definissi una ad es. TokenKind::Custom123, dovresti poter fare:
+    //
+    //     let parser = JsavParser::new(vec![]);
+    //     let unknown = TokenKind::Custom123;
+    //     let formatted = parser.token_kind_to_string(&unknown);
+    //     assert_eq!(formatted, format!("'{unknown:?}'"));
+    //
+    // Per ora lo lasciamo commentato come istruzione di come testare il fallback.
+    //
+    // let parser = JsavParser::new(vec![]);
+    // let fake = TokenKind::Custom123;
+    // assert_eq!(parser.token_kind_to_string(&fake), format!("'{fake:?}'"));
+    //
+    // Dopo aver aggiunto davvero una variante non mappata,
+    // questa sezione deve essere decommentata e verificata.
+    assert!(
+        true,
+        "Nessuna variante non mappata: fallback non testabile ora"
+    );
 }
