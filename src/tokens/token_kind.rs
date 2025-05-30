@@ -2,13 +2,41 @@
 use crate::tokens::number::Number;
 use logos::Logos;
 
+/// Parses a numeric literal token into a structured [`Number`] representation.
+///
+/// Handles:
+/// - Integer vs float detection
+/// - Scientific notation
+/// - Suffix handling (u, f, d)
+///
+/// # Arguments
+/// * `lex` - Lexer context from Logos
+///
+/// # Returns
+/// Parsed [`Number`] or `None` for invalid literals
 pub fn parse_number(lex: &mut logos::Lexer<TokenKind>) -> Option<Number> {
     let slice = lex.slice();
     let (numeric_part, suffix) = split_numeric_and_suffix(slice);
     handle_suffix(numeric_part, suffix)
 }
 
-/// Splits the input string into numeric part and possible suffix
+/// Splits a numeric literal string into its numeric part and optional suffix.
+///
+/// # Arguments
+/// * `slice` - Full numeric literal string
+///
+/// # Returns
+/// Tuple containing:
+/// - Numeric portion (without suffix)
+/// - Optional suffix (normalized to lowercase)
+///
+/// # Examples
+/// ```
+/// use jsavrs::tokens::token_kind::split_numeric_and_suffix;
+/// assert_eq!(split_numeric_and_suffix("42u"), ("42", Some("u".to_string())));
+/// assert_eq!(split_numeric_and_suffix("3.14f"), ("3.14", Some("f".to_string())));
+/// assert_eq!(split_numeric_and_suffix("100"), ("100", None));
+/// ```
 pub fn split_numeric_and_suffix(slice: &str) -> (&str, Option<String>) {
     if slice.is_empty() {
         return (slice, None);
@@ -24,7 +52,14 @@ pub fn split_numeric_and_suffix(slice: &str) -> (&str, Option<String>) {
     }
 }
 
-/// Main suffix handling router
+/// Routes numeric literal parsing based on suffix type.
+///
+/// # Arguments
+/// * `numeric_part` - Numeric portion without suffix
+/// * `suffix` - Optional suffix indicating type
+///
+/// # Returns
+/// Parsed [`Number`] variant matching suffix, or `None` for invalid formats
 pub fn handle_suffix(numeric_part: &str, suffix: Option<String>) -> Option<Number> {
     match suffix.as_deref() {
         Some("u") => handle_unsigned_suffix(numeric_part),
@@ -34,7 +69,16 @@ pub fn handle_suffix(numeric_part: &str, suffix: Option<String>) -> Option<Numbe
     }
 }
 
-/// Handles unsigned integer suffix case
+/// Parses numeric string with unsigned integer suffix ('u').
+///
+/// # Arguments
+/// * `numeric_part` - Numeric string without suffix
+///
+/// # Returns
+/// [`Number::UnsignedInteger`] if valid, `None` otherwise
+///
+/// # Validation
+/// Rejects floats and scientific notation (must be pure integer)
 pub fn handle_unsigned_suffix(numeric_part: &str) -> Option<Number> {
     if is_valid_unsigned(numeric_part) {
         numeric_part
@@ -46,22 +90,47 @@ pub fn handle_unsigned_suffix(numeric_part: &str) -> Option<Number> {
     }
 }
 
-/// Validates numeric part for unsigned integers
+/// Validates if a string represents a valid unsigned integer format.
+///
+/// # Arguments
+/// * `numeric_part` - Numeric string to validate
+///
+/// # Returns
+/// `true` if string contains no decimal points or exponent markers
 pub fn is_valid_unsigned(numeric_part: &str) -> bool {
     !numeric_part.contains(['.', 'e', 'E'])
 }
-/// Handles float suffix case
+
+/// Parses numeric string with float suffix ('f').
+///
+/// # Arguments
+/// * `numeric_part` - Numeric string without suffix
+///
+/// # Returns
+/// [`Number::Float32`] or [`Number::Scientific32`] if valid
 pub fn handle_float_suffix(numeric_part: &str) -> Option<Number> {
     parse_scientific(numeric_part, true)
         .or_else(|| numeric_part.parse::<f32>().ok().map(Number::Float32))
 }
 
-/// Handles default suffix cases (double or no suffix)
+/// Parses numeric strings with default suffix (no suffix or 'd').
+///
+/// # Arguments
+/// * `numeric_part` - Numeric string without suffix
+///
+/// # Returns
+/// [`Number::Integer`], [`Number::Float64`], or [`Number::Scientific64`]
 pub fn handle_default_suffix(numeric_part: &str) -> Option<Number> {
     parse_scientific(numeric_part, false).or_else(|| handle_non_scientific(numeric_part))
 }
 
-/// Handles non-scientific notation numbers
+/// Parses non-scientific notation numbers.
+///
+/// # Arguments
+/// * `numeric_part` - Numeric string to parse
+///
+/// # Returns
+/// [`Number::Integer`] if no decimal point, [`Number::Float64`] otherwise
 pub fn handle_non_scientific(numeric_part: &str) -> Option<Number> {
     if numeric_part.contains('.') {
         numeric_part.parse::<f64>().ok().map(Number::Float64)
@@ -70,6 +139,14 @@ pub fn handle_non_scientific(numeric_part: &str) -> Option<Number> {
     }
 }
 
+/// Parses scientific notation numbers (e.g., "6.022e23").
+///
+/// # Arguments
+/// * `s` - Full numeric string
+/// * `is_f32` - Whether to parse as 32-bit float
+///
+/// # Returns
+/// [`Number::Scientific32`] or [`Number::Scientific64`] if valid
 pub fn parse_scientific(s: &str, is_f32: bool) -> Option<Number> {
     let pos = s.find(['e', 'E'])?;
     let (base_str, exp_str) = s.split_at(pos);
@@ -84,10 +161,17 @@ pub fn parse_scientific(s: &str, is_f32: bool) -> Option<Number> {
     }
 }
 
-// Generic parser for base-specific numbers
+/// Generic parser for base-specific numbers (binary, octal, hex).
+///
+/// # Arguments
+/// * `radix` - Numeric base (2, 8, or 16)
+/// * `lex` - Lexer context
+///
+/// # Returns
+/// Parsed [`Number`] with optional unsigned suffix
 pub fn parse_base_number(radix: u32, lex: &mut logos::Lexer<TokenKind>) -> Option<Number> {
     let slice = lex.slice();
-    let (_, num_part) = slice.split_at(2); // Split off "#b", "#o", or "#x"
+    let (_, num_part) = slice.split_at(2); // Remove prefix ("#b", "#o", or "#x")
     let (num_str, suffix) = match num_part.chars().last() {
         Some('u') | Some('U') => (&num_part[..num_part.len() - 1], true),
         _ => (num_part, false),
@@ -104,18 +188,32 @@ pub fn parse_base_number(radix: u32, lex: &mut logos::Lexer<TokenKind>) -> Optio
     }
 }
 
+/// Parses binary literals (e.g., "#b1010u").
 pub fn parse_binary(lex: &mut logos::Lexer<TokenKind>) -> Option<Number> {
     parse_base_number(2, lex)
 }
 
+/// Parses octal literals (e.g., "#o755").
 pub fn parse_octal(lex: &mut logos::Lexer<TokenKind>) -> Option<Number> {
     parse_base_number(8, lex)
 }
 
+/// Parses hexadecimal literals (e.g., "#xdeadbeefu").
 pub fn parse_hex(lex: &mut logos::Lexer<TokenKind>) -> Option<Number> {
     parse_base_number(16, lex)
 }
 
+/// Represents all possible token types in the language.
+///
+/// Generated by the lexer and consumed by the parser. Variants include:
+/// - Operators
+/// - Keywords
+/// - Identifiers
+/// - Literals
+/// - Punctuation
+/// - Types
+///
+/// Uses Logos lexer generation with regex patterns and custom parsers.
 #[derive(Logos, Debug, PartialEq, Clone)]
 pub enum TokenKind {
     // Operator tokens with correct ordering (longest first)
@@ -206,20 +304,21 @@ pub enum TokenKind {
     #[token("continue")]
     KeywordContinue,
 
-    // Literals
+    // Boolean literals (captures value)
     #[token("false", |_| false)]
     #[token("true", |_| true)]
     KeywordBool(bool),
 
     // Identifiers
-    // ASCII identifiers (including underscores)
+    /// ASCII identifiers (letters, digits, underscores)
     #[regex(r"[a-zA-Z_][a-zA-Z0-9_]*", |lex| lex.slice().to_string(), priority = 2)]
     IdentifierAscii(String),
 
-    // Unicode identifiers (including underscores)
+    /// Unicode identifiers (supports international characters)
     #[regex(r"[\p{Letter}\p{Mark}_][\p{Letter}\p{Mark}\p{Number}_]*", |lex| lex.slice().to_string(), priority = 1)]
     IdentifierUnicode(String),
 
+    /// Numeric literals (supports various formats)
     #[regex(
         r"(\d+\.?\d*|\.\d+)([eE][+-]?\d+)?[ufdUF]?",
         parse_number,
@@ -227,19 +326,23 @@ pub enum TokenKind {
     )]
     Numeric(Number),
 
+    /// Binary literals (e.g., "#b1010u")
     #[regex(r"#b[01]+[uU]?", parse_binary, priority = 3)]
     Binary(Number),
 
+    /// Octal literals (e.g., "#o755")
     #[regex(r"#o[0-7]+[uU]?", parse_octal, priority = 3)]
     Octal(Number),
 
-    // Hexadecimal numbers (medium priority)
+    /// Hexadecimal literals (e.g., "#xdeadbeefu")
     #[regex(r"#x[0-9a-fA-F]+[uU]?", parse_hex, priority = 2)]
     Hexadecimal(Number),
 
+    /// String literals (captures content without quotes)
     #[regex(r#""([^"\\]|\\.)*""#, |lex| lex.slice()[1..lex.slice().len()-1].to_string())]
     StringLiteral(String),
 
+    /// Character literals (captures content without quotes)
     #[regex(r#"'([^'\\]|\\.)'"#, |lex| {
         let s = lex.slice();
         s[1..s.len()-1].to_string()
@@ -262,7 +365,7 @@ pub enum TokenKind {
     #[token("}")]
     CloseBrace,
 
-    // Types
+    // Type keywords
     #[token("i8")]
     TypeI8,
     #[token("i16")]
@@ -290,7 +393,7 @@ pub enum TokenKind {
     #[token("bool")]
     TypeBool,
 
-    // Whitespace (including Unicode spaces)
+    // Whitespace and comments (skipped by lexer)
     #[regex(
         r"[ \t\r\n\f\u{00A0}\u{1680}\u{2000}-\u{200A}\u{202F}\u{205F}\u{3000}]+",
         logos::skip
@@ -302,11 +405,16 @@ pub enum TokenKind {
     #[regex(r"//[^\n\r]*", logos::skip)]
     #[regex(r"/\*([^*]|\*[^/])*\*/", logos::skip)]
     Comment,
+
+    /// End-of-file marker
     Eof,
 }
 
-// src/tokens/token_kind.rs
 impl TokenKind {
+    /// Checks if the token represents a type keyword.
+    ///
+    /// # Returns
+    /// `true` for all type variants (i8, u8, f32, etc.), `false` otherwise
     pub fn is_type(&self) -> bool {
         matches!(
             self,
