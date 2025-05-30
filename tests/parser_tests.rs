@@ -332,7 +332,7 @@ assignment_test!(
         Stmt::Expression { expr: num_lit(5) },
         Stmt::Expression { expr: num_lit(10) },
     ],
-    "Invalid assignment target: '='"
+    "Invalid left-hand side in assignment"
 );
 
 #[test]
@@ -555,7 +555,7 @@ fn test_assignment_invalid_target_function_call() {
     assert!(!errors.is_empty());
     assert_eq!(
         errors[0].message().unwrap(),
-        "Invalid assignment target: '='"
+        "Invalid left-hand side in assignment"
     );
     assert_eq!(expr.len(), 2);
     assert_eq!(
@@ -629,7 +629,7 @@ fn test_assignment_invalid_target_binary() {
     assert!(!errors.is_empty());
     assert_eq!(
         errors[0].message().unwrap(),
-        "Invalid assignment target: '='"
+        "Invalid left-hand side in assignment"
     );
     assert_eq!(expr.len(), 2);
     assert!(matches!(

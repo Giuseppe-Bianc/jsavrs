@@ -499,7 +499,11 @@ impl JsavParser {
                 }
             }
             _ => {
-                self.syntax_error("Invalid assignment target", &token);
+                // Improved error: target the LHS expression instead of '=' token
+                self.errors.push(CompileError::SyntaxError {
+                    message: "Invalid left-hand side in assignment".to_string(),
+                    span: left.span().clone(), // Use the span of the problematic expression
+                });
                 left
             }
         }
