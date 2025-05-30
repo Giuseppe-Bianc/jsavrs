@@ -1,19 +1,46 @@
-//src/location/line_tracker.rs
+// src/location/line_tracker.rs
 use crate::location::{source_location::SourceLocation, source_span::SourceSpan};
 use std::sync::Arc;
 
-/// Precompute line start positions for efficient lookups
+/// Tracks line/column positions in source code through efficient offset-to-location conversion.
+///
+/// Precomputes line start positions during initialization to enable O(log n) lookups. Stores
+/// the entire source text and file path for location resolution and diagnostic purposes.
+///
+/// # Implementation Notes
+/// - Line numbers are 1-indexed (first line is line 1)
+/// - Column numbers are 1-indexed (first column in a line is column 1)
+/// - Handles multibyte UTF-8 characters correctly through `char_indices()`
+/// - Uses binary search for efficient offset lookups
 #[allow(dead_code)]
 pub struct LineTracker {
+    /// Precomputed starting byte offsets for each line
     line_starts: Vec<usize>,
+
+    /// Path to source file (shared reference)
     file_path: Arc<str>,
+
+    /// Original source code content
     source: String,
 }
 
 impl LineTracker {
-    /// Creates a new `LineTracker` for the given source code.
+    /// Creates a new line tracker for the given source code.
+    ///
+    /// Precomputes all line start positions in the source text. This operation has O(n) time complexity
+    /// where n is the length of the source string.
+    ///
+    /// # Arguments
+    /// * `file_path` - Path to source file for diagnostic purposes
+    /// * `source` - Complete source code content
+    ///
+    /// # Examples
+    /// ```
+    /// use jsavrs::location::line_tracker::LineTracker;
+    /// let tracker = LineTracker::new("example.lang", "print(1);\nprint(2);".to_string());
+    /// ```
     pub fn new(file_path: &str, source: String) -> Self {
-        let mut line_starts = vec![0];
+        let mut line_starts = vec![0];  // First line starts at offset 0
 
         for (i, c) in source.char_indices() {
             if c == '\n' {
@@ -28,8 +55,36 @@ impl LineTracker {
         }
     }
 
-    /// Returns the line and column for a given offset in the source code.
+    /// Converts a byte offset to its corresponding line/column position.
+    ///
+    /// # Arguments
+    /// * `offset` - Byte offset in source text
+    ///
+    /// # Returns
+    /// [`SourceLocation`] containing:
+    /// - Line number (1-indexed)
+    /// - Column number (1-indexed)
+    /// - Original byte offset
+    ///
+    /// # Panics
+    /// Panics if `offset` exceeds source length
+    ///
+    /// # Algorithm
+    /// 1. Uses binary search on precomputed line starts
+    /// 2. For exact match: returns start of line (column 1)
+    /// 3. For non-match: calculates column from nearest line start
+    ///
+    /// # Examples
+    /// ```
+    /// use jsavrs::location::line_tracker::LineTracker;
+    /// let src = "a\nbc";
+    /// let tracker = LineTracker::new("test.lang", src.to_string());
+    /// let loc = tracker.location_for(3);
+    /// assert_eq!(loc.line, 2);
+    /// assert_eq!(loc.column, 2);
+    /// ```
     pub fn location_for(&self, offset: usize) -> SourceLocation {
+        // Validate offset is within source bounds
         if offset > self.source.len() {
             panic!(
                 "Offset {} out of bounds for source of length {}",
@@ -39,12 +94,12 @@ impl LineTracker {
         }
 
         match self.line_starts.binary_search(&offset) {
-            Ok(line) => {
-                // Exact match means start of a line: column is 1
-                SourceLocation::new(line + 1, 1, offset)
-            }
+            // Exact match: offset is start of a line
+            Ok(line) => SourceLocation::new(line + 1, 1, offset),
+
+            // Offset between two line starts
             Err(line) => {
-                // `line` is the first line *after* the offset
+                // Find nearest preceding line start
                 let line_index = line.saturating_sub(1);
                 let column = offset - self.line_starts[line_index] + 1;
                 SourceLocation::new(line_index + 1, column, offset)
@@ -52,7 +107,27 @@ impl LineTracker {
         }
     }
 
-    /// Returns a `SourceSpan` for the given range of offsets.
+    /// Creates a source span from a byte offset range.
+    ///
+    /// # Arguments
+    /// * `range` - Byte offset range (start-inclusive, end-exclusive)
+    ///
+    /// # Returns
+    /// [`SourceSpan`] containing:
+    /// - File path
+    /// - Start location (converted via [`location_for`])
+    /// - End location (converted via [`location_for`])
+    ///
+    /// # Panics
+    /// Panics if either offset exceeds source length
+    ///
+    /// # Examples
+    /// ```
+    /// use jsavrs::location::line_tracker::LineTracker;
+    /// let src = "fn main() {}";
+    /// let tracker = LineTracker::new("test.lang", src.to_string());
+    /// let span = tracker.span_for(3..8);
+    /// ```
     pub fn span_for(&self, range: std::ops::Range<usize>) -> SourceSpan {
         SourceSpan::new(
             self.file_path.clone(),
