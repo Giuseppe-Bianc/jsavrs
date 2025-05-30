@@ -564,10 +564,8 @@ impl JsavParser {
                 .map(|t| t.span.clone())
                 .unwrap_or_default();
 
-            let error_message = format!(
-                "Expected {} in {} but found {}",
-                expected_str, context, found_str
-            );
+            let error_message =
+                format!("Expected {expected_str} in {context} but found {found_str}");
             self.errors.push(CompileError::SyntaxError {
                 message: error_message,
                 span,
