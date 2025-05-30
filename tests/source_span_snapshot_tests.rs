@@ -25,7 +25,13 @@ macro_rules! span_str_test {
         #[test]
         fn $name() {
             let span = create_span($file, $sl, $sc, $el, $ec);
-            insta::assert_snapshot!(span.to_string());
+
+            let snapshot_name = if cfg!(unix) {
+                concat!(stringify!($name), "_unix")
+            } else {
+                concat!(stringify!($name), "_windows")
+            };
+            insta::assert_snapshot!(snapshot_name, span.to_string());
         }
     };
 }
