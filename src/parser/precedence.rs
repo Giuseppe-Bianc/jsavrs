@@ -20,10 +20,9 @@ pub fn binding_power(token: &Token) -> (u8, u8) {
         TokenKind::EqualEqual | TokenKind::NotEqual => (8, 7),
 
         // Comparison (left-associative)
-        TokenKind::Less 
-        | TokenKind::LessEqual
-        | TokenKind::Greater 
-        | TokenKind::GreaterEqual => (10, 9),
+        TokenKind::Less | TokenKind::LessEqual | TokenKind::Greater | TokenKind::GreaterEqual => {
+            (10, 9)
+        }
 
         // Bitwise OR (left-associative)
         TokenKind::Or => (12, 11),

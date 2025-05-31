@@ -7,18 +7,16 @@ use clap::{
     },
 };
 use console::style;
+use jsavrs::error::error_reporter::ErrorReporter;
+use jsavrs::lexer::Lexer;
 use jsavrs::parser::ast_printer::pretty_print_stmt;
 use jsavrs::parser::jsav_parser::JsavParser;
-use jsavrs::{
-    error::compile_error::CompileError, lexer::lexer_tokenize_with_errors
-};
+use jsavrs::{error::compile_error::CompileError, lexer::lexer_tokenize_with_errors};
 use std::{
     fs,
     path::{Path, PathBuf},
     //process,
 };
-use jsavrs::error::error_reporter::ErrorReporter;
-use jsavrs::lexer::Lexer;
 
 const HELP_STR: &str = r#"
 {before-help}{name} {version}
@@ -78,17 +76,18 @@ fn main() -> Result<(), CompileError> {
         e
     })?;
 
-    let mut lexer = Lexer::new(file_path.to_str().ok_or_else(|| {
-        CompileError::IoError(std::io::Error::new(
-            std::io::ErrorKind::InvalidData,
-            "Invalid file path",
-        ))
-    })?, &input);
+    let mut lexer = Lexer::new(
+        file_path.to_str().ok_or_else(|| {
+            CompileError::IoError(std::io::Error::new(
+                std::io::ErrorKind::InvalidData,
+                "Invalid file path",
+            ))
+        })?,
+        &input,
+    );
     let line_tracker = lexer.get_line_tracker();
     let error_reporter: ErrorReporter = ErrorReporter::new(line_tracker);
-    let (tokens, lexer_errors) = lexer_tokenize_with_errors(
-        &mut lexer
-    );
+    let (tokens, lexer_errors) = lexer_tokenize_with_errors(&mut lexer);
     if !lexer_errors.is_empty() {
         eprintln!("{}", error_reporter.report_errors(lexer_errors));
         ()

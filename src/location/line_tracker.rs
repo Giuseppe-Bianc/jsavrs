@@ -41,7 +41,7 @@ impl LineTracker {
     /// let tracker = LineTracker::new("example.lang", "print(1);\nprint(2);".to_string());
     /// ```
     pub fn new(file_path: &str, source: String) -> Self {
-        let mut line_starts = vec![0];  // First line starts at offset 0
+        let mut line_starts = vec![0]; // First line starts at offset 0
 
         for (i, c) in source.char_indices() {
             if c == '\n' {
@@ -139,16 +139,11 @@ impl LineTracker {
 
     /// Gets a specific line from the source (1-indexed)
     pub fn get_line(&self, line_number: usize) -> Option<&str> {
-        if line_number < 1 || line_number > self.line_starts.len() {
-            return None;
-        }
-
-        let start_index = self.line_starts[line_number - 1];
-        let end_index = if line_number < self.line_starts.len() {
-            self.line_starts[line_number] - 1 // Exclude newline
-        } else {
-            self.source.len() // Last line
-        };
+        let start_index = *self.line_starts.get(line_number.checked_sub(1)?)?;
+        let end_index = self.line_starts.get(line_number)
+            .copied()
+            .map(|next| next - 1)
+            .unwrap_or(self.source.len());
 
         Some(&self.source[start_index..end_index])
     }

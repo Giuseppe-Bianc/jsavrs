@@ -64,10 +64,8 @@ impl Iterator for Lexer<'_> {
     }
 }
 
-pub fn lexer_tokenize_with_errors(
-    lexer: &mut Lexer,
-) -> (Vec<Token>, Vec<CompileError>) {
-    let mut tokens =  Vec::new();
+pub fn lexer_tokenize_with_errors(lexer: &mut Lexer) -> (Vec<Token>, Vec<CompileError>) {
+    let mut tokens = Vec::new();
     let mut errors = Vec::new();
 
     while let Some(token_result) = lexer.next_token() {

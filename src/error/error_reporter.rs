@@ -59,16 +59,20 @@ impl ErrorReporter {
         if !source_line.is_empty() {
             // Source line with line number
             output.push_str(&format!("{:4} │ {}\n", start_line, source_line));
-            let stat_mo = start_col - 1;
+            let start_offset = start_col.saturating_sub(1);
 
             // Generate underline indicators
             let underline = if start_line == end_line {
                 // Single line error
                 let length = (end_col - start_col).max(1);
-                " ".repeat(stat_mo) + &"^".repeat(length)
+                format!(
+                    "{space:>start$}{marker}",
+                    space = "",
+                    start = start_offset,
+                    marker = "^".repeat(length)
+                )
             } else {
-                // Multi-line error
-                " ".repeat(stat_mo) + "^"
+                format!("{:>width$}^", "", width = start_offset)
             };
 
             // Underline indicator

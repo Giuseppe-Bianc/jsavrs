@@ -492,7 +492,10 @@ impl JsavParser {
             .parse_expr(1)
             .unwrap_or_else(|| self.null_expr(token.span.clone()));
 
-        let span = left.span().merged(&value.span()).unwrap_or(token.span.clone());
+        let span = left
+            .span()
+            .merged(&value.span())
+            .unwrap_or(token.span.clone());
 
         // Check if left is valid l-value (variable or array access)
         let valid = match &left {
