@@ -90,7 +90,7 @@ fn main() -> Result<(), CompileError> {
         &mut lexer
     );
     if !lexer_errors.is_empty() {
-        error_reporter.report_errors(lexer_errors);
+        eprintln!("{}", error_reporter.report_errors(lexer_errors));
         ()
     }
 
@@ -110,7 +110,7 @@ fn main() -> Result<(), CompileError> {
     let parse = JsavParser::new(tokens);
     let (statements, parer_errors) = parse.parse();
     if !parer_errors.is_empty() {
-        error_reporter.report_errors(parer_errors);
+        eprintln!("{}", error_reporter.report_errors(parer_errors));
         ()
     }
 

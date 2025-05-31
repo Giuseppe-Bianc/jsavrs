@@ -1,7 +1,7 @@
-use console::style;
 use crate::error::compile_error::CompileError;
 use crate::location::line_tracker::LineTracker;
 use crate::location::source_span::SourceSpan;
+use console::style;
 
 /// Enhanced error reporter with source context display
 pub struct ErrorReporter {
@@ -13,31 +13,32 @@ impl ErrorReporter {
         Self { line_tracker }
     }
 
-    /// Reports all compile errors with source context
-    pub fn report_errors(&self, errors: Vec<CompileError>) {
+    /// Returns a formatted string containing all compile errors with source context
+    pub fn report_errors(&self, errors: Vec<CompileError>) -> String {
+        let mut output = String::new();
         for error in errors {
             match error {
                 CompileError::LexerError { message, span } => {
-                    self.print_error("LEX", &message, &span)
+                    output.push_str(&self.format_error("LEX", &message, &span));
                 }
                 CompileError::SyntaxError { message, span } => {
-                    self.print_error("SYNTAX", &message, &span)
+                    output.push_str(&self.format_error("SYNTAX", &message, &span));
                 }
                 CompileError::IoError(e) => {
-                    eprintln!(
+                    output.push_str(&format!(
                         "{} {}: {}",
                         style("ERROR:").red().bold(),
                         style("I/O").red(),
                         style(e).yellow()
-                    );
+                    ));
                 }
             }
         }
+        output
     }
 
-    /// Prints an error with source context and visual indicators
-    fn print_error(&self, category: &str, message: &str, span: &SourceSpan) {
-        // Extract source location information
+    /// Formats an error with source context and visual indicators
+    fn format_error(&self, category: &str, message: &str, span: &SourceSpan) -> String {
         let start_line = span.start.line;
         let start_col = span.start.column;
         let end_line = span.end.line;
@@ -46,43 +47,47 @@ impl ErrorReporter {
         // Get the source line where the error starts
         let source_line = self.line_tracker.get_line(start_line).unwrap_or_default();
 
-        // Print error header
-        eprintln!(
-            "{} {}: {}\n{} {}",
+        let mut output = String::new();
+
+        // Header with error category and message
+        output.push_str(&format!(
+            "{} {}: {}\n{} {}\n",
             style("ERROR").red().bold(),
             style(category).red(),
             style(message).yellow(),
             style("Location:").blue(),
             style(span).cyan()
-        );
+        ));
 
-        // Print source context only if we have the source line
         if !source_line.is_empty() {
-            // Print source line with line number
-            eprintln!("{:4} │ {}", start_line, source_line);
+            // Source line with line number
+            output.push_str(&format!("{:4} │ {}\n", start_line, source_line));
+            let stat_mo = start_col - 1;
 
-            // Calculate underline positions
-            let underline_start = if start_line == end_line {
+            // Generate underline indicators
+            let underline = if start_line == end_line {
                 // Single line error
                 let length = (end_col - start_col).max(1);
-                " ".repeat(start_col - 1) + &"^".repeat(length)
+                " ".repeat(stat_mo) + &"^".repeat(length)
             } else {
                 // Multi-line error
-                " ".repeat(start_col - 1) + "^"
+                " ".repeat(stat_mo) + "^"
             };
 
-            // Print underline indicator
-            eprintln!("     │ {}", style(underline_start).red().bold());
+            // Underline indicator
+            output.push_str(&format!("     │ {}\n", style(underline).red().bold()));
 
-            // Add note for multi-line errors
+            // Multi-line note
             if start_line != end_line {
-                eprintln!(
-                    "     │ {} (error spans lines {}-{})",
+                output.push_str(&format!(
+                    "     │ {} (error spans lines {}-{})\n",
                     style("...").blue(),
                     start_line,
                     end_line
-                );
+                ));
             }
         }
+
+        output
     }
 }
