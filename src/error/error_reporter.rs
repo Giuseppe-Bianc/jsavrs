@@ -26,7 +26,7 @@ impl ErrorReporter {
                 }
                 CompileError::IoError(e) => {
                     output.push_str(&format!(
-                        "{} {}: {}",
+                        "{} {}: {}\n",
                         style("ERROR:").red().bold(),
                         style("I/O").red(),
                         style(e).yellow()
