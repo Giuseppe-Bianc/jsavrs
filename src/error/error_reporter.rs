@@ -2,6 +2,7 @@ use crate::error::compile_error::CompileError;
 use crate::location::line_tracker::LineTracker;
 use crate::location::source_span::SourceSpan;
 use console::style;
+use std::fmt::Write;
 
 /// Enhanced error reporter with source context display
 pub struct ErrorReporter {
@@ -46,19 +47,20 @@ impl ErrorReporter {
 
         let mut output = String::new();
 
-        // Header with error category and message
-        output.push_str(&format!(
-            "{} {}: {}\n{} {}\n",
+        // Header with error information
+        let _ = writeln!(
+            &mut output,
+            "{} {}: {}\n{} {}",
             style("ERROR").red().bold(),
             style(category).red(),
             style(message).yellow(),
             style("Location:").blue(),
             style(span).cyan()
-        ));
+        );
 
         if !source_line.is_empty() {
             // Source line with line number
-            output.push_str(&format!("{:4} │ {}\n", start_line, source_line));
+            let _ = writeln!(&mut output, "{start_line:4} │ {source_line}");
             let start_offset = start_col.saturating_sub(1);
 
             // Generate underline indicators
@@ -76,16 +78,17 @@ impl ErrorReporter {
             };
 
             // Underline indicator
-            output.push_str(&format!("     │ {}\n", style(underline).red().bold()));
+            let _ = writeln!(&mut output, "     │ {}", style(underline).red().bold());
 
             // Multi-line note
             if start_line != end_line {
-                output.push_str(&format!(
-                    "     │ {} (error spans lines {}-{})\n",
+                let _ = writeln!(
+                    &mut output,
+                    "     │ {} (error spans lines {}-{})",
                     style("...").blue(),
                     start_line,
                     end_line
-                ));
+                );
             }
         }
 
