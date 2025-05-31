@@ -15,26 +15,23 @@ impl ErrorReporter {
 
     /// Returns a formatted string containing all compile errors with source context
     pub fn report_errors(&self, errors: Vec<CompileError>) -> String {
-        let mut output = String::new();
-        for error in errors {
-            match error {
+        errors
+            .into_iter()
+            .map(|error| match error {
                 CompileError::LexerError { message, span } => {
-                    output.push_str(&self.format_error("LEX", &message, &span));
+                    self.format_error("LEX", &message, &span)
                 }
                 CompileError::SyntaxError { message, span } => {
-                    output.push_str(&self.format_error("SYNTAX", &message, &span));
+                    self.format_error("SYNTAX", &message, &span)
                 }
-                CompileError::IoError(e) => {
-                    output.push_str(&format!(
-                        "{} {}: {}\n",
-                        style("ERROR:").red().bold(),
-                        style("I/O").red(),
-                        style(e).yellow()
-                    ));
-                }
-            }
-        }
-        output
+                CompileError::IoError(e) => format!(
+                    "{} {}: {}\n",
+                    style("ERROR:").red().bold(),
+                    style("I/O").red(),
+                    style(e).yellow()
+                ),
+            })
+            .collect()
     }
 
     /// Formats an error with source context and visual indicators
