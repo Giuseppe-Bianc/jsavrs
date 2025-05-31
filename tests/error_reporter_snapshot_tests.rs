@@ -1,8 +1,8 @@
-use insta::assert_debug_snapshot;
 use insta::assert_snapshot;
 use std::io;
 use jsavrs::error::compile_error::CompileError;
 use jsavrs::error::error_reporter::ErrorReporter;
+use jsavrs::lexer::{lexer_tokenize_with_errors, Lexer};
 use jsavrs::location::line_tracker::LineTracker;
 use jsavrs::utils::{create_span, strip_ansi_codes};
 
@@ -93,6 +93,17 @@ fn line_out_of_bounds() {
         message: "Invalid token".to_string(),
         span: create_span("test",5, 1, 5, 2), // Linea inesistente
     }];
+
+    let report = reporter.report_errors(errors);
+    let stripped = strip_ansi_codes(&report);
+    assert_snapshot!(stripped);// Non deve mostrare codice
+}
+
+#[test]
+fn report_error_from_lexer() {
+    let mut lexer = Lexer::new("test", &"@");
+    let reporter = ErrorReporter::new(lexer.get_line_tracker());
+    let (_tokens, errors) = lexer_tokenize_with_errors(&mut lexer);
 
     let report = reporter.report_errors(errors);
     let stripped = strip_ansi_codes(&report);

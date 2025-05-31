@@ -1,6 +1,7 @@
 use std::io;
 use jsavrs::error::compile_error::CompileError;
 use jsavrs::error::error_reporter::ErrorReporter;
+use jsavrs::lexer::{lexer_tokenize_with_errors, Lexer};
 use jsavrs::location::line_tracker::LineTracker;
 use jsavrs::utils::{create_span, strip_ansi_codes};
 
@@ -120,4 +121,22 @@ fn line_out_of_bounds() {
     let stripped = strip_ansi_codes(&report);
     assert!(stripped.contains("Location: test:line 5:column 1 - line 5:column 2"));
     assert!(!stripped.contains("│")); // Non deve mostrare codice
+}
+
+#[test]
+fn report_error_from_lexer() {
+    let mut lexer = Lexer::new("test", &"@");
+    let reporter = ErrorReporter::new(lexer.get_line_tracker());
+    let (_tokens, errors) = lexer_tokenize_with_errors(&mut lexer);
+
+    let report = reporter.report_errors(errors);
+    let stripped = strip_ansi_codes(&report);
+
+    let expected = "\
+ERROR LEX: Invalid token: \"@\"
+Location: test:line 1:column 1 - line 1:column 2
+   1 │ @
+     │ ^
+";
+    assert_eq!(stripped, expected);
 }
