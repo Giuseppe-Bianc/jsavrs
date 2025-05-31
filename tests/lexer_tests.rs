@@ -147,7 +147,8 @@ fn number_edge_cases() {
 
     // Test binary overflow with 64 bits
     let input = "#b1111111111111111111111111111111111111111111111111111111111111111";
-    let (tokens, errors) = lexer_tokenize_with_errors(input, "test");
+    let mut lexer = Lexer::new("test", &input);
+    let (tokens, errors) = lexer_tokenize_with_errors(&mut lexer);
     assert_eq!(tokens.len(), 1);
     assert_eq!(errors.len(), 1);
     assert_eq!(tokens[0].kind, Eof);
@@ -175,7 +176,8 @@ fn empty_base_numbers() {
     ];
 
     for (input, expected_msg) in cases {
-        let (tokens, errors) = lexer_tokenize_with_errors(input, "test");
+        let mut lexer = Lexer::new("test", &input);
+        let (tokens, errors) = lexer_tokenize_with_errors(&mut lexer);
         assert_eq!(tokens.len(), 1);
         assert_eq!(errors.len(), 1);
         assert_eq!(tokens[0].kind, Eof);
@@ -297,7 +299,8 @@ fn invalid_tokens() {
     ];
 
     for (input, expected) in cases {
-        let (tokens, errors) = lexer_tokenize_with_errors(input, "test");
+        let mut lexer = Lexer::new("test", &input);
+        let (tokens, errors) = lexer_tokenize_with_errors(&mut lexer);
         assert_eq!(tokens.len(), 1);
         assert_eq!(errors.len(), 1);
         assert_eq!(tokens[0].kind, Eof);
@@ -366,7 +369,8 @@ fn iterator_empty_input() {
 
 #[test]
 fn iterator_single_invalid_token() {
-    let (tokens, errors) = lexer_tokenize_with_errors(&"@", "test");
+    let mut lexer = Lexer::new("test", &"@");
+    let (tokens, errors) = lexer_tokenize_with_errors(&mut lexer);
     assert_eq!(tokens.len(), 1);
     assert_eq!(errors.len(), 1);
     assert_eq!(tokens[0].kind, Eof);
@@ -378,7 +382,8 @@ fn iterator_single_invalid_token() {
 
 #[test]
 fn iterator_multiple_invalid_tokens() {
-    let (tokens, errors) = lexer_tokenize_with_errors(&"@ $", "test");
+    let mut lexer = Lexer::new("test", &"@ $");
+    let (tokens, errors) = lexer_tokenize_with_errors(&mut lexer);
     assert_eq!(tokens.len(), 1);
     assert_eq!(errors.len(), 2);
     assert_eq!(tokens[0].kind, Eof);
@@ -394,7 +399,8 @@ fn iterator_multiple_invalid_tokens() {
 
 #[test]
 fn iterator_mixed_valid_invalid_valid() {
-    let (tokens, errors) = lexer_tokenize_with_errors(&"a @ b", "test");
+    let mut lexer = Lexer::new("test", &"a @ b");
+    let (tokens, errors) = lexer_tokenize_with_errors(&mut lexer);
     assert_eq!(tokens.len(), 3);
     assert_eq!(errors.len(), 1);
     assert_eq!(tokens[0].kind, IdentifierAscii("a".to_string()));
@@ -418,7 +424,8 @@ fn iterator_eof_emitted_once() {
 #[test]
 fn iterator_multiline_span_tracking() {
     let input = "123\n@\n456";
-    let (tokens, errors) = lexer_tokenize_with_errors(input, "test");
+    let mut lexer = Lexer::new("test", &input);
+    let (tokens, errors) = lexer_tokenize_with_errors(&mut lexer);
     assert_eq!(tokens.len(), 3);
     assert_eq!(errors.len(), 1);
     assert_eq!(tokens[0].kind, Numeric(Integer(123)));

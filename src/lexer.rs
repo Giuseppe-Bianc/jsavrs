@@ -27,6 +27,10 @@ impl<'a> Lexer<'a> {
         }
     }
 
+    pub fn get_line_tracker(&self) -> LineTracker {
+        self.line_tracker.clone()
+    }
+
     pub fn next_token(&mut self) -> Option<Result<Token, CompileError>> {
         if self.eof_emitted {
             return None;
@@ -61,11 +65,9 @@ impl Iterator for Lexer<'_> {
 }
 
 pub fn lexer_tokenize_with_errors(
-    input: &str,
-    file_path_str: &str,
+    lexer: &mut Lexer,
 ) -> (Vec<Token>, Vec<CompileError>) {
-    let mut lexer = Lexer::new(file_path_str, input);
-    let mut tokens = Vec::with_capacity(input.len() / 4);
+    let mut tokens =  Vec::new();
     let mut errors = Vec::new();
 
     while let Some(token_result) = lexer.next_token() {

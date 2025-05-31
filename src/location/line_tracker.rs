@@ -13,6 +13,7 @@ use std::sync::Arc;
 /// - Handles multibyte UTF-8 characters correctly through `char_indices()`
 /// - Uses binary search for efficient offset lookups
 #[allow(dead_code)]
+#[derive(Debug, Clone, PartialEq, Eq)]
 pub struct LineTracker {
     /// Precomputed starting byte offsets for each line
     line_starts: Vec<usize>,
@@ -134,5 +135,21 @@ impl LineTracker {
             self.location_for(range.start),
             self.location_for(range.end),
         )
+    }
+
+    /// Gets a specific line from the source (1-indexed)
+    pub fn get_line(&self, line_number: usize) -> Option<&str> {
+        if line_number < 1 || line_number > self.line_starts.len() {
+            return None;
+        }
+
+        let start_index = self.line_starts[line_number - 1];
+        let end_index = if line_number < self.line_starts.len() {
+            self.line_starts[line_number] - 1 // Exclude newline
+        } else {
+            self.source.len() // Last line
+        };
+
+        Some(&self.source[start_index..end_index])
     }
 }

@@ -10,14 +10,15 @@ use console::style;
 use jsavrs::parser::ast_printer::pretty_print_stmt;
 use jsavrs::parser::jsav_parser::JsavParser;
 use jsavrs::{
-    error::compile_error::CompileError, lexer::lexer_tokenize_with_errors,
-    location::source_span::SourceSpan,
+    error::compile_error::CompileError, lexer::lexer_tokenize_with_errors
 };
 use std::{
     fs,
     path::{Path, PathBuf},
     //process,
 };
+use jsavrs::error::error_reporter::ErrorReporter;
+use jsavrs::lexer::Lexer;
 
 const HELP_STR: &str = r#"
 {before-help}{name} {version}
@@ -77,17 +78,19 @@ fn main() -> Result<(), CompileError> {
         e
     })?;
 
+    let mut lexer = Lexer::new(file_path.to_str().ok_or_else(|| {
+        CompileError::IoError(std::io::Error::new(
+            std::io::ErrorKind::InvalidData,
+            "Invalid file path",
+        ))
+    })?, &input);
+    let line_tracker = lexer.get_line_tracker();
+    let error_reporter: ErrorReporter = ErrorReporter::new(line_tracker);
     let (tokens, lexer_errors) = lexer_tokenize_with_errors(
-        &input,
-        file_path.to_str().ok_or_else(|| {
-            CompileError::IoError(std::io::Error::new(
-                std::io::ErrorKind::InvalidData,
-                "Invalid file path",
-            ))
-        })?,
+        &mut lexer
     );
     if !lexer_errors.is_empty() {
-        report_errors(lexer_errors);
+        error_reporter.report_errors(lexer_errors);
         ()
     }
 
@@ -107,7 +110,7 @@ fn main() -> Result<(), CompileError> {
     let parse = JsavParser::new(tokens);
     let (statements, parer_errors) = parse.parse();
     if !parer_errors.is_empty() {
-        report_errors(parer_errors);
+        error_reporter.report_errors(parer_errors);
         ()
     }
 
@@ -124,32 +127,4 @@ fn main() -> Result<(), CompileError> {
     }
 
     Ok(())
-}
-
-fn report_errors(errors: Vec<CompileError>) {
-    for error in errors {
-        match error {
-            CompileError::LexerError { message, span } => print_error("LEX", &message, &span),
-            CompileError::SyntaxError { message, span } => print_error("SYNTAX", &message, &span),
-            CompileError::IoError(e) => {
-                eprintln!(
-                    "{} {}: {}",
-                    style("ERROR:").red().bold(),
-                    style("I/O").red(),
-                    style(e).yellow()
-                );
-            }
-        }
-    }
-}
-
-fn print_error(category: &str, message: &str, span: &SourceSpan) {
-    eprintln!(
-        "{} {}: {}\n{} {}",
-        style("ERROR").red().bold(),
-        style(category).red(),
-        style(message).yellow(),
-        style("Location:").blue(),
-        style(span).cyan()
-    );
 }

@@ -1,5 +1,5 @@
 use insta::assert_debug_snapshot;
-use jsavrs::lexer::lexer_tokenize_with_errors;
+use jsavrs::lexer::{lexer_tokenize_with_errors, Lexer};
 use jsavrs::parser::ast::*;
 use jsavrs::parser::jsav_parser::JsavParser;
 use jsavrs::parser::precedence::unary_binding_power;
@@ -179,6 +179,19 @@ assignment_test!(
     test_assignment_valid,
     [
         TokenKind::IdentifierAscii("x".into()),
+        TokenKind::Equal,
+        TokenKind::Numeric(Number::Integer(5)),
+        TokenKind::Eof,
+    ],
+);
+
+assignment_test!(
+    test_assignment_array_indexing_valid,
+    [
+        TokenKind::IdentifierAscii("x".into()),
+        TokenKind::OpenBracket,
+        TokenKind::Numeric(Number::Integer(0)),
+        TokenKind::CloseBracket,
         TokenKind::Equal,
         TokenKind::Numeric(Number::Integer(5)),
         TokenKind::Eof,
@@ -701,7 +714,8 @@ macro_rules! test_var_decl {
         fn $test_name() {
             // 1) Tokenizzazione
             let input = $input;
-            let (tokens, _lex_errors) = lexer_tokenize_with_errors(input, "test.vn");
+            let mut lexer = Lexer::new("test.vn", &input);
+            let (tokens, _lex_errors) = lexer_tokenize_with_errors(&mut lexer);
             // 2) Parsing
             let parser = JsavParser::new(tokens);
             assert_debug_snapshot!(stringify!($test_name), parser.parse());
@@ -824,7 +838,8 @@ test_var_decl!(
 #[test]
 fn array_declaration() {
     let input = "var arr: i8[5] = {1, 2, 3, 4, 5}";
-    let (tokens, _lex_errors) = lexer_tokenize_with_errors(input, "test.vn");
+    let mut lexer = Lexer::new("test.vn", &input);
+    let (tokens, _lex_errors) = lexer_tokenize_with_errors(&mut lexer);
     let parser = JsavParser::new(tokens);
     assert_debug_snapshot!(parser.parse());
 }
@@ -832,7 +847,8 @@ fn array_declaration() {
 #[test]
 fn vector_declaration() {
     let input = "var arr: vector<i8> = {1, 2, 3, 4, 5}";
-    let (tokens, _lex_errors) = lexer_tokenize_with_errors(input, "test.vn");
+    let mut lexer = Lexer::new("test.vn", &input);
+    let (tokens, _lex_errors) = lexer_tokenize_with_errors(&mut lexer);
     let parser = JsavParser::new(tokens);
     assert_debug_snapshot!(parser.parse());
 }
@@ -840,7 +856,8 @@ fn vector_declaration() {
 #[test]
 fn test_function_inputs() {
     let input = "fun a(num1: i8, num2: i8): i8 { }";
-    let (tokens, _lex_errors) = lexer_tokenize_with_errors(input, "test.vn");
+    let mut lexer = Lexer::new("test.vn", &input);
+    let (tokens, _lex_errors) = lexer_tokenize_with_errors(&mut lexer);
     let parser = JsavParser::new(tokens);
     assert_debug_snapshot!(parser.parse());
 }

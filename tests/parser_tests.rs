@@ -1,5 +1,5 @@
 use jsavrs::error::compile_error::CompileError;
-use jsavrs::lexer::lexer_tokenize_with_errors;
+use jsavrs::lexer::{lexer_tokenize_with_errors, Lexer};
 use jsavrs::location::source_location::SourceLocation;
 use jsavrs::location::source_span::SourceSpan;
 use jsavrs::parser::ast::*;
@@ -289,6 +289,23 @@ assignment_test!(
     false,
     [Stmt::Expression {
         expr: assign_expr(variable_expr("x"), num_lit(5)),
+    },],
+    "" // (unused because `expect_err = false`)
+);
+assignment_test!(
+    test_assignment_array_indexing_valid,
+    [
+        TokenKind::IdentifierAscii("x".into()),
+        TokenKind::OpenBracket,
+        TokenKind::Numeric(Number::Integer(0)),
+        TokenKind::CloseBracket,
+        TokenKind::Equal,
+        TokenKind::Numeric(Number::Integer(5)),
+        TokenKind::Eof,
+    ],
+    false,
+    [Stmt::Expression {
+        expr: assign_expr(array_access_expr(variable_expr("x"), num_lit(0)), num_lit(5)),
     },],
     "" // (unused because `expect_err = false`)
 );
@@ -1077,7 +1094,8 @@ fn test_continue_statement_in_if() {
 #[test]
 fn if_whit_else_brach() {
     let input = "if (true) { continue } else { break }";
-    let (tokens, _lerrors) = lexer_tokenize_with_errors(input, "test.vn");
+    let mut lexer = Lexer::new("test.vn", &input);
+    let (tokens, _lerrors) = lexer_tokenize_with_errors(&mut lexer);
     let parser = JsavParser::new(tokens);
     let (statements, errors) = parser.parse();
     assert!(errors.is_empty());
@@ -1145,7 +1163,8 @@ macro_rules! test_var_decl {
         fn $test_name() {
             // 1) Tokenizzazione
             let input = $input;
-            let (tokens, lex_errors) = lexer_tokenize_with_errors(input, "test.vn");
+            let mut lexer = Lexer::new("test.vn", &input);
+            let (tokens, lex_errors) = lexer_tokenize_with_errors(&mut lexer);
             assert!(
                 lex_errors.is_empty(),
                 "Errori di lexing in test `{}`: {:?}",
@@ -1511,7 +1530,8 @@ test_var_decl!(
 #[test]
 fn array_declaration() {
     let input = "var arr: i8[5] = {1, 2, 3, 4, 5}";
-    let (tokens, _lex_errors) = lexer_tokenize_with_errors(input, "test.vn");
+    let mut lexer = Lexer::new("test.vn", &input);
+    let (tokens, _lex_errors) = lexer_tokenize_with_errors(&mut lexer);
     let parser = JsavParser::new(tokens);
     let (expr, errors) = parser.parse();
     assert!(errors.is_empty());
@@ -1560,7 +1580,8 @@ fn array_declaration() {
 #[test]
 fn vector_declaration() {
     let input = "var arr: vector<i8> = {1, 2, 3, 4, 5}";
-    let (tokens, _lex_errors) = lexer_tokenize_with_errors(input, "test.vn");
+    let mut lexer = Lexer::new("test.vn", &input);
+    let (tokens, _lex_errors) = lexer_tokenize_with_errors(&mut lexer);
     let parser = JsavParser::new(tokens);
     let (expr, errors) = parser.parse();
     assert!(errors.is_empty());
@@ -1603,7 +1624,8 @@ fn vector_declaration() {
 #[test]
 fn test_function_inputs() {
     let input = "fun a(num1: i8, num2: i8): i8 { }";
-    let (tokens, _lex_errors) = lexer_tokenize_with_errors(input, "test.vn");
+    let mut lexer = Lexer::new("test.vn", &input);
+    let (tokens, _lex_errors) = lexer_tokenize_with_errors(&mut lexer);
     let parser = JsavParser::new(tokens);
     let (expr, errors) = parser.parse();
     assert!(errors.is_empty());
@@ -1752,7 +1774,8 @@ fn test_empty_block_statement() {
 #[test]
 fn test_var_no_name() {
     let input = "var ";
-    let (tokens, _lex_errors) = lexer_tokenize_with_errors(input, "test.vn");
+    let mut lexer = Lexer::new("test.vn", &input);
+    let (tokens, _lex_errors) = lexer_tokenize_with_errors(&mut lexer);
     let parser = JsavParser::new(tokens);
     let (_expr, errors) = parser.parse();
     assert!(!errors.is_empty());
@@ -1765,7 +1788,8 @@ fn test_var_no_name() {
 #[test]
 fn test_var_no_initializer() {
     let input = "var eee: i32";
-    let (tokens, _lex_errors) = lexer_tokenize_with_errors(input, "test.vn");
+    let mut lexer = Lexer::new("test.vn", &input);
+    let (tokens, _lex_errors) = lexer_tokenize_with_errors(&mut lexer);
     let parser = JsavParser::new(tokens);
     let (_expr, errors) = parser.parse();
     assert!(!errors.is_empty());
@@ -1778,7 +1802,8 @@ fn test_var_no_initializer() {
 #[test]
 fn test_var_invaild_type() {
     let input = "var eee: 5";
-    let (tokens, _lex_errors) = lexer_tokenize_with_errors(input, "test.vn");
+    let mut lexer = Lexer::new("test.vn", &input);
+    let (tokens, _lex_errors) = lexer_tokenize_with_errors(&mut lexer);
     let parser = JsavParser::new(tokens);
     let (_expr, errors) = parser.parse();
     assert!(!errors.is_empty());
@@ -2002,33 +2027,4 @@ fn test_operators_single_and_multi_char() {
         let result = parser.token_kind_to_string(&kind);
         assert_eq!(result, expected);
     }
-}
-
-// ——— Edge‐case: fallback per varianti non mappate esplicitamente ———
-// Qui simuliamo un caso “ipotetico” (perché tutte le varianti reali sono coperte),
-// ma se in futuro aggiungessi una variante non gestita, questa test suite fallirebbe
-// e ti ricorderebbe di estendere anche il match di token_kind_to_string.
-#[test]
-fn test_fallback_debug_format_for_unknown_variant() {
-    // ATTENZIONE: questo è solo un esempio “pseudo‐codice” perché non abbiamo
-    // una variante realmente non gestita nell’enum TokenKind.
-    // Se ne definissi una ad es. TokenKind::Custom123, dovresti poter fare:
-    //
-    //     let parser = JsavParser::new(vec![]);
-    //     let unknown = TokenKind::Custom123;
-    //     let formatted = parser.token_kind_to_string(&unknown);
-    //     assert_eq!(formatted, format!("'{unknown:?}'"));
-    //
-    // Per ora lo lasciamo commentato come istruzione di come testare il fallback.
-    //
-    // let parser = JsavParser::new(vec![]);
-    // let fake = TokenKind::Custom123;
-    // assert_eq!(parser.token_kind_to_string(&fake), format!("'{fake:?}'"));
-    //
-    // Dopo aver aggiunto davvero una variante non mappata,
-    // questa sezione deve essere decommentata e verificata.
-    assert!(
-        true,
-        "Nessuna variante non mappata: fallback non testabile ora"
-    );
 }

@@ -1,6 +1,6 @@
 // tests/ast_snapshot_test.rs
 use insta::{assert_debug_snapshot, assert_snapshot};
-use jsavrs::lexer::lexer_tokenize_with_errors;
+use jsavrs::lexer::{lexer_tokenize_with_errors, Lexer};
 use jsavrs::parser::ast::*;
 use jsavrs::parser::ast_printer::{pretty_print, pretty_print_stmt};
 use jsavrs::parser::jsav_parser::JsavParser;
@@ -325,10 +325,12 @@ fn test_continue_stmt() {
     assert_snapshot!(stripped.trim());
 }
 
+#[allow(clippy::needless_borrow)]
 #[test]
 fn test_array_literal_output() {
     let input = "var arr: i8[5] = {1, 2, 3, 4, 5}";
-    let (tokens, _lex_errors) = lexer_tokenize_with_errors(input, "test.vn");
+    let mut lexer = Lexer::new("test.vn", &input);
+    let (tokens, _lex_errors) = lexer_tokenize_with_errors(&mut lexer);
     let parser = JsavParser::new(tokens);
     let (expr, errors) = parser.parse();
     assert!(errors.is_empty());
