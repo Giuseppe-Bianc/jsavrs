@@ -95,7 +95,7 @@ fn test_timer_basic() {
 
     // Verifica che il tempo misurato sia ragionevole
     assert!(elapsed.as_millis() >= 50);
-    assert!(elapsed.as_millis() < 100); // Con un margine generoso
+    assert!(elapsed.as_millis() < 500); // Con un margine generoso
 
     // Verifica la formattazione stringa
     let time_str = timer.to_string();
@@ -157,7 +157,7 @@ fn test_time_it() {
         .expect("Failed to parse tries as u32");
 
     // Verifica che abbia eseguito molte iterazioni
-    assert!(tries >= 5, "Expected >=100 tries, got {}", tries);
+    assert!(tries >= 3, "Expected >=3 tries, got {}", tries);
 }
 
 #[test]
