@@ -92,10 +92,5 @@ fn test_timer_big_format_with_filters() {
         timed_task(1);
         let output = timer.to_string();
         assert_snapshot!("timer_big_format", output);
-        // On disk, the snapshot will now contain:
-        //
-        // ---------------------------------------------- 
-        // |   Big Format   | Time = 1ms,Time | 
-        // ----------------------------------------------
     });
 }
