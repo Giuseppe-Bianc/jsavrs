@@ -1,8 +1,15 @@
-use std::time::{Duration, Instant};
-use insta::{assert_debug_snapshot, assert_snapshot};
+use std::thread;
+use std::time::Duration;
+use insta::{assert_debug_snapshot, assert_snapshot, with_settings};
 use jsavrs::time::timer::Timer;
 use jsavrs::time::times::{big_format, Times};
 use jsavrs::time::value_label::ValueLabel;
+
+// Test helper: funzione che consuma tempo in modo controllato
+fn timed_task(duration_ms: u64) {
+    thread::sleep(Duration::from_millis(duration_ms));
+}
+
 
 #[test]
 fn test_value_label_snapshots() {
@@ -53,7 +60,7 @@ fn test_times_snapshots() {
     ];
 
     for (i, nanos) in test_cases.iter().enumerate() {
-        let times = Times::from_nanoseconds(*nanos);;
+        let times = Times::from_nanoseconds(*nanos);
         assert_debug_snapshot!(format!("times_{}_{}ns", i, nanos), &times);
     }
 }
@@ -65,8 +72,30 @@ fn test_timer_formatting_snapshots() {
         format!("[CUSTOM] {}: 123.456ms", title)
     });
     assert_snapshot!("timer_custom_formatter", &timer.to_string());
+}
 
-    // Big format
-    let timer = Timer::with_formatter("Big Format", big_format);
-    assert_snapshot!("timer_big_format", &timer.to_string());
+// A helper to run one invocation of the test under a custom `Settings`
+// that has a filter to replace all occurrences of, e.g., "123.456ms" with "<TIME>"
+#[test]
+fn test_timer_big_format_with_filters() {
+    // Build a Settings object with a filter that replaces any “,<digits>μs,<digits>ns”
+    // substring with “,Time”
+    let settings = {
+        let mut s = insta::Settings::clone_current();
+        s.add_filter(r",\d+μs,\d+ns", ",Time");
+        s
+    };
+
+    // Bind these settings for the duration of the closure
+    settings.bind(|| {
+        let timer = Timer::with_formatter("Big Format", big_format);
+        timed_task(1);
+        let output = timer.to_string();
+        assert_snapshot!("timer_big_format", output);
+        // On disk, the snapshot will now contain:
+        //
+        // ---------------------------------------------- 
+        // |   Big Format   | Time = 1ms,Time | 
+        // ----------------------------------------------
+    });
 }

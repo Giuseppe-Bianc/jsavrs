@@ -112,6 +112,14 @@ fn test_auto_timer() {
 }
 
 #[test]
+fn test_auto_timer_big() {
+    // Per testare AutoTimer dovremmo catturare stdout
+    // In questo test ci limitiamo a verificare che non crashi
+    let _timer = AutoTimer::with_formatter("AutoTimer Test", big_format);
+    timed_task(30);
+}
+
+#[test]
 fn test_timer_division() {
     // Test per la divisione che crea un nuovo timer
     {
