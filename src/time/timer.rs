@@ -1,6 +1,6 @@
-use crate::timer::time_values::{MFACTOR, SECONDS_FACTOR, TILE_PADDING};
-use crate::timer::times::{TimePrintFn, Times, simple_format};
-use crate::timer::value_label::ValueLabel;
+use crate::time::time_values::{MFACTOR, SECONDS_FACTOR, TILE_PADDING};
+use crate::time::times::{TimePrintFn, Times, simple_format};
+use crate::time::value_label::ValueLabel;
 use std::fmt;
 use std::ops::{Div, DivAssign};
 use std::time::{Duration, Instant};

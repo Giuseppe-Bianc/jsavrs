@@ -1,10 +1,10 @@
 
 use std::thread;
 use std::time::Duration;
-use jsavrs::timer::time_values::TimeValues;
-use jsavrs::timer::timer::{AutoTimer, Timer};
-use jsavrs::timer::times::{big_format, Times};
-use jsavrs::timer::value_label::ValueLabel;
+use jsavrs::time::time_values::TimeValues;
+use jsavrs::time::timer::{AutoTimer, Timer};
+use jsavrs::time::times::{big_format, Times};
+use jsavrs::time::value_label::ValueLabel;
 
 // Test helper: funzione che consuma tempo in modo controllato
 fn timed_task(duration_ms: u64) {

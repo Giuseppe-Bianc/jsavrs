@@ -1,5 +1,5 @@
 // Etichetta per il valore temporale con formattazione
-use crate::timer::time_values::{MICROSECONDS_FACTOR, MILLISECONDS_FACTOR, SECONDS_FACTOR};
+use crate::time::time_values::{MICROSECONDS_FACTOR, MILLISECONDS_FACTOR, SECONDS_FACTOR};
 use std::fmt;
 #[derive(Debug, Clone, Copy)]
 pub struct ValueLabel {

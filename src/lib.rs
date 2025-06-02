@@ -5,4 +5,4 @@ pub mod location;
 pub mod parser;
 pub mod tokens;
 pub mod utils;
-pub mod timer;
+pub mod time;

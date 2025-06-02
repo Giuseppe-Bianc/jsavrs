@@ -1,6 +1,6 @@
 // Contenitore per i valori temporali con etichette
-use crate::timer::time_values::TimeValues;
-use crate::timer::value_label::ValueLabel;
+use crate::time::time_values::TimeValues;
+use crate::time::value_label::ValueLabel;
 #[derive(Debug, Clone)]
 pub struct Times {
     pub values: TimeValues,
