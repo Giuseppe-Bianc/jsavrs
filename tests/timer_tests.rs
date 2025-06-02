@@ -3,7 +3,7 @@ use std::thread;
 use std::time::Duration;
 use jsavrs::timer::time_values::TimeValues;
 use jsavrs::timer::timer::{AutoTimer, Timer};
-use jsavrs::timer::times::Times;
+use jsavrs::timer::times::{big_format, Times};
 use jsavrs::timer::value_label::ValueLabel;
 
 // Test helper: funzione che consuma tempo in modo controllato
@@ -170,6 +170,17 @@ fn test_formatters() {
     let output = timer.to_string();
     assert!(output.starts_with("CUSTOM:"));
     assert!(output.contains("Custom Formatter"));
+    assert!(output.contains("ms") || output.contains("us") || output.contains("ns"));
+}
+
+#[test]
+fn test_big_format() {
+    let timer = Timer::with_formatter("Big Format Test", big_format);
+    timed_task(30);
+
+    let output = timer.to_string();
+    assert!(output.contains("Big Format Test"));
+    assert!(output.contains("Time = "));
     assert!(output.contains("ms") || output.contains("us") || output.contains("ns"));
 }
 

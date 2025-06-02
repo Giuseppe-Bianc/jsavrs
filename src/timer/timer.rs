@@ -1,9 +1,9 @@
-use std::time::{Duration, Instant};
+use crate::timer::time_values::{MFACTOR, SECONDS_FACTOR, TILE_PADDING};
+use crate::timer::times::{TimePrintFn, Times, simple_format};
+use crate::timer::value_label::ValueLabel;
 use std::fmt;
 use std::ops::{Div, DivAssign};
-use crate::timer::time_values::{MFACTOR, SECONDS_FACTOR, TILE_PADDING};
-use crate::timer::times::{simple_format, TimePrintFn, Times};
-use crate::timer::value_label::ValueLabel;
+use std::time::{Duration, Instant};
 
 pub struct Timer {
     title: String,
@@ -42,7 +42,7 @@ impl Timer {
 
     pub fn time_it<F>(&mut self, f: F, target_time: f64) -> String
     where
-        F: Fn()
+        F: Fn(),
     {
         let original_start = self.start;
         self.start = Instant::now();
@@ -76,6 +76,9 @@ impl Div<usize> for Timer {
     type Output = Self;
 
     fn div(mut self, rhs: usize) -> Self {
+        if rhs == 0 {
+            panic!("Cannot divide timer by zero");
+        }
         self.cycles = rhs;
         self
     }
@@ -83,6 +86,9 @@ impl Div<usize> for Timer {
 
 impl DivAssign<usize> for Timer {
     fn div_assign(&mut self, rhs: usize) {
+        if rhs == 0 {
+            panic!("Cannot divide timer by zero");
+        }
         self.cycles = rhs;
     }
 }
@@ -100,16 +106,26 @@ pub struct AutoTimer {
 
 impl AutoTimer {
     pub fn new(title: &str) -> Self {
-        AutoTimer { timer: Timer::new(title) }
+        AutoTimer {
+            timer: Timer::new(title),
+        }
     }
 
     pub fn with_formatter(title: &str, time_print: TimePrintFn) -> Self {
-        AutoTimer { timer: Timer::with_formatter(title, time_print) }
+        AutoTimer {
+            timer: Timer::with_formatter(title, time_print),
+        }
     }
 }
 
 impl Drop for AutoTimer {
     fn drop(&mut self) {
-        println!("{}", self.timer);
+        if let Ok(output) =
+            std::panic::catch_unwind(std::panic::AssertUnwindSafe(|| self.timer.to_string()))
+        {
+            println!("{}", output);
+        } else {
+            eprintln!("Error formatting timer output during drop");
+        }
     }
 }

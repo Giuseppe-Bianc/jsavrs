@@ -1,20 +1,23 @@
 // Etichetta per il valore temporale con formattazione
-use std::fmt;
 use crate::timer::time_values::{MICROSECONDS_FACTOR, MILLISECONDS_FACTOR, SECONDS_FACTOR};
+use std::fmt;
 #[derive(Debug, Clone, Copy)]
 pub struct ValueLabel {
-    pub time_val: f64,
-    pub time_label: &'static str,
+    time_val: f64,
+    time_label: &'static str,
 }
 
 impl ValueLabel {
     pub fn new(time_val: f64, time_label: &'static str) -> Self {
-        ValueLabel { time_val, time_label }
+        ValueLabel {
+            time_val,
+            time_label,
+        }
     }
 
     pub fn format_time(&self) -> String {
         let total_nanos = match self.time_label {
-            "s"  => (self.time_val * SECONDS_FACTOR).round() as u128,
+            "s" => (self.time_val * SECONDS_FACTOR).round() as u128,
             "ms" => (self.time_val * MILLISECONDS_FACTOR).round() as u128,
             "us" => (self.time_val * MICROSECONDS_FACTOR).round() as u128,
             "ns" => self.time_val.round() as u128,
