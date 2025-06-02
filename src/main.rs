@@ -94,7 +94,7 @@ fn main() -> Result<(), CompileError> {
     let error_reporter: ErrorReporter = ErrorReporter::new(line_tracker);
     let lexer_timer = Timer::new("Lexer Tokenization");
     let (tokens, lexer_errors) = lexer_tokenize_with_errors(&mut lexer);
-    println!("{}", lexer_timer);
+    println!("{lexer_timer}");
     if !lexer_errors.is_empty() {
         eprintln!("{}", error_reporter.report_errors(lexer_errors));
         ()
@@ -116,7 +116,7 @@ fn main() -> Result<(), CompileError> {
     let parse = JsavParser::new(tokens);
     let parse_timer = Timer::new("Parser");
     let (statements, parer_errors) = parse.parse();
-    println!("{}", parse_timer);
+    println!("{parse_timer}");
     if !parer_errors.is_empty() {
         eprintln!("{}", error_reporter.report_errors(parer_errors));
         ()
