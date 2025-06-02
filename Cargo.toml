@@ -27,9 +27,9 @@ regex = "1.11.1"
 
 
 [dev-dependencies]
-#assert_cmd = "2.0.12"
+assert_cmd = "2.0.12"
 insta = { version = "1.43.1", features = ["yaml", "redactions", "filters"] }
-#predicates = "3.0.3"
+predicates = "3.0.3"
 #tempfile = "3.8.0"
 
 [profile.dev.package]

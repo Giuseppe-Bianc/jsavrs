@@ -1,10 +1,9 @@
-
-use std::thread;
-use std::time::Duration;
 use jsavrs::time::time_values::TimeValues;
 use jsavrs::time::timer::{AutoTimer, Timer};
-use jsavrs::time::times::{big_format, Times};
+use jsavrs::time::times::{Times, big_format};
 use jsavrs::time::value_label::ValueLabel;
+use std::thread;
+use std::time::Duration;
 
 // Test helper: funzione che consuma tempo in modo controllato
 fn timed_task(duration_ms: u64) {
@@ -64,7 +63,7 @@ fn test_value_label_formatting() {
 #[test]
 fn test_times_relevant_timeframe() {
     let test_cases = vec![
-        (0.0, "ns"),            // 0 ns
+        (0.0, "ns"),             // 0 ns
         (0.999, "ns"),           // 0.999 ns
         (1.0, "ns"),             // 1 ns = 0.001 μs (minore di 1μs)
         (999.999, "ns"),         // 999.999 ns = 0.999999 μs (minore di 1μs)
@@ -72,7 +71,7 @@ fn test_times_relevant_timeframe() {
         (1000.0001, "us"),       // 1000.0001 ns = 1.0000001 μs
         (999_999.999, "us"),     // 999999.999 ns = 999.999999 μs
         (1_000_000.0, "ms"),     // 1,000,000 ns = 1 ms
-        (1_000_000.0001, "ms"), // 1,000,000.0001 ns = 1.0000000001 ms
+        (1_000_000.0001, "ms"),  // 1,000,000.0001 ns = 1.0000000001 ms
         (999_999_999.999, "ms"), // 999,999,999.999 ns = 999.999999999 ms
         (1_000_000_000.0, "s"),  // 1,000,000,000 ns = 1 s
     ];
@@ -81,9 +80,12 @@ fn test_times_relevant_timeframe() {
         let times = Times::from_nanoseconds(nanos);
         let vl = times.get_relevant_timeframe();
         assert_eq!(
-            vl.time_label(), expected_unit,
+            vl.time_label(),
+            expected_unit,
             "Failed for {} ns: expected {}, got {}",
-            nanos, expected_unit, vl.time_label()
+            nanos,
+            expected_unit,
+            vl.time_label()
         );
     }
 }
@@ -117,6 +119,27 @@ fn test_auto_timer_big() {
     // In questo test ci limitiamo a verificare che non crashi
     let _timer = AutoTimer::with_formatter("AutoTimer Test", big_format);
     timed_task(30);
+}
+
+#[should_panic(expected = "Cannot divide timer by zero")]
+#[test]
+fn test_timer_divide_by_zero() {
+    let timer = Timer::new("Average Timer");
+    timed_task(100);
+
+    // Divisione che consuma il timer originale e ne restituisce uno nuovo
+    let avg_timer = timer / 0;
+    let _time_str = avg_timer.to_string();
+}
+
+#[should_panic(expected = "Cannot divide timer by zero")]
+#[test]
+fn test_timer_divide_equal_by_zero() {
+    let mut timer = Timer::new("Average Timer");
+    timed_task(100);
+
+    timer /= 0;
+    let _time_str = timer.to_string();
 }
 
 #[test]
@@ -194,7 +217,6 @@ fn test_big_format() {
 
 #[test]
 fn test_edge_cases() {
-
     // Tempo molto piccolo (<1ns)
     let vl = ValueLabel::new(0.4, "ns");
     assert_eq!(vl.format_time(), "0ns"); // Arrotondamento
