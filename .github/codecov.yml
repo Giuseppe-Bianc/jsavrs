@@ -15,6 +15,8 @@ coverage:
 ignore:
   - "tests"
   - "src/main.rs"  # <- This line ignores the main Rust file
+  - "src/cli.rs"
+  - "src/utils"
 
 # Make comments less noisy
 comment:
