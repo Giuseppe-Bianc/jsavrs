@@ -40,7 +40,6 @@ impl LineTracker {
     /// use jsavrs::location::line_tracker::LineTracker;
     /// let tracker = LineTracker::new("example.lang", "print(1);\nprint(2);".to_string());
     /// ```
-
     pub fn new(file_path: &str, source: String) -> Self {
         let line_starts = std::iter::once(0)
             .chain(

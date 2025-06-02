@@ -11,7 +11,7 @@ use jsavrs::error::error_reporter::ErrorReporter;
 use jsavrs::lexer::Lexer;
 use jsavrs::parser::ast_printer::pretty_print_stmt;
 use jsavrs::parser::jsav_parser::JsavParser;
-use jsavrs::timer::timer::{AutoTimer, Timer};
+use jsavrs::time::timer::{AutoTimer, Timer};
 use jsavrs::{error::compile_error::CompileError, lexer::lexer_tokenize_with_errors};
 use std::{
     fs,
