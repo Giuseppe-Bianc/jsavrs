@@ -66,7 +66,8 @@ impl Timer {
         format!("{} for {} tries", time_str, n)
     }
 
-    pub fn to_string(&self) -> String {
+    // Renamed to avoid shadowing Display::to_string
+    pub fn as_string(&self) -> String {
         let time_str = self.make_time_str();
         (self.time_print)(&self.title, self.title_padding, &time_str)
     }
@@ -95,11 +96,12 @@ impl DivAssign<usize> for Timer {
 
 impl fmt::Display for Timer {
     fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
-        write!(f, "{}", self.to_string())
+        // Call the renamed method to avoid recursion
+        write!(f, "{}", self.as_string())
     }
 }
 
-// Timer automatico (stampa il tempo quando viene distrutto)
+// Automatic timer (prints time when dropped)
 pub struct AutoTimer {
     timer: Timer,
 }
@@ -121,7 +123,7 @@ impl AutoTimer {
 impl Drop for AutoTimer {
     fn drop(&mut self) {
         if let Ok(output) =
-            std::panic::catch_unwind(std::panic::AssertUnwindSafe(|| self.timer.to_string()))
+            std::panic::catch_unwind(std::panic::AssertUnwindSafe(|| self.timer.as_string()))
         {
             println!("{}", output);
         } else {
