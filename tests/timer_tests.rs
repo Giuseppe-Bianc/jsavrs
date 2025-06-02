@@ -81,9 +81,9 @@ fn test_times_relevant_timeframe() {
         let times = Times::from_nanoseconds(nanos);
         let vl = times.get_relevant_timeframe();
         assert_eq!(
-            vl.time_label, expected_unit,
+            vl.time_label(), expected_unit,
             "Failed for {} ns: expected {}, got {}",
-            nanos, expected_unit, vl.time_label
+            nanos, expected_unit, vl.time_label()
         );
     }
 }
@@ -202,8 +202,8 @@ fn test_edge_cases() {
         ..Times::from_nanoseconds(0.0)
     };
     let vl = times.get_relevant_timeframe();
-    assert_eq!(vl.time_label, "s");
-    assert!(vl.time_val > 3600.0);
+    assert_eq!(vl.time_label(), "s");
+    assert!(vl.time_val() > 3600.0);
 
     // Divisione per zero (dovrebbe essere prevenuta)
     let mut timer = Timer::new("Division by Zero");

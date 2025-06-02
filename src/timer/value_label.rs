@@ -8,6 +8,13 @@ pub struct ValueLabel {
 }
 
 impl ValueLabel {
+    pub fn time_val(&self) -> f64 {
+        self.time_val
+    }
+    pub fn time_label(&self) -> &'static str {
+        self.time_label
+    }
+    
     pub fn new(time_val: f64, time_label: &'static str) -> Self {
         ValueLabel {
             time_val,
