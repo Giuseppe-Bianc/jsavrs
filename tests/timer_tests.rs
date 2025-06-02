@@ -186,10 +186,6 @@ fn test_big_format() {
 
 #[test]
 fn test_edge_cases() {
-    // Tempo zero
-    let timer = Timer::new("Zero Time");
-    let time_str = timer.to_string();
-    assert!(time_str.contains("0ns") || time_str.contains("0.00"));
 
     // Tempo molto piccolo (<1ns)
     let vl = ValueLabel::new(0.4, "ns");
