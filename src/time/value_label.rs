@@ -14,7 +14,7 @@ impl ValueLabel {
     pub fn time_label(&self) -> &'static str {
         self.time_label
     }
-    
+
     pub fn new(time_val: f64, time_label: &'static str) -> Self {
         ValueLabel {
             time_val,
@@ -39,21 +39,21 @@ impl ValueLabel {
                 let rem2 = rem % 1_000_000;
                 let micros = rem2 / 1_000;
                 let nanos = rem2 % 1_000;
-                format!("{}s,{}ms,{}μs,{}ns", secs, millis, micros, nanos)
+                format!("{secs}s,{millis}ms,{micros}μs,{nanos}ns")
             }
             "ms" => {
                 let millis = total_nanos / 1_000_000;
                 let rem = total_nanos % 1_000_000;
                 let micros = rem / 1_000;
                 let nanos = rem % 1_000;
-                format!("{}ms,{}μs,{}ns", millis, micros, nanos)
+                format!("{millis}ms,{micros}μs,{nanos}ns")
             }
             "us" => {
                 let micros = total_nanos / 1_000;
                 let nanos = total_nanos % 1_000;
-                format!("{}μs,{}ns", micros, nanos)
+                format!("{micros}μs,{nanos}ns")
             }
-            "ns" => format!("{}ns", total_nanos),
+            "ns" => format!("{total_nanos}ns"),
             _ => format!("{:.3} {}", self.time_val, self.time_label),
         }
     }

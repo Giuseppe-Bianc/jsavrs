@@ -63,7 +63,7 @@ impl Timer {
         let time_str = Times::from_nanoseconds(avg_time).get_relevant_timeframe();
         self.start = original_start;
 
-        format!("{} for {} tries", time_str, n)
+        format!("{time_str} for {n} tries")
     }
 
     // Renamed to avoid shadowing Display::to_string
@@ -125,7 +125,7 @@ impl Drop for AutoTimer {
         if let Ok(output) =
             std::panic::catch_unwind(std::panic::AssertUnwindSafe(|| self.timer.as_string()))
         {
-            println!("{}", output);
+            println!("{output}");
         } else {
             eprintln!("Error formatting timer output during drop");
         }

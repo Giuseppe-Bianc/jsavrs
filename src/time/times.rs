@@ -42,11 +42,11 @@ impl Times {
 pub type TimePrintFn = fn(&str, usize, &ValueLabel) -> String;
 
 pub fn simple_format(title: &str, _: usize, time: &ValueLabel) -> String {
-    format!("{}: Time = {}", title, time)
+    format!("{title}: Time = {time}")
 }
 
 pub fn big_format(title: &str, title_len: usize, time: &ValueLabel) -> String {
-    let time_str = format!("Time = {}", time);
+    let time_str = format!("Time = {time}");
     let total_len = title_len + time_str.len() + 3; // +3 for separators
     let title_section = format!(
         "|{: ^title_len$}|{: ^time_len$}|",
