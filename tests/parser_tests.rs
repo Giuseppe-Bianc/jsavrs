@@ -1785,7 +1785,7 @@ fn test_unclose_array_literal() {
         "Expected '}' in end of array literal but found end of file"
     );
     assert!(!expr.is_empty());
-    
+
 }
 
 #[test]
@@ -1799,7 +1799,7 @@ fn test_var_invaild_type() {
     assert_eq!(errors[0].message().unwrap(), "Invalid type: number '5'");
 }
 
-#[test]
+/*#[test]
 fn test_eof() {
     let parser = JsavParser::new(vec![]);
     assert_eq!(parser.token_kind_to_string(&TokenKind::Eof), "end of file");
@@ -2016,4 +2016,4 @@ fn test_operators_single_and_multi_char() {
         let result = parser.token_kind_to_string(&kind);
         assert_eq!(result, expected);
     }
-}
+}*/

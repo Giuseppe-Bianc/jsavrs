@@ -520,7 +520,7 @@ impl JsavParser {
     // Improved syntax_error for clearer messages
     fn syntax_error(&mut self, message: &str, token: &Token) {
         self.errors.push(CompileError::SyntaxError {
-            message: format!("{}: {}", message, self.token_kind_to_string(&token.kind)),
+            message: format!("{}: {}", message, &token.kind),
             span: token.span.clone(),
         });
     }
@@ -531,10 +531,10 @@ impl JsavParser {
             true
         } else {
             let current_token = self.peek().cloned();
-            let expected_str = self.token_kind_to_string(&kind.clone());
+            let expected = &kind.clone();
             let found_str = current_token
                 .as_ref()
-                .map(|t| self.token_kind_to_string(&t.kind))
+                .map(|t| t.kind.to_string())
                 .unwrap_or_else(|| "end of input".to_string());
 
             let span = current_token
@@ -543,7 +543,7 @@ impl JsavParser {
                 .unwrap_or_default();
 
             let error_message =
-                format!("Expected {expected_str} in {context} but found {found_str}");
+                format!("Expected {expected} in {context} but found {found_str}");
             self.errors.push(CompileError::SyntaxError {
                 message: error_message,
                 span,
@@ -580,7 +580,7 @@ impl JsavParser {
         self.peek().map(|t| t.kind == kind).unwrap_or(false)
     }
 
-    pub fn token_kind_to_string(&self, kind: &TokenKind) -> String {
+    /*pub fn token_kind_to_string(&self, kind: &TokenKind) -> String {
         match kind {
             TokenKind::Eof => "end of file".to_string(),
             TokenKind::IdentifierAscii(s) => format!("identifier '{s}'"),
@@ -655,7 +655,7 @@ impl JsavParser {
             // Fallback for any unhandled variants
             _ => format!("'{kind:?}'"),
         }
-    }
+    }*/
 
     fn is_at_end(&self) -> bool {
         self.peek()

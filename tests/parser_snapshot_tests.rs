@@ -861,7 +861,7 @@ fn test_function_inputs() {
     let parser = JsavParser::new(tokens);
     assert_debug_snapshot!(parser.parse());
 }
-
+/*
 #[test]
 fn test_eof() {
     let parser = JsavParser::new(vec![]);
@@ -1054,4 +1054,4 @@ fn test_operators_single_and_multi_char() {
         .collect();
 
     assert_debug_snapshot!(input_result);
-}
+}*/

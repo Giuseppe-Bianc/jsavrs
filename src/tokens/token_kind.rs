@@ -1,3 +1,4 @@
+use std::fmt;
 // src/tokens/token_kind.rs
 use crate::tokens::number::Number;
 use logos::Logos;
@@ -432,5 +433,100 @@ impl TokenKind {
                 | TokenKind::TypeString
                 | TokenKind::TypeBool
         )
+    }
+}
+
+impl fmt::Display for TokenKind {
+    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
+        match self {
+            // Operators
+            TokenKind::Plus => write!(f, "'+'"),
+            TokenKind::Minus => write!(f, "'-'"),
+            TokenKind::Star => write!(f, "'*'"),
+            TokenKind::Slash => write!(f, "'/'"),
+            TokenKind::PlusEqual => write!(f, "'+='"),
+            TokenKind::MinusEqual => write!(f, "'-='"),
+            TokenKind::EqualEqual => write!(f, "'=='"),
+            TokenKind::NotEqual => write!(f, "'!='"),
+            TokenKind::Less => write!(f, "'<'"),
+            TokenKind::Greater => write!(f, "'>'"),
+            TokenKind::LessEqual => write!(f, "'<='"),
+            TokenKind::GreaterEqual => write!(f, "'>='"),
+            TokenKind::PlusPlus => write!(f, "'++'"),
+            TokenKind::MinusMinus => write!(f, "'--'"),
+            TokenKind::OrOr => write!(f, "'||'"),
+            TokenKind::AndAnd => write!(f, "'&&'"),
+            TokenKind::ShiftLeft => write!(f, "'<<'"),
+            TokenKind::ShiftRight => write!(f, "'>>'"),
+            TokenKind::PercentEqual => write!(f, "'%='"),
+            TokenKind::XorEqual => write!(f, "'^='"),
+            TokenKind::Not => write!(f, "'!'"),
+            TokenKind::Xor => write!(f, "'^'"),
+            TokenKind::Percent => write!(f, "'%'"),
+            TokenKind::Or => write!(f, "'|'"),
+            TokenKind::And => write!(f, "'&'"),
+            TokenKind::Equal => write!(f, "'='"),
+            TokenKind::Colon => write!(f, "':'"),
+            TokenKind::Comma => write!(f, "','"),
+            TokenKind::Dot => write!(f, "'.'"),
+            TokenKind::Semicolon => write!(f, "';'"),
+
+            // Keywords
+            TokenKind::KeywordFun => write!(f, "'fun'"),
+            TokenKind::KeywordIf => write!(f, "'if'"),
+            TokenKind::KeywordElse => write!(f, "'else'"),
+            TokenKind::KeywordReturn => write!(f, "'return'"),
+            TokenKind::KeywordWhile => write!(f, "'while'"),
+            TokenKind::KeywordFor => write!(f, "'for'"),
+            TokenKind::KeywordMain => write!(f, "'main'"),
+            TokenKind::KeywordVar => write!(f, "'var'"),
+            TokenKind::KeywordConst => write!(f, "'const'"),
+            TokenKind::KeywordNullptr => write!(f, "'nullptr'"),
+            TokenKind::KeywordBreak => write!(f, "'break'"),
+            TokenKind::KeywordContinue => write!(f, "'continue'"),
+            TokenKind::KeywordBool(b) => write!(f, "{}", b),
+
+            // Identifiers
+            TokenKind::IdentifierAscii(s) => write!(f, "{}", s),
+            TokenKind::IdentifierUnicode(s) => write!(f, "{}", s),
+
+            // Numeric literals
+            TokenKind::Numeric(n) => write!(f,"number '{n}'"),
+            TokenKind::Binary(n) => write!(f, "{}", n),
+            TokenKind::Octal(n) => write!(f, "{}", n),
+            TokenKind::Hexadecimal(n) => write!(f, "{}", n),
+
+            // String/char literals
+            TokenKind::StringLiteral(s) => write!(f, "\"{}\"", s),
+            TokenKind::CharLiteral(c) => write!(f, "'{}'", c),
+
+            // Brackets
+            TokenKind::OpenParen => write!(f, "'('"),
+            TokenKind::CloseParen => write!(f, "')'"),
+            TokenKind::OpenBracket => write!(f, "'['"),
+            TokenKind::CloseBracket => write!(f, "']'"),
+            TokenKind::OpenBrace => write!(f, "'{{'"),
+            TokenKind::CloseBrace => write!(f, "'}}'"),
+
+            // Types
+            TokenKind::TypeI8 => write!(f, "'i8'"),
+            TokenKind::TypeI16 => write!(f, "'i16'"),
+            TokenKind::TypeI32 => write!(f, "'i32'"),
+            TokenKind::TypeI64 => write!(f, "'i64'"),
+            TokenKind::TypeU8 => write!(f, "'u8'"),
+            TokenKind::TypeU16 => write!(f, "'u16'"),
+            TokenKind::TypeU32 => write!(f, "'u32'"),
+            TokenKind::TypeU64 => write!(f, "'u64'"),
+            TokenKind::TypeF32 => write!(f, "'f32'"),
+            TokenKind::TypeF64 => write!(f, "'f64'"),
+            TokenKind::TypeChar => write!(f, "'char'"),
+            TokenKind::TypeString => write!(f, "'string'"),
+            TokenKind::TypeBool => write!(f, "'bool'"),
+
+            // Special tokens
+            TokenKind::Whitespace => write!(f, "whitespace"),
+            TokenKind::Comment => write!(f, "comment"),
+            TokenKind::Eof => write!(f, "end of file"),
+        }
     }
 }
