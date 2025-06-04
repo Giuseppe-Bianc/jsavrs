@@ -493,9 +493,9 @@ impl fmt::Display for TokenKind {
 
             // Numeric literals
             TokenKind::Numeric(n) => write!(f, "number '{n}'"),
-            TokenKind::Binary(n) => write!(f, "{}", n),
-            TokenKind::Octal(n) => write!(f, "{}", n),
-            TokenKind::Hexadecimal(n) => write!(f, "{}", n),
+            TokenKind::Binary(n) => write!(f, "binary '{}'", n),
+            TokenKind::Octal(n) => write!(f, "octal '{}'", n),
+            TokenKind::Hexadecimal(n) => write!(f, "hexadecimal '{}'", n),
 
             // String/char literals
             TokenKind::StringLiteral(s) => write!(f, "string literal \"{}\"", s),

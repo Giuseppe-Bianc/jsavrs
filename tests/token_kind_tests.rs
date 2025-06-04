@@ -169,8 +169,20 @@ fn test_identifier_unicode() {
 fn test_numeric_integer() {
     let num = Number::Integer(123);
     assert_eq!(
-        Numeric(num).to_string(),
+        Numeric(num.clone()).to_string(),
         "number '123'"
+    );
+    assert_eq!(
+        Hexadecimal(num.clone()).to_string(),
+        "hexadecimal '123'"
+    );
+    assert_eq!(
+        Octal(num.clone()).to_string(),
+        "octal '123'"
+    );
+    assert_eq!(
+        Binary(num).to_string(),
+        "binary '123'"
     );
 }
 
@@ -244,6 +256,7 @@ fn test_all_keywords() {
         (KeywordFor, "'for'"),
         (KeywordBreak, "'break'"),
         (KeywordContinue, "'continue'"),
+        (KeywordMain, "'main'"),
     ];
 
     for (kind, expected) in mapping {
@@ -304,10 +317,12 @@ fn test_operators_single_and_multi_char() {
         (PlusPlus, "'++'"),
         (MinusMinus, "'--'"),
         (PlusEqual, "'+='"),
+        (MinusEqual, "'-='"),
         (Minus, "'-'"),
         (Star, "'*'"),
         (Slash, "'/'"),
         (Percent, "'%'"),
+        (PercentEqual, "'%='"),
         (Equal, "'='"),
         (EqualEqual, "'=='"),
         (NotEqual, "'!='"),
@@ -321,6 +336,7 @@ fn test_operators_single_and_multi_char() {
         (And, "'&'"),
         (Or, "'|'"),
         (Xor, "'^'"),
+        (XorEqual, "'^='"),
         (ShiftLeft, "'<<'"),
         (ShiftRight, "'>>'"),
     ];
