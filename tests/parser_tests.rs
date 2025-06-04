@@ -1773,6 +1773,22 @@ fn test_var_no_initializer() {
 }
 
 #[test]
+fn test_unclose_array_literal() {
+    let input = "var eee: i32[2] = {1, 2, 3";
+    let mut lexer = Lexer::new("test.vn", &input);
+    let (tokens, _lex_errors) = lexer_tokenize_with_errors(&mut lexer);
+    let parser = JsavParser::new(tokens);
+    let (expr, errors) = parser.parse();
+    assert!(!errors.is_empty());
+    assert_eq!(
+        errors[0].message().unwrap(),
+        "Expected '}' in end of array literal but found end of file"
+    );
+    assert!(!expr.is_empty());
+    
+}
+
+#[test]
 fn test_var_invaild_type() {
     let input = "var eee: 5";
     let mut lexer = Lexer::new("test.vn", &input);
