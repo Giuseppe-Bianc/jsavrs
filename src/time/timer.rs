@@ -122,12 +122,7 @@ impl AutoTimer {
 
 impl Drop for AutoTimer {
     fn drop(&mut self) {
-        if let Ok(output) =
-            std::panic::catch_unwind(std::panic::AssertUnwindSafe(|| self.timer.as_string()))
-        {
-            println!("{output}");
-        } else {
-            eprintln!("Error formatting timer output during drop");
-        }
+        // Now this will actually panic if the formatter does
+        println!("{}", self.timer.as_string());
     }
 }

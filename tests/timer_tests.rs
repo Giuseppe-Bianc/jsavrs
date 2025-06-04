@@ -309,3 +309,17 @@ fn test_time_it_short_operations() {
     // Verifica che abbia eseguito molte iterazioni
     assert!(tries >= 100, "Expected >=100 tries, got {}", tries);
 }
+
+// Custom formatter that panics
+fn panic_formatter(_title: &str, _padding: usize, _time: &ValueLabel) -> String {
+    panic!("test panic in formatter");
+}
+
+#[test]
+#[should_panic]
+fn test_auto_timer_drop_panic() {
+    // Create and immediately drop the AutoTimer
+    {
+        let _timer = AutoTimer::with_formatter("test", panic_formatter);
+    }
+}
