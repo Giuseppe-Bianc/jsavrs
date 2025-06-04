@@ -565,16 +565,7 @@ fn test_assignment_invalid_target_function_call() {
         errors[0].message().unwrap(),
         "Invalid left-hand side in assignment"
     );
-    assert_eq!(expr.len(), 1);
-    assert_eq!(
-        expr[0],
-        Stmt::Expression {
-            expr: assign_expr(
-                call_expr(variable_expr("foo"), vec![]),
-                num_lit(5)
-            )
-        }
-    );
+    assert_eq!(expr.len(), 0);
 }
 
 // Test for lines 178-179: Function call with zero arguments
@@ -641,7 +632,7 @@ fn test_assignment_invalid_target_binary() {
         errors[0].message().unwrap(),
         "Invalid left-hand side in assignment"
     );
-    assert_eq!(expr.len(), 1);
+    assert_eq!(expr.len(), 0);
     /*assert!(matches!(
         expr[0],
         Stmt::Expression {
