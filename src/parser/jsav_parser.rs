@@ -438,7 +438,9 @@ impl JsavParser {
     fn parse_array_literal(&mut self, start_token: Token) -> Option<Expr> {
         let mut elements = Vec::new();
         self.extract_elements(TokenKind::CloseBrace, &mut elements);
-        self.expect(TokenKind::CloseBrace, "end of array literal");
+        if !self.expect(TokenKind::CloseBrace, "end of array literal") {
+            return None;
+        }
         Some(Expr::ArrayLiteral {
             elements,
             span: self.merged_span(&start_token),
@@ -478,7 +480,9 @@ impl JsavParser {
 
     fn parse_grouping(&mut self, start_token: Token) -> Option<Expr> {
         let expr = self.parse_expr(0);
-        self.expect(TokenKind::CloseParen, "end of grouping");
+        if !self.expect(TokenKind::CloseParen, "end of grouping") {
+            return None;
+        }
         Some(Expr::Grouping {
             expr: Box::new(expr?),
             span: self.merged_span(&start_token),
@@ -517,7 +521,12 @@ impl JsavParser {
     fn parse_call(&mut self, callee: Expr, start_token: Token) -> Option<Expr> {
         let mut arguments = Vec::new();
         self.extract_elements(TokenKind::CloseParen, &mut arguments);
-        self.expect(TokenKind::CloseParen, "end of function call arguments");
+
+        // Check if we successfully found the closing parenthesis
+        if !self.expect(TokenKind::CloseParen, "end of function call arguments") {
+            return None;
+        }
+
         Some(Expr::Call {
             callee: Box::new(callee),
             arguments,
@@ -529,7 +538,9 @@ impl JsavParser {
         let index = self
             .parse_expr(0)
             .unwrap_or_else(|| self.null_expr(start_token.span.clone()));
-        self.expect(TokenKind::CloseBracket, "end of array access");
+        if !self.expect(TokenKind::CloseBracket, "end of array access") {
+            return None;
+        }
         Some(Expr::ArrayAccess {
             array: Box::new(array),
             index: Box::new(index),
@@ -559,10 +570,12 @@ impl JsavParser {
     }
 
     /// Improved `expect` to provide more context about expected vs found tokens
-    fn expect(&mut self, kind: TokenKind, context: &str) {
-        if !self.match_token(kind.clone()) {
+    fn expect(&mut self, kind: TokenKind, context: &str) -> bool {
+        if self.match_token(kind.clone()) {
+            true
+        } else {
             let current_token = self.peek().cloned();
-            let expected_str = self.token_kind_to_string(&kind);
+            let expected_str = self.token_kind_to_string(&kind.clone());
             let found_str = current_token
                 .as_ref()
                 .map(|t| self.token_kind_to_string(&t.kind))
@@ -579,6 +592,7 @@ impl JsavParser {
                 message: error_message,
                 span,
             });
+            false
         }
     }
 

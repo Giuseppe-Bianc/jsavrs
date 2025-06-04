@@ -411,13 +411,7 @@ fn test_array_access_empty_index() {
     let parser = JsavParser::new(tokens);
     let (expr, errors) = parser.parse();
     assert!(!errors.is_empty());
-    assert_eq!(expr.len(), 1);
-    assert_eq!(
-        expr[0],
-        Stmt::Expression {
-            expr: array_access_expr(variable_expr("arr"), nullptr_lit())
-        }
-    );
+    assert_eq!(expr.len(), 0);
     assert_eq!(errors[0].message().unwrap(), "Unexpected token: ']'");
 }
 
@@ -435,13 +429,7 @@ fn test_unclosed_parenthesis() {
         errors[0].message().unwrap(),
         "Expected ')' in end of grouping but found end of file"
     );
-    assert_eq!(expr.len(), 1);
-    assert_eq!(
-        expr[0],
-        Stmt::Expression {
-            expr: grouping_expr(num_lit(5))
-        }
-    );
+    assert_eq!(expr.len(), 0);
 }
 
 #[test]
@@ -605,13 +593,7 @@ fn test_function_call_unclosed_paren() {
         errors[0].message().unwrap(),
         "Expected ')' in end of function call arguments but found end of file"
     );
-    assert_eq!(expr.len(), 1);
-    assert!(matches!(
-        expr[0],
-        Stmt::Expression {
-            expr: Expr::Call { .. }
-        }
-    ));
+    assert_eq!(expr.len(), 0);
 }
 
 // Test for line 170: Assignment with binary expr target
