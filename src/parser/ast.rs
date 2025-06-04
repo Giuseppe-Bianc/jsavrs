@@ -145,6 +145,46 @@ impl Expr {
             Expr::ArrayLiteral { span, .. } => span,
         }
     }
+
+    pub fn null_expr(span: SourceSpan) -> Expr {
+        Expr::Literal {
+            value: LiteralValue::Nullptr,
+            span,
+        }
+    }
+
+    // Helper methods for literals
+    pub fn new_number_literal(value: Number, span: SourceSpan) -> Option<Expr> {
+        Some(Expr::Literal {
+            value: LiteralValue::Number(value),
+            span,
+        })
+    }
+
+    pub fn new_bool_literal(value: bool, span: SourceSpan) -> Option<Expr> {
+        Some(Expr::Literal {
+            value: LiteralValue::Bool(value),
+            span,
+        })
+    }
+
+    pub fn new_nullptr_literal(span: SourceSpan) -> Option<Expr> {
+        Some(Expr::null_expr(span))
+    }
+
+    pub fn new_string_literal(value: String, span: SourceSpan) -> Option<Expr> {
+        Some(Expr::Literal {
+            value: LiteralValue::StringLit(value),
+            span,
+        })
+    }
+
+    pub fn new_char_literal(value: String, span: SourceSpan) -> Option<Expr> {
+        Some(Expr::Literal {
+            value: LiteralValue::CharLit(value),
+            span,
+        })
+    }
 }
 
 impl Stmt {

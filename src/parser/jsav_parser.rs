@@ -3,7 +3,6 @@ use crate::error::compile_error::CompileError;
 use crate::location::source_span::SourceSpan;
 use crate::parser::ast::*;
 use crate::parser::precedence::*;
-use crate::tokens::number::Number;
 use crate::tokens::token::Token;
 use crate::tokens::token_kind::TokenKind;
 
@@ -321,11 +320,11 @@ impl JsavParser {
         let token = self.advance()?.clone();
         match token.kind {
             // Literals
-            TokenKind::Numeric(n) => self.new_number_literal(n, token.span),
-            TokenKind::KeywordBool(b) => self.new_bool_literal(b, token.span),
-            TokenKind::KeywordNullptr => self.new_nullptr_literal(token.span),
-            TokenKind::StringLiteral(s) => self.new_string_literal(s, token.span),
-            TokenKind::CharLiteral(c) => self.new_char_literal(c, token.span),
+            TokenKind::Numeric(n) => Expr::new_number_literal(n, token.span),
+            TokenKind::KeywordBool(b) => Expr::new_bool_literal(b, token.span),
+            TokenKind::KeywordNullptr => Expr::new_nullptr_literal(token.span),
+            TokenKind::StringLiteral(s) => Expr::new_string_literal(s, token.span),
+            TokenKind::CharLiteral(c) => Expr::new_char_literal(c, token.span),
             // Unary operators
             TokenKind::Minus => Some(self.parse_unary(UnaryOp::Negate, token)),
             TokenKind::Not => Some(self.parse_unary(UnaryOp::Not, token)),
@@ -386,48 +385,12 @@ impl JsavParser {
         }
     }
 
-    // Helper methods for literals
-    fn new_number_literal(&self, value: Number, span: SourceSpan) -> Option<Expr> {
-        Some(Expr::Literal {
-            value: LiteralValue::Number(value),
-            span,
-        })
-    }
-
-    fn new_bool_literal(&self, value: bool, span: SourceSpan) -> Option<Expr> {
-        Some(Expr::Literal {
-            value: LiteralValue::Bool(value),
-            span,
-        })
-    }
-
-    fn new_nullptr_literal(&self, span: SourceSpan) -> Option<Expr> {
-        Some(Expr::Literal {
-            value: LiteralValue::Nullptr,
-            span,
-        })
-    }
-
-    fn new_string_literal(&self, value: String, span: SourceSpan) -> Option<Expr> {
-        Some(Expr::Literal {
-            value: LiteralValue::StringLit(value),
-            span,
-        })
-    }
-
-    fn new_char_literal(&self, value: String, span: SourceSpan) -> Option<Expr> {
-        Some(Expr::Literal {
-            value: LiteralValue::CharLit(value),
-            span,
-        })
-    }
-
     // Parsing operations
     fn parse_unary(&mut self, op: UnaryOp, token: Token) -> Expr {
         let (_, rbp) = unary_binding_power(&token);
         let expr = self
             .parse_expr(rbp)
-            .unwrap_or_else(|| self.null_expr(token.span.clone()));
+            .unwrap_or_else(|| Expr::null_expr(token.span.clone()));
         Expr::Unary {
             op,
             expr: Box::new(expr),
@@ -469,7 +432,7 @@ impl JsavParser {
 
         let right = self
             .parse_expr(binding_power(&token).1)
-            .unwrap_or_else(|| self.null_expr(token.span.clone()));
+            .unwrap_or_else(|| Expr::null_expr(token.span.clone()));
         Some(Expr::Binary {
             left: Box::new(left),
             op,
@@ -493,7 +456,7 @@ impl JsavParser {
     fn parse_assignment(&mut self, left: Expr, token: Token) -> Option<Expr> {
         let value = self
             .parse_expr(1)
-            .unwrap_or_else(|| self.null_expr(token.span.clone()));
+            .unwrap_or_else(|| Expr::null_expr(token.span.clone()));
 
         let span = left
             .span()
@@ -537,7 +500,7 @@ impl JsavParser {
     fn parse_array_access(&mut self, array: Expr, start_token: Token) -> Option<Expr> {
         let index = self
             .parse_expr(0)
-            .unwrap_or_else(|| self.null_expr(start_token.span.clone()));
+            .unwrap_or_else(|| Expr::null_expr(start_token.span.clone()));
         if !self.expect(TokenKind::CloseBracket, "end of array access") {
             return None;
         }
@@ -552,13 +515,6 @@ impl JsavParser {
         self.previous()
             .and_then(|end| start_token.span.merged(&end.span))
             .unwrap_or(start_token.span.clone())
-    }
-
-    fn null_expr(&self, span: SourceSpan) -> Expr {
-        Expr::Literal {
-            value: LiteralValue::Nullptr,
-            span,
-        }
     }
 
     // Improved syntax_error for clearer messages
