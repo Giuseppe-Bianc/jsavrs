@@ -51,7 +51,7 @@ impl JsavParser {
     }
 
     fn parse_break_continue(&mut self) -> Option<Stmt> {
-        let token = self.advance()?;  // Use reference
+        let token = self.advance()?; // Use reference
         let span = token.span.clone();
         match token.kind {
             TokenKind::KeywordBreak => Some(Stmt::Break { span }),
@@ -508,7 +508,7 @@ impl JsavParser {
                 message: "Invalid left-hand side in assignment".to_string(),
                 span: left.span().clone(),
             });
-            return None
+            return None;
         }
 
         Some(Expr::Assign {

@@ -1,6 +1,7 @@
 // run --package jsavrs --bin jsavrs -- -i C:/dev/visualStudio/transpiler/Vandior/input.vn -v
-use clap::{Parser};
+use clap::Parser;
 use console::style;
+use jsavrs::cli::Args;
 use jsavrs::error::error_reporter::ErrorReporter;
 use jsavrs::lexer::Lexer;
 use jsavrs::parser::ast_printer::pretty_print_stmt;
@@ -12,7 +13,6 @@ use std::{
     path::Path,
     //process,
 };
-use jsavrs::cli::Args;
 
 #[allow(clippy::unused_unit)]
 fn main() -> Result<(), CompileError> {

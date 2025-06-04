@@ -1,38 +1,62 @@
 // Etichetta per il valore temporale con formattazione
 use crate::time::time_values::{MICROSECONDS_FACTOR, MILLISECONDS_FACTOR, SECONDS_FACTOR};
 use std::fmt;
+
 #[derive(Debug, Clone, Copy)]
 pub struct ValueLabel {
     time_val: f64,
-    time_label: &'static str,
+    time_label: TimeUnit, // Cambiato da &'static str a enum TimeUnit
+}
+
+#[derive(Debug, Clone, Copy)]
+enum TimeUnit {
+    Seconds,
+    Milliseconds,
+    Microseconds,
+    Nanoseconds,
+    Other(&'static str),
+}
+
+impl TimeUnit {
+    fn as_str(&self) -> &'static str {
+        match self {
+            TimeUnit::Seconds => "s",
+            TimeUnit::Milliseconds => "ms",
+            TimeUnit::Microseconds => "us",
+            TimeUnit::Nanoseconds => "ns",
+            TimeUnit::Other(s) => s,
+        }
+    }
 }
 
 impl ValueLabel {
     pub fn time_val(&self) -> f64 {
         self.time_val
     }
+
     pub fn time_label(&self) -> &'static str {
-        self.time_label
+        self.time_label.as_str()
     }
 
     pub fn new(time_val: f64, time_label: &'static str) -> Self {
+        let unit = match time_label {
+            "s" => TimeUnit::Seconds,
+            "ms" => TimeUnit::Milliseconds,
+            "us" => TimeUnit::Microseconds,
+            "ns" => TimeUnit::Nanoseconds,
+            _ => TimeUnit::Other(time_label),
+        };
+
         ValueLabel {
             time_val,
-            time_label,
+            time_label: unit,
         }
     }
 
     pub fn format_time(&self) -> String {
-        let total_nanos = match self.time_label {
-            "s" => (self.time_val * SECONDS_FACTOR).round() as u128,
-            "ms" => (self.time_val * MILLISECONDS_FACTOR).round() as u128,
-            "us" => (self.time_val * MICROSECONDS_FACTOR).round() as u128,
-            "ns" => self.time_val.round() as u128,
-            _ => return format!("{:.3} {}", self.time_val, self.time_label),
-        };
-
         match self.time_label {
-            "s" => {
+            TimeUnit::Seconds => {
+                let total_nanos = (self.time_val * SECONDS_FACTOR).round() as u128;
                 let secs = total_nanos / 1_000_000_000;
                 let rem = total_nanos % 1_000_000_000;
                 let millis = rem / 1_000_000;
@@ -41,20 +65,27 @@ impl ValueLabel {
                 let nanos = rem2 % 1_000;
                 format!("{secs}s,{millis}ms,{micros}μs,{nanos}ns")
             }
-            "ms" => {
+            TimeUnit::Milliseconds => {
+                let total_nanos = (self.time_val * MILLISECONDS_FACTOR).round() as u128;
                 let millis = total_nanos / 1_000_000;
                 let rem = total_nanos % 1_000_000;
                 let micros = rem / 1_000;
                 let nanos = rem % 1_000;
                 format!("{millis}ms,{micros}μs,{nanos}ns")
             }
-            "us" => {
+            TimeUnit::Microseconds => {
+                let total_nanos = (self.time_val * MICROSECONDS_FACTOR).round() as u128;
                 let micros = total_nanos / 1_000;
                 let nanos = total_nanos % 1_000;
                 format!("{micros}μs,{nanos}ns")
             }
-            "ns" => format!("{total_nanos}ns"),
-            _ => format!("{:.3} {}", self.time_val, self.time_label),
+            TimeUnit::Nanoseconds => {
+                let nanos = self.time_val.round() as u128;
+                format!("{nanos}ns")
+            }
+            TimeUnit::Other(_) => {
+                format!("{:.3} {}", self.time_val, self.time_label.as_str())
+            }
         }
     }
 }

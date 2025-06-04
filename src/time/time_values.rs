@@ -24,8 +24,16 @@ impl TimeValues {
         }
     }
 
-    pub fn seconds(&self) -> f64 { self.seconds }
-    pub fn millis(&self) -> f64 { self.millis }
-    pub fn micro(&self) -> f64 { self.micro }
-    pub fn nano(&self) -> f64 { self.nano }
+    pub fn seconds(&self) -> f64 {
+        self.seconds
+    }
+    pub fn millis(&self) -> f64 {
+        self.millis
+    }
+    pub fn micro(&self) -> f64 {
+        self.micro
+    }
+    pub fn nano(&self) -> f64 {
+        self.nano
+    }
 }

@@ -1,11 +1,11 @@
 use std::path::PathBuf;
 // src/cli.rs
 use clap::{
-    builder::{
-        styling::{AnsiColor, Effects},
-        PathBufValueParser, Styles,
-    },
     Parser,
+    builder::{
+        PathBufValueParser, Styles,
+        styling::{AnsiColor, Effects},
+    },
 };
 
 const HELP_STR: &str = r#"

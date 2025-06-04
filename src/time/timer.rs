@@ -86,7 +86,7 @@ impl Div<usize> for Timer {
 }
 
 impl DivAssign<usize> for Timer {
-    fn div_assign(&mut self, rhs: usize)  {
+    fn div_assign(&mut self, rhs: usize) {
         if rhs == 0 {
             panic!("Cannot divide timer by zero");
         }
