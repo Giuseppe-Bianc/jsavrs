@@ -219,6 +219,7 @@ impl JsavParser {
         Some(type_)
     }
 
+    #[allow(clippy::if_same_then_else)]
     fn parse_var_declaration(&mut self) -> Option<Stmt> {
         let start_token = if self.match_token(TokenKind::KeywordConst) {
             self.previous().unwrap().clone()
