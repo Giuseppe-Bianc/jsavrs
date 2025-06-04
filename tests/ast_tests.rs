@@ -298,6 +298,11 @@ expr_span_test!(test_expr_array_access_span, |s| Expr::ArrayAccess {
     span: s,
 });
 
+stmt_span_test!(test_stmt_main_function_span, |s| Stmt::MainFunction {
+    body: vec![],
+    span: s,
+});
+
 #[test]
 fn test_stmt_expression_span() {
     let expr = num_lit(42);
