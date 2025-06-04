@@ -4,6 +4,7 @@ use jsavrs::tokens::token_kind::{
     TokenKind, handle_suffix, handle_unsigned_suffix, split_numeric_and_suffix,
 };
 use logos::Logos;
+use jsavrs::tokens::number::Number;
 
 // Helper function to assert token matching
 fn assert_token(input: &str, expected: TokenKind) {
@@ -128,4 +129,203 @@ fn returns_false_for_structurally_similar_tokens() {
     assert!(!CloseBracket.is_type());
     assert!(!OpenBrace.is_type());
     assert!(!CloseBrace.is_type());
+}
+
+#[test]
+fn test_eof_and_ignored() {
+    assert_eq!(Eof.to_string(), "end of file");
+    assert_eq!(Comment.to_string(), "comment");
+    assert_eq!(Whitespace.to_string(), "whitespace");
+}
+
+#[test]
+fn test_identifier_ascii_normal() {
+    let ident = "foo".to_string();
+    assert_eq!(
+        IdentifierAscii(ident.clone()).to_string(),
+        format!("identifier '{ident}'")
+    );
+}
+
+#[test]
+fn test_identifier_ascii_empty() {
+    let ident = "".to_string();
+    assert_eq!(
+        IdentifierAscii(ident.clone()).to_string(),
+        "identifier ''"
+    );
+}
+
+#[test]
+fn test_identifier_unicode() {
+    let ident = "προεδομή".to_string(); // qualche stringa Unicode
+    assert_eq!(
+        IdentifierUnicode(ident.clone()).to_string(),
+        format!("identifier '{ident}'")
+    );
+}
+
+#[test]
+fn test_numeric_integer() {
+    let num = Number::Integer(123);
+    assert_eq!(
+        Numeric(num).to_string(),
+        "number '123'"
+    );
+}
+
+#[test]
+fn test_string_literal_simple() {
+    let s = "hello".to_string();
+    assert_eq!(
+        StringLiteral(s.clone()).to_string(),
+        format!("string literal \"{s}\"")
+    );
+}
+
+#[test]
+fn test_string_literal_with_quotes_inside() {
+    let s = "he said \"ciao\"".to_string();
+    assert_eq!(
+        StringLiteral(s.clone()).to_string(),
+        format!("string literal \"{s}\"")
+    );
+}
+
+#[test]
+fn test_char_literal_simple() {
+    let c = "x".to_string();
+    assert_eq!(
+        CharLiteral(c.clone()).to_string(),
+        format!("character literal '{c}'")
+    );
+}
+
+#[test]
+fn test_char_literal_unicode() {
+    let c = "ψ".to_string();
+    assert_eq!(
+        CharLiteral(c.clone()).to_string(),
+        format!("character literal '{c}'")
+    );
+}
+
+#[test]
+fn test_keyword_bool_true_false() {
+    assert_eq!(
+        KeywordBool(true).to_string(),
+        "boolean 'true'"
+    );
+    assert_eq!(
+        &KeywordBool(false).to_string(),
+        "boolean 'false'"
+    );
+}
+
+#[test]
+fn test_keyword_nullptr() {
+    assert_eq!(
+        &KeywordNullptr.to_string(),
+        "'nullptr'"
+    );
+}
+
+// ——— Test per tutte le keyword principali ———
+#[test]
+fn test_all_keywords() {
+    let mapping = vec![
+        (KeywordFun, "'fun'"),
+        (KeywordIf, "'if'"),
+        (KeywordElse, "'else'"),
+        (KeywordVar, "'var'"),
+        (KeywordConst, "'const'"),
+        (KeywordReturn, "'return'"),
+        (KeywordWhile, "'while'"),
+        (KeywordFor, "'for'"),
+        (KeywordBreak, "'break'"),
+        (KeywordContinue, "'continue'"),
+    ];
+
+    for (kind, expected) in mapping {
+        assert_eq!(kind.to_string(), expected);
+    }
+}
+
+// ——— Test per tutti i tipi primari ———
+#[test]
+fn test_all_primitive_types() {
+    let mapping = vec![
+        (TypeI8, "'i8'"),
+        (TypeI16, "'i16'"),
+        (TypeI32, "'i32'"),
+        (TypeI64, "'i64'"),
+        (TypeU8, "'u8'"),
+        (TypeU16, "'u16'"),
+        (TypeU32, "'u32'"),
+        (TypeU64, "'u64'"),
+        (TypeF32, "'f32'"),
+        (TypeF64, "'f64'"),
+        (TypeChar, "'char'"),
+        (TypeString, "'string'"),
+        (TypeBool, "'bool'"),
+    ];
+
+    for (kind, expected) in mapping {
+        assert_eq!(kind.to_string(), expected);
+    }
+}
+
+// ——— Test per punteggiatura e simboli singoli ———
+#[test]
+fn test_punctuation() {
+    let mapping = vec![
+        (OpenParen, "'('"),
+        (CloseParen, "')'"),
+        (OpenBrace, "'{'"),
+        (CloseBrace, "'}'"),
+        (OpenBracket, "'['"),
+        (CloseBracket, "']'"),
+        (Semicolon, "';'"),
+        (Colon, "':'"),
+        (Comma, "','"),
+        (Dot, "'.'"),
+    ];
+
+    for (kind, expected) in mapping {
+        assert_eq!(kind.to_string(), expected);
+    }
+}
+
+// ——— Test per operatori semplici e composti ———
+#[test]
+fn test_operators_single_and_multi_char() {
+    let mapping = vec![
+        (Plus, "'+'"),
+        (PlusPlus, "'++'"),
+        (MinusMinus, "'--'"),
+        (PlusEqual, "'+='"),
+        (Minus, "'-'"),
+        (Star, "'*'"),
+        (Slash, "'/'"),
+        (Percent, "'%'"),
+        (Equal, "'='"),
+        (EqualEqual, "'=='"),
+        (NotEqual, "'!='"),
+        (Less, "'<'"),
+        (LessEqual, "'<='"),
+        (Greater, "'>'"),
+        (GreaterEqual, "'>='"),
+        (AndAnd, "'&&'"),
+        (OrOr, "'||'"),
+        (Not, "'!'"),
+        (And, "'&'"),
+        (Or, "'|'"),
+        (Xor, "'^'"),
+        (ShiftLeft, "'<<'"),
+        (ShiftRight, "'>>'"),
+    ];
+
+    for (kind, expected) in mapping {
+        assert_eq!(kind.to_string(), expected);
+    }
 }
