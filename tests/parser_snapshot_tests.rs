@@ -861,3 +861,12 @@ fn test_function_inputs() {
     let parser = JsavParser::new(tokens);
     assert_debug_snapshot!(parser.parse());
 }
+
+#[test]
+fn test_main() {
+    let input = "main { }";
+    let mut lexer = Lexer::new("test.vn", &input);
+    let (tokens, _lex_errors) = lexer_tokenize_with_errors(&mut lexer);;
+    let parser = JsavParser::new(tokens);
+    assert_debug_snapshot!(parser.parse());
+}

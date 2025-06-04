@@ -38,6 +38,7 @@ impl JsavParser {
         let token = self.peek()?.clone();
         match token.kind {
             TokenKind::KeywordFun => self.parse_function(),
+            TokenKind::KeywordMain => self.parse_main_function(),
             TokenKind::KeywordIf => self.parse_if(),
             TokenKind::KeywordVar | TokenKind::KeywordConst => self.parse_var_declaration(),
             TokenKind::KeywordReturn => self.parse_return(),
@@ -47,6 +48,22 @@ impl JsavParser {
             TokenKind::OpenBrace => self.parse_block_stmt(),
             _ => self.parse_expression_stmt(),
         }
+    }
+    fn parse_main_function(&mut self) -> Option<Stmt> {
+        let start_token = self.advance()?.clone(); // 'main'
+        let body = self.parse_block_stmt()?;
+        let end_span = body.span();
+
+        let function_span = start_token
+            .span
+            .merged(end_span)
+            .unwrap_or(start_token.span.clone());
+
+
+        Some(Stmt::MainFunction {
+            body: vec![body],
+            span: function_span,
+        })
     }
 
     fn parse_break_continue(&mut self) -> Option<Stmt> {

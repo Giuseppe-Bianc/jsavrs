@@ -499,6 +499,17 @@ fn print_stmt(
                 }
             }
         }
+        Stmt::MainFunction {
+            body,
+            span: _span,
+        } => {
+            append_line(output, indent, is_last, styles.clone().keyword, "MainFunction");
+            let new_indent = get_indent(indent, is_last);
+            for (i, stmt) in body.iter().enumerate() {
+                let is_last_stmt = i == body.len() - 1;
+                print_stmt(stmt, &new_indent, is_last_stmt, output, styles);
+            }
+        }
         Stmt::Block {
             statements,
             span: _span,

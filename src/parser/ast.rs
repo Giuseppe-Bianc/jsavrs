@@ -129,6 +129,7 @@ pub enum Stmt {
     Continue {
         span: SourceSpan,
     },
+    MainFunction { body: Vec<Stmt>, span: SourceSpan },
 }
 
 impl Expr {
@@ -198,6 +199,7 @@ impl Stmt {
             Stmt::Return { span, .. } => span,
             Stmt::Break { span, .. } => span,
             Stmt::Continue { span, .. } => span,
+            Stmt::MainFunction { span, .. } => span,
         }
     }
 }

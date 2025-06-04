@@ -1,7 +1,7 @@
 fun a(num1: i8, num2: i8): i8 {
 }
 // single line comment
-//main {
+main {
     /*
     multi line comment
     */
@@ -27,5 +27,5 @@ fun a(num1: i8, num2: i8): i8 {
         }
 	}
 	var arr: i8[5] = {1, 2, 3, 4, 5}
-	5-5=5
-//}
+	//5-5=5
+}

@@ -341,3 +341,19 @@ fn test_array_literal_output() {
 
     assert_snapshot!(stripped.trim());
 }
+
+#[test]
+fn test_main() {
+    let input = "main { }";
+    let mut lexer = Lexer::new("test.vn", &input);
+    let (tokens, _lex_errors) = lexer_tokenize_with_errors(&mut lexer);
+    let parser = JsavParser::new(tokens);
+    let (expr, errors) = parser.parse();
+    assert!(errors.is_empty());
+    assert_eq!(expr.len(), 1);
+
+    let output = pretty_print_stmt(&expr[0]);
+    let stripped = strip_ansi_codes(&output);
+
+    assert_snapshot!(stripped.trim());
+}
