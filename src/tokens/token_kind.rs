@@ -484,22 +484,22 @@ impl fmt::Display for TokenKind {
             TokenKind::KeywordNullptr => write!(f, "'nullptr'"),
             TokenKind::KeywordBreak => write!(f, "'break'"),
             TokenKind::KeywordContinue => write!(f, "'continue'"),
-            TokenKind::KeywordBool(b) => write!(f, "boolean '{}'", b),
+            TokenKind::KeywordBool(b) => write!(f, "boolean '{b}'"),
 
             // Identifiers
             TokenKind::IdentifierAscii(s) | TokenKind::IdentifierUnicode(s) => {
-                write!(f, "identifier '{}'", s)
+                write!(f, "identifier '{s}'")
             }
 
             // Numeric literals
             TokenKind::Numeric(n) => write!(f, "number '{n}'"),
-            TokenKind::Binary(n) => write!(f, "binary '{}'", n),
-            TokenKind::Octal(n) => write!(f, "octal '{}'", n),
-            TokenKind::Hexadecimal(n) => write!(f, "hexadecimal '{}'", n),
+            TokenKind::Binary(n) => write!(f, "binary '{n}'"),
+            TokenKind::Octal(n) => write!(f, "octal '{n}'"),
+            TokenKind::Hexadecimal(n) => write!(f, "hexadecimal '{n}'"),
 
             // String/char literals
-            TokenKind::StringLiteral(s) => write!(f, "string literal \"{}\"", s),
-            TokenKind::CharLiteral(c) => write!(f, "character literal '{}'", c),
+            TokenKind::StringLiteral(s) => write!(f, "string literal \"{s}\""),
+            TokenKind::CharLiteral(c) => write!(f, "character literal '{c}'"),
 
             // Brackets
             TokenKind::OpenParen => write!(f, "'('"),
