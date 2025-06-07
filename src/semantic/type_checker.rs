@@ -1,6 +1,6 @@
 use crate::error::compile_error::CompileError;
 use crate::parser::ast::*;
-use crate::semantic::symbol_table::{SymbolTable, Symbol, VariableSymbol, FunctionSymbol};
+use crate::semantic::symbol_table::{FunctionSymbol, Symbol, SymbolTable, VariableSymbol};
 use crate::tokens::number::Number;
 
 #[derive(Debug, Default)]
@@ -26,29 +26,44 @@ impl TypeChecker {
         for stmt in statements {
             self.declare_symbols(stmt);
         }
-        
+
         // Second pass: type checking
         for stmt in statements {
             self.check_stmt(stmt);
         }
-        
+
         std::mem::take(&mut self.errors)
     }
 
     fn declare_symbols(&mut self, stmt: &Stmt) {
         match stmt {
-            Stmt::Function { name, parameters, return_type, span, .. } => {
+            Stmt::Function {
+                name,
+                parameters,
+                return_type,
+                span,
+                ..
+            } => {
                 let func_symbol = FunctionSymbol {
                     name: name.clone(),
                     parameters: parameters.clone(),
                     return_type: return_type.clone(),
                     defined_at: span.clone(),
                 };
-                if let Err(e) = self.symbol_table.declare(name, Symbol::Function(func_symbol)) {
+                if let Err(e) = self
+                    .symbol_table
+                    .declare(name, Symbol::Function(func_symbol))
+                {
                     self.errors.push(e);
                 }
             }
-            Stmt::VarDeclaration { variables, type_annotation, is_mutable, span, .. } => {
+            Stmt::VarDeclaration {
+                variables,
+                type_annotation,
+                is_mutable,
+                span,
+                ..
+            } => {
                 for var in variables {
                     let var_symbol = VariableSymbol {
                         name: var.clone(),
@@ -71,8 +86,27 @@ impl TypeChecker {
             Stmt::Expression { expr } => {
                 self.check_expr(expr);
             }
-            Stmt::VarDeclaration { variables, type_annotation, initializers, span, .. } => {
+            Stmt::VarDeclaration {
+                variables,
+                type_annotation,
+                initializers,
+                is_mutable,
+                span,
+                ..
+            } => {
                 for (i, var) in variables.iter().enumerate() {
+                    // 1️⃣  declare the variable *before* examining the initializer
+                    let var_symbol = VariableSymbol {
+                        name: var.clone(),
+                        ty: type_annotation.clone(),
+                        mutable: *is_mutable,
+                        defined_at: span.clone(),
+                        last_assignment: None,
+                    };
+                    if let Err(e) = self.symbol_table.declare(var, Symbol::Variable(var_symbol)) {
+                        self.errors.push(e);
+                    }
+
                     if let Some(init) = initializers.get(i) {
                         let init_type = self.check_expr(init);
                         if !self.is_assignable(&init_type, type_annotation) {
@@ -94,10 +128,15 @@ impl TypeChecker {
                     }
                 }
             }
-            Stmt::Function { parameters, return_type, body, .. } => {
+            Stmt::Function {
+                parameters,
+                return_type,
+                body,
+                ..
+            } => {
                 self.symbol_table.push_scope();
                 self.current_return_type = Some(return_type.clone());
-                
+
                 // Add parameters to scope
                 for param in parameters {
                     let var_symbol = VariableSymbol {
@@ -107,39 +146,46 @@ impl TypeChecker {
                         defined_at: param.span.clone(),
                         last_assignment: None,
                     };
-                    if let Err(e) = self.symbol_table.declare(
-                        &param.name, 
-                        Symbol::Variable(var_symbol)
-                    ) {
+                    if let Err(e) = self
+                        .symbol_table
+                        .declare(&param.name, Symbol::Variable(var_symbol))
+                    {
                         self.errors.push(e);
                     }
                 }
-                
+
                 // Check function body
                 for stmt in body {
                     self.check_stmt(stmt);
                 }
-                
+
                 self.symbol_table.pop_scope();
                 self.current_return_type = None;
             }
-            Stmt::If { condition, then_branch, else_branch, .. } => {
+            Stmt::If {
+                condition,
+                then_branch,
+                else_branch,
+                ..
+            } => {
                 let cond_type = self.check_expr(condition);
                 if !self.is_bool(&cond_type) {
                     self.errors.push(CompileError::TypeError {
-                        message: format!("Condition must be bool, found {}", 
-                            self.type_name(&cond_type)),
+                        message: format!(
+                            "Condition must be bool, found {}",
+                            self.type_name(&cond_type)
+                        ),
                         span: condition.span().clone(),
                     });
                 }
-                
+
                 // Then branch
                 self.symbol_table.push_scope();
                 for stmt in then_branch {
                     self.check_stmt(stmt);
                 }
                 self.symbol_table.pop_scope();
-                
+
                 // Else branch
                 if let Some(else_statements) = else_branch {
                     self.symbol_table.push_scope();
@@ -168,11 +214,12 @@ impl TypeChecker {
                         return;
                     }
                 };
-                
-                let value_type = value.as_ref()
+
+                let value_type = value
+                    .as_ref()
                     .map(|e| self.check_expr(e))
                     .unwrap_or(Type::Void);
-                
+
                 if !self.is_assignable(&value_type, &return_type) {
                     self.errors.push(CompileError::TypeError {
                         message: format!(
@@ -180,7 +227,10 @@ impl TypeChecker {
                             self.type_name(&return_type),
                             self.type_name(&value_type)
                         ),
-                        span: value.as_ref().map(|e| e.span().clone()).unwrap_or(span.clone()),
+                        span: value
+                            .as_ref()
+                            .map(|e| e.span().clone())
+                            .unwrap_or(span.clone()),
                     });
                 }
             }
@@ -204,13 +254,21 @@ impl TypeChecker {
 
     fn check_expr(&mut self, expr: &Expr) -> Type {
         match expr {
-            Expr::Binary { left, op, right, span } => {
+            Expr::Binary {
+                left,
+                op,
+                right,
+                span,
+            } => {
                 let left_type = self.check_expr(left);
                 let right_type = self.check_expr(right);
-                
+
                 match op {
-                    BinaryOp::Add | BinaryOp::Subtract | BinaryOp::Multiply |
-                    BinaryOp::Divide | BinaryOp::Modulo => {
+                    BinaryOp::Add
+                    | BinaryOp::Subtract
+                    | BinaryOp::Multiply
+                    | BinaryOp::Divide
+                    | BinaryOp::Modulo => {
                         if !self.is_numeric(&left_type) || !self.is_numeric(&right_type) {
                             self.errors.push(CompileError::TypeError {
                                 message: format!(
@@ -234,8 +292,12 @@ impl TypeChecker {
                         }
                         left_type
                     }
-                    BinaryOp::Equal | BinaryOp::NotEqual | BinaryOp::Less |
-                    BinaryOp::LessEqual | BinaryOp::Greater | BinaryOp::GreaterEqual => {
+                    BinaryOp::Equal
+                    | BinaryOp::NotEqual
+                    | BinaryOp::Less
+                    | BinaryOp::LessEqual
+                    | BinaryOp::Greater
+                    | BinaryOp::GreaterEqual => {
                         if !self.is_comparable(&left_type, &right_type) {
                             self.errors.push(CompileError::TypeError {
                                 message: format!(
@@ -290,22 +352,24 @@ impl TypeChecker {
                 LiteralValue::Bool(_) => Type::Bool,
                 LiteralValue::Nullptr => Type::Void,
             },
-            Expr::Variable { name, span } => {
-                match self.symbol_table.lookup_variable(name) {
-                    Some(var) => var.ty.clone(),
-                    None => {
-                        self.errors.push(CompileError::TypeError {
-                            message: format!("Undefined variable '{}'", name),
-                            span: span.clone(),
-                        });
-                        Type::Void
-                    }
+            Expr::Variable { name, span } => match self.symbol_table.lookup_variable(name) {
+                Some(var) => var.ty.clone(),
+                None => {
+                    self.errors.push(CompileError::TypeError {
+                        message: format!("Undefined variable '{}'", name),
+                        span: span.clone(),
+                    });
+                    Type::Void
                 }
-            }
-            Expr::Assign { target, value, span } => {
+            },
+            Expr::Assign {
+                target,
+                value,
+                span,
+            } => {
                 let value_type = self.check_expr(value);
                 let target_type = self.check_expr(target);
-                
+
                 if !self.is_assignable(&value_type, &target_type) {
                     self.errors.push(CompileError::TypeError {
                         message: format!(
@@ -316,7 +380,7 @@ impl TypeChecker {
                         span: span.clone(),
                     });
                 }
-                
+
                 // Check mutability
                 if let Expr::Variable { name, .. } = target.as_ref() {
                     if let Some(var) = self.symbol_table.lookup_variable(name) {
@@ -328,10 +392,14 @@ impl TypeChecker {
                         }
                     }
                 }
-                
+
                 target_type
             }
-            Expr::Call { callee, arguments, span } => {
+            Expr::Call {
+                callee,
+                arguments,
+                span,
+            } => {
                 // Lookup function directly by name
                 if let Expr::Variable { name, .. } = callee.as_ref() {
                     if let Some(func) = self.symbol_table.lookup_function(name) {
@@ -347,9 +415,10 @@ impl TypeChecker {
                             });
                             return func.return_type.clone();
                         }
-                        
+
                         // Check argument types
-                        for (i, (arg, param)) in arguments.iter().zip(&func.parameters).enumerate() {
+                        for (i, (arg, param)) in arguments.iter().zip(&func.parameters).enumerate()
+                        {
                             let arg_type = self.check_expr(arg);
                             if !self.is_assignable(&arg_type, &param.type_annotation) {
                                 self.errors.push(CompileError::TypeError {
@@ -363,11 +432,11 @@ impl TypeChecker {
                                 });
                             }
                         }
-                        
+
                         return func.return_type.clone();
                     }
                 }
-                
+
                 self.errors.push(CompileError::TypeError {
                     message: "Invalid function call".to_string(),
                     span: span.clone(),
@@ -377,14 +446,14 @@ impl TypeChecker {
             Expr::ArrayAccess { array, index, .. } => {
                 let array_type = self.check_expr(array);
                 let index_type = self.check_expr(index);
-                
+
                 if !self.is_integer(&index_type) {
                     self.errors.push(CompileError::TypeError {
                         message: "Array index must be integer".to_string(),
                         span: index.span().clone(),
                     });
                 }
-                
+
                 match array_type {
                     Type::Array(element_type, _) => *element_type,
                     Type::Vector(element_type) => *element_type,
@@ -403,9 +472,12 @@ impl TypeChecker {
                         message: "Array literal must have at least one element".to_string(),
                         span: span.clone(),
                     });
-                    return Type::Array(Box::new(Type::Void), Box::new(Expr::null_expr(span.clone())));
+                    return Type::Array(
+                        Box::new(Type::Void),
+                        Box::new(Expr::null_expr(span.clone())),
+                    );
                 }
-                
+
                 let first_type = self.check_expr(&elements[0]);
                 for element in elements.iter().skip(1) {
                     let element_type = self.check_expr(element);
@@ -420,13 +492,13 @@ impl TypeChecker {
                         });
                     }
                 }
-                
+
                 Type::Array(
                     Box::new(first_type),
                     Box::new(Expr::Literal {
                         value: LiteralValue::Number(Number::Integer(elements.len() as i64)),
                         span: span.clone(),
-                    })
+                    }),
                 )
             }
             _ => Type::Void, // Placeholder for other expressions
@@ -444,24 +516,39 @@ impl TypeChecker {
             (Type::U16, Type::U32 | Type::U64) => true,
             (Type::U32, Type::U64) => true,
             (Type::F32, Type::F64) => true,
-            
+
             // All other cases require exact match
             _ => from == to,
         }
     }
 
     fn is_numeric(&self, ty: &Type) -> bool {
-        matches!(ty, 
-            Type::I8 | Type::I16 | Type::I32 | Type::I64 |
-            Type::U8 | Type::U16 | Type::U32 | Type::U64 |
-            Type::F32 | Type::F64
+        matches!(
+            ty,
+            Type::I8
+                | Type::I16
+                | Type::I32
+                | Type::I64
+                | Type::U8
+                | Type::U16
+                | Type::U32
+                | Type::U64
+                | Type::F32
+                | Type::F64
         )
     }
 
     fn is_integer(&self, ty: &Type) -> bool {
-        matches!(ty, 
-            Type::I8 | Type::I16 | Type::I32 | Type::I64 |
-            Type::U8 | Type::U16 | Type::U32 | Type::U64
+        matches!(
+            ty,
+            Type::I8
+                | Type::I16
+                | Type::I32
+                | Type::I64
+                | Type::U8
+                | Type::U16
+                | Type::U32
+                | Type::U64
         )
     }
 
@@ -474,7 +561,7 @@ impl TypeChecker {
         if self.is_numeric(left) && self.is_numeric(right) {
             return true;
         }
-        
+
         // Otherwise require exact type match
         left == right
     }
