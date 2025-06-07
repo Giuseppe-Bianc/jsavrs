@@ -95,16 +95,13 @@ impl TypeChecker {
                 ..
             } => {
                 for (i, var) in variables.iter().enumerate() {
-                    // 1️⃣  declare the variable *before* examining the initializer
-                    let var_symbol = VariableSymbol {
-                        name: var.clone(),
-                        ty: type_annotation.clone(),
-                        mutable: *is_mutable,
-                        defined_at: span.clone(),
-                        last_assignment: None,
-                    };
-                    if let Err(e) = self.symbol_table.declare(var, Symbol::Variable(var_symbol)) {
-                        self.errors.push(e);
+                    // Variable already declared in first pass, just verify it exists
+                    if self.symbol_table.lookup_variable(var).is_none() {
+                        self.errors.push(CompileError::TypeError {
+                            message: format!("Variable '{}' not found in symbol table", var),
+                            span: span.clone(),
+                        });
+                        continue;
                     }
 
                     if let Some(init) = initializers.get(i) {
