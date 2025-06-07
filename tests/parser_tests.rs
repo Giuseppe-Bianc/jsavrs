@@ -1181,6 +1181,7 @@ macro_rules! test_var_decl {
                 Stmt::VarDeclaration {
                     variables: vec![$var_name.to_string()],
                     type_annotation: $type,
+                    is_mutable: true,
                     initializers: vec![Expr::Literal {
                         value: $lit,
                         span: lit_span.clone(),
@@ -1520,6 +1521,7 @@ fn array_declaration() {
                     span: test_span(1, 13, 12, 1, 14, 13)
                 })
             ),
+            is_mutable: true,
             initializers: vec![Expr::ArrayLiteral {
                 elements: vec![
                     Expr::Literal {
@@ -1564,6 +1566,7 @@ fn vector_declaration() {
         Stmt::VarDeclaration {
             variables: vec!["arr".into()],
             type_annotation: Type::Vector(Box::new(Type::I8),),
+            is_mutable: true,
             initializers: vec![Expr::ArrayLiteral {
                 elements: vec![
                     Expr::Literal {

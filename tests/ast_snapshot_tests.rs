@@ -1,6 +1,6 @@
 // tests/ast_snapshot_test.rs
 use insta::{assert_debug_snapshot, assert_snapshot};
-use jsavrs::lexer::{lexer_tokenize_with_errors, Lexer};
+use jsavrs::lexer::{Lexer, lexer_tokenize_with_errors};
 use jsavrs::parser::ast::*;
 use jsavrs::parser::ast_printer::{pretty_print, pretty_print_stmt};
 use jsavrs::parser::jsav_parser::JsavParser;
@@ -139,6 +139,7 @@ fn test_var_declaration_multiple_vars() {
     let stmt = var_declaration(
         vec!["x".to_string(), "y".to_string()],
         Type::I32,
+        true,
         vec![num_lit(1), num_lit(2)],
     );
 
@@ -252,6 +253,28 @@ fn test_complex_type_declaration() {
                 span: dummy_span(),
             }),
         ),
+        true,
+        vec![],
+    );
+
+    let output = pretty_print_stmt(&stmt);
+    let stripped = strip_ansi_codes(&output);
+
+    assert_snapshot!(stripped.trim());
+}
+
+#[test]
+fn test_complex_type_const_declaration() {
+    let stmt = var_declaration(
+        vec!["matrix".to_string()],
+        Type::Array(
+            Box::new(Type::F64),
+            Box::new(Expr::Literal {
+                value: LiteralValue::Nullptr,
+                span: dummy_span(),
+            }),
+        ),
+        false,
         vec![],
     );
 

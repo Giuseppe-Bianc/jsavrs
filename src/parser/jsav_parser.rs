@@ -59,7 +59,6 @@ impl JsavParser {
             .merged(end_span)
             .unwrap_or(start_token.span.clone());
 
-
         Some(Stmt::MainFunction {
             body: vec![body],
             span: function_span,
@@ -238,10 +237,10 @@ impl JsavParser {
 
     #[allow(clippy::if_same_then_else)]
     fn parse_var_declaration(&mut self) -> Option<Stmt> {
-        let start_token = if self.match_token(TokenKind::KeywordConst) {
-            self.previous().unwrap().clone()
+        let (start_token, is_const) = if self.match_token(TokenKind::KeywordConst) {
+            (self.previous().unwrap().clone(), false)
         } else if self.match_token(TokenKind::KeywordVar) {
-            self.previous().unwrap().clone()
+            (self.previous().unwrap().clone(), true)
         } else {
             let token = self.previous().unwrap().clone();
             self.syntax_error("Expected 'const' or 'var'", &token);
@@ -294,6 +293,7 @@ impl JsavParser {
         Some(Stmt::VarDeclaration {
             variables,
             type_annotation: type_ann,
+            is_mutable: is_const,
             initializers,
             span: self.merged_span(&start_token),
         })
@@ -560,8 +560,7 @@ impl JsavParser {
                 .map(|t| t.span.clone())
                 .unwrap_or_default();
 
-            let error_message =
-                format!("Expected {expected} in {context} but found {found_str}");
+            let error_message = format!("Expected {expected} in {context} but found {found_str}");
             self.errors.push(CompileError::SyntaxError {
                 message: error_message,
                 span,

@@ -99,6 +99,7 @@ pub enum Stmt {
     VarDeclaration {
         variables: Vec<String>,
         type_annotation: Type,
+        is_mutable: bool,
         initializers: Vec<Expr>,
         span: SourceSpan,
     },

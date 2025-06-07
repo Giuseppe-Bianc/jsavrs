@@ -306,6 +306,7 @@ fn print_stmt(
         Stmt::VarDeclaration {
             variables,
             type_annotation,
+            is_mutable,
             initializers,
             span: _span,
         } => {
@@ -319,13 +320,23 @@ fn print_stmt(
             let new_indent = get_indent(indent, is_last);
 
             // Variables
-            append_line(
-                output,
-                &new_indent,
-                false,
-                styles.structure.clone(),
-                "Variables:",
-            );
+            if is_mutable.clone() {
+                append_line(
+                    output,
+                    &new_indent,
+                    false,
+                    styles.variable.clone(),
+                    "Variables:",
+                );
+            } else {
+                append_line(
+                    output,
+                    &new_indent,
+                    false,
+                    styles.variable.clone(),
+                    "Constants:",
+                );
+            }
             let vars_indent = get_indent(&new_indent, false);
             for (i, var) in variables.iter().enumerate() {
                 let is_last_var = i == variables.len() - 1;
@@ -499,11 +510,14 @@ fn print_stmt(
                 }
             }
         }
-        Stmt::MainFunction {
-            body,
-            span: _span,
-        } => {
-            append_line(output, indent, is_last, styles.clone().keyword, "MainFunction");
+        Stmt::MainFunction { body, span: _span } => {
+            append_line(
+                output,
+                indent,
+                is_last,
+                styles.clone().keyword,
+                "MainFunction",
+            );
             let new_indent = get_indent(indent, is_last);
             for (i, stmt) in body.iter().enumerate() {
                 let is_last_stmt = i == body.len() - 1;

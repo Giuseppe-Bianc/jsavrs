@@ -314,6 +314,15 @@ stmt_span_test!(test_stmt_var_declaration_span, |s| Stmt::VarDeclaration {
     variables: vec!["x".to_string()],
     type_annotation: Type::I32,
     initializers: vec![],
+    is_mutable: true,
+    span: s,
+});
+
+stmt_span_test!(test_stmt_const_declaration_span, |s| Stmt::VarDeclaration {
+    variables: vec!["x".to_string()],
+    type_annotation: Type::I32,
+    initializers: vec![],
+    is_mutable: false,
     span: s,
 });
 
@@ -380,6 +389,7 @@ fn test_var_declaration_multiple_vars() {
     let stmt = var_declaration(
         vec!["x".to_string(), "y".to_string()],
         Type::I32,
+        true,
         vec![num_lit(1), num_lit(2)],
     );
 
@@ -537,6 +547,7 @@ fn test_complex_type_declaration() {
     let stmt = var_declaration(
         vec!["matrix".to_string()],
         Type::Array(Box::new(Type::F64), Box::new(nullptr_lit())),
+        true,
         vec![],
     );
 
@@ -552,6 +563,29 @@ fn test_complex_type_declaration() {
     └── Initializers:";
     assert_eq!(stripped.trim(), expected);
 }
+
+#[test]
+fn test_complex_type_const_declaration() {
+    let stmt = var_declaration(
+        vec!["matrix".to_string()],
+        Type::Array(Box::new(Type::F64), Box::new(nullptr_lit())),
+        false,
+        vec![],
+    );
+
+    let output = pretty_print_stmt(&stmt);
+    let stripped = strip_ansi_codes(&output);
+
+    let expected = "\
+└── VarDeclaration
+    ├── Constants:
+    │   └── matrix
+    ├── Type:
+    │   └── [f64; <expr>]
+    └── Initializers:";
+    assert_eq!(stripped.trim(), expected);
+}
+
 
 #[test]
 fn test_edge_case_empty_then_branch() {

@@ -110,6 +110,7 @@ pub fn call_expr(callee: Expr, arguments: Vec<Expr>) -> Expr {
 pub fn var_declaration(
     variables: Vec<String>,
     type_annotation: Type,
+    is_mutable: bool,
     initializers: Vec<Expr>,
 ) -> Stmt {
     Stmt::VarDeclaration {
@@ -117,6 +118,7 @@ pub fn var_declaration(
         type_annotation,
         initializers,
         span: dummy_span(),
+        is_mutable,
     }
 }
 pub fn function_declaration(
