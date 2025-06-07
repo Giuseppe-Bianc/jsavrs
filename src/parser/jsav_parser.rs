@@ -237,7 +237,7 @@ impl JsavParser {
 
     #[allow(clippy::if_same_then_else)]
     fn parse_var_declaration(&mut self) -> Option<Stmt> {
-        let (start_token, is_const) = if self.match_token(TokenKind::KeywordConst) {
+        let (start_token, is_mutable) = if self.match_token(TokenKind::KeywordConst) {
             (self.previous().unwrap().clone(), false)
         } else if self.match_token(TokenKind::KeywordVar) {
             (self.previous().unwrap().clone(), true)
@@ -293,7 +293,7 @@ impl JsavParser {
         Some(Stmt::VarDeclaration {
             variables,
             type_annotation: type_ann,
-            is_mutable: is_const,
+            is_mutable: is_mutable,
             initializers,
             span: self.merged_span(&start_token),
         })
