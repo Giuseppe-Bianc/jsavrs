@@ -320,7 +320,7 @@ fn print_stmt(
             let new_indent = get_indent(indent, is_last);
 
             // Variables
-            if is_mutable.clone() {
+            if *is_mutable {
                 append_line(
                     output,
                     &new_indent,

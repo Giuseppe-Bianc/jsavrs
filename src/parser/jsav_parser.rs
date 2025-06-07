@@ -293,7 +293,7 @@ impl JsavParser {
         Some(Stmt::VarDeclaration {
             variables,
             type_annotation: type_ann,
-            is_mutable: is_mutable,
+            is_mutable,
             initializers,
             span: self.merged_span(&start_token),
         })

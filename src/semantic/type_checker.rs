@@ -563,6 +563,7 @@ impl TypeChecker {
         left == right
     }
 
+    #[allow(clippy::only_used_in_recursion)]
     fn type_name(&self, ty: &Type) -> String {
         match ty {
             Type::I8 => "i8".to_string(),
