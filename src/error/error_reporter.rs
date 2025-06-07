@@ -20,17 +20,20 @@ impl ErrorReporter {
             .into_iter()
             .map(|error| match error {
                 CompileError::LexerError { message, span } => {
-                    self.format_error("LEX", &message, &span)
-                }
+                                self.format_error("LEX", &message, &span)
+                            }
                 CompileError::SyntaxError { message, span } => {
-                    self.format_error("SYNTAX", &message, &span)
-                }
+                                self.format_error("SYNTAX", &message, &span)
+                            }
+                CompileError::TypeError { message, span } => {
+                                self.format_error("TYPE", &message, &span)
+                            }
                 CompileError::IoError(e) => format!(
-                    "{} {}: {}\n",
-                    style("ERROR:").red().bold(),
-                    style("I/O").red(),
-                    style(e).yellow()
-                ),
+                                "{} {}: {}\n",
+                                style("ERROR:").red().bold(),
+                                style("I/O").red(),
+                                style(e).yellow()
+                            ),
             })
             .collect()
     }

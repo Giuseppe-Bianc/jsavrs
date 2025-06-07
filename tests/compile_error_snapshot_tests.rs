@@ -27,6 +27,8 @@ macro_rules! generate_display_test {
 generate_display_test!(test_lexer_error_display, LexerError, 1);
 generate_display_test!(test_parser_error_display, SyntaxError, 2);
 
+generate_display_test!(test_type_error_display, TypeError, 3);
+
 macro_rules! generate_message_test {
     ($test_name:ident, $error_type:ident, $line:expr) => {
         #[test]
@@ -39,6 +41,8 @@ macro_rules! generate_message_test {
 
 generate_message_test!(test_lexer_error_message, LexerError, 1);
 generate_message_test!(test_parser_error_message, SyntaxError, 2);
+
+generate_message_test!(test_type_error_message, TypeError, 3);
 
 macro_rules! generate_span_test {
     ($test_name:ident, $error_type:ident, $line:expr) => {
@@ -53,6 +57,8 @@ macro_rules! generate_span_test {
 generate_span_test!(test_lexer_error_span, LexerError, 1);
 generate_span_test!(test_parser_error_span, SyntaxError, 2);
 
+generate_span_test!(test_type_error_span, TypeError, 3);
+
 macro_rules! generate_set_message_test {
     ($test_name:ident, $error_type:ident, $line:expr) => {
         #[test]
@@ -66,6 +72,8 @@ macro_rules! generate_set_message_test {
 
 generate_set_message_test!(test_set_message, LexerError, 1);
 generate_set_message_test!(test_set_message_parser, SyntaxError, 2);
+
+generate_set_message_test!(test_set_message_type, TypeError, 3);
 
 macro_rules! generate_set_span_test {
     ($test_name:ident, $error_type:ident, $initial_line:expr, $new_line:expr) => {
@@ -90,7 +98,8 @@ macro_rules! generate_set_span_test {
 generate_set_span_test!(test_set_span, LexerError, 1, 2);
 generate_set_span_test!(test_set_span_parser, SyntaxError, 2, 3);
 
-// Tests for calling `set_message` on a non-lexer error
+generate_set_span_test!(test_set_span_type, TypeError, 3, 4);
+
 #[test]
 fn test_set_message_not_lexer_error() {
     let io_error = std::io::Error::new(std::io::ErrorKind::NotFound, "File not found");

@@ -20,8 +20,27 @@ fn lexer_error_single_line() {
 
     let report = reporter.report_errors(errors);
     let stripped = strip_ansi_codes(&report);
-    
+
     assert_snapshot!(stripped);
+
+}
+
+#[test]
+fn type_error_single_line() {
+    let source = "fn main() { let x = 42; }";
+    let line_tracker = LineTracker::new("test", source.to_string());
+    let reporter = ErrorReporter::new(line_tracker);
+
+    let errors = vec![CompileError::TypeError {
+        message: "Invalid character '#'".to_string(),
+        span: create_span("test", 1, 5, 1, 6),
+    }];
+
+    let report = reporter.report_errors(errors);
+    let stripped = strip_ansi_codes(&report);
+
+    assert_snapshot!(stripped);
+
 }
 
 #[test]

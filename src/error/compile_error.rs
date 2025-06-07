@@ -28,6 +28,10 @@ pub enum CompileError {
     #[error("Syntax error: {message} at {span}")]
     SyntaxError { message: String, span: SourceSpan },
 
+    /// Type checking error
+    #[error("Type error: {message} at {span}")]
+    TypeError { message: String, span: SourceSpan },
+
     /// I/O operation failure during compilation (e.g., file access issues).
     ///
     /// Wraps the standard [`std::io::Error`] for seamless error propagation.
@@ -56,6 +60,7 @@ impl CompileError {
         match self {
             CompileError::LexerError { message, .. } => Some(message),
             CompileError::SyntaxError { message, .. } => Some(message),
+            CompileError::TypeError { message, .. } => Some(message),
             _ => None,
         }
     }
@@ -83,6 +88,7 @@ impl CompileError {
         match self {
             CompileError::LexerError { span, .. } => Some(span),
             CompileError::SyntaxError { span, .. } => Some(span),
+            CompileError::TypeError { span, .. } => Some(span),
             _ => None,
         }
     }
@@ -109,6 +115,7 @@ impl CompileError {
         match self {
             CompileError::LexerError { message, .. } => *message = new_message,
             CompileError::SyntaxError { message, .. } => *message = new_message,
+            CompileError::TypeError { message, .. } => *message = new_message,
             _ => {}
         }
     }
@@ -138,6 +145,7 @@ impl CompileError {
         match self {
             CompileError::LexerError { span, .. } => *span = new_span,
             CompileError::SyntaxError { span, .. } => *span = new_span,
+            CompileError::TypeError { span, .. } => *span = new_span,
             _ => {}
         }
     }
