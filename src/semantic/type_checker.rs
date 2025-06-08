@@ -271,25 +271,25 @@ impl TypeChecker {
                     | BinaryOp::Divide
                     | BinaryOp::Modulo => {
                         if !self.is_numeric(&left_type) || !self.is_numeric(&right_type) {
-                            self.errors.push(CompileError::TypeError {
-                                message: format!(
+                            self.push_type_error(
+                                format!(
                                     "Arithmetic operands must be numeric, found {} and {}",
                                     self.type_name(&left_type),
                                     self.type_name(&right_type)
                                 ),
-                                span: span.clone(),
-                            });
+                                span.clone(),
+                            );
                             return Type::Void;
                         }
                         if left_type != right_type {
-                            self.errors.push(CompileError::TypeError {
-                                message: format!(
+                            self.push_type_error(
+                                format!(
                                     "Operand type mismatch: {} and {}",
                                     self.type_name(&left_type),
                                     self.type_name(&right_type)
                                 ),
-                                span: span.clone(),
-                            });
+                                span.clone(),
+                            );
                         }
                         left_type
                     }
@@ -300,14 +300,14 @@ impl TypeChecker {
                     | BinaryOp::Greater
                     | BinaryOp::GreaterEqual => {
                         if !self.is_comparable(&left_type, &right_type) {
-                            self.errors.push(CompileError::TypeError {
-                                message: format!(
+                            self.push_type_error(
+                                format!(
                                     "Cannot compare {} and {}",
                                     self.type_name(&left_type),
                                     self.type_name(&right_type)
                                 ),
-                                span: span.clone(),
-                            });
+                                span.clone(),
+                            );
                         }
                         Type::Bool
                     }
@@ -316,7 +316,7 @@ impl TypeChecker {
                             self.push_type_error(
                                 "Logical operands must be bool".to_string(),
                                 span.clone(),
-                            )
+                            );
                         }
                         Type::Bool
                     }
@@ -331,7 +331,7 @@ impl TypeChecker {
                             self.push_type_error(
                                 "Negation requires numeric operand".to_string(),
                                 span.clone(),
-                            )
+                            );
                         }
                         expr_type
                     }
@@ -340,7 +340,7 @@ impl TypeChecker {
                             self.push_type_error(
                                 "Logical not requires bool operand".to_string(),
                                 span.clone(),
-                            )
+                            );
                         }
                         Type::Bool
                     }
@@ -356,10 +356,7 @@ impl TypeChecker {
             Expr::Variable { name, span } => match self.symbol_table.lookup_variable(name) {
                 Some(var) => var.ty.clone(),
                 None => {
-                    self.errors.push(CompileError::TypeError {
-                        message: format!("Undefined variable '{}'", name),
-                        span: span.clone(),
-                    });
+                    self.push_type_error(format!("Undefined variable '{}'", name), span.clone());
                     Type::Void
                 }
             },
@@ -372,14 +369,14 @@ impl TypeChecker {
                 let target_type = self.check_expr(target);
 
                 if !self.is_assignable(&value_type, &target_type) {
-                    self.errors.push(CompileError::TypeError {
-                        message: format!(
+                    self.push_type_error(
+                        format!(
                             "Cannot assign {} to {}",
                             self.type_name(&value_type),
                             self.type_name(&target_type)
                         ),
-                        span: span.clone(),
-                    });
+                        span.clone(),
+                    );
                 }
 
                 // Check mutability
@@ -389,7 +386,7 @@ impl TypeChecker {
                             self.push_type_error(
                                 format!("Cannot assign to immutable variable '{}'", name),
                                 span.clone(),
-                            )
+                            );
                         }
                     }
                 }
@@ -487,7 +484,7 @@ impl TypeChecker {
                                 self.type_name(&element_type)
                             ),
                             element.span().clone(),
-                        )
+                        );
                     }
                 }
 
