@@ -106,7 +106,7 @@ fn cannot_pop_global_scope() {
     let mut table = SymbolTable::new();
     table.pop_scope(); // Should not panic
     table.pop_scope(); // Multiple pops should be safe
-    assert_eq!(table.scopes.len(), 1);
+    assert_eq!(table.scope_count(), 1);
 }
 
 #[test]

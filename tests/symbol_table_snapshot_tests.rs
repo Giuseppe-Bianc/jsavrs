@@ -1,8 +1,7 @@
 use insta::assert_debug_snapshot;
-use jsavrs::error::compile_error::CompileError;
 use jsavrs::parser::ast::{Parameter, Type};
 use jsavrs::semantic::symbol_table::{FunctionSymbol, Symbol, SymbolTable, VariableSymbol};
-use jsavrs::utils::{create_func_symbol, create_span, create_var_symbol, dummy_span};
+use jsavrs::utils::{create_func_symbol, create_span, create_var_symbol, dummy_span, int_type};
 
 #[test]
 fn global_scope_declaration_and_lookup() {
@@ -51,7 +50,7 @@ fn function_symbol_tracking() {
         name: "foo".to_string(),
         parameters: vec![Parameter {
             name: "arg".to_string(),
-            type_annotation: Type::I8,  // Use correct field name
+            type_annotation: Type::I8, // Use correct field name
             span: dummy_span(),
         }],
         return_type: Type::Void,
@@ -97,7 +96,7 @@ fn cannot_pop_global_scope() {
     let mut table = SymbolTable::new();
     table.pop_scope(); // Should not panic
     table.pop_scope(); // Multiple pops should be safe
-    assert_debug_snapshot!(table.scopes.len());
+    assert_debug_snapshot!(table.scope_count());
 }
 
 #[test]

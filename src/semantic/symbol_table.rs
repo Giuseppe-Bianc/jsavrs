@@ -1,7 +1,7 @@
-use std::collections::HashMap;
 use crate::error::compile_error::CompileError;
 use crate::location::source_span::SourceSpan;
-use crate::parser::ast::{Type, Parameter};
+use crate::parser::ast::{Parameter, Type};
+use std::collections::HashMap;
 
 #[derive(Debug, Clone, PartialEq)]
 pub enum Symbol {
@@ -29,7 +29,7 @@ pub struct FunctionSymbol {
 
 #[derive(Debug, Default)]
 pub struct SymbolTable {
-    pub scopes: Vec<HashMap<String, Symbol>>,
+    scopes: Vec<HashMap<String, Symbol>>,
     current_function: Option<FunctionSymbol>,
 }
 
@@ -45,6 +45,10 @@ impl SymbolTable {
         self.scopes.push(HashMap::new());
     }
 
+    pub fn scope_count(&self) -> usize {
+        self.scopes.len()
+    }
+
     pub fn pop_scope(&mut self) {
         if self.scopes.len() > 1 {
             self.scopes.pop();
@@ -53,7 +57,7 @@ impl SymbolTable {
 
     pub fn declare(&mut self, name: &str, symbol: Symbol) -> Result<(), CompileError> {
         let current_scope = self.scopes.last_mut().expect("Always at least one scope");
-        
+
         if current_scope.contains_key(name) {
             return Err(CompileError::TypeError {
                 message: format!("Duplicate identifier '{}' in same scope", name),
@@ -64,7 +68,7 @@ impl SymbolTable {
                 },
             });
         }
-        
+
         current_scope.insert(name.to_string(), symbol);
         Ok(())
     }
