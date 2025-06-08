@@ -60,7 +60,7 @@ impl SymbolTable {
 
         if current_scope.contains_key(name) {
             return Err(CompileError::TypeError {
-                message: format!("Duplicate identifier '{}' in same scope", name),
+                message: format!("Duplicate identifier '{name}' in same scope"),
                 span: match current_scope.get(name) {
                     Some(Symbol::Variable(v)) => v.defined_at.clone(),
                     Some(Symbol::Function(f)) => f.defined_at.clone(),

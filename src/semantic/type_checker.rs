@@ -108,7 +108,7 @@ impl TypeChecker {
                     // Variable already declared in first pass, just verify it exists
                     if self.symbol_table.lookup_variable(var).is_none() {
                         self.push_type_error(
-                            format!("Variable '{}' not found in symbol table", var),
+                            format!("Variable '{var}' not found in symbol table"),
                             span.clone(),
                         );
                         continue;
@@ -356,7 +356,7 @@ impl TypeChecker {
             Expr::Variable { name, span } => match self.symbol_table.lookup_variable(name) {
                 Some(var) => var.ty.clone(),
                 None => {
-                    self.push_type_error(format!("Undefined variable '{}'", name), span.clone());
+                    self.push_type_error(format!("Undefined variable '{name}'"), span.clone());
                     Type::Void
                 }
             },
@@ -384,7 +384,7 @@ impl TypeChecker {
                     if let Some(var) = self.symbol_table.lookup_variable(name) {
                         if !var.mutable {
                             self.push_type_error(
-                                format!("Cannot assign to immutable variable '{}'", name),
+                                format!("Cannot assign to immutable variable '{name}'"),
                                 span.clone(),
                             );
                         }
