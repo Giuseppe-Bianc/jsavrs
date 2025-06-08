@@ -253,6 +253,7 @@ impl TypeChecker {
         }
     }
 
+    #[allow(clippy::collapsible_if)]
     fn check_expr(&mut self, expr: &Expr) -> Type {
         match expr {
             Expr::Binary {
