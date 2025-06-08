@@ -29,7 +29,7 @@ pub struct FunctionSymbol {
 
 #[derive(Debug, Default)]
 pub struct SymbolTable {
-    scopes: Vec<HashMap<String, Symbol>>,
+    pub scopes: Vec<HashMap<String, Symbol>>,
     current_function: Option<FunctionSymbol>,
 }
 

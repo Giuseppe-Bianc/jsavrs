@@ -1,6 +1,7 @@
 use crate::location::source_location::SourceLocation;
 use crate::location::source_span::SourceSpan;
 use crate::parser::ast::{BinaryOp, Expr, LiteralValue, Parameter, Stmt, Type, UnaryOp};
+use crate::semantic::symbol_table::{FunctionSymbol, Symbol, VariableSymbol};
 use crate::tokens::number::Number;
 use crate::tokens::token::Token;
 use crate::tokens::token_kind::TokenKind;
@@ -198,4 +199,43 @@ macro_rules! make_error {
             span: t_span($line),
         };
     };
+}
+
+
+pub fn int_type() -> Type {
+    Type::I32
+}
+
+pub fn create_var_symbol(name: &str, mutable: bool) -> Symbol {
+    Symbol::Variable(VariableSymbol {
+        name: name.to_string(),
+        ty: int_type(),
+        mutable,
+        defined_at: dummy_span(),
+        last_assignment: None,
+    })
+}
+
+pub fn create_func_symbol(name: &str) -> Symbol {
+    Symbol::Function(FunctionSymbol {
+        name: name.to_string(),
+        parameters: Vec::new(),
+        return_type: Type::Void,
+        defined_at: dummy_span(),
+    })
+}
+
+// Helper to extract inner symbol values for comparison
+pub fn var_from_symbol(sym: Symbol) -> Option<VariableSymbol> {
+    match sym {
+        Symbol::Variable(v) => Some(v),
+        _ => None,
+    }
+}
+
+pub fn func_from_symbol(sym: Symbol) -> Option<FunctionSymbol> {
+    match sym {
+        Symbol::Function(f) => Some(f),
+        _ => None,
+    }
 }
