@@ -1,5 +1,5 @@
 // tets/ast_test.rs
-use jsavrs::lexer::{lexer_tokenize_with_errors, Lexer};
+use jsavrs::lexer::{Lexer, lexer_tokenize_with_errors};
 use jsavrs::parser::ast::*;
 use jsavrs::parser::ast_printer::{pretty_print, pretty_print_stmt};
 use jsavrs::parser::jsav_parser::JsavParser;
@@ -585,7 +585,6 @@ fn test_complex_type_const_declaration() {
     └── Initializers:";
     assert_eq!(stripped.trim(), expected);
 }
-
 
 #[test]
 fn test_edge_case_empty_then_branch() {

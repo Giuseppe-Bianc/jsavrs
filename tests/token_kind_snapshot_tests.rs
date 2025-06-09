@@ -127,10 +127,13 @@ fn test_identifier_unicode() {
 fn test_numeric_integer() {
     // Qui assumiamo che Number::Integer(i64) sia un modo valido per costruire un Number
     let num = Number::Integer(123);
-    assert_debug_snapshot!("numeric",TokenKind::Numeric(num.clone()).to_string());
-    assert_debug_snapshot!("hexadecimal",TokenKind::Hexadecimal(num.clone()).to_string());
-    assert_debug_snapshot!("octal",TokenKind::Octal(num.clone()).to_string());
-    assert_debug_snapshot!("binary",TokenKind::Binary(num.clone()).to_string());
+    assert_debug_snapshot!("numeric", TokenKind::Numeric(num.clone()).to_string());
+    assert_debug_snapshot!(
+        "hexadecimal",
+        TokenKind::Hexadecimal(num.clone()).to_string()
+    );
+    assert_debug_snapshot!("octal", TokenKind::Octal(num.clone()).to_string());
+    assert_debug_snapshot!("binary", TokenKind::Binary(num.clone()).to_string());
 }
 
 #[test]
@@ -182,7 +185,7 @@ fn test_all_keywords() {
         TokenKind::KeywordFor,
         TokenKind::KeywordBreak,
         TokenKind::KeywordContinue,
-        TokenKind::KeywordMain
+        TokenKind::KeywordMain,
     ];
 
     let input_result: Vec<(TokenKind, String)> = mapping

@@ -1,10 +1,10 @@
+use jsavrs::tokens::number::Number;
 use jsavrs::tokens::number::Number::*;
 use jsavrs::tokens::token_kind::TokenKind::*;
 use jsavrs::tokens::token_kind::{
     TokenKind, handle_suffix, handle_unsigned_suffix, split_numeric_and_suffix,
 };
 use logos::Logos;
-use jsavrs::tokens::number::Number;
 
 // Helper function to assert token matching
 fn assert_token(input: &str, expected: TokenKind) {
@@ -150,10 +150,7 @@ fn test_identifier_ascii_normal() {
 #[test]
 fn test_identifier_ascii_empty() {
     let ident = "".to_string();
-    assert_eq!(
-        IdentifierAscii(ident.clone()).to_string(),
-        "identifier ''"
-    );
+    assert_eq!(IdentifierAscii(ident.clone()).to_string(), "identifier ''");
 }
 
 #[test]
@@ -168,22 +165,10 @@ fn test_identifier_unicode() {
 #[test]
 fn test_numeric_integer() {
     let num = Number::Integer(123);
-    assert_eq!(
-        Numeric(num.clone()).to_string(),
-        "number '123'"
-    );
-    assert_eq!(
-        Hexadecimal(num.clone()).to_string(),
-        "hexadecimal '123'"
-    );
-    assert_eq!(
-        Octal(num.clone()).to_string(),
-        "octal '123'"
-    );
-    assert_eq!(
-        Binary(num).to_string(),
-        "binary '123'"
-    );
+    assert_eq!(Numeric(num.clone()).to_string(), "number '123'");
+    assert_eq!(Hexadecimal(num.clone()).to_string(), "hexadecimal '123'");
+    assert_eq!(Octal(num.clone()).to_string(), "octal '123'");
+    assert_eq!(Binary(num).to_string(), "binary '123'");
 }
 
 #[test]
@@ -224,22 +209,13 @@ fn test_char_literal_unicode() {
 
 #[test]
 fn test_keyword_bool_true_false() {
-    assert_eq!(
-        KeywordBool(true).to_string(),
-        "boolean 'true'"
-    );
-    assert_eq!(
-        &KeywordBool(false).to_string(),
-        "boolean 'false'"
-    );
+    assert_eq!(KeywordBool(true).to_string(), "boolean 'true'");
+    assert_eq!(&KeywordBool(false).to_string(), "boolean 'false'");
 }
 
 #[test]
 fn test_keyword_nullptr() {
-    assert_eq!(
-        &KeywordNullptr.to_string(),
-        "'nullptr'"
-    );
+    assert_eq!(&KeywordNullptr.to_string(), "'nullptr'");
 }
 
 // ——— Test per tutte le keyword principali ———

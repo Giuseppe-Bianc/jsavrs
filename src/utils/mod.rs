@@ -201,7 +201,6 @@ macro_rules! make_error {
     };
 }
 
-
 pub fn int_type() -> Type {
     Type::I32
 }

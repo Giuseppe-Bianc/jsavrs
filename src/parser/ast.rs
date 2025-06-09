@@ -130,7 +130,10 @@ pub enum Stmt {
     Continue {
         span: SourceSpan,
     },
-    MainFunction { body: Vec<Stmt>, span: SourceSpan },
+    MainFunction {
+        body: Vec<Stmt>,
+        span: SourceSpan,
+    },
 }
 
 impl Expr {

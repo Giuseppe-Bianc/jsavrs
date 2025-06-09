@@ -1,7 +1,10 @@
 use jsavrs::error::compile_error::CompileError;
 use jsavrs::parser::ast::{Parameter, Type};
 use jsavrs::semantic::symbol_table::{FunctionSymbol, Symbol, SymbolTable, VariableSymbol};
-use jsavrs::utils::{create_func_symbol, create_span, create_var_symbol, dummy_span, func_from_symbol, int_type, var_from_symbol};
+use jsavrs::utils::{
+    create_func_symbol, create_span, create_var_symbol, dummy_span, func_from_symbol, int_type,
+    var_from_symbol,
+};
 
 #[test]
 fn global_scope_declaration_and_lookup() {
@@ -40,10 +43,7 @@ fn duplicate_declaration_same_scope() {
     let result = table.declare("x", var2);
 
     // Fixed pattern matching without guard
-    assert!(matches!(
-        result,
-        Err(CompileError::TypeError { .. })
-    ));
+    assert!(matches!(result, Err(CompileError::TypeError { .. })));
 
     // Verify error message content
     if let Err(CompileError::TypeError { message, .. }) = result {
@@ -60,7 +60,7 @@ fn function_symbol_tracking() {
         name: "foo".to_string(),
         parameters: vec![Parameter {
             name: "arg".to_string(),
-            type_annotation: Type::I8,  // Use correct field name
+            type_annotation: Type::I8, // Use correct field name
             span: dummy_span(),
         }],
         return_type: Type::Void,
@@ -119,10 +119,7 @@ fn mixed_symbol_types() {
     table.declare("func", func.clone()).unwrap();
 
     // Compare inner values instead of Symbol wrappers
-    assert_eq!(
-        table.lookup_variable("var"),
-        var_from_symbol(var.clone())
-    );
+    assert_eq!(table.lookup_variable("var"), var_from_symbol(var.clone()));
     assert_eq!(
         table.lookup_function("func"),
         func_from_symbol(func.clone())
@@ -193,14 +190,8 @@ fn lookup_specific_symbol_types() {
     table.declare("y", func.clone()).unwrap();
 
     // Compare inner values
-    assert_eq!(
-        table.lookup_variable("x"),
-        var_from_symbol(var.clone())
-    );
+    assert_eq!(table.lookup_variable("x"), var_from_symbol(var.clone()));
     assert_eq!(table.lookup_variable("y"), None);
     assert_eq!(table.lookup_function("x"), None);
-    assert_eq!(
-        table.lookup_function("y"),
-        func_from_symbol(func.clone())
-    );
+    assert_eq!(table.lookup_function("y"), func_from_symbol(func.clone()));
 }

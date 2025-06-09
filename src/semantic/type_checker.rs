@@ -23,7 +23,7 @@ impl TypeChecker {
     }
 
     pub fn check(&mut self, statements: &[Stmt]) -> Vec<CompileError> {
-        // First pass: declare all top-level symbols
+        // First pass: dichiarazione simboli top-level
         for stmt in statements {
             self.declare_symbols(stmt);
         }
@@ -96,6 +96,7 @@ impl TypeChecker {
             Stmt::Expression { expr } => {
                 self.check_expr(expr);
             }
+
             Stmt::VarDeclaration {
                 variables,
                 type_annotation,
@@ -105,10 +106,10 @@ impl TypeChecker {
                 ..
             } => {
                 for (i, var) in variables.iter().enumerate() {
-                    // Variable already declared in first pass, just verify it exists
+                    // Variabile già dichiarata in prima passata: verifichiamo che esista
                     if self.symbol_table.lookup_variable(var).is_none() {
                         self.push_type_error(
-                            format!("Variable '{var}' not found in symbol table"),
+                            format!("Variable '{}' not found in symbol table", var),
                             span.clone(),
                         );
                         continue;
@@ -135,6 +136,7 @@ impl TypeChecker {
                     }
                 }
             }
+
             Stmt::Function {
                 parameters,
                 return_type,
@@ -144,7 +146,7 @@ impl TypeChecker {
                 self.symbol_table.push_scope();
                 self.current_return_type = Some(return_type.clone());
 
-                // Add parameters to scope
+                // Aggiungiamo i parametri nella nuova scope
                 for param in parameters {
                     let var_symbol = VariableSymbol {
                         name: param.name.clone(),
@@ -161,7 +163,7 @@ impl TypeChecker {
                     }
                 }
 
-                // Check function body
+                // Controlliamo il body della funzione
                 for stmt in body {
                     self.check_stmt(stmt);
                 }
@@ -169,6 +171,7 @@ impl TypeChecker {
                 self.symbol_table.pop_scope();
                 self.current_return_type = None;
             }
+
             Stmt::If {
                 condition,
                 then_branch,
@@ -193,7 +196,6 @@ impl TypeChecker {
                 }
                 self.symbol_table.pop_scope();
 
-                // Else branch
                 if let Some(else_statements) = else_branch {
                     self.symbol_table.push_scope();
                     for stmt in else_statements {
@@ -202,6 +204,7 @@ impl TypeChecker {
                     self.symbol_table.pop_scope();
                 }
             }
+
             Stmt::Block { statements, .. } => {
                 self.symbol_table.push_scope();
                 for stmt in statements {
@@ -209,9 +212,10 @@ impl TypeChecker {
                 }
                 self.symbol_table.pop_scope();
             }
+
             Stmt::Return { value, span } => {
-                // Clone return type to avoid borrow issues
-                let return_type = match self.current_return_type.clone() {
+                // Cloniamo il tipo di ritorno per evitare problemi di borrow
+                let expected = match self.current_return_type.clone() {
                     Some(ty) => ty,
                     None => {
                         self.push_type_error("Return outside function".to_string(), span.clone());
@@ -224,11 +228,11 @@ impl TypeChecker {
                     .map(|e| self.check_expr(e))
                     .unwrap_or(Type::Void);
 
-                if !self.is_assignable(&value_type, &return_type) {
+                if !self.is_assignable(&value_type, &expected) {
                     self.push_type_error(
                         format!(
                             "Return type mismatch: expected {}, found {}",
-                            self.type_name(&return_type),
+                            self.type_name(&expected),
                             self.type_name(&value_type)
                         ),
                         value
@@ -238,18 +242,62 @@ impl TypeChecker {
                     );
                 }
             }
+
+            // ======= BREAK / CONTINUE =======
             Stmt::Break { span } | Stmt::Continue { span } => {
-                if !self.in_loop {
-                    self.push_type_error("Break/continue outside loop".to_string(), span.clone());
-                }
+                self.check_break_or_continue(stmt, span);
             }
+
+            // ======= MAIN FUNCTION =======
             Stmt::MainFunction { body, .. } => {
                 self.symbol_table.push_scope();
                 for stmt in body {
                     self.check_stmt(stmt);
                 }
                 self.symbol_table.pop_scope();
-            }
+            } // ======= STUB FUTURI LOOP =======
+              // Quando verranno aggiunti i costrutti di loop (While, For, ecc.) nel parser,
+              // basterà scommentare questi match arm e adattare la logica:
+              //
+              // Stmt::While { condition, body, span } => {
+              //     let cond_type = self.check_expr(condition);
+              //     if !self.is_bool(&cond_type) {
+              //         self.push_type_error(
+              //             format!("Condition must be bool, found {}", self.type_name(&cond_type)),
+              //             condition.span().clone(),
+              //         );
+              //     }
+              //
+              //     // Entriamo nel loop
+              //     let prev_in_loop = self.in_loop;
+              //     self.in_loop = true;
+              //
+              //     self.symbol_table.push_scope();
+              //     for stmt in body {
+              //         self.check_stmt(stmt);
+              //     }
+              //     self.symbol_table.pop_scope();
+              //
+              //     // Uscita dal loop
+              //     self.in_loop = prev_in_loop;
+              // }
+              //
+              // Stmt::For { initializer, condition, increment, body, span } => {
+              //     // Controlli analoghi a While, + inizializzatore e incremento
+              //     // ...
+              // }
+        }
+    }
+
+    /// Estrae tutta la logica di controllo di `break` e `continue`.
+    fn check_break_or_continue(&mut self, stmt: &Stmt, span: &SourceSpan) {
+        if !self.in_loop {
+            let msg = match stmt {
+                Stmt::Break { .. } => "Break outside loop",
+                Stmt::Continue { .. } => "Continue outside loop",
+                _ => unreachable!(),
+            };
+            self.push_type_error(msg.to_string(), span.clone());
         }
     }
 
@@ -321,9 +369,10 @@ impl TypeChecker {
                         }
                         Type::Bool
                     }
-                    _ => right_type, // For bitwise ops, return left type
+                    _ => right_type, // Per bitwise ops, ritorniamo il tipo di destra
                 }
             }
+
             Expr::Unary { op, expr, span } => {
                 let expr_type = self.check_expr(expr);
                 match op {
@@ -347,6 +396,7 @@ impl TypeChecker {
                     }
                 }
             }
+
             Expr::Literal { value, .. } => match value {
                 LiteralValue::Number(_) => Type::I32, // Default number type
                 LiteralValue::StringLit(_) => Type::String,
@@ -354,13 +404,15 @@ impl TypeChecker {
                 LiteralValue::Bool(_) => Type::Bool,
                 LiteralValue::Nullptr => Type::Void,
             },
+
             Expr::Variable { name, span } => match self.symbol_table.lookup_variable(name) {
                 Some(var) => var.ty.clone(),
                 None => {
-                    self.push_type_error(format!("Undefined variable '{name}'"), span.clone());
+                    self.push_type_error(format!("Undefined variable '{}'", name), span.clone());
                     Type::Void
                 }
             },
+
             Expr::Assign {
                 target,
                 value,
@@ -380,12 +432,12 @@ impl TypeChecker {
                     );
                 }
 
-                // Check mutability
+                // Controllo mutabilità
                 if let Expr::Variable { name, .. } = target.as_ref() {
                     if let Some(var) = self.symbol_table.lookup_variable(name) {
                         if !var.mutable {
                             self.push_type_error(
-                                format!("Cannot assign to immutable variable '{name}'"),
+                                format!("Cannot assign to immutable variable '{}'", name),
                                 span.clone(),
                             );
                         }
@@ -394,15 +446,16 @@ impl TypeChecker {
 
                 target_type
             }
+
             Expr::Call {
                 callee,
                 arguments,
                 span,
             } => {
-                // Lookup function directly by name
+                // Cerchiamo la funzione direttamente per nome
                 if let Expr::Variable { name, .. } = callee.as_ref() {
                     if let Some(func) = self.symbol_table.lookup_function(name) {
-                        // Check argument count
+                        // Controllo numero di argomenti
                         if func.parameters.len() != arguments.len() {
                             self.push_type_error(
                                 format!(
@@ -415,7 +468,7 @@ impl TypeChecker {
                             return func.return_type.clone();
                         }
 
-                        // Check argument types
+                        // Controllo tipi degli argomenti
                         for (i, (arg, param)) in arguments.iter().zip(&func.parameters).enumerate()
                         {
                             let arg_type = self.check_expr(arg);
@@ -439,6 +492,7 @@ impl TypeChecker {
                 self.push_type_error("Invalid function call".to_string(), span.clone());
                 Type::Void
             }
+
             Expr::ArrayAccess { array, index, .. } => {
                 let array_type = self.check_expr(array);
                 let index_type = self.check_expr(index);
@@ -451,8 +505,8 @@ impl TypeChecker {
                 }
 
                 match array_type {
-                    Type::Array(element_type, _) => *element_type,
-                    Type::Vector(element_type) => *element_type,
+                    Type::Array(element_type, _) => *element_type.clone(),
+                    Type::Vector(element_type) => *element_type.clone(),
                     _ => {
                         self.push_type_error(
                             "Cannot index non-array type".to_string(),
@@ -462,6 +516,7 @@ impl TypeChecker {
                     }
                 }
             }
+
             Expr::ArrayLiteral { elements, span } => {
                 if elements.is_empty() {
                     self.push_type_error(
@@ -497,14 +552,15 @@ impl TypeChecker {
                     }),
                 )
             }
-            _ => Type::Void, // Placeholder for other expressions
+
+            _ => Type::Void, // Placeholders per altri casi non ancora supportati
         }
     }
 
     // Helper functions
     fn is_assignable(&self, from: &Type, to: &Type) -> bool {
         match (from, to) {
-            // Numeric types can be assigned if compatible
+            // Numeric widening
             (Type::I8, Type::I16 | Type::I32 | Type::I64) => true,
             (Type::I16, Type::I32 | Type::I64) => true,
             (Type::I32, Type::I64) => true,
@@ -513,7 +569,7 @@ impl TypeChecker {
             (Type::U32, Type::U64) => true,
             (Type::F32, Type::F64) => true,
 
-            // All other cases require exact match
+            // Altri casi richiedono esatta corrispondenza
             _ => from == to,
         }
     }
@@ -553,12 +609,11 @@ impl TypeChecker {
     }
 
     fn is_comparable(&self, left: &Type, right: &Type) -> bool {
-        // Allow comparing numeric types with each other
+        // Permettiamo il confronto tra tipi numerici
         if self.is_numeric(left) && self.is_numeric(right) {
             return true;
         }
-
-        // Otherwise require exact type match
+        // Altrimenti richiediamo esatta corrispondenza
         left == right
     }
 

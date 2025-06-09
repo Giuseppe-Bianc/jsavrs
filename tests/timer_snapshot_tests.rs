@@ -3,7 +3,6 @@ use jsavrs::time::timer::Timer;
 use jsavrs::time::times::Times;
 use jsavrs::time::value_label::ValueLabel;
 
-
 #[test]
 fn test_value_label_snapshots() {
     let test_cases = [

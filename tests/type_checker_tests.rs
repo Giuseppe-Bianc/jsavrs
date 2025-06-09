@@ -146,12 +146,8 @@ fn control_flow_statements() {
     // Valid if statement
     let stmts = vec![Stmt::If {
         condition: bool_lit(true),
-        then_branch: vec![Stmt::Expression {
-            expr: num_lit(42),
-        }],
-        else_branch: Some(vec![Stmt::Expression {
-            expr: num_lit(0),
-        }]),
+        then_branch: vec![Stmt::Expression { expr: num_lit(42) }],
+        else_branch: Some(vec![Stmt::Expression { expr: num_lit(0) }]),
         span: dummy_span(),
     }];
 
@@ -201,6 +197,52 @@ fn expression_type_checking() {
 }
 
 #[test]
+fn main_type_checking() {
+    // Test through full check flow
+    // Valid arithmetic
+    let stmts = vec![Stmt::MainFunction {
+        body: vec![Stmt::Expression {
+            expr: Expr::Binary {
+                left: Box::new(num_lit(10)),
+                op: BinaryOp::Add,
+                right: Box::new(num_lit(20)),
+                span: dummy_span(),
+            },
+        }],
+        span: dummy_span(),
+    }];
+
+    let mut checker = TypeChecker::new();
+    assert!(checker.check(&stmts).is_empty());
+}
+
+/*#[test]
+fn double_main_type_checking() {
+    // Test through full check flow
+    // Valid arithmetic
+    let stmts = vec![
+        Stmt::MainFunction {
+            body: vec![Stmt::Expression {
+                expr: Expr::Binary {
+                    left: Box::new(num_lit(10)),
+                    op: BinaryOp::Add,
+                    right: Box::new(num_lit(20)),
+                    span: dummy_span(),
+                },
+            }],
+            span: dummy_span(),
+        },
+        Stmt::MainFunction {
+            body: vec![],
+            span: dummy_span(),
+        },
+    ];
+
+    let mut checker = TypeChecker::new();
+    assert!(checker.check(&stmts).is_empty());
+}*/
+
+#[test]
 fn array_operations() {
     // Valid array literal
     let stmts = vec![Stmt::Expression {
@@ -228,10 +270,7 @@ fn array_operations() {
     let stmts = vec![
         Stmt::VarDeclaration {
             variables: vec!["arr".to_string()],
-            type_annotation: Type::Array(
-                Box::new(Type::I32),
-                Box::new(num_lit(3)),
-            ),
+            type_annotation: Type::Array(Box::new(Type::I32), Box::new(num_lit(3))),
             initializers: vec![],
             is_mutable: true,
             span: dummy_span(),
@@ -251,8 +290,6 @@ fn array_operations() {
     let mut checker = TypeChecker::new();
     let errors = checker.check(&stmts);
     assert!(!errors.is_empty());
-    
-
     // Invalid: non-array access
     let stmts = vec![
         Stmt::VarDeclaration {
@@ -318,9 +355,7 @@ fn edge_cases() {
     assert!(!errrors.is_empty());
 
     // Break outside loop
-    let stmts = vec![Stmt::Break {
-        span: dummy_span(),
-    }];
+    let stmts = vec![Stmt::Break { span: dummy_span() }];
 
     let mut checker = TypeChecker::new();
     assert_eq!(checker.check(&stmts).len(), 1);

@@ -1,10 +1,10 @@
 // tests/cli_tests.rs
 use assert_cmd::Command;
-use predicates::prelude::*;
-use std::path::PathBuf;
 use clap::Parser;
 use clap::error::ErrorKind;
 use jsavrs::cli::Args;
+use predicates::prelude::*;
+use std::path::PathBuf;
 
 #[test]
 fn help_displays_correctly() {
