@@ -286,7 +286,7 @@ impl std::fmt::Display for Type {
             Type::String => write!(f, "string"),
             Type::Bool => write!(f, "bool"),
             Type::Custom(name) => write!(f, "{}", name),
-            Type::Array(element_type, size_expr) => {
+            Type::Array(element_type, ..) => {
                 // Simplified representation since we can't evaluate expressions here
                 write!(f, "[{}; <expr>]", element_type)
             }
