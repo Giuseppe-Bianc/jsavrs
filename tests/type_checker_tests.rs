@@ -1,7 +1,7 @@
 use jsavrs::parser::ast::{BinaryOp, Expr, LiteralValue, Parameter, Stmt, Type};
 use jsavrs::semantic::type_checker::TypeChecker;
 use jsavrs::tokens::number::Number;
-use jsavrs::utils::{bool_lit, dummy_span, num_lit, string_lit};
+use jsavrs::utils::{bool_lit, char_lit, dummy_span, num_lit, string_lit};
 
 #[test]
 fn variable_declaration_and_assignment() {
@@ -255,6 +255,21 @@ fn array_operations() {
     let mut checker = TypeChecker::new();
     assert!(checker.check(&stmts).is_empty());
 
+    // Valid array literal
+    let stmts = vec![Stmt::Expression {
+        expr: Expr::ArrayLiteral {
+            elements: vec![],
+            span: dummy_span(),
+        },
+    }];
+
+    let mut checker = TypeChecker::new();
+    let errors = checker.check(&stmts);
+    assert_eq!(
+        errors[0].message(),
+        Some("Array literal must have at least one element")
+    );
+
     // Invalid: mixed element types
     let stmts = vec![Stmt::Expression {
         expr: Expr::ArrayLiteral {
@@ -290,6 +305,34 @@ fn array_operations() {
     let mut checker = TypeChecker::new();
     let errors = checker.check(&stmts);
     assert!(!errors.is_empty());
+
+    // Valid array access
+    let stmts = vec![
+        Stmt::VarDeclaration {
+            variables: vec!["arr".to_string()],
+            type_annotation: Type::Array(Box::new(Type::I32), Box::new(num_lit(3))),
+            initializers: vec![Expr::ArrayLiteral {
+                elements: vec![num_lit(1), num_lit(2), num_lit(3)],
+                span: dummy_span(),
+            }],
+            is_mutable: true,
+            span: dummy_span(),
+        },
+        Stmt::Expression {
+            expr: Expr::ArrayAccess {
+                array: Box::new(Expr::Variable {
+                    name: "arr".to_string(),
+                    span: dummy_span(),
+                }),
+                index: Box::new(char_lit("a")),
+                span: dummy_span(),
+            },
+        },
+    ];
+
+    let mut checker = TypeChecker::new();
+    let errors = checker.check(&stmts);
+    assert_eq!(errors[0].message(), Some("Array index must be integer"));
     // Invalid: non-array access
     let stmts = vec![
         Stmt::VarDeclaration {
