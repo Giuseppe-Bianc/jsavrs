@@ -1,4 +1,4 @@
-use crate::parser::ast::{Expr, LiteralValue, Stmt, Type};
+use crate::parser::ast::{Expr, LiteralValue, Stmt};
 use console::Style;
 
 #[derive(Debug, Clone, PartialEq)]
@@ -358,7 +358,7 @@ fn print_stmt(
                 "Type:",
             );
             let type_indent = get_indent(&new_indent, false);
-            let type_str = format_type(type_annotation);
+            let type_str = format!("{type_annotation}");
             append_line(
                 output,
                 &type_indent,
@@ -426,7 +426,7 @@ fn print_stmt(
                     &param_indent,
                     true,
                     styles.type_style.clone(),
-                    &format!("Type: {}", format_type(&param.type_annotation)),
+                    &format!("Type: {}", &param.type_annotation),
                 );
             }
 
@@ -444,7 +444,7 @@ fn print_stmt(
                 &return_indent,
                 true,
                 styles.clone().type_style,
-                &format_type(return_type),
+                &format!("{return_type}"),
             );
 
             // Body
@@ -555,34 +555,5 @@ fn print_stmt(
         Stmt::Continue { span: _span } => {
             append_line(output, indent, is_last, styles.clone().keyword, "Continue");
         }
-    }
-}
-
-// Helper function to format Type for display
-fn format_type(ty: &Type) -> String {
-    match ty {
-        Type::I8 => "i8".to_string(),
-        Type::I16 => "i16".to_string(),
-        Type::I32 => "i32".to_string(),
-        Type::I64 => "i64".to_string(),
-        Type::U8 => "u8".to_string(),
-        Type::U16 => "u16".to_string(),
-        Type::U32 => "u32".to_string(),
-        Type::U64 => "u64".to_string(),
-        Type::F32 => "f32".to_string(),
-        Type::F64 => "f64".to_string(),
-        Type::Char => "char".to_string(),
-        Type::String => "string".to_string(),
-        Type::Bool => "bool".to_string(),
-        Type::Custom(type_s) => type_s.clone(),
-        Type::Array(inner, _size_expr) => {
-            let inner_type = format_type(inner);
-            format!("[{inner_type}; <expr>]")
-        }
-        Type::Vector(inner) => {
-            let inner_type = format_type(inner);
-            format!("Vector<{inner_type}>")
-        }
-        Type::Void => "void".to_string(),
     }
 }

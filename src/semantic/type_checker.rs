@@ -121,9 +121,7 @@ impl TypeChecker {
                             self.push_type_error(
                                 format!(
                                     "Cannot assign {} to {} variable '{}'",
-                                    self.type_name(&init_type),
-                                    self.type_name(type_annotation),
-                                    var
+                                    init_type, type_annotation, var
                                 ),
                                 init.span().clone(),
                             );
@@ -181,10 +179,7 @@ impl TypeChecker {
                 let cond_type = self.check_expr(condition);
                 if !self.is_bool(&cond_type) {
                     self.push_type_error(
-                        format!(
-                            "Condition must be bool, found {}",
-                            self.type_name(&cond_type)
-                        ),
+                        format!("Condition must be bool, found {}", &cond_type),
                         condition.span().clone(),
                     );
                 }
@@ -232,8 +227,7 @@ impl TypeChecker {
                     self.push_type_error(
                         format!(
                             "Return type mismatch: expected {}, found {}",
-                            self.type_name(&expected),
-                            self.type_name(&value_type)
+                            &expected, &value_type
                         ),
                         value
                             .as_ref()
@@ -323,8 +317,7 @@ impl TypeChecker {
                             self.push_type_error(
                                 format!(
                                     "Arithmetic operands must be numeric, found {} and {}",
-                                    self.type_name(&left_type),
-                                    self.type_name(&right_type)
+                                    &left_type, &right_type
                                 ),
                                 span.clone(),
                             );
@@ -334,8 +327,7 @@ impl TypeChecker {
                             self.push_type_error(
                                 format!(
                                     "Operand type mismatch: {} and {}",
-                                    self.type_name(&left_type),
-                                    self.type_name(&right_type)
+                                    &left_type, &right_type
                                 ),
                                 span.clone(),
                             );
@@ -350,11 +342,7 @@ impl TypeChecker {
                     | BinaryOp::GreaterEqual => {
                         if !self.is_comparable(&left_type, &right_type) {
                             self.push_type_error(
-                                format!(
-                                    "Cannot compare {} and {}",
-                                    self.type_name(&left_type),
-                                    self.type_name(&right_type)
-                                ),
+                                format!("Cannot compare {} and {}", &left_type, &right_type),
                                 span.clone(),
                             );
                         }
@@ -423,11 +411,7 @@ impl TypeChecker {
 
                 if !self.is_assignable(&value_type, &target_type) {
                     self.push_type_error(
-                        format!(
-                            "Cannot assign {} to {}",
-                            self.type_name(&value_type),
-                            self.type_name(&target_type)
-                        ),
+                        format!("Cannot assign {} to {}", &value_type, &target_type),
                         span.clone(),
                     );
                 }
@@ -477,8 +461,8 @@ impl TypeChecker {
                                     format!(
                                         "Argument {}: expected {}, found {}",
                                         i + 1,
-                                        self.type_name(&param.type_annotation),
-                                        self.type_name(&arg_type)
+                                        &param.type_annotation,
+                                        &arg_type
                                     ),
                                     span.clone(),
                                 );
@@ -536,8 +520,8 @@ impl TypeChecker {
                         self.push_type_error(
                             format!(
                                 "Array element type mismatch: expected {}, found {}",
-                                self.type_name(&first_type),
-                                self.type_name(&element_type)
+                                &first_type,
+                                &element_type
                             ),
                             element.span().clone(),
                         );
@@ -615,28 +599,5 @@ impl TypeChecker {
         }
         // Altrimenti richiediamo esatta corrispondenza
         left == right
-    }
-
-    #[allow(clippy::only_used_in_recursion)]
-    fn type_name(&self, ty: &Type) -> String {
-        match ty {
-            Type::I8 => "i8".to_string(),
-            Type::I16 => "i16".to_string(),
-            Type::I32 => "i32".to_string(),
-            Type::I64 => "i64".to_string(),
-            Type::U8 => "u8".to_string(),
-            Type::U16 => "u16".to_string(),
-            Type::U32 => "u32".to_string(),
-            Type::U64 => "u64".to_string(),
-            Type::F32 => "f32".to_string(),
-            Type::F64 => "f64".to_string(),
-            Type::Char => "char".to_string(),
-            Type::String => "string".to_string(),
-            Type::Bool => "bool".to_string(),
-            Type::Custom(name) => name.clone(),
-            Type::Array(inner, _) => format!("[{}]", self.type_name(inner)),
-            Type::Vector(inner) => format!("Vector<{}>", self.type_name(inner)),
-            Type::Void => "void".to_string(),
-        }
     }
 }

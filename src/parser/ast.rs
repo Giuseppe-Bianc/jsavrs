@@ -267,3 +267,31 @@ pub enum Type {
     Vector(Box<Type>),
     Void,
 }
+
+// Add this at the end of the file
+impl std::fmt::Display for Type {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        match self {
+            Type::I8 => write!(f, "i8"),
+            Type::I16 => write!(f, "i16"),
+            Type::I32 => write!(f, "i32"),
+            Type::I64 => write!(f, "i64"),
+            Type::U8 => write!(f, "u8"),
+            Type::U16 => write!(f, "u16"),
+            Type::U32 => write!(f, "u32"),
+            Type::U64 => write!(f, "u64"),
+            Type::F32 => write!(f, "f32"),
+            Type::F64 => write!(f, "f64"),
+            Type::Char => write!(f, "char"),
+            Type::String => write!(f, "string"),
+            Type::Bool => write!(f, "bool"),
+            Type::Custom(name) => write!(f, "{}", name),
+            Type::Array(element_type, size_expr) => {
+                // Simplified representation since we can't evaluate expressions here
+                write!(f, "[{}; <expr>]", element_type)
+            }
+            Type::Vector(element_type) => write!(f, "Vector<{}>", element_type),
+            Type::Void => write!(f, "void"),
+        }
+    }
+}
