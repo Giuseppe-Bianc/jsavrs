@@ -215,14 +215,19 @@ pub fn create_var_symbol(name: &str, mutable: bool) -> Symbol {
     })
 }
 
-pub fn create_func_symbol(name: &str) -> Symbol {
-    Symbol::Function(FunctionSymbol {
+pub fn create_function_symbol(name: &str) -> FunctionSymbol {
+    FunctionSymbol {
         name: name.to_string(),
         parameters: Vec::new(),
         return_type: Type::Void,
         defined_at: dummy_span(),
-    })
+    }
 }
+pub fn create_func_symbol(name: &str) -> Symbol {
+    Symbol::Function(create_function_symbol(name))
+}
+
+
 
 // Helper to extract inner symbol values for comparison
 pub fn var_from_symbol(sym: Symbol) -> Option<VariableSymbol> {

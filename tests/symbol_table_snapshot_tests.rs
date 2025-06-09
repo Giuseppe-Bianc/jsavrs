@@ -1,4 +1,7 @@
+use insta::_macro_support::assert_snapshot;
 use insta::assert_debug_snapshot;
+use jsavrs::error::compile_error::CompileError;
+use jsavrs::location::source_span::SourceSpan;
 use jsavrs::parser::ast::{Parameter, Type};
 use jsavrs::semantic::symbol_table::{FunctionSymbol, Symbol, SymbolTable, VariableSymbol};
 use jsavrs::utils::{create_func_symbol, create_span, create_var_symbol, dummy_span, int_type};
@@ -170,4 +173,50 @@ fn lookup_specific_symbol_types() {
     assert_debug_snapshot!(table.lookup_variable("y"));
     assert_debug_snapshot!(table.lookup_function("x"));
     assert_debug_snapshot!(table.lookup_function("y"));
+}
+#[test]
+fn duplicate_function_error_span() {
+    let mut table = SymbolTable::new();
+    let span1 = create_span("file", 5, 1, 5, 10);
+    let span2 = create_span("file", 10, 1, 10, 10);
+
+    let first_func = Symbol::Function(FunctionSymbol {
+        name: "func".to_string(),
+        parameters: Vec::new(),
+        return_type: Type::Void,
+        defined_at: span1.clone(),
+    });
+
+    let second_func = Symbol::Function(FunctionSymbol {
+        name: "func".to_string(),
+        parameters: Vec::new(),
+        return_type: Type::Void,
+        defined_at: span2.clone(),
+    });
+
+    table.declare("func", first_func).unwrap();
+    assert_debug_snapshot!(table.declare("func", second_func).unwrap_err());
+}
+
+#[test]
+fn duplicate_unknown_symbol_type_uses_default_span() {
+    let mut table = SymbolTable::new();
+
+    // Create an unknown symbol type (TypeAlias in this case)
+    let unknown_symbol = Symbol::TypeAlias(Type::I32);
+
+    // Create a variable symbol for duplicate declaration
+    let var_symbol = Symbol::Variable(VariableSymbol {
+        name: "x".to_string(),
+        ty: int_type(),
+        mutable: true,
+        defined_at: create_span("file", 5, 1, 5, 2),
+        last_assignment: None,
+    });
+
+    // Declare the unknown symbol
+    table.declare("x", unknown_symbol).unwrap();
+
+    // Attempt to declare duplicate symbol
+    assert_debug_snapshot!(table.declare("x", var_symbol).unwrap_err());
 }

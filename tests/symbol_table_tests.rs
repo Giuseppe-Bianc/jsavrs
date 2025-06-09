@@ -1,9 +1,10 @@
 use jsavrs::error::compile_error::CompileError;
+use jsavrs::location::source_span::SourceSpan;
 use jsavrs::parser::ast::{Parameter, Type};
 use jsavrs::semantic::symbol_table::{FunctionSymbol, Symbol, SymbolTable, VariableSymbol};
 use jsavrs::utils::{
-    create_func_symbol, create_span, create_var_symbol, dummy_span, func_from_symbol, int_type,
-    var_from_symbol,
+    create_func_symbol,create_span, create_var_symbol, dummy_span,
+    func_from_symbol, int_type, var_from_symbol,
 };
 
 #[test]
@@ -194,4 +195,104 @@ fn lookup_specific_symbol_types() {
     assert_eq!(table.lookup_variable("y"), None);
     assert_eq!(table.lookup_function("x"), None);
     assert_eq!(table.lookup_function("y"), func_from_symbol(func.clone()));
+}
+
+#[test]
+fn duplicate_variable_error_span() {
+    let mut table = SymbolTable::new();
+    let span1 = create_span("file", 1, 1, 1, 5);
+    let span2 = create_span("file", 2, 1, 2, 5);
+
+    let first_var = Symbol::Variable(VariableSymbol {
+        name: "x".to_string(),
+        ty: int_type(),
+        mutable: true,
+        defined_at: span1.clone(),
+        last_assignment: None,
+    });
+
+    let second_var = Symbol::Variable(VariableSymbol {
+        name: "x".to_string(),
+        ty: int_type(),
+        mutable: false,
+        defined_at: span2.clone(),
+        last_assignment: None,
+    });
+
+    table.declare("x", first_var).unwrap();
+    let err = table.declare("x", second_var).unwrap_err();
+
+    // Verify error type and that it uses the first declaration's span
+    match err {
+        CompileError::TypeError { message, span } => {
+            assert!(message.contains("Duplicate identifier 'x' in same scope"));
+            assert_eq!(span, span1);
+        }
+        _ => panic!("Expected TypeError"),
+    }
+}
+
+#[test]
+fn duplicate_function_error_span() {
+    let mut table = SymbolTable::new();
+    let span1 = create_span("file", 5, 1, 5, 10);
+    let span2 = create_span("file", 10, 1, 10, 10);
+
+    let first_func = Symbol::Function(FunctionSymbol {
+        name: "func".to_string(),
+        parameters: Vec::new(),
+        return_type: Type::Void,
+        defined_at: span1.clone(),
+    });
+
+    let second_func = Symbol::Function(FunctionSymbol {
+        name: "func".to_string(),
+        parameters: Vec::new(),
+        return_type: Type::Void,
+        defined_at: span2.clone(),
+    });
+
+    table.declare("func", first_func).unwrap();
+    let err = table.declare("func", second_func).unwrap_err();
+
+    // Verify error type and that it uses the first declaration's span
+    match err {
+        CompileError::TypeError { message, span } => {
+            assert!(message.contains("Duplicate identifier 'func' in same scope"));
+            assert_eq!(span, span1);
+        }
+        _ => panic!("Expected TypeError"),
+    }
+}
+
+#[test]
+fn duplicate_unknown_symbol_type_uses_default_span() {
+    let mut table = SymbolTable::new();
+
+    // Create an unknown symbol type (TypeAlias in this case)
+    let unknown_symbol = Symbol::TypeAlias(Type::I32);
+
+    // Create a variable symbol for duplicate declaration
+    let var_symbol = Symbol::Variable(VariableSymbol {
+        name: "x".to_string(),
+        ty: int_type(),
+        mutable: true,
+        defined_at: create_span("file", 5, 1, 5, 2),
+        last_assignment: None,
+    });
+
+    // Declare the unknown symbol
+    table.declare("x", unknown_symbol).unwrap();
+
+    // Attempt to declare duplicate symbol
+    let err = table.declare("x", var_symbol).unwrap_err();
+
+    // Verify error type and default span
+    match err {
+        CompileError::TypeError { message, span } => {
+            assert!(message.contains("Duplicate identifier 'x' in same scope"));
+            assert_eq!(span, SourceSpan::default());
+        }
+        _ => panic!("Expected TypeError with default span"),
+    }
 }
