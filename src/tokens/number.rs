@@ -8,8 +8,26 @@ use std::fmt;
 /// processing during compilation.
 #[derive(Debug, PartialEq, Clone)]
 pub enum Number {
+    /// Signed 8-bit integer literal (e.g., `-42i8`)
+    I8(i8),
+
+    /// Signed 16-bit integer literal (e.g., `1234i16`)
+    I16(i16),
+
+    /// Signed 32-bit integer literal (e.g., `123456i32`)
+    I32(i32),
+
     /// Signed 64-bit integer literal (e.g., `-42`, `1234`)
     Integer(i64),
+
+    /// Unsigned 8-bit integer literal (e.g., `42u8`)
+    U8(u8),
+
+    /// Unsigned 16-bit integer literal (e.g., `1234u16`)
+    U16(u16),
+
+    /// Unsigned 32-bit integer literal (e.g., `123456u32`)
+    U32(u32),
 
     /// Unsigned 64-bit integer literal (e.g., `42u`, `1234u`)
     UnsignedInteger(u64),
@@ -46,13 +64,20 @@ impl fmt::Display for Number {
     /// # Examples
     /// ```
     /// use jsavrs::tokens::number::Number;
-    /// assert_eq!(Number::Integer(-42).to_string(), "-42");
+    /// assert_eq!(Number::I8(-42).to_string(), "-42");
+    /// assert_eq!(Number::U32(123456).to_string(), "123456");
     /// assert_eq!(Number::Float64(3.14159).to_string(), "3.14159");
     /// assert_eq!(Number::Scientific32(6.022, 23).to_string(), "6.022e23");
     /// ```
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
         match self {
+            Number::I8(i) => write!(f, "{i}i8"),
+            Number::I16(i) => write!(f, "{i}i16"),
+            Number::I32(i) => write!(f, "{i}i32"),
             Number::Integer(i) => write!(f, "{i}"),
+            Number::U8(u) => write!(f, "{u}u8"),
+            Number::U16(u) => write!(f, "{u}u16"),
+            Number::U32(u) => write!(f, "{u}u32"),
             Number::UnsignedInteger(u) => write!(f, "{u}"),
             Number::Float32(flt) => write!(f, "{flt}"),
             Number::Float64(flt) => write!(f, "{flt}"),

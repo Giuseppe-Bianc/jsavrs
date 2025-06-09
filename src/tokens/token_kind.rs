@@ -1,14 +1,14 @@
-use std::fmt;
 // src/tokens/token_kind.rs
 use crate::tokens::number::Number;
 use logos::Logos;
+use std::fmt;
 
 /// Parses a numeric literal token into a structured [`Number`] representation.
 ///
 /// Handles:
 /// - Integer vs float detection
 /// - Scientific notation
-/// - Suffix handling (u, f, d)
+/// - Multi-character suffixes (i8, i16, i32, u8, u16, u32, u, f, d)
 ///
 /// # Arguments
 /// * `lex` - Lexer context from Logos
@@ -35,22 +35,31 @@ pub fn parse_number(lex: &mut logos::Lexer<TokenKind>) -> Option<Number> {
 /// ```
 /// use jsavrs::tokens::token_kind::split_numeric_and_suffix;
 /// assert_eq!(split_numeric_and_suffix("42u"), ("42", Some("u".to_string())));
-/// assert_eq!(split_numeric_and_suffix("3.14f"), ("3.14", Some("f".to_string())));
+/// assert_eq!(split_numeric_and_suffix("3.14F"), ("3.14", Some("f".to_string())));
+/// assert_eq!(split_numeric_and_suffix("100i16"), ("100", Some("i16".to_string())));
+/// assert_eq!(split_numeric_and_suffix("6.022e23u32"), ("6.022e23", Some("u32".to_string())));
 /// assert_eq!(split_numeric_and_suffix("100"), ("100", None));
 /// ```
 pub fn split_numeric_and_suffix(slice: &str) -> (&str, Option<String>) {
     if slice.is_empty() {
         return (slice, None);
     }
-
-    let last_char = slice.chars().last().unwrap();
-    match last_char {
-        'u' | 'U' | 'f' | 'F' | 'd' | 'D' => {
-            let (num_part, suffix_part) = slice.split_at(slice.len() - 1);
-            (num_part, Some(suffix_part.to_ascii_lowercase()))
+    let lowered = slice.to_ascii_lowercase();
+    // Supported suffixes, longest first:
+    const SUFFIXES: [&str; 9] = [
+        "i16", "i32", "u16", "u32", // length == 3
+        "i8", "u8", // length == 2
+        "u", "f", "d", // length == 1
+    ];
+    for &suf in SUFFIXES.iter() {
+        if lowered.ends_with(suf) {
+            let cut_pos = slice.len() - suf.len();
+            let numeric_part = &slice[..cut_pos];
+            let suffix_part = slice[cut_pos..].to_ascii_lowercase();
+            return (numeric_part, Some(suffix_part));
         }
-        _ => (slice, None),
     }
+    (slice, None)
 }
 
 /// Routes numeric literal parsing based on suffix type.
@@ -63,46 +72,92 @@ pub fn split_numeric_and_suffix(slice: &str) -> (&str, Option<String>) {
 /// Parsed [`Number`] variant matching suffix, or `None` for invalid formats
 pub fn handle_suffix(numeric_part: &str, suffix: Option<String>) -> Option<Number> {
     match suffix.as_deref() {
-        Some("u") => handle_unsigned_suffix(numeric_part),
-        Some("f") => handle_float_suffix(numeric_part),
-        Some("d") | None => handle_default_suffix(numeric_part),
+        // Unsigned‐integer suffixes
+        Some("u") => {
+            if is_valid_integer_literal(numeric_part) {
+                numeric_part
+                    .parse::<u64>()
+                    .ok()
+                    .map(Number::UnsignedInteger)
+            } else {
+                None
+            }
+        }
+        Some("u8") => {
+            if is_valid_integer_literal(numeric_part) {
+                numeric_part.parse::<u8>().ok().map(Number::U8)
+            } else {
+                None
+            }
+        }
+        Some("u16") => {
+            if is_valid_integer_literal(numeric_part) {
+                numeric_part.parse::<u16>().ok().map(Number::U16)
+            } else {
+                None
+            }
+        }
+        Some("u32") => {
+            if is_valid_integer_literal(numeric_part) {
+                numeric_part.parse::<u32>().ok().map(Number::U32)
+            } else {
+                None
+            }
+        }
+        // Signed‐integer suffixes
+        Some("i8") => {
+            if is_valid_integer_literal(numeric_part) {
+                numeric_part.parse::<i8>().ok().map(Number::I8)
+            } else {
+                None
+            }
+        }
+        Some("i16") => {
+            if is_valid_integer_literal(numeric_part) {
+                numeric_part.parse::<i16>().ok().map(Number::I16)
+            } else {
+                None
+            }
+        }
+        Some("i32") => {
+            if is_valid_integer_literal(numeric_part) {
+                numeric_part.parse::<i32>().ok().map(Number::I32)
+            } else {
+                None
+            }
+        }
+        // Float32 suffix
+        Some("f") => parse_scientific(numeric_part, true)
+            .or_else(|| numeric_part.parse::<f32>().ok().map(Number::Float32)),
+
+        // Double (f64) or no suffix
+        Some("d") | None => {
+            parse_scientific(numeric_part, false).or_else(|| handle_non_scientific(numeric_part))
+        }
+
         _ => None,
     }
 }
 
-/// Parses numeric string with unsigned integer suffix ('u').
-///
-/// # Arguments
-/// * `numeric_part` - Numeric string without suffix
-///
-/// # Returns
-/// [`Number::UnsignedInteger`] if valid, `None` otherwise
-///
-/// # Validation
-/// Rejects floats and scientific notation (must be pure integer)
-pub fn handle_unsigned_suffix(numeric_part: &str) -> Option<Number> {
-    if is_valid_unsigned(numeric_part) {
-        numeric_part
-            .parse::<u64>()
-            .ok()
-            .map(Number::UnsignedInteger)
-    } else {
-        None
-    }
-}
-
-/// Validates if a string represents a valid unsigned integer format.
+/// Helper to check if a string represents a valid pure-integer literal:
+/// no decimal point, no 'e'/'E', no sign (we assume negative sign is a separate token).
 ///
 /// # Arguments
 /// * `numeric_part` - Numeric string to validate
 ///
 /// # Returns
-/// `true` if string contains no decimal points or exponent markers
-pub fn is_valid_unsigned(numeric_part: &str) -> bool {
-    !numeric_part.contains(['.', 'e', 'E'])
+/// `true` if it contains only digits (0–9)
+fn is_valid_integer_literal(numeric_part: &str) -> bool {
+    if numeric_part.is_empty() {
+        return false;
+    }
+    if numeric_part.contains('.') || numeric_part.contains('e') || numeric_part.contains('E') {
+        return false;
+    }
+    numeric_part.chars().all(|c| c.is_ascii_digit())
 }
 
-/// Parses numeric string with float suffix ('f').
+/// Parses numeric string with float32 suffix ('f').
 ///
 /// # Arguments
 /// * `numeric_part` - Numeric string without suffix
@@ -149,7 +204,7 @@ pub fn handle_non_scientific(numeric_part: &str) -> Option<Number> {
 /// # Returns
 /// [`Number::Scientific32`] or [`Number::Scientific64`] if valid
 pub fn parse_scientific(s: &str, is_f32: bool) -> Option<Number> {
-    let pos = s.find(['e', 'E'])?;
+    let pos = s.find(|c| c == 'e' || c == 'E')?;
     let (base_str, exp_str) = s.split_at(pos);
     let exp = exp_str[1..].parse::<i32>().ok()?;
 
@@ -173,12 +228,12 @@ pub fn parse_scientific(s: &str, is_f32: bool) -> Option<Number> {
 pub fn parse_base_number(radix: u32, lex: &mut logos::Lexer<TokenKind>) -> Option<Number> {
     let slice = lex.slice();
     let (_, num_part) = slice.split_at(2); // Remove prefix ("#b", "#o", or "#x")
-    let (num_str, suffix) = match num_part.chars().last() {
+    let (num_str, suffix_u) = match num_part.chars().last() {
         Some('u') | Some('U') => (&num_part[..num_part.len() - 1], true),
         _ => (num_part, false),
     };
 
-    if suffix {
+    if suffix_u {
         u64::from_str_radix(num_str, radix)
             .ok()
             .map(Number::UnsignedInteger)
@@ -319,9 +374,9 @@ pub enum TokenKind {
     #[regex(r"[\p{Letter}\p{Mark}_][\p{Letter}\p{Mark}\p{Number}_]*", |lex| lex.slice().to_string(), priority = 1)]
     IdentifierUnicode(String),
 
-    /// Numeric literals (supports various formats)
+    /// Numeric literals (supports integer, float, scientific, and multi-char suffixes)
     #[regex(
-        r"(\d+\.?\d*|\.\d+)([eE][+-]?\d+)?[ufdUF]?",
+        r"(\d+\.?\d*|\.\d+)([eE][+-]?\d+)?([uU]|[fF]|[dD]|[iI](8|16|32)|[uU](8|16|32))?",
         parse_number,
         priority = 4
     )]

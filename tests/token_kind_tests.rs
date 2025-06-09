@@ -2,7 +2,7 @@ use jsavrs::tokens::number::Number;
 use jsavrs::tokens::number::Number::*;
 use jsavrs::tokens::token_kind::TokenKind::*;
 use jsavrs::tokens::token_kind::{
-    TokenKind, handle_suffix, handle_unsigned_suffix, split_numeric_and_suffix,
+    TokenKind, handle_suffix, split_numeric_and_suffix,
 };
 use logos::Logos;
 
@@ -33,7 +33,7 @@ fn test_unknown_suffix_for_handle_suffix() {
 #[test]
 fn test_malformed_numeric_part_handle_unsigned_suffix() {
     // Fixed typo in test name
-    assert!(handle_unsigned_suffix("123.45").is_none());
+    assert!(handle_suffix("123.45", Some("u".into())).is_none());
 }
 
 #[test]
