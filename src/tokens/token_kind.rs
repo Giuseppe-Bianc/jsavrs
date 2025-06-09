@@ -173,7 +173,7 @@ pub fn handle_non_scientific(numeric_part: &str) -> Option<Number> {
 /// # Returns
 /// [`Number::Scientific32`] or [`Number::Scientific64`] if valid
 pub fn parse_scientific(s: &str, is_f32: bool) -> Option<Number> {
-    let pos = s.find(|c| c == 'e' || c == 'E')?;
+    let pos = s.find(['e', 'E'])?;
     let (base_str, exp_str) = s.split_at(pos);
     let exp = exp_str[1..].parse::<i32>().ok()?;
 

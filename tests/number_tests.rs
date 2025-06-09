@@ -10,6 +10,45 @@ fn test_integer_display() {
 }
 
 #[test]
+fn test_i8_display() {
+    assert_eq!(Number::I8(0).to_string(), "0i8");
+    assert_eq!(Number::I8(42).to_string(), "42i8");
+    assert_eq!(Number::I8(-42).to_string(), "-42i8");
+    assert_eq!(Number::I8(i8::MAX).to_string(), format!("{}i8", i8::MAX));
+    assert_eq!(Number::I8(i8::MIN).to_string(), format!("{}i8", i8::MIN));
+}
+
+#[test]
+fn test_i16_display() {
+    assert_eq!(Number::I16(0).to_string(), "0i16");
+    assert_eq!(Number::I16(1234).to_string(), "1234i16");
+    assert_eq!(Number::I16(-1234).to_string(), "-1234i16");
+    assert_eq!(
+        Number::I16(i16::MAX).to_string(),
+        format!("{}i16", i16::MAX)
+    );
+    assert_eq!(
+        Number::I16(i16::MIN).to_string(),
+        format!("{}i16", i16::MIN)
+    );
+}
+
+#[test]
+fn test_i32_display() {
+    assert_eq!(Number::I32(0).to_string(), "0i32");
+    assert_eq!(Number::I32(123456).to_string(), "123456i32");
+    assert_eq!(Number::I32(-123456).to_string(), "-123456i32");
+    assert_eq!(
+        Number::I32(i32::MAX).to_string(),
+        format!("{}i32", i32::MAX)
+    );
+    assert_eq!(
+        Number::I32(i32::MIN).to_string(),
+        format!("{}i32", i32::MIN)
+    );
+}
+
+#[test]
 fn test_unsigned_integer_display() {
     assert_eq!(Number::UnsignedInteger(0).to_string(), "0");
     assert_eq!(Number::UnsignedInteger(42).to_string(), "42");
@@ -18,6 +57,28 @@ fn test_unsigned_integer_display() {
         u64::MAX.to_string()
     );
 }
+
+#[test]
+fn test_u8_display() {
+    assert_eq!(Number::U8(0).to_string(), "0u8");
+    assert_eq!(Number::U8(42).to_string(), "42u8");
+    assert_eq!(Number::U8(u8::MAX).to_string(), format!("{}u8", u8::MAX));
+}
+
+#[test]
+fn test_u16_display() {
+    assert_eq!(Number::U16(0).to_string(), "0u16");
+    assert_eq!(Number::U16(1234).to_string(), "1234u16");
+    assert_eq!(Number::U16(u16::MAX).to_string(), format!("{}u16", u16::MAX));
+}
+
+#[test]
+fn test_u32_display() {
+    assert_eq!(Number::U32(0).to_string(), "0u32");
+    assert_eq!(Number::U32(123456).to_string(), "123456u32");
+    assert_eq!(Number::U32(u32::MAX).to_string(), format!("{}u32", u32::MAX));
+}
+
 
 #[allow(clippy::approx_constant)]
 #[test]
@@ -91,6 +152,12 @@ fn test_extreme_float_values() {
 #[test]
 fn test_display_trait_consistency() {
     let numbers = vec![
+        Number::I8(10),
+        Number::I16(10),
+        Number::I32(10),
+        Number::U8(10),
+        Number::U16(10),
+        Number::U32(10),
         Number::Integer(10),
         Number::UnsignedInteger(10),
         Number::Float32(10.0),

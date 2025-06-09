@@ -11,13 +11,61 @@ fn test_integer_display_snapshot() {
 }
 
 #[test]
-fn test_unsigned_integer_display_snapshot() {
+fn test_i8_display() {
+    assert_snapshot!("i8_0", Number::I8(0).to_string(), "0i8");
+    assert_snapshot!("i8_42", Number::I8(42).to_string(), "42i8");
+    assert_snapshot!("i8_neg_42", Number::I8(-42).to_string(), "-42i8");
+    assert_snapshot!("i8_max", Number::I8(i8::MAX).to_string());
+    assert_snapshot!("i8_min", Number::I8(i8::MIN).to_string());
+}
+
+#[test]
+fn test_i16_display() {
+    assert_snapshot!("i16_0", Number::I16(0).to_string());
+    assert_snapshot!("i16_1234", Number::I16(1234).to_string());
+    assert_snapshot!("i16_neg_1234", Number::I16(-1234).to_string());
+    assert_snapshot!("i16_max", Number::I16(i16::MAX).to_string());
+    assert_snapshot!("i16_min", Number::I16(i16::MIN).to_string());
+}
+
+#[test]
+fn test_i32_display() {
+    assert_snapshot!("i32_0", Number::I32(0).to_string());
+    assert_snapshot!("i32_123456", Number::I32(123456).to_string());
+    assert_snapshot!("i32_neg_123456", Number::I32(-123456).to_string());
+    assert_snapshot!("i32_max", Number::I32(i32::MAX).to_string());
+    assert_snapshot!("i32_min", Number::I32(i32::MIN).to_string());
+}
+
+#[test]
+fn test_unsigned_integer_display() {
     assert_snapshot!("unsigned_0", Number::UnsignedInteger(0).to_string());
     assert_snapshot!("unsigned_42", Number::UnsignedInteger(42).to_string());
     assert_snapshot!(
         "unsigned_max",
         Number::UnsignedInteger(u64::MAX).to_string()
     );
+}
+
+#[test]
+fn test_u8_display() {
+    assert_snapshot!("u8_0", Number::U8(0).to_string());
+    assert_snapshot!("u8_42", Number::U8(42).to_string());
+    assert_snapshot!("u8_max", Number::U8(u8::MAX).to_string());
+}
+
+#[test]
+fn test_u16_display() {
+    assert_snapshot!("u16_0", Number::U16(0).to_string());
+    assert_snapshot!("u16_1234", Number::U16(1234).to_string());
+    assert_snapshot!("u16_max", Number::U16(u16::MAX).to_string());
+}
+
+#[test]
+fn test_u32_display() {
+    assert_snapshot!("u32_0", Number::U32(0).to_string());
+    assert_snapshot!("u32_123456", Number::U32(123456).to_string());
+    assert_snapshot!("u32_max", Number::U32(u32::MAX).to_string());
 }
 
 #[allow(clippy::approx_constant)]
@@ -109,6 +157,12 @@ fn test_extreme_float_values_snapshot() {
 #[test]
 fn test_display_trait_consistency_snapshot() {
     let numbers = vec![
+        Number::I8(10),
+        Number::I16(10),
+        Number::I32(10),
+        Number::U8(10),
+        Number::U16(10),
+        Number::U32(10),
         Number::Integer(10),
         Number::UnsignedInteger(10),
         Number::Float32(10.0),
