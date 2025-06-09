@@ -69,16 +69,21 @@ fn test_u8_display() {
 fn test_u16_display() {
     assert_eq!(Number::U16(0).to_string(), "0u16");
     assert_eq!(Number::U16(1234).to_string(), "1234u16");
-    assert_eq!(Number::U16(u16::MAX).to_string(), format!("{}u16", u16::MAX));
+    assert_eq!(
+        Number::U16(u16::MAX).to_string(),
+        format!("{}u16", u16::MAX)
+    );
 }
 
 #[test]
 fn test_u32_display() {
     assert_eq!(Number::U32(0).to_string(), "0u32");
     assert_eq!(Number::U32(123456).to_string(), "123456u32");
-    assert_eq!(Number::U32(u32::MAX).to_string(), format!("{}u32", u32::MAX));
+    assert_eq!(
+        Number::U32(u32::MAX).to_string(),
+        format!("{}u32", u32::MAX)
+    );
 }
-
 
 #[allow(clippy::approx_constant)]
 #[test]

@@ -84,25 +84,21 @@ where
 pub fn handle_suffix(numeric_part: &str, suffix: Option<String>) -> Option<Number> {
     match suffix.as_deref() {
         // Unsigned‐integer suffixes
-        Some("u")  => parse_integer::<u64>(numeric_part, Number::UnsignedInteger),
+        Some("u") => parse_integer::<u64>(numeric_part, Number::UnsignedInteger),
         Some("u8") => parse_integer::<u8>(numeric_part, Number::U8),
-        Some("u16")=> parse_integer::<u16>(numeric_part, Number::U16),
-        Some("u32")=> parse_integer::<u32>(numeric_part, Number::U32),
+        Some("u16") => parse_integer::<u16>(numeric_part, Number::U16),
+        Some("u32") => parse_integer::<u32>(numeric_part, Number::U32),
 
         // Signed‐integer suffixes
         Some("i8") => parse_integer::<i8>(numeric_part, Number::I8),
-        Some("i16")=> parse_integer::<i16>(numeric_part, Number::I16),
-        Some("i32")=> parse_integer::<i32>(numeric_part, Number::I32),
+        Some("i16") => parse_integer::<i16>(numeric_part, Number::I16),
+        Some("i32") => parse_integer::<i32>(numeric_part, Number::I32),
 
         // Float32 suffix
-        Some("f") => parse_scientific(numeric_part, true)
-            .or_else(|| numeric_part.parse::<f32>().ok().map(Number::Float32)),
+        Some("f") => handle_float_suffix(numeric_part),
 
         // Double (f64) o nessun suffisso
-        Some("d") | None => {
-            parse_scientific(numeric_part, false)
-                .or_else(|| handle_non_scientific(numeric_part))
-        }
+        Some("d") | None => handle_default_suffix(numeric_part),
 
         _ => None,
     }
@@ -116,10 +112,7 @@ pub fn handle_suffix(numeric_part: &str, suffix: Option<String>) -> Option<Numbe
 ///
 /// # Returns
 /// `true` if it contains only digits (0–9)
-fn is_valid_integer_literal(numeric_part: &str) -> bool {
-    if numeric_part.is_empty() {
-        return false;
-    }
+pub fn is_valid_integer_literal(numeric_part: &str) -> bool {
     if numeric_part.contains('.') || numeric_part.contains('e') || numeric_part.contains('E') {
         return false;
     }
@@ -340,7 +333,8 @@ pub enum TokenKind {
     IdentifierAscii(String),
 
     /// Unicode identifiers (supports international characters)
-    #[regex(r"[\p{Letter}\p{Mark}_][\p{Letter}\p{Mark}\p{Number}_]*", |lex| lex.slice().to_string(), priority = 1)]
+    #[regex(r"[\p{Letter}\p{Mark}_][\p{Letter}\p{Mark}\p{Number}_]*", |lex| lex.slice().to_string(), priority = 1
+    )]
     IdentifierUnicode(String),
 
     /// Numeric literals (supports integer, float, scientific, and multi-char suffixes)

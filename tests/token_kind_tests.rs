@@ -1,9 +1,7 @@
 use jsavrs::tokens::number::Number;
 use jsavrs::tokens::number::Number::*;
 use jsavrs::tokens::token_kind::TokenKind::*;
-use jsavrs::tokens::token_kind::{
-    TokenKind, handle_suffix, split_numeric_and_suffix,
-};
+use jsavrs::tokens::token_kind::{TokenKind, handle_suffix, split_numeric_and_suffix};
 use logos::Logos;
 
 // Helper function to assert token matching
@@ -78,6 +76,8 @@ fn test_invalid_scientific_notation() {
     let mut lex = TokenKind::lexer("1e2e3");
     assert_eq!(lex.next().unwrap(), Ok(Numeric(Scientific64(1.0, 2))));
     assert_eq!(lex.next().unwrap(), Ok(IdentifierAscii("e3".into())));
+    let mut lex2 = TokenKind::lexer("1.2e3.4"); // Invalid exponent
+    assert!(!lex2.next().unwrap().is_err());
 }
 
 #[test]

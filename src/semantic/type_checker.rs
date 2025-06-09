@@ -520,8 +520,7 @@ impl TypeChecker {
                         self.push_type_error(
                             format!(
                                 "Array element type mismatch: expected {}, found {}",
-                                &first_type,
-                                &element_type
+                                &first_type, &element_type
                             ),
                             element.span().clone(),
                         );
