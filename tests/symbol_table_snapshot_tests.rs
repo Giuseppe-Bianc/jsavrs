@@ -1,7 +1,4 @@
-use insta::_macro_support::assert_snapshot;
 use insta::assert_debug_snapshot;
-use jsavrs::error::compile_error::CompileError;
-use jsavrs::location::source_span::SourceSpan;
 use jsavrs::parser::ast::{Parameter, Type};
 use jsavrs::semantic::symbol_table::{FunctionSymbol, Symbol, SymbolTable, VariableSymbol};
 use jsavrs::utils::{create_func_symbol, create_span, create_var_symbol, dummy_span, int_type};

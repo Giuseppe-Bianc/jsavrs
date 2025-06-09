@@ -109,7 +109,7 @@ impl TypeChecker {
                     // Variabile già dichiarata in prima passata: verifichiamo che esista
                     if self.symbol_table.lookup_variable(var).is_none() {
                         self.push_type_error(
-                            format!("Variable '{}' not found in symbol table", var),
+                            format!("Variable '{var}' not found in symbol table"),
                             span.clone(),
                         );
                         continue;
@@ -120,8 +120,7 @@ impl TypeChecker {
                         if !self.is_assignable(&init_type, type_annotation) {
                             self.push_type_error(
                                 format!(
-                                    "Cannot assign {} to {} variable '{}'",
-                                    init_type, type_annotation, var
+                                    "Cannot assign {init_type} to {type_annotation} variable '{var}'"
                                 ),
                                 init.span().clone(),
                             );
@@ -179,7 +178,7 @@ impl TypeChecker {
                 let cond_type = self.check_expr(condition);
                 if !self.is_bool(&cond_type) {
                     self.push_type_error(
-                        format!("Condition must be bool, found {}", &cond_type),
+                        format!("Condition must be bool, found {cond_type}"),
                         condition.span().clone(),
                     );
                 }
@@ -225,10 +224,7 @@ impl TypeChecker {
 
                 if !self.is_assignable(&value_type, &expected) {
                     self.push_type_error(
-                        format!(
-                            "Return type mismatch: expected {}, found {}",
-                            &expected, &value_type
-                        ),
+                        format!("Return type mismatch: expected {expected}, found {value_type}"),
                         value
                             .as_ref()
                             .map(|e| e.span().clone())
@@ -316,8 +312,7 @@ impl TypeChecker {
                         if !self.is_numeric(&left_type) || !self.is_numeric(&right_type) {
                             self.push_type_error(
                                 format!(
-                                    "Arithmetic operands must be numeric, found {} and {}",
-                                    &left_type, &right_type
+                                    "Arithmetic operands must be numeric, found {left_type} and {right_type}"
                                 ),
                                 span.clone(),
                             );
@@ -325,10 +320,7 @@ impl TypeChecker {
                         }
                         if left_type != right_type {
                             self.push_type_error(
-                                format!(
-                                    "Operand type mismatch: {} and {}",
-                                    &left_type, &right_type
-                                ),
+                                format!("Operand type mismatch: {left_type} and {right_type}"),
                                 span.clone(),
                             );
                         }
@@ -342,7 +334,7 @@ impl TypeChecker {
                     | BinaryOp::GreaterEqual => {
                         if !self.is_comparable(&left_type, &right_type) {
                             self.push_type_error(
-                                format!("Cannot compare {} and {}", &left_type, &right_type),
+                                format!("Cannot compare {left_type} and {right_type}"),
                                 span.clone(),
                             );
                         }
@@ -396,7 +388,7 @@ impl TypeChecker {
             Expr::Variable { name, span } => match self.symbol_table.lookup_variable(name) {
                 Some(var) => var.ty.clone(),
                 None => {
-                    self.push_type_error(format!("Undefined variable '{}'", name), span.clone());
+                    self.push_type_error(format!("Undefined variable '{name}'"), span.clone());
                     Type::Void
                 }
             },
@@ -411,7 +403,7 @@ impl TypeChecker {
 
                 if !self.is_assignable(&value_type, &target_type) {
                     self.push_type_error(
-                        format!("Cannot assign {} to {}", &value_type, &target_type),
+                        format!("Cannot assign {value_type} to {target_type}"),
                         span.clone(),
                     );
                 }
@@ -421,7 +413,7 @@ impl TypeChecker {
                     if let Some(var) = self.symbol_table.lookup_variable(name) {
                         if !var.mutable {
                             self.push_type_error(
-                                format!("Cannot assign to immutable variable '{}'", name),
+                                format!("Cannot assign to immutable variable '{name}'"),
                                 span.clone(),
                             );
                         }
@@ -519,8 +511,7 @@ impl TypeChecker {
                     if element_type != first_type {
                         self.push_type_error(
                             format!(
-                                "Array element type mismatch: expected {}, found {}",
-                                &first_type, &element_type
+                                "Array element type mismatch: expected {first_type}, found {element_type}"
                             ),
                             element.span().clone(),
                         );
