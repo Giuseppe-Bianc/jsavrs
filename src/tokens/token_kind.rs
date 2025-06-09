@@ -62,6 +62,17 @@ pub fn split_numeric_and_suffix(slice: &str) -> (&str, Option<String>) {
     (slice, None)
 }
 
+fn parse_integer<T>(numeric_part: &str, map_fn: fn(T) -> Number) -> Option<Number>
+where
+    T: std::str::FromStr,
+{
+    if is_valid_integer_literal(numeric_part) {
+        numeric_part.parse::<T>().ok().map(map_fn)
+    } else {
+        None
+    }
+}
+
 /// Routes numeric literal parsing based on suffix type.
 ///
 /// # Arguments
@@ -73,66 +84,24 @@ pub fn split_numeric_and_suffix(slice: &str) -> (&str, Option<String>) {
 pub fn handle_suffix(numeric_part: &str, suffix: Option<String>) -> Option<Number> {
     match suffix.as_deref() {
         // Unsigned‐integer suffixes
-        Some("u") => {
-            if is_valid_integer_literal(numeric_part) {
-                numeric_part
-                    .parse::<u64>()
-                    .ok()
-                    .map(Number::UnsignedInteger)
-            } else {
-                None
-            }
-        }
-        Some("u8") => {
-            if is_valid_integer_literal(numeric_part) {
-                numeric_part.parse::<u8>().ok().map(Number::U8)
-            } else {
-                None
-            }
-        }
-        Some("u16") => {
-            if is_valid_integer_literal(numeric_part) {
-                numeric_part.parse::<u16>().ok().map(Number::U16)
-            } else {
-                None
-            }
-        }
-        Some("u32") => {
-            if is_valid_integer_literal(numeric_part) {
-                numeric_part.parse::<u32>().ok().map(Number::U32)
-            } else {
-                None
-            }
-        }
+        Some("u")  => parse_integer::<u64>(numeric_part, Number::UnsignedInteger),
+        Some("u8") => parse_integer::<u8>(numeric_part, Number::U8),
+        Some("u16")=> parse_integer::<u16>(numeric_part, Number::U16),
+        Some("u32")=> parse_integer::<u32>(numeric_part, Number::U32),
+
         // Signed‐integer suffixes
-        Some("i8") => {
-            if is_valid_integer_literal(numeric_part) {
-                numeric_part.parse::<i8>().ok().map(Number::I8)
-            } else {
-                None
-            }
-        }
-        Some("i16") => {
-            if is_valid_integer_literal(numeric_part) {
-                numeric_part.parse::<i16>().ok().map(Number::I16)
-            } else {
-                None
-            }
-        }
-        Some("i32") => {
-            if is_valid_integer_literal(numeric_part) {
-                numeric_part.parse::<i32>().ok().map(Number::I32)
-            } else {
-                None
-            }
-        }
+        Some("i8") => parse_integer::<i8>(numeric_part, Number::I8),
+        Some("i16")=> parse_integer::<i16>(numeric_part, Number::I16),
+        Some("i32")=> parse_integer::<i32>(numeric_part, Number::I32),
+
         // Float32 suffix
         Some("f") => parse_scientific(numeric_part, true)
             .or_else(|| numeric_part.parse::<f32>().ok().map(Number::Float32)),
 
-        // Double (f64) or no suffix
+        // Double (f64) o nessun suffisso
         Some("d") | None => {
-            parse_scientific(numeric_part, false).or_else(|| handle_non_scientific(numeric_part))
+            parse_scientific(numeric_part, false)
+                .or_else(|| handle_non_scientific(numeric_part))
         }
 
         _ => None,

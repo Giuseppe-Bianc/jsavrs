@@ -64,8 +64,8 @@ impl fmt::Display for Number {
     /// # Examples
     /// ```
     /// use jsavrs::tokens::number::Number;
-    /// assert_eq!(Number::I8(-42).to_string(), "-42");
-    /// assert_eq!(Number::U32(123456).to_string(), "123456");
+    /// assert_eq!(Number::I8(-42).to_string(), "-42i8");
+    /// assert_eq!(Number::U32(123456).to_string(), "123456u32");
     /// assert_eq!(Number::Float64(3.14159).to_string(), "3.14159");
     /// assert_eq!(Number::Scientific32(6.022, 23).to_string(), "6.022e23");
     /// ```
