@@ -285,12 +285,12 @@ impl std::fmt::Display for Type {
             Type::Char => write!(f, "char"),
             Type::String => write!(f, "string"),
             Type::Bool => write!(f, "bool"),
-            Type::Custom(name) => write!(f, "{}", name),
+            Type::Custom(name) => write!(f, "{name}"),
             Type::Array(element_type, ..) => {
                 // Simplified representation since we can't evaluate expressions here
-                write!(f, "[{}; <expr>]", element_type)
+                write!(f, "[{element_type}; <expr>]")
             }
-            Type::Vector(element_type) => write!(f, "Vector<{}>", element_type),
+            Type::Vector(element_type) => write!(f, "Vector<{element_type}>"),
             Type::Void => write!(f, "void"),
         }
     }
