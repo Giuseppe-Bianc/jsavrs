@@ -403,6 +403,12 @@ fn edge_cases() {
     let mut checker = TypeChecker::new();
     assert_eq!(checker.check(&stmts).len(), 1);
 
+    // Continue outside loop
+    let stmts = vec![Stmt::Continue { span: dummy_span() }];
+
+    let mut checker = TypeChecker::new();
+    assert_eq!(checker.check(&stmts).len(), 1);
+
     // Empty array declaration without initializer
     let stmts = vec![Stmt::VarDeclaration {
         variables: vec!["arr".to_string()],
