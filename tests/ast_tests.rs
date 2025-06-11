@@ -818,3 +818,10 @@ fn test_main() {
     └── Block";
     assert_eq!(stripped.trim(), expected);
 }
+
+#[test]
+fn  nullptr_type_display() {
+    let input = format!("{}", Type::NullPtr);
+    let expected = "nullptr";
+    assert_eq!(input, expected);
+}
