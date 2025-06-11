@@ -266,6 +266,7 @@ pub enum Type {
     Array(Box<Type>, Box<Expr>),
     Vector(Box<Type>),
     Void,
+    NullPtr
 }
 
 // Add this at the end of the file
@@ -292,6 +293,7 @@ impl std::fmt::Display for Type {
             }
             Type::Vector(element_type) => write!(f, "Vector<{element_type}>"),
             Type::Void => write!(f, "void"),
+            Type::NullPtr => write!(f, "nullptr"),
         }
     }
 }

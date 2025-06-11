@@ -27,7 +27,7 @@ pub struct FunctionSymbol {
     pub defined_at: SourceSpan,
 }
 
-#[derive(Debug, Default)]
+#[derive(Debug, Default, Clone, PartialEq)]
 pub struct SymbolTable {
     scopes: Vec<HashMap<String, Symbol>>,
     current_function: Option<FunctionSymbol>,

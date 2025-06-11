@@ -1,14 +1,14 @@
+// src/semantic/type_checker.rs
 use crate::error::compile_error::CompileError;
 use crate::location::source_span::SourceSpan;
 use crate::parser::ast::*;
-use crate::semantic::symbol_table::{FunctionSymbol, Symbol, SymbolTable, VariableSymbol};
+use crate::semantic::symbol_table::*;
 use crate::tokens::number::Number;
 
-#[derive(Debug, Default)]
 pub struct TypeChecker {
     symbol_table: SymbolTable,
     errors: Vec<CompileError>,
-    current_return_type: Option<Type>,
+    current_function_return_type: Option<Type>,
     in_loop: bool,
 }
 
@@ -17,538 +17,644 @@ impl TypeChecker {
         Self {
             symbol_table: SymbolTable::new(),
             errors: Vec::new(),
-            current_return_type: None,
+            current_function_return_type: None,
             in_loop: false,
         }
     }
 
-    pub fn check(&mut self, statements: &[Stmt]) -> Vec<CompileError> {
-        // First pass: dichiarazione simboli top-level
-        for stmt in statements {
-            self.declare_symbols(stmt);
+    pub fn check(&mut self, ast: &[Stmt]) -> Vec<CompileError> {
+        // First pass: declare functions and global variables
+        for stmt in ast {
+            self.visit_stmt_first_pass(stmt);
         }
 
         // Second pass: type checking
-        for stmt in statements {
-            self.check_stmt(stmt);
+        for stmt in ast {
+            self.visit_stmt(stmt);
         }
 
         std::mem::take(&mut self.errors)
     }
 
-    fn push_error(&mut self, error: CompileError) {
-        self.errors.push(error);
-    }
-
-    fn push_type_error(&mut self, message: String, span: SourceSpan) {
-        self.push_error(CompileError::TypeError { message, span });
-    }
-
-    fn declare_symbols(&mut self, stmt: &Stmt) {
+    fn visit_stmt_first_pass(&mut self, stmt: &Stmt) {
         match stmt {
-            Stmt::Function {
-                name,
-                parameters,
-                return_type,
-                span,
-                ..
-            } => {
-                let func_symbol = FunctionSymbol {
-                    name: name.clone(),
-                    parameters: parameters.clone(),
-                    return_type: return_type.clone(),
-                    defined_at: span.clone(),
-                };
-                if let Err(e) = self
-                    .symbol_table
-                    .declare(name, Symbol::Function(func_symbol))
-                {
-                    self.push_error(e);
-                }
-            }
             Stmt::VarDeclaration {
                 variables,
                 type_annotation,
                 is_mutable,
+                initializers,
                 span,
-                ..
             } => {
                 for var in variables {
-                    let var_symbol = VariableSymbol {
+                    let symbol = Symbol::Variable(VariableSymbol {
                         name: var.clone(),
                         ty: type_annotation.clone(),
                         mutable: *is_mutable,
                         defined_at: span.clone(),
                         last_assignment: None,
-                    };
-                    if let Err(e) = self.symbol_table.declare(var, Symbol::Variable(var_symbol)) {
-                        self.push_error(e);
+                    });
+                    if let Err(e) = self.symbol_table.declare(var, symbol) {
+                        self.errors.push(e);
                     }
                 }
             }
-            _ => {}
-        }
-    }
-
-    #[allow(unused_variables)]
-    fn check_stmt(&mut self, stmt: &Stmt) {
-        match stmt {
-            Stmt::Expression { expr } => {
-                self.check_expr(expr);
-            }
-
-            Stmt::VarDeclaration {
-                variables,
-                type_annotation,
-                initializers,
-                is_mutable,
-                span,
-                ..
-            } => {
-                for (i, var) in variables.iter().enumerate() {
-                    // Variabile già dichiarata in prima passata: verifichiamo che esista
-                    if self.symbol_table.lookup_variable(var).is_none() {
-                        self.push_type_error(
-                            format!("Variable '{var}' not found in symbol table"),
-                            span.clone(),
-                        );
-                        continue;
-                    }
-
-                    if let Some(init) = initializers.get(i) {
-                        let init_type = self.check_expr(init);
-                        if !self.is_assignable(&init_type, type_annotation) {
-                            self.push_type_error(
-                                format!(
-                                    "Cannot assign {init_type} to {type_annotation} variable '{var}'"
-                                ),
-                                init.span().clone(),
-                            );
-                        }
-                    } else if let Type::Array(..) = type_annotation {
-                        self.push_type_error(
-                            "Array type requires initializer".to_string(),
-                            span.clone(),
-                        );
-                    }
-                }
-            }
-
             Stmt::Function {
+                name,
                 parameters,
                 return_type,
-                body,
-                ..
+                body: _,
+                span,
             } => {
-                self.symbol_table.push_scope();
-                self.current_return_type = Some(return_type.clone());
+                let func_symbol = Symbol::Function(FunctionSymbol {
+                    name: name.clone(),
+                    parameters: parameters.clone(),
+                    return_type: return_type.clone(),
+                    defined_at: span.clone(),
+                });
+                if let Err(e) = self.symbol_table.declare(name, func_symbol) {
+                    self.errors.push(e);
+                }
 
-                // Aggiungiamo i parametri nella nuova scope
+                // Push scope for parameters
+                self.symbol_table.push_scope();
                 for param in parameters {
-                    let var_symbol = VariableSymbol {
+                    let symbol = Symbol::Variable(VariableSymbol {
                         name: param.name.clone(),
                         ty: param.type_annotation.clone(),
                         mutable: false,
                         defined_at: param.span.clone(),
                         last_assignment: None,
-                    };
-                    if let Err(e) = self
-                        .symbol_table
-                        .declare(&param.name, Symbol::Variable(var_symbol))
-                    {
-                        self.push_error(e);
+                    });
+                    if let Err(e) = self.symbol_table.declare(&param.name, symbol) {
+                        self.errors.push(e);
                     }
                 }
+            }
+            Stmt::MainFunction { body: _, span } => {
+                let func_symbol = Symbol::Function(FunctionSymbol {
+                    name: "main".to_string(),
+                    parameters: Vec::new(),
+                    return_type: Type::Void,
+                    defined_at: span.clone(),
+                });
+                if let Err(e) = self.symbol_table.declare("main", func_symbol) {
+                    self.errors.push(e);
+                }
+                self.symbol_table.push_scope();
+            }
+            _ => {} // Other statements don't declare symbols in first pass
+        }
+    }
 
-                // Controlliamo il body della funzione
+    fn visit_stmt(&mut self, stmt: &Stmt) {
+        match stmt {
+            Stmt::Block { statements, span } => {
+                self.symbol_table.push_scope();
+                for stmt in statements {
+                    self.visit_stmt(stmt);
+                }
+                self.symbol_table.pop_scope();
+            }
+            Stmt::Function {
+                name,
+                parameters,
+                return_type,
+                body,
+                span,
+            } => {
+                // Set current function context
+                let old_return_type = self
+                    .current_function_return_type
+                    .replace(return_type.clone());
+
+                // Process function body
                 for stmt in body {
-                    self.check_stmt(stmt);
+                    self.visit_stmt(stmt);
                 }
 
+                // Pop parameter scope
                 self.symbol_table.pop_scope();
-                self.current_return_type = None;
+                self.current_function_return_type = old_return_type;
             }
-
+            Stmt::MainFunction { body, span } => {
+                let old_return_type = self.current_function_return_type.replace(Type::Void);
+                for stmt in body {
+                    self.visit_stmt(stmt);
+                }
+                self.symbol_table.pop_scope();
+                self.current_function_return_type = old_return_type;
+            }
+            Stmt::VarDeclaration {
+                variables,
+                type_annotation,
+                is_mutable: _,
+                initializers,
+                span,
+            } => {
+                for (var, init) in variables.iter().zip(initializers) {
+                    if let Some(init_type) = self.visit_expr(init) {
+                        if !self.is_assignable(&init_type, type_annotation) {
+                            self.errors.push(CompileError::TypeError {
+                                message: format!(
+                                    "Cannot assign {} to {} for variable '{}'",
+                                    init_type, type_annotation, var
+                                ),
+                                span: init.span().clone(),
+                            });
+                        }
+                    }
+                }
+            }
+            Stmt::Expression { expr } => {
+                self.visit_expr(expr);
+            }
             Stmt::If {
                 condition,
                 then_branch,
                 else_branch,
-                ..
+                span,
             } => {
-                let cond_type = self.check_expr(condition);
-                if !self.is_bool(&cond_type) {
-                    self.push_type_error(
-                        format!("Condition must be bool, found {cond_type}"),
-                        condition.span().clone(),
-                    );
+                if let Some(cond_type) = self.visit_expr(condition) {
+                    if cond_type != Type::Bool {
+                        self.errors.push(CompileError::TypeError {
+                            message: format!("If condition must be bool, found {}", cond_type),
+                            span: condition.span().clone(),
+                        });
+                    }
                 }
 
-                // Then branch
-                self.symbol_table.push_scope();
                 for stmt in then_branch {
-                    self.check_stmt(stmt);
+                    self.visit_stmt(stmt);
                 }
-                self.symbol_table.pop_scope();
 
-                if let Some(else_statements) = else_branch {
-                    self.symbol_table.push_scope();
-                    for stmt in else_statements {
-                        self.check_stmt(stmt);
+                if let Some(else_branch) = else_branch {
+                    for stmt in else_branch {
+                        self.visit_stmt(stmt);
                     }
-                    self.symbol_table.pop_scope();
                 }
             }
-
-            Stmt::Block { statements, .. } => {
-                self.symbol_table.push_scope();
-                for stmt in statements {
-                    self.check_stmt(stmt);
-                }
-                self.symbol_table.pop_scope();
-            }
-
             Stmt::Return { value, span } => {
-                // Cloniamo il tipo di ritorno per evitare problemi di borrow
-                let expected = match self.current_return_type.clone() {
-                    Some(ty) => ty,
-                    None => {
-                        self.push_type_error("Return outside function".to_string(), span.clone());
-                        return;
+                if let Some(expected) = &self.current_function_return_type.clone() {
+                    match value {
+                        Some(expr) => {
+                            if let Some(actual) = self.visit_expr(expr) {
+                                if !self.is_assignable(&actual, expected) {
+                                    self.errors.push(CompileError::TypeError {
+                                        message: format!(
+                                            "Return type mismatch: expected {}, found {}",
+                                            expected, actual
+                                        ),
+                                        span: expr.span().clone(),
+                                    });
+                                }
+                            }
+                        }
+                        None if *expected != Type::Void => {
+                            self.errors.push(CompileError::TypeError {
+                                message: format!(
+                                    "Function requires return type {}, found void",
+                                    expected
+                                ),
+                                span: span.clone(),
+                            });
+                        }
+                        _ => {}
                     }
-                };
-
-                let value_type = value
-                    .as_ref()
-                    .map(|e| self.check_expr(e))
-                    .unwrap_or(Type::Void);
-
-                if !self.is_assignable(&value_type, &expected) {
-                    self.push_type_error(
-                        format!("Return type mismatch: expected {expected}, found {value_type}"),
-                        value
-                            .as_ref()
-                            .map(|e| e.span().clone())
-                            .unwrap_or(span.clone()),
-                    );
+                } else {
+                    self.errors.push(CompileError::TypeError {
+                        message: "Return statement outside function".to_string(),
+                        span: span.clone(),
+                    });
                 }
             }
-
-            // ======= BREAK / CONTINUE =======
             Stmt::Break { span } | Stmt::Continue { span } => {
-                self.check_break_or_continue(stmt, span);
-            }
-
-            // ======= MAIN FUNCTION =======
-            Stmt::MainFunction { body, .. } => {
-                self.symbol_table.push_scope();
-                for stmt in body {
-                    self.check_stmt(stmt);
+                if !self.in_loop {
+                    self.errors.push(CompileError::TypeError {
+                        message: "Break/continue outside loop".to_string(),
+                        span: span.clone(),
+                    });
                 }
-                self.symbol_table.pop_scope();
-            } // ======= STUB FUTURI LOOP =======
-              // Quando verranno aggiunti i costrutti di loop (While, For, ecc.) nel parser,
-              // basterà scommentare questi match arm e adattare la logica:
-              //
-              // Stmt::While { condition, body, span } => {
-              //     let cond_type = self.check_expr(condition);
-              //     if !self.is_bool(&cond_type) {
-              //         self.push_type_error(
-              //             format!("Condition must be bool, found {}", self.type_name(&cond_type)),
-              //             condition.span().clone(),
-              //         );
-              //     }
-              //
-              //     // Entriamo nel loop
-              //     let prev_in_loop = self.in_loop;
-              //     self.in_loop = true;
-              //
-              //     self.symbol_table.push_scope();
-              //     for stmt in body {
-              //         self.check_stmt(stmt);
-              //     }
-              //     self.symbol_table.pop_scope();
-              //
-              //     // Uscita dal loop
-              //     self.in_loop = prev_in_loop;
-              // }
-              //
-              // Stmt::For { initializer, condition, increment, body, span } => {
-              //     // Controlli analoghi a While, + inizializzatore e incremento
-              //     // ...
-              // }
+            }
+            _ => unimplemented!("Unsupported statement in type checker"),
         }
     }
 
-    /// Estrae tutta la logica di controllo di `break` e `continue`.
-    fn check_break_or_continue(&mut self, stmt: &Stmt, span: &SourceSpan) {
-        if !self.in_loop {
-            let msg = match stmt {
-                Stmt::Break { .. } => "Break outside loop",
-                Stmt::Continue { .. } => "Continue outside loop",
-                _ => unreachable!(),
-            };
-            self.push_type_error(msg.to_string(), span.clone());
-        }
-    }
-
-    #[allow(clippy::collapsible_if)]
-    fn check_expr(&mut self, expr: &Expr) -> Type {
+    fn visit_expr(&mut self, expr: &Expr) -> Option<Type> {
         match expr {
+            Expr::Variable { name, span } => self
+                .symbol_table
+                .lookup_variable(name)
+                .map(|sym| sym.ty.clone())
+                .or_else(|| {
+                    self.errors.push(CompileError::TypeError {
+                        message: format!("Undefined variable '{}'", name),
+                        span: span.clone(),
+                    });
+                    None
+                }),
+            Expr::Literal { value, span } => match value {
+                LiteralValue::Number(n) => Some(self.type_of_number(n)),
+                LiteralValue::StringLit(_) => Some(Type::String),
+                LiteralValue::CharLit(_) => Some(Type::Char),
+                LiteralValue::Bool(_) => Some(Type::Bool),
+                LiteralValue::Nullptr => Some(Type::NullPtr),
+            },
             Expr::Binary {
                 left,
                 op,
                 right,
                 span,
             } => {
-                let left_type = self.check_expr(left);
-                let right_type = self.check_expr(right);
-
-                match op {
-                    BinaryOp::Add
-                    | BinaryOp::Subtract
-                    | BinaryOp::Multiply
-                    | BinaryOp::Divide
-                    | BinaryOp::Modulo => {
-                        if !self.is_numeric(&left_type) || !self.is_numeric(&right_type) {
-                            self.push_type_error(
-                                format!(
-                                    "Arithmetic operands must be numeric, found {left_type} and {right_type}"
-                                ),
-                                span.clone(),
-                            );
-                            return Type::Void;
-                        }
-                        if left_type != right_type {
-                            self.push_type_error(
-                                format!("Operand type mismatch: {left_type} and {right_type}"),
-                                span.clone(),
-                            );
-                        }
-                        left_type
-                    }
-                    BinaryOp::Equal
-                    | BinaryOp::NotEqual
-                    | BinaryOp::Less
-                    | BinaryOp::LessEqual
-                    | BinaryOp::Greater
-                    | BinaryOp::GreaterEqual => {
-                        if !self.is_comparable(&left_type, &right_type) {
-                            self.push_type_error(
-                                format!("Cannot compare {left_type} and {right_type}"),
-                                span.clone(),
-                            );
-                        }
-                        Type::Bool
-                    }
-                    BinaryOp::And | BinaryOp::Or => {
-                        if !self.is_bool(&left_type) || !self.is_bool(&right_type) {
-                            self.push_type_error(
-                                "Logical operands must be bool".to_string(),
-                                span.clone(),
-                            );
-                        }
-                        Type::Bool
-                    }
-                    _ => right_type, // Per bitwise ops, ritorniamo il tipo di destra
-                }
+                let left_type = self.visit_expr(left)?;
+                let right_type = self.visit_expr(right)?;
+                self.check_binary_op(&left_type, op, &right_type, span)
             }
-
             Expr::Unary { op, expr, span } => {
-                let expr_type = self.check_expr(expr);
-                match op {
-                    UnaryOp::Negate => {
-                        if !self.is_numeric(&expr_type) {
-                            self.push_type_error(
-                                "Negation requires numeric operand".to_string(),
-                                span.clone(),
-                            );
-                        }
-                        expr_type
-                    }
-                    UnaryOp::Not => {
-                        if !self.is_bool(&expr_type) {
-                            self.push_type_error(
-                                "Logical not requires bool operand".to_string(),
-                                span.clone(),
-                            );
-                        }
-                        Type::Bool
-                    }
-                }
+                let expr_type = self.visit_expr(expr)?;
+                self.check_unary_op(op, &expr_type, span)
             }
-
-            Expr::Literal { value, .. } => match value {
-                LiteralValue::Number(_) => Type::I32, // Default number type
-                LiteralValue::StringLit(_) => Type::String,
-                LiteralValue::CharLit(_) => Type::Char,
-                LiteralValue::Bool(_) => Type::Bool,
-                LiteralValue::Nullptr => Type::Void,
-            },
-
-            Expr::Variable { name, span } => match self.symbol_table.lookup_variable(name) {
-                Some(var) => var.ty.clone(),
-                None => {
-                    self.push_type_error(format!("Undefined variable '{name}'"), span.clone());
-                    Type::Void
-                }
-            },
-
+            Expr::Grouping { expr, span } => self.visit_expr(expr),
             Expr::Assign {
                 target,
                 value,
                 span,
             } => {
-                let value_type = self.check_expr(value);
-                let target_type = self.check_expr(target);
+                let value_type = self.visit_expr(value)?;
 
-                if !self.is_assignable(&value_type, &target_type) {
-                    self.push_type_error(
-                        format!("Cannot assign {value_type} to {target_type}"),
-                        span.clone(),
-                    );
-                }
-
-                // Controllo mutabilità
-                if let Expr::Variable { name, .. } = target.as_ref() {
-                    if let Some(var) = self.symbol_table.lookup_variable(name) {
-                        if !var.mutable {
-                            self.push_type_error(
-                                format!("Cannot assign to immutable variable '{name}'"),
-                                span.clone(),
-                            );
+                // Check valid lvalue
+                match &**target {
+                    Expr::Variable { name, span } => {
+                        if let Some(sym) = self.symbol_table.lookup_variable(name) {
+                            if !sym.mutable {
+                                self.errors.push(CompileError::TypeError {
+                                    message: format!("Assignment to immutable variable '{}'", name),
+                                    span: span.clone(),
+                                });
+                            }
+                            if !self.is_assignable(&value_type, &sym.ty) {
+                                self.errors.push(CompileError::TypeError {
+                                    message: format!("Cannot assign {} to {}", value_type, sym.ty),
+                                    span: span.clone(),
+                                });
+                            }
+                            Some(sym.ty.clone())
+                        } else {
+                            self.errors.push(CompileError::TypeError {
+                                message: format!("Undefined variable '{}'", name),
+                                span: span.clone(),
+                            });
+                            None
                         }
                     }
+                    Expr::ArrayAccess { array, index, span } => {
+                        let index_type = self.visit_expr(index)?;
+                        if !self.is_integer_type(&index_type) {
+                            self.errors.push(CompileError::TypeError {
+                                message: format!(
+                                    "Array index must be integer, found {}",
+                                    index_type
+                                ),
+                                span: index.span().clone(),
+                            });
+                        }
+
+                        let array_type = self.visit_expr(array)?;
+                        if let Type::Array(elem_type, _) = &array_type {
+                            if !self.is_assignable(&value_type, elem_type) {
+                                self.errors.push(CompileError::TypeError {
+                                    message: format!(
+                                        "Cannot assign {} to array element of type {}",
+                                        value_type, elem_type
+                                    ),
+                                    span: span.clone(),
+                                });
+                            }
+                            Some(*elem_type.clone())
+                        } else {
+                            self.errors.push(CompileError::TypeError {
+                                message: format!("Indexing non-array type {}", array_type),
+                                span: array.span().clone(),
+                            });
+                            None
+                        }
+                    }
+                    _ => {
+                        self.errors.push(CompileError::TypeError {
+                            message: "Invalid assignment target".to_string(),
+                            span: target.span().clone(),
+                        });
+                        None
+                    }
                 }
-
-                target_type
             }
-
             Expr::Call {
                 callee,
                 arguments,
                 span,
             } => {
-                // Cerchiamo la funzione direttamente per nome
-                if let Expr::Variable { name, .. } = callee.as_ref() {
-                    if let Some(func) = self.symbol_table.lookup_function(name) {
-                        // Controllo numero di argomenti
-                        if func.parameters.len() != arguments.len() {
-                            self.push_type_error(
-                                format!(
-                                    "Expected {} arguments, found {}",
-                                    func.parameters.len(),
-                                    arguments.len()
-                                ),
-                                span.clone(),
-                            );
-                            return func.return_type.clone();
-                        }
+                // Handle function calls by name lookup
+                if let Expr::Variable {
+                    name,
+                    span: var_span,
+                } = &**callee
+                {
+                    if let Some(symbol) = self.symbol_table.lookup(name) {
+                        match symbol {
+                            Symbol::Function(func) => {
+                                // Validate argument count
+                                if arguments.len() != func.parameters.len() {
+                                    self.errors.push(CompileError::TypeError {
+                                        message: format!(
+                                            "Expected {} arguments, found {}",
+                                            func.parameters.len(),
+                                            arguments.len()
+                                        ),
+                                        span: span.clone(),
+                                    });
+                                }
 
-                        // Controllo tipi degli argomenti
-                        for (i, (arg, param)) in arguments.iter().zip(&func.parameters).enumerate()
-                        {
-                            let arg_type = self.check_expr(arg);
-                            if !self.is_assignable(&arg_type, &param.type_annotation) {
-                                self.push_type_error(
-                                    format!(
-                                        "Argument {}: expected {}, found {}",
-                                        i + 1,
-                                        &param.type_annotation,
-                                        &arg_type
-                                    ),
-                                    span.clone(),
-                                );
+                                // Validate argument types
+                                for (i, (arg, param)) in
+                                    arguments.iter().zip(&func.parameters).enumerate()
+                                {
+                                    if let Some(arg_type) = self.visit_expr(arg) {
+                                        if !self.is_assignable(&arg_type, &param.type_annotation) {
+                                            self.errors.push(CompileError::TypeError {
+                                                message: format!(
+                                                    "Argument {}: expected {}, found {}",
+                                                    i + 1,
+                                                    param.type_annotation,
+                                                    arg_type
+                                                ),
+                                                span: arg.span().clone(),
+                                            });
+                                        }
+                                    }
+                                }
+                                return Some(func.return_type.clone());
+                            }
+                            _ => {
+                                self.errors.push(CompileError::TypeError {
+                                    message: format!("'{}' is not a function", name),
+                                    span: var_span.clone(),
+                                });
                             }
                         }
-
-                        return func.return_type.clone();
+                    } else {
+                        self.errors.push(CompileError::TypeError {
+                            message: format!("Undefined function '{}'", name),
+                            span: var_span.clone(),
+                        });
                     }
+                } else {
+                    self.errors.push(CompileError::TypeError {
+                        message: "Callee must be a function name".to_string(),
+                        span: callee.span().clone(),
+                    });
                 }
 
-                self.push_type_error("Invalid function call".to_string(), span.clone());
-                Type::Void
+                // Visit arguments even for invalid calls to catch nested errors
+                for arg in arguments {
+                    self.visit_expr(arg);
+                }
+                None
             }
+            Expr::ArrayAccess { array, index, span } => {
+                let array_type = self.visit_expr(array)?;
+                let index_type = self.visit_expr(index)?;
 
-            Expr::ArrayAccess { array, index, .. } => {
-                let array_type = self.check_expr(array);
-                let index_type = self.check_expr(index);
-
-                if !self.is_integer(&index_type) {
-                    self.push_type_error(
-                        "Array index must be integer".to_string(),
-                        index.span().clone(),
-                    );
+                if !self.is_integer_type(&index_type) {
+                    self.errors.push(CompileError::TypeError {
+                        message: format!("Array index must be integer, found {}", index_type),
+                        span: index.span().clone(),
+                    });
                 }
 
                 match array_type {
-                    Type::Array(element_type, _) => *element_type.clone(),
-                    Type::Vector(element_type) => *element_type.clone(),
+                    Type::Array(elem_type, _) => Some(*elem_type),
                     _ => {
-                        self.push_type_error(
-                            "Cannot index non-array type".to_string(),
-                            array.span().clone(),
-                        );
-                        Type::Void
+                        self.errors.push(CompileError::TypeError {
+                            message: format!("Indexing non-array type {}", array_type),
+                            span: array.span().clone(),
+                        });
+                        None
                     }
                 }
             }
-
+            // In the visit_expr method for ArrayLiteral
             Expr::ArrayLiteral { elements, span } => {
                 if elements.is_empty() {
-                    self.push_type_error(
-                        "Array literal must have at least one element".to_string(),
-                        span.clone(),
-                    );
-                    return Type::Array(
-                        Box::new(Type::Void),
-                        Box::new(Expr::null_expr(span.clone())),
-                    );
+                    self.errors.push(CompileError::TypeError {
+                        message: "Array literal must have at least one element".to_string(),
+                        span: span.clone(),
+                    });
+                    return None;
                 }
 
-                let first_type = self.check_expr(&elements[0]);
-                for element in elements.iter().skip(1) {
-                    let element_type = self.check_expr(element);
-                    if element_type != first_type {
-                        self.push_type_error(
-                            format!(
-                                "Array element type mismatch: expected {first_type}, found {element_type}"
-                            ),
-                            element.span().clone(),
-                        );
+                let mut element_type = None;
+                for element in elements {
+                    if let Some(ty) = self.visit_expr(element) {
+                        if let Some(prev) = &element_type {
+                            if !self.is_same_type(prev, &ty) {
+                                self.errors.push(CompileError::TypeError {
+                                    message: format!(
+                                        "Array element type mismatch: expected {}, found {}",
+                                        prev, ty
+                                    ),
+                                    span: element.span().clone(),
+                                });
+                            }
+                        } else {
+                            element_type = Some(ty);
+                        }
                     }
                 }
 
-                Type::Array(
-                    Box::new(first_type),
-                    Box::new(Expr::Literal {
-                        value: LiteralValue::Number(Number::Integer(elements.len() as i64)),
-                        span: span.clone(),
-                    }),
-                )
+                element_type
+                    .map(|ty| Type::Array(Box::new(ty), Box::new(Expr::null_expr(span.clone()))))
             }
-
-            _ => Type::Void, // Placeholders per altri casi non ancora supportati
+            _ => unimplemented!("Unsupported expression in type checker"),
         }
     }
 
     // Helper functions
-    fn is_assignable(&self, from: &Type, to: &Type) -> bool {
-        match (from, to) {
-            // Numeric widening
-            (Type::I8, Type::I16 | Type::I32 | Type::I64) => true,
-            (Type::I16, Type::I32 | Type::I64) => true,
-            (Type::I32, Type::I64) => true,
-            (Type::U8, Type::U16 | Type::U32 | Type::U64) => true,
-            (Type::U16, Type::U32 | Type::U64) => true,
-            (Type::U32, Type::U64) => true,
-            (Type::F32, Type::F64) => true,
-
-            // Altri casi richiedono esatta corrispondenza
-            _ => from == to,
+    fn type_of_number(&self, n: &Number) -> Type {
+        match n {
+            Number::I8(_) => Type::I8,
+            Number::I16(_) => Type::I16,
+            Number::I32(_) => Type::I32,
+            Number::Integer(_) => Type::I64,
+            Number::U8(_) => Type::U8,
+            Number::U16(_) => Type::U16,
+            Number::U32(_) => Type::U32,
+            Number::UnsignedInteger(_) => Type::U64,
+            Number::Float32(_) | Number::Scientific32(_, _) => Type::F32,
+            Number::Float64(_) | Number::Scientific64(_, _) => Type::F64,
         }
     }
 
-    fn is_numeric(&self, ty: &Type) -> bool {
+    fn is_assignable(&self, source: &Type, target: &Type) -> bool {
+        match (source, target) {
+            // Numeric promotions
+            (Type::I8, Type::I16 | Type::I32 | Type::I64 | Type::F32 | Type::F64) => true,
+            (Type::I16, Type::I32 | Type::I64 | Type::F32 | Type::F64) => true,
+            (Type::I32, Type::I64 | Type::F64) => true,
+            (Type::U8, Type::U16 | Type::U32 | Type::U64 | Type::F32 | Type::F64) => true,
+            (Type::U16, Type::U32 | Type::U64 | Type::F32 | Type::F64) => true,
+            (Type::U32, Type::U64 | Type::F64) => true,
+            (Type::F32, Type::F64) => true,
+
+            // Null pointer can be assigned to pointer types
+            (Type::NullPtr, Type::Array(_, _) | Type::Vector(_)) => true,
+
+            // Exact matches
+            _ => source == target,
+        }
+    }
+
+    fn is_integer_type(&self, ty: &Type) -> bool {
+        matches!(
+            ty,
+            Type::I8
+                | Type::I16
+                | Type::I32
+                | Type::I64
+                | Type::U8
+                | Type::U16
+                | Type::U32
+                | Type::U64
+        )
+    }
+
+    fn is_same_type(&self, t1: &Type, t2: &Type) -> bool {
+        t1 == t2
+    }
+
+    fn check_binary_op(
+        &mut self,
+        left: &Type,
+        op: &BinaryOp,
+        right: &Type,
+        span: &SourceSpan,
+    ) -> Option<Type> {
+        match op {
+            // Arithmetic operations
+            BinaryOp::Add
+            | BinaryOp::Subtract
+            | BinaryOp::Multiply
+            | BinaryOp::Divide
+            | BinaryOp::Modulo => {
+                if self.is_numeric_type(left) && self.is_numeric_type(right) {
+                    // Numeric promotion
+                    Some(self.promote_numeric_types(left, right))
+                } else {
+                    self.errors.push(CompileError::TypeError {
+                        message: format!(
+                            "Binary operator '{:?}' requires numeric operands, found {} and {}",
+                            op, left, right
+                        ),
+                        span: span.clone(),
+                    });
+                    None
+                }
+            }
+
+            // Comparison operations
+            BinaryOp::Equal
+            | BinaryOp::NotEqual
+            | BinaryOp::Less
+            | BinaryOp::LessEqual
+            | BinaryOp::Greater
+            | BinaryOp::GreaterEqual => {
+                if self.is_comparable(left, right) {
+                    Some(Type::Bool)
+                } else {
+                    self.errors.push(CompileError::TypeError {
+                        message: format!(
+                            "Comparison operator '{:?}' requires compatible types, found {} and {}",
+                            op, left, right
+                        ),
+                        span: span.clone(),
+                    });
+                    None
+                }
+            }
+
+            // Logical operations
+            BinaryOp::And | BinaryOp::Or => {
+                if *left == Type::Bool && *right == Type::Bool {
+                    Some(Type::Bool)
+                } else {
+                    self.errors.push(CompileError::TypeError {
+                        message: format!(
+                            "Logical operator '{:?}' requires boolean operands, found {} and {}",
+                            op, left, right
+                        ),
+                        span: span.clone(),
+                    });
+                    None
+                }
+            }
+
+            // Bitwise operations
+            BinaryOp::BitwiseAnd
+            | BinaryOp::BitwiseOr
+            | BinaryOp::BitwiseXor
+            | BinaryOp::ShiftLeft
+            | BinaryOp::ShiftRight => {
+                if self.is_integer_type(left) && self.is_integer_type(right) {
+                    // Use the left operand's type as result type
+                    Some(left.clone())
+                } else {
+                    self.errors.push(CompileError::TypeError {
+                        message: format!(
+                            "Bitwise operator '{:?}' requires integer operands, found {} and {}",
+                            op, left, right
+                        ),
+                        span: span.clone(),
+                    });
+                    None
+                }
+            }
+        }
+    }
+
+    fn check_unary_op(
+        &mut self,
+        op: &UnaryOp,
+        expr_type: &Type,
+        span: &SourceSpan,
+    ) -> Option<Type> {
+        match op {
+            UnaryOp::Negate => {
+                if self.is_numeric_type(expr_type) {
+                    Some(expr_type.clone())
+                } else {
+                    self.errors.push(CompileError::TypeError {
+                        message: format!("Negation requires numeric operand, found {}", expr_type),
+                        span: span.clone(),
+                    });
+                    None
+                }
+            }
+            UnaryOp::Not => {
+                if *expr_type == Type::Bool {
+                    Some(Type::Bool)
+                } else {
+                    self.errors.push(CompileError::TypeError {
+                        message: format!(
+                            "Logical not requires boolean operand, found {}",
+                            expr_type
+                        ),
+                        span: span.clone(),
+                    });
+                    None
+                }
+            }
+        }
+    }
+
+    fn is_numeric_type(&self, ty: &Type) -> bool {
         matches!(
             ty,
             Type::I8
@@ -564,30 +670,39 @@ impl TypeChecker {
         )
     }
 
-    fn is_integer(&self, ty: &Type) -> bool {
-        matches!(
-            ty,
-            Type::I8
-                | Type::I16
-                | Type::I32
-                | Type::I64
-                | Type::U8
-                | Type::U16
-                | Type::U32
-                | Type::U64
-        )
-    }
-
-    fn is_bool(&self, ty: &Type) -> bool {
-        ty == &Type::Bool
-    }
-
-    fn is_comparable(&self, left: &Type, right: &Type) -> bool {
-        // Permettiamo il confronto tra tipi numerici
-        if self.is_numeric(left) && self.is_numeric(right) {
+    fn is_comparable(&self, t1: &Type, t2: &Type) -> bool {
+        // Allow comparison between numeric types
+        if self.is_numeric_type(t1) && self.is_numeric_type(t2) {
             return true;
         }
-        // Altrimenti richiediamo esatta corrispondenza
-        left == right
+
+        // Allow comparison between same non-numeric types
+        t1 == t2
+    }
+
+    fn promote_numeric_types(&self, t1: &Type, t2: &Type) -> Type {
+        // Promotion hierarchy
+        let hierarchy = [
+            Type::F64,
+            Type::F32,
+            Type::U64,
+            Type::I64,
+            Type::U32,
+            Type::I32,
+            Type::U16,
+            Type::I16,
+            Type::U8,
+            Type::I8,
+        ];
+
+        // Find the highest ranked type
+        for ty in &hierarchy {
+            if t1 == ty || t2 == ty {
+                return ty.clone();
+            }
+        }
+
+        // Fallback to I64
+        Type::I64
     }
 }
