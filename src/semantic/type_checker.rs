@@ -42,7 +42,7 @@ impl TypeChecker {
                 variables,
                 type_annotation,
                 is_mutable,
-                initializers,
+                initializers: _,
                 span,
             } => {
                 for var in variables {
@@ -108,7 +108,7 @@ impl TypeChecker {
 
     fn visit_stmt(&mut self, stmt: &Stmt) {
         match stmt {
-            Stmt::Block { statements, span } => {
+            Stmt::Block { statements, span: _ } => {
                 self.symbol_table.push_scope();
                 for stmt in statements {
                     self.visit_stmt(stmt);
@@ -116,11 +116,11 @@ impl TypeChecker {
                 self.symbol_table.pop_scope();
             }
             Stmt::Function {
-                name,
-                parameters,
+                name: _,
+                parameters:_,
                 return_type,
                 body,
-                span,
+                span:_,
             } => {
                 // Set current function context
                 let old_return_type = self
@@ -136,7 +136,7 @@ impl TypeChecker {
                 self.symbol_table.pop_scope();
                 self.current_function_return_type = old_return_type;
             }
-            Stmt::MainFunction { body, span } => {
+            Stmt::MainFunction { body, span: _ } => {
                 let old_return_type = self.current_function_return_type.replace(Type::Void);
                 for stmt in body {
                     self.visit_stmt(stmt);
@@ -149,7 +149,7 @@ impl TypeChecker {
                 type_annotation,
                 is_mutable: _,
                 initializers,
-                span,
+                span:_,
             } => {
                 for (var, init) in variables.iter().zip(initializers) {
                     if let Some(init_type) = self.visit_expr(init) {
@@ -172,7 +172,7 @@ impl TypeChecker {
                 condition,
                 then_branch,
                 else_branch,
-                span,
+                span: _ ,
             } => {
                 if let Some(cond_type) = self.visit_expr(condition) {
                     if cond_type != Type::Bool {
@@ -252,7 +252,7 @@ impl TypeChecker {
                     });
                     None
                 }),
-            Expr::Literal { value, span } => match value {
+            Expr::Literal { value, span: _ } => match value {
                 LiteralValue::Number(n) => Some(self.type_of_number(n)),
                 LiteralValue::StringLit(_) => Some(Type::String),
                 LiteralValue::CharLit(_) => Some(Type::Char),
@@ -273,11 +273,11 @@ impl TypeChecker {
                 let expr_type = self.visit_expr(expr)?;
                 self.check_unary_op(op, &expr_type, span)
             }
-            Expr::Grouping { expr, span } => self.visit_expr(expr),
+            Expr::Grouping { expr, span: _ } => self.visit_expr(expr),
             Expr::Assign {
                 target,
                 value,
-                span,
+                span:_,
             } => {
                 let value_type = self.visit_expr(value)?;
 
@@ -419,7 +419,7 @@ impl TypeChecker {
                 }
                 None
             }
-            Expr::ArrayAccess { array, index, span } => {
+            Expr::ArrayAccess { array, index, span:_ } => {
                 let array_type = self.visit_expr(array)?;
                 let index_type = self.visit_expr(index)?;
 
