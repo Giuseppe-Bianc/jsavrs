@@ -124,7 +124,7 @@ impl TypeChecker {
         }
     }
 
-    #[allow(unreachable_patterns)]
+    #[allow(unreachable_patterns, clippy::collapsible_if)]
     fn visit_stmt(&mut self, stmt: &Stmt) {
         match stmt {
             Stmt::Block {
@@ -246,7 +246,7 @@ impl TypeChecker {
         }
     }
 
-    #[allow(unreachable_patterns)]
+    #[allow(unreachable_patterns, clippy::collapsible_if)]
     fn visit_expr(&mut self, expr: &Expr) -> Option<Type> {
         match expr {
             Expr::Variable { name, span } => self
