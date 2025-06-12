@@ -2,7 +2,7 @@ use jsavrs::error::compile_error::CompileError;
 use jsavrs::parser::ast::*;
 use jsavrs::semantic::type_checker::TypeChecker;
 use jsavrs::tokens::number::Number;
-use jsavrs::utils::dummy_span;
+use jsavrs::utils::{call_expr, dummy_span, function_declaration, var_declaration, variable_expr};
 
 // Test helper
 fn typecheck(ast: Vec<Stmt>) -> Vec<CompileError> {
@@ -15,61 +15,53 @@ fn typecheckd(ast: Vec<Stmt>) -> Vec<CompileError> {
     checker.check(&ast)
 }
 
-
 #[test]
-fn test_var_declaration_in_main(){
-    let ast = vec![
-        Stmt::MainFunction {
-            body: vec![Stmt::VarDeclaration {
-                variables: vec!["x".to_string()],
-                type_annotation: Type::I32,
-                is_mutable: true,
-                initializers: vec![Expr::Literal {
-                    value: LiteralValue::Number(Number::I32(42)),
-                    span: dummy_span(),
-                }],
+fn test_var_declaration_in_main() {
+    let ast = vec![Stmt::MainFunction {
+        body: vec![var_declaration(
+            vec!["x".to_string()],
+            Type::I32,
+            true,
+            vec![Expr::Literal {
+                value: LiteralValue::Number(Number::I32(42)),
                 span: dummy_span(),
             }],
-            span: dummy_span(),
-        }
-    ];
+        )],
+        span: dummy_span(),
+    }];
     let errors = typecheck(ast);
     assert!(errors.is_empty(), "Unexpected errors: {:?}", errors);
 }
 
 #[test]
-fn test_var_declaration_in_main_using_typecheck_default(){
-    let ast = vec![
-        Stmt::MainFunction {
-            body: vec![Stmt::VarDeclaration {
-                variables: vec!["x".to_string()],
-                type_annotation: Type::I32,
-                is_mutable: true,
-                initializers: vec![Expr::Literal {
-                    value: LiteralValue::Number(Number::I32(42)),
-                    span: dummy_span(),
-                }],
+fn test_var_declaration_in_main_using_typecheck_default() {
+    let ast = vec![Stmt::MainFunction {
+        body: vec![var_declaration(
+            vec!["x".to_string()],
+            Type::I32,
+            true,
+            vec![Expr::Literal {
+                value: LiteralValue::Number(Number::I32(42)),
                 span: dummy_span(),
             }],
-            span: dummy_span(),
-        }
-    ];
+        )],
+        span: dummy_span(),
+    }];
     let errors = typecheckd(ast);
     assert!(errors.is_empty(), "Unexpected errors: {:?}", errors);
 }
 
 #[test]
 fn test_variable_declaration_valid() {
-    let ast = vec![Stmt::VarDeclaration {
-        variables: vec!["x".to_string()],
-        type_annotation: Type::I32,
-        is_mutable: true,
-        initializers: vec![Expr::Literal {
+    let ast = vec![var_declaration(
+        vec!["x".to_string()],
+        Type::I32,
+        true,
+        vec![Expr::Literal {
             value: LiteralValue::Number(Number::I32(42)),
             span: dummy_span(),
         }],
-        span: dummy_span(),
-    }];
+    )];
 
     let errors = typecheck(ast);
     assert!(errors.is_empty(), "Unexpected errors: {:?}", errors);
@@ -78,16 +70,15 @@ fn test_variable_declaration_valid() {
 #[test]
 fn test_variable_declaration_in_block_valid() {
     let ast = vec![Stmt::Block {
-        statements: vec![Stmt::VarDeclaration {
-            variables: vec!["x".to_string()],
-            type_annotation: Type::I32,
-            is_mutable: true,
-            initializers: vec![Expr::Literal {
+        statements: vec![var_declaration(
+            vec!["x".to_string()],
+            Type::I32,
+            true,
+            vec![Expr::Literal {
                 value: LiteralValue::Number(Number::I32(42)),
                 span: dummy_span(),
             }],
-            span: dummy_span(),
-        }],
+        )],
         span: dummy_span(),
     }];
 
@@ -97,29 +88,31 @@ fn test_variable_declaration_in_block_valid() {
 
 #[test]
 fn test_variable_declaration_type_mismatch() {
-    let ast = vec![Stmt::VarDeclaration {
-        variables: vec!["x".to_string()],
-        type_annotation: Type::I32,
-        is_mutable: true,
-        initializers: vec![Expr::Literal {
+    let ast = vec![var_declaration(
+        vec!["x".to_string()],
+        Type::I32,
+        true,
+        vec![Expr::Literal {
             value: LiteralValue::StringLit("test".to_string()),
             span: dummy_span(),
         }],
-        span: dummy_span(),
-    }];
+    )];
 
     let errors = typecheck(ast);
     assert_eq!(errors.len(), 1);
-    assert!(errors[0].message().unwrap().contains("Cannot assign"));
+    assert_eq!(
+        errors[0].message(),
+        Some("Cannot assign string to i32 for variable 'x'")
+    );
 }
 
 #[test]
 fn test_function_call_valid() {
     let ast = vec![
         // Function declaration
-        Stmt::Function {
-            name: "add".to_string(),
-            parameters: vec![
+        function_declaration(
+            "add".to_string(),
+            vec![
                 Parameter {
                     name: "a".to_string(),
                     type_annotation: Type::I32,
@@ -131,21 +124,17 @@ fn test_function_call_valid() {
                     span: dummy_span(),
                 },
             ],
-            return_type: Type::I32,
-            body: vec![Stmt::Block {
+            Type::I32,
+            vec![Stmt::Block {
                 statements: vec![],
                 span: dummy_span(),
             }],
-            span: dummy_span(),
-        },
+        ),
         // Function call
         Stmt::Expression {
-            expr: Expr::Call {
-                callee: Box::new(Expr::Variable {
-                    name: "add".to_string(),
-                    span: dummy_span(),
-                }),
-                arguments: vec![
+            expr: call_expr(
+                variable_expr("add"),
+                vec![
                     Expr::Literal {
                         value: LiteralValue::Number(Number::I32(1)),
                         span: dummy_span(),
@@ -155,8 +144,7 @@ fn test_function_call_valid() {
                         span: dummy_span(),
                     },
                 ],
-                span: dummy_span(),
-            },
+            ),
         },
     ];
 

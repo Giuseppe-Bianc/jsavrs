@@ -12,6 +12,20 @@ pub struct TypeChecker {
     in_loop: bool,
 }
 
+// Promotion hierarchy
+const HIERARCHY: [Type; 10] = [
+    Type::F64,
+    Type::F32,
+    Type::U64,
+    Type::I64,
+    Type::U32,
+    Type::I32,
+    Type::U16,
+    Type::I16,
+    Type::U8,
+    Type::I8,
+];
+
 impl TypeChecker {
     pub fn new() -> Self {
         Self {
@@ -647,22 +661,9 @@ impl TypeChecker {
     }
 
     fn promote_numeric_types(&self, t1: &Type, t2: &Type) -> Type {
-        // Promotion hierarchy
-        let hierarchy = [
-            Type::F64,
-            Type::F32,
-            Type::U64,
-            Type::I64,
-            Type::U32,
-            Type::I32,
-            Type::U16,
-            Type::I16,
-            Type::U8,
-            Type::I8,
-        ];
 
         // Find the highest ranked type
-        for ty in &hierarchy {
+        for ty in &HIERARCHY {
             if t1 == ty || t2 == ty {
                 return ty.clone();
             }
