@@ -106,6 +106,7 @@ impl TypeChecker {
         }
     }
 
+    #[allow(unreachable_patterns)]
     fn visit_stmt(&mut self, stmt: &Stmt) {
         match stmt {
             Stmt::Block { statements, span: _ } => {
@@ -239,6 +240,7 @@ impl TypeChecker {
         }
     }
 
+    #[allow(unreachable_patterns)]
     fn visit_expr(&mut self, expr: &Expr) -> Option<Type> {
         match expr {
             Expr::Variable { name, span } => self
