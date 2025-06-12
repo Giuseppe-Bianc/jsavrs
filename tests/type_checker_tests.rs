@@ -29,23 +29,19 @@ fn test_variable_declaration_valid() {
 
 #[test]
 fn test_variable_declaration_in_block_valid() {
-    let ast = vec![
-        Stmt::Block {
-            statements: vec![
-                Stmt::VarDeclaration {
-                    variables: vec!["x".to_string()],
-                    type_annotation: Type::I32,
-                    is_mutable: true,
-                    initializers: vec![Expr::Literal {
-                        value: LiteralValue::Number(Number::I32(42)),
-                        span: dummy_span(),
-                    }],
-                    span: dummy_span(),
-                }
-            ],
+    let ast = vec![Stmt::Block {
+        statements: vec![Stmt::VarDeclaration {
+            variables: vec!["x".to_string()],
+            type_annotation: Type::I32,
+            is_mutable: true,
+            initializers: vec![Expr::Literal {
+                value: LiteralValue::Number(Number::I32(42)),
+                span: dummy_span(),
+            }],
             span: dummy_span(),
-        },
-    ];
+        }],
+        span: dummy_span(),
+    }];
 
     let errors = typecheck(ast);
     assert!(errors.is_empty(), "Unexpected errors: {:?}", errors);
@@ -375,6 +371,30 @@ fn test_binary_arithmetic_valid() {
             op: BinaryOp::Add,
             right: Box::new(Expr::Literal {
                 value: LiteralValue::Number(Number::I32(20)),
+                span: dummy_span(),
+            }),
+            span: dummy_span(),
+        },
+    }];
+
+    let errors = typecheck(ast);
+    assert!(errors.is_empty(), "Unexpected errors: {:?}", errors);
+}
+
+#[test]
+fn test_binary_arithmetic_in_grouping_valid() {
+    let ast = vec![Stmt::Expression {
+        expr: Expr::Grouping {
+            expr: Box::new(Expr::Binary {
+                left: Box::new(Expr::Literal {
+                    value: LiteralValue::Number(Number::I32(10)),
+                    span: dummy_span(),
+                }),
+                op: BinaryOp::Add,
+                right: Box::new(Expr::Literal {
+                    value: LiteralValue::Number(Number::I32(20)),
+                    span: dummy_span(),
+                }),
                 span: dummy_span(),
             }),
             span: dummy_span(),
