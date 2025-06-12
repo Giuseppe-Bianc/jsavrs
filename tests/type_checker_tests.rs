@@ -10,6 +10,12 @@ fn typecheck(ast: Vec<Stmt>) -> Vec<CompileError> {
     checker.check(&ast)
 }
 
+fn typecheckd(ast: Vec<Stmt>) -> Vec<CompileError> {
+    let mut checker = TypeChecker::default();
+    checker.check(&ast)
+}
+
+
 #[test]
 fn test_var_declaration_in_main(){
     let ast = vec![
@@ -28,6 +34,27 @@ fn test_var_declaration_in_main(){
         }
     ];
     let errors = typecheck(ast);
+    assert!(errors.is_empty(), "Unexpected errors: {:?}", errors);
+}
+
+#[test]
+fn test_var_declaration_in_main_using_typecheck_default(){
+    let ast = vec![
+        Stmt::MainFunction {
+            body: vec![Stmt::VarDeclaration {
+                variables: vec!["x".to_string()],
+                type_annotation: Type::I32,
+                is_mutable: true,
+                initializers: vec![Expr::Literal {
+                    value: LiteralValue::Number(Number::I32(42)),
+                    span: dummy_span(),
+                }],
+                span: dummy_span(),
+            }],
+            span: dummy_span(),
+        }
+    ];
+    let errors = typecheckd(ast);
     assert!(errors.is_empty(), "Unexpected errors: {:?}", errors);
 }
 

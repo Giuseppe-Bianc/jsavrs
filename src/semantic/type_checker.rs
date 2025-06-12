@@ -706,3 +706,9 @@ impl TypeChecker {
         Type::I64
     }
 }
+
+impl Default for TypeChecker {
+    fn default() -> Self {
+        Self::new()
+    }
+}
