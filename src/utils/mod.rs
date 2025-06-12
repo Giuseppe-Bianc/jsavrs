@@ -27,6 +27,71 @@ pub fn num_lit(n: i64) -> Expr {
     }
 }
 
+/// Creates a numeric literal expression from an `i8` value.
+pub fn num_lit_i8(n: i8) -> Expr {
+    Expr::Literal {
+        value: LiteralValue::Number(Number::I8(n)),
+        span: dummy_span(),
+    }
+}
+
+/// Creates a numeric literal expression from an `i16` value.
+pub fn num_lit_i16(n: i16) -> Expr {
+    Expr::Literal {
+        value: LiteralValue::Number(Number::I16(n)),
+        span: dummy_span(),
+    }
+}
+
+/// Creates a numeric literal expression from an `i32` value.
+pub fn num_lit_i32(n: i32) -> Expr {
+    Expr::Literal {
+        value: LiteralValue::Number(Number::I32(n)),
+        span: dummy_span(),
+    }
+}
+
+/// Creates a numeric literal expression from an `i64` value (alias for `num_lit`).
+pub fn num_lit_i64(n: i64) -> Expr {
+    Expr::Literal {
+        value: LiteralValue::Number(Number::Integer(n)),
+        span: dummy_span(),
+    }
+}
+
+/// Creates a numeric literal expression from a `u8` value.
+pub fn num_lit_u8(n: u8) -> Expr {
+    Expr::Literal {
+        value: LiteralValue::Number(Number::U8(n)),
+        span: dummy_span(),
+    }
+}
+
+/// Creates a numeric literal expression from a `u16` value.
+pub fn num_lit_u16(n: u16) -> Expr {
+    Expr::Literal {
+        value: LiteralValue::Number(Number::U16(n)),
+        span: dummy_span(),
+    }
+}
+
+/// Creates a numeric literal expression from a `u32` value.
+pub fn num_lit_u32(n: u32) -> Expr {
+    Expr::Literal {
+        value: LiteralValue::Number(Number::U32(n)),
+        span: dummy_span(),
+    }
+}
+
+/// Creates a numeric literal expression from a `u64` value.
+pub fn num_lit_unsigned(n: u64) -> Expr {
+    Expr::Literal {
+        value: LiteralValue::Number(Number::UnsignedInteger(n)),
+        span: dummy_span(),
+    }
+}
+
+
 pub fn float_lit(n: f64) -> Expr {
     Expr::Literal {
         value: LiteralValue::Number(Number::Float64(n)),

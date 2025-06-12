@@ -2,7 +2,7 @@ use jsavrs::error::compile_error::CompileError;
 use jsavrs::parser::ast::*;
 use jsavrs::semantic::type_checker::TypeChecker;
 use jsavrs::tokens::number::Number;
-use jsavrs::utils::{call_expr, dummy_span, function_declaration, var_declaration, variable_expr};
+use jsavrs::utils::*;
 
 // Test helper
 fn typecheck(ast: Vec<Stmt>) -> Vec<CompileError> {
@@ -155,9 +155,9 @@ fn test_function_call_valid() {
 #[test]
 fn test_function_call_argument_mismatch() {
     let ast = vec![
-        Stmt::Function {
-            name: "add".to_string(),
-            parameters: vec![
+        function_declaration(
+            "add".to_string(),
+            vec![
                 Parameter {
                     name: "a".to_string(),
                     type_annotation: Type::I32,
@@ -169,32 +169,21 @@ fn test_function_call_argument_mismatch() {
                     span: dummy_span(),
                 },
             ],
-            return_type: Type::I32,
-            body: vec![Stmt::Block {
+            Type::I32,
+            vec![Stmt::Block {
                 statements: vec![],
                 span: dummy_span(),
             }],
-            span: dummy_span(),
-        },
+        ),
         Stmt::Expression {
-            expr: Expr::Call {
-                callee: Box::new(Expr::Variable {
-                    name: "add".to_string(),
-                    span: dummy_span(),
-                }),
-                arguments: vec![
-                    Expr::Literal {
-                        value: LiteralValue::Number(Number::I32(1)),
-                        span: dummy_span(),
-                    },
+            expr: call_expr(
+                variable_expr("add"),
+                vec![
+                    num_lit_i32(1),
                     // Wrong type argument
-                    Expr::Literal {
-                        value: LiteralValue::StringLit("two".to_string()),
-                        span: dummy_span(),
-                    },
+                    string_lit("two"),
                 ],
-                span: dummy_span(),
-            },
+            ),
         },
     ];
 
@@ -208,19 +197,15 @@ fn test_function_call_argument_mismatch() {
 
 #[test]
 fn test_return_type_mismatch() {
-    let ast = vec![Stmt::Function {
-        name: "test".to_string(),
-        parameters: Vec::new(),
-        return_type: Type::I32,
-        body: vec![Stmt::Return {
-            value: Some(Expr::Literal {
-                value: LiteralValue::Bool(true),
-                span: dummy_span(),
-            }),
+    let ast = vec![function_declaration(
+        "test".to_string(),
+        vec![],
+        Type::I32,
+        vec![Stmt::Return {
+            value: Some(bool_lit(true)),
             span: dummy_span(),
         }],
-        span: dummy_span(),
-    }];
+    )];
 
     let errors = typecheck(ast);
     assert_eq!(errors.len(), 1);
@@ -258,17 +243,7 @@ fn test_array_operations_valid() {
         },
         // Array access
         Stmt::Expression {
-            expr: Expr::ArrayAccess {
-                array: Box::new(Expr::Variable {
-                    name: "arr".to_string(),
-                    span: dummy_span(),
-                }),
-                index: Box::new(Expr::Literal {
-                    value: LiteralValue::Number(Number::I32(0)),
-                    span: dummy_span(),
-                }),
-                span: dummy_span(),
-            },
+            expr: array_access_expr(variable_expr("arr"), num_lit_i32(0)),
         },
     ];
 
@@ -279,18 +254,7 @@ fn test_array_operations_valid() {
 #[test]
 fn test_numeric_promotion() {
     let ast = vec![Stmt::Expression {
-        expr: Expr::Binary {
-            left: Box::new(Expr::Literal {
-                value: LiteralValue::Number(Number::I32(42)),
-                span: dummy_span(),
-            }),
-            op: BinaryOp::Add,
-            right: Box::new(Expr::Literal {
-                value: LiteralValue::Number(Number::Float64(3.14)),
-                span: dummy_span(),
-            }),
-            span: dummy_span(),
-        },
+        expr: binary_expr(num_lit_i32(42), BinaryOp::Add, float_lit(3.14)),
     }];
 
     let errors = typecheck(ast);
@@ -318,10 +282,7 @@ fn test_continue_outside_loop() {
 #[test]
 fn test_undefined_variable() {
     let ast = vec![Stmt::Expression {
-        expr: Expr::Variable {
-            name: "undefined".to_string(),
-            span: dummy_span(),
-        },
+        expr: variable_expr("undefined"),
     }];
 
     let errors = typecheck(ast);
@@ -332,30 +293,21 @@ fn test_undefined_variable() {
 #[test]
 fn test_immutable_assignment() {
     let ast = vec![
-        // Constant declaration
-        Stmt::VarDeclaration {
-            variables: vec!["x".to_string()],
-            type_annotation: Type::I32,
-            is_mutable: false,
-            initializers: vec![Expr::Literal {
-                value: LiteralValue::Number(Number::I32(42)),
-                span: dummy_span(),
-            }],
-            span: dummy_span(),
-        },
-        // Assignment attempt
+        var_declaration(
+            // Constant declaration
+            vec!["x".to_string()],
+            Type::I32,
+            false,
+            vec![num_lit_i32(42)],
+        ),
         Stmt::Expression {
-            expr: Expr::Assign {
-                target: Box::new(Expr::Variable {
-                    name: "x".to_string(),
-                    span: dummy_span(),
-                }),
-                value: Box::new(Expr::Literal {
+            expr: assign_expr(
+                variable_expr("x"),
+                Expr::Literal {
                     value: LiteralValue::Number(Number::I32(43)),
                     span: dummy_span(),
-                }),
-                span: dummy_span(),
-            },
+                },
+            ),
         },
     ];
 
@@ -399,18 +351,7 @@ fn test_double_main_function_signature() {
 #[test]
 fn test_binary_arithmetic_valid() {
     let ast = vec![Stmt::Expression {
-        expr: Expr::Binary {
-            left: Box::new(Expr::Literal {
-                value: LiteralValue::Number(Number::I32(10)),
-                span: dummy_span(),
-            }),
-            op: BinaryOp::Add,
-            right: Box::new(Expr::Literal {
-                value: LiteralValue::Number(Number::I32(20)),
-                span: dummy_span(),
-            }),
-            span: dummy_span(),
-        },
+        expr: binary_expr(num_lit_i32(10), BinaryOp::Add, num_lit_i32(20)),
     }];
 
     let errors = typecheck(ast);
@@ -420,21 +361,7 @@ fn test_binary_arithmetic_valid() {
 #[test]
 fn test_binary_arithmetic_in_grouping_valid() {
     let ast = vec![Stmt::Expression {
-        expr: Expr::Grouping {
-            expr: Box::new(Expr::Binary {
-                left: Box::new(Expr::Literal {
-                    value: LiteralValue::Number(Number::I32(10)),
-                    span: dummy_span(),
-                }),
-                op: BinaryOp::Add,
-                right: Box::new(Expr::Literal {
-                    value: LiteralValue::Number(Number::I32(20)),
-                    span: dummy_span(),
-                }),
-                span: dummy_span(),
-            }),
-            span: dummy_span(),
-        },
+        expr: grouping_expr(binary_expr(num_lit_i32(10), BinaryOp::Add, num_lit_i32(20))),
     }];
 
     let errors = typecheck(ast);
@@ -444,18 +371,7 @@ fn test_binary_arithmetic_in_grouping_valid() {
 #[test]
 fn test_binary_arithmetic_invalid() {
     let ast = vec![Stmt::Expression {
-        expr: Expr::Binary {
-            left: Box::new(Expr::Literal {
-                value: LiteralValue::Bool(true),
-                span: dummy_span(),
-            }),
-            op: BinaryOp::Add,
-            right: Box::new(Expr::Literal {
-                value: LiteralValue::Number(Number::I32(20)),
-                span: dummy_span(),
-            }),
-            span: dummy_span(),
-        },
+        expr: binary_expr(bool_lit(true), BinaryOp::Add, num_lit_i32(20)),
     }];
 
     let errors = typecheck(ast);
@@ -469,18 +385,7 @@ fn test_binary_arithmetic_invalid() {
 #[test]
 fn test_binary_comparison_valid() {
     let ast = vec![Stmt::Expression {
-        expr: Expr::Binary {
-            left: Box::new(Expr::Literal {
-                value: LiteralValue::Number(Number::I32(10)),
-                span: dummy_span(),
-            }),
-            op: BinaryOp::Less,
-            right: Box::new(Expr::Literal {
-                value: LiteralValue::Number(Number::I32(20)),
-                span: dummy_span(),
-            }),
-            span: dummy_span(),
-        },
+        expr: binary_expr(num_lit_i32(10), BinaryOp::Less, num_lit_i32(20)),
     }];
 
     let errors = typecheck(ast);
@@ -490,18 +395,7 @@ fn test_binary_comparison_valid() {
 #[test]
 fn test_binary_comparison_invalid() {
     let ast = vec![Stmt::Expression {
-        expr: Expr::Binary {
-            left: Box::new(Expr::Literal {
-                value: LiteralValue::Bool(true),
-                span: dummy_span(),
-            }),
-            op: BinaryOp::Less,
-            right: Box::new(Expr::Literal {
-                value: LiteralValue::StringLit("test".to_string()),
-                span: dummy_span(),
-            }),
-            span: dummy_span(),
-        },
+        expr: binary_expr(bool_lit(true), BinaryOp::Less, string_lit("test")),
     }];
 
     let errors = typecheck(ast);
@@ -515,18 +409,7 @@ fn test_binary_comparison_invalid() {
 #[test]
 fn test_logical_operations_valid() {
     let ast = vec![Stmt::Expression {
-        expr: Expr::Binary {
-            left: Box::new(Expr::Literal {
-                value: LiteralValue::Bool(true),
-                span: dummy_span(),
-            }),
-            op: BinaryOp::And,
-            right: Box::new(Expr::Literal {
-                value: LiteralValue::Bool(false),
-                span: dummy_span(),
-            }),
-            span: dummy_span(),
-        },
+        expr: binary_expr(bool_lit(true), BinaryOp::And, bool_lit(false)),
     }];
 
     let errors = typecheck(ast);
@@ -536,18 +419,7 @@ fn test_logical_operations_valid() {
 #[test]
 fn test_logical_operations_invalid() {
     let ast = vec![Stmt::Expression {
-        expr: Expr::Binary {
-            left: Box::new(Expr::Literal {
-                value: LiteralValue::Number(Number::I32(1)),
-                span: dummy_span(),
-            }),
-            op: BinaryOp::Or,
-            right: Box::new(Expr::Literal {
-                value: LiteralValue::Bool(false),
-                span: dummy_span(),
-            }),
-            span: dummy_span(),
-        },
+        expr: binary_expr(num_lit_i32(1), BinaryOp::Or, bool_lit(false)),
     }];
 
     let errors = typecheck(ast);
@@ -561,18 +433,7 @@ fn test_logical_operations_invalid() {
 #[test]
 fn test_bitwise_operations_valid() {
     let ast = vec![Stmt::Expression {
-        expr: Expr::Binary {
-            left: Box::new(Expr::Literal {
-                value: LiteralValue::Number(Number::I32(10)),
-                span: dummy_span(),
-            }),
-            op: BinaryOp::BitwiseAnd,
-            right: Box::new(Expr::Literal {
-                value: LiteralValue::Number(Number::I32(20)),
-                span: dummy_span(),
-            }),
-            span: dummy_span(),
-        },
+        expr: binary_expr(num_lit_i32(10), BinaryOp::BitwiseAnd, num_lit_i32(20)),
     }];
 
     let errors = typecheck(ast);
@@ -582,18 +443,7 @@ fn test_bitwise_operations_valid() {
 #[test]
 fn test_bitwise_operations_invalid() {
     let ast = vec![Stmt::Expression {
-        expr: Expr::Binary {
-            left: Box::new(Expr::Literal {
-                value: LiteralValue::Bool(true),
-                span: dummy_span(),
-            }),
-            op: BinaryOp::BitwiseOr,
-            right: Box::new(Expr::Literal {
-                value: LiteralValue::Number(Number::I32(20)),
-                span: dummy_span(),
-            }),
-            span: dummy_span(),
-        },
+        expr: binary_expr(bool_lit(true), BinaryOp::BitwiseOr, num_lit_i32(20)),
     }];
 
     let errors = typecheck(ast);
@@ -607,14 +457,7 @@ fn test_bitwise_operations_invalid() {
 #[test]
 fn test_unary_negate_valid() {
     let ast = vec![Stmt::Expression {
-        expr: Expr::Unary {
-            op: UnaryOp::Negate,
-            expr: Box::new(Expr::Literal {
-                value: LiteralValue::Number(Number::I32(10)),
-                span: dummy_span(),
-            }),
-            span: dummy_span(),
-        },
+        expr: unary_expr(UnaryOp::Negate, num_lit_i32(10)),
     }];
 
     let errors = typecheck(ast);
@@ -624,14 +467,7 @@ fn test_unary_negate_valid() {
 #[test]
 fn test_unary_negate_invalid() {
     let ast = vec![Stmt::Expression {
-        expr: Expr::Unary {
-            op: UnaryOp::Negate,
-            expr: Box::new(Expr::Literal {
-                value: LiteralValue::Bool(true),
-                span: dummy_span(),
-            }),
-            span: dummy_span(),
-        },
+        expr: unary_expr(UnaryOp::Negate, bool_lit(true)),
     }];
 
     let errors = typecheck(ast);
@@ -645,14 +481,7 @@ fn test_unary_negate_invalid() {
 #[test]
 fn test_unary_not_valid() {
     let ast = vec![Stmt::Expression {
-        expr: Expr::Unary {
-            op: UnaryOp::Not,
-            expr: Box::new(Expr::Literal {
-                value: LiteralValue::Bool(true),
-                span: dummy_span(),
-            }),
-            span: dummy_span(),
-        },
+        expr: unary_expr(UnaryOp::Not, bool_lit(true)),
     }];
 
     let errors = typecheck(ast);
@@ -662,14 +491,7 @@ fn test_unary_not_valid() {
 #[test]
 fn test_unary_not_invalid() {
     let ast = vec![Stmt::Expression {
-        expr: Expr::Unary {
-            op: UnaryOp::Not,
-            expr: Box::new(Expr::Literal {
-                value: LiteralValue::Number(Number::I32(10)),
-                span: dummy_span(),
-            }),
-            span: dummy_span(),
-        },
+        expr: unary_expr(UnaryOp::Not, num_lit_i32(10)),
     }];
 
     let errors = typecheck(ast);
