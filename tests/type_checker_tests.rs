@@ -1,3 +1,4 @@
+use std::vec;
 use jsavrs::error::compile_error::CompileError;
 use jsavrs::parser::ast::*;
 use jsavrs::semantic::type_checker::TypeChecker;
@@ -500,4 +501,56 @@ fn test_unary_not_invalid() {
         errors[0].message(),
         Some("Logical not requires boolean operand, found i32")
     );
+}
+
+#[test]
+fn test_if() {
+    let ast = vec![Stmt::If {
+        condition: bool_lit(true),
+        then_branch: vec![Stmt::Expression {
+            expr: num_lit_i32(42),
+        }],
+        else_branch: None,
+        span: dummy_span(),
+    }];
+
+    let errors = typecheck(ast);
+    assert_eq!(errors.len(), 0);
+}
+
+#[test]
+fn test_if_invalid_condition() {
+    let ast = vec![Stmt::If {
+        condition: num_lit(32),
+        then_branch: vec![Stmt::Expression {
+            expr: num_lit_i32(42),
+        }],
+        else_branch: None,
+        span: dummy_span(),
+    }];
+
+    let errors = typecheck(ast);
+    assert_eq!(errors.len(), 1);
+    assert_eq!(
+        errors[0].message(),
+        Some("If condition must be bool, found i64")
+    );
+}
+
+#[test]
+fn test_if_else() {
+    let ast = vec![Stmt::If {
+        condition: bool_lit(true),
+        then_branch: vec![Stmt::Expression {
+            expr: num_lit_i32(42),
+        }],
+        else_branch: Some(vec![Stmt::Block {
+            statements: vec![],
+            span: dummy_span(),
+        }]),
+        span: dummy_span(),
+    }];
+
+    let errors = typecheck(ast);
+    assert_eq!(errors.len(), 0);
 }
