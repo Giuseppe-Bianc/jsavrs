@@ -217,6 +217,27 @@ fn test_return_type_mismatch() {
 }
 
 #[test]
+fn test_return_type_void() {
+    let ast = vec![function_declaration(
+        "test".to_string(),
+        vec![],
+        Type::I32,
+        vec![Stmt::Return {
+            value: None,
+            span: dummy_span(),
+        }],
+    )];
+
+    let errors = typecheck(ast);
+    assert_eq!(errors.len(), 1);
+    assert_eq!(
+        errors[0].message(),
+        Some("Function requires return type i32, found void")
+    );
+}
+
+
+#[test]
 fn test_array_operations_valid() {
     let ast = vec![
         // Array declaration
