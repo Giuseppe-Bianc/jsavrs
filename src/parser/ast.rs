@@ -266,7 +266,7 @@ pub enum Type {
     Array(Box<Type>, Box<Expr>),
     Vector(Box<Type>),
     Void,
-    NullPtr
+    NullPtr,
 }
 
 // Add this at the end of the file

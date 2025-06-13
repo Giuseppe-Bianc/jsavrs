@@ -1,12 +1,12 @@
-use std::path::PathBuf;
 // src/cli.rs
 use clap::{
-    Parser,
     builder::{
-        PathBufValueParser, Styles,
-        styling::{AnsiColor, Effects},
+        styling::{AnsiColor, Effects}, PathBufValueParser,
+        Styles,
     },
+    Parser,
 };
+use std::path::PathBuf;
 
 const HELP_STR: &str = r#"
 {before-help}{name} {version}

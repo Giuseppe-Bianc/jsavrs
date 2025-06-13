@@ -660,7 +660,6 @@ impl TypeChecker {
     }
 
     fn promote_numeric_types(&self, t1: &Type, t2: &Type) -> Type {
-
         // Find the highest ranked type
         for ty in &HIERARCHY {
             if t1 == ty || t2 == ty {

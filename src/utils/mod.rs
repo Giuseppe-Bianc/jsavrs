@@ -91,7 +91,6 @@ pub fn num_lit_unsigned(n: u64) -> Expr {
     }
 }
 
-
 pub fn float_lit(n: f64) -> Expr {
     Expr::Literal {
         value: LiteralValue::Number(Number::Float64(n)),
@@ -291,8 +290,6 @@ pub fn create_function_symbol(name: &str) -> FunctionSymbol {
 pub fn create_func_symbol(name: &str) -> Symbol {
     Symbol::Function(create_function_symbol(name))
 }
-
-
 
 // Helper to extract inner symbol values for comparison
 pub fn var_from_symbol(sym: Symbol) -> Option<VariableSymbol> {

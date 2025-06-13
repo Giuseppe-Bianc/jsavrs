@@ -1,4 +1,3 @@
-use std::collections::{HashMap, HashSet};
 //src/lexer.rs
 use crate::{
     error::compile_error::CompileError,
@@ -6,6 +5,7 @@ use crate::{
     tokens::{token::Token, token_kind::TokenKind},
 };
 use logos::Logos;
+use std::collections::{HashMap, HashSet};
 
 pub struct Lexer<'a> {
     inner: logos::Lexer<'a, TokenKind>,
