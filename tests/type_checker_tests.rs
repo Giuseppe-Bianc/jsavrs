@@ -1,9 +1,9 @@
-use std::vec;
 use jsavrs::error::compile_error::CompileError;
 use jsavrs::parser::ast::*;
 use jsavrs::semantic::type_checker::TypeChecker;
 use jsavrs::tokens::number::Number;
 use jsavrs::utils::*;
+use std::vec;
 
 // Test helper
 fn typecheck(ast: Vec<Stmt>) -> Vec<CompileError> {
@@ -253,6 +253,111 @@ fn test_array_operations_valid() {
 }
 
 #[test]
+fn test_empty_array_literal() {
+    let ast = vec![
+        // Array declaration
+        Stmt::VarDeclaration {
+            variables: vec!["arr".to_string()],
+            type_annotation: Type::Array(
+                Box::new(Type::I32),
+                Box::new(Expr::null_expr(dummy_span())),
+            ),
+            is_mutable: true,
+            initializers: vec![Expr::ArrayLiteral {
+                elements: vec![],
+                span: dummy_span(),
+            }],
+            span: dummy_span(),
+        },
+        // Array access
+        Stmt::Expression {
+            expr: array_access_expr(variable_expr("arr"), num_lit_i32(0)),
+        },
+    ];
+
+    let errors = typecheck(ast);
+    assert_eq!(errors.len(), 1);
+    assert_eq!(
+        errors[0].message(),
+        Some("Array literal must have at least one element")
+    );
+}
+
+#[test]
+fn test_mismatched_types_in_array_literal() {
+    let ast = vec![
+        // Array declaration
+        Stmt::VarDeclaration {
+            variables: vec!["arr".to_string()],
+            type_annotation: Type::Array(
+                Box::new(Type::I32),
+                Box::new(Expr::null_expr(dummy_span())),
+            ),
+            is_mutable: true,
+            initializers: vec![Expr::ArrayLiteral {
+                elements: vec![
+                    num_lit_i32(1),
+                    char_lit("s")
+                ],
+                span: dummy_span(),
+            }],
+            span: dummy_span(),
+        },
+        // Array access
+        Stmt::Expression {
+            expr: array_access_expr(variable_expr("arr"), num_lit_i32(0)),
+        },
+    ];
+
+    let errors = typecheck(ast);
+    assert_eq!(errors.len(), 1);
+    assert_eq!(
+        errors[0].message(),
+        Some("Array elements must be of the same type, found i32 and char")
+    );
+}
+
+#[test]
+fn test_array_invalid_index_access() {
+    let ast = vec![
+        // Array declaration
+        Stmt::VarDeclaration {
+            variables: vec!["arr".to_string()],
+            type_annotation: Type::Array(
+                Box::new(Type::I32),
+                Box::new(Expr::null_expr(dummy_span())),
+            ),
+            is_mutable: true,
+            initializers: vec![Expr::ArrayLiteral {
+                elements: vec![
+                    Expr::Literal {
+                        value: LiteralValue::Number(Number::I32(1)),
+                        span: dummy_span(),
+                    },
+                    Expr::Literal {
+                        value: LiteralValue::Number(Number::I32(2)),
+                        span: dummy_span(),
+                    },
+                ],
+                span: dummy_span(),
+            }],
+            span: dummy_span(),
+        },
+        // Array access
+        Stmt::Expression {
+            expr: array_access_expr(variable_expr("arr"), char_lit("a")),
+        },
+    ];
+
+    let errors = typecheck(ast);
+    assert_eq!(errors.len(), 1);
+    assert_eq!(
+        errors[0].message(),
+        Some("Array index must be integer, found char")
+    );
+}
+
+#[test]
 fn test_numeric_promotion() {
     let ast = vec![Stmt::Expression {
         expr: binary_expr(num_lit_i32(42), BinaryOp::Add, float_lit(3.14)),
@@ -318,6 +423,27 @@ fn test_immutable_assignment() {
         errors[0].message(),
         Some("Assignment to immutable variable 'x'")
     );
+}
+
+#[test]
+fn test_indexing_a_non_array_type() {
+    let ast = vec![
+        var_declaration(
+            // Constant declaration
+            vec!["x".to_string()],
+            Type::I32,
+            false,
+            vec![num_lit_i32(42)],
+        ),
+        // Array access
+        Stmt::Expression {
+            expr: array_access_expr(variable_expr("x"), num_lit_i32(0)),
+        },
+    ];
+
+    let errors = typecheck(ast);
+    assert_eq!(errors.len(), 1);
+    assert_eq!(errors[0].message(), Some("Indexing non-array type i32"));
 }
 
 #[test]
@@ -553,4 +679,19 @@ fn test_if_else() {
 
     let errors = typecheck(ast);
     assert_eq!(errors.len(), 0);
+}
+
+#[test]
+fn test_return_outside_of_function() {
+    let ast = vec![Stmt::Return {
+        value: Some(num_lit_i32(42)),
+        span: dummy_span(),
+    }];
+
+    let errors = typecheck(ast);
+    assert_eq!(errors.len(), 1);
+    assert_eq!(
+        errors[0].message(),
+        Some("Return statement outside function")
+    );
 }
