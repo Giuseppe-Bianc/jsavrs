@@ -54,6 +54,19 @@ impl TypeChecker {
         self.errors.push(CompileError::TypeError { message, span });
     }
 
+    fn undefined_var_error(&mut self, name: &String, span: SourceSpan) {
+        self.errors.push(CompileError::TypeError {
+            message: format!("Undefined variable '{name}'"),
+            span,
+        });
+    }
+    fn array_access_index_error(&mut self, index_type: &Type, span: SourceSpan) {
+        self.errors.push(CompileError::TypeError {
+            message: format!("Array index must be integer, found {index_type}"),
+            span,
+        });
+    }
+
     // Helper method per dichiarare simboli
     fn declare_symbol(&mut self, name: &str, symbol: Symbol) {
         if let Err(e) = self.symbol_table.declare(name, symbol) {
@@ -253,7 +266,7 @@ impl TypeChecker {
                 .lookup_variable(name)
                 .map(|sym| sym.ty.clone())
                 .or_else(|| {
-                    self.ptype_error(format!("Undefined variable '{name}'"), span.clone());
+                    self.undefined_var_error(name, span.clone());
                     None
                 }),
             Expr::Literal { value, span: _ } => match value {
@@ -303,17 +316,14 @@ impl TypeChecker {
                             }
                             Some(sym.ty.clone())
                         } else {
-                            self.ptype_error(format!("Undefined variable '{name}'"), span.clone());
+                            self.undefined_var_error(name, span.clone());
                             None
                         }
                     }
                     Expr::ArrayAccess { array, index, span } => {
                         let index_type = self.visit_expr(index)?;
                         if !self.is_integer_type(&index_type) {
-                            self.ptype_error(
-                                format!("Array index must be integer, found {index_type}"),
-                                index.span().clone(),
-                            );
+                            self.array_access_index_error(&index_type, index.span().clone());
                         }
 
                         let array_type = self.visit_expr(array)?;
@@ -420,10 +430,7 @@ impl TypeChecker {
                 let index_type = self.visit_expr(index)?;
 
                 if !self.is_integer_type(&index_type) {
-                    self.ptype_error(
-                        format!("Array index must be integer, found {index_type}"),
-                        index.span().clone(),
-                    );
+                    self.array_access_index_error(&index_type, index.span().clone());
                 }
 
                 match array_type {

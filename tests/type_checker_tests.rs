@@ -236,7 +236,6 @@ fn test_return_type_void() {
     );
 }
 
-
 #[test]
 fn test_array_operations_valid() {
     let ast = vec![
@@ -316,10 +315,7 @@ fn test_mismatched_types_in_array_literal() {
             ),
             is_mutable: true,
             initializers: vec![Expr::ArrayLiteral {
-                elements: vec![
-                    num_lit_i32(1),
-                    char_lit("s")
-                ],
+                elements: vec![num_lit_i32(1), char_lit("s")],
                 span: dummy_span(),
             }],
             span: dummy_span(),
@@ -414,9 +410,24 @@ fn test_undefined_variable() {
 
     let errors = typecheck(ast);
     assert_eq!(errors.len(), 1);
-    assert_eq!(errors[0].message(),
-        Some("Undefined variable 'undefined'")
-    );
+    assert_eq!(errors[0].message(), Some("Undefined variable 'undefined'"));
+}
+
+#[test]
+fn test_assign_to_undefined_variable() {
+    let ast = vec![Stmt::Expression {
+        expr: assign_expr(
+            variable_expr("undefined"),
+            Expr::Literal {
+                value: LiteralValue::Number(Number::I32(43)),
+                span: dummy_span(),
+            },
+        ),
+    },];
+
+    let errors = typecheck(ast);
+    assert_eq!(errors.len(), 1);
+    assert_eq!(errors[0].message(), Some("Undefined variable 'undefined'"));
 }
 
 #[test]
@@ -449,29 +460,22 @@ fn test_immutable_assignment() {
 }
 
 #[test]
-fn test_assign_i8_to_i32() {
+fn test_assign_f64_to_i32() {
     let ast = vec![
         var_declaration(
-            // Constant declaration
             vec!["x".to_string()],
             Type::I32,
             true,
             vec![num_lit_i32(42)],
         ),
         Stmt::Expression {
-            expr: assign_expr(
-                variable_expr("x"),
-                float_lit(3.222)
-            ),
+            expr: assign_expr(variable_expr("x"), float_lit(3.222)),
         },
     ];
 
     let errors = typecheck(ast);
     assert_eq!(errors.len(), 1);
-    assert_eq!(
-        errors[0].message(),
-        Some("Cannot assign f64 to i32")
-    );
+    assert_eq!(errors[0].message(), Some("Cannot assign f64 to i32"));
 }
 
 #[test]
@@ -742,5 +746,49 @@ fn test_return_outside_of_function() {
     assert_eq!(
         errors[0].message(),
         Some("Return statement outside function")
+    );
+}
+
+
+#[test]
+fn test_function_arguments_numbers_mismatch() {
+    let ast = vec![
+        function_declaration(
+            "add".to_string(),
+            vec![
+                Parameter {
+                    name: "a".to_string(),
+                    type_annotation: Type::I32,
+                    span: dummy_span(),
+                },
+                Parameter {
+                    name: "b".to_string(),
+                    type_annotation: Type::I32,
+                    span: dummy_span(),
+                },
+            ],
+            Type::I32,
+            vec![Stmt::Block {
+                statements: vec![],
+                span: dummy_span(),
+            }],
+        ),
+        Stmt::Expression {
+            expr: call_expr(
+                variable_expr("add"),
+                vec![
+                    num_lit_i32(2),
+                    num_lit_i32(3),
+                    num_lit_i32(4)
+                ],
+            ),
+        },
+    ];
+
+    let errors = typecheck(ast);
+    assert_eq!(errors.len(), 1);
+    assert_eq!(
+        errors[0].message(),
+        Some("Function 'add' expects 2 arguments, found 3")
     );
 }
