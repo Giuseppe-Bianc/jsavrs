@@ -414,7 +414,9 @@ fn test_undefined_variable() {
 
     let errors = typecheck(ast);
     assert_eq!(errors.len(), 1);
-    assert!(errors[0].message().unwrap().contains("Undefined variable"));
+    assert_eq!(errors[0].message(),
+        Some("Undefined variable 'undefined'")
+    );
 }
 
 #[test]
@@ -443,6 +445,32 @@ fn test_immutable_assignment() {
     assert_eq!(
         errors[0].message(),
         Some("Assignment to immutable variable 'x'")
+    );
+}
+
+#[test]
+fn test_assign_i8_to_i32() {
+    let ast = vec![
+        var_declaration(
+            // Constant declaration
+            vec!["x".to_string()],
+            Type::I32,
+            true,
+            vec![num_lit_i32(42)],
+        ),
+        Stmt::Expression {
+            expr: assign_expr(
+                variable_expr("x"),
+                float_lit(3.222)
+            ),
+        },
+    ];
+
+    let errors = typecheck(ast);
+    assert_eq!(errors.len(), 1);
+    assert_eq!(
+        errors[0].message(),
+        Some("Cannot assign f64 to i32")
     );
 }
 
