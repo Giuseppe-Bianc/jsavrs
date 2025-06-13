@@ -54,6 +54,13 @@ impl TypeChecker {
         self.errors.push(CompileError::TypeError { message, span });
     }
 
+    // Helper method per dichiarare simboli
+    fn declare_symbol(&mut self, name: &str, symbol: Symbol) {
+        if let Err(e) = self.symbol_table.declare(name, symbol) {
+            self.errors.push(e);
+        }
+    }
+
     fn visit_stmt_first_pass(&mut self, stmt: &Stmt) {
         match stmt {
             Stmt::VarDeclaration {
@@ -71,9 +78,7 @@ impl TypeChecker {
                         defined_at: span.clone(),
                         last_assignment: None,
                     });
-                    if let Err(e) = self.symbol_table.declare(var, symbol) {
-                        self.errors.push(e);
-                    }
+                    self.declare_symbol(var, symbol);
                 }
             }
             Stmt::Function {
@@ -89,9 +94,7 @@ impl TypeChecker {
                     return_type: return_type.clone(),
                     defined_at: span.clone(),
                 });
-                if let Err(e) = self.symbol_table.declare(name, func_symbol) {
-                    self.errors.push(e);
-                }
+                self.declare_symbol(name, func_symbol);
 
                 // Push scope for parameters
                 self.symbol_table.push_scope();
@@ -103,9 +106,7 @@ impl TypeChecker {
                         defined_at: param.span.clone(),
                         last_assignment: None,
                     });
-                    if let Err(e) = self.symbol_table.declare(&param.name, symbol) {
-                        self.errors.push(e);
-                    }
+                    self.declare_symbol(&param.name, symbol);
                 }
             }
             Stmt::MainFunction { body: _, span } => {
@@ -115,9 +116,7 @@ impl TypeChecker {
                     return_type: Type::Void,
                     defined_at: span.clone(),
                 });
-                if let Err(e) = self.symbol_table.declare("main", func_symbol) {
-                    self.errors.push(e);
-                }
+                self.declare_symbol("main", func_symbol);
                 self.symbol_table.push_scope();
             }
             _ => {} // Other statements don't declare symbols in first pass
