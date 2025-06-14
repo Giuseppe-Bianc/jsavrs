@@ -418,10 +418,7 @@ fn test_assign_to_undefined_variable() {
     let ast = vec![Stmt::Expression {
         expr: assign_expr(
             variable_expr("undefined"),
-            Expr::Literal {
-                value: LiteralValue::Number(Number::I32(43)),
-                span: dummy_span(),
-            },
+            num_lit_i32(43),
         ),
     },];
 
@@ -790,5 +787,47 @@ fn test_function_arguments_numbers_mismatch() {
     assert_eq!(
         errors[0].message(),
         Some("Function 'add' expects 2 arguments, found 3")
+    );
+}
+#[test]
+fn test_invalid_assignment_target() {
+    let ast = vec![
+        function_declaration(
+            "add".to_string(),
+            vec![
+                Parameter {
+                    name: "a".to_string(),
+                    type_annotation: Type::I32,
+                    span: dummy_span(),
+                },
+                Parameter {
+                    name: "b".to_string(),
+                    type_annotation: Type::I32,
+                    span: dummy_span(),
+                },
+            ],
+            Type::I32,
+            vec![Stmt::Block {
+                statements: vec![],
+                span: dummy_span(),
+            }],
+        ),
+        Stmt::Expression {
+            expr: assign_expr(call_expr(
+                variable_expr("add"),
+                vec![
+                    num_lit_i32(2),
+                    num_lit_i32(3),
+                    num_lit_i32(4)
+                ],
+            ), num_lit_i32(43)),
+        },
+    ];
+
+    let errors = typecheck(ast);
+    assert_eq!(errors.len(), 1);
+    assert_eq!(
+        errors[0].message(),
+        Some("Invalid assignment target")
     );
 }
