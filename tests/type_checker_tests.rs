@@ -821,7 +821,7 @@ fn test_invalid_assignment_target() {
 }
 
 #[test]
-fn test_assign_wrong_type_to_access() {
+fn test_assign_wrong_type_to_array_access() {
     let ast = vec![
         // Array declaration
         Stmt::VarDeclaration {
@@ -860,5 +860,47 @@ fn test_assign_wrong_type_to_access() {
     assert_eq!(
         errors[0].message(),
         Some("Cannot assign f64 to array element of type i32")
+    );
+}
+#[test]
+fn test_assign_to_array_access_whit_nullptr_index() {
+    let ast = vec![
+        // Array declaration
+        Stmt::VarDeclaration {
+            variables: vec!["arr".to_string()],
+            type_annotation: Type::Array(
+                Box::new(Type::I32),
+                Box::new(Expr::null_expr(dummy_span())),
+            ),
+            is_mutable: true,
+            initializers: vec![Expr::ArrayLiteral {
+                elements: vec![
+                    Expr::Literal {
+                        value: LiteralValue::Number(Number::I32(1)),
+                        span: dummy_span(),
+                    },
+                    Expr::Literal {
+                        value: LiteralValue::Number(Number::I32(2)),
+                        span: dummy_span(),
+                    },
+                ],
+                span: dummy_span(),
+            }],
+            span: dummy_span(),
+        },
+        // Array access
+        Stmt::Expression {
+            expr: assign_expr(
+                array_access_expr(variable_expr("arr"), nullptr_lit()),
+                num_lit_i32(33),
+            ),
+        },
+    ];
+
+    let errors = typecheck(ast);
+    assert_eq!(errors.len(), 1);
+    assert_eq!(
+        errors[0].message(),
+        Some("Array index must be integer, found nullptr")
     );
 }
