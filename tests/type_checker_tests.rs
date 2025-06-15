@@ -154,6 +154,29 @@ fn test_function_call_valid() {
 }
 
 #[test]
+fn test_function_call_not_using_variable() {
+    let ast = vec![
+        // Function call
+        Stmt::Expression {
+            expr: call_expr(
+                array_access_expr(variable_expr("num"), num_lit_i32(0)),
+                vec![
+                    num_lit_i32(1),
+                    num_lit_i32(2),
+                ],
+            ),
+        },
+    ];
+
+    let errors = typecheck(ast);
+    assert_eq!(errors.len(), 1);
+    assert_eq!(
+        errors[0].message(),
+        Some("Callee must be a function name")
+    );
+}
+
+#[test]
 fn test_function_call_argument_mismatch() {
     let ast = vec![
         function_declaration(
