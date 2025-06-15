@@ -160,20 +160,14 @@ fn test_function_call_not_using_variable() {
         Stmt::Expression {
             expr: call_expr(
                 array_access_expr(variable_expr("num"), num_lit_i32(0)),
-                vec![
-                    num_lit_i32(1),
-                    num_lit_i32(2),
-                ],
+                vec![num_lit_i32(1), num_lit_i32(2)],
             ),
         },
     ];
 
     let errors = typecheck(ast);
     assert_eq!(errors.len(), 1);
-    assert_eq!(
-        errors[0].message(),
-        Some("Callee must be a function name")
-    );
+    assert_eq!(errors[0].message(), Some("Callee must be a function name"));
 }
 
 #[test]
@@ -271,16 +265,7 @@ fn test_array_operations_valid() {
             ),
             is_mutable: true,
             initializers: vec![Expr::ArrayLiteral {
-                elements: vec![
-                    Expr::Literal {
-                        value: LiteralValue::Number(Number::I32(1)),
-                        span: dummy_span(),
-                    },
-                    Expr::Literal {
-                        value: LiteralValue::Number(Number::I32(2)),
-                        span: dummy_span(),
-                    },
-                ],
+                elements: vec![num_lit_i32(1), num_lit_i32(2)],
                 span: dummy_span(),
             }],
             span: dummy_span(),
@@ -369,16 +354,7 @@ fn test_array_invalid_index_access() {
             ),
             is_mutable: true,
             initializers: vec![Expr::ArrayLiteral {
-                elements: vec![
-                    Expr::Literal {
-                        value: LiteralValue::Number(Number::I32(1)),
-                        span: dummy_span(),
-                    },
-                    Expr::Literal {
-                        value: LiteralValue::Number(Number::I32(2)),
-                        span: dummy_span(),
-                    },
-                ],
+                elements: vec![num_lit_i32(1), num_lit_i32(2)],
                 span: dummy_span(),
             }],
             span: dummy_span(),
@@ -458,13 +434,7 @@ fn test_immutable_assignment() {
             vec![num_lit_i32(42)],
         ),
         Stmt::Expression {
-            expr: assign_expr(
-                variable_expr("x"),
-                Expr::Literal {
-                    value: LiteralValue::Number(Number::I32(43)),
-                    span: dummy_span(),
-                },
-            ),
+            expr: assign_expr(variable_expr("x"), num_lit_i32(43)),
         },
     ];
 
@@ -855,10 +825,7 @@ fn test_assign_wrong_type_to_array_access() {
             ),
             is_mutable: true,
             initializers: vec![Expr::ArrayLiteral {
-                elements: vec![
-                    num_lit_i32(1),
-                    num_lit_i32(2),
-                ],
+                elements: vec![num_lit_i32(1), num_lit_i32(2)],
                 span: dummy_span(),
             }],
             span: dummy_span(),
@@ -891,10 +858,7 @@ fn test_assign_to_array_access_whit_nullptr_index() {
             ),
             is_mutable: true,
             initializers: vec![Expr::ArrayLiteral {
-                elements: vec![
-                    num_lit_i32(1),
-                    num_lit_i32(2),
-                ],
+                elements: vec![num_lit_i32(1), num_lit_i32(2)],
                 span: dummy_span(),
             }],
             span: dummy_span(),
@@ -928,7 +892,7 @@ fn test_assign_to_a_non_array() {
         },
         Stmt::Expression {
             expr: assign_expr(
-                array_access_expr(variable_expr("arr"),num_lit_i32(2) ),
+                array_access_expr(variable_expr("arr"), num_lit_i32(2)),
                 num_lit_i32(33),
             ),
         },
@@ -936,8 +900,5 @@ fn test_assign_to_a_non_array() {
 
     let errors = typecheck(ast);
     assert_eq!(errors.len(), 1);
-    assert_eq!(
-        errors[0].message(),
-        Some("Indexing non-array type i32")
-    );
+    assert_eq!(errors[0].message(), Some("Indexing non-array type i32"));
 }
