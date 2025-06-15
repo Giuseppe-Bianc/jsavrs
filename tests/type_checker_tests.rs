@@ -416,11 +416,8 @@ fn test_undefined_variable() {
 #[test]
 fn test_assign_to_undefined_variable() {
     let ast = vec![Stmt::Expression {
-        expr: assign_expr(
-            variable_expr("undefined"),
-            num_lit_i32(43),
-        ),
-    },];
+        expr: assign_expr(variable_expr("undefined"), num_lit_i32(43)),
+    }];
 
     let errors = typecheck(ast);
     assert_eq!(errors.len(), 1);
@@ -746,7 +743,6 @@ fn test_return_outside_of_function() {
     );
 }
 
-
 #[test]
 fn test_function_arguments_numbers_mismatch() {
     let ast = vec![
@@ -773,11 +769,7 @@ fn test_function_arguments_numbers_mismatch() {
         Stmt::Expression {
             expr: call_expr(
                 variable_expr("add"),
-                vec![
-                    num_lit_i32(2),
-                    num_lit_i32(3),
-                    num_lit_i32(4)
-                ],
+                vec![num_lit_i32(2), num_lit_i32(3), num_lit_i32(4)],
             ),
         },
     ];
@@ -813,14 +805,53 @@ fn test_invalid_assignment_target() {
             }],
         ),
         Stmt::Expression {
-            expr: assign_expr(call_expr(
-                variable_expr("add"),
-                vec![
-                    num_lit_i32(2),
-                    num_lit_i32(3),
-                    num_lit_i32(4)
+            expr: assign_expr(
+                call_expr(
+                    variable_expr("add"),
+                    vec![num_lit_i32(2), num_lit_i32(3), num_lit_i32(4)],
+                ),
+                num_lit_i32(43),
+            ),
+        },
+    ];
+
+    let errors = typecheck(ast);
+    assert_eq!(errors.len(), 1);
+    assert_eq!(errors[0].message(), Some("Invalid assignment target"));
+}
+
+#[test]
+fn test_assign_wrong_type_to_access() {
+    let ast = vec![
+        // Array declaration
+        Stmt::VarDeclaration {
+            variables: vec!["arr".to_string()],
+            type_annotation: Type::Array(
+                Box::new(Type::I32),
+                Box::new(Expr::null_expr(dummy_span())),
+            ),
+            is_mutable: true,
+            initializers: vec![Expr::ArrayLiteral {
+                elements: vec![
+                    Expr::Literal {
+                        value: LiteralValue::Number(Number::I32(1)),
+                        span: dummy_span(),
+                    },
+                    Expr::Literal {
+                        value: LiteralValue::Number(Number::I32(2)),
+                        span: dummy_span(),
+                    },
                 ],
-            ), num_lit_i32(43)),
+                span: dummy_span(),
+            }],
+            span: dummy_span(),
+        },
+        // Array access
+        Stmt::Expression {
+            expr: assign_expr(
+                array_access_expr(variable_expr("arr"), num_lit_i32(0)),
+                float_lit(3.12),
+            ),
         },
     ];
 
@@ -828,6 +859,6 @@ fn test_invalid_assignment_target() {
     assert_eq!(errors.len(), 1);
     assert_eq!(
         errors[0].message(),
-        Some("Invalid assignment target")
+        Some("Cannot assign f64 to array element of type i32")
     );
 }
