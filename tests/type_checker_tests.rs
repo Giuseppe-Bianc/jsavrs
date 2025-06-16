@@ -902,3 +902,50 @@ fn test_assign_to_a_non_array() {
     assert_eq!(errors.len(), 1);
     assert_eq!(errors[0].message(), Some("Indexing non-array type i32"));
 }
+
+#[test]
+fn test_non_function_variable_call() {
+    let ast = vec![
+        // Declare a variable that is NOT a function
+        var_declaration(
+            vec!["x".to_string()],
+            Type::I32,
+            true,
+            vec![num_lit_i32(42)],
+        ),
+        // Try to call the variable as a function
+        Stmt::Expression {
+            expr: call_expr(
+                variable_expr("x"),
+                vec![],
+            ),
+        },
+    ];
+
+    let errors = typecheck(ast);
+    assert_eq!(errors.len(), 1);
+    assert_eq!(
+        errors[0].message(),
+        Some("'x' is not a function")
+    );
+}
+
+#[test]
+fn test_undefined_function_call() {
+    let ast = vec![
+        // Try to call an undefined function
+        Stmt::Expression {
+            expr: call_expr(
+                variable_expr("undefined_function"),
+                vec![num_lit_i32(1), num_lit_i32(2)],
+            ),
+        },
+    ];
+
+    let errors = typecheck(ast);
+    assert_eq!(errors.len(), 1);
+    assert_eq!(
+        errors[0].message(),
+        Some("Undefined function 'undefined_function'")
+    );
+}
