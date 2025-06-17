@@ -8,12 +8,12 @@ main {
 	//var arr: i8[] = {1, 2, 3} // vector
 	//var arr2: i8[3] = {1, 2, 3} // array
 	//var a, b: i8 = (1 + 4 + (12 + 3) * 3), 12
-	var a: i8 = 1 + 4 - (12 + 3) / 3
-	var b: i8 = 12
+	var a: i64 = 1 + 4 - (12 + 3) / 3
+	var b: i8 = 12i8
 	var c: char = 'a'
 	//(1 + 4 + (12 + 3) * 3)
 	if (a == 1 + (1 + 2)) {
-		break
+		//break
 	} else if (a == 2) {
         a = 2
     } else {
@@ -26,6 +26,6 @@ main {
             return
         }
 	}
-	var arr: i8[5] = {1, 2, 3, 4, 5}
+	var arr: i64[5] = {1, 2, 3, 4, 5}
 	//5-5=5
 }

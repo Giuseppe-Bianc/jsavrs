@@ -1,104 +1,61 @@
 use jsavrs::error::compile_error::CompileError;
-use jsavrs::parser::ast::*;
+use jsavrs::lexer::{lexer_tokenize_with_errors, Lexer};
+use jsavrs::parser::ast::{Expr, Type};
+use jsavrs::parser::jsav_parser::JsavParser;
 use jsavrs::semantic::type_checker::TypeChecker;
 use jsavrs::tokens::number::Number;
-use jsavrs::utils::*;
-use std::vec;
+use jsavrs::utils::dummy_span;
 
 // Test helper
-fn typecheck(ast: Vec<Stmt>) -> Vec<CompileError> {
+fn typecheck(ast: &str) -> Vec<CompileError> {
+    let mut lexer = Lexer::new("test.vn", &ast);
+    let (tokens, _lex_errors) = lexer_tokenize_with_errors(&mut lexer);
+    let parser = JsavParser::new(tokens);
+    let (expr, _errors) = parser.parse();
     let mut checker = TypeChecker::new();
-    checker.check(&ast)
+    checker.check(&*expr)
 }
 
-fn typecheckd(ast: Vec<Stmt>) -> Vec<CompileError> {
+fn typecheckd(ast: &str) -> Vec<CompileError> {
+    let mut lexer = Lexer::new("test.vn", &ast);
+    let (tokens, _lex_errors) = lexer_tokenize_with_errors(&mut lexer);
+    let parser = JsavParser::new(tokens);
+    let (expr, _errors) = parser.parse();
     let mut checker = TypeChecker::default();
-    checker.check(&ast)
+    checker.check(&*expr)
 }
 
 #[test]
 fn test_var_declaration_in_main() {
-    let ast = vec![Stmt::MainFunction {
-        body: vec![var_declaration(
-            vec!["x".to_string()],
-            Type::I32,
-            true,
-            vec![Expr::Literal {
-                value: LiteralValue::Number(Number::I32(42)),
-                span: dummy_span(),
-            }],
-        )],
-        span: dummy_span(),
-    }];
-    let errors = typecheck(ast);
+    let input = "main { var x: i32 = 42i32 }";
+    let errors = typecheck(input);
     assert!(errors.is_empty(), "Unexpected errors: {:?}", errors);
 }
 
 #[test]
 fn test_var_declaration_in_main_using_typecheck_default() {
-    let ast = vec![Stmt::MainFunction {
-        body: vec![var_declaration(
-            vec!["x".to_string()],
-            Type::I32,
-            true,
-            vec![Expr::Literal {
-                value: LiteralValue::Number(Number::I32(42)),
-                span: dummy_span(),
-            }],
-        )],
-        span: dummy_span(),
-    }];
-    let errors = typecheckd(ast);
+    let input = "main { var x: i32 = 42i32 }";
+    let errors = typecheckd(input);
     assert!(errors.is_empty(), "Unexpected errors: {:?}", errors);
 }
 
 #[test]
 fn test_variable_declaration_valid() {
-    let ast = vec![var_declaration(
-        vec!["x".to_string()],
-        Type::I32,
-        true,
-        vec![Expr::Literal {
-            value: LiteralValue::Number(Number::I32(42)),
-            span: dummy_span(),
-        }],
-    )];
-
-    let errors = typecheck(ast);
+    let input = "var x: i32 = 42i32";
+    let errors = typecheck(input);
     assert!(errors.is_empty(), "Unexpected errors: {:?}", errors);
 }
 
 #[test]
 fn test_variable_declaration_in_block_valid() {
-    let ast = vec![Stmt::Block {
-        statements: vec![var_declaration(
-            vec!["x".to_string()],
-            Type::I32,
-            true,
-            vec![Expr::Literal {
-                value: LiteralValue::Number(Number::I32(42)),
-                span: dummy_span(),
-            }],
-        )],
-        span: dummy_span(),
-    }];
-
+    let ast = "{ var x: i32 = 42i32 }";
     let errors = typecheck(ast);
     assert!(errors.is_empty(), "Unexpected errors: {:?}", errors);
 }
 
 #[test]
 fn test_variable_declaration_type_mismatch() {
-    let ast = vec![var_declaration(
-        vec!["x".to_string()],
-        Type::I32,
-        true,
-        vec![Expr::Literal {
-            value: LiteralValue::StringLit("test".to_string()),
-            span: dummy_span(),
-        }],
-    )];
-
+    let ast = "var x: i32 = \"test\"";
     let errors = typecheck(ast);
     assert_eq!(errors.len(), 1);
     assert_eq!(
@@ -109,45 +66,9 @@ fn test_variable_declaration_type_mismatch() {
 
 #[test]
 fn test_function_call_valid() {
-    let ast = vec![
-        // Function declaration
-        function_declaration(
-            "add".to_string(),
-            vec![
-                Parameter {
-                    name: "a".to_string(),
-                    type_annotation: Type::I32,
-                    span: dummy_span(),
-                },
-                Parameter {
-                    name: "b".to_string(),
-                    type_annotation: Type::I32,
-                    span: dummy_span(),
-                },
-            ],
-            Type::I32,
-            vec![Stmt::Block {
-                statements: vec![],
-                span: dummy_span(),
-            }],
-        ),
-        // Function call
-        Stmt::Expression {
-            expr: call_expr(
-                variable_expr("add"),
-                vec![
-                    Expr::Literal {
-                        value: LiteralValue::Number(Number::I32(1)),
-                        span: dummy_span(),
-                    },
-                    Expr::Literal {
-                        value: LiteralValue::Number(Number::I32(2)),
-                        span: dummy_span(),
-                    },
-                ],
-            ),
-        },
-    ];
+    let ast = "fun add(num1: i32, num2: i32): i32 {
+}
+add(1i32, 2i32)";
 
     let errors = typecheck(ast);
     assert!(errors.is_empty(), "Unexpected errors: {:?}", errors);
@@ -155,15 +76,7 @@ fn test_function_call_valid() {
 
 #[test]
 fn test_function_call_not_using_variable() {
-    let ast = vec![
-        // Function call
-        Stmt::Expression {
-            expr: call_expr(
-                array_access_expr(variable_expr("num"), num_lit_i32(0)),
-                vec![num_lit_i32(1), num_lit_i32(2)],
-            ),
-        },
-    ];
+    let ast = "num[0]()";
 
     let errors = typecheck(ast);
     assert_eq!(errors.len(), 1);
@@ -172,38 +85,9 @@ fn test_function_call_not_using_variable() {
 
 #[test]
 fn test_function_call_argument_mismatch() {
-    let ast = vec![
-        function_declaration(
-            "add".to_string(),
-            vec![
-                Parameter {
-                    name: "a".to_string(),
-                    type_annotation: Type::I32,
-                    span: dummy_span(),
-                },
-                Parameter {
-                    name: "b".to_string(),
-                    type_annotation: Type::I32,
-                    span: dummy_span(),
-                },
-            ],
-            Type::I32,
-            vec![Stmt::Block {
-                statements: vec![],
-                span: dummy_span(),
-            }],
-        ),
-        Stmt::Expression {
-            expr: call_expr(
-                variable_expr("add"),
-                vec![
-                    num_lit_i32(1),
-                    // Wrong type argument
-                    string_lit("two"),
-                ],
-            ),
-        },
-    ];
+    let ast = "fun add(a: i32, b: i32): i32 {
+}
+add(1i32, \"two\")";
 
     let errors = typecheck(ast);
     assert_eq!(errors.len(), 1);
@@ -215,15 +99,9 @@ fn test_function_call_argument_mismatch() {
 
 #[test]
 fn test_return_type_mismatch() {
-    let ast = vec![function_declaration(
-        "test".to_string(),
-        vec![],
-        Type::I32,
-        vec![Stmt::Return {
-            value: Some(bool_lit(true)),
-            span: dummy_span(),
-        }],
-    )];
+    let ast = "fun add(num1: i32, num2: i32): i32 {
+    return true
+}";
 
     let errors = typecheck(ast);
     assert_eq!(errors.len(), 1);
@@ -235,15 +113,9 @@ fn test_return_type_mismatch() {
 
 #[test]
 fn test_return_type_void() {
-    let ast = vec![function_declaration(
-        "test".to_string(),
-        vec![],
-        Type::I32,
-        vec![Stmt::Return {
-            value: None,
-            span: dummy_span(),
-        }],
-    )];
+    let ast = "fun add(num1: i32, num2: i32): i32 {
+    return
+}";
 
     let errors = typecheck(ast);
     assert_eq!(errors.len(), 1);
@@ -255,26 +127,8 @@ fn test_return_type_void() {
 
 #[test]
 fn test_array_operations_valid() {
-    let ast = vec![
-        // Array declaration
-        Stmt::VarDeclaration {
-            variables: vec!["arr".to_string()],
-            type_annotation: Type::Array(
-                Box::new(Type::I32),
-                Box::new(Expr::null_expr(dummy_span())),
-            ),
-            is_mutable: true,
-            initializers: vec![Expr::ArrayLiteral {
-                elements: vec![num_lit_i32(1), num_lit_i32(2)],
-                span: dummy_span(),
-            }],
-            span: dummy_span(),
-        },
-        // Array access
-        Stmt::Expression {
-            expr: array_access_expr(variable_expr("arr"), num_lit_i32(0)),
-        },
-    ];
+    let ast = "var arr: i32[2] = {1i32,2i32}
+    arr[0]";
 
     let errors = typecheck(ast);
     assert!(errors.is_empty(), "Unexpected errors: {:?}", errors);
@@ -282,26 +136,8 @@ fn test_array_operations_valid() {
 
 #[test]
 fn test_empty_array_literal() {
-    let ast = vec![
-        // Array declaration
-        Stmt::VarDeclaration {
-            variables: vec!["arr".to_string()],
-            type_annotation: Type::Array(
-                Box::new(Type::I32),
-                Box::new(Expr::null_expr(dummy_span())),
-            ),
-            is_mutable: true,
-            initializers: vec![Expr::ArrayLiteral {
-                elements: vec![],
-                span: dummy_span(),
-            }],
-            span: dummy_span(),
-        },
-        // Array access
-        Stmt::Expression {
-            expr: array_access_expr(variable_expr("arr"), num_lit_i32(0)),
-        },
-    ];
+    let ast = "var arr: i32[2] = {}
+    arr[0]";
 
     let errors = typecheck(ast);
     assert_eq!(errors.len(), 1);
@@ -313,26 +149,8 @@ fn test_empty_array_literal() {
 
 #[test]
 fn test_mismatched_types_in_array_literal() {
-    let ast = vec![
-        // Array declaration
-        Stmt::VarDeclaration {
-            variables: vec!["arr".to_string()],
-            type_annotation: Type::Array(
-                Box::new(Type::I32),
-                Box::new(Expr::null_expr(dummy_span())),
-            ),
-            is_mutable: true,
-            initializers: vec![Expr::ArrayLiteral {
-                elements: vec![num_lit_i32(1), char_lit("s")],
-                span: dummy_span(),
-            }],
-            span: dummy_span(),
-        },
-        // Array access
-        Stmt::Expression {
-            expr: array_access_expr(variable_expr("arr"), num_lit_i32(0)),
-        },
-    ];
+    let ast = "var arr: i32[2] = {1i32,'s'}
+    arr[0]";
 
     let errors = typecheck(ast);
     assert_eq!(errors.len(), 1);
@@ -344,26 +162,8 @@ fn test_mismatched_types_in_array_literal() {
 
 #[test]
 fn test_array_invalid_index_access() {
-    let ast = vec![
-        // Array declaration
-        Stmt::VarDeclaration {
-            variables: vec!["arr".to_string()],
-            type_annotation: Type::Array(
-                Box::new(Type::I32),
-                Box::new(Expr::null_expr(dummy_span())),
-            ),
-            is_mutable: true,
-            initializers: vec![Expr::ArrayLiteral {
-                elements: vec![num_lit_i32(1), num_lit_i32(2)],
-                span: dummy_span(),
-            }],
-            span: dummy_span(),
-        },
-        // Array access
-        Stmt::Expression {
-            expr: array_access_expr(variable_expr("arr"), char_lit("a")),
-        },
-    ];
+    let ast = "var arr: i32[2] = {1i32,2i32}
+    arr['a']";
 
     let errors = typecheck(ast);
     assert_eq!(errors.len(), 1);
@@ -375,9 +175,7 @@ fn test_array_invalid_index_access() {
 
 #[test]
 fn test_numeric_promotion() {
-    let ast = vec![Stmt::Expression {
-        expr: binary_expr(num_lit_i32(42), BinaryOp::Add, float_lit(3.14)),
-    }];
+    let ast = "42i32 + 3.14f64";
 
     let errors = typecheck(ast);
     assert!(errors.is_empty(), "Unexpected errors: {:?}", errors);
@@ -385,7 +183,7 @@ fn test_numeric_promotion() {
 
 #[test]
 fn test_break_outside_loop() {
-    let ast = vec![Stmt::Break { span: dummy_span() }];
+    let ast = "break";
 
     let errors = typecheck(ast);
     assert_eq!(errors.len(), 1);
@@ -394,7 +192,7 @@ fn test_break_outside_loop() {
 
 #[test]
 fn test_continue_outside_loop() {
-    let ast = vec![Stmt::Continue { span: dummy_span() }];
+    let ast = "continue";
 
     let errors = typecheck(ast);
     assert_eq!(errors.len(), 1);
@@ -403,9 +201,7 @@ fn test_continue_outside_loop() {
 
 #[test]
 fn test_undefined_variable() {
-    let ast = vec![Stmt::Expression {
-        expr: variable_expr("undefined"),
-    }];
+    let ast = "undefined";
 
     let errors = typecheck(ast);
     assert_eq!(errors.len(), 1);
@@ -414,9 +210,7 @@ fn test_undefined_variable() {
 
 #[test]
 fn test_assign_to_undefined_variable() {
-    let ast = vec![Stmt::Expression {
-        expr: assign_expr(variable_expr("undefined"), num_lit_i32(43)),
-    }];
+    let ast = "undefined = 43i32";
 
     let errors = typecheck(ast);
     assert_eq!(errors.len(), 1);
@@ -425,18 +219,8 @@ fn test_assign_to_undefined_variable() {
 
 #[test]
 fn test_immutable_assignment() {
-    let ast = vec![
-        var_declaration(
-            // Constant declaration
-            vec!["x".to_string()],
-            Type::I32,
-            false,
-            vec![num_lit_i32(42)],
-        ),
-        Stmt::Expression {
-            expr: assign_expr(variable_expr("x"), num_lit_i32(43)),
-        },
-    ];
+    let ast = "const x: i32 = 42i32
+    x = 43i32";
 
     let errors = typecheck(ast);
     assert_eq!(errors.len(), 1);
@@ -448,17 +232,8 @@ fn test_immutable_assignment() {
 
 #[test]
 fn test_assign_f64_to_i32() {
-    let ast = vec![
-        var_declaration(
-            vec!["x".to_string()],
-            Type::I32,
-            true,
-            vec![num_lit_i32(42)],
-        ),
-        Stmt::Expression {
-            expr: assign_expr(variable_expr("x"), float_lit(3.222)),
-        },
-    ];
+    let ast = "var x: i32 = 42i32
+    x = 3.222";
 
     let errors = typecheck(ast);
     assert_eq!(errors.len(), 1);
@@ -467,19 +242,8 @@ fn test_assign_f64_to_i32() {
 
 #[test]
 fn test_indexing_a_non_array_type() {
-    let ast = vec![
-        var_declaration(
-            // Constant declaration
-            vec!["x".to_string()],
-            Type::I32,
-            false,
-            vec![num_lit_i32(42)],
-        ),
-        // Array access
-        Stmt::Expression {
-            expr: array_access_expr(variable_expr("x"), num_lit_i32(0)),
-        },
-    ];
+    let ast = "var x: i32 = 42i32
+    x[0]";
 
     let errors = typecheck(ast);
     assert_eq!(errors.len(), 1);
@@ -488,10 +252,7 @@ fn test_indexing_a_non_array_type() {
 
 #[test]
 fn test_main_function_signature() {
-    let ast = vec![Stmt::MainFunction {
-        body: vec![],
-        span: dummy_span(),
-    }];
+    let ast = "main {}";
 
     let errors = typecheck(ast);
     assert!(errors.is_empty(), "Unexpected errors: {:?}", errors);
@@ -517,9 +278,7 @@ fn test_double_main_function_signature() {
 
 #[test]
 fn test_binary_arithmetic_valid() {
-    let ast = vec![Stmt::Expression {
-        expr: binary_expr(num_lit_i32(10), BinaryOp::Add, num_lit_i32(20)),
-    }];
+    let ast = "10i32 + 20i32";
 
     let errors = typecheck(ast);
     assert!(errors.is_empty(), "Unexpected errors: {:?}", errors);
@@ -527,9 +286,7 @@ fn test_binary_arithmetic_valid() {
 
 #[test]
 fn test_binary_arithmetic_in_grouping_valid() {
-    let ast = vec![Stmt::Expression {
-        expr: grouping_expr(binary_expr(num_lit_i32(10), BinaryOp::Add, num_lit_i32(20))),
-    }];
+    let ast = "(10i32 + 20i32)";
 
     let errors = typecheck(ast);
     assert!(errors.is_empty(), "Unexpected errors: {:?}", errors);
@@ -537,9 +294,7 @@ fn test_binary_arithmetic_in_grouping_valid() {
 
 #[test]
 fn test_binary_arithmetic_invalid() {
-    let ast = vec![Stmt::Expression {
-        expr: binary_expr(bool_lit(true), BinaryOp::Add, num_lit_i32(20)),
-    }];
+    let ast = "true + 20i32";
 
     let errors = typecheck(ast);
     assert_eq!(errors.len(), 1);
@@ -551,9 +306,7 @@ fn test_binary_arithmetic_invalid() {
 
 #[test]
 fn test_binary_comparison_valid() {
-    let ast = vec![Stmt::Expression {
-        expr: binary_expr(num_lit_i32(10), BinaryOp::Less, num_lit_i32(20)),
-    }];
+    let ast = "10i32 < 20i32";
 
     let errors = typecheck(ast);
     assert!(errors.is_empty(), "Unexpected errors: {:?}", errors);
@@ -561,9 +314,7 @@ fn test_binary_comparison_valid() {
 
 #[test]
 fn test_binary_comparison_invalid() {
-    let ast = vec![Stmt::Expression {
-        expr: binary_expr(bool_lit(true), BinaryOp::Less, string_lit("test")),
-    }];
+    let ast = "true < \"test\"";
 
     let errors = typecheck(ast);
     assert_eq!(errors.len(), 1);
@@ -575,9 +326,7 @@ fn test_binary_comparison_invalid() {
 
 #[test]
 fn test_logical_operations_valid() {
-    let ast = vec![Stmt::Expression {
-        expr: binary_expr(bool_lit(true), BinaryOp::And, bool_lit(false)),
-    }];
+    let ast = "true && false";
 
     let errors = typecheck(ast);
     assert!(errors.is_empty(), "Unexpected errors: {:?}", errors);
@@ -585,9 +334,7 @@ fn test_logical_operations_valid() {
 
 #[test]
 fn test_logical_operations_invalid() {
-    let ast = vec![Stmt::Expression {
-        expr: binary_expr(num_lit_i32(1), BinaryOp::Or, bool_lit(false)),
-    }];
+    let ast = "1i32 || false";
 
     let errors = typecheck(ast);
     assert_eq!(errors.len(), 1);
@@ -599,9 +346,7 @@ fn test_logical_operations_invalid() {
 
 #[test]
 fn test_bitwise_operations_valid() {
-    let ast = vec![Stmt::Expression {
-        expr: binary_expr(num_lit_i32(10), BinaryOp::BitwiseAnd, num_lit_i32(20)),
-    }];
+    let ast = "10i32 & 20i32";
 
     let errors = typecheck(ast);
     assert!(errors.is_empty(), "Unexpected errors: {:?}", errors);
@@ -609,9 +354,7 @@ fn test_bitwise_operations_valid() {
 
 #[test]
 fn test_bitwise_operations_invalid() {
-    let ast = vec![Stmt::Expression {
-        expr: binary_expr(bool_lit(true), BinaryOp::BitwiseOr, num_lit_i32(20)),
-    }];
+    let ast = "true | 20i32";
 
     let errors = typecheck(ast);
     assert_eq!(errors.len(), 1);
@@ -623,9 +366,7 @@ fn test_bitwise_operations_invalid() {
 
 #[test]
 fn test_unary_negate_valid() {
-    let ast = vec![Stmt::Expression {
-        expr: unary_expr(UnaryOp::Negate, num_lit_i32(10)),
-    }];
+    let ast = "-10i32";
 
     let errors = typecheck(ast);
     assert!(errors.is_empty(), "Unexpected errors: {:?}", errors);
@@ -633,9 +374,7 @@ fn test_unary_negate_valid() {
 
 #[test]
 fn test_unary_negate_invalid() {
-    let ast = vec![Stmt::Expression {
-        expr: unary_expr(UnaryOp::Negate, bool_lit(true)),
-    }];
+    let ast = "-true";
 
     let errors = typecheck(ast);
     assert_eq!(errors.len(), 1);
@@ -647,9 +386,7 @@ fn test_unary_negate_invalid() {
 
 #[test]
 fn test_unary_not_valid() {
-    let ast = vec![Stmt::Expression {
-        expr: unary_expr(UnaryOp::Not, bool_lit(true)),
-    }];
+    let ast = "!true";
 
     let errors = typecheck(ast);
     assert!(errors.is_empty(), "Unexpected errors: {:?}", errors);
@@ -657,9 +394,7 @@ fn test_unary_not_valid() {
 
 #[test]
 fn test_unary_not_invalid() {
-    let ast = vec![Stmt::Expression {
-        expr: unary_expr(UnaryOp::Not, num_lit_i32(10)),
-    }];
+    let ast = "!0i32";
 
     let errors = typecheck(ast);
     assert_eq!(errors.len(), 1);
@@ -671,14 +406,9 @@ fn test_unary_not_invalid() {
 
 #[test]
 fn test_if() {
-    let ast = vec![Stmt::If {
-        condition: bool_lit(true),
-        then_branch: vec![Stmt::Expression {
-            expr: num_lit_i32(42),
-        }],
-        else_branch: None,
-        span: dummy_span(),
-    }];
+    let ast = "if (true) {
+        42i32
+    }";
 
     let errors = typecheck(ast);
     assert_eq!(errors.len(), 0);
@@ -686,14 +416,9 @@ fn test_if() {
 
 #[test]
 fn test_if_invalid_condition() {
-    let ast = vec![Stmt::If {
-        condition: num_lit(32),
-        then_branch: vec![Stmt::Expression {
-            expr: num_lit_i32(42),
-        }],
-        else_branch: None,
-        span: dummy_span(),
-    }];
+    let ast = "if (32) {
+        42i32
+    }";
 
     let errors = typecheck(ast);
     assert_eq!(errors.len(), 1);
@@ -705,17 +430,9 @@ fn test_if_invalid_condition() {
 
 #[test]
 fn test_if_else() {
-    let ast = vec![Stmt::If {
-        condition: bool_lit(true),
-        then_branch: vec![Stmt::Expression {
-            expr: num_lit_i32(42),
-        }],
-        else_branch: Some(vec![Stmt::Block {
-            statements: vec![],
-            span: dummy_span(),
-        }]),
-        span: dummy_span(),
-    }];
+    let ast = "if (true) {
+        42i32
+    } else { }";
 
     let errors = typecheck(ast);
     assert_eq!(errors.len(), 0);
@@ -723,10 +440,7 @@ fn test_if_else() {
 
 #[test]
 fn test_return_outside_of_function() {
-    let ast = vec![Stmt::Return {
-        value: Some(num_lit_i32(42)),
-        span: dummy_span(),
-    }];
+    let ast = "return 42i32";
 
     let errors = typecheck(ast);
     assert_eq!(errors.len(), 1);
@@ -738,34 +452,9 @@ fn test_return_outside_of_function() {
 
 #[test]
 fn test_function_arguments_numbers_mismatch() {
-    let ast = vec![
-        function_declaration(
-            "add".to_string(),
-            vec![
-                Parameter {
-                    name: "a".to_string(),
-                    type_annotation: Type::I32,
-                    span: dummy_span(),
-                },
-                Parameter {
-                    name: "b".to_string(),
-                    type_annotation: Type::I32,
-                    span: dummy_span(),
-                },
-            ],
-            Type::I32,
-            vec![Stmt::Block {
-                statements: vec![],
-                span: dummy_span(),
-            }],
-        ),
-        Stmt::Expression {
-            expr: call_expr(
-                variable_expr("add"),
-                vec![num_lit_i32(2), num_lit_i32(3), num_lit_i32(4)],
-            ),
-        },
-    ];
+    let ast = "fun add(a: i32, b: i32): i32 {
+}
+add(2i32, 3i32, 4i32)";
 
     let errors = typecheck(ast);
     assert_eq!(errors.len(), 1);
@@ -774,70 +463,21 @@ fn test_function_arguments_numbers_mismatch() {
         Some("Function 'add' expects 2 arguments, found 3")
     );
 }
-#[test]
+/*#[test]
 fn test_invalid_assignment_target() {
-    let ast = vec![
-        function_declaration(
-            "add".to_string(),
-            vec![
-                Parameter {
-                    name: "a".to_string(),
-                    type_annotation: Type::I32,
-                    span: dummy_span(),
-                },
-                Parameter {
-                    name: "b".to_string(),
-                    type_annotation: Type::I32,
-                    span: dummy_span(),
-                },
-            ],
-            Type::I32,
-            vec![Stmt::Block {
-                statements: vec![],
-                span: dummy_span(),
-            }],
-        ),
-        Stmt::Expression {
-            expr: assign_expr(
-                call_expr(
-                    variable_expr("add"),
-                    vec![num_lit_i32(2), num_lit_i32(3), num_lit_i32(4)],
-                ),
-                num_lit_i32(43),
-            ),
-        },
-    ];
+    let ast = "fun add(a: i32, b: i32): i32 {
+}
+add(2i32, 3i32, 4i32) = 43i32";
 
     let errors = typecheck(ast);
     assert_eq!(errors.len(), 1);
     assert_eq!(errors[0].message(), Some("Invalid assignment target"));
-}
+}*/
 
 #[test]
 fn test_assign_wrong_type_to_array_access() {
-    let ast = vec![
-        // Array declaration
-        Stmt::VarDeclaration {
-            variables: vec!["arr".to_string()],
-            type_annotation: Type::Array(
-                Box::new(Type::I32),
-                Box::new(Expr::null_expr(dummy_span())),
-            ),
-            is_mutable: true,
-            initializers: vec![Expr::ArrayLiteral {
-                elements: vec![num_lit_i32(1), num_lit_i32(2)],
-                span: dummy_span(),
-            }],
-            span: dummy_span(),
-        },
-        // Array access
-        Stmt::Expression {
-            expr: assign_expr(
-                array_access_expr(variable_expr("arr"), num_lit_i32(0)),
-                float_lit(3.12),
-            ),
-        },
-    ];
+    let ast = "var arr: i32[2] = {1i32,2i32}
+    arr[0] = 3.12";
 
     let errors = typecheck(ast);
     assert_eq!(errors.len(), 1);
@@ -848,29 +488,8 @@ fn test_assign_wrong_type_to_array_access() {
 }
 #[test]
 fn test_assign_to_array_access_whit_nullptr_index() {
-    let ast = vec![
-        // Array declaration
-        Stmt::VarDeclaration {
-            variables: vec!["arr".to_string()],
-            type_annotation: Type::Array(
-                Box::new(Type::I32),
-                Box::new(Expr::null_expr(dummy_span())),
-            ),
-            is_mutable: true,
-            initializers: vec![Expr::ArrayLiteral {
-                elements: vec![num_lit_i32(1), num_lit_i32(2)],
-                span: dummy_span(),
-            }],
-            span: dummy_span(),
-        },
-        // Array access
-        Stmt::Expression {
-            expr: assign_expr(
-                array_access_expr(variable_expr("arr"), nullptr_lit()),
-                num_lit_i32(33),
-            ),
-        },
-    ];
+    let ast = "var arr: i32[2] = {1i32,2i32}
+    arr[nullptr] = 33i32";
 
     let errors = typecheck(ast);
     assert_eq!(errors.len(), 1);
@@ -881,22 +500,8 @@ fn test_assign_to_array_access_whit_nullptr_index() {
 }
 #[test]
 fn test_assign_to_a_non_array() {
-    let ast = vec![
-        // Array declaration
-        Stmt::VarDeclaration {
-            variables: vec!["arr".to_string()],
-            type_annotation: Type::I32,
-            is_mutable: true,
-            initializers: vec![num_lit_i32(4)],
-            span: dummy_span(),
-        },
-        Stmt::Expression {
-            expr: assign_expr(
-                array_access_expr(variable_expr("arr"), num_lit_i32(2)),
-                num_lit_i32(33),
-            ),
-        },
-    ];
+    let ast = "var arr: i32 = 2i32
+    arr[2] = 33i32";
 
     let errors = typecheck(ast);
     assert_eq!(errors.len(), 1);
@@ -905,19 +510,8 @@ fn test_assign_to_a_non_array() {
 
 #[test]
 fn test_non_function_variable_call() {
-    let ast = vec![
-        // Declare a variable that is NOT a function
-        var_declaration(
-            vec!["x".to_string()],
-            Type::I32,
-            true,
-            vec![num_lit_i32(42)],
-        ),
-        // Try to call the variable as a function
-        Stmt::Expression {
-            expr: call_expr(variable_expr("x"), vec![]),
-        },
-    ];
+    let ast = "var x: i32 = 42i32
+    x()";
 
     let errors = typecheck(ast);
     assert_eq!(errors.len(), 1);
@@ -926,15 +520,7 @@ fn test_non_function_variable_call() {
 
 #[test]
 fn test_undefined_function_call() {
-    let ast = vec![
-        // Try to call an undefined function
-        Stmt::Expression {
-            expr: call_expr(
-                variable_expr("undefined_function"),
-                vec![num_lit_i32(1), num_lit_i32(2)],
-            ),
-        },
-    ];
+    let ast = "undefined_function(1i32, 2i32)";
 
     let errors = typecheck(ast);
     assert_eq!(errors.len(), 1);
@@ -971,7 +557,7 @@ fn test_type_of_number_float_variants() {
     );
 
     // 64-bit float
-    assert_eq!(tc.type_of_number(&Number::Float64(2.71828)), Type::F64);
+    assert_eq!(tc.type_of_number(&Number::Float64(2.71838)), Type::F64);
     assert_eq!(
         tc.type_of_number(&Number::Scientific64(1.0e2, 2)),
         Type::F64

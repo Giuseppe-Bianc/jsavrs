@@ -76,6 +76,11 @@ impl TypeChecker {
 
     fn visit_stmt_first_pass(&mut self, stmt: &Stmt) {
         match stmt {
+            Stmt::Block { statements, .. } => {
+                for stmt in statements {
+                    self.visit_stmt_first_pass(stmt);
+                }
+            }
             Stmt::VarDeclaration {
                 variables,
                 type_annotation,
@@ -98,9 +103,10 @@ impl TypeChecker {
                 name,
                 parameters,
                 return_type,
-                body: _,
+                body,
                 span,
             } => {
+                // Declare function symbol
                 let func_symbol = Symbol::Function(FunctionSymbol {
                     name: name.clone(),
                     parameters: parameters.clone(),
@@ -109,7 +115,7 @@ impl TypeChecker {
                 });
                 self.declare_symbol(name, func_symbol);
 
-                // Push scope for parameters
+                // Push scope and declare parameters
                 self.symbol_table.push_scope();
                 for param in parameters {
                     let symbol = Symbol::Variable(VariableSymbol {
@@ -121,8 +127,15 @@ impl TypeChecker {
                     });
                     self.declare_symbol(&param.name, symbol);
                 }
+
+                // Process body in first pass (without nested scope changes)
+                for stmt in body {
+                    self.visit_stmt_first_pass(stmt);
+                }
+                // Do NOT pop scope here - retain for second pass
             }
-            Stmt::MainFunction { body: _, span } => {
+            Stmt::MainFunction { body, span } => {
+                // Declare main symbol
                 let func_symbol = Symbol::Function(FunctionSymbol {
                     name: "main".to_string(),
                     parameters: Vec::new(),
@@ -130,7 +143,13 @@ impl TypeChecker {
                     defined_at: span.clone(),
                 });
                 self.declare_symbol("main", func_symbol);
+
+                // Push scope and process body
                 self.symbol_table.push_scope();
+                for stmt in body {
+                    self.visit_stmt_first_pass(stmt);
+                }
+                // Do NOT pop scope
             }
             _ => {} // Other statements don't declare symbols in first pass
         }
@@ -167,8 +186,6 @@ impl TypeChecker {
                     self.visit_stmt(stmt);
                 }
 
-                // Pop parameter scope
-                self.symbol_table.pop_scope();
                 self.current_function_return_type = old_return_type;
             }
             Stmt::MainFunction { body, span: _ } => {
@@ -176,7 +193,6 @@ impl TypeChecker {
                 for stmt in body {
                     self.visit_stmt(stmt);
                 }
-                self.symbol_table.pop_scope();
                 self.current_function_return_type = old_return_type;
             }
             Stmt::VarDeclaration {
@@ -254,8 +270,7 @@ impl TypeChecker {
                 if !self.in_loop {
                     self.ptype_error("Break/continue outside loop".to_string(), span.clone());
                 }
-            }
-            //_ => unimplemented!("Unsupported statement in type checker"),
+            } //_ => unimplemented!("Unsupported statement in type checker"),
         }
     }
 
@@ -456,6 +471,7 @@ impl TypeChecker {
                     return None;
                 }
 
+                let len = elements.len();
                 let mut element_type = None;
                 for element in elements {
                     if let Some(ty) = self.visit_expr(element) {
@@ -472,10 +488,15 @@ impl TypeChecker {
                     }
                 }
 
-                element_type
-                    .map(|ty| Type::Array(Box::new(ty), Box::new(Expr::null_expr(span.clone()))))
-            }
-            //_ => unimplemented!("Unsupported expression in type checker"),
+                element_type.map(|ty| {
+                    // Create proper size expression with actual length
+                    let size_expr = Expr::Literal {
+                        value: LiteralValue::Number(Number::Integer(len as i64)),
+                        span: span.clone(),
+                    };
+                    Type::Array(Box::new(ty), Box::new(size_expr))
+                })
+            } //_ => unimplemented!("Unsupported expression in type checker"),
         }
     }
 
@@ -509,7 +530,38 @@ impl TypeChecker {
             // Null pointer can be assigned to pointer types
             (Type::NullPtr, Type::Array(_, _) | Type::Vector(_)) => true,
 
-            // Exact matches
+            // Array assignment handling
+            (Type::Array(source_elem, source_size), Type::Array(target_elem, target_size)) => {
+                // Check if element types are compatible
+                if !self.is_assignable(source_elem, target_elem) {
+                    return false;
+                }
+
+                // Try to extract size values from expressions
+                let get_size = |expr: &Box<Expr>| {
+                    if let Expr::Literal {
+                        value: LiteralValue::Number(Number::Integer(n)),
+                        ..
+                    } = &**expr
+                    {
+                        Some(*n)
+                    } else {
+                        None
+                    }
+                };
+
+                if let (Some(source_size_val), Some(target_size_val)) =
+                    (get_size(source_size), get_size(target_size))
+                {
+                    // Compare sizes if both are integer literals
+                    source_size_val == target_size_val
+                } else {
+                    // Fallback to expression comparison for non-literals
+                    source_size == target_size
+                }
+            }
+
+            // Exact matches for other types
             _ => source == target,
         }
     }

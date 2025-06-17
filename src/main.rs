@@ -13,6 +13,7 @@ use std::{
     path::Path,
     //process,
 };
+use jsavrs::semantic::type_checker::TypeChecker;
 
 #[allow(clippy::unused_unit)]
 fn main() -> Result<(), CompileError> {
@@ -85,6 +86,15 @@ fn main() -> Result<(), CompileError> {
         }
     } else {
         println!("{} statements found", statements.iter().len());
+    }
+
+    let type_check_timer = Timer::new("Type Checking");
+    let mut type_checkr = TypeChecker::new();
+    let type_check_errors = type_checkr.check(&*statements);
+    println!("{type_check_timer}");
+    if !type_check_errors.is_empty() {
+        eprintln!("{}", error_reporter.report_errors(type_check_errors));
+        ()
     }
 
     Ok(())
