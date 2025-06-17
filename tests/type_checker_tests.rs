@@ -915,19 +915,13 @@ fn test_non_function_variable_call() {
         ),
         // Try to call the variable as a function
         Stmt::Expression {
-            expr: call_expr(
-                variable_expr("x"),
-                vec![],
-            ),
+            expr: call_expr(variable_expr("x"), vec![]),
         },
     ];
 
     let errors = typecheck(ast);
     assert_eq!(errors.len(), 1);
-    assert_eq!(
-        errors[0].message(),
-        Some("'x' is not a function")
-    );
+    assert_eq!(errors[0].message(), Some("'x' is not a function"));
 }
 
 #[test]
@@ -947,5 +941,106 @@ fn test_undefined_function_call() {
     assert_eq!(
         errors[0].message(),
         Some("Undefined function 'undefined_function'")
+    );
+}
+
+#[test]
+fn test_type_of_number_integer_variants() {
+    let tc = TypeChecker::new();
+    // Signed ints
+    assert_eq!(tc.type_of_number(&Number::I8(0)), Type::I8);
+    assert_eq!(tc.type_of_number(&Number::I16(0)), Type::I16);
+    assert_eq!(tc.type_of_number(&Number::I32(0)), Type::I32);
+    assert_eq!(tc.type_of_number(&Number::Integer(42)), Type::I64);
+
+    // Unsigned ints
+    assert_eq!(tc.type_of_number(&Number::U8(0)), Type::U8);
+    assert_eq!(tc.type_of_number(&Number::U16(0)), Type::U16);
+    assert_eq!(tc.type_of_number(&Number::U32(0)), Type::U32);
+    assert_eq!(tc.type_of_number(&Number::UnsignedInteger(42)), Type::U64);
+}
+
+#[test]
+fn test_type_of_number_float_variants() {
+    let tc = TypeChecker::new();
+    // 32-bit float
+    assert_eq!(tc.type_of_number(&Number::Float32(3.14)), Type::F32);
+    assert_eq!(
+        tc.type_of_number(&Number::Scientific32(1.0e2, 2)),
+        Type::F32
+    );
+
+    // 64-bit float
+    assert_eq!(tc.type_of_number(&Number::Float64(2.71828)), Type::F64);
+    assert_eq!(
+        tc.type_of_number(&Number::Scientific64(1.0e2, 2)),
+        Type::F64
+    );
+}
+
+#[test]
+fn test_is_assignable_exact_and_promotions() {
+    let tc = TypeChecker::new();
+
+    // Exact matches
+    assert!(tc.is_assignable(&Type::I32, &Type::I32));
+    assert!(tc.is_assignable(&Type::F64, &Type::F64));
+
+    // Signed promotions
+    assert!(tc.is_assignable(&Type::I8, &Type::I16));
+    assert!(tc.is_assignable(&Type::I8, &Type::F32));
+    assert!(tc.is_assignable(&Type::I16, &Type::F64));
+    assert!(tc.is_assignable(&Type::I32, &Type::I64));
+
+    // Unsigned promotions
+    assert!(tc.is_assignable(&Type::U8, &Type::U16));
+    assert!(tc.is_assignable(&Type::U8, &Type::F64));
+    assert!(tc.is_assignable(&Type::U32, &Type::U64));
+    // Additional U16 promotions
+    assert!(tc.is_assignable(&Type::U16, &Type::U32));
+    assert!(tc.is_assignable(&Type::U16, &Type::U64));
+    assert!(tc.is_assignable(&Type::U16, &Type::F32));
+    assert!(tc.is_assignable(&Type::U16, &Type::F64));
+
+    // Float promotions
+    assert!(tc.is_assignable(&Type::F32, &Type::F64));
+
+    // Incompatible types
+    assert!(!tc.is_assignable(&Type::I8, &Type::U8));
+    assert!(!tc.is_assignable(&Type::F64, &Type::F32));
+    assert!(!tc.is_assignable(&Type::U16, &Type::I32));
+}
+
+#[test]
+fn test_is_assignable_nullptr() {
+    let tc = TypeChecker::new();
+
+    // NullPtr assignable to Array and Vector
+    let array_ty = Type::Array(Box::new(Type::I32), Box::new(Expr::null_expr(dummy_span())));
+    let vector_ty = Type::Vector(Box::new(Type::I8));
+    assert!(tc.is_assignable(&Type::NullPtr, &array_ty));
+    assert!(tc.is_assignable(&Type::NullPtr, &vector_ty));
+
+    // NullPtr not assignable to non-pointer
+    assert!(!tc.is_assignable(&Type::NullPtr, &Type::I32));
+}
+
+#[test]
+fn test_promote_numeric_types_behaviour() {
+    let tc = TypeChecker::new();
+
+    // Lower-rank gets promoted to higher-rank
+    assert_eq!(tc.promote_numeric_types(&Type::I8, &Type::I16), Type::I16);
+    assert_eq!(tc.promote_numeric_types(&Type::U8, &Type::F32), Type::F32);
+    assert_eq!(tc.promote_numeric_types(&Type::I32, &Type::F64), Type::F64);
+    assert_eq!(tc.promote_numeric_types(&Type::U32, &Type::U64), Type::U64);
+
+    // Symmetric behaviour
+    assert_eq!(tc.promote_numeric_types(&Type::F32, &Type::U8), Type::F32);
+
+    // If neither type matches hierarchy, fallback to I64
+    assert_eq!(
+        tc.promote_numeric_types(&Type::Bool, &Type::String),
+        Type::I64
     );
 }

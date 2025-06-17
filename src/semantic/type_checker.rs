@@ -136,7 +136,8 @@ impl TypeChecker {
         }
     }
 
-    #[allow(unreachable_patterns, clippy::collapsible_if)]
+    //#[allow(unreachable_patterns)]
+    #[allow(clippy::collapsible_if)]
     fn visit_stmt(&mut self, stmt: &Stmt) {
         match stmt {
             Stmt::Block {
@@ -254,11 +255,12 @@ impl TypeChecker {
                     self.ptype_error("Break/continue outside loop".to_string(), span.clone());
                 }
             }
-            _ => unimplemented!("Unsupported statement in type checker"),
+            //_ => unimplemented!("Unsupported statement in type checker"),
         }
     }
 
-    #[allow(unreachable_patterns, clippy::collapsible_if)]
+    //#[allow(unreachable_patterns)]
+    #[allow(clippy::collapsible_if)]
     fn visit_expr(&mut self, expr: &Expr) -> Option<Type> {
         match expr {
             Expr::Variable { name, span } => self
@@ -473,12 +475,12 @@ impl TypeChecker {
                 element_type
                     .map(|ty| Type::Array(Box::new(ty), Box::new(Expr::null_expr(span.clone()))))
             }
-            _ => unimplemented!("Unsupported expression in type checker"),
+            //_ => unimplemented!("Unsupported expression in type checker"),
         }
     }
 
     // Helper functions
-    fn type_of_number(&self, n: &Number) -> Type {
+    pub fn type_of_number(&self, n: &Number) -> Type {
         match n {
             Number::I8(_) => Type::I8,
             Number::I16(_) => Type::I16,
@@ -493,7 +495,7 @@ impl TypeChecker {
         }
     }
 
-    fn is_assignable(&self, source: &Type, target: &Type) -> bool {
+    pub fn is_assignable(&self, source: &Type, target: &Type) -> bool {
         match (source, target) {
             // Numeric promotions
             (Type::I8, Type::I16 | Type::I32 | Type::I64 | Type::F32 | Type::F64) => true,
@@ -666,7 +668,7 @@ impl TypeChecker {
         t1 == t2
     }
 
-    fn promote_numeric_types(&self, t1: &Type, t2: &Type) -> Type {
+    pub fn promote_numeric_types(&self, t1: &Type, t2: &Type) -> Type {
         // Find the highest ranked type
         for ty in &HIERARCHY {
             if t1 == ty || t2 == ty {
