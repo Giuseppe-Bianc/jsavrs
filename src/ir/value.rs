@@ -97,7 +97,7 @@ impl fmt::Display for ImmediateValue {
             ImmediateValue::F64(flt) => write!(f, "{}f64", flt),
             ImmediateValue::Bool(b) => write!(f, "{}", b),
             ImmediateValue::Char(c) => write!(f, "'{}'", c),
-            ImmediateValue::String(s) => write!(f, "\"{}\"", s),
+            ImmediateValue::String(s) => write!(f, "\"{}\"", s.escape_default()),
         }
     }
 }
