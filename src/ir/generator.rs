@@ -1,9 +1,9 @@
 //src/ir/generator.rs
 use super::*;
-use crate::parser::ast::*;
 use crate::ir::instruction::{IrBinaryOp, IrUnaryOp};
-use std::collections::HashMap;
+use crate::parser::ast::*;
 use crate::tokens::number::Number;
+use std::collections::HashMap;
 
 /// Generates IR from AST
 pub struct IrGenerator {
@@ -15,6 +15,7 @@ pub struct IrGenerator {
     value_types: HashMap<String, IrType>,
 }
 
+#[allow(clippy::only_used_in_recursion)]
 impl IrGenerator {
     pub fn new() -> Self {
         Self {
@@ -33,7 +34,13 @@ impl IrGenerator {
 
         for stmt in stmts {
             match stmt {
-                Stmt::Function { name, parameters, return_type, body, .. } => {
+                Stmt::Function {
+                    name,
+                    parameters,
+                    return_type,
+                    body,
+                    ..
+                } => {
                     let mut func = self.create_function(&name, &parameters, return_type);
                     self.generate_function_body(&mut func, body);
                     functions.push(func);
@@ -43,19 +50,16 @@ impl IrGenerator {
                     self.generate_function_body(&mut func, body);
                     functions.push(func);
                 }
-                _ => self.errors.push("Unsupported top-level statement".to_string()),
+                _ => self
+                    .errors
+                    .push("Unsupported top-level statement".to_string()),
             }
         }
 
         functions
     }
 
-    fn create_function(
-        &mut self,
-        name: &str,
-        params: &[Parameter],
-        return_type: Type,
-    ) -> Function {
+    fn create_function(&mut self, name: &str, params: &[Parameter], return_type: Type) -> Function {
         let ir_params = params
             .iter()
             .map(|param| {
@@ -86,7 +90,11 @@ impl IrGenerator {
             Type::Bool => IrType::Bool,
             Type::Custom(name) => IrType::Custom(name.clone()),
             Type::Array(element_type, size_expr) => {
-                if let Expr::Literal { value: LiteralValue::Number(Number::Integer(size)), .. } = **size_expr {
+                if let Expr::Literal {
+                    value: LiteralValue::Number(Number::Integer(size)),
+                    ..
+                } = **size_expr
+                {
                     IrType::Array(Box::new(self.map_type(element_type)), size as usize)
                 } else {
                     IrType::Pointer(Box::new(self.map_type(element_type)))
@@ -131,7 +139,12 @@ impl IrGenerator {
             Stmt::Expression { expr } => {
                 self.generate_expr(func, expr);
             }
-            Stmt::VarDeclaration { variables, type_annotation, initializers, .. } => {
+            Stmt::VarDeclaration {
+                variables,
+                type_annotation,
+                initializers,
+                ..
+            } => {
                 self.generate_var_declaration(func, variables, type_annotation, initializers);
             }
             Stmt::Return { value, .. } => {
@@ -142,7 +155,12 @@ impl IrGenerator {
                     self.generate_stmt(func, stmt);
                 }
             }
-            Stmt::If { condition, then_branch, else_branch, .. } => {
+            Stmt::If {
+                condition,
+                then_branch,
+                else_branch,
+                ..
+            } => {
                 self.generate_if(func, condition, then_branch, else_branch);
             }
             _ => self.errors.push("Unsupported statement type".to_string()),
@@ -215,7 +233,13 @@ impl IrGenerator {
         }
 
         // Add branch to merge if no terminator
-        if !self.current_block.as_ref().unwrap().terminator.is_terminator() {
+        if !self
+            .current_block
+            .as_ref()
+            .unwrap()
+            .terminator
+            .is_terminator()
+        {
             self.add_terminator(Terminator::Branch(merge_label.clone()));
         }
 
@@ -228,7 +252,13 @@ impl IrGenerator {
         }
 
         // Add branch to merge if no terminator
-        if !self.current_block.as_ref().unwrap().terminator.is_terminator() {
+        if !self
+            .current_block
+            .as_ref()
+            .unwrap()
+            .terminator
+            .is_terminator()
+        {
             self.add_terminator(Terminator::Branch(merge_label.clone()));
         }
 
@@ -239,7 +269,9 @@ impl IrGenerator {
     fn generate_expr(&mut self, func: &mut Function, expr: Expr) -> Value {
         match expr {
             Expr::Literal { value, .. } => self.generate_literal(value),
-            Expr::Binary { left, op, right, .. } => self.generate_binary(func, *left, op, *right),
+            Expr::Binary {
+                left, op, right, ..
+            } => self.generate_binary(func, *left, op, *right),
             Expr::Unary { op, expr, .. } => self.generate_unary(func, op, *expr),
             Expr::Variable { name, .. } => self.generate_variable(name),
             Expr::Assign { target, value, .. } => self.generate_assign(func, *target, *value),
@@ -272,7 +304,13 @@ impl IrGenerator {
         }
     }
 
-    fn generate_binary(&mut self, func: &mut Function, left: Expr, op: BinaryOp, right: Expr) -> Value {
+    fn generate_binary(
+        &mut self,
+        func: &mut Function,
+        left: Expr,
+        op: BinaryOp,
+        right: Expr,
+    ) -> Value {
         let ir_op = match op {
             BinaryOp::Add => IrBinaryOp::Add,
             BinaryOp::Subtract => IrBinaryOp::Subtract,
@@ -379,5 +417,11 @@ impl IrGenerator {
         if let Some(block) = &mut self.current_block {
             block.terminator = term;
         }
+    }
+}
+
+impl Default for IrGenerator {
+    fn default() -> Self {
+        Self::new()
     }
 }
