@@ -89,22 +89,22 @@ pub enum Instruction {
 impl fmt::Display for Instruction {
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
         match self {
-            Instruction::Alloca { dest, ty } => write!(f, "{} = alloca {}", dest, ty),
-            Instruction::Store { value, dest } => write!(f, "store {} to {}", value, dest),
-            Instruction::Load { dest, src, ty } => write!(f, "{} = load {} from {}", dest, ty, src),
+            Instruction::Alloca { dest, ty } => write!(f, "{dest} = alloca {ty}"),
+            Instruction::Store { value, dest } => write!(f, "store {value} to {dest}"),
+            Instruction::Load { dest, src, ty } => write!(f, "{dest} = load {ty} from {src}"),
             Instruction::Binary {
                 op,
                 dest,
                 left,
                 right,
                 ty,
-            } => write!(f, "{} = {} {} {}, {}", dest, op, left, right, ty),
+            } => write!(f, "{dest} = {op} {left} {right}, {ty}"),
             Instruction::Unary {
                 op,
                 dest,
                 operand,
                 ty,
-            } => write!(f, "{} = {} {} {}", dest, op, operand, ty),
+            } => write!(f, "{dest} = {op} {operand} {ty}"),
             Instruction::Call {
                 dest,
                 func,
@@ -113,37 +113,33 @@ impl fmt::Display for Instruction {
             } => {
                 let dest_str = dest
                     .as_ref()
-                    .map_or_else(|| "".to_string(), |d| format!("{} = ", d));
+                    .map_or_else(|| "".to_string(), |d| format!("{d} = "));
                 let args_str = args
                     .iter()
                     .map(|arg| arg.to_string())
                     .collect::<Vec<_>>()
                     .join(", ");
-                write!(f, "{}{}({}) : {}", dest_str, func, args_str, ty)
+                write!(f, "{dest_str}{func}({args_str}) : {ty}")
             }
             Instruction::GetElementPtr {
                 dest,
                 base,
                 index,
                 element_ty,
-            } => write!(
-                f,
-                "{} = getelementptr {}, {} : {}",
-                dest, base, index, element_ty
-            ),
+            } => write!(f, "{dest} = getelementptr {base}, {index} : {element_ty}",),
             Instruction::Cast {
                 dest,
                 value,
                 from_ty,
                 to_ty,
-            } => write!(f, "{} = cast {} from {} to {}", dest, value, from_ty, to_ty),
+            } => write!(f, "{dest} = cast {value} from {from_ty} to {to_ty}"),
             Instruction::Phi { dest, ty, incoming } => {
                 let incoming_str = incoming
                     .iter()
-                    .map(|(val, block)| format!("[ {}, {} ]", val, block))
+                    .map(|(val, block)| format!("[ {val}, {block} ]"))
                     .collect::<Vec<_>>()
                     .join(", ");
-                write!(f, "{} = phi {} [ {} ]", dest, ty, incoming_str)
+                write!(f, "{dest} = phi {ty} [ {incoming_str} ]")
             }
         }
     }

@@ -40,14 +40,14 @@ impl fmt::Display for Function {
         let params_str = self
             .parameters
             .iter()
-            .map(|(name, ty)| format!("{}: {}", name, ty))
+            .map(|(name, ty)| format!("{name}: {ty}"))
             .collect::<Vec<_>>()
             .join(", ");
 
         writeln!(f, "function {} ({}) -> {}:", self.name, params_str, self.return_type)?;
 
         for block in &self.basic_blocks {
-            writeln!(f, "{}", block)?;
+            writeln!(f, "{block}")?;
         }
 
         Ok(())

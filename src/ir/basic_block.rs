@@ -24,7 +24,7 @@ impl fmt::Display for BasicBlock {
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
         writeln!(f, "{}:", self.label)?;
         for inst in &self.instructions {
-            writeln!(f, "  {}", inst)?;
+            writeln!(f, "  {inst}")?;
         }
         write!(f, "  {}", self.terminator)
     }

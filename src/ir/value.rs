@@ -74,10 +74,10 @@ impl Value {
 impl fmt::Display for Value {
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
         match &self.kind {
-            ValueKind::Immediate(imm) => write!(f, "{}", imm),
-            ValueKind::Local(name) => write!(f, "%{}", name),
-            ValueKind::Global(name) => write!(f, "@{}", name),
-            ValueKind::Temporary(id) => write!(f, "t{}", id),
+            ValueKind::Immediate(imm) => write!(f, "{imm}"),
+            ValueKind::Local(name) => write!(f, "%{name}"),
+            ValueKind::Global(name) => write!(f, "@{name}"),
+            ValueKind::Temporary(id) => write!(f, "t{id}"),
         }
     }
 }
@@ -85,18 +85,18 @@ impl fmt::Display for Value {
 impl fmt::Display for ImmediateValue {
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
         match self {
-            ImmediateValue::I8(i) => write!(f, "{}i8", i),
-            ImmediateValue::I16(i) => write!(f, "{}i16", i),
-            ImmediateValue::I32(i) => write!(f, "{}i32", i),
-            ImmediateValue::I64(i) => write!(f, "{}i64", i),
-            ImmediateValue::U8(u) => write!(f, "{}u8", u),
-            ImmediateValue::U16(u) => write!(f, "{}u16", u),
-            ImmediateValue::U32(u) => write!(f, "{}u32", u),
-            ImmediateValue::U64(u) => write!(f, "{}u64", u),
-            ImmediateValue::F32(flt) => write!(f, "{}f32", flt),
-            ImmediateValue::F64(flt) => write!(f, "{}f64", flt),
-            ImmediateValue::Bool(b) => write!(f, "{}", b),
-            ImmediateValue::Char(c) => write!(f, "'{}'", c),
+            ImmediateValue::I8(i) => write!(f, "{i}i8"),
+            ImmediateValue::I16(i) => write!(f, "{i}i16"),
+            ImmediateValue::I32(i) => write!(f, "{i}i32"),
+            ImmediateValue::I64(i) => write!(f, "{i}i64"),
+            ImmediateValue::U8(u) => write!(f, "{u}u8"),
+            ImmediateValue::U16(u) => write!(f, "{u}u16"),
+            ImmediateValue::U32(u) => write!(f, "{u}u32"),
+            ImmediateValue::U64(u) => write!(f, "{u}u64"),
+            ImmediateValue::F32(flt) => write!(f, "{flt}f32"),
+            ImmediateValue::F64(flt) => write!(f, "{flt}f64"),
+            ImmediateValue::Bool(b) => write!(f, "{b}"),
+            ImmediateValue::Char(c) => write!(f, "'{c}'"),
             ImmediateValue::String(s) => write!(f, "\"{}\"", s.escape_default()),
         }
     }
