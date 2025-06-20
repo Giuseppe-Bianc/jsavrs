@@ -126,7 +126,7 @@ impl fmt::Display for Instruction {
                 base,
                 index,
                 element_ty,
-            } => write!(f, "{dest} = getelementptr {base}, {index} : {element_ty}",),
+            } => write!(f, "{dest} = getelementptr {base}, {index} : {element_ty}", ),
             Instruction::Cast {
                 dest,
                 value,

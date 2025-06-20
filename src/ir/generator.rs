@@ -15,7 +15,7 @@ pub struct IrGenerator {
     value_types: HashMap<String, IrType>,
 }
 
-#[allow(clippy::only_used_in_recursion)]
+#[allow(clippy::collapsible_if, clippy::only_used_in_recursion)]
 impl IrGenerator {
     pub fn new() -> Self {
         Self {
