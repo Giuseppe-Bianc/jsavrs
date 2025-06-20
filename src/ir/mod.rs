@@ -9,7 +9,7 @@ pub mod generator;
 
 pub use basic_block::BasicBlock;
 pub use function::Function;
-pub use instruction::{IrBinaryOp, Instruction, IrUnaryOp};
+pub use instruction::{Instruction, IrBinaryOp, IrUnaryOp};
 pub use terminator::Terminator;
 pub use types::IrType;
 pub use value::{ImmediateValue, Value, ValueKind};

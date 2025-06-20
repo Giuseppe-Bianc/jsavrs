@@ -6,6 +6,7 @@ use jsavrs::error::error_reporter::ErrorReporter;
 use jsavrs::lexer::Lexer;
 use jsavrs::parser::ast_printer::pretty_print_stmt;
 use jsavrs::parser::jsav_parser::JsavParser;
+use jsavrs::semantic::type_checker::TypeChecker;
 use jsavrs::time::timer::{AutoTimer, Timer};
 use jsavrs::{error::compile_error::CompileError, lexer::lexer_tokenize_with_errors};
 use std::{
@@ -13,9 +14,8 @@ use std::{
     path::Path,
     //process,
 };
-use jsavrs::semantic::type_checker::TypeChecker;
 
-#[allow(clippy::unused_unit)]
+#[allow(clippy::explicit_auto_deref, clippy::unused_unit)]
 fn main() -> Result<(), CompileError> {
     let _total_timer = AutoTimer::new("Total Execution"); // Timer totale
     let args = Args::parse();
