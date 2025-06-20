@@ -26,6 +26,7 @@ const HIERARCHY: [Type; 10] = [
     Type::I8,
 ];
 
+#[allow(clippy::borrowed_box, clippy::only_used_in_recursion)]
 impl TypeChecker {
     pub fn new() -> Self {
         Self {
