@@ -30,17 +30,13 @@ impl Terminator {
 impl fmt::Display for Terminator {
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
         match self {
-            Terminator::Return(value, ty) => write!(f, "ret {} {}", value, ty),
-            Terminator::Branch(label) => write!(f, "br {}", label),
+            Terminator::Return(value, ty) => write!(f, "ret {value} {ty}"),
+            Terminator::Branch(label) => write!(f, "br {label}"),
             Terminator::ConditionalBranch {
                 condition,
                 true_label,
                 false_label,
-            } => write!(
-                f,
-                "br {} ? {} : {}",
-                condition, true_label, false_label
-            ),
+            } => write!(f, "br {condition} ? {true_label} : {false_label}"),
             Terminator::Switch {
                 value,
                 ty,
@@ -49,10 +45,13 @@ impl fmt::Display for Terminator {
             } => {
                 let cases_str = cases
                     .iter()
-                    .map(|(val, label)| format!("{} => {}", val, label))
+                    .map(|(val, label)| format!("{val} => {label}"))
                     .collect::<Vec<_>>()
                     .join(", ");
-                write!(f, "switch {} {}: {} default {}", value, ty, cases_str, default_label)
+                write!(
+                    f,
+                    "switch {value} {ty}: {cases_str} default {default_label}"
+                )
             }
             Terminator::Unreachable => write!(f, "unreachable"),
         }
