@@ -20,7 +20,7 @@ pub enum IrType {
     Void,
     Pointer(Box<IrType>),
     Array(Box<IrType>, usize),
-    Custom(String),  // Added for user-defined types
+    Custom(String), // Added for user-defined types
 }
 
 impl fmt::Display for IrType {
@@ -40,9 +40,9 @@ impl fmt::Display for IrType {
             IrType::Char => write!(f, "char"),
             IrType::String => write!(f, "string"),
             IrType::Void => write!(f, "void"),
-            IrType::Pointer(inner) => write!(f, "*{}", inner),
-            IrType::Array(element_type, size) => write!(f, "[{}; {}]", element_type, size),
-            IrType::Custom(name) => write!(f, "{}", name),  // Added
+            IrType::Pointer(inner) => write!(f, "*{inner}"),
+            IrType::Array(element_type, size) => write!(f, "[{element_type}; {size}]"),
+            IrType::Custom(name) => write!(f, "{name}"), // Added
         }
     }
 }
