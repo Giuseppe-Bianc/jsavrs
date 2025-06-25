@@ -14,6 +14,7 @@ use std::{
     path::Path,
     //process,
 };
+use jsavrs::ir::generator::IrGenerator;
 
 #[allow(clippy::explicit_auto_deref, clippy::unused_unit)]
 fn main() -> Result<(), CompileError> {
@@ -92,9 +93,23 @@ fn main() -> Result<(), CompileError> {
     let mut type_checkr = TypeChecker::new();
     let type_check_errors = type_checkr.check(&*statements);
     println!("{type_check_timer}");
+    println!("type checking done");
     if !type_check_errors.is_empty() {
         eprintln!("{}", error_reporter.report_errors(type_check_errors));
         ()
+    }
+
+    let mut generator = IrGenerator::new();
+    let ir_timer = Timer::new("IR Generation");
+    let functions = generator.generate(statements);
+    println!("{ir_timer}");
+    
+    if args.verbose {
+        for func in &functions {
+            println!("{}", func);
+        }
+    } else {
+        println!("{} functions generated", functions.len());
     }
 
     Ok(())
