@@ -106,7 +106,7 @@ fn main() -> Result<(), CompileError> {
     
     if args.verbose {
         for func in &functions {
-            println!("{}", func);
+            println!("{func}");
         }
     } else {
         println!("{} functions generated", functions.len());

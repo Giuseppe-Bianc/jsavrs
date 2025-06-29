@@ -1,6 +1,6 @@
 // tests/ast_snapshot_test.rs
 use insta::{assert_debug_snapshot, assert_snapshot};
-use jsavrs::lexer::{Lexer, lexer_tokenize_with_errors};
+use jsavrs::lexer::{lexer_tokenize_with_errors, Lexer};
 use jsavrs::parser::ast::*;
 use jsavrs::parser::ast_printer::{pretty_print, pretty_print_stmt};
 use jsavrs::parser::jsav_parser::JsavParser;
@@ -14,7 +14,6 @@ fn test_simple_binary_expr() {
     let stripped = strip_ansi_codes(&output);
     assert_snapshot!(stripped.trim());
 }
-
 #[test]
 fn test_nested_binary_expr() {
     let inner = binary_expr(num_lit(1), BinaryOp::Add, num_lit(2));
@@ -24,11 +23,9 @@ fn test_nested_binary_expr() {
     let stripped = strip_ansi_codes(&output);
     assert_snapshot!(stripped.trim());
 }
-
 #[test]
 fn test_unary_negate() {
     let expr = unary_expr(UnaryOp::Negate, num_lit(5));
-
     let output = pretty_print(&expr);
     let stripped = strip_ansi_codes(&output);
     assert_snapshot!(stripped.trim());
@@ -65,7 +62,6 @@ fn test_variable_assignment() {
 
     let output = pretty_print(&expr);
     let stripped = strip_ansi_codes(&output);
-
     assert_snapshot!(stripped.trim());
 }
 
@@ -81,7 +77,6 @@ fn test_function_call() {
 
     let output = pretty_print(&expr);
     let stripped = strip_ansi_codes(&output);
-
     assert_snapshot!(stripped.trim());
 }
 
@@ -93,7 +88,6 @@ fn test_array_access() {
 
     let output = pretty_print(&expr);
     let stripped = strip_ansi_codes(&output);
-
     assert_snapshot!(stripped.trim());
 }
 
@@ -111,7 +105,6 @@ fn test_deeply_nested_binary() {
 
     let output = pretty_print(&expr);
     let stripped = strip_ansi_codes(&output);
-
     assert_snapshot!(stripped.trim());
 }
 
@@ -121,7 +114,6 @@ fn test_multiple_unary_ops() {
 
     let output = pretty_print(&expr);
     let stripped = strip_ansi_codes(&output);
-
     assert_snapshot!(stripped.trim());
 }
 
@@ -130,7 +122,6 @@ fn test_stmt_expression() {
     let stmt = Stmt::Expression { expr: num_lit(42) };
     let output = pretty_print_stmt(&stmt);
     let stripped = strip_ansi_codes(&output);
-
     assert_snapshot!(stripped.trim());
 }
 
@@ -145,9 +136,9 @@ fn test_var_declaration_multiple_vars() {
 
     let output = pretty_print_stmt(&stmt);
     let stripped = strip_ansi_codes(&output);
-
     assert_snapshot!(stripped.trim());
 }
+
 #[test]
 fn test_function_with_parameters() {
     let stmt = function_declaration(
@@ -177,7 +168,6 @@ fn test_function_with_parameters() {
 
     let output = pretty_print_stmt(&stmt);
     let stripped = strip_ansi_codes(&output);
-
     assert_snapshot!(stripped.trim());
 }
 
@@ -196,7 +186,6 @@ fn test_if_stmt_with_else() {
 
     let output = pretty_print_stmt(&stmt);
     let stripped = strip_ansi_codes(&output);
-
     assert_snapshot!(stripped.trim());
 }
 
@@ -225,10 +214,8 @@ fn test_nested_block_stmt() {
 
     let output = pretty_print_stmt(&stmt);
     let stripped = strip_ansi_codes(&output);
-
     assert_snapshot!(stripped.trim());
 }
-
 #[test]
 fn test_return_stmt_with_value() {
     let stmt = Stmt::Return {
@@ -238,28 +225,19 @@ fn test_return_stmt_with_value() {
 
     let output = pretty_print_stmt(&stmt);
     let stripped = strip_ansi_codes(&output);
-
     assert_snapshot!(stripped.trim());
 }
-
 #[test]
 fn test_complex_type_declaration() {
     let stmt = var_declaration(
         vec!["matrix".to_string()],
-        Type::Array(
-            Box::new(Type::F64),
-            Box::new(Expr::Literal {
-                value: LiteralValue::Nullptr,
-                span: dummy_span(),
-            }),
-        ),
+        Type::Array(Box::new(Type::F64), Box::new(nullptr_lit())),
         true,
         vec![],
     );
 
     let output = pretty_print_stmt(&stmt);
     let stripped = strip_ansi_codes(&output);
-
     assert_snapshot!(stripped.trim());
 }
 
@@ -267,20 +245,13 @@ fn test_complex_type_declaration() {
 fn test_complex_type_const_declaration() {
     let stmt = var_declaration(
         vec!["matrix".to_string()],
-        Type::Array(
-            Box::new(Type::F64),
-            Box::new(Expr::Literal {
-                value: LiteralValue::Nullptr,
-                span: dummy_span(),
-            }),
-        ),
+        Type::Array(Box::new(Type::F64), Box::new(nullptr_lit())),
         false,
         vec![],
     );
 
     let output = pretty_print_stmt(&stmt);
     let stripped = strip_ansi_codes(&output);
-
     assert_snapshot!(stripped.trim());
 }
 
@@ -295,7 +266,102 @@ fn test_edge_case_empty_then_branch() {
 
     let output = pretty_print_stmt(&stmt);
     let stripped = strip_ansi_codes(&output);
+    assert_snapshot!(stripped.trim());
+}
 
+#[test]
+fn test_while() {
+    let stmt = Stmt::While {
+        condition: bool_lit(true),
+        body: vec![],
+        span: dummy_span(),
+    };
+
+    let output = pretty_print_stmt(&stmt);
+    let stripped = strip_ansi_codes(&output);
+    assert_snapshot!(stripped.trim());
+}
+
+#[test]
+fn test_while_not_empty_body() {
+    let stmt = Stmt::While {
+        condition: bool_lit(true),
+        body: vec![Stmt::Expression { expr: num_lit(42) }],
+        span: dummy_span(),
+    };
+
+    let output = pretty_print_stmt(&stmt);
+    let stripped = strip_ansi_codes(&output);
+    assert_snapshot!(stripped.trim());
+}
+
+#[test]
+fn test_for() {
+    let stmt = Stmt::For {
+        initializer: Some(Box::from(var_declaration(
+            vec!["x".to_string()],
+            Type::I32,
+            true,
+            vec![num_lit(1)],
+        ))),
+        condition: None,
+        increment: None,
+        body: vec![],
+        span: dummy_span(),
+    };
+
+    let output = pretty_print_stmt(&stmt);
+    let stripped = strip_ansi_codes(&output);
+    assert_snapshot!(stripped.trim());
+}
+
+#[test]
+fn test_for_not_empty_body() {
+    let stmt = Stmt::For {
+        initializer: Some(Box::from(var_declaration(
+            vec!["x".to_string()],
+            Type::I32,
+            true,
+            vec![num_lit(1)],
+        ))),
+        condition: None,
+        increment: None,
+        body: vec![Stmt::Expression { expr: num_lit(42) }],
+        span: dummy_span(),
+    };
+
+    let output = pretty_print_stmt(&stmt);
+    let stripped = strip_ansi_codes(&output);
+    assert_snapshot!(stripped.trim());
+}
+
+#[test]
+fn test_edge_case_multiple_parameters() {
+    let stmt = function_declaration(
+        "func".to_string(),
+        vec![
+            Parameter {
+                name: "a".to_string(),
+                type_annotation: Type::I32,
+                span: dummy_span(),
+            },
+            Parameter {
+                name: "b".to_string(),
+                type_annotation: Type::I32,
+                span: dummy_span(),
+            },
+            Parameter {
+                name: "c".to_string(),
+                type_annotation: Type::I32,
+                span: dummy_span(),
+            },
+        ],
+        Type::Void,
+        vec![],
+    );
+
+    let output = pretty_print_stmt(&stmt);
+    let stripped = strip_ansi_codes(&output);
     assert_snapshot!(stripped.trim());
 }
 
@@ -329,6 +395,47 @@ test_type_output!(test_void_output, Type::Void);
 test_type_output!(test_custom_output, Type::Custom("inin".to_string()));
 
 #[test]
+fn test_corner_case_deeply_nested_if() {
+    let inner_if = Stmt::If {
+        condition: bool_lit(false),
+        then_branch: vec![Stmt::Expression { expr: num_lit(3) }],
+        else_branch: None,
+        span: dummy_span(),
+    };
+
+    let stmt = Stmt::If {
+        condition: bool_lit(true),
+        then_branch: vec![inner_if],
+        else_branch: None,
+        span: dummy_span(),
+    };
+
+    let output = pretty_print_stmt(&stmt);
+    let stripped = strip_ansi_codes(&output);
+    assert_snapshot!(stripped.trim());
+}
+
+#[test]
+fn test_corner_case_complex_return_type() {
+    let stmt = function_declaration(
+        "getVector".to_string(),
+        vec![],
+        Type::Vector(Box::new(Type::Array(
+            Box::new(Type::I32),
+            Box::new(Expr::Literal {
+                value: LiteralValue::Nullptr,
+                span: dummy_span(),
+            }),
+        ))),
+        vec![],
+    );
+
+    let output = pretty_print_stmt(&stmt);
+    let stripped = strip_ansi_codes(&output);
+    assert_snapshot!(stripped.trim());
+}
+
+#[test]
 fn test_break_stmt() {
     let stmt = Stmt::Break { span: dummy_span() };
 
@@ -337,7 +444,6 @@ fn test_break_stmt() {
 
     assert_snapshot!(stripped.trim());
 }
-
 #[test]
 fn test_continue_stmt() {
     let stmt = Stmt::Continue { span: dummy_span() };
@@ -361,7 +467,6 @@ fn test_array_literal_output() {
 
     let output = pretty_print_stmt(&expr[0]);
     let stripped = strip_ansi_codes(&output);
-
     assert_snapshot!(stripped.trim());
 }
 
