@@ -1,5 +1,5 @@
 // tets/ast_test.rs
-use jsavrs::lexer::{Lexer, lexer_tokenize_with_errors};
+use jsavrs::lexer::{lexer_tokenize_with_errors, Lexer};
 use jsavrs::parser::ast::*;
 use jsavrs::parser::ast_printer::{pretty_print, pretty_print_stmt};
 use jsavrs::parser::jsav_parser::JsavParser;
@@ -642,6 +642,95 @@ fn test_while() {
 }
 
 #[test]
+fn test_while_not_empty_body() {
+    let stmt = Stmt::While {
+        condition: bool_lit(true),
+        body: vec![Stmt::Expression { expr: num_lit(42) }],
+        span: dummy_span(),
+    };
+
+    let output = pretty_print_stmt(&stmt);
+    let stripped = strip_ansi_codes(&output);
+
+    let expected = "\
+└── While
+    ├── Condition:
+    │   └── Literal true
+    └── Body:
+        └── Expression
+            └── Expr:
+                └── Literal 42";
+    assert_eq!(stripped.trim(), expected);
+}
+
+#[test]
+fn test_for() {
+    let stmt = Stmt::For {
+        initializer: Some(Box::from(var_declaration(
+            vec!["x".to_string()],
+            Type::I32,
+            true,
+            vec![num_lit(1)],
+        ))),
+        condition: None,
+        increment: None,
+        body: vec![],
+        span: dummy_span(),
+    };
+
+    let output = pretty_print_stmt(&stmt);
+    let stripped = strip_ansi_codes(&output);
+
+    let expected = "\
+└── For
+    ├── Initializer:
+    │   └── VarDeclaration
+    │       ├── Variables:
+    │       │   └── x
+    │       ├── Type:
+    │       │   └── i32
+    │       └── Initializers:
+    │           └── Literal 1
+    └── Body:";
+    assert_eq!(stripped.trim(), expected);
+}
+
+#[test]
+fn test_for_not_empty_body() {
+    let stmt = Stmt::For {
+        initializer: Some(Box::from(var_declaration(
+            vec!["x".to_string()],
+            Type::I32,
+            true,
+            vec![num_lit(1)],
+        ))),
+        condition: None,
+        increment: None,
+        body: vec![Stmt::Expression { expr: num_lit(42) }],
+        span: dummy_span(),
+    };
+
+    let output = pretty_print_stmt(&stmt);
+    let stripped = strip_ansi_codes(&output);
+
+    let expected = "\
+└── For
+    ├── Initializer:
+    │   └── VarDeclaration
+    │       ├── Variables:
+    │       │   └── x
+    │       ├── Type:
+    │       │   └── i32
+    │       └── Initializers:
+    │           └── Literal 1
+    └── Body:
+        └── Expression
+            └── Expr:
+                └── Literal 42";
+    assert_eq!(stripped.trim(), expected);
+}
+
+#[test]
 fn test_edge_case_multiple_parameters() {
     let stmt = function_declaration(
         "func".to_string(),
@@ -855,7 +944,7 @@ fn test_main() {
 }
 
 #[test]
-fn  nullptr_type_display() {
+fn nullptr_type_display() {
     let input = format!("{}", Type::NullPtr);
     let expected = "nullptr";
     assert_eq!(input, expected);
