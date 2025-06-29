@@ -352,6 +352,13 @@ stmt_span_test!(test_stmt_while_span, |s| Stmt::While {
     body: vec![],
     span: s,
 });
+stmt_span_test!(test_stmt_for_span, |s| Stmt::For {
+    initializer: None,
+    condition: None,
+    increment: None,
+    body: vec![],
+    span: s,
+});
 
 stmt_span_test!(test_stmt_block_span, |s| Stmt::Block {
     statements: vec![],
@@ -612,6 +619,25 @@ fn test_edge_case_empty_then_branch() {
     ├── Condition:
     │   └── Literal true
     └── Then: (empty)";
+    assert_eq!(stripped.trim(), expected);
+}
+
+#[test]
+fn test_while() {
+    let stmt = Stmt::While {
+        condition: bool_lit(true),
+        body: vec![],
+        span: dummy_span(),
+    };
+
+    let output = pretty_print_stmt(&stmt);
+    let stripped = strip_ansi_codes(&output);
+
+    let expected = "\
+└── While
+    ├── Condition:
+    │   └── Literal true
+    └── Body:";
     assert_eq!(stripped.trim(), expected);
 }
 
