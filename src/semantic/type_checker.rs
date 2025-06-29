@@ -271,7 +271,8 @@ impl TypeChecker {
                 if !self.in_loop {
                     self.ptype_error("Break/continue outside loop".to_string(), span.clone());
                 }
-            } //_ => unimplemented!("Unsupported statement in type checker"),
+            } 
+            _ => unimplemented!("Unsupported statement in type checker"),
         }
     }
 

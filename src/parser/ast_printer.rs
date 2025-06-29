@@ -549,6 +549,87 @@ fn print_stmt(
                 print_expr(expr, &get_indent(&new_indent, true), true, output, styles);
             }
         }
+        Stmt::While {
+            condition,
+            body,
+            span: _span,
+        } => {
+            append_line(output, indent, is_last, styles.clone().keyword, "While");
+            let new_indent = get_indent(indent, is_last);
+
+            // Condition
+            append_line(
+                output,
+                &new_indent,
+                false,
+                styles.structure.clone(),
+                "Condition:",
+            );
+            let cond_indent = get_indent(&new_indent, false);
+            print_expr(condition, &cond_indent, true, output, styles);
+
+            // Body
+            append_line(output, &new_indent, true, styles.structure.clone(), "Body:");
+            let body_indent = get_indent(&new_indent, true);
+            for (i, stmt) in body.iter().enumerate() {
+                let is_last_stmt = i == body.len() - 1;
+                print_stmt(stmt, &body_indent, is_last_stmt, output, styles);
+            }
+        }
+        Stmt::For {
+            initializer,
+            condition,
+            increment,
+            body,
+            span: _span,
+        } => {
+            append_line(output, indent, is_last, styles.clone().keyword, "For");
+            let new_indent = get_indent(indent, is_last);
+
+            // Initializer
+            if let Some(init) = initializer {
+                append_line(
+                    output,
+                    &new_indent,
+                    false,
+                    styles.structure.clone(),
+                    "Initializer:",
+                );
+                print_stmt(init, &get_indent(&new_indent, false), true, output, styles);
+            }
+
+            // Condition
+            if let Some(cond) = condition {
+                append_line(
+                    output,
+                    &new_indent,
+                    false,
+                    styles.structure.clone(),
+                    "Condition:",
+                );
+                print_expr(cond, &get_indent(&new_indent, false), true, output, styles);
+            }
+
+            // Increment
+            if let Some(inc) = increment {
+                append_line(
+                    output,
+                    &new_indent,
+                    false,
+                    styles.structure.clone(),
+                    "Increment:",
+                );
+                print_expr(inc, &get_indent(&new_indent, false), true, output, styles);
+            }
+
+            // Body
+            append_line(output, &new_indent, true, styles.structure.clone(), "Body:");
+            let body_indent = get_indent(&new_indent, true);
+            for (i, stmt) in body.iter().enumerate() {
+                let is_last_stmt = i == body.len() - 1;
+                print_stmt(stmt, &body_indent, is_last_stmt, output, styles);
+            }
+        }
         Stmt::Break { span: _span } => {
             append_line(output, indent, is_last, styles.clone().keyword, "Break");
         }

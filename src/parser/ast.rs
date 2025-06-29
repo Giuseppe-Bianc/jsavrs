@@ -116,6 +116,18 @@ pub enum Stmt {
         else_branch: Option<Vec<Stmt>>,
         span: SourceSpan,
     },
+    While {
+        condition: Expr,
+        body: Vec<Stmt>,
+        span: SourceSpan,
+    },
+    For {
+        initializer: Option<Box<Stmt>>,
+        condition: Option<Expr>,
+        increment: Option<Expr>,
+        body: Vec<Stmt>,
+        span: SourceSpan,
+    },
     Block {
         statements: Vec<Stmt>,
         span: SourceSpan,
@@ -197,6 +209,8 @@ impl Stmt {
         match self {
             Stmt::Expression { expr } => expr.span(),
             Stmt::VarDeclaration { span, .. } => span,
+            Stmt::While { span, .. } => span,
+            Stmt::For { span, .. } => span,
             Stmt::Function { span, .. } => span,
             Stmt::If { span, .. } => span,
             Stmt::Block { span, .. } => span,
