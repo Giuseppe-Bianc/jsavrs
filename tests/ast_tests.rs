@@ -696,6 +696,57 @@ fn test_for() {
 }
 
 #[test]
+fn test_for_complete() {
+    let stmt = Stmt::For {
+        initializer: Some(Box::from(var_declaration(
+            vec!["x".to_string()],
+            Type::I32,
+            true,
+            vec![num_lit(1)],
+        ))),
+        condition: Some(binary_expr(variable_expr("x"), BinaryOp::Less, num_lit(2))),
+        increment: Some(assign_expr(
+            variable_expr("x"),
+            binary_expr(variable_expr("x"), BinaryOp::Add, num_lit(1)),
+        )),
+        body: vec![],
+        span: dummy_span(),
+    };
+
+    let output = pretty_print_stmt(&stmt);
+    let stripped = strip_ansi_codes(&output);
+
+    let expected = "\
+└── For
+    ├── Initializer:
+    │   └── VarDeclaration
+    │       ├── Variables:
+    │       │   └── x
+    │       ├── Type:
+    │       │   └── i32
+    │       └── Initializers:
+    │           └── Literal 1
+    ├── Condition:
+    │   └── BinaryOp Less
+    │       ├── Left:
+    │       │   └── Variable 'x'
+    │       └── Right:
+    │           └── Literal 2
+    ├── Increment:
+    │   └── Assignment
+    │       ├── Target:
+    │       │   └── Variable 'x'
+    │       └── Value:
+    │           └── BinaryOp Add
+    │               ├── Left:
+    │               │   └── Variable 'x'
+    │               └── Right:
+    │                   └── Literal 1
+    └── Body:";
+    assert_eq!(stripped.trim(), expected);
+}
+
+#[test]
 fn test_for_not_empty_body() {
     let stmt = Stmt::For {
         initializer: Some(Box::from(var_declaration(
@@ -723,6 +774,60 @@ fn test_for_not_empty_body() {
     │       │   └── i32
     │       └── Initializers:
     │           └── Literal 1
+    └── Body:
+        └── Expression
+            └── Expr:
+                └── Literal 42";
+    assert_eq!(stripped.trim(), expected);
+}
+
+#[test]
+fn test_for_complete_not_empty_body() {
+    let stmt = Stmt::For {
+        initializer: Some(Box::from(var_declaration(
+            vec!["x".to_string()],
+            Type::I32,
+            true,
+            vec![num_lit(1)],
+        ))),
+        condition: Some(binary_expr(variable_expr("x"), BinaryOp::Less, num_lit(2))),
+        increment: Some(assign_expr(
+            variable_expr("x"),
+            binary_expr(variable_expr("x"), BinaryOp::Add, num_lit(1)),
+        )),
+        body: vec![Stmt::Expression { expr: num_lit(42) }],
+        span: dummy_span(),
+    };
+
+    let output = pretty_print_stmt(&stmt);
+    let stripped = strip_ansi_codes(&output);
+
+    let expected = "\
+└── For
+    ├── Initializer:
+    │   └── VarDeclaration
+    │       ├── Variables:
+    │       │   └── x
+    │       ├── Type:
+    │       │   └── i32
+    │       └── Initializers:
+    │           └── Literal 1
+    ├── Condition:
+    │   └── BinaryOp Less
+    │       ├── Left:
+    │       │   └── Variable 'x'
+    │       └── Right:
+    │           └── Literal 2
+    ├── Increment:
+    │   └── Assignment
+    │       ├── Target:
+    │       │   └── Variable 'x'
+    │       └── Value:
+    │           └── BinaryOp Add
+    │               ├── Left:
+    │               │   └── Variable 'x'
+    │               └── Right:
+    │                   └── Literal 1
     └── Body:
         └── Expression
             └── Expr:

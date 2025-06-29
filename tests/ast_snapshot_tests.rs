@@ -316,6 +316,30 @@ fn test_for() {
 }
 
 #[test]
+fn test_for_complete() {
+    let stmt = Stmt::For {
+        initializer: Some(Box::from(var_declaration(
+            vec!["x".to_string()],
+            Type::I32,
+            true,
+            vec![num_lit(1)],
+        ))),
+        condition: Some(binary_expr(variable_expr("x"), BinaryOp::Less, num_lit(2))),
+        increment: Some(assign_expr(
+            variable_expr("x"),
+            binary_expr(variable_expr("x"), BinaryOp::Add, num_lit(1)),
+        )),
+        body: vec![],
+        span: dummy_span(),
+    };
+
+    let output = pretty_print_stmt(&stmt);
+    let stripped = strip_ansi_codes(&output);
+
+    assert_snapshot!(stripped.trim());
+}
+
+#[test]
 fn test_for_not_empty_body() {
     let stmt = Stmt::For {
         initializer: Some(Box::from(var_declaration(
@@ -332,6 +356,30 @@ fn test_for_not_empty_body() {
 
     let output = pretty_print_stmt(&stmt);
     let stripped = strip_ansi_codes(&output);
+    assert_snapshot!(stripped.trim());
+}
+
+#[test]
+fn test_for_complete_not_empty_body() {
+    let stmt = Stmt::For {
+        initializer: Some(Box::from(var_declaration(
+            vec!["x".to_string()],
+            Type::I32,
+            true,
+            vec![num_lit(1)],
+        ))),
+        condition: Some(binary_expr(variable_expr("x"), BinaryOp::Less, num_lit(2))),
+        increment: Some(assign_expr(
+            variable_expr("x"),
+            binary_expr(variable_expr("x"), BinaryOp::Add, num_lit(1)),
+        )),
+        body: vec![Stmt::Expression { expr: num_lit(42) }],
+        span: dummy_span(),
+    };
+
+    let output = pretty_print_stmt(&stmt);
+    let stripped = strip_ansi_codes(&output);
+
     assert_snapshot!(stripped.trim());
 }
 
