@@ -344,6 +344,15 @@ stmt_span_test!(test_stmt_if_span, |s| Stmt::If {
     span: s,
 });
 
+stmt_span_test!(test_stmt_while_span, |s| Stmt::While {
+    condition: Expr::Literal {
+        value: LiteralValue::Bool(true),
+        span: dummy_span(),
+    },
+    body: vec![],
+    span: s,
+});
+
 stmt_span_test!(test_stmt_block_span, |s| Stmt::Block {
     statements: vec![],
     span: s,
