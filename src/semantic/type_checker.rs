@@ -77,125 +77,125 @@ impl TypeChecker {
 
     fn visit_stmt_first_pass(&mut self, stmt: &Stmt) {
         match stmt {
-            Stmt::Block { statements, .. } => {
-                for stmt in statements {
-                    self.visit_stmt_first_pass(stmt);
-                }
-            }
+            Stmt::Block { statements, .. } => self.process_block(statements),
             Stmt::VarDeclaration {
                 variables,
                 type_annotation,
                 is_mutable,
                 initializers: _,
                 span,
-            } => {
-                for var in variables {
-                    let symbol = Symbol::Variable(VariableSymbol {
-                        name: var.clone(),
-                        ty: type_annotation.clone(),
-                        mutable: *is_mutable,
-                        defined_at: span.clone(),
-                        last_assignment: None,
-                    });
-                    self.declare_symbol(var, symbol);
-                }
-            }
+            } => self.process_var_declaration(variables, type_annotation, *is_mutable, span),
             Stmt::Function {
                 name,
                 parameters,
                 return_type,
                 body,
                 span,
-            } => {
-                // Declare function symbol
-                let func_symbol = Symbol::Function(FunctionSymbol {
-                    name: name.clone(),
-                    parameters: parameters.clone(),
-                    return_type: return_type.clone(),
-                    defined_at: span.clone(),
-                });
-                self.declare_symbol(name, func_symbol);
-
-                // Push scope and declare parameters
-                self.symbol_table.push_scope();
-                for param in parameters {
-                    let symbol = Symbol::Variable(VariableSymbol {
-                        name: param.name.clone(),
-                        ty: param.type_annotation.clone(),
-                        mutable: false,
-                        defined_at: param.span.clone(),
-                        last_assignment: None,
-                    });
-                    self.declare_symbol(&param.name, symbol);
-                }
-
-                // Process body in first pass (without nested scope changes)
-                for stmt in body {
-                    self.visit_stmt_first_pass(stmt);
-                }
-                // Do NOT pop scope here - retain for second pass
-            }
-            Stmt::MainFunction { body, span } => {
-                // Declare main symbol
-                let func_symbol = Symbol::Function(FunctionSymbol {
-                    name: "main".to_string(),
-                    parameters: Vec::new(),
-                    return_type: Type::Void,
-                    defined_at: span.clone(),
-                });
-                self.declare_symbol("main", func_symbol);
-
-                // Push scope and process body
-                self.symbol_table.push_scope();
-                for stmt in body {
-                    self.visit_stmt_first_pass(stmt);
-                }
-                // Do NOT pop scope
-            }
+            } => self.process_function(name, parameters, return_type, body, span),
+            Stmt::MainFunction { body, span } => self.process_main_function(body, span),
             Stmt::For {
-                initializer,
-                condition: _,
-                increment: _,
-                body,
-                span: _,
-            } => {
-                // Process initializer if it exists
-                if let Some(init) = initializer {
-                    self.visit_stmt_first_pass(init);
-                }
-                // Process body
-                for stmt in body {
-                    self.visit_stmt_first_pass(stmt);
-                }
-            }
-            Stmt::While {
-                condition: _,
-                body,
-                span: _,
-            } => {
-                // Process body
-                for stmt in body {
-                    self.visit_stmt_first_pass(stmt);
-                }
-            }
+                initializer, body, ..
+            } => self.process_for_loop(initializer, body),
+            Stmt::While { body, .. } => self.process_while_loop(body),
             Stmt::If {
-                condition: _,
                 then_branch,
                 else_branch,
-                span: _,
-            } => {
-                // Process then branch
-                for stmt in then_branch {
-                    self.visit_stmt_first_pass(stmt);
-                }
-                // Process else branch if exists
-                if let Some(else_branch) = else_branch {
-                    for stmt in else_branch {
-                        self.visit_stmt_first_pass(stmt);
-                    }
-                }
-            }
+                ..
+            } => self.process_if_statement(then_branch, else_branch),
             _ => {} // Other statements don't declare symbols in first pass
+        }
+    }
+
+    fn process_block(&mut self, statements: &[Stmt]) {
+        for stmt in statements {
+            self.visit_stmt_first_pass(stmt);
+        }
+    }
+
+    fn process_var_declaration(
+        &mut self,
+        variables: &[String],
+        type_annotation: &Type,
+        is_mutable: bool,
+        span: &SourceSpan,
+    ) {
+        for var in variables {
+            let symbol = Symbol::Variable(VariableSymbol {
+                name: var.clone(),
+                ty: type_annotation.clone(),
+                mutable: is_mutable,
+                defined_at: span.clone(),
+                last_assignment: None,
+            });
+            self.declare_symbol(var, symbol);
+        }
+    }
+
+    fn process_function(
+        &mut self,
+        name: &str,
+        parameters: &[Parameter],
+        return_type: &Type,
+        body: &[Stmt],
+        span: &SourceSpan,
+    ) {
+        // Declare function symbol
+        let func_symbol = Symbol::Function(FunctionSymbol {
+            name: name.to_string(),
+            parameters: parameters.to_vec(),
+            return_type: return_type.clone(),
+            defined_at: span.clone(),
+        });
+        self.declare_symbol(name, func_symbol);
+
+        // Create new scope for parameters
+        self.symbol_table.push_scope();
+        self.declare_parameters(parameters);
+
+        // Process function body
+        self.process_block(body);
+        // Note: Scope not popped to retain symbols for second pass
+    }
+
+    fn process_main_function(&mut self, body: &[Stmt], span: &SourceSpan) {
+        // Main is treated as special case function
+        self.process_function("main", &[], &Type::Void, body, span);
+    }
+
+    fn declare_parameters(&mut self, parameters: &[Parameter]) {
+        for param in parameters {
+            let symbol = Symbol::Variable(VariableSymbol {
+                name: param.name.clone(),
+                ty: param.type_annotation.clone(),
+                mutable: false,
+                defined_at: param.span.clone(),
+                last_assignment: None,
+            });
+            self.declare_symbol(&param.name, symbol);
+        }
+    }
+
+    fn process_for_loop(&mut self, initializer: &Option<Box<Stmt>>, body: &[Stmt]) {
+        // Process initializer if present
+        if let Some(init) = initializer {
+            self.visit_stmt_first_pass(init);
+        }
+
+        // Process loop body
+        self.process_block(body);
+    }
+
+    fn process_while_loop(&mut self, body: &[Stmt]) {
+        self.process_block(body);
+    }
+
+    fn process_if_statement(&mut self, then_branch: &[Stmt], else_branch: &Option<Vec<Stmt>>) {
+        // Process main branch
+        self.process_block(then_branch);
+
+        // Process else branch if exists
+        if let Some(else_statements) = else_branch {
+            self.process_block(else_statements);
         }
     }
 
@@ -370,8 +370,7 @@ impl TypeChecker {
                 }
 
                 self.in_loop -= 1;
-            }
-            //_ => unimplemented!("Unsupported statement in type checker"),
+            } //_ => unimplemented!("Unsupported statement in type checker"),
         }
     }
 
