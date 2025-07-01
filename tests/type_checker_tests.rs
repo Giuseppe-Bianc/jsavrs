@@ -1,5 +1,5 @@
 use jsavrs::error::compile_error::CompileError;
-use jsavrs::lexer::{lexer_tokenize_with_errors, Lexer};
+use jsavrs::lexer::{Lexer, lexer_tokenize_with_errors};
 use jsavrs::parser::ast::{Expr, Type};
 use jsavrs::parser::jsav_parser::JsavParser;
 use jsavrs::semantic::type_checker::TypeChecker;
@@ -528,6 +528,88 @@ fn test_undefined_function_call() {
         errors[0].message(),
         Some("Undefined function 'undefined_function'")
     );
+}
+
+#[test]
+fn test_while_loop_valid() {
+    let ast = "while (true) { 42i32 }";
+    let errors = typecheck(ast);
+    assert!(errors.is_empty(), "Unexpected errors: {:?}", errors);
+}
+
+#[test]
+fn test_while_loop_invalid_condition() {
+    let ast = "while (42i32) { }";
+    let errors = typecheck(ast);
+    assert_eq!(errors.len(), 1);
+    assert_eq!(
+        errors[0].message(),
+        Some("While condition must be bool, found i32")
+    );
+}
+
+#[test]
+fn test_break_inside_while() {
+    let ast = "while (true) { break }";
+    let errors = typecheck(ast);
+    assert!(errors.is_empty(), "Unexpected errors: {:?}", errors);
+}
+
+#[test]
+fn test_continue_inside_while() {
+    let ast = "while (true) { continue }";
+    let errors = typecheck(ast);
+    assert!(errors.is_empty(), "Unexpected errors: {:?}", errors);
+}
+
+#[test]
+fn test_for_loop_valid() {
+    let ast = "for (var i: i32 = 0i32; i < 10i32; i = i + 1i32) { }";
+    let errors = typecheck(ast);
+    assert!(errors.is_empty(), "Unexpected errors: {:?}", errors);
+}
+
+#[test]
+fn test_for_loop_invalid_condition() {
+    let ast = "for (var i: i32 = 0i32; 42i32; i = i + 1i32) { }";
+    let errors = typecheck(ast);
+    assert_eq!(errors.len(), 1);
+    assert_eq!(
+        errors[0].message(),
+        Some("For loop condition must be bool, found i32")
+    );
+}
+
+#[test]
+fn test_break_inside_for() {
+    let ast = "for (;;) { break }";
+    let errors = typecheck(ast);
+    assert!(errors.is_empty(), "Unexpected errors: {:?}", errors);
+}
+
+#[test]
+fn test_continue_inside_for() {
+    let ast = "for (;;) { continue }";
+    let errors = typecheck(ast);
+    assert!(errors.is_empty(), "Unexpected errors: {:?}", errors);
+}
+
+
+#[test]
+fn test_nested_loops_with_break_continue() {
+    let ast = "
+    while (true) {
+        for (var i: i32 = 0i32; i < 10i32; i = i + 1i32) {
+            if (i == 5i32) {
+                break
+            } else {
+                continue
+            }
+        }
+        continue
+    }";
+    let errors = typecheck(ast);
+    assert!(errors.is_empty(), "Unexpected errors: {:?}", errors);
 }
 
 #[test]

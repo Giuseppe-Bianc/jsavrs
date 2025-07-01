@@ -887,10 +887,10 @@ fn test_nested_if_statements() {
     assert_eq!(
         statements[0],
         Stmt::If {
-            condition: grouping_expr(bool_lit(true)),
+            condition: bool_lit(true),
             then_branch: vec![Stmt::Block {
                 statements: vec![Stmt::If {
-                    condition: grouping_expr(bool_lit(false)),
+                    condition: bool_lit(false),
                     then_branch: vec![Stmt::Block {
                         statements: vec![Stmt::Return {
                             value: None,
@@ -1022,7 +1022,7 @@ fn test_break_statement_in_if() {
     assert_eq!(
         statements[0],
         Stmt::If {
-            condition: grouping_expr(bool_lit(true)),
+            condition: bool_lit(true),
             then_branch: vec![Stmt::Block {
                 statements: vec![Stmt::Break { span: dummy_span() }],
                 span: dummy_span(),
@@ -1053,12 +1053,81 @@ fn test_continue_statement_in_if() {
     assert_eq!(
         statements[0],
         Stmt::If {
-            condition: grouping_expr(bool_lit(true)),
+            condition: bool_lit(true),
             then_branch: vec![Stmt::Block {
                 statements: vec![Stmt::Continue { span: dummy_span() }],
                 span: dummy_span(),
             }],
             else_branch: None,
+            span: dummy_span(),
+        }
+    );
+}
+
+#[test]
+fn test_empty_for_loop() {
+    let tokens = create_tokens(vec![
+        TokenKind::KeywordFor,
+        TokenKind::OpenParen,
+        TokenKind::Semicolon,
+        TokenKind::Semicolon,
+        TokenKind::CloseParen,
+        TokenKind::OpenBrace,
+        TokenKind::CloseBrace,
+        TokenKind::Eof,
+    ]);
+    let parser = JsavParser::new(tokens);
+    let (statements, errors) = parser.parse();
+    assert!(errors.is_empty());
+    assert_eq!(statements.len(), 1);
+    assert_eq!(
+        statements[0],
+        Stmt::For {
+            initializer: None,
+            condition: None,
+            increment: None,
+            body: vec![],
+            span: dummy_span(),
+        }
+    );
+}
+
+#[test]
+fn test_full_for_loop() {
+    let tokens = create_tokens(vec![
+        TokenKind::KeywordFor,
+        TokenKind::OpenParen,
+        TokenKind::KeywordVar,
+        TokenKind::IdentifierAscii("i".into()),
+        TokenKind::Colon,
+        TokenKind::TypeI32,
+        TokenKind::Equal,
+        TokenKind::Numeric(Number::Integer(0)),
+        TokenKind::Semicolon,
+        TokenKind::IdentifierAscii("i".into()),
+        TokenKind::Less,
+        TokenKind::Numeric(Number::Integer(10)),
+        TokenKind::Semicolon,
+        TokenKind::CloseParen,
+        TokenKind::OpenBrace,
+        TokenKind::CloseBrace,
+        TokenKind::Eof,
+    ]);
+    let parser = JsavParser::new(tokens);
+    let (statements, errors) = parser.parse();
+    assert!(errors.is_empty());
+    assert_eq!(statements.len(), 1);
+    assert_eq!(
+        statements[0],
+        Stmt::For {
+            initializer: Some(Box::from(var_declaration(vec!["i".to_string()], Type::I32,true, vec![num_lit(0)]))),
+            condition: Some(binary_expr(
+                variable_expr("i"),
+                BinaryOp::Less,
+                num_lit(10)
+            )),
+            increment: None,
+            body: vec![],
             span: dummy_span(),
         }
     );
@@ -1078,12 +1147,9 @@ fn if_whit_else_brach() {
     assert_eq!(
         statements[0],
         Stmt::If {
-            condition: Expr::Grouping {
-                expr: Box::from(Expr::Literal {
-                    value: LiteralValue::Bool(true),
-                    span: test_span(1, 5, 4, 1, 9, 8)
-                }),
-                span: test_span(1, 4, 3, 1, 10, 9)
+            condition: Expr::Literal {
+                value: LiteralValue::Bool(true),
+                span: test_span(1, 5, 4, 1, 9, 8)
             },
             then_branch: vec![Stmt::Block {
                 statements: vec![Stmt::Continue {

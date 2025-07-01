@@ -42,8 +42,8 @@ impl JsavParser {
             TokenKind::KeywordIf => self.parse_if(),
             TokenKind::KeywordVar | TokenKind::KeywordConst => self.parse_var_declaration(),
             TokenKind::KeywordReturn => self.parse_return(),
-            // TokenKind::KeywordWhile => self.parse_while(),
-            // TokenKind::KeywordFor => self.parse_for(),
+            TokenKind::KeywordWhile => self.parse_while(),
+            TokenKind::KeywordFor => self.parse_for(),
             TokenKind::KeywordBreak | TokenKind::KeywordContinue => self.parse_break_continue(),
             TokenKind::OpenBrace => self.parse_block_stmt(),
             _ => self.parse_expression_stmt(),
@@ -175,7 +175,9 @@ impl JsavParser {
 
     fn parse_if(&mut self) -> Option<Stmt> {
         let start_token = self.advance()?.clone(); // 'if'
+        self.expect(TokenKind::OpenParen, "after 'if'");
         let condition = self.parse_expr(0)?;
+        self.expect(TokenKind::CloseParen, "after the condition");
         let then_branch = self.parse_block_stmt()?;
 
         let else_branch = if self.match_token(TokenKind::KeywordElse) {
@@ -189,6 +191,91 @@ impl JsavParser {
             then_branch: vec![then_branch],
             else_branch,
             span: self.merged_span(&start_token),
+        })
+    }
+
+    fn parse_while(&mut self) -> Option<Stmt> {
+        let start_token = self.advance()?.clone(); // 'while'
+        self.expect(TokenKind::OpenParen, "after 'while'");
+        let condition = self.parse_expr(0)?;
+        self.expect(TokenKind::CloseParen, "after the condition");
+        let body = self.parse_block_stmt()?;
+        let end_span = body.span();
+        let function_span = start_token
+            .span
+            .merged(end_span)
+            .unwrap_or_else(|| start_token.span.clone());
+        Some(Stmt::While {
+            condition,
+            body: vec![body],
+            span: function_span,
+        })
+    }
+
+    fn parse_for(&mut self) -> Option<Stmt> {
+        let start_token = self.advance()?.clone(); // 'for'
+        self.expect(TokenKind::OpenParen, "after 'for'");
+
+        // 1. Parse initializer (può essere var/const, espressione o vuoto)
+        let initializer = if self.match_token(TokenKind::Semicolon) {
+            None // Inizializzatore vuoto
+        } else if self.check(TokenKind::KeywordVar) || self.check(TokenKind::KeywordConst) {
+            // Dichiarazione var/const
+            let stmt = self.parse_var_declaration();
+            self.expect(TokenKind::Semicolon, "after for loop initializer");
+            stmt.map(Box::new)
+        } else {
+            // Espressione
+            let stmt = self.parse_expression_stmt();
+            self.expect(TokenKind::Semicolon, "after for loop initializer");
+            stmt.map(Box::new)
+        };
+
+        // 2. Parse condition (opzionale)
+        let condition = if self.check(TokenKind::Semicolon) {
+            self.advance(); // Consuma il punto e virgola
+            None
+        } else {
+            let expr = self.parse_expr(0);
+            self.expect(TokenKind::Semicolon, "after for loop condition");
+            expr
+        };
+
+        // 3. Parse increment (opzionale)
+        let increment = if self.check(TokenKind::CloseParen) {
+            None
+        } else {
+            let expr = self.parse_expr(0);
+            // Non c'è punto e virgola dopo l'incremento
+            expr
+        };
+
+        // 4. Chiudi parentesi
+        self.expect(TokenKind::CloseParen, "after for loop clauses");
+
+        // 5. Parse body
+        let body_stmt = self.parse_stmt()?;
+        let body = if let Stmt::Block { statements, .. } = body_stmt {
+            statements // Usa le dichiarazioni direttamente
+        } else {
+            vec![body_stmt] // Avvolgi in un vettore
+        };
+
+        // Calcola lo span totale (dal token 'for' alla fine del body)
+        let end_span = body.last().map(|s| s.span()).cloned().unwrap_or_else(|| {
+            self.previous()
+                .map(|t| t.span.clone())
+                .unwrap_or_else(|| start_token.span.clone())
+        });
+
+        let span = start_token.span.merged(&end_span).unwrap_or(start_token.span);
+
+        Some(Stmt::For {
+            initializer,
+            condition,
+            increment,
+            body,
+            span,
         })
     }
 

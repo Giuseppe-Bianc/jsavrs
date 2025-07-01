@@ -28,4 +28,8 @@ main {
 	}
 	var arr: i64[5] = {1, 2, 3, 4, 5}
 	//5-5=5
+
+	for (;;) { break }
+	for (var i:i32 = 0i32; i < 10i32; i = i + 1i32) { break }
+	while (true) { break }
 }

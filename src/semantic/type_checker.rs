@@ -9,7 +9,7 @@ pub struct TypeChecker {
     symbol_table: SymbolTable,
     errors: Vec<CompileError>,
     current_function_return_type: Option<Type>,
-    in_loop: bool,
+    in_loop: usize,
 }
 
 // Promotion hierarchy
@@ -33,7 +33,7 @@ impl TypeChecker {
             symbol_table: SymbolTable::new(),
             errors: Vec::new(),
             current_function_return_type: None,
-            in_loop: false,
+            in_loop: 0,
         }
     }
 
@@ -152,6 +152,49 @@ impl TypeChecker {
                 }
                 // Do NOT pop scope
             }
+            Stmt::For {
+                initializer,
+                condition: _,
+                increment: _,
+                body,
+                span: _,
+            } => {
+                // Process initializer if it exists
+                if let Some(init) = initializer {
+                    self.visit_stmt_first_pass(init);
+                }
+                // Process body
+                for stmt in body {
+                    self.visit_stmt_first_pass(stmt);
+                }
+            }
+            Stmt::While {
+                condition: _,
+                body,
+                span: _,
+            } => {
+                // Process body
+                for stmt in body {
+                    self.visit_stmt_first_pass(stmt);
+                }
+            }
+            Stmt::If {
+                condition: _,
+                then_branch,
+                else_branch,
+                span: _,
+            } => {
+                // Process then branch
+                for stmt in then_branch {
+                    self.visit_stmt_first_pass(stmt);
+                }
+                // Process else branch if exists
+                if let Some(else_branch) = else_branch {
+                    for stmt in else_branch {
+                        self.visit_stmt_first_pass(stmt);
+                    }
+                }
+            }
             _ => {} // Other statements don't declare symbols in first pass
         }
     }
@@ -268,11 +311,67 @@ impl TypeChecker {
                 }
             }
             Stmt::Break { span } | Stmt::Continue { span } => {
-                if !self.in_loop {
+                if self.in_loop == 0 {
                     self.ptype_error("Break/continue outside loop".to_string(), span.clone());
                 }
-            } 
-            _ => unimplemented!("Unsupported statement in type checker"),
+            }
+            Stmt::While {
+                condition,
+                body,
+                span: _,
+            } => {
+                self.in_loop += 1;
+                if let Some(cond_type) = self.visit_expr(condition) {
+                    if cond_type != Type::Bool {
+                        self.ptype_error(
+                            format!("While condition must be bool, found {cond_type}"),
+                            condition.span().clone(),
+                        );
+                    }
+                }
+                for stmt in body {
+                    self.visit_stmt(stmt);
+                }
+                self.in_loop -= 1;
+            }
+            Stmt::For {
+                initializer,
+                condition,
+                increment,
+                body,
+                span: _,
+            } => {
+                self.in_loop += 1;
+                // Process initializer
+                if let Some(init) = initializer {
+                    self.visit_stmt(init);
+                }
+
+                // Process condition
+                if let Some(cond) = condition {
+                    if let Some(cond_type) = self.visit_expr(cond) {
+                        if cond_type != Type::Bool {
+                            self.ptype_error(
+                                format!("For loop condition must be bool, found {cond_type}"),
+                                cond.span().clone(),
+                            );
+                        }
+                    }
+                }
+
+                // Process increment
+                if let Some(inc) = increment {
+                    self.visit_expr(inc);
+                }
+
+                // Process body
+                for stmt in body {
+                    self.visit_stmt(stmt);
+                }
+
+                self.in_loop -= 1;
+            }
+            //_ => unimplemented!("Unsupported statement in type checker"),
         }
     }
 
@@ -498,7 +597,7 @@ impl TypeChecker {
                     };
                     Type::Array(Box::new(ty), Box::new(size_expr))
                 })
-            } //_ => unimplemented!("Unsupported expression in type checker"),
+            }
         }
     }
 

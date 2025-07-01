@@ -3,6 +3,7 @@ use clap::Parser;
 use console::style;
 use jsavrs::cli::Args;
 use jsavrs::error::error_reporter::ErrorReporter;
+use jsavrs::ir::generator::IrGenerator;
 use jsavrs::lexer::Lexer;
 use jsavrs::parser::ast_printer::pretty_print_stmt;
 use jsavrs::parser::jsav_parser::JsavParser;
@@ -14,7 +15,6 @@ use std::{
     path::Path,
     //process,
 };
-use jsavrs::ir::generator::IrGenerator;
 
 #[allow(clippy::explicit_auto_deref, clippy::unused_unit)]
 fn main() -> Result<(), CompileError> {
@@ -103,7 +103,7 @@ fn main() -> Result<(), CompileError> {
     let ir_timer = Timer::new("IR Generation");
     let functions = generator.generate(statements);
     println!("{ir_timer}");
-    
+
     if args.verbose {
         for func in &functions {
             println!("{func}");
