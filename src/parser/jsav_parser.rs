@@ -245,9 +245,8 @@ impl JsavParser {
         let increment = if self.check(TokenKind::CloseParen) {
             None
         } else {
-            let expr = self.parse_expr(0);
             // Non c'è punto e virgola dopo l'incremento
-            expr
+            self.parse_expr(0)
         };
 
         // 4. Chiudi parentesi
