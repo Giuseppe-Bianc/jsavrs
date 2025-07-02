@@ -107,8 +107,8 @@ impl SourceSpan {
     pub fn merged(&self, other: &SourceSpan) -> Option<Self> {
         (self.file_path == other.file_path).then(|| Self {
             file_path: self.file_path.clone(),
-            start: self.clone().start.min(other.start.clone()),
-            end: self.clone().end.max(other.end.clone()),
+            start: self.clone().start.min(other.start),
+            end: self.clone().end.max(other.end),
         })
     }
 }
