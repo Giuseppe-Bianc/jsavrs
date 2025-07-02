@@ -1,23 +1,37 @@
 // Contenitore per i valori temporali con etichette
 use crate::time::time_values::TimeValues;
 use crate::time::value_label::ValueLabel;
+
+#[derive(Debug, Clone)]
+pub struct TimeLabels {
+    pub seconds: &'static str,
+    pub millis: &'static str,
+    pub micro: &'static str,
+    pub nano: &'static str,
+}
+
+impl Default for TimeLabels {
+    fn default() -> Self {
+        Self {
+            seconds: "s",
+            millis: "ms",
+            micro: "us",
+            nano: "ns",
+        }
+    }
+}
+
 #[derive(Debug, Clone)]
 pub struct Times {
     pub values: TimeValues,
-    pub label_seconds: &'static str,
-    pub label_millis: &'static str,
-    pub label_micro: &'static str,
-    pub label_nano: &'static str,
+    pub labels: TimeLabels,
 }
 
 impl Times {
     pub fn from_nanoseconds(nanoseconds: f64) -> Self {
-        Times {
+        Self {
             values: TimeValues::from_nanoseconds(nanoseconds),
-            label_seconds: "s",
-            label_millis: "ms",
-            label_micro: "us",
-            label_nano: "ns",
+            labels: TimeLabels::default(),
         }
     }
 
@@ -28,13 +42,13 @@ impl Times {
 
         // Modifica: usare >= 1.0 invece di > 1.0
         if s >= 1.0 {
-            ValueLabel::new(s, self.label_seconds)
+            ValueLabel::new(s, self.labels.seconds)
         } else if ms >= 1.0 {
-            ValueLabel::new(ms, self.label_millis)
+            ValueLabel::new(ms, self.labels.millis)
         } else if us >= 1.0 {
-            ValueLabel::new(us, self.label_micro)
+            ValueLabel::new(us, self.labels.micro)
         } else {
-            ValueLabel::new(self.values.nano(), self.label_nano)
+            ValueLabel::new(self.values.nano(), self.labels.nano)
         }
     }
 }
