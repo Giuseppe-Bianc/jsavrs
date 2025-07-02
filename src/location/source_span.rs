@@ -80,8 +80,8 @@ impl SourceSpan {
     /// ```
     pub fn merge(&mut self, other: &SourceSpan) {
         if self.file_path == other.file_path {
-            self.start = self.clone().start.min(other.start.clone());
-            self.end = self.clone().end.max(other.end.clone());
+            self.start = self.start.min(other.start);
+            self.end = self.end.max(other.end);
         }
     }
 

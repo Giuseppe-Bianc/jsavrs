@@ -137,11 +137,9 @@ impl LineTracker {
     /// Gets a specific line from the source (1-indexed)
     pub fn get_line(&self, line_number: usize) -> Option<&str> {
         let start_index = *self.line_starts.get(line_number.checked_sub(1)?)?;
-        let end_index = self
-            .line_starts
-            .get(line_number)
-            .copied()
-            .map(|next| next - 1)
+        let end_index = self.source[start_index..]
+            .find('\n')
+            .map(|rel| start_index + rel)
             .unwrap_or(self.source.len());
 
         Some(&self.source[start_index..end_index])
