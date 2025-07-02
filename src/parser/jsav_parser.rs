@@ -376,6 +376,10 @@ impl JsavParser {
             }
         }
 
+        if variables.len() != initializers.len() {
+            self.syntax_error("Number of initializers does not match number of variables", &start_token);
+        }        
+
         Some(Stmt::VarDeclaration {
             variables,
             type_annotation: type_ann,
