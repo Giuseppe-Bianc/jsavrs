@@ -1,6 +1,8 @@
-//src/ir/generator.rs
+// src/ir/generator.rs
 use super::*;
+use crate::error::compile_error::CompileError;
 use crate::ir::instruction::{IrBinaryOp, IrUnaryOp};
+use crate::location::source_span::SourceSpan;
 use crate::parser::ast::*;
 use crate::tokens::number::Number;
 use std::collections::HashMap;
@@ -11,8 +13,10 @@ pub struct IrGenerator {
     symbol_table: HashMap<String, Value>,
     temp_counter: usize,
     block_counter: usize,
-    errors: Vec<String>,
+    errors: Vec<CompileError>,
     value_types: HashMap<String, IrType>,
+    break_stack: Vec<String>,      // Stack of loop end labels
+    continue_stack: Vec<String>,   // Stack of loop continue targets
 }
 
 #[allow(clippy::collapsible_if, clippy::only_used_in_recursion)]
@@ -25,11 +29,13 @@ impl IrGenerator {
             block_counter: 0,
             errors: Vec::new(),
             value_types: HashMap::new(),
+            break_stack: Vec::new(),
+            continue_stack: Vec::new(),
         }
     }
 
     /// Generate IR from AST statements
-    pub fn generate(&mut self, stmts: Vec<Stmt>) -> Vec<Function> {
+    pub fn generate(&mut self, stmts: Vec<Stmt>) -> (Vec<Function>, Vec<CompileError>) {
         let mut functions = Vec::new();
 
         for stmt in stmts {
@@ -39,24 +45,27 @@ impl IrGenerator {
                     parameters,
                     return_type,
                     body,
-                    ..
+                    span: _,
                 } => {
                     let mut func = self.create_function(&name, &parameters, return_type);
                     self.generate_function_body(&mut func, body);
                     functions.push(func);
                 }
-                Stmt::MainFunction { body, .. } => {
+                Stmt::MainFunction { body, span: _ } => {
                     let mut func = self.create_function("main", &[], Type::Void);
                     self.generate_function_body(&mut func, body);
                     functions.push(func);
                 }
-                _ => self
-                    .errors
-                    .push("Unsupported top-level statement".to_string()),
+                other => {
+                    self.errors.push(CompileError::IrGeneratorError {
+                        message: "Unsupported top-level statement".to_string(),
+                        span: other.span().clone(),
+                    });
+                }
             }
         }
 
-        functions
+        (functions, std::mem::take(&mut self.errors))
     }
 
     fn create_function(&mut self, name: &str, params: &[Parameter], return_type: Type) -> Function {
@@ -107,6 +116,9 @@ impl IrGenerator {
     }
 
     fn generate_function_body(&mut self, func: &mut Function, body: Vec<Stmt>) {
+        // Clear loop stacks at start of function
+        self.break_stack.clear();
+        self.continue_stack.clear();
         self.start_block(func, "entry");
 
         for stmt in body {
@@ -143,14 +155,15 @@ impl IrGenerator {
                 variables,
                 type_annotation,
                 initializers,
-                ..
+                span: _,
+                is_mutable: _,
             } => {
                 self.generate_var_declaration(func, variables, type_annotation, initializers);
             }
-            Stmt::Return { value, .. } => {
+            Stmt::Return { value, span: _ } => {
                 self.generate_return(func, value);
             }
-            Stmt::Block { statements, .. } => {
+            Stmt::Block { statements, span:_ } => {
                 for stmt in statements {
                     self.generate_stmt(func, stmt);
                 }
@@ -159,11 +172,36 @@ impl IrGenerator {
                 condition,
                 then_branch,
                 else_branch,
-                ..
+                span: _,
             } => {
                 self.generate_if(func, condition, then_branch, else_branch);
             }
-            _ => self.errors.push("Unsupported statement type".to_string()),
+            Stmt::While {
+                condition,
+                body,
+                span: _,
+            } => {
+                self.generate_while(func, condition, body);
+            }
+            Stmt::For {
+                initializer,
+                condition,
+                increment,
+                body,
+                span: _,
+            } => {
+                self.generate_for(func, initializer, condition, increment, body);
+            }
+            Stmt::Break { span } => {
+                self.handle_break(span);
+            }
+            Stmt::Continue { span } => {
+                self.handle_continue(span);
+            }
+            other => self.errors.push(CompileError::IrGeneratorError {
+                message: "Unsupported statement type".to_string(),
+                span: other.span().clone(),
+            }),
         }
     }
 
@@ -266,7 +304,168 @@ impl IrGenerator {
         self.start_block(func, &merge_label);
     }
 
+    fn generate_while(
+        &mut self,
+        func: &mut Function,
+        condition: Expr,
+        body: Vec<Stmt>,
+        /*span: SourceSpan,*/
+    ) {
+        let loop_start_label = self.new_block_label("loop_start");
+        let loop_body_label = self.new_block_label("loop_body");
+        let loop_end_label = self.new_block_label("loop_end");
+
+        // Branch to loop start
+        self.add_terminator(Terminator::Branch(loop_start_label.clone()));
+
+        // Loop start block (condition evaluation)
+        self.start_block(func, &loop_start_label);
+        let cond_value = self.generate_expr(func, condition);
+        self.add_terminator(Terminator::ConditionalBranch {
+            condition: cond_value,
+            true_label: loop_body_label.clone(),
+            false_label: loop_end_label.clone(),
+        });
+
+        // Push loop context
+        self.break_stack.push(loop_end_label.clone());
+        self.continue_stack.push(loop_start_label.clone());
+        
+        // Loop body block
+        self.start_block(func, &loop_body_label);
+        for stmt in body {
+            self.generate_stmt(func, stmt);
+        }
+
+        // Pop loop context
+        self.break_stack.pop();
+        self.continue_stack.pop();
+        
+        // After body, branch back to condition
+        if !self
+            .current_block
+            .as_ref()
+            .unwrap()
+            .terminator
+            .is_terminator()
+        {
+            self.add_terminator(Terminator::Branch(loop_start_label.clone()));
+        }
+
+        // Loop end block
+        self.start_block(func, &loop_end_label);
+    }
+
+    fn generate_for(
+        &mut self,
+        func: &mut Function,
+        initializer: Option<Box<Stmt>>,
+        condition: Option<Expr>,
+        increment: Option<Expr>,
+        body: Vec<Stmt>,
+        /*span: SourceSpan,*/
+    ) {
+        let loop_start_label = self.new_block_label("for_start");
+        //let loop_cond_label = self.new_block_label("for_cond");
+        let loop_body_label = self.new_block_label("for_body");
+        let loop_inc_label = self.new_block_label("for_inc");
+        let loop_end_label = self.new_block_label("for_end");
+
+        // Generate initializer in current block
+        if let Some(init) = initializer {
+            self.generate_stmt(func, *init);
+        }
+
+        // Branch to condition block
+        self.add_terminator(Terminator::Branch(loop_start_label.clone()));
+
+        // Start block (for condition evaluation)
+        self.start_block(func, &loop_start_label);
+
+        // Generate condition if present, otherwise default to true
+        let cond_value = if let Some(cond) = condition {
+            self.generate_expr(func, cond)
+        } else {
+            Value::new_immediate(ImmediateValue::Bool(true))
+        };
+
+        self.add_terminator(Terminator::ConditionalBranch {
+            condition: cond_value,
+            true_label: loop_body_label.clone(),
+            false_label: loop_end_label.clone(),
+        });
+
+        // Push loop context
+        self.break_stack.push(loop_end_label.clone());
+        self.continue_stack.push(loop_inc_label.clone());
+        
+        // Body block
+        self.start_block(func, &loop_body_label);
+        for stmt in body {
+            self.generate_stmt(func, stmt);
+        }
+
+        // Pop loop context
+        self.break_stack.pop();
+        self.continue_stack.pop();
+        
+        // After body, branch to increment block
+        if !self
+            .current_block
+            .as_ref()
+            .unwrap()
+            .terminator
+            .is_terminator()
+        {
+            self.add_terminator(Terminator::Branch(loop_inc_label.clone()));
+        }
+
+        // Increment block
+        self.start_block(func, &loop_inc_label);
+        if let Some(inc) = increment {
+            self.generate_expr(func, inc);
+        }
+
+        // After increment, branch back to condition
+        if !self
+            .current_block
+            .as_ref()
+            .unwrap()
+            .terminator
+            .is_terminator()
+        {
+            self.add_terminator(Terminator::Branch(loop_start_label.clone()));
+        }
+
+        // End block
+        self.start_block(func, &loop_end_label);
+    }
+
+    // Break/Continue handlers
+    fn handle_break(&mut self, span: SourceSpan) {
+        if let Some(label) = self.break_stack.last() {
+            self.add_terminator(Terminator::Branch(label.clone()));
+        } else {
+            self.errors.push(CompileError::IrGeneratorError {
+                message: "Break outside loop".to_string(),
+                span,
+            });
+        }
+    }
+
+    fn handle_continue(&mut self, span: SourceSpan) {
+        if let Some(label) = self.continue_stack.last() {
+            self.add_terminator(Terminator::Branch(label.clone()));
+        } else {
+            self.errors.push(CompileError::IrGeneratorError {
+                message: "Continue outside loop".to_string(),
+                span,
+            });
+        }
+    }
+
     fn generate_expr(&mut self, func: &mut Function, expr: Expr) -> Value {
+        //let span = expr.span().clone();
         match expr {
             Expr::Literal { value, .. } => self.generate_literal(value),
             Expr::Binary {
@@ -275,11 +474,71 @@ impl IrGenerator {
             Expr::Unary { op, expr, .. } => self.generate_unary(func, op, *expr),
             Expr::Variable { name, .. } => self.generate_variable(name),
             Expr::Assign { target, value, .. } => self.generate_assign(func, *target, *value),
-            _ => {
-                self.errors.push("Unsupported expression type".to_string());
+            Expr::Grouping { expr, .. } => self.generate_expr(func, *expr),
+            Expr::ArrayLiteral { elements, .. } => {
+                self.generate_array_literal(func, elements)
+            }
+            other => {
+                self.errors.push(CompileError::IrGeneratorError {
+                    message: "Unsupported expression type".to_string(),
+                    span: other.span().clone(),
+                });
                 Value::new_immediate(ImmediateValue::I32(0))
             }
         }
+    }
+
+    fn generate_array_literal(
+        &mut self,
+        func: &mut Function,
+        elements: Vec<Expr>,
+        /*span: SourceSpan,*/
+    ) -> Value {
+        if elements.is_empty() {
+            return Value::new_immediate(ImmediateValue::I64(0)); // Null pointer
+        }
+
+        // Generate all element values first
+        let mut element_vals = Vec::with_capacity(elements.len());
+        for element in elements {
+            element_vals.push(self.generate_expr(func, element));
+        }
+
+        // Determine element type from first element
+        let element_ty = element_vals[0].ty.clone();
+        let array_size = element_vals.len();
+
+        // Allocate array
+        let array_temp = self.new_temp();
+        let array_ty = IrType::Array(Box::new(element_ty.clone()), array_size);
+        self.add_instruction(Instruction::Alloca {
+            dest: array_temp.clone(),
+            ty: array_ty.clone(),
+        });
+        let array_ptr = Value::new_local(array_temp.clone(), array_ty.clone());
+
+        // Store each element
+        for (index, element_val) in element_vals.into_iter().enumerate() {
+            // Calculate element pointer
+            let index_temp = self.new_temp();
+            let index_val = Value::new_immediate(ImmediateValue::I32(index as i32));
+            self.add_instruction(Instruction::GetElementPtr {
+                dest: index_temp.clone(),
+                base: array_ptr.clone(),
+                index: index_val,
+                element_ty: element_ty.clone(),
+            });
+
+            // Store element
+            let element_ptr =
+                Value::new_temporary(index_temp, IrType::Pointer(Box::new(element_ty.clone())));
+            self.add_instruction(Instruction::Store {
+                value: element_val,
+                dest: element_ptr,
+            });
+        }
+
+        array_ptr
     }
 
     fn generate_literal(&mut self, value: LiteralValue) -> Value {

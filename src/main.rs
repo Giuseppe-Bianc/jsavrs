@@ -10,6 +10,7 @@ use jsavrs::parser::jsav_parser::JsavParser;
 use jsavrs::semantic::type_checker::TypeChecker;
 use jsavrs::time::timer::{AutoTimer, Timer};
 use jsavrs::{error::compile_error::CompileError, lexer::lexer_tokenize_with_errors};
+use std::process;
 use std::{
     fs,
     path::Path,
@@ -52,7 +53,7 @@ fn main() -> Result<(), CompileError> {
     println!("{lexer_timer}");
     if !lexer_errors.is_empty() {
         eprintln!("{}", error_reporter.report_errors(lexer_errors));
-        ()
+        process::exit(-1);
     }
 
     // Print tokens with color if verbose
@@ -101,8 +102,16 @@ fn main() -> Result<(), CompileError> {
 
     let mut generator = IrGenerator::new();
     let ir_timer = Timer::new("IR Generation");
-    let functions = generator.generate(statements);
+    let (functions, ir_errors) = generator.generate(statements);
     println!("{ir_timer}");
+
+
+    if !ir_errors.is_empty() {
+        eprintln!("{}", error_reporter.report_errors(ir_errors));
+        process::exit(-1);
+    }
+
+    println!("IR generation done");
 
     if args.verbose {
         for func in &functions {

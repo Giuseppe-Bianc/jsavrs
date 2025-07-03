@@ -28,6 +28,9 @@ impl ErrorReporter {
                 CompileError::TypeError { message, span } => {
                     self.format_error("TYPE", &message, &span)
                 }
+                CompileError::IrGeneratorError { message, span } => {
+                    self.format_error("IR GEN", &message, &span)
+                }
                 CompileError::IoError(e) => format!(
                     "{} {}: {}\n",
                     style("ERROR:").red().bold(),
