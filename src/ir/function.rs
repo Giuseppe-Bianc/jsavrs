@@ -47,8 +47,9 @@ impl fmt::Display for Function {
         writeln!(f, "function {} ({}) -> {}:", self.name, params_str, self.return_type)?;
 
         for block in &self.basic_blocks {
-            writeln!(f, "{block}")?;
+            writeln!(f, "{block}\n")?;
         }
+
 
         Ok(())
     }

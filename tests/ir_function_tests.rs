@@ -118,12 +118,13 @@ fn test_display_with_blocks() {
     let output = format!("{}", func);
     let lines: Vec<&str> = output.trim_end().split('\n').collect();
 
-    assert_eq!(lines.len(), 5); // Header + 2 blocks
+    assert_eq!(lines.len(), 6); // Header + 2 blocks + 2 newlines
     assert_eq!(lines[0], "function example () -> i32:");
     assert_eq!(lines[1], "entry:");
     assert_eq!(lines[2], "  unreachable");
-    assert_eq!(lines[3], "exit:");
-    assert_eq!(lines[4], "  unreachable");
+    assert_eq!(lines[3], "");
+    assert_eq!(lines[4], "exit:");
+    assert_eq!(lines[5], "  unreachable");
 }
 
 #[test]
@@ -152,5 +153,5 @@ fn test_function_with_many_blocks() {
     assert_eq!(func.basic_blocks.len(), 100);
     let output = format!("{}", func);
     let lines: Vec<&str> = output.trim_end().split('\n').collect();
-    assert_eq!(lines.len(), 201); // Header + 100 blocks
+    assert_eq!(lines.len(), 300); // Header + 100 blocks + 2 newlines for each block
 }
