@@ -931,3 +931,114 @@ fn test_generate_for_loop_with_continue() {
         Terminator::Branch(_) // to for_inc
     ));
 }
+
+// Add to the existing test module
+#[test]
+fn test_generate_grouping_expression() {
+    let ast = vec![function_declaration(
+        "test".to_string(),
+        vec![],
+        Type::I32,
+        vec![Stmt::Return {
+            value: Some(Expr::Grouping {
+                expr: Box::new(Expr::Binary {
+                    left: Box::new(Expr::Literal {
+                        value: LiteralValue::Number(Number::I32(10)),
+                        span: dummy_span(),
+                    }),
+                    op: BinaryOp::Add,
+                    right: Box::new(Expr::Literal {
+                        value: LiteralValue::Number(Number::I32(20)),
+                        span: dummy_span(),
+                    }),
+                    span: dummy_span(),
+                }),
+                span: dummy_span(),
+            }),
+            span: dummy_span(),
+        }],
+    )];
+
+    let mut generator = IrGenerator::new();
+    let (functions, ir_errors) = generator.generate(ast);
+    assert_eq!(ir_errors.len(), 0);
+    assert_eq!(functions.len(), 1);
+    let func = &functions[0];
+    let block = &func.basic_blocks[0];
+    assert_eq!(block.instructions.len(), 1);
+
+    // Should have a single binary instruction with the grouped values
+    if let Instruction::Binary {
+        op,
+        left,
+        right,
+        ty,
+        ..
+    } = &block.instructions[0]
+    {
+        assert_eq!(*op, IrBinaryOp::Add);
+        assert_eq!(*ty, IrType::I32);
+        assert!(matches!(
+            &left.kind,
+            ValueKind::Immediate(ImmediateValue::I32(10))
+        ));
+        assert!(matches!(
+            &right.kind,
+            ValueKind::Immediate(ImmediateValue::I32(20))
+        ));
+    } else {
+        panic!("Expected binary instruction");
+    }
+}
+
+#[test]
+fn test_generate_array_literal_with_elements() {
+    let ast = vec![function_declaration(
+        "test".to_string(),
+        vec![],
+        Type::Array(Box::new(Type::I32), Box::new(Expr::Literal {
+            value: LiteralValue::Number(Number::Integer(3)),
+            span: dummy_span(),
+        })),
+        vec![Stmt::Return {
+            value: Some(Expr::ArrayLiteral {
+                elements: vec![
+                    Expr::Literal {
+                        value: LiteralValue::Number(Number::I32(10)),
+                        span: dummy_span(),
+                    },
+                    Expr::Literal {
+                        value: LiteralValue::Number(Number::I32(20)),
+                        span: dummy_span(),
+                    },
+                    Expr::Literal {
+                        value: LiteralValue::Number(Number::I32(30)),
+                        span: dummy_span(),
+                    },
+                ],
+                span: dummy_span(),
+            }),
+            span: dummy_span(),
+        }],
+    )];
+
+    let mut generator = IrGenerator::new();
+    let (functions, ir_errors) = generator.generate(ast);
+    assert_eq!(ir_errors.len(), 0);
+    assert_eq!(functions.len(), 1);
+    let func = &functions[0];
+    let block = &func.basic_blocks[0];
+
+    assert_eq!(block.instructions.len(), 7);
+
+    // First instruction should be alloca for the array
+    if let Instruction::Alloca { ty, .. } = &block.instructions[0] {
+        assert!(matches!(ty, IrType::Array(..)));
+        if let IrType::Array(element_type, size) = ty {
+            assert_eq!(**element_type, IrType::I32);
+            assert_eq!(*size, 3);
+        }
+    } else {
+        panic!("Expected alloca instruction for array");
+    }
+}
