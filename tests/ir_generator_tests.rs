@@ -22,8 +22,8 @@ fn test_generate_function_with_return() {
     )];
 
     let mut generator = IrGenerator::new();
-    let functions = generator.generate(ast);
-
+    let (functions, ir_errors) = generator.generate(ast);
+    assert_eq!(ir_errors.len(), 0);
     assert_eq!(functions.len(), 1);
     let func = &functions[0];
     assert_eq!(func.name, "test");
@@ -57,8 +57,9 @@ fn test_generate_void_function() {
     )];
 
     let mut generator = IrGenerator::new();
-    let functions = generator.generate(ast);
-
+    let (functions, ir_errors) = generator.generate(ast);
+    assert_eq!(ir_errors.len(), 0);
+    assert_eq!(functions.len(), 1);
     let func = &functions[0];
     let block = &func.basic_blocks[0];
     assert!(matches!(
@@ -84,8 +85,8 @@ fn test_generate_main_function() {
     }];
 
     let mut generator = IrGenerator::new();
-    let functions = generator.generate(ast);
-
+    let (functions, ir_errors) = generator.generate(ast);
+    assert_eq!(ir_errors.len(), 0);
     assert_eq!(functions.len(), 1);
     let func = &functions[0];
     assert_eq!(func.name, "main");
@@ -116,8 +117,9 @@ fn test_generate_binary_expression() {
     )];
 
     let mut generator = IrGenerator::new();
-    let functions = generator.generate(ast);
-
+    let (functions, ir_errors) = generator.generate(ast);
+    assert_eq!(ir_errors.len(), 0);
+    assert_eq!(functions.len(), 1);
     let func = &functions[0];
     let block = &func.basic_blocks[0];
     assert_eq!(block.instructions.len(), 1);
@@ -165,8 +167,9 @@ fn test_generate_unary_expression() {
     )];
 
     let mut generator = IrGenerator::new();
-    let functions = generator.generate(ast);
-
+    let (functions, ir_errors) = generator.generate(ast);
+    assert_eq!(ir_errors.len(), 0);
+    assert_eq!(functions.len(), 1);
     let func = &functions[0];
     let block = &func.basic_blocks[0];
     assert_eq!(block.instructions.len(), 1);
@@ -217,8 +220,9 @@ fn test_generate_variable_assignment() {
     )];
 
     let mut generator = IrGenerator::new();
-    let functions = generator.generate(ast);
-
+    let (functions, ir_errors) = generator.generate(ast);
+    assert_eq!(ir_errors.len(), 0);
+    assert_eq!(functions.len(), 1);
     let func = &functions[0];
     assert_eq!(func.basic_blocks.len(), 1);
     let block = &func.basic_blocks[0];
@@ -250,8 +254,9 @@ fn test_generate_if_statement() {
     )];
 
     let mut generator = IrGenerator::new();
-    let functions = generator.generate(ast);
-
+    let (functions, ir_errors) = generator.generate(ast);
+    assert_eq!(ir_errors.len(), 0);
+    assert_eq!(functions.len(), 1);
     let func = &functions[0];
     assert_eq!(func.basic_blocks.len(), 4); // entry, then, else, merge
 
@@ -311,8 +316,9 @@ fn test_generate_nested_expressions() {
     )];
 
     let mut generator = IrGenerator::new();
-    let functions = generator.generate(ast);
-
+    let (functions, ir_errors) = generator.generate(ast);
+    assert_eq!(ir_errors.len(), 0);
+    assert_eq!(functions.len(), 1);
     let func = &functions[0];
     let block = &func.basic_blocks[0];
     assert_eq!(block.instructions.len(), 3); // unary, binary, binary
@@ -359,8 +365,9 @@ fn test_generate_custom_type() {
     )];
 
     let mut generator = IrGenerator::new();
-    let functions = generator.generate(ast);
-
+    let (functions, ir_errors) = generator.generate(ast);
+    assert_eq!(ir_errors.len(), 0);
+    assert_eq!(functions.len(), 1);
     let func = &functions[0];
     assert_eq!(func.parameters[0].1, IrType::Custom("MyType".to_string()));
     assert_eq!(func.return_type, IrType::Custom("MyType".to_string()));
@@ -388,8 +395,9 @@ fn test_generate_array_type() {
     )];
 
     let mut generator = IrGenerator::new();
-    let functions = generator.generate(ast);
-
+    let (functions, ir_errors) = generator.generate(ast);
+    assert_eq!(ir_errors.len(), 0);
+    assert_eq!(functions.len(), 1);
     let func = &functions[0];
     let block = &func.basic_blocks[0];
     assert_eq!(block.instructions.len(), 1);
@@ -416,8 +424,9 @@ fn test_generate_missing_return() {
     }];
 
     let mut generator = IrGenerator::new();
-    let functions = generator.generate(ast);
-
+    let (functions, ir_errors) = generator.generate(ast);
+    assert_eq!(ir_errors.len(), 0);
+    assert_eq!(functions.len(), 1);
     let func = &functions[0];
     let block = &func.basic_blocks[0];
     assert!(matches!(
@@ -458,8 +467,8 @@ fn test_generate_multiple_functions() {
     ];
 
     let mut generator = IrGenerator::new();
-    let functions = generator.generate(ast);
-
+    let (functions, ir_errors) = generator.generate(ast);
+    assert_eq!(ir_errors.len(), 0);
     assert_eq!(functions.len(), 2);
     assert_eq!(functions[0].name, "func1");
     assert_eq!(functions[1].name, "func2");
@@ -482,8 +491,9 @@ fn test_generate_string_literal() {
     }];
 
     let mut generator = IrGenerator::new();
-    let functions = generator.generate(ast);
-
+    let (functions, ir_errors) = generator.generate(ast);
+    assert_eq!(ir_errors.len(), 0);
+    assert_eq!(functions.len(), 1);
     let func = &functions[0];
     let block = &func.basic_blocks[0];
     assert!(matches!(
@@ -512,8 +522,9 @@ fn test_generate_nullptr() {
     }];
 
     let mut generator = IrGenerator::new();
-    let functions = generator.generate(ast);
-
+    let (functions, ir_errors) = generator.generate(ast);
+    assert_eq!(ir_errors.len(), 0);
+    assert_eq!(functions.len(), 1);
     let func = &functions[0];
     let block = &func.basic_blocks[0];
     assert!(matches!(
