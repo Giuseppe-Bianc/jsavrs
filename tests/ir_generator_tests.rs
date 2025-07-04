@@ -745,3 +745,189 @@ fn test_generate_simple_while_loop() {
         loop_end.terminator
     );
 }
+#[test]
+fn test_generate_for_loop_basic() {
+    let ast = vec![function_declaration(
+        "test".to_string(),
+        vec![],
+        Type::Void,
+        vec![
+            Stmt::For {
+                initializer: Some(Box::new(Stmt::VarDeclaration {
+                    variables: vec!["i".to_string()],
+                    type_annotation: Type::I32,
+                    is_mutable: true,
+                    initializers: vec![Expr::Literal {
+                        value: LiteralValue::Number(Number::I32(0)),
+                        span: dummy_span(),
+                    }],
+                    span: dummy_span(),
+                })),
+                condition: Some(Expr::Binary {
+                    left: Box::new(Expr::Variable {
+                        name: "i".to_string(),
+                        span: dummy_span(),
+                    }),
+                    op: BinaryOp::Less,
+                    right: Box::new(Expr::Literal {
+                        value: LiteralValue::Number(Number::I32(10)),
+                        span: dummy_span(),
+                    }),
+                    span: dummy_span(),
+                }),
+                increment: Some(Expr::Assign {
+                    target: Box::new(Expr::Variable {
+                        name: "i".to_string(),
+                        span: dummy_span(),
+                    }),
+                    value: Box::new(Expr::Binary {
+                        left: Box::new(Expr::Variable {
+                            name: "i".to_string(),
+                            span: dummy_span(),
+                        }),
+                        op: BinaryOp::Add,
+                        right: Box::new(Expr::Literal {
+                            value: LiteralValue::Number(Number::I32(1)),
+                            span: dummy_span(),
+                        }),
+                        span: dummy_span(),
+                    }),
+                    span: dummy_span(),
+                }),
+                body: vec![],
+                span: dummy_span(),
+            }
+        ],
+    )];
+
+    let mut generator = IrGenerator::new();
+    let (functions, ir_errors) = generator.generate(ast);
+    assert_eq!(ir_errors.len(), 0);
+    assert_eq!(functions.len(), 1);
+    let func = &functions[0];
+
+    // Verify block structure: entry, for_start, for_body, for_inc, for_end
+    assert_eq!(func.basic_blocks.len(), 5);
+
+    // Check terminators in each block
+    assert!(matches!(
+        func.basic_blocks[0].terminator,
+        Terminator::Branch(_) // to for_start
+    ));
+    assert!(matches!(
+        func.basic_blocks[1].terminator,
+        Terminator::ConditionalBranch { .. }
+    ));
+    assert!(matches!(
+        func.basic_blocks[2].terminator,
+        Terminator::Branch(_) // to for_inc
+    ));
+    assert!(matches!(
+        func.basic_blocks[3].terminator,
+        Terminator::Branch(_) // to for_start
+    ));
+}
+
+#[test]
+fn test_generate_for_loop_with_break() {
+    let ast = vec![function_declaration(
+        "test".to_string(),
+        vec![],
+        Type::Void,
+        vec![
+            Stmt::For {
+                initializer: Some(Box::new(Stmt::VarDeclaration {
+                    variables: vec!["i".to_string()],
+                    type_annotation: Type::I32,
+                    is_mutable: true,
+                    initializers: vec![Expr::Literal {
+                        value: LiteralValue::Number(Number::I32(0)),
+                        span: dummy_span(),
+                    }],
+                    span: dummy_span(),
+                })),
+                condition: Some(Expr::Binary {
+                    left: Box::new(Expr::Variable {
+                        name: "i".to_string(),
+                        span: dummy_span(),
+                    }),
+                    op: BinaryOp::Less,
+                    right: Box::new(Expr::Literal {
+                        value: LiteralValue::Number(Number::I32(10)),
+                        span: dummy_span(),
+                    }),
+                    span: dummy_span(),
+                }),
+                increment: None,
+                body: vec![
+                    Stmt::Break { span: dummy_span() }
+                ],
+                span: dummy_span(),
+            }
+        ],
+    )];
+
+    let mut generator = IrGenerator::new();
+    let (functions, ir_errors) = generator.generate(ast);
+    assert_eq!(ir_errors.len(), 0);
+    assert_eq!(functions.len(), 1);
+    let func = &functions[0];
+
+    // Body block (index 2) should break to for_end
+    assert!(matches!(
+        func.basic_blocks[2].terminator,
+        Terminator::Branch(_) // to for_end
+    ));
+}
+
+#[test]
+fn test_generate_for_loop_with_continue() {
+    let ast = vec![function_declaration(
+        "test".to_string(),
+        vec![],
+        Type::Void,
+        vec![
+            Stmt::For {
+                initializer: Some(Box::new(Stmt::VarDeclaration {
+                    variables: vec!["i".to_string()],
+                    type_annotation: Type::I32,
+                    is_mutable: true,
+                    initializers: vec![Expr::Literal {
+                        value: LiteralValue::Number(Number::I32(0)),
+                        span: dummy_span(),
+                    }],
+                    span: dummy_span(),
+                })),
+                condition: Some(Expr::Binary {
+                    left: Box::new(Expr::Variable {
+                        name: "i".to_string(),
+                        span: dummy_span(),
+                    }),
+                    op: BinaryOp::Less,
+                    right: Box::new(Expr::Literal {
+                        value: LiteralValue::Number(Number::I32(10)),
+                        span: dummy_span(),
+                    }),
+                    span: dummy_span(),
+                }),
+                increment: None,
+                body: vec![
+                    Stmt::Continue { span: dummy_span() }
+                ],
+                span: dummy_span(),
+            }
+        ],
+    )];
+
+    let mut generator = IrGenerator::new();
+    let (functions, ir_errors) = generator.generate(ast);
+    assert_eq!(ir_errors.len(), 0);
+    assert_eq!(functions.len(), 1);
+    let func = &functions[0];
+
+    // Body block (index 2) should continue to for_inc
+    assert!(matches!(
+        func.basic_blocks[2].terminator,
+        Terminator::Branch(_) // to for_inc
+    ));
+}
