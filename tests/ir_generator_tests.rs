@@ -596,3 +596,152 @@ fn test_generate_simple_block() {
         Instruction::Store { .. }
     ));
 }
+
+#[test]
+fn test_generate_simple_while_loop() {
+    let ast = vec![function_declaration(
+        "test".to_string(),
+        vec![],
+        Type::Void,
+        vec![
+            Stmt::VarDeclaration {
+                variables: vec!["counter".to_string()],
+                type_annotation: Type::I32,
+                is_mutable: true,
+                initializers: vec![Expr::Literal {
+                    value: LiteralValue::Number(Number::I32(0)),
+                    span: dummy_span(),
+                }],
+                span: dummy_span(),
+            },
+            Stmt::While {
+                condition: Expr::Binary {
+                    left: Box::new(Expr::Variable {
+                        name: "counter".to_string(),
+                        span: dummy_span(),
+                    }),
+                    op: BinaryOp::Less,
+                    right: Box::new(Expr::Literal {
+                        value: LiteralValue::Number(Number::I32(5)),
+                        span: dummy_span(),
+                    }),
+                    span: dummy_span(),
+                },
+                body: vec![Stmt::Expression {
+                    expr: Expr::Assign {
+                        target: Box::new(Expr::Variable {
+                            name: "counter".to_string(),
+                            span: dummy_span(),
+                        }),
+                        value: Box::new(Expr::Binary {
+                            left: Box::new(Expr::Variable {
+                                name: "counter".to_string(),
+                                span: dummy_span(),
+                            }),
+                            op: BinaryOp::Add,
+                            right: Box::new(Expr::Literal {
+                                value: LiteralValue::Number(Number::I32(1)),
+                                span: dummy_span(),
+                            }),
+                            span: dummy_span(),
+                        }),
+                        span: dummy_span(),
+                    },
+                }],
+                span: dummy_span(),
+            },
+            Stmt::Return { value: None, span: dummy_span() },
+        ],
+    )];
+
+    let mut generator = IrGenerator::new();
+    let (functions, ir_errors) = generator.generate(ast);
+    assert!(ir_errors.is_empty(),);
+    assert_eq!(functions.len(), 1);
+    let func = &functions[0];
+    assert_eq!(func.basic_blocks.len(), 4);
+
+    // Entry block checks
+    let entry_block = &func.basic_blocks[0];
+    assert!(
+        matches!(entry_block.instructions[0], Instruction::Alloca { .. }),
+        "Expected Alloca instruction, got {:?}",
+        entry_block.instructions[0]
+    );
+    assert!(
+        matches!(entry_block.instructions[1], Instruction::Store { .. }),
+        "Expected Store instruction, got {:?}",
+        entry_block.instructions[1]
+    );
+    assert!(
+        matches!(&entry_block.terminator, Terminator::Branch(_)),
+        "Expected Branch terminator, got {:?}",
+        entry_block.terminator
+    );
+
+    // Loop start block checks
+    let loop_start = &func.basic_blocks[1];
+    assert!(
+        loop_start.instructions.len() >= 1,
+        "Expected at least 1 instruction, got {}",
+        loop_start.instructions.len()
+    );
+    assert!(
+        matches!(
+            &loop_start.instructions[0],
+            Instruction::Binary {
+                op: IrBinaryOp::Less,
+                ..
+            }
+        ),
+        "Expected Less comparison, got {:?}",
+        loop_start.instructions[0]
+    );
+    assert!(
+        matches!(
+            &loop_start.terminator,
+            Terminator::ConditionalBranch { .. }
+        ),
+        "Expected ConditionalBranch terminator, got {:?}",
+        loop_start.terminator
+    );
+
+    // Loop body block checks
+    let loop_body = &func.basic_blocks[2];
+    assert!(
+        loop_body.instructions.len() >= 2,
+        "Expected at least 3 instructions, got {}",
+        loop_body.instructions.len()
+    );
+    assert!(
+        matches!(
+            loop_body.instructions[0],
+            Instruction::Binary { .. }
+        ),
+        "Expected Load instruction, got {:?}",
+        loop_body.instructions[0]
+    );
+    assert!(
+        matches!(
+            loop_body.instructions[1],
+            Instruction::Store {
+                ..
+            }
+        ),
+        "Expected Add operation, got {:?}",
+        loop_body.instructions[1]
+    );
+    assert!(
+        matches!(&loop_body.terminator, Terminator::Branch(_)),
+        "Expected Branch terminator, got {:?}",
+        loop_body.terminator
+    );
+
+    // Loop end block checks
+    let loop_end = &func.basic_blocks[3];
+    assert!(
+        matches!(&loop_end.terminator, Terminator::Return(..)),
+        "Expected Return terminator, got {:?}",
+        loop_end.terminator
+    );
+}
