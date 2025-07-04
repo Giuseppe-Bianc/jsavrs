@@ -1042,3 +1042,40 @@ fn test_generate_array_literal_with_elements() {
         panic!("Expected alloca instruction for array");
     }
 }
+
+#[test]
+fn test_default_implementation() {
+    let ast = vec![function_declaration(
+        "test".to_string(),
+        vec![],
+        Type::I32,
+        vec![Stmt::Return {
+            value: Some(Expr::Literal {
+                value: LiteralValue::Number(Number::I32(42)),
+                span: dummy_span(),
+            }),
+            span: dummy_span(),
+        }],
+    )];
+
+    let mut default_generator = IrGenerator::default();
+    let (functions, errors) = default_generator.generate(ast);
+
+    // Verify default instance works correctly
+    assert_eq!(errors.len(), 0);
+    assert_eq!(functions.len(), 1);
+    assert_eq!(functions[0].name, "test");
+
+    // Verify terminator in the generated function
+    let block = &functions[0].basic_blocks[0];
+    assert!(matches!(
+        &block.terminator,
+        Terminator::Return(
+            Value {
+                kind: ValueKind::Immediate(ImmediateValue::I32(42)),
+                ..
+            },
+            IrType::I32
+        )
+    ));
+}

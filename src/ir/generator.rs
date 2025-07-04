@@ -15,8 +15,8 @@ pub struct IrGenerator {
     block_counter: usize,
     errors: Vec<CompileError>,
     value_types: HashMap<String, IrType>,
-    break_stack: Vec<String>,      // Stack of loop end labels
-    continue_stack: Vec<String>,   // Stack of loop continue targets
+    break_stack: Vec<String>,    // Stack of loop end labels
+    continue_stack: Vec<String>, // Stack of loop continue targets
 }
 
 #[allow(clippy::collapsible_if, clippy::only_used_in_recursion)]
@@ -57,15 +57,20 @@ impl IrGenerator {
                     functions.push(func);
                 }
                 other => {
-                    self.errors.push(CompileError::IrGeneratorError {
-                        message: "Unsupported top-level statement".to_string(),
-                        span: other.span().clone(),
-                    });
+                    self.new_error(
+                        "Unsupported top-level statement".to_string(),
+                        other.span().clone(),
+                    );
                 }
             }
         }
 
         (functions, std::mem::take(&mut self.errors))
+    }
+
+    fn new_error(&mut self, message: String, span: SourceSpan) {
+        self.errors
+            .push(CompileError::IrGeneratorError { message, span });
     }
 
     fn create_function(&mut self, name: &str, params: &[Parameter], return_type: Type) -> Function {
@@ -163,7 +168,10 @@ impl IrGenerator {
             Stmt::Return { value, span: _ } => {
                 self.generate_return(func, value);
             }
-            Stmt::Block { statements, span:_ } => {
+            Stmt::Block {
+                statements,
+                span: _,
+            } => {
                 for stmt in statements {
                     self.generate_stmt(func, stmt);
                 }
@@ -198,10 +206,10 @@ impl IrGenerator {
             Stmt::Continue { span } => {
                 self.handle_continue(span);
             }
-            other => self.errors.push(CompileError::IrGeneratorError {
-                message: "Unsupported statement type".to_string(),
-                span: other.span().clone(),
-            }),
+            other => self.new_error(
+                "Unsupported statement type".to_string(),
+                other.span().clone(),
+            ),
         }
     }
 
@@ -330,7 +338,7 @@ impl IrGenerator {
         // Push loop context
         self.break_stack.push(loop_end_label.clone());
         self.continue_stack.push(loop_start_label.clone());
-        
+
         // Loop body block
         self.start_block(func, &loop_body_label);
         for stmt in body {
@@ -340,7 +348,7 @@ impl IrGenerator {
         // Pop loop context
         self.break_stack.pop();
         self.continue_stack.pop();
-        
+
         // After body, branch back to condition
         if !self
             .current_block
@@ -398,7 +406,7 @@ impl IrGenerator {
         // Push loop context
         self.break_stack.push(loop_end_label.clone());
         self.continue_stack.push(loop_inc_label.clone());
-        
+
         // Body block
         self.start_block(func, &loop_body_label);
         for stmt in body {
@@ -408,7 +416,7 @@ impl IrGenerator {
         // Pop loop context
         self.break_stack.pop();
         self.continue_stack.pop();
-        
+
         // After body, branch to increment block
         if !self
             .current_block
@@ -446,10 +454,7 @@ impl IrGenerator {
         if let Some(label) = self.break_stack.last() {
             self.add_terminator(Terminator::Branch(label.clone()));
         } else {
-            self.errors.push(CompileError::IrGeneratorError {
-                message: "Break outside loop".to_string(),
-                span,
-            });
+            self.new_error("Break outside loop".to_string(), span);
         }
     }
 
@@ -457,10 +462,7 @@ impl IrGenerator {
         if let Some(label) = self.continue_stack.last() {
             self.add_terminator(Terminator::Branch(label.clone()));
         } else {
-            self.errors.push(CompileError::IrGeneratorError {
-                message: "Continue outside loop".to_string(),
-                span,
-            });
+            self.new_error("Continue outside loop".to_string(), span);
         }
     }
 
@@ -475,14 +477,12 @@ impl IrGenerator {
             Expr::Variable { name, .. } => self.generate_variable(name),
             Expr::Assign { target, value, .. } => self.generate_assign(func, *target, *value),
             Expr::Grouping { expr, .. } => self.generate_expr(func, *expr),
-            Expr::ArrayLiteral { elements, .. } => {
-                self.generate_array_literal(func, elements)
-            }
+            Expr::ArrayLiteral { elements, .. } => self.generate_array_literal(func, elements),
             other => {
-                self.errors.push(CompileError::IrGeneratorError {
-                    message: "Unsupported expression type".to_string(),
-                    span: other.span().clone(),
-                });
+                self.new_error(
+                    "Unsupported expression type".to_string(),
+                    other.span().clone(),
+                );
                 Value::new_immediate(ImmediateValue::I32(0))
             }
         }
