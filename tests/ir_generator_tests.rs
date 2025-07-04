@@ -1,5 +1,5 @@
-use jsavrs::ir::generator::IrGenerator;
 use jsavrs::ir::IrType;
+use jsavrs::ir::generator::IrGenerator;
 use jsavrs::ir::{ImmediateValue, Value, ValueKind};
 use jsavrs::ir::{Instruction, IrBinaryOp, IrUnaryOp, Terminator};
 use jsavrs::parser::ast::*;
@@ -536,5 +536,63 @@ fn test_generate_nullptr() {
             },
             IrType::Pointer(..)
         )
+    ));
+}
+
+#[test]
+fn test_generate_simple_block() {
+    let ast = vec![function_declaration(
+        "test".to_string(),
+        vec![],
+        Type::Void,
+        vec![
+            Stmt::Block {
+                statements: vec![
+                    Stmt::VarDeclaration {
+                        variables: vec!["x".to_string()],
+                        type_annotation: Type::I32,
+                        is_mutable: true,
+                        initializers: vec![],
+                        span: dummy_span(),
+                    },
+                    Stmt::Expression {
+                        expr: Expr::Assign {
+                            target: Box::new(Expr::Variable {
+                                name: "x".to_string(),
+                                span: dummy_span(),
+                            }),
+                            value: Box::new(Expr::Literal {
+                                value: LiteralValue::Number(Number::I32(10)),
+                                span: dummy_span(),
+                            }),
+                            span: dummy_span(),
+                        },
+                    },
+                ],
+                span: dummy_span(),
+            },
+            Stmt::Return {
+                value: None,
+                span: dummy_span(),
+            },
+        ],
+    )];
+
+    let mut generator = IrGenerator::new();
+    let (functions, ir_errors) = generator.generate(ast);
+    assert_eq!(ir_errors.len(), 0);
+    assert_eq!(functions.len(), 1);
+    let func = &functions[0];
+
+    // Should have 1 block with 2 instructions (alloca + store)
+    let entry_block = &func.basic_blocks[0];
+    assert_eq!(entry_block.instructions.len(), 2);
+    assert!(matches!(
+        entry_block.instructions[0],
+        Instruction::Alloca { .. }
+    ));
+    assert!(matches!(
+        entry_block.instructions[1],
+        Instruction::Store { .. }
     ));
 }
