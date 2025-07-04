@@ -31,7 +31,7 @@ macro_rules! generate_display_test {
 generate_display_test!(test_lexer_error_display, LexerError, 1);
 generate_display_test!(test_parser_error_display, SyntaxError, 2);
 generate_display_test!(test_type_error_display, TypeError, 3);
-generate_display_test!(test_io_error_display, IrGeneratorError, 4);
+generate_display_test!(test_ir_error_display, IrGeneratorError, 4);
 
 macro_rules! generate_message_test {
     ($test_name:ident, $error_type:ident, $line:expr) => {
