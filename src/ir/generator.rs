@@ -34,6 +34,9 @@ impl IrGenerator {
         }
     }
 
+    fn block_needs_terminator(&self) -> bool {
+        self.current_block.as_ref().map_or(false, |b| !b.terminator.is_terminator())
+    }
     /// Generate IR from AST statements
     pub fn generate(&mut self, stmts: Vec<Stmt>) -> (Vec<Function>, Vec<CompileError>) {
         let mut functions = Vec::new();
@@ -279,13 +282,7 @@ impl IrGenerator {
         }
 
         // Add branch to merge if no terminator
-        if !self
-            .current_block
-            .as_ref()
-            .unwrap()
-            .terminator
-            .is_terminator()
-        {
+        if self.block_needs_terminator(){
             self.add_terminator(Terminator::Branch(merge_label.clone()));
         }
 
@@ -298,13 +295,7 @@ impl IrGenerator {
         }
 
         // Add branch to merge if no terminator
-        if !self
-            .current_block
-            .as_ref()
-            .unwrap()
-            .terminator
-            .is_terminator()
-        {
+        if self.block_needs_terminator(){
             self.add_terminator(Terminator::Branch(merge_label.clone()));
         }
 
@@ -350,13 +341,7 @@ impl IrGenerator {
         self.continue_stack.pop();
 
         // After body, branch back to condition
-        if !self
-            .current_block
-            .as_ref()
-            .unwrap()
-            .terminator
-            .is_terminator()
-        {
+        if self.block_needs_terminator(){
             self.add_terminator(Terminator::Branch(loop_start_label.clone()));
         }
 
@@ -418,13 +403,7 @@ impl IrGenerator {
         self.continue_stack.pop();
 
         // After body, branch to increment block
-        if !self
-            .current_block
-            .as_ref()
-            .unwrap()
-            .terminator
-            .is_terminator()
-        {
+        if self.block_needs_terminator() {
             self.add_terminator(Terminator::Branch(loop_inc_label.clone()));
         }
 
@@ -435,13 +414,7 @@ impl IrGenerator {
         }
 
         // After increment, branch back to condition
-        if !self
-            .current_block
-            .as_ref()
-            .unwrap()
-            .terminator
-            .is_terminator()
-        {
+        if self.block_needs_terminator() {
             self.add_terminator(Terminator::Branch(loop_start_label.clone()));
         }
 
@@ -470,9 +443,7 @@ impl IrGenerator {
         //let span = expr.span().clone();
         match expr {
             Expr::Literal { value, .. } => self.generate_literal(value),
-            Expr::Binary {
-                left, op, right, ..
-            } => self.generate_binary(func, *left, op, *right),
+            Expr::Binary {left, op, right, .. } => self.generate_binary(func, *left, op, *right),
             Expr::Unary { op, expr, .. } => self.generate_unary(func, op, *expr),
             Expr::Variable { name, .. } => self.generate_variable(name),
             Expr::Assign { target, value, .. } => self.generate_assign(func, *target, *value),
@@ -529,9 +500,7 @@ impl IrGenerator {
                 element_ty: element_ty.clone(),
             });
 
-            // Store element
-            let element_ptr =
-                Value::new_temporary(index_temp, IrType::Pointer(Box::new(element_ty.clone())));
+            let element_ptr = Value::new_temporary(index_temp, IrType::Pointer(Box::new(element_ty.clone())));
             self.add_instruction(Instruction::Store {
                 value: element_val,
                 dest: element_ptr,
@@ -555,12 +524,10 @@ impl IrGenerator {
                 Number::Float32(f) => Value::new_immediate(ImmediateValue::F32(f)),
                 Number::Float64(f) => Value::new_immediate(ImmediateValue::F64(f)),
                 Number::Scientific32(f, i) => {
-                    // Convert scientific notation to float
                     let value = f.powi(i);
                     Value::new_immediate(ImmediateValue::F32(value))
                 }
                 Number::Scientific64(f, i) => {
-                    // Convert scientific notation to float
                     let value = f.powi(i);
                     Value::new_immediate(ImmediateValue::F64(value))
                 }
@@ -640,10 +607,7 @@ impl IrGenerator {
     }
 
     fn generate_variable(&mut self, name: String) -> Value {
-        self.symbol_table
-            .get(&name)
-            .cloned()
-            .unwrap_or_else(|| Value::new_immediate(ImmediateValue::I32(0)))
+        self.symbol_table.get(&name).cloned().unwrap_or_else(|| Value::new_immediate(ImmediateValue::I32(0)))
     }
 
     fn generate_assign(&mut self, func: &mut Function, target: Expr, value: Expr) -> Value {
