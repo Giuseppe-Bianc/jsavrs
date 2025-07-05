@@ -1,7 +1,7 @@
 use jsavrs::ir::generator::IrGenerator;
-use jsavrs::ir::IrType;
-use jsavrs::ir::{ImmediateValue, Value, ValueKind};
-use jsavrs::ir::{Instruction, IrBinaryOp, IrUnaryOp, Terminator};
+use jsavrs::ir::{
+    ImmediateValue, Instruction, IrBinaryOp, IrType, IrUnaryOp, Terminator, Value, ValueKind,
+};
 use jsavrs::parser::ast::*;
 use jsavrs::tokens::number::Number;
 use jsavrs::utils::*;
@@ -13,10 +13,7 @@ fn test_generate_function_with_return() {
         vec![],
         Type::I32,
         vec![Stmt::Return {
-            value: Some(Expr::Literal {
-                value: LiteralValue::Number(Number::I32(42)),
-                span: dummy_span(),
-            }),
+            value: Some(num_lit_i32(42)),
             span: dummy_span(),
         }],
     )];
@@ -100,18 +97,7 @@ fn test_generate_binary_expression() {
         vec![],
         Type::I32,
         vec![Stmt::Return {
-            value: Some(Expr::Binary {
-                left: Box::new(Expr::Literal {
-                    value: LiteralValue::Number(Number::I32(10)),
-                    span: dummy_span(),
-                }),
-                op: BinaryOp::Add,
-                right: Box::new(Expr::Literal {
-                    value: LiteralValue::Number(Number::I32(20)),
-                    span: dummy_span(),
-                }),
-                span: dummy_span(),
-            }),
+            value: Some(binary_expr(num_lit_i32(10), BinaryOp::Add, num_lit_i32(20))),
             span: dummy_span(),
         }],
     )];
@@ -154,25 +140,9 @@ fn test_generate_variable_assignment() {
         vec![],
         Type::Void,
         vec![
-            Stmt::VarDeclaration {
-                variables: vec!["x".to_string()],
-                type_annotation: Type::I32,
-                is_mutable: true,
-                initializers: vec![],
-                span: dummy_span(),
-            },
+            var_declaration(vec!["x".to_string()], Type::I32, true, vec![]),
             Stmt::Expression {
-                expr: Expr::Assign {
-                    target: Box::new(Expr::Variable {
-                        name: "x".to_string(),
-                        span: dummy_span(),
-                    }),
-                    value: Box::new(Expr::Literal {
-                        value: LiteralValue::Number(Number::I32(10)),
-                        span: dummy_span(),
-                    }),
-                    span: dummy_span(),
-                },
+                expr: assign_expr(variable_expr("x"), num_lit_i32(10)),
             },
         ],
     )];
@@ -198,10 +168,7 @@ fn test_generate_if_statement() {
         vec![],
         Type::Void,
         vec![Stmt::If {
-            condition: Expr::Literal {
-                value: LiteralValue::Bool(true),
-                span: dummy_span(),
-            },
+            condition: bool_lit(true),
             then_branch: vec![Stmt::Return {
                 value: None,
                 span: dummy_span(),
@@ -245,30 +212,11 @@ fn test_generate_nested_expressions() {
         vec![],
         Type::I32,
         vec![Stmt::Return {
-            value: Some(Expr::Binary {
-                left: Box::new(Expr::Unary {
-                    op: UnaryOp::Negate,
-                    expr: Box::new(Expr::Literal {
-                        value: LiteralValue::Number(Number::I32(5)),
-                        span: dummy_span(),
-                    }),
-                    span: dummy_span(),
-                }),
-                op: BinaryOp::Multiply,
-                right: Box::new(Expr::Binary {
-                    left: Box::new(Expr::Literal {
-                        value: LiteralValue::Number(Number::I32(3)),
-                        span: dummy_span(),
-                    }),
-                    op: BinaryOp::Add,
-                    right: Box::new(Expr::Literal {
-                        value: LiteralValue::Number(Number::I32(2)),
-                        span: dummy_span(),
-                    }),
-                    span: dummy_span(),
-                }),
-                span: dummy_span(),
-            }),
+            value: Some(binary_expr(
+                unary_expr(UnaryOp::Negate, num_lit_i32(5)),
+                BinaryOp::Multiply,
+                binary_expr(num_lit_i32(3), BinaryOp::Add, num_lit_i32(2)),
+            )),
             span: dummy_span(),
         }],
     )];
@@ -279,7 +227,7 @@ fn test_generate_nested_expressions() {
     assert_eq!(functions.len(), 1);
     let func = &functions[0];
     let block = &func.basic_blocks[0];
-    assert_eq!(block.instructions.len(), 3); // unary, binary, binary
+    assert_eq!(block.instructions.len(), 3);
 
     // First instruction should be unary
     assert!(matches!(block.instructions[0], Instruction::Unary { .. }));
@@ -314,10 +262,7 @@ fn test_generate_custom_type() {
         }],
         Type::Custom("MyType".to_string()),
         vec![Stmt::Return {
-            value: Some(Expr::Variable {
-                name: "param".to_string(),
-                span: dummy_span(),
-            }),
+            value: Some(variable_expr("param")),
             span: dummy_span(),
         }],
     )];
@@ -337,19 +282,12 @@ fn test_generate_array_type() {
         "test".to_string(),
         vec![],
         Type::Void,
-        vec![Stmt::VarDeclaration {
-            variables: vec!["arr".to_string()],
-            type_annotation: Type::Array(
-                Box::new(Type::I32),
-                Box::new(Expr::Literal {
-                    value: LiteralValue::Number(Number::Integer(10)),
-                    span: dummy_span(),
-                }),
-            ),
-            is_mutable: true,
-            initializers: vec![],
-            span: dummy_span(),
-        }],
+        vec![var_declaration(
+            vec!["arr".to_string()],
+            Type::Array(Box::new(Type::I32), Box::new(num_lit(10))),
+            true,
+            vec![],
+        )],
     )];
 
     let mut generator = IrGenerator::new();
@@ -377,7 +315,7 @@ fn test_generate_missing_return() {
         name: "test".to_string(),
         parameters: vec![],
         return_type: Type::I32,
-        body: vec![], // No return statement
+        body: vec![],
         span: dummy_span(),
     }];
 
@@ -402,26 +340,24 @@ fn test_generate_missing_return() {
 #[test]
 fn test_generate_multiple_functions() {
     let ast = vec![
-        Stmt::Function {
-            name: "func1".to_string(),
-            parameters: vec![],
-            return_type: Type::Void,
-            body: vec![Stmt::Return {
+        function_declaration(
+            "func1".to_string(),
+            vec![],
+            Type::Void,
+            vec![Stmt::Return {
                 value: None,
                 span: dummy_span(),
             }],
-            span: dummy_span(),
-        },
-        Stmt::Function {
-            name: "func2".to_string(),
-            parameters: vec![],
-            return_type: Type::Void,
-            body: vec![Stmt::Return {
+        ),
+        function_declaration(
+            "func2".to_string(),
+            vec![],
+            Type::Void,
+            vec![Stmt::Return {
                 value: None,
                 span: dummy_span(),
             }],
-            span: dummy_span(),
-        },
+        ),
     ];
 
     let mut generator = IrGenerator::new();
@@ -439,10 +375,7 @@ fn test_generate_string_literal() {
         parameters: vec![],
         return_type: Type::String,
         body: vec![Stmt::Return {
-            value: Some(Expr::Literal {
-                value: LiteralValue::StringLit("hello".to_string()),
-                span: dummy_span(),
-            }),
+            value: Some(string_lit("hello")),
             span: dummy_span(),
         }],
         span: dummy_span(),
@@ -470,10 +403,7 @@ fn test_generate_nullptr() {
         parameters: vec![],
         return_type: Type::NullPtr,
         body: vec![Stmt::Return {
-            value: Some(Expr::Literal {
-                value: LiteralValue::Nullptr,
-                span: dummy_span(),
-            }),
+            value: Some(nullptr_lit()),
             span: dummy_span(),
         }],
         span: dummy_span(),
@@ -506,23 +436,11 @@ fn test_generate_simple_block() {
         vec![
             Stmt::Block {
                 statements: vec![
-                    Stmt::VarDeclaration {
-                        variables: vec!["x".to_string()],
-                        type_annotation: Type::I32,
-                        is_mutable: true,
-                        initializers: vec![],
-                        span: dummy_span(),
-                    },
+                    var_declaration(vec!["y".to_string()], Type::I32, true, vec![num_lit_i32(5)]),
                     Stmt::Expression {
                         expr: Expr::Assign {
-                            target: Box::new(Expr::Variable {
-                                name: "x".to_string(),
-                                span: dummy_span(),
-                            }),
-                            value: Box::new(Expr::Literal {
-                                value: LiteralValue::Number(Number::I32(10)),
-                                span: dummy_span(),
-                            }),
+                            target: Box::new(variable_expr("x")),
+                            value: Box::new(num_lit_i32(10)),
                             span: dummy_span(),
                         },
                     },
@@ -562,47 +480,17 @@ fn test_generate_simple_while_loop() {
         vec![],
         Type::Void,
         vec![
-            Stmt::VarDeclaration {
-                variables: vec!["counter".to_string()],
-                type_annotation: Type::I32,
-                is_mutable: true,
-                initializers: vec![Expr::Literal {
-                    value: LiteralValue::Number(Number::I32(0)),
-                    span: dummy_span(),
-                }],
-                span: dummy_span(),
-            },
+            var_declaration(vec!["x".to_string()], Type::I32, true, vec![num_lit_i32(0)]),
             Stmt::While {
-                condition: Expr::Binary {
-                    left: Box::new(Expr::Variable {
-                        name: "counter".to_string(),
-                        span: dummy_span(),
-                    }),
-                    op: BinaryOp::Less,
-                    right: Box::new(Expr::Literal {
-                        value: LiteralValue::Number(Number::I32(5)),
-                        span: dummy_span(),
-                    }),
-                    span: dummy_span(),
-                },
+                condition: binary_expr(variable_expr("counter"), BinaryOp::Less, num_lit_i32(5)),
                 body: vec![Stmt::Expression {
                     expr: Expr::Assign {
-                        target: Box::new(Expr::Variable {
-                            name: "counter".to_string(),
-                            span: dummy_span(),
-                        }),
-                        value: Box::new(Expr::Binary {
-                            left: Box::new(Expr::Variable {
-                                name: "counter".to_string(),
-                                span: dummy_span(),
-                            }),
-                            op: BinaryOp::Add,
-                            right: Box::new(Expr::Literal {
-                                value: LiteralValue::Number(Number::I32(1)),
-                                span: dummy_span(),
-                            }),
-                            span: dummy_span(),
-                        }),
+                        target: Box::new(variable_expr("counter")),
+                        value: Box::new(binary_expr(
+                            variable_expr("counter"),
+                            BinaryOp::Add,
+                            num_lit_i32(1),
+                        )),
                         span: dummy_span(),
                     },
                 }],
@@ -706,41 +594,21 @@ fn test_generate_for_loop_basic() {
                 variables: vec!["i".to_string()],
                 type_annotation: Type::I32,
                 is_mutable: true,
-                initializers: vec![Expr::Literal {
-                    value: LiteralValue::Number(Number::I32(0)),
-                    span: dummy_span(),
-                }],
+                initializers: vec![num_lit_i32(0)],
                 span: dummy_span(),
             })),
-            condition: Some(Expr::Binary {
-                left: Box::new(Expr::Variable {
-                    name: "i".to_string(),
-                    span: dummy_span(),
-                }),
-                op: BinaryOp::Less,
-                right: Box::new(Expr::Literal {
-                    value: LiteralValue::Number(Number::I32(10)),
-                    span: dummy_span(),
-                }),
-                span: dummy_span(),
-            }),
+            condition: Some(binary_expr(
+                variable_expr("i"),
+                BinaryOp::Less,
+                num_lit_i32(10),
+            )),
             increment: Some(Expr::Assign {
-                target: Box::new(Expr::Variable {
-                    name: "i".to_string(),
-                    span: dummy_span(),
-                }),
-                value: Box::new(Expr::Binary {
-                    left: Box::new(Expr::Variable {
-                        name: "i".to_string(),
-                        span: dummy_span(),
-                    }),
-                    op: BinaryOp::Add,
-                    right: Box::new(Expr::Literal {
-                        value: LiteralValue::Number(Number::I32(1)),
-                        span: dummy_span(),
-                    }),
-                    span: dummy_span(),
-                }),
+                target: Box::new(variable_expr("i")),
+                value: Box::new(binary_expr(
+                    variable_expr("i"),
+                    BinaryOp::Add,
+                    num_lit_i32(1),
+                )),
                 span: dummy_span(),
             }),
             body: vec![],
@@ -787,24 +655,14 @@ fn test_generate_for_loop_with_break() {
                 variables: vec!["i".to_string()],
                 type_annotation: Type::I32,
                 is_mutable: true,
-                initializers: vec![Expr::Literal {
-                    value: LiteralValue::Number(Number::I32(0)),
-                    span: dummy_span(),
-                }],
+                initializers: vec![num_lit_i32(0)],
                 span: dummy_span(),
             })),
-            condition: Some(Expr::Binary {
-                left: Box::new(Expr::Variable {
-                    name: "i".to_string(),
-                    span: dummy_span(),
-                }),
-                op: BinaryOp::Less,
-                right: Box::new(Expr::Literal {
-                    value: LiteralValue::Number(Number::I32(10)),
-                    span: dummy_span(),
-                }),
-                span: dummy_span(),
-            }),
+            condition: Some(binary_expr(
+                variable_expr("i"),
+                BinaryOp::Less,
+                num_lit_i32(10),
+            )),
             increment: None,
             body: vec![Stmt::Break { span: dummy_span() }],
             span: dummy_span(),
@@ -835,24 +693,14 @@ fn test_generate_for_loop_with_continue() {
                 variables: vec!["i".to_string()],
                 type_annotation: Type::I32,
                 is_mutable: true,
-                initializers: vec![Expr::Literal {
-                    value: LiteralValue::Number(Number::I32(0)),
-                    span: dummy_span(),
-                }],
+                initializers: vec![num_lit_i32(0)],
                 span: dummy_span(),
             })),
-            condition: Some(Expr::Binary {
-                left: Box::new(Expr::Variable {
-                    name: "i".to_string(),
-                    span: dummy_span(),
-                }),
-                op: BinaryOp::Less,
-                right: Box::new(Expr::Literal {
-                    value: LiteralValue::Number(Number::I32(10)),
-                    span: dummy_span(),
-                }),
-                span: dummy_span(),
-            }),
+            condition: Some(binary_expr(
+                variable_expr("i"),
+                BinaryOp::Less,
+                num_lit_i32(10),
+            )),
             increment: None,
             body: vec![Stmt::Continue { span: dummy_span() }],
             span: dummy_span(),
@@ -880,21 +728,11 @@ fn test_generate_grouping_expression() {
         vec![],
         Type::I32,
         vec![Stmt::Return {
-            value: Some(Expr::Grouping {
-                expr: Box::new(Expr::Binary {
-                    left: Box::new(Expr::Literal {
-                        value: LiteralValue::Number(Number::I32(10)),
-                        span: dummy_span(),
-                    }),
-                    op: BinaryOp::Add,
-                    right: Box::new(Expr::Literal {
-                        value: LiteralValue::Number(Number::I32(20)),
-                        span: dummy_span(),
-                    }),
-                    span: dummy_span(),
-                }),
-                span: dummy_span(),
-            }),
+            value: Some(grouping_expr(binary_expr(
+                num_lit_i32(10),
+                BinaryOp::Add,
+                num_lit_i32(20),
+            ))),
             span: dummy_span(),
         }],
     )];
@@ -936,29 +774,10 @@ fn test_generate_array_literal_with_elements() {
     let ast = vec![function_declaration(
         "test".to_string(),
         vec![],
-        Type::Array(
-            Box::new(Type::I32),
-            Box::new(Expr::Literal {
-                value: LiteralValue::Number(Number::Integer(3)),
-                span: dummy_span(),
-            }),
-        ),
+        Type::Array(Box::new(Type::I32), Box::new(num_lit(3))),
         vec![Stmt::Return {
             value: Some(Expr::ArrayLiteral {
-                elements: vec![
-                    Expr::Literal {
-                        value: LiteralValue::Number(Number::I32(10)),
-                        span: dummy_span(),
-                    },
-                    Expr::Literal {
-                        value: LiteralValue::Number(Number::I32(20)),
-                        span: dummy_span(),
-                    },
-                    Expr::Literal {
-                        value: LiteralValue::Number(Number::I32(30)),
-                        span: dummy_span(),
-                    },
-                ],
+                elements: vec![num_lit_i32(10), num_lit_i32(20), num_lit_i32(30)],
                 span: dummy_span(),
             }),
             span: dummy_span(),
@@ -993,10 +812,7 @@ fn test_default_implementation() {
         vec![],
         Type::I32,
         vec![Stmt::Return {
-            value: Some(Expr::Literal {
-                value: LiteralValue::Number(Number::I32(42)),
-                span: dummy_span(),
-            }),
+            value: Some(num_lit_i32(42)),
             span: dummy_span(),
         }],
     )];
@@ -1051,18 +867,7 @@ fn test_generate_binary_all_operations() {
             vec![],
             Type::I32,
             vec![Stmt::Return {
-                value: Some(Expr::Binary {
-                    left: Box::new(Expr::Literal {
-                        value: LiteralValue::Number(Number::I32(10)),
-                        span: dummy_span(),
-                    }),
-                    op: ast_op,
-                    right: Box::new(Expr::Literal {
-                        value: LiteralValue::Number(Number::I32(20)),
-                        span: dummy_span(),
-                    }),
-                    span: dummy_span(),
-                }),
+                value: Some(binary_expr(num_lit_i32(10), ast_op, num_lit_i32(20))),
                 span: dummy_span(),
             }],
         )];
@@ -1107,14 +912,7 @@ fn test_generate_unary_expression() {
             vec![],
             Type::I32,
             vec![Stmt::Return {
-                value: Some(Expr::Unary {
-                    op: ast_op,
-                    expr: Box::new(Expr::Literal {
-                        value: LiteralValue::Number(Number::I32(42)),
-                        span: dummy_span(),
-                    }),
-                    span: dummy_span(),
-                }),
+                value: Some(unary_expr(ast_op, num_lit_i32(42))),
                 span: dummy_span(),
             }],
         )];
@@ -1130,16 +928,13 @@ fn test_generate_unary_expression() {
 
         match &block.instructions[0] {
             Instruction::Unary {
-                op,
-                dest: _,
-                operand,
-                ty,
+                op, operand, ty, ..
             } => {
                 assert_eq!(*op, expected_ir_op);
                 assert_eq!(*ty, IrType::I32);
                 assert_eq!(operand.kind, ValueKind::Immediate(ImmediateValue::I32(42)));
             }
-            _ => panic!("Expected binary instruction"),
+            _ => panic!("Expected unary instruction"),
         }
     }
 }
@@ -1293,10 +1088,7 @@ fn test_generate_boolean_literals() {
             vec![],
             Type::Bool,
             vec![Stmt::Return {
-                value: Some(Expr::Literal {
-                    value: LiteralValue::Bool(b),
-                    span: dummy_span(),
-                }),
+                value: Some(bool_lit(b)),
                 span: dummy_span(),
             }],
         )];
@@ -1329,10 +1121,7 @@ fn test_generate_char_literal() {
         vec![],
         Type::Char,
         vec![Stmt::Return {
-            value: Some(Expr::Literal {
-                value: LiteralValue::CharLit("A".to_string()),
-                span: dummy_span(),
-            }),
+            value: Some(char_lit("A")),
             span: dummy_span(),
         }],
     )];
@@ -1364,10 +1153,7 @@ fn test_generate_nullptr_literal() {
         vec![],
         Type::NullPtr,
         vec![Stmt::Return {
-            value: Some(Expr::Literal {
-                value: LiteralValue::Nullptr,
-                span: dummy_span(),
-            }),
+            value: Some(nullptr_lit()),
             span: dummy_span(),
         }],
     )];
@@ -1391,39 +1177,3 @@ fn test_generate_nullptr_literal() {
         _ => panic!("Expected return terminator"),
     }
 }
-
-/*#[test]
-fn test_generate_unhandled_literal() {
-    // Test an unhandled literal type (should fall back to I32(0))
-    let ast = vec![function_declaration(
-        "test".to_string(),
-        vec![],
-        Type::I32,
-        vec![Stmt::Return {
-            value: Some(Expr::Literal {
-                value: LiteralValue::Number(Number::F128(123.456)), // Unhandled type
-                span: dummy_span(),
-            }),
-            span: dummy_span(),
-        }],
-    )];
-
-    let mut generator = IrGenerator::new();
-    let (functions, ir_errors) = generator.generate(ast);
-    assert_eq!(ir_errors.len(), 0);
-    assert_eq!(functions.len(), 1);
-
-    let func = &functions[0];
-    let block = &func.basic_blocks[0];
-
-    match &block.terminator {
-        Terminator::Return(value, ty) => {
-            assert_eq!(*ty, IrType::I32);
-            match &value.kind {
-                ValueKind::Immediate(ImmediateValue::I32(0)) => (), // Expected fallback
-                _ => panic!("Expected fallback to I32(0)"),
-            }
-        }
-        _ => panic!("Expected return terminator"),
-    }
-}*/
