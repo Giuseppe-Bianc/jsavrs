@@ -1098,7 +1098,7 @@ fn test_generate_binary_all_operations() {
 fn test_generate_unary_expression() {
     let test_cases = vec![
         (UnaryOp::Negate, IrUnaryOp::Negate),
-        (UnaryOp::Not, IrUnaryOp::Not)
+        (UnaryOp::Not, IrUnaryOp::Not),
     ];
 
     for (ast_op, expected_ir_op) in test_cases {
@@ -1129,12 +1129,269 @@ fn test_generate_unary_expression() {
         assert_eq!(block.instructions.len(), 1);
 
         match &block.instructions[0] {
-            Instruction::Unary { op, dest:_, operand, ty } => {
+            Instruction::Unary {
+                op,
+                dest: _,
+                operand,
+                ty,
+            } => {
                 assert_eq!(*op, expected_ir_op);
                 assert_eq!(*ty, IrType::I32);
-                assert_eq!(operand.kind,  ValueKind::Immediate(ImmediateValue::I32(42)));
+                assert_eq!(operand.kind, ValueKind::Immediate(ImmediateValue::I32(42)));
             }
             _ => panic!("Expected binary instruction"),
         }
     }
 }
+
+#[test]
+fn test_generate_integer_literals() {
+    let test_cases = vec![
+        (Number::I8(42), ImmediateValue::I8(42), IrType::I8),
+        (Number::I16(1000), ImmediateValue::I16(1000), IrType::I16),
+        (Number::I32(32000), ImmediateValue::I32(32000), IrType::I32),
+        (Number::Integer(2_000_000_000), ImmediateValue::I64(2_000_000_000), IrType::I64),
+        (Number::U8(255), ImmediateValue::U8(255), IrType::U8),
+        (Number::U16(65535), ImmediateValue::U16(65535), IrType::U16),
+        (Number::U32(4_000_000_000), ImmediateValue::U32(4_000_000_000), IrType::U32),
+        (Number::UnsignedInteger(18_000_000_000_000_000_000), ImmediateValue::U64(18_000_000_000_000_000_000), IrType::U64),
+    ];
+
+    for (num, expected_value, expected_type) in test_cases {
+        let ast = vec![function_declaration(
+            "test".to_string(),
+            vec![],
+            match num {
+                Number::I8(_) => Type::I8,
+                Number::I16(_) => Type::I16,
+                Number::I32(_) => Type::I32,
+                Number::Integer(_) => Type::I64,
+                Number::U8(_) => Type::U8,
+                Number::U16(_) => Type::U16,
+                Number::U32(_) => Type::U32,
+                Number::UnsignedInteger(_) => Type::U64,
+                _ => Type::I32,
+            },
+            vec![Stmt::Return {
+                value: Some(Expr::Literal {
+                    value: LiteralValue::Number(num),
+                    span: dummy_span(),
+                }),
+                span: dummy_span(),
+            }],
+        )];
+
+        let mut generator = IrGenerator::new();
+        let (functions, ir_errors) = generator.generate(ast);
+        assert_eq!(ir_errors.len(), 0);
+        assert_eq!(functions.len(), 1);
+        
+        let func = &functions[0];
+        let block = &func.basic_blocks[0];
+        
+        match &block.terminator {
+            Terminator::Return(value, ty) => {
+                assert_eq!(*ty, expected_type);
+                match &value.kind {
+                    ValueKind::Immediate(imm) => assert_eq!(imm, &expected_value),
+                    _ => panic!("Expected immediate value"),
+                }
+            }
+            _ => panic!("Expected return terminator"),
+        }
+    }
+}
+/*
+#[test]
+fn test_generate_float_literals() {
+    let test_cases = vec![
+        (Number::Float32(3.14), ImmediateValue::F32(3.14), IrType::F32),
+        (Number::Float64(123.456), ImmediateValue::F64(123.456), IrType::F64),
+    ];
+
+    for (num, expected_value, expected_type) in test_cases {
+        let ast = vec![function_declaration(
+            "test".to_string(),
+            vec![],
+            match num {
+                Number::Float32(_) => Type::F32,
+                Number::Float64(_) => Type::F64,
+                _ => Type::F32,
+            },
+            vec![Stmt::Return {
+                value: Some(Expr::Literal {
+                    value: LiteralValue::Number(num),
+                    span: dummy_span(),
+                }),
+                span: dummy_span(),
+            }],
+        )];
+
+        let mut generator = IrGenerator::new();
+        let (functions, ir_errors) = generator.generate(ast);
+        assert_eq!(ir_errors.len(), 0);
+        assert_eq!(functions.len(), 1);
+        
+        let func = &functions[0];
+        let block = &func.basic_blocks[0];
+        
+        match &block.terminator {
+            Terminator::Return(value, ty) => {
+                assert_eq!(*ty, expected_type);
+                match &value.kind {
+                    ValueKind::Immediate(imm) => assert_eq!(imm, &expected_value),
+                    _ => panic!("Expected immediate value"),
+                }
+            }
+            _ => panic!("Expected return terminator"),
+        }
+    }
+}*/
+
+#[test]
+fn test_generate_boolean_literals() {
+    let test_cases = vec![
+        (true, ImmediateValue::Bool(true)),
+        (false, ImmediateValue::Bool(false)),
+    ];
+
+    for (b, expected_value) in test_cases {
+        let ast = vec![function_declaration(
+            "test".to_string(),
+            vec![],
+            Type::Bool,
+            vec![Stmt::Return {
+                value: Some(Expr::Literal {
+                    value: LiteralValue::Bool(b),
+                    span: dummy_span(),
+                }),
+                span: dummy_span(),
+            }],
+        )];
+
+        let mut generator = IrGenerator::new();
+        let (functions, ir_errors) = generator.generate(ast);
+        assert_eq!(ir_errors.len(), 0);
+        assert_eq!(functions.len(), 1);
+        
+        let func = &functions[0];
+        let block = &func.basic_blocks[0];
+        
+        match &block.terminator {
+            Terminator::Return(value, ty) => {
+                assert_eq!(*ty, IrType::Bool);
+                match &value.kind {
+                    ValueKind::Immediate(imm) => assert_eq!(imm, &expected_value),
+                    _ => panic!("Expected immediate value"),
+                }
+            }
+            _ => panic!("Expected return terminator"),
+        }
+    }
+}
+
+#[test]
+fn test_generate_char_literal() {
+    let ast = vec![function_declaration(
+        "test".to_string(),
+        vec![],
+        Type::Char,
+        vec![Stmt::Return {
+            value: Some(Expr::Literal {
+                value: LiteralValue::CharLit("A".to_string()),
+                span: dummy_span(),
+            }),
+            span: dummy_span(),
+        }],
+    )];
+
+    let mut generator = IrGenerator::new();
+    let (functions, ir_errors) = generator.generate(ast);
+    assert_eq!(ir_errors.len(), 0);
+    assert_eq!(functions.len(), 1);
+    
+    let func = &functions[0];
+    let block = &func.basic_blocks[0];
+    
+    match &block.terminator {
+        Terminator::Return(value, ty) => {
+            assert_eq!(*ty, IrType::Char);
+            match &value.kind {
+                ValueKind::Immediate(ImmediateValue::Char(c)) => assert_eq!(*c, 'A'),
+                _ => panic!("Expected char immediate value"),
+            }
+        }
+        _ => panic!("Expected return terminator"),
+    }
+}
+
+#[test]
+fn test_generate_nullptr_literal() {
+    let ast = vec![function_declaration(
+        "test".to_string(),
+        vec![],
+        Type::NullPtr,
+        vec![Stmt::Return {
+            value: Some(Expr::Literal {
+                value: LiteralValue::Nullptr,
+                span: dummy_span(),
+            }),
+            span: dummy_span(),
+        }],
+    )];
+
+    let mut generator = IrGenerator::new();
+    let (functions, ir_errors) = generator.generate(ast);
+    assert_eq!(ir_errors.len(), 0);
+    assert_eq!(functions.len(), 1);
+    
+    let func = &functions[0];
+    let block = &func.basic_blocks[0];
+    
+    match &block.terminator {
+        Terminator::Return(value, ty) => {
+            assert!(matches!(ty, IrType::Pointer(_)));
+            match &value.kind {
+                ValueKind::Immediate(ImmediateValue::I64(0)) => (), // Expected
+                _ => panic!("Expected i64(0) for nullptr"),
+            }
+        }
+        _ => panic!("Expected return terminator"),
+    }
+}
+
+/*#[test]
+fn test_generate_unhandled_literal() {
+    // Test an unhandled literal type (should fall back to I32(0))
+    let ast = vec![function_declaration(
+        "test".to_string(),
+        vec![],
+        Type::I32,
+        vec![Stmt::Return {
+            value: Some(Expr::Literal {
+                value: LiteralValue::Number(Number::F128(123.456)), // Unhandled type
+                span: dummy_span(),
+            }),
+            span: dummy_span(),
+        }],
+    )];
+
+    let mut generator = IrGenerator::new();
+    let (functions, ir_errors) = generator.generate(ast);
+    assert_eq!(ir_errors.len(), 0);
+    assert_eq!(functions.len(), 1);
+    
+    let func = &functions[0];
+    let block = &func.basic_blocks[0];
+    
+    match &block.terminator {
+        Terminator::Return(value, ty) => {
+            assert_eq!(*ty, IrType::I32);
+            match &value.kind {
+                ValueKind::Immediate(ImmediateValue::I32(0)) => (), // Expected fallback
+                _ => panic!("Expected fallback to I32(0)"),
+            }
+        }
+        _ => panic!("Expected return terminator"),
+    }
+}*/
