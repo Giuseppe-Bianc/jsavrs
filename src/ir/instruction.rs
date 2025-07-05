@@ -1,6 +1,7 @@
 //src/ir/instruction.rs
 use super::{types::IrType, value::Value};
 use std::fmt;
+use crate::parser::ast::{BinaryOp, UnaryOp};
 
 /// Binary operations in IR
 #[derive(Debug, Clone, PartialEq)]
@@ -25,11 +26,46 @@ pub enum IrBinaryOp {
     ShiftRight,
 }
 
+impl From<BinaryOp> for IrBinaryOp {
+    fn from(op: BinaryOp) -> Self {
+        match op {
+            BinaryOp::Add => IrBinaryOp::Add,
+            BinaryOp::Subtract => IrBinaryOp::Subtract,
+            BinaryOp::Multiply => IrBinaryOp::Multiply,
+            BinaryOp::Divide => IrBinaryOp::Divide,
+            BinaryOp::Modulo => IrBinaryOp::Modulo,
+            BinaryOp::Equal => IrBinaryOp::Equal,
+            BinaryOp::NotEqual => IrBinaryOp::NotEqual,
+            BinaryOp::Less => IrBinaryOp::Less,
+            BinaryOp::LessEqual => IrBinaryOp::LessEqual,
+            BinaryOp::Greater => IrBinaryOp::Greater,
+            BinaryOp::GreaterEqual => IrBinaryOp::GreaterEqual,
+            BinaryOp::And => IrBinaryOp::And,
+            BinaryOp::Or => IrBinaryOp::Or,
+            BinaryOp::BitwiseAnd => IrBinaryOp::BitwiseAnd,
+            BinaryOp::BitwiseOr => IrBinaryOp::BitwiseOr,
+            BinaryOp::BitwiseXor => IrBinaryOp::BitwiseXor,
+            BinaryOp::ShiftLeft => IrBinaryOp::ShiftLeft,
+            BinaryOp::ShiftRight => IrBinaryOp::ShiftRight,
+        }
+    }
+}
+
+
 /// Unary operations in IR
 #[derive(Debug, Clone, PartialEq)]
 pub enum IrUnaryOp {
     Negate,
     Not,
+}
+
+impl From<UnaryOp> for IrUnaryOp {
+    fn from(op: UnaryOp) -> Self {
+        match op {
+            UnaryOp::Negate => IrUnaryOp::Negate,
+            UnaryOp::Not => IrUnaryOp::Not,
+        }
+    }
 }
 
 /// IR instructions

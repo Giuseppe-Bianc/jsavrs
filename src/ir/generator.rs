@@ -282,7 +282,7 @@ impl IrGenerator {
         }
 
         // Add branch to merge if no terminator
-        if self.block_needs_terminator(){
+        if self.block_needs_terminator() {
             self.add_terminator(Terminator::Branch(merge_label.clone()));
         }
 
@@ -549,26 +549,7 @@ impl IrGenerator {
         op: BinaryOp,
         right: Expr,
     ) -> Value {
-        let ir_op = match op {
-            BinaryOp::Add => IrBinaryOp::Add,
-            BinaryOp::Subtract => IrBinaryOp::Subtract,
-            BinaryOp::Multiply => IrBinaryOp::Multiply,
-            BinaryOp::Divide => IrBinaryOp::Divide,
-            BinaryOp::Modulo => IrBinaryOp::Modulo,
-            BinaryOp::Equal => IrBinaryOp::Equal,
-            BinaryOp::NotEqual => IrBinaryOp::NotEqual,
-            BinaryOp::Less => IrBinaryOp::Less,
-            BinaryOp::LessEqual => IrBinaryOp::LessEqual,
-            BinaryOp::Greater => IrBinaryOp::Greater,
-            BinaryOp::GreaterEqual => IrBinaryOp::GreaterEqual,
-            BinaryOp::And => IrBinaryOp::And,
-            BinaryOp::Or => IrBinaryOp::Or,
-            BinaryOp::BitwiseAnd => IrBinaryOp::BitwiseAnd,
-            BinaryOp::BitwiseOr => IrBinaryOp::BitwiseOr,
-            BinaryOp::BitwiseXor => IrBinaryOp::BitwiseXor,
-            BinaryOp::ShiftLeft => IrBinaryOp::ShiftLeft,
-            BinaryOp::ShiftRight => IrBinaryOp::ShiftRight,
-        };
+        let ir_op: IrBinaryOp = op.into();
 
         let left_val = self.generate_expr(func, left);
         let right_val = self.generate_expr(func, right);
@@ -587,10 +568,7 @@ impl IrGenerator {
     }
 
     fn generate_unary(&mut self, func: &mut Function, op: UnaryOp, expr: Expr) -> Value {
-        let ir_op = match op {
-            UnaryOp::Negate => IrUnaryOp::Negate,
-            UnaryOp::Not => IrUnaryOp::Not,
-        };
+        let ir_op: IrUnaryOp = op.into();
 
         let operand = self.generate_expr(func, expr);
         let ty = operand.ty.clone();
