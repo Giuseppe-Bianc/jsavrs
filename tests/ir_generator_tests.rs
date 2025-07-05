@@ -1,5 +1,5 @@
-use jsavrs::ir::IrType;
 use jsavrs::ir::generator::IrGenerator;
+use jsavrs::ir::IrType;
 use jsavrs::ir::{ImmediateValue, Value, ValueKind};
 use jsavrs::ir::{Instruction, IrBinaryOp, IrUnaryOp, Terminator};
 use jsavrs::parser::ast::*;
@@ -1150,11 +1150,23 @@ fn test_generate_integer_literals() {
         (Number::I8(42), ImmediateValue::I8(42), IrType::I8),
         (Number::I16(1000), ImmediateValue::I16(1000), IrType::I16),
         (Number::I32(32000), ImmediateValue::I32(32000), IrType::I32),
-        (Number::Integer(2_000_000_000), ImmediateValue::I64(2_000_000_000), IrType::I64),
+        (
+            Number::Integer(2_000_000_000),
+            ImmediateValue::I64(2_000_000_000),
+            IrType::I64,
+        ),
         (Number::U8(255), ImmediateValue::U8(255), IrType::U8),
         (Number::U16(65535), ImmediateValue::U16(65535), IrType::U16),
-        (Number::U32(4_000_000_000), ImmediateValue::U32(4_000_000_000), IrType::U32),
-        (Number::UnsignedInteger(18_000_000_000_000_000_000), ImmediateValue::U64(18_000_000_000_000_000_000), IrType::U64),
+        (
+            Number::U32(4_000_000_000),
+            ImmediateValue::U32(4_000_000_000),
+            IrType::U32,
+        ),
+        (
+            Number::UnsignedInteger(18_000_000_000_000_000_000),
+            ImmediateValue::U64(18_000_000_000_000_000_000),
+            IrType::U64,
+        ),
     ];
 
     for (num, expected_value, expected_type) in test_cases {
@@ -1185,10 +1197,10 @@ fn test_generate_integer_literals() {
         let (functions, ir_errors) = generator.generate(ast);
         assert_eq!(ir_errors.len(), 0);
         assert_eq!(functions.len(), 1);
-        
+
         let func = &functions[0];
         let block = &func.basic_blocks[0];
-        
+
         match &block.terminator {
             Terminator::Return(value, ty) => {
                 assert_eq!(*ty, expected_type);
@@ -1201,12 +1213,30 @@ fn test_generate_integer_literals() {
         }
     }
 }
-/*
+
 #[test]
 fn test_generate_float_literals() {
     let test_cases = vec![
-        (Number::Float32(3.14), ImmediateValue::F32(3.14), IrType::F32),
-        (Number::Float64(123.456), ImmediateValue::F64(123.456), IrType::F64),
+        (
+            Number::Float32(3.14),
+            ImmediateValue::F32(3.14),
+            IrType::F32,
+        ),
+        (
+            Number::Float64(123.456),
+            ImmediateValue::F64(123.456),
+            IrType::F64,
+        ),
+        (
+            Number::Scientific32(2.0, 2),
+            ImmediateValue::F32(4.0),
+            IrType::F32,
+        ),
+        (
+            Number::Scientific64(10.0, 3),
+            ImmediateValue::F64(1000.0),
+            IrType::F64,
+        ),
     ];
 
     for (num, expected_value, expected_type) in test_cases {
@@ -1216,6 +1246,8 @@ fn test_generate_float_literals() {
             match num {
                 Number::Float32(_) => Type::F32,
                 Number::Float64(_) => Type::F64,
+                Number::Scientific32(_, _) => Type::F32,
+                Number::Scientific64(_, _) => Type::F64,
                 _ => Type::F32,
             },
             vec![Stmt::Return {
@@ -1231,10 +1263,10 @@ fn test_generate_float_literals() {
         let (functions, ir_errors) = generator.generate(ast);
         assert_eq!(ir_errors.len(), 0);
         assert_eq!(functions.len(), 1);
-        
+
         let func = &functions[0];
         let block = &func.basic_blocks[0];
-        
+
         match &block.terminator {
             Terminator::Return(value, ty) => {
                 assert_eq!(*ty, expected_type);
@@ -1246,7 +1278,7 @@ fn test_generate_float_literals() {
             _ => panic!("Expected return terminator"),
         }
     }
-}*/
+}
 
 #[test]
 fn test_generate_boolean_literals() {
@@ -1273,10 +1305,10 @@ fn test_generate_boolean_literals() {
         let (functions, ir_errors) = generator.generate(ast);
         assert_eq!(ir_errors.len(), 0);
         assert_eq!(functions.len(), 1);
-        
+
         let func = &functions[0];
         let block = &func.basic_blocks[0];
-        
+
         match &block.terminator {
             Terminator::Return(value, ty) => {
                 assert_eq!(*ty, IrType::Bool);
@@ -1309,10 +1341,10 @@ fn test_generate_char_literal() {
     let (functions, ir_errors) = generator.generate(ast);
     assert_eq!(ir_errors.len(), 0);
     assert_eq!(functions.len(), 1);
-    
+
     let func = &functions[0];
     let block = &func.basic_blocks[0];
-    
+
     match &block.terminator {
         Terminator::Return(value, ty) => {
             assert_eq!(*ty, IrType::Char);
@@ -1344,10 +1376,10 @@ fn test_generate_nullptr_literal() {
     let (functions, ir_errors) = generator.generate(ast);
     assert_eq!(ir_errors.len(), 0);
     assert_eq!(functions.len(), 1);
-    
+
     let func = &functions[0];
     let block = &func.basic_blocks[0];
-    
+
     match &block.terminator {
         Terminator::Return(value, ty) => {
             assert!(matches!(ty, IrType::Pointer(_)));
@@ -1380,10 +1412,10 @@ fn test_generate_unhandled_literal() {
     let (functions, ir_errors) = generator.generate(ast);
     assert_eq!(ir_errors.len(), 0);
     assert_eq!(functions.len(), 1);
-    
+
     let func = &functions[0];
     let block = &func.basic_blocks[0];
-    
+
     match &block.terminator {
         Terminator::Return(value, ty) => {
             assert_eq!(*ty, IrType::I32);

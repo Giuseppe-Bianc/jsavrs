@@ -552,7 +552,19 @@ impl IrGenerator {
                 Number::U16(u) => Value::new_immediate(ImmediateValue::U16(u)),
                 Number::U32(u) => Value::new_immediate(ImmediateValue::U32(u)),
                 Number::UnsignedInteger(u) => Value::new_immediate(ImmediateValue::U64(u)),
-                _ => Value::new_immediate(ImmediateValue::I32(0)),
+                Number::Float32(f) => Value::new_immediate(ImmediateValue::F32(f)),
+                Number::Float64(f) => Value::new_immediate(ImmediateValue::F64(f)),
+                Number::Scientific32(f, i) => {
+                    // Convert scientific notation to float
+                    let value = f.powi(i);
+                    Value::new_immediate(ImmediateValue::F32(value))
+                }
+                Number::Scientific64(f, i) => {
+                    // Convert scientific notation to float
+                    let value = f.powi(i);
+                    Value::new_immediate(ImmediateValue::F64(value))
+                }
+                //_ => Value::new_immediate(ImmediateValue::I32(0)),
             },
             LiteralValue::Bool(b) => Value::new_immediate(ImmediateValue::Bool(b)),
             LiteralValue::StringLit(s) => Value::new_immediate(ImmediateValue::String(s)),
