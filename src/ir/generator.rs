@@ -35,7 +35,9 @@ impl IrGenerator {
     }
 
     fn block_needs_terminator(&self) -> bool {
-        self.current_block.as_ref().map_or(false, |b| !b.terminator.is_terminator())
+        self.current_block
+            .as_ref()
+            .map_or(false, |b| !b.terminator.is_terminator())
     }
     /// Generate IR from AST statements
     pub fn generate(&mut self, stmts: Vec<Stmt>) -> (Vec<Function>, Vec<CompileError>) {
@@ -163,10 +165,17 @@ impl IrGenerator {
                 variables,
                 type_annotation,
                 initializers,
-                span: _,
-                is_mutable: _,
+                span,
+                is_mutable,
             } => {
-                self.generate_var_declaration(func, variables, type_annotation, initializers);
+                self.generate_var_declaration(
+                    func,
+                    variables,
+                    type_annotation,
+                    initializers,
+                    is_mutable,
+                    span
+                );
             }
             Stmt::Return { value, span: _ } => {
                 self.generate_return(func, value);
@@ -222,26 +231,43 @@ impl IrGenerator {
         variables: Vec<String>,
         type_annotation: Type,
         initializers: Vec<Expr>,
+        is_mutable: bool,
+        span: SourceSpan,
     ) {
         let ty = self.map_type(&type_annotation);
 
         for (i, var) in variables.iter().enumerate() {
-            let temp = self.new_temp();
-            self.add_instruction(Instruction::Alloca {
-                dest: temp.clone(),
-                ty: ty.clone(),
-            });
-
-            let value = Value::new_local(temp.clone(), ty.clone());
-            self.symbol_table.insert(var.clone(), value.clone());
-            self.value_types.insert(temp.clone(), ty.clone());
-
-            if let Some(init) = initializers.get(i) {
-                let value = self.generate_expr(func, init.clone());
-                self.add_instruction(Instruction::Store {
-                    value,
-                    dest: Value::new_local(temp.clone(), ty.clone()),
+            if is_mutable {
+                // Variabile mutabile: comportamento originale
+                let temp = self.new_temp();
+                self.add_instruction(Instruction::Alloca {
+                    dest: temp.clone(),
+                    ty: ty.clone(),
                 });
+
+                let value = Value::new_local(temp.clone(), ty.clone());
+                self.symbol_table.insert(var.clone(), value.clone());
+                self.value_types.insert(temp.clone(), ty.clone());
+
+                if let Some(init) = initializers.get(i) {
+                    let value = self.generate_expr(func, init.clone());
+                    self.add_instruction(Instruction::Store {
+                        value,
+                        dest: Value::new_local(temp.clone(), ty.clone()),
+                    });
+                }
+            } else {
+                // COSTANTE: nessuna allocazione, solo binding del valore
+                if let Some(init) = initializers.get(i) {
+                    let value = self.generate_expr(func, init.clone());
+                    self.symbol_table.insert(var.clone(), value);
+                } else {
+                    // Gestione errore: costante non inizializzata
+                    self.new_error(
+                        format!("Constant '{}' must be initialized", var),
+                        span.clone(), // Sostituisci con span appropriato
+                    );
+                }
             }
         }
     }
@@ -295,7 +321,7 @@ impl IrGenerator {
         }
 
         // Add branch to merge if no terminator
-        if self.block_needs_terminator(){
+        if self.block_needs_terminator() {
             self.add_terminator(Terminator::Branch(merge_label.clone()));
         }
 
@@ -341,7 +367,7 @@ impl IrGenerator {
         self.continue_stack.pop();
 
         // After body, branch back to condition
-        if self.block_needs_terminator(){
+        if self.block_needs_terminator() {
             self.add_terminator(Terminator::Branch(loop_start_label.clone()));
         }
 
@@ -443,7 +469,9 @@ impl IrGenerator {
         //let span = expr.span().clone();
         match expr {
             Expr::Literal { value, .. } => self.generate_literal(value),
-            Expr::Binary {left, op, right, .. } => self.generate_binary(func, *left, op, *right),
+            Expr::Binary {
+                left, op, right, ..
+            } => self.generate_binary(func, *left, op, *right),
             Expr::Unary { op, expr, .. } => self.generate_unary(func, op, *expr),
             Expr::Variable { name, .. } => self.generate_variable(name),
             Expr::Assign { target, value, .. } => self.generate_assign(func, *target, *value),
@@ -500,7 +528,8 @@ impl IrGenerator {
                 element_ty: element_ty.clone(),
             });
 
-            let element_ptr = Value::new_temporary(index_temp, IrType::Pointer(Box::new(element_ty.clone())));
+            let element_ptr =
+                Value::new_temporary(index_temp, IrType::Pointer(Box::new(element_ty.clone())));
             self.add_instruction(Instruction::Store {
                 value: element_val,
                 dest: element_ptr,
@@ -530,8 +559,7 @@ impl IrGenerator {
                 Number::Scientific64(f, i) => {
                     let value = f.powi(i);
                     Value::new_immediate(ImmediateValue::F64(value))
-                }
-                //_ => Value::new_immediate(ImmediateValue::I32(0)),
+                } //_ => Value::new_immediate(ImmediateValue::I32(0)),
             },
             LiteralValue::Bool(b) => Value::new_immediate(ImmediateValue::Bool(b)),
             LiteralValue::StringLit(s) => Value::new_immediate(ImmediateValue::String(s)),
@@ -585,7 +613,10 @@ impl IrGenerator {
     }
 
     fn generate_variable(&mut self, name: String) -> Value {
-        self.symbol_table.get(&name).cloned().unwrap_or_else(|| Value::new_immediate(ImmediateValue::I32(0)))
+        self.symbol_table
+            .get(&name)
+            .cloned()
+            .unwrap_or_else(|| Value::new_immediate(ImmediateValue::I32(0)))
     }
 
     fn generate_assign(&mut self, func: &mut Function, target: Expr, value: Expr) -> Value {

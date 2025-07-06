@@ -462,7 +462,7 @@ fn test_generate_simple_block() {
 
     // Should have 1 block with 2 instructions (alloca + store)
     let entry_block = &func.basic_blocks[0];
-    assert_eq!(entry_block.instructions.len(), 2);
+    assert_eq!(entry_block.instructions.len(), 3);
     assert!(matches!(
         entry_block.instructions[0],
         Instruction::Alloca { .. }
@@ -471,6 +471,12 @@ fn test_generate_simple_block() {
         entry_block.instructions[1],
         Instruction::Store { .. }
     ));
+
+    assert!(matches!(
+        entry_block.instructions[2],
+        Instruction::Store { .. }
+    ));
+
 }
 
 #[test]
