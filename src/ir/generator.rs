@@ -234,7 +234,7 @@ impl IrGenerator {
         is_mutable: bool,
         span: SourceSpan,
     ) {
-        let ty = self.map_type(&type_annotation);
+        let ty: IrType = self.map_type(&type_annotation);
 
         for (i, var) in variables.iter().enumerate() {
             if is_mutable {

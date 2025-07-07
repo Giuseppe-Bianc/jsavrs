@@ -439,7 +439,7 @@ fn test_generate_simple_block() {
                     var_declaration(vec!["y".to_string()], Type::I32, true, vec![num_lit_i32(5)]),
                     Stmt::Expression {
                         expr: Expr::Assign {
-                            target: Box::new(variable_expr("x")),
+                            target: Box::new(variable_expr("y")),
                             value: Box::new(num_lit_i32(10)),
                             span: dummy_span(),
                         },
@@ -456,7 +456,8 @@ fn test_generate_simple_block() {
 
     let mut generator = IrGenerator::new();
     let (functions, ir_errors) = generator.generate(ast);
-    assert_eq!(ir_errors.len(), 0);
+    assert_eq!(ir_errors.len(), 0/*1*/);
+   // assert_eq!(ir_errors[0].message(), Some(""));
     assert_eq!(functions.len(), 1);
     let func = &functions[0];
 
@@ -486,7 +487,7 @@ fn test_generate_simple_while_loop() {
         vec![],
         Type::Void,
         vec![
-            var_declaration(vec!["x".to_string()], Type::I32, true, vec![num_lit_i32(0)]),
+            var_declaration(vec!["counter".to_string()], Type::I32, true, vec![num_lit_i32(0)]),
             Stmt::While {
                 condition: binary_expr(variable_expr("counter"), BinaryOp::Less, num_lit_i32(5)),
                 body: vec![Stmt::Expression {
@@ -511,7 +512,8 @@ fn test_generate_simple_while_loop() {
 
     let mut generator = IrGenerator::new();
     let (functions, ir_errors) = generator.generate(ast);
-    assert!(ir_errors.is_empty(),);
+    assert_eq!(ir_errors.len(),0);
+    //assert_eq!(ir_errors[0].message(), Some(""));
     assert_eq!(functions.len(), 1);
     let func = &functions[0];
     assert_eq!(func.basic_blocks.len(), 4);
