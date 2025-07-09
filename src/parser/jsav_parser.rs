@@ -35,7 +35,7 @@ impl JsavParser {
     }
 
     fn parse_stmt(&mut self) -> Option<Stmt> {
-        let token = self.peek()?.clone();
+        let token = self.peek()?;
         match token.kind {
             TokenKind::KeywordFun => self.parse_function(),
             TokenKind::KeywordMain => self.parse_main_function(),
@@ -57,7 +57,7 @@ impl JsavParser {
         let function_span = start_token
             .span
             .merged(end_span)
-            .unwrap_or(start_token.span.clone());
+            .unwrap_or_else(|| start_token.span.clone());
 
         Some(Stmt::MainFunction {
             body: vec![body],
@@ -378,7 +378,7 @@ impl JsavParser {
 
         if variables.len() != initializers.len() {
             self.syntax_error("Number of initializers does not match number of variables", &start_token);
-        }        
+        }
 
         Some(Stmt::VarDeclaration {
             variables,
@@ -560,7 +560,7 @@ impl JsavParser {
         })
     }
 
-    //src/parser/jsav_parser.rs
+
     fn parse_assignment(&mut self, left: Expr, token: Token) -> Option<Expr> {
         let value = self
             .parse_expr(1)
