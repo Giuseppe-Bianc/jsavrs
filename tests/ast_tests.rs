@@ -1018,7 +1018,7 @@ fn test_array_literal_output() {
     ├── Variables:
     │   └── arr
     ├── Type:
-    │   └── [i8; <expr>]
+    │   └── [i8; 5]
     └── Initializers:
         └── Array Literal
             └── Elements:
