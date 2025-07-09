@@ -79,7 +79,7 @@ impl JsavParser {
         let start_token = self.advance()?.clone(); // '{'
         let mut statements = Vec::new();
 
-        while !self.check(TokenKind::CloseBrace) && !self.is_at_end() {
+        while !self.check(&TokenKind::CloseBrace) && !self.is_at_end() {
             if let Some(stmt) = self.parse_stmt() {
                 statements.push(stmt);
             } else {
@@ -87,7 +87,7 @@ impl JsavParser {
             }
         }
 
-        self.expect(TokenKind::CloseBrace, "end of block");
+        self.expect(&TokenKind::CloseBrace, "end of block");
         Some(Stmt::Block {
             statements,
             span: self.merged_span(&start_token),
@@ -127,13 +127,13 @@ impl JsavParser {
         let name = self.consume_identifier()?;
         let _name_span = self.previous()?.span.clone();
 
-        self.expect(TokenKind::OpenParen, "after function name");
+        self.expect(&TokenKind::OpenParen, "after function name");
         let mut params = Vec::new();
-        while !self.check(TokenKind::CloseParen) && !self.is_at_end() {
+        while !self.check(&TokenKind::CloseParen) && !self.is_at_end() {
             let param_start = self.peek()?.clone();
             let name = self.consume_identifier()?;
             let name_span = self.previous()?.span.clone();
-            self.expect(TokenKind::Colon, "after parameter name");
+            self.expect(&TokenKind::Colon, "after parameter name");
             let type_ann = self.parse_type()?;
             let type_span = self.previous()?.span.clone();
             let param_span = name_span
@@ -144,13 +144,13 @@ impl JsavParser {
                 type_annotation: type_ann,
                 span: param_span,
             });
-            if !self.match_token(TokenKind::Comma) {
+            if !self.match_token(&TokenKind::Comma) {
                 break;
             }
         }
-        self.expect(TokenKind::CloseParen, "after parameter list");
+        self.expect(&TokenKind::CloseParen, "after parameter list");
 
-        let return_type = if self.match_token(TokenKind::Colon) {
+        let return_type = if self.match_token(&TokenKind::Colon) {
             let type_ann = self.parse_type()?;
             Some(type_ann)
         } else {
@@ -175,12 +175,12 @@ impl JsavParser {
 
     fn parse_if(&mut self) -> Option<Stmt> {
         let start_token = self.advance()?.clone(); // 'if'
-        self.expect(TokenKind::OpenParen, "after 'if'");
+        self.expect(&TokenKind::OpenParen, "after 'if'");
         let condition = self.parse_expr(0)?;
-        self.expect(TokenKind::CloseParen, "after the condition");
+        self.expect(&TokenKind::CloseParen, "after the condition");
         let then_branch = self.parse_block_stmt()?;
 
-        let else_branch = if self.match_token(TokenKind::KeywordElse) {
+        let else_branch = if self.match_token(&TokenKind::KeywordElse) {
             Some(vec![self.parse_stmt()?])
         } else {
             None
@@ -196,9 +196,9 @@ impl JsavParser {
 
     fn parse_while(&mut self) -> Option<Stmt> {
         let start_token = self.advance()?.clone(); // 'while'
-        self.expect(TokenKind::OpenParen, "after 'while'");
+        self.expect(&TokenKind::OpenParen, "after 'while'");
         let condition = self.parse_expr(0)?;
-        self.expect(TokenKind::CloseParen, "after the condition");
+        self.expect(&TokenKind::CloseParen, "after the condition");
         let body = self.parse_block_stmt()?;
         let end_span = body.span();
         let function_span = start_token
@@ -214,35 +214,35 @@ impl JsavParser {
 
     fn parse_for(&mut self) -> Option<Stmt> {
         let start_token = self.advance()?.clone(); // 'for'
-        self.expect(TokenKind::OpenParen, "after 'for'");
+        self.expect(&TokenKind::OpenParen, "after 'for'");
 
         // 1. Parse initializer (può essere var/const, espressione o vuoto)
-        let initializer = if self.match_token(TokenKind::Semicolon) {
+        let initializer = if self.match_token(&TokenKind::Semicolon) {
             None // Inizializzatore vuoto
-        } else if self.check(TokenKind::KeywordVar) || self.check(TokenKind::KeywordConst) {
+        } else if self.check(&TokenKind::KeywordVar) {
             // Dichiarazione var/const
             let stmt = self.parse_var_declaration();
-            self.expect(TokenKind::Semicolon, "after for loop initializer");
+            self.expect(&TokenKind::Semicolon, "after for loop initializer");
             stmt.map(Box::new)
         } else {
             // Espressione
             let stmt = self.parse_expression_stmt();
-            self.expect(TokenKind::Semicolon, "after for loop initializer");
+            self.expect(&TokenKind::Semicolon, "after for loop initializer");
             stmt.map(Box::new)
         };
 
         // 2. Parse condition (opzionale)
-        let condition = if self.check(TokenKind::Semicolon) {
+        let condition = if self.check(&TokenKind::Semicolon) {
             self.advance(); // Consuma il punto e virgola
             None
         } else {
             let expr = self.parse_expr(0);
-            self.expect(TokenKind::Semicolon, "after for loop condition");
+            self.expect(&TokenKind::Semicolon, "after for loop condition");
             expr
         };
 
         // 3. Parse increment (opzionale)
-        let increment = if self.check(TokenKind::CloseParen) {
+        let increment = if self.check(&TokenKind::CloseParen) {
             None
         } else {
             // Non c'è punto e virgola dopo l'incremento
@@ -250,7 +250,7 @@ impl JsavParser {
         };
 
         // 4. Chiudi parentesi
-        self.expect(TokenKind::CloseParen, "after for loop clauses");
+        self.expect(&TokenKind::CloseParen, "after for loop clauses");
 
         // 5. Parse body
         let body_stmt = self.parse_stmt()?;
@@ -303,17 +303,17 @@ impl JsavParser {
             }
         };
 
-        while self.match_token(TokenKind::OpenBracket) {
+        while self.match_token(&TokenKind::OpenBracket) {
             let size_expr = self.parse_expr(0)?;
-            self.expect(TokenKind::CloseBracket, "after array size");
+            self.expect(&TokenKind::CloseBracket, "after array size");
             type_ = Type::Array(Box::new(type_), Box::new(size_expr));
         }
 
         #[allow(clippy::collapsible_if)]
         if let Type::Custom(name) = &type_ {
-            if name == "vector" && self.match_token(TokenKind::Less) {
+            if name == "vector" && self.match_token(&TokenKind::Less) {
                 let inner_type = self.parse_type()?;
-                self.expect(TokenKind::Greater, "after vector inner type");
+                self.expect(&TokenKind::Greater, "after vector inner type");
                 type_ = Type::Vector(Box::new(inner_type));
             }
         }
@@ -323,9 +323,9 @@ impl JsavParser {
 
     #[allow(clippy::if_same_then_else)]
     fn parse_var_declaration(&mut self) -> Option<Stmt> {
-        let (start_token, is_mutable) = if self.match_token(TokenKind::KeywordConst) {
+        let (start_token, is_mutable) = if self.match_token(&TokenKind::KeywordConst) {
             (self.previous().unwrap().clone(), false)
-        } else if self.match_token(TokenKind::KeywordVar) {
+        } else if self.match_token(&TokenKind::KeywordVar) {
             (self.previous().unwrap().clone(), true)
         } else {
             let token = self.previous().unwrap().clone();
@@ -336,7 +336,7 @@ impl JsavParser {
         let mut variables = Vec::new();
         while let Some(name) = self.consume_identifier() {
             variables.push(name);
-            if !self.match_token(TokenKind::Comma) {
+            if !self.match_token(&TokenKind::Comma) {
                 break;
             }
         }
@@ -346,32 +346,26 @@ impl JsavParser {
             return None;
         }
 
-        self.expect(TokenKind::Colon, "after variable name(s)");
+        self.expect(&TokenKind::Colon, "after variable name(s)");
         let type_ann = match self.parse_type() {
             Some(t) => t,
             None => {
-                let err_token = self.peek().cloned();
-                if let Some(t) = &err_token {
-                    self.syntax_error("Invalid type specification", t);
-                }
+                self.report_peek_error("Invalid type specification");
                 Type::Void
             }
         };
 
-        self.expect(TokenKind::Equal, "after type annotation");
+        self.expect(&TokenKind::Equal, "after type annotation");
         let mut initializers = Vec::new();
         loop {
             match self.parse_expr(0) {
                 Some(expr) => initializers.push(expr),
                 None => {
-                    let err_token = self.peek().cloned();
-                    if let Some(t) = &err_token {
-                        self.syntax_error("Expected initializer expression", t);
-                    }
+                    self.report_peek_error("Expected initializer expression");
                     break;
                 }
             }
-            if !self.match_token(TokenKind::Comma) {
+            if !self.match_token(&TokenKind::Comma) {
                 break;
             }
         }
@@ -387,6 +381,12 @@ impl JsavParser {
             initializers,
             span: self.merged_span(&start_token),
         })
+    }
+
+    fn report_peek_error(&mut self, message: &str) {
+        if let Some(token) = &self.peek().cloned() {
+            self.syntax_error(message, token);
+        }
     }
 
     fn consume_identifier(&mut self) -> Option<String> {
@@ -509,7 +509,7 @@ impl JsavParser {
     fn parse_array_literal(&mut self, start_token: Token) -> Option<Expr> {
         let mut elements = Vec::new();
         self.extract_elements(TokenKind::CloseBrace, &mut elements);
-        if !self.expect(TokenKind::CloseBrace, "end of array literal") {
+        if !self.expect(&TokenKind::CloseBrace, "end of array literal") {
             return None;
         }
         Some(Expr::ArrayLiteral {
@@ -519,11 +519,11 @@ impl JsavParser {
     }
 
     fn extract_elements(&mut self, kind: TokenKind, elements: &mut Vec<Expr>) {
-        while !self.check(kind.clone()) && !self.is_at_end() {
+        while !self.check(&kind.clone()) && !self.is_at_end() {
             if let Some(expr) = self.parse_expr(0) {
                 elements.push(expr);
             }
-            if !self.match_token(TokenKind::Comma) {
+            if !self.match_token(&TokenKind::Comma) {
                 break;
             }
         }
@@ -551,7 +551,7 @@ impl JsavParser {
 
     fn parse_grouping(&mut self, start_token: Token) -> Option<Expr> {
         let expr = self.parse_expr(0);
-        if !self.expect(TokenKind::CloseParen, "end of grouping") {
+        if !self.expect(&TokenKind::CloseParen, "end of grouping") {
             return None;
         }
         Some(Expr::Grouping {
@@ -559,7 +559,6 @@ impl JsavParser {
             span: self.merged_span(&start_token),
         })
     }
-
 
     fn parse_assignment(&mut self, left: Expr, token: Token) -> Option<Expr> {
         let value = self
@@ -594,7 +593,7 @@ impl JsavParser {
         self.extract_elements(TokenKind::CloseParen, &mut arguments);
 
         // Check if we successfully found the closing parenthesis
-        if !self.expect(TokenKind::CloseParen, "end of function call arguments") {
+        if !self.expect(&TokenKind::CloseParen, "end of function call arguments") {
             return None;
         }
 
@@ -609,7 +608,7 @@ impl JsavParser {
         let index = self
             .parse_expr(0)
             .unwrap_or_else(|| Expr::null_expr(start_token.span.clone()));
-        if !self.expect(TokenKind::CloseBracket, "end of array access") {
+        if !self.expect(&TokenKind::CloseBracket, "end of array access") {
             return None;
         }
         Some(Expr::ArrayAccess {
@@ -634,8 +633,8 @@ impl JsavParser {
     }
 
     /// Improved `expect` to provide more context about expected vs found tokens
-    fn expect(&mut self, kind: TokenKind, context: &str) -> bool {
-        if self.match_token(kind.clone()) {
+    fn expect(&mut self, kind: &TokenKind, context: &str) -> bool {
+        if self.match_token(&kind.clone()) {
             true
         } else {
             let current_token = self.peek().cloned();
@@ -659,7 +658,7 @@ impl JsavParser {
         }
     }
 
-    fn match_token(&mut self, kind: TokenKind) -> bool {
+    fn match_token(&mut self, kind: &TokenKind) -> bool {
         if self.check(kind) {
             self.advance();
             true
@@ -683,8 +682,8 @@ impl JsavParser {
         self.tokens.get(self.current)
     }
 
-    fn check(&self, kind: TokenKind) -> bool {
-        self.peek().map(|t| t.kind == kind).unwrap_or(false)
+    fn check(&self, kind: &TokenKind) -> bool {
+        self.peek().map(|t| &t.kind == kind).unwrap_or(false)
     }
 
     fn is_at_end(&self) -> bool {
