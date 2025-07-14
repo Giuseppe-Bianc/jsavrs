@@ -37,7 +37,7 @@ impl IrGenerator {
     fn block_needs_terminator(&self) -> bool {
         self.current_block
             .as_ref()
-            .map_or(false, |b| !b.terminator.is_terminator())
+            .is_some_and(|b| !b.terminator.is_terminator())
     }
     /// Generate IR from AST statements
     pub fn generate(&mut self, stmts: Vec<Stmt>) -> (Vec<Function>, Vec<CompileError>) {
@@ -264,7 +264,7 @@ impl IrGenerator {
                 } else {
                     // Gestione errore: costante non inizializzata
                     self.new_error(
-                        format!("Constant '{}' must be initialized", var),
+                        format!("Constant '{var}' must be initialized"),
                         span.clone(), // Sostituisci con span appropriato
                     );
                 }

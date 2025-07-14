@@ -305,7 +305,7 @@ impl std::fmt::Display for Type {
                 // Simplified representation since we can't evaluate expressions here
                 if let Expr::Literal { value: LiteralValue::Number(Number::Integer(size)),
                     ..} = **size_expr {
-                    write!(f, "[{element_type}; {}]", size)
+                    write!(f, "[{element_type}; {size}]")
                 } else {
                     write!(f, "[{element_type}; <expr>]")
                 }
