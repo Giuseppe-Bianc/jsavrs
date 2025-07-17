@@ -125,6 +125,14 @@ impl IrGenerator {
         }
     }
 
+    fn finalize_current_block(&mut self, func: &mut Function) {
+        if let Some(block) = self.current_block.take() {
+            if !block.instructions.is_empty() || block.terminator.is_terminator() {
+                func.add_block(block);
+            }
+        }
+    }
+
     fn generate_function_body(&mut self, func: &mut Function, body: Vec<Stmt>) {
         // Clear loop stacks at start of function
         self.break_stack.clear();
@@ -146,11 +154,7 @@ impl IrGenerator {
             }
         }
 
-        if let Some(block) = self.current_block.take() {
-            if block.terminator.is_terminator() || !block.instructions.is_empty() {
-                func.add_block(block);
-            }
-        }
+        self.finalize_current_block(func);
 
         self.symbol_table.clear();
         self.value_types.clear();
@@ -174,7 +178,7 @@ impl IrGenerator {
                     type_annotation,
                     initializers,
                     is_mutable,
-                    span
+                    span,
                 );
             }
             Stmt::Return { value, span: _ } => {
@@ -643,11 +647,7 @@ impl IrGenerator {
     }
 
     fn start_block(&mut self, func: &mut Function, label: &str) {
-        if let Some(block) = self.current_block.take() {
-            if !block.instructions.is_empty() || block.terminator.is_terminator() {
-                func.add_block(block);
-            }
-        }
+        self.finalize_current_block(func);
         self.current_block = Some(BasicBlock::new(label));
     }
 
