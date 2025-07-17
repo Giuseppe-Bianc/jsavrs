@@ -68,23 +68,27 @@ impl AsmGenerator {
         CompileError::AsmGeneratorError(message.to_string())
     }
 
-    fn emit(&mut self, code: &str) {
+    fn emit(&mut self, code: &str, allign: bool) {
+        if allign {
+            self.asm_code.push_str("    ");
+        }
         self.asm_code.push_str(code);
         self.asm_code.push('\n');
     }
 
     fn emit_header(&mut self) {
         self.data_section.push_str("section .data\n");
+        self.data_section.push_str("; String constants\n");
         self.asm_code.push_str("section .text\n");
 
         match self.target_os {
             TargetOS::Linux => {
                 self.asm_code.push_str("global main\n");
-                self.asm_code.push_str("extern printf, exit\n");
+                self.asm_code.push_str("extern printf, exit\n\n");
             }
             TargetOS::Windows => {
                 self.asm_code.push_str("global mainCRTStartup\n");
-                self.asm_code.push_str("extern printf, ExitProcess\n");
+                self.asm_code.push_str("extern printf, ExitProcess\n\n");
             }
         }
     }
@@ -107,14 +111,14 @@ mainCRTStartup:
         self.temp_offset_map.clear();
 
         // Function prologue
-        self.emit(&format!("{}:", func.name));
-        self.emit("push rbp");
-        self.emit("mov rbp, rsp");
+        self.emit(&format!("{}:", func.name), false);
+        self.emit("push rbp", true);
+        self.emit("mov rbp, rsp", true);
 
         // Calculate stack size and allocate space
         let stack_size = self.calculate_stack_size(func);
         if stack_size > 0 {
-            self.emit(&format!("sub rsp, {}", align_to(stack_size, 16)));
+            self.emit(&format!("sub rsp, {}", align_to(stack_size, 16)), true);
         }
 
         // Store parameters to stack
@@ -133,22 +137,25 @@ mainCRTStartup:
         }
 
         // Function epilogue
-        self.emit(".return:");
-        self.emit("mov rsp, rbp");
-        self.emit("pop rbp");
-        self.emit("ret");
+        self.emit(".return:", false);
+        self.emit("mov rsp, rbp", true);
+        self.emit("pop rbp", true);
+        self.emit("ret", true);
+        self.asm_code.push('\n'); // Add newline before label
 
         Ok(())
     }
 
     fn generate_block(&mut self, block: &BasicBlock) -> Result<(), CompileError> {
-        self.emit(&format!(".{}:", block.label));
+        self.asm_code.push('\n'); // Add newline before label
+        self.emit(&format!(".{}:", block.label), false);
 
         for inst in &block.instructions {
             self.generate_instruction(inst)?;
         }
 
         self.generate_terminator(&block.terminator)?;
+        self.asm_code.push('\n'); // Add newline before label
         Ok(())
     }
 
@@ -201,11 +208,11 @@ mainCRTStartup:
         match term {
             Terminator::Return(value, ty) => {
                 let reg = self.load_value(value, "rax", "xmm0")?;
-                self.emit("jmp .return");
+                self.emit("jmp .return", true);
                 Ok(())
             }
             Terminator::Branch(label) => {
-                self.emit(&format!("jmp .{}", label));
+                self.emit(&format!("jmp .{}", label), true);
                 Ok(())
             }
             Terminator::ConditionalBranch {
@@ -214,9 +221,9 @@ mainCRTStartup:
                 false_label,
             } => {
                 let cond_reg = self.load_value(condition, "rax", "xmm0")?;
-                self.emit(&format!("cmp {}, 0", cond_reg));
-                self.emit(&format!("jne .{}", true_label));
-                self.emit(&format!("jmp .{}", false_label));
+                self.emit(&format!("cmp {}, 0", cond_reg), true);
+                self.emit(&format!("jne .{}", true_label), true);
+                self.emit(&format!("jmp .{}", false_label), true);
                 Ok(())
             }
             _ => Err(self.error("Unsupported terminator")),
@@ -292,7 +299,7 @@ mainCRTStartup:
                     int_reg
                 };
                 let imm_str = self.imm_to_string(imm)?;
-                self.emit(&format!("mov {}, {}", reg, imm_str));
+                self.emit(&format!("mov {}, {}", reg, imm_str), true);
                 Ok(reg.to_string())
             }
             _ => {
@@ -329,11 +336,11 @@ mainCRTStartup:
     ) -> Result<(), CompileError> {
         match ty {
             IrType::F32 => {
-                self.emit(&format!("movss {}, [{} + {}]", dest, base, offset));
+                self.emit(&format!("movss {}, [{} + {}]", dest, base, offset), true);
                 Ok(())
             }
             IrType::F64 => {
-                self.emit(&format!("movsd {}, [{} + {}]", dest, base, offset));
+                self.emit(&format!("movsd {}, [{} + {}]", dest, base, offset), true);
                 Ok(())
             }
             _ => {
@@ -351,7 +358,7 @@ mainCRTStartup:
                     suffix,
                     base,
                     offset
-                ));
+                ), true);
                 Ok(())
             }
         }
@@ -366,11 +373,11 @@ mainCRTStartup:
     ) -> Result<(), CompileError> {
         match ty {
             IrType::F32 => {
-                self.emit(&format!("movss [{} + {}], {}", base, offset, src));
+                self.emit(&format!("movss [{} + {}], {}", base, offset, src), true);
                 Ok(())
             }
             IrType::F64 => {
-                self.emit(&format!("movsd [{} + {}], {}", base, offset, src));
+                self.emit(&format!("movsd [{} + {}], {}", base, offset, src), true);
                 Ok(())
             }
             _ => {
@@ -388,7 +395,7 @@ mainCRTStartup:
                     base,
                     offset,
                     self.get_subreg(src, size)
-                ));
+                ), true);
                 Ok(())
             }
         }
@@ -482,11 +489,11 @@ mainCRTStartup:
             _ => return Err(self.error("Unsupported binary operation")),
         };
 
-        self.emit(&format!("{} {}, {}", op_asm, left_reg, right_reg));
+        self.emit(&format!("{} {}, {}", op_asm, left_reg, right_reg), true);
 
         if matches!(op, IrBinaryOp::Equal) {
-            self.emit("sete al");
-            self.emit("movzx rax, al");
+            self.emit("sete al", true);
+            self.emit("movzx rax, al", true);
         }
 
         let dest_offset = self.stack_offset + self.type_size(ty) as i32;
@@ -508,14 +515,14 @@ mainCRTStartup:
             let reg = self.get_param_reg(i, &arg.ty)?.to_string();
             let value_reg = self.load_value(arg, "rax", "xmm0")?;
             if self.is_float(&arg.ty) {
-                self.emit(&format!("movss {}, {}", reg, value_reg));
+                self.emit(&format!("movss {}, {}", reg, value_reg), true);
             } else {
-                self.emit(&format!("mov {}, {}", reg, value_reg));
+                self.emit(&format!("mov {}, {}", reg, value_reg), true);
             }
         }
 
         // Call function
-        self.emit(&format!("call {}", func));
+        self.emit(&format!("call {}", func), true);
 
         // Handle result
         if let Some(dest) = dest {
