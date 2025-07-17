@@ -49,13 +49,15 @@ impl JsavParser {
             _ => self.parse_expression_stmt(),
         }
     }
-
     fn parse_main_function(&mut self) -> Option<Stmt> {
         let start_token = self.advance()?.clone(); // 'main'
         let body = self.parse_block_stmt()?;
         let end_span = body.span();
 
-        let function_span = self.merge_span_or_first(&start_token.span, &end_span);
+        let function_span = start_token
+            .span
+            .merged(end_span)
+            .unwrap_or_else(|| start_token.span.clone());
 
         Some(Stmt::MainFunction {
             body: vec![body],
@@ -134,7 +136,9 @@ impl JsavParser {
             self.expect(&TokenKind::Colon, "after parameter name");
             let type_ann = self.parse_type()?;
             let type_span = self.previous()?.span.clone();
-            let param_span = self.merge_span_or_first(&name_span, &type_span);
+            let param_span = name_span
+                .merged(&type_span)
+                .unwrap_or_else(|| param_start.span.clone());
             params.push(Parameter {
                 name,
                 type_annotation: type_ann,
@@ -155,7 +159,10 @@ impl JsavParser {
 
         let body = self.parse_block_stmt()?;
         let end_span = body.span();
-        let function_span = self.merge_span_or_first(&start_token.span, &end_span);
+        let function_span = start_token
+            .span
+            .merged(end_span)
+            .unwrap_or_else(|| start_token.span.clone());
 
         Some(Stmt::Function {
             name,
@@ -194,7 +201,10 @@ impl JsavParser {
         self.expect(&TokenKind::CloseParen, "after the condition");
         let body = self.parse_block_stmt()?;
         let end_span = body.span();
-        let function_span = self.merge_span_or_first(&start_token.span, &end_span);
+        let function_span = start_token
+            .span
+            .merged(end_span)
+            .unwrap_or_else(|| start_token.span.clone());
         Some(Stmt::While {
             condition,
             body: vec![body],
@@ -257,7 +267,7 @@ impl JsavParser {
                 .unwrap_or_else(|| start_token.span.clone())
         });
 
-        let span = self.merge_span_or_first(&start_token.span, &end_span);
+        let span = start_token.span.merged(&end_span).unwrap_or(start_token.span);
 
         Some(Stmt::For {
             initializer,
@@ -361,10 +371,7 @@ impl JsavParser {
         }
 
         if variables.len() != initializers.len() {
-            self.syntax_error(
-                "Number of initializers does not match number of variables",
-                &start_token,
-            );
+            self.syntax_error("Number of initializers does not match number of variables", &start_token);
         }
 
         Some(Stmt::VarDeclaration {
@@ -374,11 +381,6 @@ impl JsavParser {
             initializers,
             span: self.merged_span(&start_token),
         })
-    }
-
-    // Helper per gestire la fusione degli span
-    fn merge_span_or_first(&self, span1: &SourceSpan, span2: &SourceSpan) -> SourceSpan {
-        span1.merged(span2).unwrap_or_else(|| span1.clone())
     }
 
     fn report_peek_error(&mut self, message: &str) {
@@ -563,7 +565,10 @@ impl JsavParser {
             .parse_expr(1)
             .unwrap_or_else(|| Expr::null_expr(token.span.clone()));
 
-        let span = self.merge_span_or_first(left.span(), value.span());
+        let span = left
+            .span()
+            .merged(value.span())
+            .unwrap_or(token.span.clone());
 
         // Check if left is valid l-value (variable or array access)
         let valid = matches!(&left, Expr::Variable { .. } | Expr::ArrayAccess { .. });

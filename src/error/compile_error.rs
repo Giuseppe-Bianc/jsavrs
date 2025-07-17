@@ -33,7 +33,10 @@ pub enum CompileError {
     TypeError { message: String, span: SourceSpan },
 
     #[error("Type error: {message} at {span}")]
-    IrGeneratorError { message: String, span: SourceSpan},
+    IrGeneratorError { message: String, span: SourceSpan },
+
+    #[error("Assembly generation error: {0}")]
+    AsmGeneratorError(String),
 
     /// I/O operation failure during compilation (e.g., file access issues).
     ///

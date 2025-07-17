@@ -16,6 +16,7 @@ use std::{
     path::Path,
     //process,
 };
+use jsavrs::asm::generator::{AsmGenerator, TargetOS};
 
 #[allow(clippy::explicit_auto_deref, clippy::unused_unit)]
 fn main() -> Result<(), CompileError> {
@@ -120,6 +121,13 @@ fn main() -> Result<(), CompileError> {
     } else {
         println!("{} functions generated", functions.len());
     }
+
+
+
+    let mut asm_gen = AsmGenerator::new(if cfg!(windows) { TargetOS::Windows } else { TargetOS::Linux });
+    let (nasm_code, asm_error) = asm_gen.generate(functions);
+
+    std::fs::write("output.asm", nasm_code).unwrap();
 
     Ok(())
 }

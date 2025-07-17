@@ -31,6 +31,12 @@ impl ErrorReporter {
                 CompileError::IrGeneratorError { message, span } => {
                     self.format_error("IR GEN", &message, &span)
                 }
+                CompileError::AsmGeneratorError(mesage) => format!(
+                    "{} {}: {}\n",
+                    style("ERROR:").red().bold(),
+                    style("ASM GEN").red(),
+                    style(mesage).yellow()
+                ),
                 CompileError::IoError(e) => format!(
                     "{} {}: {}\n",
                     style("ERROR:").red().bold(),
