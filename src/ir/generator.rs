@@ -10,6 +10,7 @@ use std::collections::HashMap;
 /// Generates IR from AST
 pub struct IrGenerator {
     current_block: Option<BasicBlock>,
+    current_block_label: Option<String>,
     symbol_table: HashMap<String, Value>,
     temp_counter: usize,
     block_counter: usize,
@@ -24,6 +25,7 @@ impl IrGenerator {
     pub fn new() -> Self {
         Self {
             current_block: None,
+            current_block_label: None,
             symbol_table: HashMap::new(),
             temp_counter: 0,
             block_counter: 0,
@@ -39,6 +41,7 @@ impl IrGenerator {
             .as_ref()
             .is_some_and(|b| !b.terminator.is_terminator())
     }
+
     /// Generate IR from AST statements
     pub fn generate(&mut self, stmts: Vec<Stmt>) -> (Vec<Function>, Vec<CompileError>) {
         let mut functions = Vec::new();
@@ -127,9 +130,9 @@ impl IrGenerator {
 
     fn finalize_current_block(&mut self, func: &mut Function) {
         if let Some(block) = self.current_block.take() {
-            if !block.instructions.is_empty() || block.terminator.is_terminator() {
-                func.add_block(block);
-            }
+            let label = block.label.clone();
+            func.add_block(block);
+            self.current_block_label = Some(label);
         }
     }
 
@@ -150,7 +153,10 @@ impl IrGenerator {
                     IrType::Void => Value::new_immediate(ImmediateValue::I32(0)),
                     _ => Value::new_immediate(ImmediateValue::I32(0)),
                 };
-                self.add_terminator(Terminator::Return(return_value, func.return_type.clone()));
+                self.add_terminator(
+                    func,
+                    Terminator::Return(return_value, func.return_type.clone()),
+                );
             }
         }
 
@@ -217,10 +223,10 @@ impl IrGenerator {
                 self.generate_for(func, initializer, condition, increment, body);
             }
             Stmt::Break { span } => {
-                self.handle_break(span);
+                self.handle_break(func, span);
             }
             Stmt::Continue { span } => {
-                self.handle_continue(span);
+                self.handle_continue(func, span);
             }
             other => self.new_error(
                 "Unsupported statement type".to_string(),
@@ -282,7 +288,10 @@ impl IrGenerator {
             |expr| self.generate_expr(func, expr),
         );
 
-        self.add_terminator(Terminator::Return(return_value, func.return_type.clone()));
+        self.add_terminator(
+            func,
+            Terminator::Return(return_value, func.return_type.clone()),
+        );
     }
 
     fn generate_if(
@@ -299,11 +308,14 @@ impl IrGenerator {
         let merge_label = self.new_block_label("merge");
 
         // Conditional branch
-        self.add_terminator(Terminator::ConditionalBranch {
-            condition: cond_value,
-            true_label: then_label.clone(),
-            false_label: else_label.clone(),
-        });
+        self.add_terminator(
+            func,
+            Terminator::ConditionalBranch {
+                condition: cond_value,
+                true_label: then_label.clone(),
+                false_label: else_label.clone(),
+            },
+        );
 
         // End current block and start then block
         self.start_block(func, &then_label);
@@ -313,7 +325,7 @@ impl IrGenerator {
 
         // Add branch to merge if no terminator
         if self.block_needs_terminator() {
-            self.add_terminator(Terminator::Branch(merge_label.clone()));
+            self.add_terminator(func, Terminator::Branch(merge_label.clone()));
         }
 
         // Start else block
@@ -326,7 +338,7 @@ impl IrGenerator {
 
         // Add branch to merge if no terminator
         if self.block_needs_terminator() {
-            self.add_terminator(Terminator::Branch(merge_label.clone()));
+            self.add_terminator(func, Terminator::Branch(merge_label.clone()));
         }
 
         // Start merge block
@@ -345,16 +357,19 @@ impl IrGenerator {
         let loop_end_label = self.new_block_label("loop_end");
 
         // Branch to loop start
-        self.add_terminator(Terminator::Branch(loop_start_label.clone()));
+        self.add_terminator(func, Terminator::Branch(loop_start_label.clone()));
 
         // Loop start block (condition evaluation)
         self.start_block(func, &loop_start_label);
         let cond_value = self.generate_expr(func, condition);
-        self.add_terminator(Terminator::ConditionalBranch {
-            condition: cond_value,
-            true_label: loop_body_label.clone(),
-            false_label: loop_end_label.clone(),
-        });
+        self.add_terminator(
+            func,
+            Terminator::ConditionalBranch {
+                condition: cond_value,
+                true_label: loop_body_label.clone(),
+                false_label: loop_end_label.clone(),
+            },
+        );
 
         // Push loop context
         self.break_stack.push(loop_end_label.clone());
@@ -372,7 +387,7 @@ impl IrGenerator {
 
         // After body, branch back to condition
         if self.block_needs_terminator() {
-            self.add_terminator(Terminator::Branch(loop_start_label.clone()));
+            self.add_terminator(func, Terminator::Branch(loop_start_label.clone()));
         }
 
         // Loop end block
@@ -400,7 +415,7 @@ impl IrGenerator {
         }
 
         // Branch to condition block
-        self.add_terminator(Terminator::Branch(loop_start_label.clone()));
+        self.add_terminator(func, Terminator::Branch(loop_start_label.clone()));
 
         // Start block (for condition evaluation)
         self.start_block(func, &loop_start_label);
@@ -412,11 +427,14 @@ impl IrGenerator {
             Value::new_immediate(ImmediateValue::Bool(true))
         };
 
-        self.add_terminator(Terminator::ConditionalBranch {
-            condition: cond_value,
-            true_label: loop_body_label.clone(),
-            false_label: loop_end_label.clone(),
-        });
+        self.add_terminator(
+            func,
+            Terminator::ConditionalBranch {
+                condition: cond_value,
+                true_label: loop_body_label.clone(),
+                false_label: loop_end_label.clone(),
+            },
+        );
 
         // Push loop context
         self.break_stack.push(loop_end_label.clone());
@@ -434,7 +452,7 @@ impl IrGenerator {
 
         // After body, branch to increment block
         if self.block_needs_terminator() {
-            self.add_terminator(Terminator::Branch(loop_inc_label.clone()));
+            self.add_terminator(func, Terminator::Branch(loop_inc_label.clone()));
         }
 
         // Increment block
@@ -445,7 +463,7 @@ impl IrGenerator {
 
         // After increment, branch back to condition
         if self.block_needs_terminator() {
-            self.add_terminator(Terminator::Branch(loop_start_label.clone()));
+            self.add_terminator(func, Terminator::Branch(loop_start_label.clone()));
         }
 
         // End block
@@ -453,17 +471,17 @@ impl IrGenerator {
     }
 
     // Break/Continue handlers
-    fn handle_break(&mut self, span: SourceSpan) {
+    fn handle_break(&mut self, func: &mut Function, span: SourceSpan) {
         if let Some(label) = self.break_stack.last() {
-            self.add_terminator(Terminator::Branch(label.clone()));
+            self.add_terminator(func, Terminator::Branch(label.clone()));
         } else {
             self.new_error("Break outside loop".to_string(), span);
         }
     }
 
-    fn handle_continue(&mut self, span: SourceSpan) {
+    fn handle_continue(&mut self, func: &mut Function, span: SourceSpan) {
         if let Some(label) = self.continue_stack.last() {
-            self.add_terminator(Terminator::Branch(label.clone()));
+            self.add_terminator(func, Terminator::Branch(label.clone()));
         } else {
             self.new_error("Continue outside loop".to_string(), span);
         }
@@ -648,7 +666,18 @@ impl IrGenerator {
 
     fn start_block(&mut self, func: &mut Function, label: &str) {
         self.finalize_current_block(func);
-        self.current_block = Some(BasicBlock::new(label));
+
+        let mut new_block = BasicBlock::new(label);
+
+        // Preserve predecessors from CFG
+        if let Some(preds) = func.cfg.predecessors.get(label) {
+            for pred in preds {
+                new_block.add_predecessor(pred.clone());
+            }
+        }
+
+        self.current_block = Some(new_block);
+        self.current_block_label = Some(label.to_string());
     }
 
     fn add_instruction(&mut self, inst: Instruction) {
@@ -657,9 +686,16 @@ impl IrGenerator {
         }
     }
 
-    fn add_terminator(&mut self, term: Terminator) {
+    fn add_terminator(&mut self, func: &mut Function, term: Terminator) {
         if let Some(block) = &mut self.current_block {
-            block.terminator = term;
+            block.terminator = term.clone();
+
+            // Add CFG edges
+            if let Some(current_label) = &self.current_block_label {
+                for target in term.get_targets() {
+                    func.add_edge(current_label, &target);
+                }
+            }
         }
     }
 }
