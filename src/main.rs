@@ -16,6 +16,7 @@ use std::{
     path::Path,
     //process,
 };
+use jsavrs::nir::generator::NIrGenerator;
 //use jsavrs::asm::generator::{AsmGenerator, TargetOS};
 
 #[allow(clippy::explicit_auto_deref, clippy::unused_unit)]
@@ -101,9 +102,9 @@ fn main() -> Result<(), CompileError> {
         ()
     }
 
-    let mut generator = IrGenerator::new();
+    /*let mut generator = IrGenerator::new();
     let ir_timer = Timer::new("IR Generation");
-    let (functions, ir_errors) = generator.generate(statements);
+    let (functions, ir_errors) = generator.generate(statements.clone());
     println!("{ir_timer}");
 
 
@@ -120,6 +121,27 @@ fn main() -> Result<(), CompileError> {
         }
     } else {
         println!("{} functions generated", functions.len());
+    }*/
+
+    let mut generator = NIrGenerator::new();
+    let nir_timer = Timer::new("NIR Generation");
+    let (nfunctions, ir_errors) = generator.generate(statements.clone());
+    println!("{nir_timer}");
+
+
+    if !ir_errors.is_empty() {
+        eprintln!("{}", error_reporter.report_errors(ir_errors));
+        process::exit(-1);
+    }
+
+    println!("NIR generation done");
+
+    if args.verbose {
+        for nfunc in &nfunctions {
+            println!("{nfunc}");
+        }
+    } else {
+        println!("{} functions generated", nfunctions.len());
     }
 
 

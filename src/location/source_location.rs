@@ -19,7 +19,7 @@
 ///
 /// This ordering matches how humans read source code (top-to-bottom, left-to-right)
 /// while maintaining consistency with the derived implementations of `PartialOrd`/`Ord`.
-#[derive(Debug, Clone, Copy, PartialEq, Eq, Ord, PartialOrd, Default)]
+#[derive(Debug, Clone, Copy, PartialEq, Eq, Ord, PartialOrd, Default, Hash)]
 pub struct SourceLocation {
     /// Line number in source file (1-indexed)
     pub line: usize,

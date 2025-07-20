@@ -13,7 +13,7 @@ use std::sync::Arc;
 ///
 /// Used for error reporting, source mapping, and semantic analysis.
 /// Implements ordering based on start position then end position.
-#[derive(Debug, Clone, PartialEq, Eq, PartialOrd, Ord)]
+#[derive(Debug, Clone, PartialEq, Eq, PartialOrd, Ord, Hash)]
 pub struct SourceSpan {
     /// Path to source file (shared reference)
     pub file_path: Arc<str>,

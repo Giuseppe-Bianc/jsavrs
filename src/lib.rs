@@ -9,4 +9,5 @@ pub mod time;
 pub mod tokens;
 pub mod utils;
 pub mod ir;
+pub mod nir;
 //pub mod asm;
