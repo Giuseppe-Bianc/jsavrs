@@ -3,7 +3,7 @@ use clap::Parser;
 use console::style;
 use jsavrs::cli::Args;
 use jsavrs::error::error_reporter::ErrorReporter;
-use jsavrs::ir::generator::IrGenerator;
+//use jsavrs::ir::generator::IrGenerator;
 use jsavrs::lexer::Lexer;
 use jsavrs::parser::ast_printer::pretty_print_stmt;
 use jsavrs::parser::jsav_parser::JsavParser;
