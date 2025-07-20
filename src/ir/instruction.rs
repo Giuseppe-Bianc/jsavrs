@@ -1,7 +1,7 @@
 //src/ir/instruction.rs
 use super::{types::IrType, value::Value};
-use std::fmt;
 use crate::parser::ast::{BinaryOp, UnaryOp};
+use std::fmt;
 
 /// Binary operations in IR
 #[derive(Debug, Clone, PartialEq)]
@@ -50,7 +50,6 @@ impl From<BinaryOp> for IrBinaryOp {
         }
     }
 }
-
 
 /// Unary operations in IR
 #[derive(Debug, Clone, PartialEq)]
@@ -162,7 +161,7 @@ impl fmt::Display for Instruction {
                 base,
                 index,
                 element_ty,
-            } => write!(f, "{dest} = getelementptr {base}, {index} : {element_ty}", ),
+            } => write!(f, "{dest} = getelementptr {base}, {index} : {element_ty}" ),
             Instruction::Cast {
                 dest,
                 value,

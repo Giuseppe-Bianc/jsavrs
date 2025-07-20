@@ -301,10 +301,12 @@ impl std::fmt::Display for Type {
             Type::String => write!(f, "string"),
             Type::Bool => write!(f, "bool"),
             Type::Custom(name) => write!(f, "{name}"),
-            Type::Array(element_type,size_expr) => {
+            Type::Array(element_type, size_expr) => {
                 // Simplified representation since we can't evaluate expressions here
-                if let Expr::Literal { value: LiteralValue::Number(Number::Integer(size)),
-                    ..} = **size_expr {
+                if let Expr::Literal {
+                    value: LiteralValue::Number(Number::Integer(size)),
+                    ..
+                } = **size_expr {
                     write!(f, "[{element_type}; {size}]")
                 } else {
                     write!(f, "[{element_type}; <expr>]")

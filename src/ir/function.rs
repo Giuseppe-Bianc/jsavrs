@@ -106,25 +106,23 @@ impl fmt::Display for Function {
             self.name, params_str, self.return_type
         )?;
 
-        // Print blocks in topological order
+        use std::collections::{HashSet, VecDeque};
         let mut visited = HashSet::new();
-        let mut stack = vec![self.cfg.entry_label.clone()];
+        let mut queue = VecDeque::new();
+        visited.insert(self.cfg.entry_label.clone());
+        queue.push_back(self.cfg.entry_label.clone());
 
-        while let Some(label) = stack.pop() {
-            if visited.contains(&label) {
-                continue;
-            }
-            visited.insert(label.clone());
-
+        while let Some(label) = queue.pop_front() {
             if let Some(block) = self.cfg.blocks.get(&label) {
                 writeln!(f, "{}\n", block)?;
+            }
 
-                // Push successors in reverse order for DFS
-                if let Some(successors) = self.cfg.successors.get(&label) {
-                    let mut sorted_successors: Vec<_> = successors.iter().collect();
-                    sorted_successors.sort();
-                    for succ in sorted_successors.iter().rev() {
-                        stack.push((*succ.clone()).clone());
+            if let Some(successors) = self.cfg.successors.get(&label) {
+                let mut sorted_successors: Vec<_> = successors.iter().collect();
+                sorted_successors.sort();
+                for succ in sorted_successors {
+                    if visited.insert(succ.clone()) {
+                        queue.push_back(succ.clone());
                     }
                 }
             }

@@ -123,7 +123,6 @@ fn main() -> Result<(), CompileError> {
     }
 
 
-
     /*let mut asm_gen = AsmGenerator::new(if cfg!(windows) { TargetOS::Windows } else { TargetOS::Linux });
     let (nasm_code, asm_error) = asm_gen.generate(functions);
 
