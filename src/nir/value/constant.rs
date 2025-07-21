@@ -1,6 +1,6 @@
 // src/nir/value/constant.rs
-use std::fmt;
 use super::Value;
+use std::fmt;
 
 #[derive(Debug, Clone, PartialEq)]
 pub enum IrConstantValue {
@@ -14,20 +14,24 @@ impl fmt::Display for IrConstantValue {
         match self {
             IrConstantValue::String(s) => write!(f, "\"{}\"", s.escape_default()),
             IrConstantValue::Array(elems) => {
-                let elems_str = elems
-                    .iter()
-                    .map(|e| e.to_string())
-                    .collect::<Vec<_>>()
-                    .join(", ");
-                write!(f, "[{}]", elems_str)
+                write!(f, "[")?;
+                for (i, elem) in elems.iter().enumerate() {
+                    if i > 0 {
+                        write!(f, ", ")?;
+                    }
+                    write!(f, "{}", elem)?;
+                }
+                write!(f, "]")
             }
             IrConstantValue::Struct(name, fields) => {
-                let fields_str = fields
-                    .iter()
-                    .map(|f| f.to_string())
-                    .collect::<Vec<_>>()
-                    .join(", ");
-                write!(f, "{}<{}>", name, fields_str)
+                write!(f, "{}<", name)?;
+                for (i, field) in fields.iter().enumerate() {
+                    if i > 0 {
+                        write!(f, ", ")?;
+                    }
+                    write!(f, "{}", field)?;
+                }
+                write!(f, ">")
             }
         }
     }

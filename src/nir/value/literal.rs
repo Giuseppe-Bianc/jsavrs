@@ -1,6 +1,6 @@
 // src/nir/value/literal.rs
-use std::fmt;
 use crate::nir::IrType;
+use std::fmt;
 
 #[derive(Debug, Clone, PartialEq)]
 pub enum IrLiteralValue {
@@ -48,8 +48,20 @@ impl fmt::Display for IrLiteralValue {
             IrLiteralValue::U16(val) => write!(f, "{}u16", val),
             IrLiteralValue::U32(val) => write!(f, "{}u32", val),
             IrLiteralValue::U64(val) => write!(f, "{}u64", val),
-            IrLiteralValue::F32(val) => write!(f, "{}f32", val),
-            IrLiteralValue::F64(val) => write!(f, "{}f64", val),
+            IrLiteralValue::F32(val) => {
+                if val.fract() == 0.0 && val.is_finite() {
+                    write!(f, "{:.1}f32", val)
+                } else {
+                    write!(f, "{}f32", val)
+                }
+            }
+            IrLiteralValue::F64(val) => {
+                if val.fract() == 0.0 && val.is_finite() {
+                    write!(f, "{:.1}f64", val)
+                } else {
+                    write!(f, "{}f64", val)
+                }
+            }
             IrLiteralValue::Bool(val) => write!(f, "{}", val),
             IrLiteralValue::Char(val) => write!(f, "'{}'", val.escape_default()),
         }
