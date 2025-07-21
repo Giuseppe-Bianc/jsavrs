@@ -1,6 +1,9 @@
 // src/nir/instruction.rs
 use super::{IrType, Value};
-use crate::{location::source_span::SourceSpan, parser::ast::{BinaryOp, UnaryOp}};
+use crate::{
+    location::source_span::SourceSpan,
+    parser::ast::{BinaryOp, UnaryOp},
+};
 use std::fmt;
 
 #[derive(Debug, Clone, PartialEq)]
@@ -190,60 +193,29 @@ impl fmt::Display for Instruction {
         };
 
         match &self.kind {
-            InstructionKind::Alloca { ty } => write!(f, "{}alloca {}", result_str, ty),
-            InstructionKind::Store { value, dest } => write!(f, "store {} to {}", value, dest),
-            InstructionKind::Load { src, ty } => {
-                write!(f, "{}load {} from {}", result_str, ty, src)
-            }
-            InstructionKind::Binary {
-                op,
-                left,
-                right,
-                ty,
-            } => {
-                write!(f, "{}{} {} {}, {}", result_str, op, left, right, ty)
-            }
-            InstructionKind::Unary { op, operand, ty } => {
-                write!(f, "{}{} {} {}", result_str, op, operand, ty)
-            }
+            InstructionKind::Alloca { ty } => write!(f, "{result_str}alloca {ty}"),
+            InstructionKind::Store { value, dest } => write!(f, "store {value} to {dest}"),
+            InstructionKind::Load { src, ty } => write!(f, "{result_str}load {ty} from {src}"),
+            InstructionKind::Binary { op, left, right, ty } => write!(f, "{result_str}{op} {left} {right}, {ty}"),
+            InstructionKind::Unary { op, operand, ty } =>  write!(f, "{result_str}{op} {operand} {ty}"),
             InstructionKind::Call { func, args, ty } => {
                 let args_str = args
                     .iter()
                     .map(|arg| arg.to_string())
                     .collect::<Vec<_>>()
                     .join(", ");
-                write!(f, "{}{}({}) : {}", result_str, func, args_str, ty)
+                write!(f, "{result_str}{func}({args_str}) : {ty}")
             }
-            InstructionKind::GetElementPtr {
-                base,
-                index,
-                element_ty,
-            } => {
-                write!(
-                    f,
-                    "{}getelementptr {}, {} : {}",
-                    result_str, base, index, element_ty
-                )
-            }
-            InstructionKind::Cast {
-                kind: _,
-                value,
-                from_ty,
-                to_ty,
-            } => {
-                write!(
-                    f,
-                    "{} cast {} from {} to {}",
-                    result_str, value, from_ty, to_ty
-                )
-            }
+            InstructionKind::GetElementPtr { base, index, element_ty} => write!(f, "{result_str} getelementptr {base}, {index} : {element_ty}"),
+            InstructionKind::Cast { kind: _, value, from_ty, to_ty} => write!(f, "{result_str} cast {value} from {from_ty} to {to_ty}"),
+
             InstructionKind::Phi { ty, incoming } => {
                 let incoming_str = incoming
                     .iter()
-                    .map(|(val, block)| format!("[ {}, {} ]", val, block))
+                    .map(|(val, block)| format!("[ {val}, {block} ]"))
                     .collect::<Vec<_>>()
                     .join(", ");
-                write!(f, "{}phi {} [ {} ]", result_str, ty, incoming_str)
+                write!(f, "{result_str} phi {ty} [ {incoming_str} ]")
             }
             InstructionKind::Vector { op, operands, ty } => {
                 let operands_str = operands
@@ -251,7 +223,7 @@ impl fmt::Display for Instruction {
                     .map(|op| op.to_string())
                     .collect::<Vec<_>>()
                     .join(", ");
-                write!(f, "{}vector.{} {} : {}", result_str, op, operands_str, ty)
+                write!(f, "{result_str} vector.{op} {operands_str} : {ty}")
             }
         }
     }

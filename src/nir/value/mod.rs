@@ -76,11 +76,11 @@ impl Value {
 impl fmt::Display for Value {
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
         match &self.kind {
-            ValueKind::Literal(imm) => write!(f, "{}", imm),
-            ValueKind::Constant(imm) => write!(f, "{}", imm),
-            ValueKind::Local(name) => write!(f, "%{}", name),
-            ValueKind::Global(name) => write!(f, "@{}", name),
-            ValueKind::Temporary(id) => write!(f, "t{}", id),
+            ValueKind::Literal(imm) => write!(f, "{imm}"),
+            ValueKind::Constant(imm) => write!(f, "{imm}"),
+            ValueKind::Local(name) => write!(f, "%{name}"),
+            ValueKind::Global(name) => write!(f, "@{name}"),
+            ValueKind::Temporary(id) => write!(f, "t{id}"),
         }
     }
 }

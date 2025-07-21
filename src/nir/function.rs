@@ -5,14 +5,14 @@ use crate::location::source_span::SourceSpan;
 
 /// Control Flow Graph representation
 #[derive(Debug, Clone, PartialEq)]
-pub struct CFG {
+pub struct Cfg {
     pub blocks: HashMap<String, BasicBlock>,
     pub successors: HashMap<String, HashSet<String>>,
     pub predecessors: HashMap<String, HashSet<String>>,
     pub entry_label: String,
 }
 
-impl CFG {
+impl Cfg {
     pub fn new(entry_label: &str) -> Self {
         let mut cfg = Self {
             blocks: HashMap::new(),
@@ -54,7 +54,7 @@ pub struct Function {
     pub name: String,
     pub parameters: Vec<IrParameter>,
     pub return_type: IrType,
-    pub cfg: CFG,
+    pub cfg: Cfg,
     pub local_vars: HashMap<String, IrType>,
     pub attributes: FunctionAttributes, // Added function attributes
 }
@@ -87,7 +87,7 @@ impl Function {
             name: name.to_string(),
             parameters: params,
             return_type,
-            cfg: CFG::new(format!("entry_{name}").as_str()),
+            cfg: Cfg::new(format!("entry_{name}").as_str()),
             local_vars: HashMap::new(),
             attributes: FunctionAttributes::default(),
         }
@@ -121,7 +121,7 @@ impl fmt::Display for Function {
 
         while let Some(label) = queue.pop_front() {
             if let Some(block) = self.cfg.blocks.get(&label) {
-                writeln!(f, "{}\n", block)?;
+                writeln!(f, "{block}\n")?;
             }
 
             if let Some(successors) = self.cfg.successors.get(&label) {

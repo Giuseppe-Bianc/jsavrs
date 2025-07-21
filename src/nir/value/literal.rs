@@ -40,29 +40,29 @@ impl From<&IrLiteralValue> for IrType {
 impl fmt::Display for IrLiteralValue {
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
         match self {
-            IrLiteralValue::I8(val) => write!(f, "{}i8", val),
-            IrLiteralValue::I16(val) => write!(f, "{}i16", val),
-            IrLiteralValue::I32(val) => write!(f, "{}i32", val),
-            IrLiteralValue::I64(val) => write!(f, "{}i64", val),
-            IrLiteralValue::U8(val) => write!(f, "{}u8", val),
-            IrLiteralValue::U16(val) => write!(f, "{}u16", val),
-            IrLiteralValue::U32(val) => write!(f, "{}u32", val),
-            IrLiteralValue::U64(val) => write!(f, "{}u64", val),
+            IrLiteralValue::I8(val) => write!(f, "{val}i8"),
+            IrLiteralValue::I16(val) => write!(f, "{val}i16"),
+            IrLiteralValue::I32(val) => write!(f, "{val}i32"),
+            IrLiteralValue::I64(val) => write!(f, "{val}i64"),
+            IrLiteralValue::U8(val) => write!(f, "{val}u8"),
+            IrLiteralValue::U16(val) => write!(f, "{val}u16"),
+            IrLiteralValue::U32(val) => write!(f, "{val}u32"),
+            IrLiteralValue::U64(val) => write!(f, "{val}u64"),
             IrLiteralValue::F32(val) => {
                 if val.fract() == 0.0 && val.is_finite() {
-                    write!(f, "{:.1}f32", val)
+                    write!(f, "{val:.1}f32")
                 } else {
-                    write!(f, "{}f32", val)
+                    write!(f, "{val}f32")
                 }
             }
             IrLiteralValue::F64(val) => {
                 if val.fract() == 0.0 && val.is_finite() {
-                    write!(f, "{:.1}f64", val)
+                    write!(f, "{val:.1}f64")
                 } else {
-                    write!(f, "{}f64", val)
+                    write!(f, "{val}f64")
                 }
             }
-            IrLiteralValue::Bool(val) => write!(f, "{}", val),
+            IrLiteralValue::Bool(val) => write!(f, "{val}"),
             IrLiteralValue::Char(val) => write!(f, "'{}'", val.escape_default()),
         }
     }

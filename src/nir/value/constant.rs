@@ -19,7 +19,7 @@ impl fmt::Display for IrConstantValue {
                     if i > 0 {
                         write!(f, ", ")?;
                     }
-                    write!(f, "{}", elem)?;
+                    write!(f, "{elem}")?;
                 }
                 write!(f, "]")
             }
@@ -29,7 +29,7 @@ impl fmt::Display for IrConstantValue {
                     if i > 0 {
                         write!(f, ", ")?;
                     }
-                    write!(f, "{}", field)?;
+                    write!(f, "{field}")?;
                 }
                 write!(f, ">")
             }
