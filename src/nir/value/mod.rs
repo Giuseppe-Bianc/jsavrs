@@ -1,52 +1,26 @@
-// src/nir/value.rs
+// src/nir/value/mod.rs
+pub mod debug_info;
+pub mod kind;
+pub mod literal;
+pub mod constant;
+
+pub use self::{
+    constant::IrConstantValue,
+    debug_info::ValueDebugInfo,
+    kind::ValueKind,
+    literal::IrLiteralValue,
+};
+
 use super::types::IrType;
 use crate::location::source_span::SourceSpan;
 use std::fmt;
 
 #[derive(Debug, Clone, PartialEq)]
 pub struct Value {
-    pub id: u64, // Unique ID for tracking
+    pub id: u64,
     pub kind: ValueKind,
     pub ty: IrType,
-    pub debug_info: Option<ValueDebugInfo>, // Added debug info
-}
-
-#[derive(Debug, Clone, PartialEq)]
-pub struct ValueDebugInfo {
-    pub name: Option<String>,
-    pub source_span: SourceSpan,
-}
-
-#[derive(Debug, Clone, PartialEq)]
-pub enum ValueKind {
-    Literal(IrLiteralValue),   // Simple literals
-    Constant(IrConstantValue), // Complex constants
-    Local(String),
-    Global(String),
-    Temporary(u64), // Changed to numeric ID
-}
-
-#[derive(Debug, Clone, PartialEq)]
-pub enum IrLiteralValue {
-    I8(i8),
-    I16(i16),
-    I32(i32),
-    I64(i64),
-    U8(u8),
-    U16(u16),
-    U32(u32),
-    U64(u64),
-    F32(f32),
-    F64(f64),
-    Bool(bool),
-    Char(char),
-}
-
-#[derive(Debug, Clone, PartialEq)]
-pub enum IrConstantValue {
-    String(String),
-    Array(Vec<Value>),
-    Struct(String, Vec<Value>),
+    pub debug_info: Option<ValueDebugInfo>,
 }
 
 impl Value {
