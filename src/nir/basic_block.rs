@@ -47,6 +47,6 @@ impl fmt::Display for BasicBlock {
         for inst in &self.instructions {
             writeln!(f, "  {inst}")?;
         }
-        write!(f, "  {}", self.terminator)
+         write!(f, "  {term}", term = self.terminator)
     }
 }

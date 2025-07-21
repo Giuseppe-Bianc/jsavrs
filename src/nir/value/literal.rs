@@ -63,7 +63,7 @@ impl fmt::Display for IrLiteralValue {
                 }
             }
             IrLiteralValue::Bool(val) => write!(f, "{val}"),
-            IrLiteralValue::Char(val) => write!(f, "'{}'", val.escape_default()),
+            IrLiteralValue::Char(val) => write!(f, "'{escaped}'", escaped = val.escape_default()),
         }
     }
 }

@@ -37,7 +37,7 @@ impl fmt::Display for IrType {
             IrType::Custom(name, _) => write!(f, "{name}"),
             IrType::Struct(name, fields, _) => {
                 let fields_str = fields.iter().map(|t| t.to_string()).collect::<Vec<_>>().join(", ");
-                write!(f, "struct {name}({fields_str})")
+                write!(f, "struct {name} {{ {fields_str} }}")
             }
         }
     }

@@ -2,6 +2,7 @@
 use super::{IrType, Value};
 use crate::location::source_span::SourceSpan;
 use std::fmt;
+use std::fmt::Write;
 
 #[derive(Debug, Clone, PartialEq)]
 pub struct Terminator {
@@ -90,11 +91,13 @@ impl fmt::Display for Terminator {
                 default_label,
                 cases,
             } => {
-                let cases_str = cases
-                    .iter()
-                    .map(|(val, label)| format!("{val} => {label}"))
-                    .collect::<Vec<_>>()
-                    .join(", ");
+                let mut cases_str = String::new();
+                for (idx, (val, label)) in cases.iter().enumerate() {
+                    if idx > 0 {
+                        cases_str.push_str(", ");
+                    }
+                    write!(&mut cases_str, "{val} => {label}")?;
+                }
                 write!(f, "switch {value} {ty}: {cases_str}, default {default_label}")
             }
             TerminatorKind::IndirectBranch { address, possible_labels } => write!(f, "ibr {address} [{}]", possible_labels.join(", ")),
