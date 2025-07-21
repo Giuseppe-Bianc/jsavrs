@@ -29,6 +29,7 @@ struct TypeContext {
     _aliases: HashMap<String, IrType>,
 }
 
+#[allow(clippy::collapsible_if)]
 impl NIrGenerator {
     pub fn new() -> Self {
         Self {
@@ -54,7 +55,9 @@ impl NIrGenerator {
     }*/
 
     fn block_needs_terminator(&self) -> bool {
-        self.current_block.as_ref().is_some_and(|b| !b.terminator.is_terminator())
+        self.current_block
+            .as_ref()
+            .is_some_and(|b| !b.terminator.is_terminator())
     }
 
     pub fn generate(&mut self, stmts: Vec<Stmt>) -> (Vec<Function>, Vec<CompileError>) {
@@ -62,8 +65,15 @@ impl NIrGenerator {
 
         for stmt in stmts {
             match stmt {
-                Stmt::Function { name, parameters, return_type, body, span } => {
-                    let mut func = self.create_function(&name, &parameters, return_type, span.clone());
+                Stmt::Function {
+                    name,
+                    parameters,
+                    return_type,
+                    body,
+                    span,
+                } => {
+                    let mut func =
+                        self.create_function(&name, &parameters, return_type, span.clone());
                     self.generate_function_body(&mut func, body, span);
                     functions.push(func);
                 }
@@ -96,7 +106,8 @@ impl NIrGenerator {
     }*/
 
     fn new_error(&mut self, message: String, span: SourceSpan) {
-        self.errors.push(CompileError::IrGeneratorError { message, span });
+        self.errors
+            .push(CompileError::IrGeneratorError { message, span });
     }
 
     fn create_function(
@@ -398,7 +409,10 @@ impl NIrGenerator {
 
         self.add_terminator(
             func,
-            Terminator::new(TerminatorKind::Branch(loop_start_label.clone()), span.clone()),
+            Terminator::new(
+                TerminatorKind::Branch(loop_start_label.clone()),
+                span.clone(),
+            ),
         );
 
         self.start_block(func, &loop_start_label, span.clone());
@@ -429,7 +443,10 @@ impl NIrGenerator {
         if self.block_needs_terminator() {
             self.add_terminator(
                 func,
-                Terminator::new(TerminatorKind::Branch(loop_start_label.clone()), span.clone()),
+                Terminator::new(
+                    TerminatorKind::Branch(loop_start_label.clone()),
+                    span.clone(),
+                ),
             );
         }
 
@@ -586,7 +603,9 @@ impl NIrGenerator {
         let array_ty = IrType::Array(Box::new(element_ty.clone()), array_size);
 
         let alloca_inst = Instruction::new(
-            InstructionKind::Alloca { ty: array_ty.clone() },
+            InstructionKind::Alloca {
+                ty: array_ty.clone(),
+            },
             span.clone(),
         )
         .with_result(Value::new_temporary(array_temp, array_ty.clone()));
@@ -606,7 +625,10 @@ impl NIrGenerator {
                 },
                 span.clone(),
             )
-            .with_result(Value::new_temporary(index_temp, IrType::Pointer(Box::new(element_ty.clone()))));
+            .with_result(Value::new_temporary(
+                index_temp,
+                IrType::Pointer(Box::new(element_ty.clone())),
+            ));
             self.add_instruction(gep_inst.clone());
 
             let element_ptr = gep_inst.result.unwrap();
