@@ -24,7 +24,7 @@ impl fmt::Display for IrConstantValue {
                 write!(f, "]")
             }
             IrConstantValue::Struct(name, fields) => {
-                write!(f, "{}<", name)?;
+                write!(f, "{name}<")?;
                 for (i, field) in fields.iter().enumerate() {
                     if i > 0 {
                         write!(f, ", ")?;

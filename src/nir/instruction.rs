@@ -187,7 +187,7 @@ impl Instruction {
 impl fmt::Display for Instruction {
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
         let result_str = if let Some(result) = &self.result {
-            format!("{} = ", result)
+            format!("{result} = ")
         } else {
             String::new()
         };
