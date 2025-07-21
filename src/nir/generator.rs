@@ -762,7 +762,7 @@ impl NIrGenerator {
 
     fn generate_variable(&mut self, name: String, span: SourceSpan) -> Value {
         self.symbol_table.get(&name).cloned().unwrap_or_else(|| {
-            self.new_error(format!("Undefined variable '{}'", name), span.clone());
+            self.new_error(format!("Undefined variable '{name}'"), span.clone());
             Value::new_literal(IrLiteralValue::I32(0)).with_debug_info(None, span)
         })
     }
