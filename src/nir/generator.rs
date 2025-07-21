@@ -29,7 +29,7 @@ struct TypeContext {
     _aliases: HashMap<String, IrType>,
 }
 
-#[allow(clippy::collapsible_if)]
+#[allow(clippy::collapsible_if, clippy::collapsible_else_if)]
 impl NIrGenerator {
     pub fn new() -> Self {
         Self {
