@@ -102,27 +102,6 @@ fn main() -> Result<(), CompileError> {
         ()
     }
 
-    /*let mut generator = IrGenerator::new();
-    let ir_timer = Timer::new("IR Generation");
-    let (functions, ir_errors) = generator.generate(statements.clone());
-    println!("{ir_timer}");
-
-
-    if !ir_errors.is_empty() {
-        eprintln!("{}", error_reporter.report_errors(ir_errors));
-        process::exit(-1);
-    }
-
-    println!("IR generation done");
-
-    if args.verbose {
-        for func in &functions {
-            println!("{func}");
-        }
-    } else {
-        println!("{} functions generated", functions.len());
-    }*/
-
     let mut generator = NIrGenerator::new();
     let nir_timer = Timer::new("NIR Generation");
     let (nfunctions, ir_errors) = generator.generate(statements.clone());
