@@ -284,31 +284,28 @@ impl NIrGenerator {
         for (i, var) in variables.iter().enumerate() {
             if is_mutable {
                 let temp_id = self.new_temp();
-                let temp_name = format!("t{temp_id}");
+                let ptr_ty = IrType::Pointer(Box::new(ty.clone()));
+                let ptr_value = Value::new_temporary(temp_id, ptr_ty)
+                    .with_debug_info(Some(var.clone()), span.clone());
 
-                let alloca_inst =
-                    Instruction::new(InstructionKind::Alloca { ty: ty.clone() }, span.clone())
-                        .with_result(Value::new_temporary(temp_id, ty.clone()));
+                let alloca_inst = Instruction::new(InstructionKind::Alloca { ty: ty.clone() }, span.clone(), ).with_result(ptr_value.clone());
 
                 self.add_instruction(alloca_inst);
 
-                let value = Value::new_local(temp_name.clone(), ty.clone())
-                    .with_debug_info(Some(var.clone()), span.clone());
-
-                self.symbol_table.insert(var.clone(), value.clone());
-                self.value_types.insert(temp_name, ty.clone());
-
+                // Store initial value to the allocated pointer
                 if let Some(init) = initializers.get(i) {
-                    let value = self.generate_expr(func, init.clone());
+                    let value_val = self.generate_expr(func, init.clone());
                     let store_inst = Instruction::new(
                         InstructionKind::Store {
-                            value: value.clone(),
-                            dest: value.clone(),
+                            value: value_val,
+                            dest: ptr_value.clone(),
                         },
                         span.clone(),
                     );
                     self.add_instruction(store_inst);
                 }
+
+                self.symbol_table.insert(var.clone(), ptr_value);
             } else {
                 if let Some(init) = initializers.get(i) {
                     let value = self.generate_expr(func, init.clone());
