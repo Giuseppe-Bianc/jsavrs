@@ -106,8 +106,13 @@ impl NIrGenerator {
     }*/
 
     fn new_error(&mut self, message: String, span: SourceSpan) {
-        self.errors
-            .push(CompileError::IrGeneratorError { message, span });
+        self.errors.push(CompileError::IrGeneratorError { message, span });
+    }
+
+    fn add_branch_if_needed(&mut self, func: &mut Function, target_label: &str, span: SourceSpan) {
+        if self.block_needs_terminator() {
+            self.add_terminator(func, Terminator::new(TerminatorKind::Branch(target_label.to_string()), span));
+        }
     }
 
     fn create_function(
@@ -369,12 +374,7 @@ impl NIrGenerator {
             self.generate_stmt(func, stmt);
         }
 
-        if self.block_needs_terminator() {
-            self.add_terminator(
-                func,
-                Terminator::new(TerminatorKind::Branch(merge_label.clone()), span.clone()),
-            );
-        }
+        self.add_branch_if_needed(func, &merge_label, span.clone());
 
         self.start_block(func, &else_label, span.clone());
         if let Some(else_stmts) = else_branch {
@@ -383,13 +383,7 @@ impl NIrGenerator {
             }
         }
 
-        if self.block_needs_terminator() {
-            self.add_terminator(
-                func,
-                Terminator::new(TerminatorKind::Branch(merge_label.clone()), span.clone()),
-            );
-        }
-
+        self.add_branch_if_needed(func, &merge_label, span.clone());
         self.start_block(func, &merge_label, span);
     }
 
@@ -437,16 +431,7 @@ impl NIrGenerator {
         self.break_stack.pop();
         self.continue_stack.pop();
 
-        if self.block_needs_terminator() {
-            self.add_terminator(
-                func,
-                Terminator::new(
-                    TerminatorKind::Branch(loop_start_label.clone()),
-                    span.clone(),
-                ),
-            );
-        }
-
+        self.add_branch_if_needed(func, &loop_start_label, span.clone());
         self.start_block(func, &loop_end_label, span);
     }
 
@@ -504,25 +489,14 @@ impl NIrGenerator {
         self.break_stack.pop();
         self.continue_stack.pop();
 
-        if self.block_needs_terminator() {
-            self.add_terminator(
-                func,
-                Terminator::new(TerminatorKind::Branch(loop_inc_label.clone()), span.clone()),
-            );
-        }
+        self.add_branch_if_needed(func, &loop_inc_label, span.clone());
 
         self.start_block(func, &loop_inc_label, span.clone());
         if let Some(inc) = increment {
             self.generate_expr(func, inc);
         }
 
-        if self.block_needs_terminator() {
-            self.add_terminator(
-                func,
-                Terminator::new(TerminatorKind::Branch(loop_st_label.clone()), span.clone()),
-            );
-        }
-
+        self.add_branch_if_needed(func, &loop_st_label, span.clone());
         self.start_block(func, &loop_end_label, span);
     }
 
