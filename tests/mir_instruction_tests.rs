@@ -443,3 +443,76 @@ fn test_vector_dot_product() {
         "t22 =  vector.vdot t20, t21 : f32"
     );
 }
+
+#[test]
+fn test_all_binary_ops() {
+    let ops = vec![
+        (IrBinaryOp::Add, "add"),
+        (IrBinaryOp::Subtract, "sub"),
+        (IrBinaryOp::Multiply, "mul"),
+        (IrBinaryOp::Divide, "div"),
+        (IrBinaryOp::Modulo, "mod"),
+        (IrBinaryOp::Equal, "eq"),
+        (IrBinaryOp::NotEqual, "ne"),
+        (IrBinaryOp::Less, "lt"),
+        (IrBinaryOp::LessEqual, "le"),
+        (IrBinaryOp::Greater, "gt"),
+        (IrBinaryOp::GreaterEqual, "ge"),
+        (IrBinaryOp::And, "and"),
+        (IrBinaryOp::Or, "or"),
+        (IrBinaryOp::BitwiseAnd, "bitand"),
+        (IrBinaryOp::BitwiseOr, "bitor"),
+        (IrBinaryOp::BitwiseXor, "bitxor"),
+        (IrBinaryOp::ShiftLeft, "shl"),
+        (IrBinaryOp::ShiftRight, "shr"),
+    ];
+
+    let ty = IrType::I32;
+    for (idx, (op, op_str)) in ops.iter().enumerate() {
+        let left = Value::new_literal(IrLiteralValue::I32(100 + idx as i32));
+        let right = Value::new_literal(IrLiteralValue::I32(200 + idx as i32));
+
+        let inst = Instruction::new(
+            InstructionKind::Binary {
+                op: op.clone(),
+                left: left.clone(),
+                right: right.clone(),
+                ty: ty.clone(),
+            },
+            dummy_span()
+        ).with_result(temp_value(1000 + idx as u64, ty.clone()));
+
+        assert_eq!(
+            format!("{}", inst),
+            format!("t{} = {} {} {}, i32", 1000 + idx, op_str, left, right)
+        );
+    }
+}
+
+#[test]
+fn test_all_unary_ops() {
+    let ops = vec![
+        (IrUnaryOp::Negate, "neg"),
+        (IrUnaryOp::Not, "not"),
+    ];
+
+    let ty = IrType::I32;
+    for (idx, (op, op_str)) in ops.iter().enumerate() {
+        let operand = Value::new_literal(IrLiteralValue::I32(100 + idx as i32));
+        let res_idx = 5000 + idx as u64;
+
+        let inst = Instruction::new(
+            InstructionKind::Unary {
+                op: op.clone(),
+                operand: operand.clone(),
+                ty: ty.clone(),
+            },
+            dummy_span()
+        ).with_result(temp_value(res_idx, ty.clone()));
+
+        assert_eq!(
+            format!("{}", inst),
+            format!("t{} = {} {} i32", res_idx, op_str, operand)
+        );
+    }
+}
