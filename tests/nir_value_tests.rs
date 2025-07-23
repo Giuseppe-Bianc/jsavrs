@@ -251,3 +251,125 @@ fn debug_info_creation() {
     };
     assert!(no_name.name.is_none());
 }
+#[test]
+fn literal_to_type_conversion() {
+    // Test di conversione per tutti i tipi
+    assert_eq!(IrType::from(&IrLiteralValue::I8(0)), IrType::I8);
+    assert_eq!(IrType::from(&IrLiteralValue::I16(0)), IrType::I16);
+    assert_eq!(IrType::from(&IrLiteralValue::I32(0)), IrType::I32);
+    assert_eq!(IrType::from(&IrLiteralValue::I64(0)), IrType::I64);
+
+    assert_eq!(IrType::from(&IrLiteralValue::U8(0)), IrType::U8);
+    assert_eq!(IrType::from(&IrLiteralValue::U16(0)), IrType::U16);
+    assert_eq!(IrType::from(&IrLiteralValue::U32(0)), IrType::U32);
+    assert_eq!(IrType::from(&IrLiteralValue::U64(0)), IrType::U64);
+
+    assert_eq!(IrType::from(&IrLiteralValue::F32(0.0)), IrType::F32);
+    assert_eq!(IrType::from(&IrLiteralValue::F64(0.0)), IrType::F64);
+
+    assert_eq!(IrType::from(&IrLiteralValue::Bool(true)), IrType::Bool);
+    assert_eq!(IrType::from(&IrLiteralValue::Char('a')), IrType::Char);
+}
+
+#[test]
+fn integer_display_formatting() {
+    // Limiti degli interi con segno
+    assert_eq!(format!("{}", IrLiteralValue::I8(-128)), "-128i8");
+    assert_eq!(format!("{}", IrLiteralValue::I8(127)), "127i8");
+    assert_eq!(format!("{}", IrLiteralValue::I16(-32768)), "-32768i16");
+    assert_eq!(format!("{}", IrLiteralValue::I16(32767)), "32767i16");
+    assert_eq!(format!("{}", IrLiteralValue::I32(-2147483648)), "-2147483648i32");
+    assert_eq!(format!("{}", IrLiteralValue::I32(2147483647)), "2147483647i32");
+    assert_eq!(format!("{}", IrLiteralValue::I64(-9223372036854775808)), "-9223372036854775808i64");
+    assert_eq!(format!("{}", IrLiteralValue::I64(9223372036854775807)), "9223372036854775807i64");
+
+    // Limiti degli interi senza segno
+    assert_eq!(format!("{}", IrLiteralValue::U8(0)), "0u8");
+    assert_eq!(format!("{}", IrLiteralValue::U8(255)), "255u8");
+    assert_eq!(format!("{}", IrLiteralValue::U16(0)), "0u16");
+    assert_eq!(format!("{}", IrLiteralValue::U16(65535)), "65535u16");
+    assert_eq!(format!("{}", IrLiteralValue::U32(0)), "0u32");
+    assert_eq!(format!("{}", IrLiteralValue::U32(4294967295)), "4294967295u32");
+    assert_eq!(format!("{}", IrLiteralValue::U64(0)), "0u64");
+    assert_eq!(format!("{}", IrLiteralValue::U64(18446744073709551615)), "18446744073709551615u64");
+}
+
+#[test]
+fn float_display_formatting() {
+    // Numeri interi rappresentati come float
+    assert_eq!(format!("{}", IrLiteralValue::F32(42.0)), "42.0f32");
+    assert_eq!(format!("{}", IrLiteralValue::F32(-100.0)), "-100.0f32");
+    assert_eq!(format!("{}", IrLiteralValue::F64(123456.0)), "123456.0f64");
+
+    // Numeri frazionari
+    assert_eq!(format!("{}", IrLiteralValue::F32(3.14159)), "3.14159f32");
+    assert_eq!(format!("{}", IrLiteralValue::F64(2.718281828459045)), "2.718281828459045f64");
+
+    // Zero negativo
+    assert_eq!(format!("{}", IrLiteralValue::F32(-0.0)), "-0.0f32");
+    assert_eq!(format!("{}", IrLiteralValue::F64(-0.0)), "-0.0f64");
+
+    // Valori speciali
+    assert_eq!(format!("{}", IrLiteralValue::F32(f32::NAN)), "NaNf32");
+    assert_eq!(format!("{}", IrLiteralValue::F32(f32::INFINITY)), "inff32");
+    assert_eq!(format!("{}", IrLiteralValue::F32(f32::NEG_INFINITY)), "-inff32");
+    assert_eq!(format!("{}", IrLiteralValue::F64(f64::NAN)), "NaNf64");
+    assert_eq!(format!("{}", IrLiteralValue::F64(f64::INFINITY)), "inff64");
+    assert_eq!(format!("{}", IrLiteralValue::F64(f64::NEG_INFINITY)), "-inff64");
+}
+
+#[test]
+fn bool_display_formatting() {
+    assert_eq!(format!("{}", IrLiteralValue::Bool(true)), "true");
+    assert_eq!(format!("{}", IrLiteralValue::Bool(false)), "false");
+}
+
+#[test]
+fn char_display_formatting() {
+    // Caratteri ASCII stampabili
+    assert_eq!(format!("{}", IrLiteralValue::Char('a')), "'a'");
+    assert_eq!(format!("{}", IrLiteralValue::Char('Z')), "'Z'");
+    assert_eq!(format!("{}", IrLiteralValue::Char(' ')), "' '");
+    assert_eq!(format!("{}", IrLiteralValue::Char('@')), "'@'");
+
+    // Caratteri speciali (escape necessari)
+    assert_eq!(format!("{}", IrLiteralValue::Char('\'')), "'\\\''");
+    assert_eq!(format!("{}", IrLiteralValue::Char('\"')), "'\\\"'");
+    assert_eq!(format!("{}", IrLiteralValue::Char('\\')), "'\\\\'");
+
+    // Caratteri di controllo
+    assert_eq!(format!("{}", IrLiteralValue::Char('\n')), "'\\n'");
+    assert_eq!(format!("{}", IrLiteralValue::Char('\r')), "'\\r'");
+    assert_eq!(format!("{}", IrLiteralValue::Char('\t')), "'\\t'");
+    assert_eq!(format!("{}", IrLiteralValue::Char('\0')), "'\\u{0}'");
+    assert_eq!(format!("{}", IrLiteralValue::Char('\x07')), "'\\u{7}'");
+    assert_eq!(format!("{}", IrLiteralValue::Char('\x1F')), "'\\u{1f}'");
+
+    // Caratteri Unicode
+    assert_eq!(format!("{}", IrLiteralValue::Char('é')), "'\\u{e9}'");
+    assert_eq!(format!("{}", IrLiteralValue::Char('ß')), "'\\u{df}'");
+    assert_eq!(format!("{}", IrLiteralValue::Char('あ')), "'\\u{3042}'");
+    assert_eq!(format!("{}", IrLiteralValue::Char('😂')), "'\\u{1f602}'");
+    assert_eq!(format!("{}", IrLiteralValue::Char('\u{FFFF}')), "'\\u{ffff}'");
+    assert_eq!(format!("{}", IrLiteralValue::Char('\u{10FFFF}')), "'\\u{10ffff}'");
+
+    // Caratteri che richiedono escape Unicode
+    assert_eq!(format!("{}", IrLiteralValue::Char('\u{0}')), "'\\u{0}'");
+    assert_eq!(format!("{}", IrLiteralValue::Char('\u{1F}')), "'\\u{1f}'");
+    assert_eq!(format!("{}", IrLiteralValue::Char('\u{7F}')), "'\\u{7f}'");
+}
+
+#[test]
+fn display_precision_edge_cases() {
+    // Numeri che sono esattamente interi
+    assert_eq!(format!("{}", IrLiteralValue::F32(5.0)), "5.0f32");
+    assert_eq!(format!("{}", IrLiteralValue::F64(-10.0)), "-10.0f64");
+
+    // Numeri con frazioni molto piccole
+    assert_eq!(format!("{}", IrLiteralValue::F32(0.000000001)), "0.000000001f32");
+    assert_eq!(format!("{}", IrLiteralValue::F64(0.0000000000000001)), "0.0000000000000001f64");
+
+    // Numeri che sembrano interi ma hanno parte frazionaria
+    assert_eq!(format!("{}", IrLiteralValue::F32(1.0000001)), "1.0000001f32");
+    assert_eq!(format!("{}", IrLiteralValue::F64(2.000000000000001)), "2.000000000000001f64");
+}
