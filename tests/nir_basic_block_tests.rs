@@ -1,4 +1,5 @@
-use jsavrs::nir::{BasicBlock, Instruction, InstructionKind, IrType, IrUnaryOp, Terminator, TerminatorKind, Value, ValueKind};
+use jsavrs::nir::{BasicBlock, Instruction, InstructionKind, IrBinaryOp, IrLiteralValue, IrType, TerminatorKind, Value};
+use jsavrs::utils::dummy_span;
 
 #[test]
 fn test_new_block() {
@@ -29,4 +30,22 @@ fn test_block_display_whit_predecessor() {
     let mut block: BasicBlock = BasicBlock::new("entry", Default::default());
     block.add_predecessor("prev".to_string());
     assert_eq!(block.to_string(), "// Predecessors: prev\nentry:\n  unreachable");
+}
+
+#[test]
+fn test_block_display_whit_instruction() {
+    let mut block: BasicBlock = BasicBlock::new("entry", Default::default());
+    let left = Value::new_literal(IrLiteralValue::I32(100i32));
+    let right = Value::new_literal(IrLiteralValue::I32(200i32));
+
+    let inst = Instruction::new(
+        InstructionKind::Binary {
+            op: IrBinaryOp::Add,
+            left: left.clone(),
+            right: right.clone(),
+            ty: IrType::I32,
+        },
+        dummy_span()
+    ).with_result(Value::new_temporary(1000, IrType::I32));
+    assert_eq!(block.to_string(), "entry:\n  unreachable");
 }

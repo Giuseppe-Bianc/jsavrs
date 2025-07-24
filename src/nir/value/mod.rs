@@ -60,7 +60,7 @@ impl Value {
 
     pub fn new_temporary(id: u64, ty: IrType) -> Self {
         Value {
-            id,
+            id: Self::next_id(),
             kind: ValueKind::Temporary(id),
             ty,
             debug_info: None,
