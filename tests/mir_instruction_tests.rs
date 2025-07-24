@@ -1,4 +1,7 @@
-use jsavrs::nir::{CastKind, Instruction, InstructionKind, IrBinaryOp, IrConstantValue, IrLiteralValue, IrType, IrUnaryOp, Value, ValueKind, VectorOp};
+use jsavrs::nir::{
+    CastKind, Instruction, InstructionKind, IrBinaryOp, IrConstantValue, IrLiteralValue, IrType,
+    IrUnaryOp, Value, VectorOp,
+};
 use jsavrs::utils::dummy_span;
 // tests/nir_instruction_tests.rs
 
@@ -168,21 +171,36 @@ fn test_phi_instruction() {
 }
 
 #[test]
-fn test_vector_instruction() {
-    let vec1 = Value::new_temporary(9, IrType::Custom("vec3".to_string(), dummy_span()));
-    let vec2 = Value::new_temporary(10, IrType::Custom("vec3".to_string(), dummy_span()));
-    let ty = IrType::Custom("vec3".to_string(), dummy_span());
+fn test_vectors_instruction() {
+    let ops = vec![
+        (VectorOp::Add, "vadd"),
+        (VectorOp::Sub, "vsub"),
+        (VectorOp::Mul, "vmul"),
+        (VectorOp::Div, "vdiv"),
+        (VectorOp::DotProduct, "vdot"),
+        (VectorOp::Shuffle, "vshuffle"),
+    ];
+    let vec1 = Value::new_temporary(15, IrType::Custom("vec4".to_string(), dummy_span()));
+    let vec2 = Value::new_temporary(16, IrType::Custom("vec4".to_string(), dummy_span()));
+    let ty = IrType::Custom("vec4".to_string(), dummy_span());
 
-    let inst = Instruction::new(
-        InstructionKind::Vector {
-            op: VectorOp::Add,
-            operands: vec![vec1.clone(), vec2.clone()],
-            ty: ty.clone(),
-        },
-        dummy_span()
-    ).with_result(Value::new_temporary(11, ty));
+    for (op, op_str) in ops {
+        let inst = Instruction::new(
+            InstructionKind::Vector {
+                op: op.clone(),
+                operands: vec![vec1.clone(), vec2.clone()],
+                ty: ty.clone(),
+            },
+            dummy_span(),
+        )
+            .with_result(Value::new_temporary(17, ty.clone()));
 
-    assert_eq!(format!("{}", inst), "t11 =  vector.vadd t9, t10 : vec3");
+        assert_eq!(
+            format!("{}", inst),
+            format!("t17 =  vector.{} t15, t16 : vec4", op_str)
+        );
+    }
+
 }
 
 #[test]
@@ -338,27 +356,6 @@ fn test_struct_type_display() {
 }
 
 #[test]
-fn test_vector_shuffle_instruction() {
-    let vec1 = Value::new_temporary(15, IrType::Custom("vec4".to_string(), dummy_span()));
-    let vec2 = Value::new_temporary(16, IrType::Custom("vec4".to_string(), dummy_span()));
-    let ty = IrType::Custom("vec4".to_string(), dummy_span());
-
-    let inst = Instruction::new(
-        InstructionKind::Vector {
-            op: VectorOp::Shuffle,
-            operands: vec![vec1.clone(), vec2.clone()],
-            ty: ty.clone(),
-        },
-        dummy_span()
-    ).with_result(Value::new_temporary(17, ty));
-
-    assert_eq!(
-        format!("{}", inst),
-        "t17 =  vector.vshuffle t15, t16 : vec4"
-    );
-}
-
-#[test]
 fn test_char_literal_display() {
     let char_val = Value::new_literal(IrLiteralValue::Char('\n'));
     let inst = Instruction::new(
@@ -410,27 +407,6 @@ fn test_phi_single_incoming() {
     assert_eq!(
         format!("{}", inst),
         "t19 =  phi i32 [ [ 42i32, entry ] ]"
-    );
-}
-
-#[test]
-fn test_vector_dot_product() {
-    let vec1 = Value::new_temporary(20, IrType::Custom("vec3".to_string(), dummy_span()));
-    let vec2 = Value::new_temporary(21, IrType::Custom("vec3".to_string(), dummy_span()));
-    let ty = IrType::F32;
-
-    let inst = Instruction::new(
-        InstructionKind::Vector {
-            op: VectorOp::DotProduct,
-            operands: vec![vec1.clone(), vec2.clone()],
-            ty: ty.clone(),
-        },
-        dummy_span()
-    ).with_result(Value::new_temporary(22, ty));
-
-    assert_eq!(
-        format!("{}", inst),
-        "t22 =  vector.vdot t20, t21 : f32"
     );
 }
 
