@@ -47,5 +47,25 @@ fn test_block_display_whit_instruction() {
         },
         dummy_span()
     ).with_result(Value::new_temporary(1000, IrType::I32));
-    assert_eq!(block.to_string(), "entry:\n  unreachable");
+    block.instructions.push(inst);
+    assert_eq!(block.to_string(), "entry:\n  t1000 = add 100i32 200i32, i32\n  unreachable");
+}
+#[test]
+fn test_block_display_whit_instruction_and_predecessor() {
+    let mut block: BasicBlock = BasicBlock::new("entry", Default::default());
+    let left = Value::new_literal(IrLiteralValue::I32(100i32));
+    let right = Value::new_literal(IrLiteralValue::I32(200i32));
+
+    let inst = Instruction::new(
+        InstructionKind::Binary {
+            op: IrBinaryOp::Add,
+            left: left.clone(),
+            right: right.clone(),
+            ty: IrType::I32,
+        },
+        dummy_span()
+    ).with_result(Value::new_temporary(1000, IrType::I32));
+    block.add_predecessor("prev".to_string());
+    block.instructions.push(inst);
+    assert_eq!(block.to_string(), "// Predecessors: prev\nentry:\n  t1000 = add 100i32 200i32, i32\n  unreachable");
 }
