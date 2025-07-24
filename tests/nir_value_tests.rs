@@ -1,5 +1,6 @@
 use jsavrs::utils::*;
-use jsavrs::nir::{Value, IrLiteralValue, IrConstantValue, ValueKind, IrType, ValueDebugInfo};
+use jsavrs::nir::{Value, IrLiteralValue, IrConstantValue, ValueKind, IrType, ValueDebugInfo, IrBinaryOp, IrUnaryOp};
+use jsavrs::parser::ast::{BinaryOp, UnaryOp};
 
 #[test]
 fn value_creation_and_properties() {
@@ -372,4 +373,57 @@ fn display_precision_edge_cases() {
     // Numeri che sembrano interi ma hanno parte frazionaria
     assert_eq!(format!("{}", IrLiteralValue::F32(1.0000001)), "1.0000001f32");
     assert_eq!(format!("{}", IrLiteralValue::F64(2.000000000000001)), "2.000000000000001f64");
+}
+
+#[test]
+fn test_binary_op_conversion() {
+    // Test all variants
+    let test_cases = vec![
+        (BinaryOp::Add, IrBinaryOp::Add),
+        (BinaryOp::Subtract, IrBinaryOp::Subtract),
+        (BinaryOp::Multiply, IrBinaryOp::Multiply),
+        (BinaryOp::Divide, IrBinaryOp::Divide),
+        (BinaryOp::Modulo, IrBinaryOp::Modulo),
+        (BinaryOp::Equal, IrBinaryOp::Equal),
+        (BinaryOp::NotEqual, IrBinaryOp::NotEqual),
+        (BinaryOp::Less, IrBinaryOp::Less),
+        (BinaryOp::LessEqual, IrBinaryOp::LessEqual),
+        (BinaryOp::Greater, IrBinaryOp::Greater),
+        (BinaryOp::GreaterEqual, IrBinaryOp::GreaterEqual),
+        (BinaryOp::And, IrBinaryOp::And),
+        (BinaryOp::Or, IrBinaryOp::Or),
+        (BinaryOp::BitwiseAnd, IrBinaryOp::BitwiseAnd),
+        (BinaryOp::BitwiseOr, IrBinaryOp::BitwiseOr),
+        (BinaryOp::BitwiseXor, IrBinaryOp::BitwiseXor),
+        (BinaryOp::ShiftLeft, IrBinaryOp::ShiftLeft),
+        (BinaryOp::ShiftRight, IrBinaryOp::ShiftRight),
+    ];
+
+    for (input, expected) in test_cases {
+        let result: IrBinaryOp = input.clone().into();
+        assert_eq!(
+            result, expected,
+            "Failed conversion for {:?}: expected {:?}, got {:?}",
+            input, expected, result
+        );
+    }
+}
+
+#[test]
+fn test_unary_op_conversion() {
+    // Test all variants
+    let test_cases = vec![
+        (UnaryOp::Negate, IrUnaryOp::Negate),
+        (UnaryOp::Not, IrUnaryOp::Not),
+
+        ];
+
+    for (input, expected) in test_cases {
+        let result: IrUnaryOp = input.clone().into();
+        assert_eq!(
+            result, expected,
+            "Failed conversion for {:?}: expected {:?}, got {:?}",
+            input, expected, result
+        );
+    }
 }
