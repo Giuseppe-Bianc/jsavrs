@@ -49,6 +49,15 @@ impl Value {
         }
     }
 
+    pub fn new_global(name: String, ty: IrType) -> Self {
+        Value {
+            id: Self::next_id(),
+            kind: ValueKind::Global(name),
+            ty,
+            debug_info: None,
+        }
+    }
+
     pub fn new_temporary(id: u64, ty: IrType) -> Self {
         Value {
             id,

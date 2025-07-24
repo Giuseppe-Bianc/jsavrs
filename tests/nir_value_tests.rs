@@ -91,15 +91,7 @@ fn value_display_formatting() {
         "%foo"
     );
     assert_eq!(
-        format!(
-            "{}",
-            Value {
-                id: 1,
-                kind: ValueKind::Global("bar".to_string()),
-                ty: IrType::I32,
-                debug_info: None,
-            }
-        ),
+        format!("{}", Value::new_global("bar".to_string(), IrType::I32)),
         "@bar"
     );
     assert_eq!(
