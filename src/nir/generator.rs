@@ -57,13 +57,7 @@ impl NIrGenerator {
 
         for stmt in stmts {
             match stmt {
-                Stmt::Function {
-                    name,
-                    parameters,
-                    return_type,
-                    body,
-                    span,
-                } => {
+                Stmt::Function { name, parameters, return_type, body, span} => {
                     let mut func =
                         self.create_function(&name, &parameters, return_type, span.clone());
                     self.generate_function_body(&mut func, body, span);
