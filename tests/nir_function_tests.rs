@@ -1,4 +1,7 @@
-use jsavrs::nir::{BasicBlock, Cfg, Function, FunctionAttributes, Instruction, InstructionKind, IrLiteralValue, IrParameter, IrType, ParamAttributes, Terminator, TerminatorKind, Value};
+use jsavrs::nir::{
+    BasicBlock, Cfg, Function, FunctionAttributes, Instruction, InstructionKind, IrLiteralValue,
+    IrParameter, IrType, ParamAttributes, Terminator, TerminatorKind, Value,
+};
 use jsavrs::utils::dummy_span;
 
 fn create_dummy_value() -> Value {
@@ -349,4 +352,118 @@ fn test_function_with_parameters() {
     let output = format!("{}", func);
 
     assert!(output.contains("function func (a: i32, b: f64) -> bool:"));
+}
+
+#[test]
+fn test_cfg_get_block() {
+    let mut cfg = Cfg::new("entry");
+    let block = BasicBlock::new("block1", dummy_span());
+    cfg.add_block(block);
+
+    // Test existing block
+    let retrieved_block = cfg.get_block("block1");
+    assert!(retrieved_block.is_some());
+    assert_eq!(retrieved_block.unwrap().label, "block1");
+
+    // Test non-existent block
+    assert!(cfg.get_block("invalid").is_none());
+
+    // Test entry block
+    assert!(cfg.get_block("entry").is_some());
+}
+
+#[test]
+fn test_cfg_get_block_mut() {
+    let mut cfg = Cfg::new("entry");
+    let block = BasicBlock::new("block1", dummy_span());
+    cfg.add_block(block);
+
+    // Modify existing block
+    if let Some(block) = cfg.get_block_mut("block1") {
+        block.add_predecessor("new_pred".to_string());
+    }
+
+    let retrieved_block = cfg.get_block("block1").unwrap();
+    assert_eq!(retrieved_block.predecessors, vec!["new_pred"]);
+
+    // Try to modify non-existent block
+    assert!(cfg.get_block_mut("invalid").is_none());
+
+    // Modify entry block
+    if let Some(entry) = cfg.get_block_mut("entry") {
+        entry.terminator = Terminator::new(
+            TerminatorKind::Branch("new_target".to_string()),
+            dummy_span(),
+        );
+    }
+
+    let entry = cfg.get_block("entry").unwrap();
+    match &entry.terminator.kind {
+        TerminatorKind::Branch(label) => assert_eq!(label, "new_target"),
+        _ => panic!("Terminator not modified correctly"),
+    }
+}
+
+#[test]
+fn test_function_cfg_accessors() {
+    let mut func = Function::new("test", vec![], IrType::Void);
+    let block = BasicBlock::new("block1", dummy_span());
+    func.add_block(block);
+
+    // Test get_block through function's cfg
+    assert!(func.cfg.get_block("block1").is_some());
+    assert!(func.cfg.get_block("entry_test").is_some());
+    assert!(func.cfg.get_block("invalid").is_none());
+
+    // Test get_block_mut through function's cfg
+    if let Some(block) = func.cfg.get_block_mut("block1") {
+        block.add_predecessor("func_pred".to_string());
+    }
+
+    let block = func.cfg.get_block("block1").unwrap();
+    assert!(block
+        .predecessors
+        .contains(&"func_pred".to_string()));
+}
+
+#[test]
+fn test_cfg_get_block_mut_persists_changes() {
+    let mut cfg = Cfg::new("entry");
+    let block = BasicBlock::new("block1", dummy_span());
+    cfg.add_block(block);
+
+    // Modify block through mutable reference
+    {
+        let block = cfg.get_block_mut("block1").unwrap();
+        block.instructions.push(Instruction::new(
+            InstructionKind::Load {
+                src: create_dummy_value(),
+                ty: IrType::I32,
+            },
+            dummy_span(),
+        ));
+    }
+
+    // Verify changes persisted
+    let block = cfg.get_block("block1").unwrap();
+    assert_eq!(block.instructions.len(), 1);
+}
+
+#[test]
+fn test_cfg_get_block_mut_entry_block() {
+    let mut cfg = Cfg::new("entry");
+
+    // Modify entry block
+    if let Some(entry) = cfg.get_block_mut("entry") {
+        entry.terminator = Terminator::new(
+            TerminatorKind::Unreachable,
+            dummy_span(),
+        );
+    }
+
+    let entry = cfg.get_block("entry").unwrap();
+    assert!(matches!(
+        entry.terminator.kind,
+        TerminatorKind::Unreachable
+    ));
 }
