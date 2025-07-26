@@ -17,7 +17,10 @@ pub struct DebugInfo {
 
 #[derive(Debug, Clone, PartialEq)]
 pub enum TerminatorKind {
-    Return(Value, IrType),
+    Return {
+        value: Value,
+        ty: IrType,
+    },
     Branch(String),
     ConditionalBranch {
         condition: Value,
@@ -82,9 +85,13 @@ impl Terminator {
 impl fmt::Display for Terminator {
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
         match &self.kind {
-            TerminatorKind::Return(value, ty) => write!(f, "ret {value} {ty}"),
+            TerminatorKind::Return {value, ty} => write!(f, "ret {value} {ty}"),
             TerminatorKind::Branch(label) => write!(f, "br {label}"),
-            TerminatorKind::ConditionalBranch { condition, true_label, false_label} => write!(f, "br {condition} ? {true_label} : {false_label}"),
+            TerminatorKind::ConditionalBranch {
+                condition,
+                true_label,
+                false_label,
+            } => write!(f, "br {condition} ? {true_label} : {false_label}"),
             TerminatorKind::Switch {
                 value,
                 ty,
@@ -98,9 +105,15 @@ impl fmt::Display for Terminator {
                     }
                     write!(&mut cases_str, "{val} => {label}")?;
                 }
-                write!(f, "switch {value} {ty}: {cases_str}, default {default_label}")
+                write!(
+                    f,
+                    "switch {value} {ty}: {cases_str}, default {default_label}"
+                )
             }
-            TerminatorKind::IndirectBranch { address, possible_labels } => write!(f, "ibr {address} [{}]", possible_labels.join(", ")),
+            TerminatorKind::IndirectBranch {
+                address,
+                possible_labels,
+            } => write!(f, "ibr {address} [{}]", possible_labels.join(", ")),
             TerminatorKind::Unreachable => write!(f, "unreachable"),
         }
     }

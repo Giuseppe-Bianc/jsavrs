@@ -1,7 +1,6 @@
 use jsavrs::nir::{IrConstantValue, IrLiteralValue, IrType, Terminator, TerminatorKind, Value};
 use jsavrs::utils::dummy_span;
 
-
 // Helper per creare valori di test
 fn create_i32_value(v: i32) -> Value {
     Value::new_literal(IrLiteralValue::I32(v))
@@ -20,16 +19,16 @@ fn return_terminator_edge_cases() {
     );
 
     let term = Terminator::new(
-        TerminatorKind::Return(string_val.clone(), IrType::String),
+        TerminatorKind::Return {
+            value: string_val,
+            ty: IrType::String,
+        },
         dummy_span(),
     );
 
     assert!(term.is_terminator());
     assert!(term.get_targets().is_empty());
-    assert_eq!(
-        format!("{}", term),
-        "ret \"\\n\\t\\\\\\\"\" string"
-    );
+    assert_eq!(format!("{}", term), "ret \"\\n\\t\\\\\\\"\" string");
 
     // Valori numerici edge
     let edge_cases = [
@@ -41,7 +40,10 @@ fn return_terminator_edge_cases() {
     for (val, expected) in edge_cases {
         let value = create_i32_value(val);
         let term = Terminator::new(
-            TerminatorKind::Return(value.clone(), IrType::I32),
+            TerminatorKind::Return {
+                value: value.clone(),
+                ty: IrType::I32,
+            },
             dummy_span(),
         );
 
@@ -52,20 +54,14 @@ fn return_terminator_edge_cases() {
 #[test]
 fn branch_terminator_edge_cases() {
     // Label vuota
-    let term = Terminator::new(
-        TerminatorKind::Branch("".to_string()),
-        dummy_span(),
-    );
+    let term = Terminator::new(TerminatorKind::Branch("".to_string()), dummy_span());
 
     assert!(term.is_terminator());
     assert_eq!(term.get_targets(), vec![""]);
     assert_eq!(format!("{}", term), "br ");
 
     // Caratteri speciali
-    let term = Terminator::new(
-        TerminatorKind::Branch("label$@1".to_string()),
-        dummy_span(),
-    );
+    let term = Terminator::new(TerminatorKind::Branch("label$@1".to_string()), dummy_span());
 
     assert_eq!(format!("{}", term), "br label$@1");
 }
@@ -84,10 +80,7 @@ fn conditional_branch_edge_cases() {
 
     assert!(term.is_terminator());
     assert_eq!(term.get_targets(), vec!["shared", "shared"]);
-    assert_eq!(
-        format!("{}", term),
-        "br true ? shared : shared"
-    );
+    assert_eq!(format!("{}", term), "br true ? shared : shared");
 
     // Label vuote
     let term = Terminator::new(
@@ -99,10 +92,7 @@ fn conditional_branch_edge_cases() {
         dummy_span(),
     );
 
-    assert_eq!(
-        format!("{}", term),
-        "br false ?  : "
-    );
+    assert_eq!(format!("{}", term), "br false ?  : ");
 }
 
 #[test]
@@ -120,10 +110,7 @@ fn switch_terminator_edge_cases() {
 
     assert!(term.is_terminator());
     assert_eq!(term.get_targets(), vec!["default"]);
-    assert_eq!(
-        format!("{}", term),
-        "switch 0i32 i32: , default default"
-    );
+    assert_eq!(format!("{}", term), "switch 0i32 i32: , default default");
 
     // Single case
     let term = Terminator::new(
@@ -136,10 +123,7 @@ fn switch_terminator_edge_cases() {
         dummy_span(),
     );
 
-    assert_eq!(
-        term.get_targets(),
-        vec!["case1", "default"]
-    );
+    assert_eq!(term.get_targets(), vec!["case1", "default"]);
     assert_eq!(
         format!("{}", term),
         "switch 42i32 i32: 1i32 => case1, default default"
@@ -178,10 +162,7 @@ fn indirect_branch_edge_cases() {
 
     assert!(term.is_terminator());
     assert!(term.get_targets().is_empty());
-    assert_eq!(
-        format!("{}", term),
-        "ibr 43981i32 []"
-    );
+    assert_eq!(format!("{}", term), "ibr 43981i32 []");
 
     // Label vuote
     let term = Terminator::new(
@@ -192,22 +173,13 @@ fn indirect_branch_edge_cases() {
         dummy_span(),
     );
 
-    assert_eq!(
-        term.get_targets(),
-        vec!["", "label"]
-    );
-    assert_eq!(
-        format!("{}", term),
-        "ibr 0i32 [, label]"
-    );
+    assert_eq!(term.get_targets(), vec!["", "label"]);
+    assert_eq!(format!("{}", term), "ibr 0i32 [, label]");
 }
 
 #[test]
 fn unreachable_terminator() {
-    let term = Terminator::new(
-        TerminatorKind::Unreachable,
-        dummy_span(),
-    );
+    let term = Terminator::new(TerminatorKind::Unreachable, dummy_span());
 
     assert!(!term.is_terminator());
     assert!(term.get_targets().is_empty());
@@ -252,19 +224,13 @@ fn get_targets_edge_cases() {
 fn display_floating_point_edge_cases() {
     // Verifica formattazione float interi
     let float_val = Value::new_literal(IrLiteralValue::F32(42.0));
-    let term = Terminator::new(
-        TerminatorKind::Return(float_val, IrType::F32),
-        dummy_span(),
-    );
+    let term = Terminator::new(TerminatorKind::Return{value: float_val,ty: IrType::F32}, dummy_span());
 
     assert_eq!(format!("{}", term), "ret 42.0f32 f32");
 
     // Valori float non interi
     let float_val = Value::new_literal(IrLiteralValue::F64(3.14159));
-    let term = Terminator::new(
-        TerminatorKind::Return(float_val, IrType::F64),
-        dummy_span(),
-    );
+    let term = Terminator::new(TerminatorKind::Return{value: float_val,ty: IrType::F64}, dummy_span());
 
     assert_eq!(format!("{}", term), "ret 3.14159f64 f64");
 }

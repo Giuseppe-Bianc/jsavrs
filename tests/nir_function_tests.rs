@@ -183,7 +183,7 @@ fn test_function_display() {
         dummy_span(),
     );
     exit_block.terminator = Terminator::new(
-        TerminatorKind::Return(create_dummy_value(), IrType::Void),
+        TerminatorKind::Return{value:create_dummy_value(),ty: IrType::Void},
         dummy_span(),
     );
 
@@ -286,7 +286,7 @@ fn test_complex_cfg() {
 #[test]
 fn test_terminator_targets() {
     let return_term = Terminator::new(
-        TerminatorKind::Return(create_dummy_value(), IrType::Void),
+        TerminatorKind::Return{value: create_dummy_value(),ty: IrType::Void},
         dummy_span(),
     );
     assert_eq!(return_term.get_targets(), Vec::<String>::new());

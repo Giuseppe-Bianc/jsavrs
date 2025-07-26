@@ -188,7 +188,10 @@ impl NIrGenerator {
                 self.add_terminator(
                     func,
                     Terminator::new(
-                        TerminatorKind::Return(return_value, func.return_type.clone()),
+                        TerminatorKind::Return {
+                            value: return_value,
+                            ty: func.return_type.clone(),
+                        },
                         SourceSpan::default(),
                     ),
                 );
@@ -281,7 +284,10 @@ impl NIrGenerator {
         self.add_terminator(
             func,
             Terminator::new(
-                TerminatorKind::Return(return_value, func.return_type.clone()),
+                TerminatorKind::Return {
+                    value: return_value,
+                    ty: func.return_type.clone(),
+                },
                 span,
             ),
         );
