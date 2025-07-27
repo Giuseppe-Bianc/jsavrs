@@ -1,6 +1,6 @@
 use jsavrs::nir::generator::NIrGenerator;
-use jsavrs::nir::{InstructionKind, IrBinaryOp, IrLiteralValue, IrType, TerminatorKind, Value, ValueKind};
-use jsavrs::parser::ast::{BinaryOp, Stmt, Type};
+use jsavrs::nir::{InstructionKind, IrBinaryOp, IrLiteralValue, IrType, IrUnaryOp, TerminatorKind, Value, ValueKind};
+use jsavrs::parser::ast::{BinaryOp, Stmt, Type, UnaryOp};
 use jsavrs::utils::*;
 
 #[test]
@@ -333,5 +333,83 @@ fn test_generate_if_statement() {
             }
         }
         other => panic!("Unexpected terminator: {:?}", other),
+    }
+}
+
+#[test]
+fn test_generate_nested_expressions() {
+    let ast = vec![function_declaration(
+        "test".to_string(),
+        vec![],
+        Type::I32,
+        vec![Stmt::Return {
+            value: Some(binary_expr(
+                unary_expr(UnaryOp::Negate, num_lit_i32(5)),
+                BinaryOp::Multiply,
+                binary_expr(num_lit_i32(3), BinaryOp::Add, num_lit_i32(2)),
+            )),
+            span: dummy_span(),
+        }],
+    )];
+
+    let mut generator = NIrGenerator::new();
+    let (functions, ir_errors) = generator.generate(ast);
+    assert_eq!(ir_errors.len(), 0);
+    assert_eq!(functions.len(), 1);
+    let func = &functions[0];
+    assert_eq!(func.cfg.blocks.len(), 1);
+    assert_eq!(func.cfg.entry_label, "entry_test");
+    let entry_block = func.cfg.get_block("entry_test").unwrap();
+    assert_eq!(entry_block.instructions.len(), 3);
+
+    let first_instruction = &entry_block.instructions[0];
+    match first_instruction.clone().kind {
+        InstructionKind::Unary { op, operand, ty } => {
+            assert_eq!(op, IrUnaryOp::Negate);
+            assert_eq!(ty, IrType::I32);
+            if let ValueKind::Literal(IrLiteralValue::I32(5)) = operand.kind {
+                // Successo: operando corretto
+            } else {
+                panic!("Operand is not i32(5) actual: {:?}", operand);
+            }
+        }
+        other => panic!("Unexpected kind: {:?}", other),
+    }
+    let second_instruction = &entry_block.instructions[1];
+    match second_instruction.clone().kind {
+        InstructionKind::Binary { op, left, right, ty } => {
+            assert_eq!(op, IrBinaryOp::Add);
+            assert_eq!(ty, IrType::I32);
+            if let ValueKind::Literal(IrLiteralValue::I32(3)) = left.kind {
+                // Successo: operando sinistro corretto
+            } else {
+                panic!("Left operand is not i32(3) actual: {:?}", left);
+            }
+            if let ValueKind::Literal(IrLiteralValue::I32(2)) = right.kind {
+                // Successo: operando destro corretto
+            } else {
+                panic!("Right operand is not i32(2) actual: {:?}", right);
+            }
+        }
+        other => panic!("Unexpected kind: {:?}", other),
+    }
+
+    let third_instruction = &entry_block.instructions[2];
+    match third_instruction.clone().kind {
+        InstructionKind::Binary { op, left, right, ty } => {
+            assert_eq!(op, IrBinaryOp::Multiply);
+            assert_eq!(ty, IrType::I32);
+            if let ValueKind::Temporary(0) = left.kind {
+                // Successo: operando sinistro corretto (risultato della negazione)
+            } else {
+                panic!("Left operand is not temporary(0) actual: {:?}", left);
+            }
+            if let ValueKind::Temporary(1) = right.kind {
+                // Successo: operando destro corretto (risultato dell'addizione)
+            } else {
+                panic!("Right operand is not temporary(1) actual: {:?}", right);
+            }
+        }
+        other => panic!("Unexpected kind: {:?}", other),
     }
 }
