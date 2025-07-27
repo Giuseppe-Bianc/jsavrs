@@ -57,7 +57,7 @@ impl NIrGenerator {
 
         for stmt in stmts {
             match stmt {
-                Stmt::Function { name, parameters, return_type, body, span} => {
+                Stmt::Function { name, parameters, return_type, body, span } => {
                     let mut func =
                         self.create_function(&name, &parameters, return_type, span.clone());
                     self.generate_function_body(&mut func, body, span);
@@ -86,11 +86,11 @@ impl NIrGenerator {
 
     fn add_branch_if_needed(&mut self, func: &mut Function, target_label: &str, span: SourceSpan) {
         if self.block_needs_terminator() {
-            self.add_terminator(func, Terminator::new(TerminatorKind::Branch{label: target_label.to_string()}, span));
+            self.add_terminator(func, Terminator::new(TerminatorKind::Branch { label: target_label.to_string() }, span));
         }
     }
 
-    fn create_function(&mut self, name: &str, params: &[Parameter], return_type: Type,  span: SourceSpan) -> Function {
+    fn create_function(&mut self, name: &str, params: &[Parameter], return_type: Type, span: SourceSpan) -> Function {
         let ir_params = params.iter().map(|param| {
             let ty = self.map_type(&param.type_annotation);
             IrParameter {
@@ -236,7 +236,7 @@ impl NIrGenerator {
             Stmt::Continue { span } => {
                 self.handle_continue(func, span);
             }
-            other => self.new_error( "Unsupported statement type".to_string(), other.span().clone(), ),
+            other => self.new_error("Unsupported statement type".to_string(), other.span().clone()),
         }
     }
 
@@ -250,7 +250,7 @@ impl NIrGenerator {
                 let ptr_value = Value::new_temporary(temp_id, ptr_ty)
                     .with_debug_info(Some(var.clone()), span.clone());
 
-                let alloca_inst = Instruction::new(InstructionKind::Alloca { ty: ty.clone() }, span.clone(), ).with_result(ptr_value.clone());
+                let alloca_inst = Instruction::new(InstructionKind::Alloca { ty: ty.clone() }, span.clone()).with_result(ptr_value.clone());
 
                 self.add_instruction(alloca_inst);
 
@@ -338,7 +338,7 @@ impl NIrGenerator {
         self.add_terminator(
             func,
             Terminator::new(
-                TerminatorKind::Branch{label: loop_start_label.clone()},
+                TerminatorKind::Branch { label: loop_start_label.clone() },
                 span.clone(),
             ),
         );
@@ -372,7 +372,7 @@ impl NIrGenerator {
         self.start_block(func, &loop_end_label, span);
     }
 
-    fn generate_for(&mut self, func: &mut Function, initializer: Option<Box<Stmt>>, condition: Option<Expr>, increment: Option<Expr>, body: Vec<Stmt>, span: SourceSpan ) {
+    fn generate_for(&mut self, func: &mut Function, initializer: Option<Box<Stmt>>, condition: Option<Expr>, increment: Option<Expr>, body: Vec<Stmt>, span: SourceSpan) {
         let loop_st_label = self.new_block_label("for_start");
         let loop_bd_label = self.new_block_label("for_body");
         let loop_inc_label = self.new_block_label("for_inc");
@@ -384,7 +384,7 @@ impl NIrGenerator {
 
         self.add_terminator(
             func,
-            Terminator::new(TerminatorKind::Branch{label: loop_st_label.clone()}, span.clone()),
+            Terminator::new(TerminatorKind::Branch { label: loop_st_label.clone() }, span.clone()),
         );
 
         self.start_block(func, &loop_st_label, span.clone());
@@ -431,7 +431,7 @@ impl NIrGenerator {
 
     fn handle_break(&mut self, func: &mut Function, span: SourceSpan) {
         if let Some(label) = self.break_stack.last() {
-            self.add_terminator(func, Terminator::new(TerminatorKind::Branch{label: label.clone()},  span));
+            self.add_terminator(func, Terminator::new(TerminatorKind::Branch { label: label.clone() }, span));
         } else {
             self.new_error("Break outside loop".to_string(), span);
         }
@@ -439,7 +439,7 @@ impl NIrGenerator {
 
     fn handle_continue(&mut self, func: &mut Function, span: SourceSpan) {
         if let Some(label) = self.continue_stack.last() {
-            self.add_terminator(func, Terminator::new(TerminatorKind::Branch{label: label.clone()}, span));
+            self.add_terminator(func, Terminator::new(TerminatorKind::Branch { label: label.clone() }, span));
         } else {
             self.new_error("Continue outside loop".to_string(), span);
         }
@@ -457,7 +457,7 @@ impl NIrGenerator {
                 self.generate_array_literal(func, elements, span)
             }
             other => {
-                self.new_error( "Unsupported expression type".to_string(), other.span().clone());
+                self.new_error("Unsupported expression type".to_string(), other.span().clone());
                 Value::new_literal(IrLiteralValue::I32(0))
             }
         }
@@ -598,7 +598,7 @@ impl NIrGenerator {
         let target_val = self.generate_expr(func, target);
         let value_val = self.generate_expr(func, value);
 
-        let store_inst = Instruction::new(InstructionKind::Store { value: value_val.clone(), dest: target_val },span.clone());
+        let store_inst = Instruction::new(InstructionKind::Store { value: value_val.clone(), dest: target_val }, span.clone());
         self.add_instruction(store_inst);
 
         value_val

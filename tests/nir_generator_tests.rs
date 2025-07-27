@@ -28,7 +28,7 @@ fn test_generate_function_with_return() {
     assert_eq!(entry_block.clone().instructions.len(), 0);
     // VERIFICA TERMINATOR
     match &entry_block.terminator.kind {
-        TerminatorKind::Return{value, .. } => {
+        TerminatorKind::Return { value, .. } => {
             if let Value {
                 kind: ValueKind::Literal(IrLiteralValue::I32(42)),
                 ..
@@ -68,7 +68,7 @@ fn test_generate_void_function() {
     assert_eq!(entry_block.clone().instructions.len(), 0);
     // VERIFICA TERMINATOR
     match &entry_block.terminator.kind {
-        TerminatorKind::Return{value, .. } => {
+        TerminatorKind::Return { value, .. } => {
             if let Value {
                 kind: ValueKind::Literal(IrLiteralValue::I32(0)),
                 ..
@@ -106,16 +106,16 @@ fn test_generate_main_function() {
     assert_eq!(entry_block.clone().instructions.len(), 0);
     // VERIFICA TERMINATOR
     match &entry_block.terminator.kind {
-        TerminatorKind::Return{value, .. } => {
-                if let Value {
-                    kind: ValueKind::Literal(IrLiteralValue::I32(0)),
-                    ..
-                } = *value
-                {
-                    // Successo: valore di ritorno corretto
-                } else {
-                    panic!("Return value is not 0 actual: {:?}", value);
-                }
+        TerminatorKind::Return { value, .. } => {
+            if let Value {
+                kind: ValueKind::Literal(IrLiteralValue::I32(0)),
+                ..
+            } = *value
+            {
+                // Successo: valore di ritorno corretto
+            } else {
+                panic!("Return value is not 0 actual: {:?}", value);
+            }
         }
         other => panic!("Unexpected terminator: {:?}", other),
     }
@@ -123,7 +123,6 @@ fn test_generate_main_function() {
 
 #[test]
 fn test_generate_binary_expression() {
-
     let ast = vec![function_declaration(
         "test".to_string(),
         vec![],
@@ -157,7 +156,7 @@ fn test_generate_binary_expression() {
     // VERIFICA ISTRUZIONE BINARY
     let instruction = &entry_block.instructions[0];
     match &instruction.kind {
-        InstructionKind::Binary { op, left, right, ty} => {
+        InstructionKind::Binary { op, left, right, ty } => {
             // Verifica operatore
             assert_eq!(*op, IrBinaryOp::Add);
 
@@ -219,7 +218,7 @@ fn test_generate_variable_assignment() {
     // VERIFICA ISTRUZIONE ALLOCA
     let alloca_instr = &entry_block.instructions[0];
     match &alloca_instr.kind {
-        InstructionKind::Alloca { ty }  => {
+        InstructionKind::Alloca { ty } => {
             assert_eq!(*ty, IrType::I32);
         }
         other => panic!("Expected alloca instruction, got {:?}", other),
@@ -227,7 +226,7 @@ fn test_generate_variable_assignment() {
     // VERIFICA ISTRUZIONE STORE
     let store_instr = &entry_block.instructions[1];
     match &store_instr.kind {
-        InstructionKind::Store{ value, dest } => {
+        InstructionKind::Store { value, dest } => {
             if let Value {
                 kind: ValueKind::Literal(IrLiteralValue::I32(10)),
                 ..
@@ -294,7 +293,7 @@ fn test_generate_if_statement() {
         other => panic!("Unexpected terminator: {:?}", other),
     }
 
-    let then_block= func.cfg.blocks.get("then_1").unwrap();
+    let then_block = func.cfg.blocks.get("then_1").unwrap();
     assert_eq!(then_block.instructions.len(), 0);
     match &then_block.terminator.kind {
         TerminatorKind::Return { value, .. } => {
@@ -310,7 +309,7 @@ fn test_generate_if_statement() {
         }
         other => panic!("Unexpected terminator: {:?}", other),
     }
-    let else_block= func.cfg.blocks.get("else_2").unwrap();
+    let else_block = func.cfg.blocks.get("else_2").unwrap();
     assert_eq!(else_block.instructions.len(), 0);
     match &else_block.terminator.kind {
         TerminatorKind::Branch { label } => {

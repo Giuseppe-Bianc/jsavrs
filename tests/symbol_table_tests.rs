@@ -3,7 +3,7 @@ use jsavrs::location::source_span::SourceSpan;
 use jsavrs::parser::ast::{Parameter, Type};
 use jsavrs::semantic::symbol_table::{FunctionSymbol, Symbol, SymbolTable, VariableSymbol};
 use jsavrs::utils::{
-    create_func_symbol,create_span, create_var_symbol, dummy_span,
+    create_func_symbol, create_span, create_var_symbol, dummy_span,
     func_from_symbol, int_type, var_from_symbol,
 };
 

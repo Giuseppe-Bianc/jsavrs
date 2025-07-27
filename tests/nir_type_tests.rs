@@ -1,5 +1,5 @@
-use jsavrs::nir::IrType;
 use jsavrs::location::source_span::SourceSpan;
+use jsavrs::nir::IrType;
 
 #[test]
 fn test_ir_type_display() {

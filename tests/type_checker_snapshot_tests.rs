@@ -1,4 +1,4 @@
-use insta::{assert_debug_snapshot};
+use insta::assert_debug_snapshot;
 use jsavrs::error::compile_error::CompileError;
 use jsavrs::lexer::{lexer_tokenize_with_errors, Lexer};
 use jsavrs::parser::ast::{Expr, Type};

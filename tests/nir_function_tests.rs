@@ -144,14 +144,14 @@ fn test_basic_block_display() {
 
     // With instructions
     let value = create_dummy_value();
-    let inst =  Instruction::new(InstructionKind::Load {
+    let inst = Instruction::new(InstructionKind::Load {
         src: value.clone(),
         ty: IrType::I32,
     }, dummy_span());
     block.instructions.push(inst);
 
     block.terminator = Terminator::new(
-        TerminatorKind::Branch{label: "exit".to_string()},
+        TerminatorKind::Branch { label: "exit".to_string() },
         dummy_span(),
     );
 
@@ -175,15 +175,15 @@ fn test_function_display() {
 
     // Add terminators
     entry_block.terminator = Terminator::new(
-        TerminatorKind::Branch{label: "block1".to_string()},
+        TerminatorKind::Branch { label: "block1".to_string() },
         dummy_span(),
     );
     block1.terminator = Terminator::new(
-        TerminatorKind::Branch{label: "exit".to_string()},
+        TerminatorKind::Branch { label: "exit".to_string() },
         dummy_span(),
     );
     exit_block.terminator = Terminator::new(
-        TerminatorKind::Return{value:create_dummy_value(),ty: IrType::Void},
+        TerminatorKind::Return { value: create_dummy_value(), ty: IrType::Void },
         dummy_span(),
     );
 
@@ -286,13 +286,13 @@ fn test_complex_cfg() {
 #[test]
 fn test_terminator_targets() {
     let return_term = Terminator::new(
-        TerminatorKind::Return{value: create_dummy_value(),ty: IrType::Void},
+        TerminatorKind::Return { value: create_dummy_value(), ty: IrType::Void },
         dummy_span(),
     );
     assert_eq!(return_term.get_targets(), Vec::<String>::new());
 
     let branch_term = Terminator::new(
-        TerminatorKind::Branch{label: "target".to_string()},
+        TerminatorKind::Branch { label: "target".to_string() },
         dummy_span(),
     );
     assert_eq!(branch_term.get_targets(), vec!["target"]);
@@ -392,14 +392,14 @@ fn test_cfg_get_block_mut() {
     // Modify entry block
     if let Some(entry) = cfg.get_block_mut("entry") {
         entry.terminator = Terminator::new(
-            TerminatorKind::Branch{label: "new_target".to_string()},
+            TerminatorKind::Branch { label: "new_target".to_string() },
             dummy_span(),
         );
     }
 
     let entry = cfg.get_block("entry").unwrap();
     match &entry.terminator.kind {
-        TerminatorKind::Branch{label} => assert_eq!(label, "new_target"),
+        TerminatorKind::Branch { label } => assert_eq!(label, "new_target"),
         _ => panic!("Terminator not modified correctly"),
     }
 }

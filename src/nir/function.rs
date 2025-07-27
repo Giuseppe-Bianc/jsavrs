@@ -1,7 +1,7 @@
 // src/nir/function.rs
 use super::{basic_block::BasicBlock, types::IrType};
-use std::{ collections::{HashMap, HashSet}, fmt };
 use crate::location::source_span::SourceSpan;
+use std::{collections::{HashMap, HashSet}, fmt};
 
 /// Control Flow Graph representation
 #[derive(Debug, Clone, PartialEq)]

@@ -1,5 +1,5 @@
 use jsavrs::location::source_location::SourceLocation;
-use jsavrs::location::source_span::{SourceSpan, truncate_path};
+use jsavrs::location::source_span::{truncate_path, SourceSpan};
 use jsavrs::utils::create_span;
 use std::path::Path;
 use std::sync::Arc;

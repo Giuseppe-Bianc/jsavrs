@@ -1,5 +1,5 @@
 use insta::assert_debug_snapshot;
-use jsavrs::lexer::{Lexer, lexer_tokenize_with_errors};
+use jsavrs::lexer::{lexer_tokenize_with_errors, Lexer};
 use jsavrs::parser::ast::*;
 use jsavrs::parser::jsav_parser::JsavParser;
 use jsavrs::parser::precedence::unary_binding_power;

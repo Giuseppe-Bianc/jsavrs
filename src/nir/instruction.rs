@@ -197,7 +197,7 @@ impl fmt::Display for Instruction {
             InstructionKind::Store { value, dest } => write!(f, "store {value} to {dest}"),
             InstructionKind::Load { src, ty } => write!(f, "{result_str}load {ty} from {src}"),
             InstructionKind::Binary { op, left, right, ty } => write!(f, "{result_str}{op} {left} {right}, {ty}"),
-            InstructionKind::Unary { op, operand, ty } =>  write!(f, "{result_str}{op} {operand} {ty}"),
+            InstructionKind::Unary { op, operand, ty } => write!(f, "{result_str}{op} {operand} {ty}"),
             InstructionKind::Call { func, args, ty } => {
                 let args_str = args
                     .iter()
@@ -206,8 +206,8 @@ impl fmt::Display for Instruction {
                     .join(", ");
                 write!(f, "{result_str}{func}({args_str}) : {ty}")
             }
-            InstructionKind::GetElementPtr { base, index, element_ty} => write!(f, "{result_str} getelementptr {base}, {index} : {element_ty}"),
-            InstructionKind::Cast { kind: _, value, from_ty, to_ty} => write!(f, "{result_str} cast {value} from {from_ty} to {to_ty}"),
+            InstructionKind::GetElementPtr { base, index, element_ty } => write!(f, "{result_str} getelementptr {base}, {index} : {element_ty}"),
+            InstructionKind::Cast { kind: _, value, from_ty, to_ty } => write!(f, "{result_str} cast {value} from {from_ty} to {to_ty}"),
 
             InstructionKind::Phi { ty, incoming } => {
                 let incoming_str = incoming

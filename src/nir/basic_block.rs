@@ -1,7 +1,8 @@
 // src/nir/basic_block.rs
 use super::{instruction::*, terminator::*};
-use std::fmt;
 use crate::location::source_span::SourceSpan;
+// src/nir/basic_block.rs
+use std::fmt;
 
 #[derive(Debug, Clone, PartialEq)]
 pub struct BasicBlock {
@@ -47,6 +48,6 @@ impl fmt::Display for BasicBlock {
         for inst in &self.instructions {
             writeln!(f, "  {inst}")?;
         }
-         write!(f, "  {term}", term = self.terminator)
+        write!(f, "  {term}", term = self.terminator)
     }
 }

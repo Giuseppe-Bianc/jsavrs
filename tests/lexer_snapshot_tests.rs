@@ -35,7 +35,7 @@ fn run_hashtag_error(
         replacements.len(),
         to_remove.len()
     )
-    .unwrap();
+        .unwrap();
     out
 }
 

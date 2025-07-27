@@ -45,7 +45,7 @@ fn test_block_display_whit_instruction() {
             right: right.clone(),
             ty: IrType::I32,
         },
-        dummy_span()
+        dummy_span(),
     ).with_result(Value::new_temporary(1000, IrType::I32));
     block.instructions.push(inst);
     assert_eq!(block.to_string(), "entry:\n  t1000 = add 100i32 200i32, i32\n  unreachable");
@@ -63,7 +63,7 @@ fn test_block_display_whit_instruction_and_predecessor() {
             right: right.clone(),
             ty: IrType::I32,
         },
-        dummy_span()
+        dummy_span(),
     ).with_result(Value::new_temporary(1000, IrType::I32));
     block.add_predecessor("prev".to_string());
     block.instructions.push(inst);

@@ -1,6 +1,6 @@
+use crate::location::source_span::SourceSpan;
 // src/nir/types.rs
 use std::fmt;
-use crate::location::source_span::SourceSpan;
 
 #[derive(Debug, Clone, PartialEq, Eq, Hash)]
 pub enum IrType {

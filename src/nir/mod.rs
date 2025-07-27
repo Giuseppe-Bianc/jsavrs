@@ -9,8 +9,8 @@ pub mod generator;
 
 
 pub use basic_block::BasicBlock;
-pub use function::{IrParameter, ParamAttributes, Function, FunctionAttributes, Cfg};
-pub use instruction::{Instruction, CastKind, InstructionKind, IrBinaryOp, IrUnaryOp, VectorOp};
+pub use function::{Cfg, Function, FunctionAttributes, IrParameter, ParamAttributes};
+pub use instruction::{CastKind, Instruction, InstructionKind, IrBinaryOp, IrUnaryOp, VectorOp};
 pub use terminator::{Terminator, TerminatorKind};
 pub use types::IrType;
-pub use value::{IrConstantValue, IrLiteralValue, Value, ValueKind, ValueDebugInfo};
+pub use value::{IrConstantValue, IrLiteralValue, Value, ValueDebugInfo, ValueKind};

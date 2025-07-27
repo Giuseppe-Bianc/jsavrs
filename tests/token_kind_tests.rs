@@ -1,7 +1,7 @@
 use jsavrs::tokens::number::Number;
 use jsavrs::tokens::number::Number::*;
 use jsavrs::tokens::token_kind::TokenKind::*;
-use jsavrs::tokens::token_kind::{TokenKind, handle_suffix, split_numeric_and_suffix};
+use jsavrs::tokens::token_kind::{handle_suffix, split_numeric_and_suffix, TokenKind};
 use logos::Logos;
 
 // Helper function to assert token matching

@@ -5,6 +5,7 @@ use jsavrs::cli::Args;
 use jsavrs::error::error_reporter::ErrorReporter;
 //use jsavrs::ir::generator::IrGenerator;
 use jsavrs::lexer::Lexer;
+use jsavrs::nir::generator::NIrGenerator;
 use jsavrs::parser::ast_printer::pretty_print_stmt;
 use jsavrs::parser::jsav_parser::JsavParser;
 use jsavrs::semantic::type_checker::TypeChecker;
@@ -16,7 +17,6 @@ use std::{
     path::Path,
     //process,
 };
-use jsavrs::nir::generator::NIrGenerator;
 //use jsavrs::asm::generator::{AsmGenerator, TargetOS};
 
 #[allow(clippy::explicit_auto_deref, clippy::unused_unit)]

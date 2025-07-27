@@ -1,7 +1,7 @@
 // tests/cli_tests.rs
 use assert_cmd::Command;
-use clap::Parser;
 use clap::error::ErrorKind;
+use clap::Parser;
 use jsavrs::cli::Args;
 use predicates::prelude::*;
 use std::path::PathBuf;

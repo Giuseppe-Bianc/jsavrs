@@ -54,14 +54,14 @@ fn return_terminator_edge_cases() {
 #[test]
 fn branch_terminator_edge_cases() {
     // Label vuota
-    let term = Terminator::new(TerminatorKind::Branch{label: "".to_string()}, dummy_span());
+    let term = Terminator::new(TerminatorKind::Branch { label: "".to_string() }, dummy_span());
 
     assert!(term.is_terminator());
     assert_eq!(term.get_targets(), vec![""]);
     assert_eq!(format!("{}", term), "br ");
 
     // Caratteri speciali
-    let term = Terminator::new(TerminatorKind::Branch{label: "label$@1".to_string()}, dummy_span());
+    let term = Terminator::new(TerminatorKind::Branch { label: "label$@1".to_string() }, dummy_span());
 
     assert_eq!(format!("{}", term), "br label$@1");
 }
@@ -224,13 +224,13 @@ fn get_targets_edge_cases() {
 fn display_floating_point_edge_cases() {
     // Verifica formattazione float interi
     let float_val = Value::new_literal(IrLiteralValue::F32(42.0));
-    let term = Terminator::new(TerminatorKind::Return{value: float_val,ty: IrType::F32}, dummy_span());
+    let term = Terminator::new(TerminatorKind::Return { value: float_val, ty: IrType::F32 }, dummy_span());
 
     assert_eq!(format!("{}", term), "ret 42.0f32 f32");
 
     // Valori float non interi
     let float_val = Value::new_literal(IrLiteralValue::F64(3.14159));
-    let term = Terminator::new(TerminatorKind::Return{value: float_val,ty: IrType::F64}, dummy_span());
+    let term = Terminator::new(TerminatorKind::Return { value: float_val, ty: IrType::F64 }, dummy_span());
 
     assert_eq!(format!("{}", term), "ret 3.14159f64 f64");
 }

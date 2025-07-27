@@ -1,6 +1,6 @@
-use jsavrs::utils::*;
-use jsavrs::nir::{Value, IrLiteralValue, IrConstantValue, ValueKind, IrType, ValueDebugInfo, IrBinaryOp, IrUnaryOp};
+use jsavrs::nir::{IrBinaryOp, IrConstantValue, IrLiteralValue, IrType, IrUnaryOp, Value, ValueDebugInfo, ValueKind};
 use jsavrs::parser::ast::{BinaryOp, UnaryOp};
+use jsavrs::utils::*;
 
 #[test]
 fn value_creation_and_properties() {
@@ -232,7 +232,7 @@ fn value_kind_variants() {
 fn debug_info_creation() {
     let debug_info = ValueDebugInfo {
         name: Some("var".to_string()),
-        source_span: dummy_span()
+        source_span: dummy_span(),
     };
 
     assert_eq!(debug_info.name, Some("var".to_string()));
@@ -240,7 +240,7 @@ fn debug_info_creation() {
 
     let no_name = ValueDebugInfo {
         name: None,
-        source_span: dummy_span()
+        source_span: dummy_span(),
     };
     assert!(no_name.name.is_none());
 }
@@ -407,8 +407,7 @@ fn test_unary_op_conversion() {
     let test_cases = vec![
         (UnaryOp::Negate, IrUnaryOp::Negate),
         (UnaryOp::Not, IrUnaryOp::Not),
-
-        ];
+    ];
 
     for (input, expected) in test_cases {
         let result: IrUnaryOp = input.clone().into();

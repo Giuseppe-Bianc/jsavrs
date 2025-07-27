@@ -1,5 +1,5 @@
 use jsavrs::error::compile_error::CompileError;
-use jsavrs::lexer::{Lexer, lexer_tokenize_with_errors};
+use jsavrs::lexer::{lexer_tokenize_with_errors, Lexer};
 use jsavrs::location::source_location::SourceLocation;
 use jsavrs::location::source_span::SourceSpan;
 use jsavrs::parser::ast::*;
@@ -1120,7 +1120,7 @@ fn test_full_for_loop() {
     assert_eq!(
         statements[0],
         Stmt::For {
-            initializer: Some(Box::from(var_declaration(vec!["i".to_string()], Type::I32,true, vec![num_lit(0)]))),
+            initializer: Some(Box::from(var_declaration(vec!["i".to_string()], Type::I32, true, vec![num_lit(0)]))),
             condition: Some(binary_expr(
                 variable_expr("i"),
                 BinaryOp::Less,
@@ -1631,7 +1631,7 @@ fn vector_declaration() {
         expr[0],
         Stmt::VarDeclaration {
             variables: vec!["arr".into()],
-            type_annotation: Type::Vector(Box::new(Type::I8),),
+            type_annotation: Type::Vector(Box::new(Type::I8), ),
             is_mutable: true,
             initializers: vec![Expr::ArrayLiteral {
                 elements: vec![

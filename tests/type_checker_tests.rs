@@ -1,5 +1,5 @@
 use jsavrs::error::compile_error::CompileError;
-use jsavrs::lexer::{Lexer, lexer_tokenize_with_errors};
+use jsavrs::lexer::{lexer_tokenize_with_errors, Lexer};
 use jsavrs::parser::ast::{Expr, Type};
 use jsavrs::parser::jsav_parser::JsavParser;
 use jsavrs::semantic::type_checker::TypeChecker;

@@ -1,6 +1,6 @@
 use jsavrs::error::compile_error::CompileError;
 use jsavrs::error::error_reporter::ErrorReporter;
-use jsavrs::lexer::{Lexer, lexer_tokenize_with_errors};
+use jsavrs::lexer::{lexer_tokenize_with_errors, Lexer};
 use jsavrs::location::line_tracker::LineTracker;
 use jsavrs::utils::{create_span, strip_ansi_codes};
 use std::io;
