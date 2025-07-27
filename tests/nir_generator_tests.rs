@@ -1,7 +1,7 @@
 use jsavrs::nir::generator::NIrGenerator;
 use jsavrs::nir::{ InstructionKind, IrBinaryOp, IrLiteralValue, IrType, TerminatorKind, Value, ValueKind};
 use jsavrs::parser::ast::{BinaryOp, Stmt, Type};
-use jsavrs::utils::{binary_expr, dummy_span, function_declaration, num_lit_i32};
+use jsavrs::utils::{assign_expr, binary_expr, dummy_span, function_declaration, num_lit_i32, var_declaration, variable_expr};
 
 #[test]
 fn test_generate_function_with_return() {
@@ -107,15 +107,15 @@ fn test_generate_main_function() {
     // VERIFICA TERMINATOR
     match &entry_block.terminator.kind {
         TerminatorKind::Return{value, .. } => {
-            if let Value {
-                kind: ValueKind::Literal(IrLiteralValue::I32(0)),
-                ..
-            } = *value
-            {
-                // Successo: valore di ritorno corretto
-            } else {
-                panic!("Return value is not 0 actual: {:?}", value);
-            }
+                if let Value {
+                    kind: ValueKind::Literal(IrLiteralValue::I32(0)),
+                    ..
+                } = *value
+                {
+                    // Successo: valore di ritorno corretto
+                } else {
+                    panic!("Return value is not 0 actual: {:?}", value);
+                }
         }
         other => panic!("Unexpected terminator: {:?}", other),
     }
@@ -157,12 +157,7 @@ fn test_generate_binary_expression() {
     // VERIFICA ISTRUZIONE BINARY
     let instruction = &entry_block.instructions[0];
     match &instruction.kind {
-        InstructionKind::Binary {
-            op,
-            left,
-            right,
-            ty,
-        } => {
+        InstructionKind::Binary { op, left, right, ty} => {
             // Verifica operatore
             assert_eq!(*op, IrBinaryOp::Add);
 
@@ -183,5 +178,76 @@ fn test_generate_binary_expression() {
             }
         }
         other => panic!("Expected binary instruction, got {:?}", other),
+    }
+}
+
+#[test]
+fn test_generate_variable_assignment() {
+    let ast = vec![function_declaration(
+        "test".to_string(),
+        vec![],
+        Type::Void,
+        vec![
+            var_declaration(vec!["x".to_string()], Type::I32, true, vec![]),
+            Stmt::Expression {
+                expr: assign_expr(variable_expr("x"), num_lit_i32(10)),
+            },
+        ],
+    )];
+
+    let mut generator = NIrGenerator::new();
+    let (functions, ir_errors) = generator.generate(ast);
+
+    // Verifica assenza errori
+    assert_eq!(ir_errors.len(), 0);
+
+    // Verifica struttura funzione
+    assert_eq!(functions.len(), 1);
+    let func = &functions[0];
+    assert_eq!(func.name, "test");
+    assert_eq!(func.return_type, IrType::Void);
+
+    // Verifica struttura CFG
+    assert_eq!(func.cfg.blocks.len(), 1);
+    assert_eq!(func.cfg.entry_label, "entry_test");
+
+    // Verifica contenuto blocco entry
+    let entry_block = func.cfg.get_block("entry_test").unwrap();
+    assert_eq!(entry_block.instructions.len(), 2);
+    /*assert!(matches!(block.instructions[0], Instruction::Alloca { .. }));
+    assert!(matches!(block.instructions[1], Instruction::Store { .. }));*/
+    // VERIFICA ISTRUZIONE ALLOCA
+    let alloca_instr = &entry_block.instructions[0];
+    match &alloca_instr.kind {
+        InstructionKind::Alloca { ty }  => {
+            assert_eq!(*ty, IrType::I32);
+        }
+        other => panic!("Expected alloca instruction, got {:?}", other),
+    }
+    // VERIFICA ISTRUZIONE STORE
+    let store_instr = &entry_block.instructions[1];
+    match &store_instr.kind {
+        InstructionKind::Store{ value, dest } => {
+            if let Value {
+                kind: ValueKind::Literal(IrLiteralValue::I32(10)),
+                ..
+            } = *value
+            {
+                // Successo: valore di ritorno corretto
+            } else {
+                panic!("Return value is not 10 actual: {:?}", value);
+            }
+
+            if let Value {
+                kind: ValueKind::Temporary(0),
+                ..
+            } = *dest
+            {
+                // Successo: valore di ritorno corretto
+            } else {
+                panic!("Return value is not 10 actual: {:?}", dest);
+            }
+        }
+        other => panic!("Expected store instruction, got {:?}", other),
     }
 }
