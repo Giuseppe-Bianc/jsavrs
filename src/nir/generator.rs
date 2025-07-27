@@ -86,7 +86,7 @@ impl NIrGenerator {
 
     fn add_branch_if_needed(&mut self, func: &mut Function, target_label: &str, span: SourceSpan) {
         if self.block_needs_terminator() {
-            self.add_terminator(func, Terminator::new(TerminatorKind::Branch(target_label.to_string()), span));
+            self.add_terminator(func, Terminator::new(TerminatorKind::Branch{label: target_label.to_string()}, span));
         }
     }
 
@@ -338,7 +338,7 @@ impl NIrGenerator {
         self.add_terminator(
             func,
             Terminator::new(
-                TerminatorKind::Branch(loop_start_label.clone()),
+                TerminatorKind::Branch{label: loop_start_label.clone()},
                 span.clone(),
             ),
         );
@@ -384,7 +384,7 @@ impl NIrGenerator {
 
         self.add_terminator(
             func,
-            Terminator::new(TerminatorKind::Branch(loop_st_label.clone()), span.clone()),
+            Terminator::new(TerminatorKind::Branch{label: loop_st_label.clone()}, span.clone()),
         );
 
         self.start_block(func, &loop_st_label, span.clone());
@@ -431,7 +431,7 @@ impl NIrGenerator {
 
     fn handle_break(&mut self, func: &mut Function, span: SourceSpan) {
         if let Some(label) = self.break_stack.last() {
-            self.add_terminator(func, Terminator::new(TerminatorKind::Branch(label.clone()), span));
+            self.add_terminator(func, Terminator::new(TerminatorKind::Branch{label: label.clone()},  span));
         } else {
             self.new_error("Break outside loop".to_string(), span);
         }
@@ -439,7 +439,7 @@ impl NIrGenerator {
 
     fn handle_continue(&mut self, func: &mut Function, span: SourceSpan) {
         if let Some(label) = self.continue_stack.last() {
-            self.add_terminator(func, Terminator::new(TerminatorKind::Branch(label.clone()), span));
+            self.add_terminator(func, Terminator::new(TerminatorKind::Branch{label: label.clone()}, span));
         } else {
             self.new_error("Continue outside loop".to_string(), span);
         }

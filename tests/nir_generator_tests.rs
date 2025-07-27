@@ -1,7 +1,7 @@
 use jsavrs::nir::generator::NIrGenerator;
-use jsavrs::nir::{ InstructionKind, IrBinaryOp, IrLiteralValue, IrType, TerminatorKind, Value, ValueKind};
+use jsavrs::nir::{InstructionKind, IrBinaryOp, IrLiteralValue, IrType, TerminatorKind, Value, ValueKind};
 use jsavrs::parser::ast::{BinaryOp, Stmt, Type};
-use jsavrs::utils::{assign_expr, binary_expr, dummy_span, function_declaration, num_lit_i32, var_declaration, variable_expr};
+use jsavrs::utils::*;
 
 #[test]
 fn test_generate_function_with_return() {
@@ -249,5 +249,90 @@ fn test_generate_variable_assignment() {
             }
         }
         other => panic!("Expected store instruction, got {:?}", other),
+    }
+}
+
+#[test]
+fn test_generate_if_statement() {
+    let ast = vec![function_declaration(
+        "test".to_string(),
+        vec![],
+        Type::Void,
+        vec![Stmt::If {
+            condition: bool_lit(true),
+            then_branch: vec![Stmt::Return {
+                value: None,
+                span: dummy_span(),
+            }],
+            else_branch: None,
+            span: dummy_span(),
+        }],
+    )];
+
+    let mut generator = NIrGenerator::new();
+    let (functions, ir_errors) = generator.generate(ast);
+    assert_eq!(ir_errors.len(), 0);
+    assert_eq!(functions.len(), 1);
+    let func = &functions[0];
+    assert_eq!(func.cfg.blocks.len(), 4);
+    assert_eq!(func.cfg.entry_label, "entry_test");
+    let entry_block = func.cfg.get_block("entry_test").unwrap();
+    match &entry_block.terminator.kind {
+        TerminatorKind::ConditionalBranch { condition, true_label, false_label } => {
+            if let Value {
+                kind: ValueKind::Literal(IrLiteralValue::Bool(true)),
+                ..
+            } = *condition
+            {
+                // Successo: condizione corretta
+            } else {
+                panic!("Condition is not true actual: {:?}", condition);
+            }
+            assert_eq!(true_label, "then_1");
+            assert_eq!(false_label, "else_2");
+        }
+        other => panic!("Unexpected terminator: {:?}", other),
+    }
+
+    let then_block= func.cfg.blocks.get("then_1").unwrap();
+    assert_eq!(then_block.instructions.len(), 0);
+    match &then_block.terminator.kind {
+        TerminatorKind::Return { value, .. } => {
+            if let Value {
+                kind: ValueKind::Literal(IrLiteralValue::I32(0)),
+                ..
+            } = *value
+            {
+                // Successo: valore di ritorno corretto
+            } else {
+                panic!("Return value is not 0 actual: {:?}", value);
+            }
+        }
+        other => panic!("Unexpected terminator: {:?}", other),
+    }
+    let else_block= func.cfg.blocks.get("else_2").unwrap();
+    assert_eq!(else_block.instructions.len(), 0);
+    match &else_block.terminator.kind {
+        TerminatorKind::Branch { label } => {
+            // Successo: blocco else ha un branch verso il merge
+            assert_eq!(label, "merge_3");
+        }
+        other => panic!("Unexpected terminator: {:?}", other),
+    }
+    let merge_block = func.cfg.blocks.get("merge_3").unwrap();
+    assert_eq!(merge_block.instructions.len(), 0);
+    match &merge_block.terminator.kind {
+        TerminatorKind::Return { value, .. } => {
+            if let Value {
+                kind: ValueKind::Literal(IrLiteralValue::I32(0)),
+                ..
+            } = *value
+            {
+                // Successo: valore di ritorno corretto
+            } else {
+                panic!("Return value is not 0 actual: {:?}", value);
+            }
+        }
+        other => panic!("Unexpected terminator: {:?}", other),
     }
 }

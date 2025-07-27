@@ -21,7 +21,9 @@ pub enum TerminatorKind {
         value: Value,
         ty: IrType,
     },
-    Branch(String),
+    Branch {
+        label: String,
+    },
     ConditionalBranch {
         condition: Value,
         true_label: String,
@@ -47,7 +49,7 @@ impl Terminator {
 
     pub fn get_targets(&self) -> Vec<String> {
         match &self.kind {
-            TerminatorKind::Branch(label) => vec![label.clone()],
+            TerminatorKind::Branch { label } => vec![label.clone()],
             TerminatorKind::ConditionalBranch {
                 true_label,
                 false_label,
@@ -85,8 +87,8 @@ impl Terminator {
 impl fmt::Display for Terminator {
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
         match &self.kind {
-            TerminatorKind::Return {value, ty} => write!(f, "ret {value} {ty}"),
-            TerminatorKind::Branch(label) => write!(f, "br {label}"),
+            TerminatorKind::Return { value, ty } => write!(f, "ret {value} {ty}"),
+            TerminatorKind::Branch { label } => write!(f, "br {label}"),
             TerminatorKind::ConditionalBranch {
                 condition,
                 true_label,

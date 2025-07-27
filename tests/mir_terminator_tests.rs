@@ -54,14 +54,14 @@ fn return_terminator_edge_cases() {
 #[test]
 fn branch_terminator_edge_cases() {
     // Label vuota
-    let term = Terminator::new(TerminatorKind::Branch("".to_string()), dummy_span());
+    let term = Terminator::new(TerminatorKind::Branch{label: "".to_string()}, dummy_span());
 
     assert!(term.is_terminator());
     assert_eq!(term.get_targets(), vec![""]);
     assert_eq!(format!("{}", term), "br ");
 
     // Caratteri speciali
-    let term = Terminator::new(TerminatorKind::Branch("label$@1".to_string()), dummy_span());
+    let term = Terminator::new(TerminatorKind::Branch{label: "label$@1".to_string()}, dummy_span());
 
     assert_eq!(format!("{}", term), "br label$@1");
 }
