@@ -246,7 +246,7 @@ pub fn t_span(line: usize) -> SourceSpan {
     create_span("test_file", line, 1, line, 2)
 }
 
-/// Helper macro to construct a `CompileError::<Variant>` instance, optionally mutable, with a default message and span.
+/// Helper macro to construct a `CompileError::<Variant>` instance, optionally mutable, with a default message but no span.
 #[macro_export]
 macro_rules! make_error {
     // Immutable binding
@@ -281,8 +281,6 @@ macro_rules! make_error_lineless {
         };
     };
 }
-
-
 
 pub fn int_type() -> Type {
     Type::I32

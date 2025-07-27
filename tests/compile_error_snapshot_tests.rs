@@ -54,7 +54,7 @@ generate_message_test!(test_ir_error_message, IrGeneratorError, 4);
 
 #[test]
 fn test_asm_generator() {
-    make_error_lineless!(mut error, AsmGeneratorError);
+    make_error_lineless!(error, AsmGeneratorError);
     assert_snapshot!(error.message().unwrap());
 }
 
