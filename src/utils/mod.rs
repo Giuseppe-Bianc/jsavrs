@@ -265,6 +265,25 @@ macro_rules! make_error {
     };
 }
 
+/// Helper macro to construct a `CompileError::<Variant>` instance, optionally mutable, with a default message and span.
+#[macro_export]
+macro_rules! make_error_lineless {
+    // Immutable binding
+    ($var:ident, $error_type:ident) => {
+        let $var = CompileError::$error_type {
+            message: "Unexpected token \"@\"".to_string(),
+        };
+    };
+    // Mutable binding
+    (mut $var:ident, $error_type:ident) => {
+        let mut $var = CompileError::$error_type {
+            message: "Unexpected token \"@\"".to_string(),
+        };
+    };
+}
+
+
+
 pub fn int_type() -> Type {
     Type::I32
 }

@@ -2,7 +2,7 @@ use insta::assert_debug_snapshot;
 use insta::assert_snapshot;
 use jsavrs::error::compile_error::CompileError;
 use jsavrs::location::{source_location::SourceLocation, source_span::SourceSpan};
-use jsavrs::make_error;
+use jsavrs::{make_error, make_error_lineless};
 use jsavrs::utils::t_span;
 use std::sync::Arc;
 
@@ -10,6 +10,14 @@ use std::sync::Arc;
 fn test_io_error_display() {
     let io_error = std::io::Error::new(std::io::ErrorKind::NotFound, "File not found");
     let error: CompileError = io_error.into();
+    assert_snapshot!(error);
+}
+
+#[test]
+fn test_asm_generator_error_display() {
+    let error = CompileError::AsmGeneratorError {
+        message: "Invalid assembly code".to_string(),
+    };
     assert_snapshot!(error);
 }
 
@@ -44,6 +52,12 @@ generate_message_test!(test_parser_error_message, SyntaxError, 2);
 generate_message_test!(test_type_error_message, TypeError, 3);
 generate_message_test!(test_ir_error_message, IrGeneratorError, 4);
 
+#[test]
+fn test_asm_generator() {
+    make_error_lineless!(mut error, AsmGeneratorError);
+    assert_snapshot!(error.message().unwrap());
+}
+
 macro_rules! generate_span_test {
     ($test_name:ident, $error_type:ident, $line:expr) => {
         #[test]
@@ -68,6 +82,13 @@ macro_rules! generate_set_message_test {
             assert_snapshot!(error.message().unwrap());
         }
     };
+}
+
+#[test]
+fn test_set_message_asm_generator() {
+    make_error_lineless!(mut error, AsmGeneratorError);
+    error.set_message("New message".to_string());
+    assert_snapshot!(error.message().unwrap());
 }
 
 generate_set_message_test!(test_set_message, LexerError, 1);

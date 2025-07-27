@@ -75,6 +75,24 @@ Location: test:line 1:column 5 - line 1:column 6
     assert_eq!(stripped, expected);
 }
 
+#[test]
+fn asm_gen_error_single_line() {
+    let source = "fn main() { let x = 42; }";
+    let line_tracker = LineTracker::new("test", source.to_string());
+    let reporter = ErrorReporter::new(line_tracker);
+
+    let errors = vec![CompileError::AsmGeneratorError { message: "invalid asm".to_string() }];
+
+    let report = reporter.report_errors(errors);
+    let stripped = strip_ansi_codes(&report);
+
+    let expected = "\
+ERROR: ASM GEN: invalid asm
+";
+    assert_eq!(stripped, expected);
+}
+
+
 
 #[test]
 fn syntax_error_multi_line() {

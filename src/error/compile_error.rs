@@ -35,8 +35,8 @@ pub enum CompileError {
     #[error("Type error: {message} at {span}")]
     IrGeneratorError { message: String, span: SourceSpan },
 
-    #[error("Assembly generation error: {0}")]
-    AsmGeneratorError(String),
+    #[error("Assembly generation error: {message}")]
+    AsmGeneratorError { message: String },
 
     /// I/O operation failure during compilation (e.g., file access issues).
     ///
@@ -68,6 +68,7 @@ impl CompileError {
             CompileError::SyntaxError { message, .. } => Some(message),
             CompileError::TypeError { message, .. } => Some(message),
             CompileError::IrGeneratorError { message, .. } => Some(message),
+            CompileError::AsmGeneratorError { message } => Some(message),
             _ => None,
         }
     }
@@ -125,6 +126,7 @@ impl CompileError {
             CompileError::SyntaxError { message, .. } => *message = new_message,
             CompileError::TypeError { message, .. } => *message = new_message,
             CompileError::IrGeneratorError { message, .. } => *message = new_message,
+            CompileError::AsmGeneratorError { message } => *message = new_message,
             _ => {}
         }
     }
