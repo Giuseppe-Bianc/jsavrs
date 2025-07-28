@@ -716,3 +716,93 @@ fn test_generate_simple_while_loop() {
         other => panic!("Unexpected terminator: {:?}", other),
     }
 }
+
+#[test]
+fn test_generate_for_loop_basic() {
+    let ast = vec![function_declaration(
+        "test".to_string(),
+        vec![],
+        Type::Void,
+        vec![Stmt::For {
+            initializer: Some(Box::new(Stmt::VarDeclaration {
+                variables: vec!["i".to_string()],
+                type_annotation: Type::I32,
+                is_mutable: true,
+                initializers: vec![num_lit_i32(0)],
+                span: dummy_span(),
+            })),
+            condition: Some(binary_expr(
+                variable_expr("i"),
+                BinaryOp::Less,
+                num_lit_i32(10),
+            )),
+            increment: Some(Expr::Assign {
+                target: Box::new(variable_expr("i")),
+                value: Box::new(binary_expr(
+                    variable_expr("i"),
+                    BinaryOp::Add,
+                    num_lit_i32(1),
+                )),
+                span: dummy_span(),
+            }),
+            body: vec![],
+            span: dummy_span(),
+        }],
+    )];
+
+    let mut generator = NIrGenerator::new();
+    let (functions, ir_errors) = generator.generate(ast);
+    assert_eq!(ir_errors.len(), 0);
+    assert_eq!(functions.len(), 1);
+    let func = &functions[0];
+    // Verify block structure: entry, for_start, for_body, for_inc, for_end
+    assert_eq!(func.cfg.blocks.len(), 5);
+    assert_eq!(func.cfg.entry_label, "entry_test");
+    let entry_block = func.cfg.get_block("entry_test").unwrap();
+
+    match &entry_block.terminator.kind {
+        TerminatorKind::Branch { label } => {
+            assert_eq!(label, "for_start_1");
+        }
+        other => panic!("Unexpected terminator: {:?}", other),
+    }
+    let for_start = func.cfg.get_block("for_start_1").unwrap();
+    assert_eq!(for_start.instructions.len(), 1);
+    match &for_start.terminator.kind {
+        TerminatorKind::ConditionalBranch { condition, true_label, false_label } =>{
+            assert_eq!(
+                condition.kind,
+                ValueKind::Temporary(1) // Initial value of i
+            );
+            assert_eq!(true_label, "for_body_2");
+            assert_eq!(false_label, "for_end_4");
+        }
+        other => panic!("Unexpected terminator: {:?}", other),
+    }
+
+    let for_body = func.cfg.get_block("for_body_2").unwrap();
+    assert_eq!(for_body.instructions.len(), 0);
+    match &for_body.terminator.kind {
+        TerminatorKind::Branch { label } => {
+            assert_eq!(label, "for_inc_3");
+        }
+        other => panic!("Unexpected terminator: {:?}", other),
+    }
+    let for_inc = func.cfg.get_block("for_inc_3").unwrap();
+    assert_eq!(for_inc.instructions.len(), 2);
+    match &for_inc.terminator.kind {
+        TerminatorKind::Branch { label } => {
+            assert_eq!(label, "for_start_1");
+        }
+        other => panic!("Unexpected terminator: {:?}", other),
+    }
+    let for_end = func.cfg.get_block("for_end_4").unwrap();
+    assert_eq!(for_end.instructions.len(), 0);
+    match &for_end.terminator.kind {
+        TerminatorKind::Return { value, ty } => {
+            assert_eq!(*ty, IrType::Void);
+            assert_eq!(value.kind, ValueKind::Literal(IrLiteralValue::I32(0)));
+        }
+        other => panic!("Unexpected terminator: {:?}", other),
+    }
+}
