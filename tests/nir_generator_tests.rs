@@ -3,7 +3,7 @@ use jsavrs::nir::{
     InstructionKind, IrBinaryOp, IrConstantValue, IrLiteralValue, IrType, IrUnaryOp,
     TerminatorKind, ValueKind,
 };
-use jsavrs::parser::ast::{BinaryOp, Parameter, Stmt, Type, UnaryOp};
+use jsavrs::parser::ast::{BinaryOp, Expr, Parameter, Stmt, Type, UnaryOp};
 use jsavrs::utils::*;
 
 #[test]
@@ -486,6 +486,232 @@ fn test_generate_string_literal() {
                     string: "hello".to_string()
                 })
             );
+        }
+        other => panic!("Unexpected terminator: {:?}", other),
+    }
+}
+
+#[test]
+fn test_generate_nullptr() {
+    let ast = vec![Stmt::Function {
+        name: "test".to_string(),
+        parameters: vec![],
+        return_type: Type::NullPtr,
+        body: vec![Stmt::Return {
+            value: Some(nullptr_lit()),
+            span: dummy_span(),
+        }],
+        span: dummy_span(),
+    }];
+
+    let mut generator = NIrGenerator::new();
+    let (functions, ir_errors) = generator.generate(ast);
+    assert_eq!(ir_errors.len(), 0);
+    assert_eq!(functions.len(), 1);
+    let func = &functions[0];
+    assert_eq!(func.cfg.blocks.len(), 1);
+    assert_eq!(func.cfg.entry_label, "entry_test");
+    let entry_block = func.cfg.get_block("entry_test").unwrap();
+    match &entry_block.terminator.kind {
+        TerminatorKind::Return { value, ty } => {
+            assert_eq!(*ty, IrType::Pointer(Box::new(IrType::I8)));
+            assert_eq!(value.kind, ValueKind::Literal(IrLiteralValue::I64(0)));
+        }
+        other => panic!("Unexpected terminator: {:?}", other),
+    }
+}
+
+
+#[test]
+fn test_generate_simple_block() {
+    let ast = vec![function_declaration(
+        "test".to_string(),
+        vec![],
+        Type::Void,
+        vec![
+            Stmt::Block {
+                statements: vec![
+                    var_declaration(vec!["y".to_string()], Type::I32, true, vec![num_lit_i32(5)]),
+                    Stmt::Expression {
+                        expr: Expr::Assign {
+                            target: Box::new(variable_expr("y")),
+                            value: Box::new(num_lit_i32(10)),
+                            span: dummy_span(),
+                        },
+                    },
+                ],
+                span: dummy_span(),
+            },
+            Stmt::Return {
+                value: None,
+                span: dummy_span(),
+            },
+        ],
+    )];
+
+    let mut generator = NIrGenerator::new();
+    let (functions, ir_errors) = generator.generate(ast);
+    assert_eq!(ir_errors.len(), 0);
+    assert_eq!(functions.len(), 1);
+    let func = &functions[0];
+    assert_eq!(func.cfg.blocks.len(), 1);
+    assert_eq!(func.cfg.entry_label, "entry_test");
+    let entry_block = func.cfg.get_block("entry_test").unwrap();
+    assert_eq!(entry_block.instructions.len(), 3);
+    // Verifica istruzioni all'interno del blocco
+    match &entry_block.instructions[0].kind {
+        InstructionKind::Alloca { ty } => {
+            assert_eq!(*ty, IrType::I32);
+        }
+        other => panic!("Expected alloca instruction, got {:?}", other),
+    }
+
+    match &entry_block.instructions[1].kind {
+        InstructionKind::Store { value, dest } => {
+            assert_eq!(value.kind, ValueKind::Literal(IrLiteralValue::I32(5)));
+            assert_eq!(dest.kind, ValueKind::Temporary(0));
+        }
+        other => panic!("Expected store instruction, got {:?}", other),
+    }
+
+
+    match &entry_block.instructions[2].kind {
+        InstructionKind::Store { value, dest } => {
+            assert_eq!(value.kind, ValueKind::Literal(IrLiteralValue::I32(10)));
+            assert_eq!(dest.kind, ValueKind::Temporary(0));
+        }
+        other => panic!("Expected store instruction, got {:?}", other),
+    }
+}
+
+#[test]
+fn test_generate_simple_while_loop() {
+    let ast = vec![function_declaration(
+        "test".to_string(),
+        vec![],
+        Type::Void,
+        vec![
+            var_declaration(vec!["counter".to_string()], Type::I32, true, vec![num_lit_i32(0)]),
+            Stmt::While {
+                condition: binary_expr(variable_expr("counter"), BinaryOp::Less, num_lit_i32(5)),
+                body: vec![Stmt::Expression {
+                    expr: Expr::Assign {
+                        target: Box::new(variable_expr("counter")),
+                        value: Box::new(binary_expr(
+                            variable_expr("counter"),
+                            BinaryOp::Add,
+                            num_lit_i32(1),
+                        )),
+                        span: dummy_span(),
+                    },
+                }],
+                span: dummy_span(),
+            },
+            Stmt::Return {
+                value: None,
+                span: dummy_span(),
+            },
+        ],
+    )];
+
+    let mut generator = NIrGenerator::new();
+    let (functions, ir_errors) = generator.generate(ast);
+    assert_eq!(ir_errors.len(), 0);
+    assert_eq!(functions.len(), 1);
+    let func = &functions[0];
+    assert_eq!(func.cfg.blocks.len(), 4);
+    assert_eq!(func.cfg.entry_label, "entry_test");
+    let entry_block = func.cfg.get_block("entry_test").unwrap();
+    assert_eq!(entry_block.instructions.len(), 2);
+    match &entry_block.instructions[0].kind {
+        InstructionKind::Alloca { ty } => {
+            assert_eq!(*ty, IrType::I32);
+        }
+        other => panic!("Expected alloca instruction, got {:?}", other),
+    }
+    match &entry_block.instructions[1].kind {
+        InstructionKind::Store { value, dest } => {
+            assert_eq!(value.kind, ValueKind::Literal(IrLiteralValue::I32(0)));
+            assert_eq!(dest.kind, ValueKind::Temporary(0));
+        }
+        other => panic!("Expected store instruction, got {:?}", other),
+    }
+
+    match &entry_block.terminator.kind {
+        TerminatorKind::Branch { label } => {
+            assert_eq!(label, "loop_start_1");
+        }
+        other => panic!("Unexpected terminator: {:?}", other),
+    }
+
+    let loop_start = func.cfg.get_block("loop_start_1").unwrap();
+    assert_eq!(loop_start.instructions.len(), 1);
+    match loop_start.instructions[0].clone().kind {
+        InstructionKind::Binary {
+            op,
+            left,
+            right,
+            ty,
+        } => {
+            assert_eq!(op, IrBinaryOp::Less);
+            assert_eq!(ty, IrType::Pointer(Box::new(IrType::I32)));
+            assert_eq!(left.kind, ValueKind::Temporary(0));
+            assert_eq!(right.kind, ValueKind::Literal(IrLiteralValue::I32(5)));
+        }
+        other => panic!("Unexpected kind: {:?}", other),
+    }
+
+    match &loop_start.terminator.kind {
+        TerminatorKind::ConditionalBranch { condition, true_label, false_label } => {
+            assert_eq!(
+                condition.kind,
+                ValueKind::Temporary(1)
+            );
+            assert_eq!(true_label, "loop_body_2");
+            assert_eq!(false_label, "loop_end_3");
+        }
+        other => panic!("Unexpected terminator: {:?}", other),
+    }
+
+    let loop_body = func.cfg.get_block("loop_body_2").unwrap();
+    assert_eq!(loop_body.instructions.len(), 2);
+
+    match loop_body.instructions[0].clone().kind {
+        InstructionKind::Binary {
+            op,
+            left,
+            right,
+            ty,
+        } => {
+            assert_eq!(op, IrBinaryOp::Add);
+            assert_eq!(ty, IrType::Pointer(Box::new(IrType::I32)));
+            assert_eq!(left.kind, ValueKind::Temporary(0));
+            assert_eq!(right.kind, ValueKind::Literal(IrLiteralValue::I32(1)));
+        }
+        other => panic!("Unexpected kind: {:?}", other),
+    }
+
+    match loop_body.instructions[1].clone().kind {
+        InstructionKind::Store { value, dest } => {
+            assert_eq!(value.kind, ValueKind::Temporary(2));
+            assert_eq!(dest.kind, ValueKind::Temporary(0));
+        }
+        other => panic!("Unexpected kind: {:?}", other),
+    }
+
+    match &loop_body.terminator.kind {
+        TerminatorKind::Branch { label } => {
+            assert_eq!(label, "loop_start_1");
+        }
+        other => panic!("Unexpected terminator: {:?}", other),
+    }
+
+    let loop_end = func.cfg.get_block("loop_end_3").unwrap();
+    assert_eq!(loop_end.instructions.len(), 0);
+    match &loop_end.terminator.kind {
+        TerminatorKind::Return { value, ty } => {
+            assert_eq!(*ty, IrType::Void);
+            assert_eq!(value.kind, ValueKind::Literal(IrLiteralValue::I32(0)));
         }
         other => panic!("Unexpected terminator: {:?}", other),
     }
