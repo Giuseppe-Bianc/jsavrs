@@ -1,6 +1,6 @@
 use jsavrs::nir::generator::NIrGenerator;
 use jsavrs::nir::{InstructionKind, IrBinaryOp, IrLiteralValue, IrType, IrUnaryOp, TerminatorKind, Value, ValueKind};
-use jsavrs::parser::ast::{BinaryOp, Stmt, Type, UnaryOp};
+use jsavrs::parser::ast::{BinaryOp, Parameter, Stmt, Type, UnaryOp};
 use jsavrs::utils::*;
 
 #[test]
@@ -412,4 +412,29 @@ fn test_generate_nested_expressions() {
         }
         other => panic!("Unexpected kind: {:?}", other),
     }
+}
+
+#[test]
+fn test_generate_custom_type() {
+    let ast = vec![function_declaration(
+        "test".to_string(),
+        vec![Parameter {
+            name: "param".to_string(),
+            type_annotation: Type::Custom("MyType".to_string()),
+            span: dummy_span(),
+        }],
+        Type::Custom("MyType".to_string()),
+        vec![Stmt::Return {
+            value: Some(variable_expr("param")),
+            span: dummy_span(),
+        }],
+    )];
+
+    let mut generator = NIrGenerator::new();
+    let (functions, ir_errors) = generator.generate(ast);
+    assert_eq!(ir_errors.len(), 0);
+    assert_eq!(functions.len(), 1);
+    let func = &functions[0];
+    assert_eq!(func.parameters[0].ty, IrType::Custom("MyType".to_string(), dummy_span()));
+    assert_eq!(func.return_type, IrType::Custom("MyType".to_string(), dummy_span()));
 }
