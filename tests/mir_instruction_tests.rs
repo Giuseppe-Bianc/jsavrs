@@ -242,7 +242,7 @@ fn test_float_literal_display() {
 #[test]
 fn test_string_constant_display() {
     let string_val = Value::new_constant(
-        IrConstantValue::String("hello\nworld".to_string()),
+        IrConstantValue::String{string: "hello\nworld".to_string()},
         IrType::String,
     );
 
@@ -268,7 +268,7 @@ fn test_array_constant_display() {
         Value::new_literal(IrLiteralValue::I32(3)),
     ];
     let array_val = Value::new_constant(
-        IrConstantValue::Array(elements),
+        IrConstantValue::Array{elements},
         IrType::Array(Box::new(IrType::I32), 3),
     );
 
@@ -293,7 +293,7 @@ fn test_struct_constant_display() {
         Value::new_literal(IrLiteralValue::Bool(true)),
     ];
     let struct_val = Value::new_constant(
-        IrConstantValue::Struct("Point".to_string(), fields),
+        IrConstantValue::Struct { name: "Point".to_string(),elements:  fields},
         IrType::Struct("Point".to_string(), vec![IrType::I32, IrType::Bool], dummy_span()),
     );
 

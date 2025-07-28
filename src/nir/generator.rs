@@ -547,7 +547,7 @@ impl NIrGenerator {
                 Value::new_literal(IrLiteralValue::Bool(b)).with_debug_info(None, span)
             }
             LiteralValue::StringLit(s) => {
-                Value::new_constant(IrConstantValue::String(s), IrType::String)
+                Value::new_constant(IrConstantValue::String{string: s}, IrType::String)
                     .with_debug_info(None, span)
             }
             LiteralValue::CharLit(c) => {
