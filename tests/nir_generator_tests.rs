@@ -1081,3 +1081,34 @@ fn test_generate_array_literal_with_elements() {
         other => panic!("Unexpected kind: {:?}", other),
     }
 }
+
+
+#[test]
+fn test_default_implementation() {
+    let ast = vec![function_declaration(
+        "test".to_string(),
+        vec![],
+        Type::I32,
+        vec![Stmt::Return {
+            value: Some(num_lit_i32(42)),
+            span: dummy_span(),
+        }],
+    )];
+
+    let mut generator = NIrGenerator::default();
+    let (functions, ir_errors) = generator.generate(ast);
+    assert_eq!(ir_errors.len(), 0);
+    assert_eq!(functions.len(), 1);
+    let func = &functions[0];
+    assert_eq!(func.cfg.blocks.len(), 1);
+    assert_eq!(func.cfg.entry_label, "entry_test");
+    let entry_block = func.cfg.get_block("entry_test").unwrap();
+
+    match &entry_block.terminator.kind {
+        TerminatorKind::Return { value, ty } => {
+            assert_eq!(*ty, IrType::I32);
+            assert_eq!(value.kind, ValueKind::Literal(IrLiteralValue::I32(42)));
+        }
+        other => panic!("Unexpected terminator: {:?}", other),
+    }
+}
