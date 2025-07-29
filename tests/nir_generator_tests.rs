@@ -956,3 +956,128 @@ fn test_generate_for_loop_with_continue() {
         other => panic!("Unexpected terminator: {:?}", other),
     }
 }
+
+#[test]
+fn test_generate_grouping_expression() {
+    let ast = vec![function_declaration(
+        "test".to_string(),
+        vec![],
+        Type::I32,
+        vec![Stmt::Return {
+            value: Some(grouping_expr(binary_expr(
+                num_lit_i32(10),
+                BinaryOp::Add,
+                num_lit_i32(20),
+            ))),
+            span: dummy_span(),
+        }],
+    )];
+
+    let mut generator = NIrGenerator::new();
+    let (functions, ir_errors) = generator.generate(ast);
+    assert_eq!(ir_errors.len(), 0);
+    assert_eq!(functions.len(), 1);
+    let func = &functions[0];
+    assert_eq!(func.cfg.blocks.len(), 1);
+    assert_eq!(func.cfg.entry_label, "entry_test");
+    let entry_block = func.cfg.get_block("entry_test").unwrap();
+    assert_eq!(entry_block.instructions.len(), 1);
+    match entry_block.instructions[0].clone().kind {
+        InstructionKind::Binary {
+            op,
+            left,
+            right,
+            ty,
+        } => {
+            assert_eq!(op, IrBinaryOp::Add);
+            assert_eq!(ty, IrType::I32);
+            assert_eq!(left.kind, ValueKind::Literal(IrLiteralValue::I32(10)));
+            assert_eq!(right.kind, ValueKind::Literal(IrLiteralValue::I32(20)));
+        }
+        other => panic!("Unexpected kind: {:?}", other),
+    }
+}
+
+#[test]
+fn test_generate_array_literal_with_elements() {
+    let ast = vec![function_declaration(
+        "test".to_string(),
+        vec![],
+        Type::Array(Box::new(Type::I32), Box::new(num_lit(3))),
+        vec![Stmt::Return {
+            value: Some(Expr::ArrayLiteral {
+                elements: vec![num_lit_i32(10), num_lit_i32(20), num_lit_i32(30)],
+                span: dummy_span(),
+            }),
+            span: dummy_span(),
+        }],
+    )];
+
+    let mut generator = NIrGenerator::new();
+    let (functions, ir_errors) = generator.generate(ast);
+    assert_eq!(ir_errors.len(), 0);
+    assert_eq!(functions.len(), 1);
+    let func = &functions[0];
+    assert_eq!(func.cfg.blocks.len(), 1);
+    assert_eq!(func.cfg.entry_label, "entry_test");
+    let entry_block = func.cfg.get_block("entry_test").unwrap();
+    assert_eq!(entry_block.instructions.len(), 7);
+
+    match entry_block.instructions[0].clone().kind {
+        InstructionKind::Alloca { ty } => {
+            assert_eq!(ty, IrType::Array(Box::new(IrType::I32), 3));
+        }
+        other => panic!("Unexpected kind: {:?}", other),
+    }
+
+    match entry_block.instructions[1].clone().kind {
+        InstructionKind::GetElementPtr { base, index, element_ty } => {
+            assert_eq!(base.kind, ValueKind::Temporary(0)); // Array base
+            assert_eq!(index.kind, ValueKind::Literal(IrLiteralValue::I32(0)));
+            assert_eq!(element_ty, IrType::I32);
+        }
+        other => panic!("Unexpected kind: {:?}", other),
+    }
+
+    match entry_block.instructions[2].clone().kind {
+        InstructionKind::Store { value, dest } => {
+            assert_eq!(value.kind, ValueKind::Literal(IrLiteralValue::I32(10)));
+            assert_eq!(dest.kind, ValueKind::Temporary(1)); // First element
+        }
+        other => panic!("Unexpected kind: {:?}", other),
+    }
+
+    match entry_block.instructions[3].clone().kind {
+        InstructionKind::GetElementPtr { base, index, element_ty } => {
+            assert_eq!(base.kind, ValueKind::Temporary(0)); // Array base
+            assert_eq!(index.kind, ValueKind::Literal(IrLiteralValue::I32(1)));
+            assert_eq!(element_ty, IrType::I32);
+        }
+        other => panic!("Unexpected kind: {:?}", other),
+    }
+
+    match entry_block.instructions[4].clone().kind {
+        InstructionKind::Store { value, dest } => {
+            assert_eq!(value.kind, ValueKind::Literal(IrLiteralValue::I32(20)));
+            assert_eq!(dest.kind, ValueKind::Temporary(2)); // Second element
+        }
+        other => panic!("Unexpected kind: {:?}", other),
+    }
+
+    match entry_block.instructions[5].clone().kind {
+        InstructionKind::GetElementPtr { base, index, element_ty } => {
+            assert_eq!(base.kind, ValueKind::Temporary(0)); // Array base
+            assert_eq!(index.kind, ValueKind::Literal(IrLiteralValue::I32(2)));
+            assert_eq!(element_ty, IrType::I32);
+        }
+        other => panic!("Unexpected kind: {:?}", other),
+    }
+
+    match entry_block.instructions[6].clone().kind {
+        InstructionKind::Store { value, dest } => {
+            assert_eq!(value.kind, ValueKind::Literal(IrLiteralValue::I32(30)));
+            assert_eq!(dest.kind, ValueKind::Temporary(3)); // Third element
+        }
+        other => panic!("Unexpected kind: {:?}", other),
+    }
+}
