@@ -1112,3 +1112,106 @@ fn test_default_implementation() {
         other => panic!("Unexpected terminator: {:?}", other),
     }
 }
+
+#[test]
+fn test_generate_binary_all_operations() {
+    let test_cases = vec![
+        (BinaryOp::Add, IrBinaryOp::Add),
+        (BinaryOp::Subtract, IrBinaryOp::Subtract),
+        (BinaryOp::Multiply, IrBinaryOp::Multiply),
+        (BinaryOp::Divide, IrBinaryOp::Divide),
+        (BinaryOp::Modulo, IrBinaryOp::Modulo),
+        (BinaryOp::Equal, IrBinaryOp::Equal),
+        (BinaryOp::NotEqual, IrBinaryOp::NotEqual),
+        (BinaryOp::Less, IrBinaryOp::Less),
+        (BinaryOp::LessEqual, IrBinaryOp::LessEqual),
+        (BinaryOp::Greater, IrBinaryOp::Greater),
+        (BinaryOp::GreaterEqual, IrBinaryOp::GreaterEqual),
+        (BinaryOp::And, IrBinaryOp::And),
+        (BinaryOp::Or, IrBinaryOp::Or),
+        (BinaryOp::BitwiseAnd, IrBinaryOp::BitwiseAnd),
+        (BinaryOp::BitwiseOr, IrBinaryOp::BitwiseOr),
+        (BinaryOp::BitwiseXor, IrBinaryOp::BitwiseXor),
+        (BinaryOp::ShiftLeft, IrBinaryOp::ShiftLeft),
+        (BinaryOp::ShiftRight, IrBinaryOp::ShiftRight),
+    ];
+
+    for (ast_op, expected_ir_op) in test_cases {
+        let ast = vec![function_declaration(
+            "test".to_string(),
+            vec![],
+            Type::I32,
+            vec![Stmt::Return {
+                value: Some(binary_expr(num_lit_i32(10), ast_op, num_lit_i32(20))),
+                span: dummy_span(),
+            }],
+        )];
+
+        let mut generator = NIrGenerator::default();
+        let (functions, ir_errors) = generator.generate(ast);
+        assert_eq!(ir_errors.len(), 0);
+        assert_eq!(functions.len(), 1);
+        let func = &functions[0];
+        assert_eq!(func.cfg.blocks.len(), 1);
+        assert_eq!(func.cfg.entry_label, "entry_test");
+        let entry_block = func.cfg.get_block("entry_test").unwrap();
+        assert_eq!(entry_block.instructions.len(), 1);
+        match entry_block.instructions[0].clone().kind {
+            InstructionKind::Binary {
+                op,
+                left,
+                right,
+                ty,
+            } => {
+                assert_eq!(op, expected_ir_op);
+                assert_eq!(ty, IrType::I32);
+                assert_eq!(left.kind, ValueKind::Literal(IrLiteralValue::I32(10)));
+                assert_eq!(right.kind, ValueKind::Literal(IrLiteralValue::I32(20)));
+            }
+            other => panic!("Unexpected kind: {:?}", other),
+        }
+    }
+}
+
+#[test]
+fn test_generate_unary_expression() {
+    let test_cases = vec![
+        (UnaryOp::Negate, IrUnaryOp::Negate),
+        (UnaryOp::Not, IrUnaryOp::Not),
+    ];
+
+    for (ast_op, expected_ir_op) in test_cases {
+        let ast = vec![function_declaration(
+            "test".to_string(),
+            vec![],
+            Type::I32,
+            vec![Stmt::Return {
+                value: Some(unary_expr(ast_op, num_lit_i32(42))),
+                span: dummy_span(),
+            }],
+        )];
+
+        let mut generator = NIrGenerator::default();
+        let (functions, ir_errors) = generator.generate(ast);
+        assert_eq!(ir_errors.len(), 0);
+        assert_eq!(functions.len(), 1);
+        let func = &functions[0];
+        assert_eq!(func.cfg.blocks.len(), 1);
+        assert_eq!(func.cfg.entry_label, "entry_test");
+        let entry_block = func.cfg.get_block("entry_test").unwrap();
+        assert_eq!(entry_block.instructions.len(), 1);
+
+        match &entry_block.instructions[0].kind {
+            InstructionKind::Unary {
+                op,
+                operand,
+                ty,
+            } => {
+                assert_eq!(*op, expected_ir_op);
+                assert_eq!(*ty, IrType::I32);
+                assert_eq!(operand.kind, ValueKind::Literal(IrLiteralValue::I32(42)));
+            }
+            other => panic!("Unexpected kind: {:?}", other),
+        }
+    }
+}
