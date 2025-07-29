@@ -3,7 +3,8 @@ use jsavrs::nir::{
     InstructionKind, IrBinaryOp, IrConstantValue, IrLiteralValue, IrType, IrUnaryOp,
     TerminatorKind, ValueKind,
 };
-use jsavrs::parser::ast::{BinaryOp, Expr, Parameter, Stmt, Type, UnaryOp};
+use jsavrs::parser::ast::{BinaryOp, Expr, LiteralValue, Parameter, Stmt, Type, UnaryOp};
+use jsavrs::tokens::number::Number;
 use jsavrs::utils::*;
 
 #[test]
@@ -521,7 +522,6 @@ fn test_generate_nullptr() {
     }
 }
 
-
 #[test]
 fn test_generate_simple_block() {
     let ast = vec![function_declaration(
@@ -573,7 +573,6 @@ fn test_generate_simple_block() {
         }
         other => panic!("Expected store instruction, got {:?}", other),
     }
-
 
     match &entry_block.instructions[2].kind {
         InstructionKind::Store { value, dest } => {
@@ -1082,7 +1081,6 @@ fn test_generate_array_literal_with_elements() {
     }
 }
 
-
 #[test]
 fn test_default_implementation() {
     let ast = vec![function_declaration(
@@ -1157,12 +1155,7 @@ fn test_generate_binary_all_operations() {
         let entry_block = func.cfg.get_block("entry_test").unwrap();
         assert_eq!(entry_block.instructions.len(), 1);
         match entry_block.instructions[0].clone().kind {
-            InstructionKind::Binary {
-                op,
-                left,
-                right,
-                ty,
-            } => {
+            InstructionKind::Binary { op, left, right, ty } => {
                 assert_eq!(op, expected_ir_op);
                 assert_eq!(ty, IrType::I32);
                 assert_eq!(left.kind, ValueKind::Literal(IrLiteralValue::I32(10)));
@@ -1202,16 +1195,190 @@ fn test_generate_unary_expression() {
         assert_eq!(entry_block.instructions.len(), 1);
 
         match &entry_block.instructions[0].kind {
-            InstructionKind::Unary {
-                op,
-                operand,
-                ty,
-            } => {
+            InstructionKind::Unary { op, operand, ty } => {
                 assert_eq!(*op, expected_ir_op);
                 assert_eq!(*ty, IrType::I32);
                 assert_eq!(operand.kind, ValueKind::Literal(IrLiteralValue::I32(42)));
             }
             other => panic!("Unexpected kind: {:?}", other),
+        }
+    }
+}
+
+#[test]
+fn test_generate_integer_literals() {
+    let test_cases = vec![
+        (Number::I8(42), IrLiteralValue::I8(42), IrType::I8),
+        (Number::I16(1000), IrLiteralValue::I16(1000), IrType::I16),
+        (Number::I32(32000), IrLiteralValue::I32(32000), IrType::I32),
+        (
+            Number::Integer(2_000_000_000),
+            IrLiteralValue::I64(2_000_000_000),
+            IrType::I64,
+        ),
+        (Number::U8(255), IrLiteralValue::U8(255), IrType::U8),
+        (Number::U16(65535), IrLiteralValue::U16(65535), IrType::U16),
+        (
+            Number::U32(4_000_000_000),
+            IrLiteralValue::U32(4_000_000_000),
+            IrType::U32,
+        ),
+        (
+            Number::UnsignedInteger(18_000_000_000_000_000_000),
+            IrLiteralValue::U64(18_000_000_000_000_000_000),
+            IrType::U64,
+        ),
+    ];
+
+    for (num, expected_value, expected_type) in test_cases {
+        let ast = vec![function_declaration(
+            "test".to_string(),
+            vec![],
+            match num {
+                Number::I8(_) => Type::I8,
+                Number::I16(_) => Type::I16,
+                Number::I32(_) => Type::I32,
+                Number::Integer(_) => Type::I64,
+                Number::U8(_) => Type::U8,
+                Number::U16(_) => Type::U16,
+                Number::U32(_) => Type::U32,
+                Number::UnsignedInteger(_) => Type::U64,
+                _ => Type::I32,
+            },
+            vec![Stmt::Return {
+                value: Some(Expr::Literal {
+                    value: LiteralValue::Number(num),
+                    span: dummy_span(),
+                }),
+                span: dummy_span(),
+            }],
+        )];
+
+        let mut generator = NIrGenerator::default();
+        let (functions, ir_errors) = generator.generate(ast);
+        assert_eq!(ir_errors.len(), 0);
+        assert_eq!(functions.len(), 1);
+        let func = &functions[0];
+        assert_eq!(func.cfg.blocks.len(), 1);
+        assert_eq!(func.cfg.entry_label, "entry_test");
+        let entry_block = func.cfg.get_block("entry_test").unwrap();
+
+        match &entry_block.terminator.kind {
+            TerminatorKind::Return { value, ty } => {
+                assert_eq!(*ty, expected_type);
+                match &value.kind {
+                    ValueKind::Literal(imm) => assert_eq!(imm, &expected_value),
+                    _ => panic!("Expected immediate value"),
+                }
+            }
+            other => panic!("Unexpected terminator: {:?}", other),
+        }
+    }
+}
+
+#[test]
+fn test_generate_float_literals() {
+    let test_cases = vec![
+        (
+            Number::Float32(3.14),
+            IrLiteralValue::F32(3.14),
+            IrType::F32,
+        ),
+        (
+            Number::Float64(123.456),
+            IrLiteralValue::F64(123.456),
+            IrType::F64,
+        ),
+        (
+            Number::Scientific32(2.0, 2),
+            IrLiteralValue::F32(4.0),
+            IrType::F32,
+        ),
+        (
+            Number::Scientific64(10.0, 3),
+            IrLiteralValue::F64(1000.0),
+            IrType::F64,
+        ),
+    ];
+
+    for (num, expected_value, expected_type) in test_cases {
+        let ast = vec![function_declaration(
+            "test".to_string(),
+            vec![],
+            match num {
+                Number::Float32(_) => Type::F32,
+                Number::Float64(_) => Type::F64,
+                Number::Scientific32(_, _) => Type::F32,
+                Number::Scientific64(_, _) => Type::F64,
+                _ => Type::F32,
+            },
+            vec![Stmt::Return {
+                value: Some(Expr::Literal {
+                    value: LiteralValue::Number(num),
+                    span: dummy_span(),
+                }),
+                span: dummy_span(),
+            }],
+        )];
+
+        let mut generator = NIrGenerator::default();
+        let (functions, ir_errors) = generator.generate(ast);
+        assert_eq!(ir_errors.len(), 0);
+        assert_eq!(functions.len(), 1);
+        let func = &functions[0];
+        assert_eq!(func.cfg.blocks.len(), 1);
+        assert_eq!(func.cfg.entry_label, "entry_test");
+        let entry_block = func.cfg.get_block("entry_test").unwrap();
+
+        match &entry_block.terminator.kind {
+            TerminatorKind::Return { value, ty } => {
+                assert_eq!(*ty, expected_type);
+                match &value.kind {
+                    ValueKind::Literal(imm) => assert_eq!(imm, &expected_value),
+                    _ => panic!("Expected immediate value"),
+                }
+            }
+            other => panic!("Unexpected terminator: {:?}", other),
+        }
+    }
+}
+
+#[test]
+fn test_generate_boolean_literals() {
+    let test_cases = vec![
+        (true, IrLiteralValue::Bool(true)),
+        (false, IrLiteralValue::Bool(false)),
+    ];
+
+    for (b, expected_value) in test_cases {
+        let ast = vec![function_declaration(
+            "test".to_string(),
+            vec![],
+            Type::Bool,
+            vec![Stmt::Return {
+                value: Some(bool_lit(b)),
+                span: dummy_span(),
+            }],
+        )];
+
+        let mut generator = NIrGenerator::default();
+        let (functions, ir_errors) = generator.generate(ast);
+        assert_eq!(ir_errors.len(), 0);
+        assert_eq!(functions.len(), 1);
+        let func = &functions[0];
+        assert_eq!(func.cfg.blocks.len(), 1);
+        assert_eq!(func.cfg.entry_label, "entry_test");
+        let entry_block = func.cfg.get_block("entry_test").unwrap();
+
+        match &entry_block.terminator.kind {
+            TerminatorKind::Return { value, ty } => {
+                assert_eq!(*ty, IrType::Bool);
+                match &value.kind {
+                    ValueKind::Literal(imm) => assert_eq!(imm, &expected_value),
+                    _ => panic!("Expected immediate value"),
+                }
+            }
+            other => panic!("Unexpected terminator: {:?}", other),
         }
     }
 }
