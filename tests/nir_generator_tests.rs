@@ -7,6 +7,60 @@ use jsavrs::parser::ast::{BinaryOp, Expr, LiteralValue, Parameter, Stmt, Type, U
 use jsavrs::tokens::number::Number;
 use jsavrs::utils::*;
 
+
+// Macro per verificare i return con valori letterali
+#[macro_export]
+macro_rules! assert_return_literal {
+    ($block:expr, $expected_ty:expr, $expected_literal:pat) => {
+        match &$block.terminator.kind {
+            TerminatorKind::Return { value, ty } => {
+                assert_eq!(*ty, $expected_ty);
+                match &value.kind {
+                    ValueKind::Literal($expected_literal) => (),
+                    other => panic!("Expected literal value, got {:?}", other),
+                }
+            }
+            other => panic!("Unexpected terminator: {:?}", other),
+        }
+    };
+}
+
+// Macro per verificare i return con stringhe costanti
+#[macro_export]
+macro_rules! assert_return_constant_string {
+    ($block:expr, $expected_str:expr) => {
+        match &$block.terminator.kind {
+            TerminatorKind::Return { value, ty } => {
+                assert_eq!(*ty, IrType::String);
+                match &value.kind {
+                    ValueKind::Constant(IrConstantValue::String { string }) => {
+                        assert_eq!(string, $expected_str);
+                    }
+                    other => panic!("Expected constant string, got {:?}", other),
+                }
+            }
+            other => panic!("Unexpected terminator: {:?}", other),
+        }
+    };
+}
+
+// Macro per verificare i return con nullptr
+#[macro_export]
+macro_rules! assert_return_nullptr {
+    ($block:expr) => {
+        match &$block.terminator.kind {
+            TerminatorKind::Return { value, ty } => {
+                assert_eq!(*ty, IrType::Pointer(Box::new(IrType::I8)));
+                assert_eq!(
+                    value.kind,
+                    ValueKind::Literal(IrLiteralValue::I64(0))
+                );
+            }
+            other => panic!("Unexpected terminator: {:?}", other),
+        }
+    };
+}
+
 #[test]
 fn test_generate_function_with_return() {
     let ast = vec![function_declaration(
@@ -31,12 +85,7 @@ fn test_generate_function_with_return() {
     let entry_block = func.cfg.get_block("entry_test").unwrap();
     assert_eq!(entry_block.clone().instructions.len(), 0);
     // VERIFICA TERMINATOR
-    match &entry_block.terminator.kind {
-        TerminatorKind::Return { value, .. } => {
-            assert_eq!(value.kind, ValueKind::Literal(IrLiteralValue::I32(42)));
-        }
-        other => panic!("Unexpected terminator: {:?}", other),
-    }
+    assert_return_literal!(entry_block, IrType::I32, IrLiteralValue::I32(42));
 }
 
 #[test]
@@ -62,13 +111,7 @@ fn test_generate_void_function() {
     assert_eq!(func.cfg.entry_label, "entry_void_func");
     let entry_block = func.cfg.get_block("entry_void_func").unwrap();
     assert_eq!(entry_block.clone().instructions.len(), 0);
-    // VERIFICA TERMINATOR
-    match &entry_block.terminator.kind {
-        TerminatorKind::Return { value, .. } => {
-            assert_eq!(value.kind, ValueKind::Literal(IrLiteralValue::I32(0)));
-        }
-        other => panic!("Unexpected terminator: {:?}", other),
-    }
+    assert_return_literal!(entry_block, IrType::Void, IrLiteralValue::I32(0));
 }
 
 #[test]
@@ -93,12 +136,7 @@ fn test_generate_main_function() {
     let entry_block = func.cfg.get_block("entry_main").unwrap();
     assert_eq!(entry_block.clone().instructions.len(), 0);
     // VERIFICA TERMINATOR
-    match &entry_block.terminator.kind {
-        TerminatorKind::Return { value, .. } => {
-            assert_eq!(value.kind, ValueKind::Literal(IrLiteralValue::I32(0)));
-        }
-        other => panic!("Unexpected terminator: {:?}", other),
-    }
+    assert_return_literal!(entry_block, IrType::Void, IrLiteralValue::I32(0));
 }
 
 #[test]
@@ -259,12 +297,7 @@ fn test_generate_if_statement() {
     }
     let merge_block = func.cfg.blocks.get("merge_3").unwrap();
     assert_eq!(merge_block.instructions.len(), 0);
-    match &merge_block.terminator.kind {
-        TerminatorKind::Return { value, .. } => {
-            assert_eq!(value.kind, ValueKind::Literal(IrLiteralValue::I32(0)));
-        }
-        other => panic!("Unexpected terminator: {:?}", other),
-    }
+    assert_return_literal!(merge_block, IrType::Void, IrLiteralValue::I32(0));
 }
 
 #[test]
@@ -417,13 +450,7 @@ fn test_generate_missing_return() {
     assert_eq!(func.cfg.blocks.len(), 1);
     assert_eq!(func.cfg.entry_label, "entry_test");
     let entry_block = func.cfg.get_block("entry_test").unwrap();
-    match &entry_block.terminator.kind {
-        TerminatorKind::Return { value, ty } => {
-            assert_eq!(*ty, IrType::I32);
-            assert_eq!(value.kind, ValueKind::Literal(IrLiteralValue::I32(0)));
-        }
-        other => panic!("Unexpected terminator: {:?}", other),
-    }
+    assert_return_literal!(entry_block, IrType::I32, IrLiteralValue::I32(0));
 }
 
 #[test]
@@ -478,18 +505,7 @@ fn test_generate_string_literal() {
     assert_eq!(func.cfg.blocks.len(), 1);
     assert_eq!(func.cfg.entry_label, "entry_test");
     let entry_block = func.cfg.get_block("entry_test").unwrap();
-    match &entry_block.terminator.kind {
-        TerminatorKind::Return { value, ty } => {
-            assert_eq!(*ty, IrType::String);
-            assert_eq!(
-                value.kind,
-                ValueKind::Constant(IrConstantValue::String {
-                    string: "hello".to_string()
-                })
-            );
-        }
-        other => panic!("Unexpected terminator: {:?}", other),
-    }
+    assert_return_constant_string!(entry_block, "hello");
 }
 
 #[test]
@@ -513,13 +529,7 @@ fn test_generate_nullptr() {
     assert_eq!(func.cfg.blocks.len(), 1);
     assert_eq!(func.cfg.entry_label, "entry_test");
     let entry_block = func.cfg.get_block("entry_test").unwrap();
-    match &entry_block.terminator.kind {
-        TerminatorKind::Return { value, ty } => {
-            assert_eq!(*ty, IrType::Pointer(Box::new(IrType::I8)));
-            assert_eq!(value.kind, ValueKind::Literal(IrLiteralValue::I64(0)));
-        }
-        other => panic!("Unexpected terminator: {:?}", other),
-    }
+    assert_return_nullptr!(entry_block);
 }
 
 #[test]
@@ -707,13 +717,7 @@ fn test_generate_simple_while_loop() {
 
     let loop_end = func.cfg.get_block("loop_end_3").unwrap();
     assert_eq!(loop_end.instructions.len(), 0);
-    match &loop_end.terminator.kind {
-        TerminatorKind::Return { value, ty } => {
-            assert_eq!(*ty, IrType::Void);
-            assert_eq!(value.kind, ValueKind::Literal(IrLiteralValue::I32(0)));
-        }
-        other => panic!("Unexpected terminator: {:?}", other),
-    }
+    assert_return_literal!(loop_end, IrType::Void, IrLiteralValue::I32(0));
 }
 
 #[test]
@@ -797,13 +801,7 @@ fn test_generate_for_loop_basic() {
     }
     let for_end = func.cfg.get_block("for_end_4").unwrap();
     assert_eq!(for_end.instructions.len(), 0);
-    match &for_end.terminator.kind {
-        TerminatorKind::Return { value, ty } => {
-            assert_eq!(*ty, IrType::Void);
-            assert_eq!(value.kind, ValueKind::Literal(IrLiteralValue::I32(0)));
-        }
-        other => panic!("Unexpected terminator: {:?}", other),
-    }
+    assert_return_literal!(for_end, IrType::Void, IrLiteralValue::I32(0));
 }
 
 #[test]
@@ -872,13 +870,7 @@ fn test_generate_for_loop_with_break() {
 
     let for_end = func.cfg.get_block("for_end_4").unwrap();
     assert_eq!(for_end.instructions.len(), 0);
-    match &for_end.terminator.kind {
-        TerminatorKind::Return { value, ty } => {
-            assert_eq!(*ty, IrType::Void);
-            assert_eq!(value.kind, ValueKind::Literal(IrLiteralValue::I32(0)));
-        }
-        other => panic!("Unexpected terminator: {:?}", other),
-    }
+    assert_return_literal!(for_end, IrType::Void, IrLiteralValue::I32(0));
 }
 
 #[test]
@@ -947,13 +939,7 @@ fn test_generate_for_loop_with_continue() {
 
     let for_end = func.cfg.get_block("for_end_4").unwrap();
     assert_eq!(for_end.instructions.len(), 0);
-    match &for_end.terminator.kind {
-        TerminatorKind::Return { value, ty } => {
-            assert_eq!(*ty, IrType::Void);
-            assert_eq!(value.kind, ValueKind::Literal(IrLiteralValue::I32(0)));
-        }
-        other => panic!("Unexpected terminator: {:?}", other),
-    }
+    assert_return_literal!(for_end, IrType::Void, IrLiteralValue::I32(0));
 }
 
 #[test]
@@ -1101,14 +1087,7 @@ fn test_default_implementation() {
     assert_eq!(func.cfg.blocks.len(), 1);
     assert_eq!(func.cfg.entry_label, "entry_test");
     let entry_block = func.cfg.get_block("entry_test").unwrap();
-
-    match &entry_block.terminator.kind {
-        TerminatorKind::Return { value, ty } => {
-            assert_eq!(*ty, IrType::I32);
-            assert_eq!(value.kind, ValueKind::Literal(IrLiteralValue::I32(42)));
-        }
-        other => panic!("Unexpected terminator: {:?}", other),
-    }
+    assert_return_literal!(entry_block, IrType::I32, IrLiteralValue::I32(42));
 }
 
 #[test]
@@ -1437,11 +1416,5 @@ fn test_generate_nullptr_literal() {
     assert_eq!(func.cfg.entry_label, "entry_test");
     let entry_block = func.cfg.get_block("entry_test").unwrap();
 
-    match &entry_block.terminator.kind {
-        TerminatorKind::Return { value, ty } => {
-            assert_eq!(*ty, IrType::Pointer(Box::new(IrType::I8)));
-            assert_eq!(value.kind, ValueKind::Literal(IrLiteralValue::I64(0)));
-        }
-        other => panic!("Unexpected terminator: {:?}", other),
-    }
+    assert_return_nullptr!(entry_block);
 }
