@@ -51,12 +51,103 @@ macro_rules! assert_return_nullptr {
         match &$block.terminator.kind {
             TerminatorKind::Return { value, ty } => {
                 assert_eq!(*ty, IrType::Pointer(Box::new(IrType::I8)));
-                assert_eq!(
-                    value.kind,
-                    ValueKind::Literal(IrLiteralValue::I64(0))
-                );
+                assert_eq!(value.kind, ValueKind::Literal(IrLiteralValue::I64(0)));
             }
             other => panic!("Unexpected terminator: {:?}", other),
+        }
+    };
+}
+
+// Macro per verificare le istruzioni Alloca
+#[macro_export]
+macro_rules! assert_alloca_instruction {
+    ($instruction:expr, $expected_ty:expr) => {
+        match &$instruction.kind {
+            InstructionKind::Alloca { ty } => {
+                assert_eq!(*ty, $expected_ty);
+            }
+            other => panic!("Expected Alloca instruction, got {:?}", other),
+        }
+    };
+}
+
+// Macro per verificare le istruzioni Store
+#[macro_export]
+macro_rules! assert_store_instruction {
+    ($instruction:expr, $expected_value:expr, $expected_dest:expr) => {
+        match &$instruction.kind {
+            InstructionKind::Store { value, dest } => {
+                assert_eq!(value.kind, $expected_value);
+                assert_eq!(dest.kind, $expected_dest);
+            }
+            other => panic!("Expected Store instruction, got {:?}", other),
+        }
+    };
+}
+
+// Macro per verificare le istruzioni Binary
+#[macro_export]
+macro_rules! assert_binary_instruction {
+    ($instruction:expr, $expected_op:expr, $expected_ty:expr, $expected_left:expr, $expected_right:expr) => {
+        match &$instruction.kind {
+            InstructionKind::Binary { op, left, right, ty } => {
+                assert_eq!(*op, $expected_op);
+                assert_eq!(left.kind, $expected_left);
+                assert_eq!(right.kind, $expected_right);
+                assert_eq!(*ty, $expected_ty);
+            }
+            other => panic!("Expected Binary instruction, got {:?}", other),
+        }
+    };
+}
+
+// Macro per verificare le istruzioni GetElementPtr
+#[macro_export]
+macro_rules! assert_gep_instruction {
+    ($instruction:expr, $expected_base:expr, $expected_index:expr, $expected_element_ty:expr) => {
+        match &$instruction.kind {
+            InstructionKind::GetElementPtr {
+                base,
+                index,
+                element_ty,
+            } => {
+                assert_eq!(base.kind, $expected_base);
+                assert_eq!(index.kind, $expected_index);
+                assert_eq!(*element_ty, $expected_element_ty);
+            }
+            other => panic!("Expected GetElementPtr instruction, got {:?}", other),
+        }
+    };
+}
+
+// Macro per verificare i terminator ConditionalBranch
+#[macro_export]
+macro_rules! assert_conditional_branch {
+    ($block:expr, $expected_condition:expr, $expected_true:expr, $expected_false:expr) => {
+        match &$block.terminator.kind {
+            TerminatorKind::ConditionalBranch {
+                condition,
+                true_label,
+                false_label,
+            } => {
+                assert_eq!(condition.kind, $expected_condition);
+                assert_eq!(true_label, $expected_true);
+                assert_eq!(false_label, $expected_false);
+            }
+            other => panic!("Expected ConditionalBranch terminator, got {:?}", other),
+        }
+    };
+}
+
+// Macro per verificare i terminator Branch
+#[macro_export]
+macro_rules! assert_branch {
+    ($block:expr, $expected_label:expr) => {
+        match &$block.terminator.kind {
+            TerminatorKind::Branch { label } => {
+                assert_eq!(label, $expected_label);
+            }
+            other => panic!("Expected Branch terminator, got {:?}", other),
         }
     };
 }
@@ -173,20 +264,7 @@ fn test_generate_binary_expression() {
 
     // VERIFICA ISTRUZIONE BINARY
     let instruction = &entry_block.instructions[0];
-    match &instruction.kind {
-        InstructionKind::Binary { op, left, right, ty } => {
-            // Verifica operatore
-            assert_eq!(*op, IrBinaryOp::Add);
-
-            // Verifica tipo
-            assert_eq!(*ty, IrType::I32);
-
-            // Verifica operandi
-            assert_eq!(left.kind, ValueKind::Literal(IrLiteralValue::I32(10)));
-            assert_eq!(right.kind, ValueKind::Literal(IrLiteralValue::I32(20)));
-        }
-        other => panic!("Expected binary instruction, got {:?}", other),
-    }
+    assert_binary_instruction!(instruction, IrBinaryOp::Add, IrType::I32, ValueKind::Literal(IrLiteralValue::I32(10)), ValueKind::Literal(IrLiteralValue::I32(20)));
 }
 
 #[test]
@@ -224,21 +302,10 @@ fn test_generate_variable_assignment() {
     assert_eq!(entry_block.instructions.len(), 2);
     // VERIFICA ISTRUZIONE ALLOCA
     let alloca_instr = &entry_block.instructions[0];
-    match &alloca_instr.kind {
-        InstructionKind::Alloca { ty } => {
-            assert_eq!(*ty, IrType::I32);
-        }
-        other => panic!("Expected alloca instruction, got {:?}", other),
-    }
+    assert_alloca_instruction!(alloca_instr, IrType::I32);
     // VERIFICA ISTRUZIONE STORE
     let store_instr = &entry_block.instructions[1];
-    match &store_instr.kind {
-        InstructionKind::Store { value, dest } => {
-            assert_eq!(value.kind, ValueKind::Literal(IrLiteralValue::I32(10)));
-            assert_eq!(dest.kind, ValueKind::Temporary(0));
-        }
-        other => panic!("Expected store instruction, got {:?}", other),
-    }
+    assert_store_instruction!(store_instr, ValueKind::Literal(IrLiteralValue::I32(10)), ValueKind::Temporary(0));
 }
 
 #[test]
@@ -266,35 +333,13 @@ fn test_generate_if_statement() {
     assert_eq!(func.cfg.blocks.len(), 4);
     assert_eq!(func.cfg.entry_label, "entry_test");
     let entry_block = func.cfg.get_block("entry_test").unwrap();
-    match &entry_block.terminator.kind {
-        TerminatorKind::ConditionalBranch { condition, true_label, false_label } => {
-            assert_eq!(
-                condition.kind,
-                ValueKind::Literal(IrLiteralValue::Bool(true))
-            );
-            assert_eq!(true_label, "then_1");
-            assert_eq!(false_label, "else_2");
-        }
-        other => panic!("Unexpected terminator: {:?}", other),
-    }
-
+    assert_conditional_branch!(entry_block, ValueKind::Literal(IrLiteralValue::Bool(true)), "then_1", "else_2");
     let then_block = func.cfg.blocks.get("then_1").unwrap();
     assert_eq!(then_block.instructions.len(), 0);
-    match &then_block.terminator.kind {
-        TerminatorKind::Return { value, .. } => {
-            assert_eq!(value.kind, ValueKind::Literal(IrLiteralValue::I32(0)));
-        }
-        other => panic!("Unexpected terminator: {:?}", other),
-    }
+    assert_return_literal!(then_block, IrType::Void, IrLiteralValue::I32(0));
     let else_block = func.cfg.blocks.get("else_2").unwrap();
     assert_eq!(else_block.instructions.len(), 0);
-    match &else_block.terminator.kind {
-        TerminatorKind::Branch { label } => {
-            // Successo: blocco else ha un branch verso il merge
-            assert_eq!(label, "merge_3");
-        }
-        other => panic!("Unexpected terminator: {:?}", other),
-    }
+    assert_branch!(else_block, "merge_3");
     let merge_block = func.cfg.blocks.get("merge_3").unwrap();
     assert_eq!(merge_block.instructions.len(), 0);
     assert_return_literal!(merge_block, IrType::Void, IrLiteralValue::I32(0));
@@ -336,36 +381,10 @@ fn test_generate_nested_expressions() {
         other => panic!("Unexpected kind: {:?}", other),
     }
     let second_instruction = &entry_block.instructions[1];
-    match second_instruction.clone().kind {
-        InstructionKind::Binary {
-            op,
-            left,
-            right,
-            ty,
-        } => {
-            assert_eq!(op, IrBinaryOp::Add);
-            assert_eq!(ty, IrType::I32);
-            assert_eq!(left.kind, ValueKind::Literal(IrLiteralValue::I32(3)));
-            assert_eq!(right.kind, ValueKind::Literal(IrLiteralValue::I32(2)));
-        }
-        other => panic!("Unexpected kind: {:?}", other),
-    }
+    assert_binary_instruction!(second_instruction.clone(), IrBinaryOp::Add, IrType::I32, ValueKind::Literal(IrLiteralValue::I32(3)), ValueKind::Literal(IrLiteralValue::I32(2)));
 
     let third_instruction = &entry_block.instructions[2];
-    match third_instruction.clone().kind {
-        InstructionKind::Binary {
-            op,
-            left,
-            right,
-            ty,
-        } => {
-            assert_eq!(op, IrBinaryOp::Multiply);
-            assert_eq!(ty, IrType::I32);
-            assert_eq!(left.kind, ValueKind::Temporary(0));
-            assert_eq!(right.kind, ValueKind::Temporary(1));
-        }
-        other => panic!("Unexpected kind: {:?}", other),
-    }
+    assert_binary_instruction!(third_instruction.clone(), IrBinaryOp::Multiply, IrType::I32, ValueKind::Temporary(0), ValueKind::Temporary(1));
 }
 
 #[test]
@@ -424,12 +443,7 @@ fn test_generate_array_type() {
     assert_eq!(entry_block.instructions.len(), 1);
     // VERIFICA ISTRUZIONE ALLOCA
     let instruction = &entry_block.instructions[0];
-    match &instruction.kind {
-        InstructionKind::Alloca { ty } => {
-            assert_eq!(*ty, IrType::Array(Box::new(IrType::I32), 10));
-        }
-        other => panic!("Expected alloca instruction, got {:?}", other),
-    }
+    assert_alloca_instruction!(instruction , IrType::Array(Box::new(IrType::I32), 10));
 }
 
 #[test]
@@ -569,28 +583,9 @@ fn test_generate_simple_block() {
     let entry_block = func.cfg.get_block("entry_test").unwrap();
     assert_eq!(entry_block.instructions.len(), 3);
     // Verifica istruzioni all'interno del blocco
-    match &entry_block.instructions[0].kind {
-        InstructionKind::Alloca { ty } => {
-            assert_eq!(*ty, IrType::I32);
-        }
-        other => panic!("Expected alloca instruction, got {:?}", other),
-    }
-
-    match &entry_block.instructions[1].kind {
-        InstructionKind::Store { value, dest } => {
-            assert_eq!(value.kind, ValueKind::Literal(IrLiteralValue::I32(5)));
-            assert_eq!(dest.kind, ValueKind::Temporary(0));
-        }
-        other => panic!("Expected store instruction, got {:?}", other),
-    }
-
-    match &entry_block.instructions[2].kind {
-        InstructionKind::Store { value, dest } => {
-            assert_eq!(value.kind, ValueKind::Literal(IrLiteralValue::I32(10)));
-            assert_eq!(dest.kind, ValueKind::Temporary(0));
-        }
-        other => panic!("Expected store instruction, got {:?}", other),
-    }
+    assert_alloca_instruction!(entry_block.instructions[0], IrType::I32);
+    assert_store_instruction!(entry_block.instructions[1], ValueKind::Literal(IrLiteralValue::I32(5)), ValueKind::Temporary(0));
+    assert_store_instruction!(entry_block.instructions[2], ValueKind::Literal(IrLiteralValue::I32(10)), ValueKind::Temporary(0));
 }
 
 #[test]
@@ -632,88 +627,19 @@ fn test_generate_simple_while_loop() {
     assert_eq!(func.cfg.entry_label, "entry_test");
     let entry_block = func.cfg.get_block("entry_test").unwrap();
     assert_eq!(entry_block.instructions.len(), 2);
-    match &entry_block.instructions[0].kind {
-        InstructionKind::Alloca { ty } => {
-            assert_eq!(*ty, IrType::I32);
-        }
-        other => panic!("Expected alloca instruction, got {:?}", other),
-    }
-    match &entry_block.instructions[1].kind {
-        InstructionKind::Store { value, dest } => {
-            assert_eq!(value.kind, ValueKind::Literal(IrLiteralValue::I32(0)));
-            assert_eq!(dest.kind, ValueKind::Temporary(0));
-        }
-        other => panic!("Expected store instruction, got {:?}", other),
-    }
-
-    match &entry_block.terminator.kind {
-        TerminatorKind::Branch { label } => {
-            assert_eq!(label, "loop_start_1");
-        }
-        other => panic!("Unexpected terminator: {:?}", other),
-    }
-
+    assert_alloca_instruction!(entry_block.instructions[0], IrType::I32);
+    assert_store_instruction!(entry_block.instructions[1], ValueKind::Literal(IrLiteralValue::I32(0)), ValueKind::Temporary(0));
+    assert_branch!(entry_block, "loop_start_1");
     let loop_start = func.cfg.get_block("loop_start_1").unwrap();
     assert_eq!(loop_start.instructions.len(), 1);
-    match loop_start.instructions[0].clone().kind {
-        InstructionKind::Binary {
-            op,
-            left,
-            right,
-            ty,
-        } => {
-            assert_eq!(op, IrBinaryOp::Less);
-            assert_eq!(ty, IrType::Pointer(Box::new(IrType::I32)));
-            assert_eq!(left.kind, ValueKind::Temporary(0));
-            assert_eq!(right.kind, ValueKind::Literal(IrLiteralValue::I32(5)));
-        }
-        other => panic!("Unexpected kind: {:?}", other),
-    }
-
-    match &loop_start.terminator.kind {
-        TerminatorKind::ConditionalBranch { condition, true_label, false_label } => {
-            assert_eq!(
-                condition.kind,
-                ValueKind::Temporary(1)
-            );
-            assert_eq!(true_label, "loop_body_2");
-            assert_eq!(false_label, "loop_end_3");
-        }
-        other => panic!("Unexpected terminator: {:?}", other),
-    }
+    assert_binary_instruction!(loop_start.instructions[0].clone(), IrBinaryOp::Less, IrType::Pointer(Box::new(IrType::I32)), ValueKind::Temporary(0), ValueKind::Literal(IrLiteralValue::I32(5)));
+    assert_conditional_branch!(loop_start, ValueKind::Temporary(1), "loop_body_2", "loop_end_3");
 
     let loop_body = func.cfg.get_block("loop_body_2").unwrap();
     assert_eq!(loop_body.instructions.len(), 2);
-
-    match loop_body.instructions[0].clone().kind {
-        InstructionKind::Binary {
-            op,
-            left,
-            right,
-            ty,
-        } => {
-            assert_eq!(op, IrBinaryOp::Add);
-            assert_eq!(ty, IrType::Pointer(Box::new(IrType::I32)));
-            assert_eq!(left.kind, ValueKind::Temporary(0));
-            assert_eq!(right.kind, ValueKind::Literal(IrLiteralValue::I32(1)));
-        }
-        other => panic!("Unexpected kind: {:?}", other),
-    }
-
-    match loop_body.instructions[1].clone().kind {
-        InstructionKind::Store { value, dest } => {
-            assert_eq!(value.kind, ValueKind::Temporary(2));
-            assert_eq!(dest.kind, ValueKind::Temporary(0));
-        }
-        other => panic!("Unexpected kind: {:?}", other),
-    }
-
-    match &loop_body.terminator.kind {
-        TerminatorKind::Branch { label } => {
-            assert_eq!(label, "loop_start_1");
-        }
-        other => panic!("Unexpected terminator: {:?}", other),
-    }
+    assert_binary_instruction!(loop_body.instructions[0].clone(), IrBinaryOp::Add, IrType::Pointer(Box::new(IrType::I32)), ValueKind::Temporary(0), ValueKind::Literal(IrLiteralValue::I32(1)));
+    assert_store_instruction!(loop_body.instructions[1].clone(), ValueKind::Temporary(2), ValueKind::Temporary(0));
+    assert_branch!(loop_body, "loop_start_1");
 
     let loop_end = func.cfg.get_block("loop_end_3").unwrap();
     assert_eq!(loop_end.instructions.len(), 0);
@@ -762,43 +688,16 @@ fn test_generate_for_loop_basic() {
     assert_eq!(func.cfg.blocks.len(), 5);
     assert_eq!(func.cfg.entry_label, "entry_test");
     let entry_block = func.cfg.get_block("entry_test").unwrap();
-
-    match &entry_block.terminator.kind {
-        TerminatorKind::Branch { label } => {
-            assert_eq!(label, "for_start_1");
-        }
-        other => panic!("Unexpected terminator: {:?}", other),
-    }
+    assert_branch!(entry_block, "for_start_1");
     let for_start = func.cfg.get_block("for_start_1").unwrap();
     assert_eq!(for_start.instructions.len(), 1);
-    match &for_start.terminator.kind {
-        TerminatorKind::ConditionalBranch { condition, true_label, false_label } =>{
-            assert_eq!(
-                condition.kind,
-                ValueKind::Temporary(1) // Initial value of i
-            );
-            assert_eq!(true_label, "for_body_2");
-            assert_eq!(false_label, "for_end_4");
-        }
-        other => panic!("Unexpected terminator: {:?}", other),
-    }
-
+    assert_conditional_branch!(for_start, ValueKind::Temporary(1), "for_body_2", "for_end_4");
     let for_body = func.cfg.get_block("for_body_2").unwrap();
     assert_eq!(for_body.instructions.len(), 0);
-    match &for_body.terminator.kind {
-        TerminatorKind::Branch { label } => {
-            assert_eq!(label, "for_inc_3");
-        }
-        other => panic!("Unexpected terminator: {:?}", other),
-    }
+    assert_branch!(for_body, "for_inc_3");
     let for_inc = func.cfg.get_block("for_inc_3").unwrap();
     assert_eq!(for_inc.instructions.len(), 2);
-    match &for_inc.terminator.kind {
-        TerminatorKind::Branch { label } => {
-            assert_eq!(label, "for_start_1");
-        }
-        other => panic!("Unexpected terminator: {:?}", other),
-    }
+    assert_branch!(for_inc, "for_start_1");
     let for_end = func.cfg.get_block("for_end_4").unwrap();
     assert_eq!(for_end.instructions.len(), 0);
     assert_return_literal!(for_end, IrType::Void, IrLiteralValue::I32(0));
@@ -838,36 +737,16 @@ fn test_generate_for_loop_with_break() {
     assert_eq!(func.cfg.blocks.len(), 5);
     assert_eq!(func.cfg.entry_label, "entry_test");
     let entry_block = func.cfg.get_block("entry_test").unwrap();
-
-    match &entry_block.terminator.kind {
-        TerminatorKind::Branch { label } => {
-            assert_eq!(label, "for_start_1");
-        }
-        other => panic!("Unexpected terminator: {:?}", other),
-    }
-
+    assert_branch!(entry_block, "for_start_1");
     let for_start = func.cfg.get_block("for_start_1").unwrap();
     assert_eq!(for_start.instructions.len(), 1);
-    match &for_start.terminator.kind {
-        TerminatorKind::ConditionalBranch { condition, true_label, false_label } => {
-            assert_eq!(
-                condition.kind,
-                ValueKind::Temporary(1) // Initial value of i
-            );
-            assert_eq!(true_label, "for_body_2");
-            assert_eq!(false_label, "for_end_4");
-        }
-        other => panic!("Unexpected terminator: {:?}", other),
-    }
+    assert_conditional_branch!(for_start, ValueKind::Temporary(1), "for_body_2", "for_end_4");
     let for_body = func.cfg.get_block("for_body_2").unwrap();
     assert_eq!(for_body.instructions.len(), 0);
-    match &for_body.terminator.kind {
-        TerminatorKind::Branch { label } => {
-            assert_eq!(label, "for_end_4"); // Should break to for_end
-        }
-        other => panic!("Unexpected terminator: {:?}", other),
-    }
-
+    assert_branch!(for_body, "for_end_4");
+    let for_inc = func.cfg.get_block("for_inc_3").unwrap();
+    assert_eq!(for_inc.instructions.len(), 0);
+    assert_branch!(for_inc, "for_start_1");
     let for_end = func.cfg.get_block("for_end_4").unwrap();
     assert_eq!(for_end.instructions.len(), 0);
     assert_return_literal!(for_end, IrType::Void, IrLiteralValue::I32(0));
@@ -907,36 +786,16 @@ fn test_generate_for_loop_with_continue() {
     assert_eq!(func.cfg.blocks.len(), 5);
     assert_eq!(func.cfg.entry_label, "entry_test");
     let entry_block = func.cfg.get_block("entry_test").unwrap();
-
-    match &entry_block.terminator.kind {
-        TerminatorKind::Branch { label } => {
-            assert_eq!(label, "for_start_1");
-        }
-        other => panic!("Unexpected terminator: {:?}", other),
-    }
-
+    assert_branch!(entry_block, "for_start_1");
     let for_start = func.cfg.get_block("for_start_1").unwrap();
     assert_eq!(for_start.instructions.len(), 1);
-    match &for_start.terminator.kind {
-        TerminatorKind::ConditionalBranch { condition, true_label, false_label } => {
-            assert_eq!(
-                condition.kind,
-                ValueKind::Temporary(1) // Initial value of i
-            );
-            assert_eq!(true_label, "for_body_2");
-            assert_eq!(false_label, "for_end_4");
-        }
-        other => panic!("Unexpected terminator: {:?}", other),
-    }
+    assert_conditional_branch!(for_start, ValueKind::Temporary(1), "for_body_2", "for_end_4");
     let for_body = func.cfg.get_block("for_body_2").unwrap();
     assert_eq!(for_body.instructions.len(), 0);
-    match &for_body.terminator.kind {
-        TerminatorKind::Branch { label } => {
-            assert_eq!(label, "for_inc_3"); // Should break to for_end
-        }
-        other => panic!("Unexpected terminator: {:?}", other),
-    }
-
+    assert_branch!(for_body, "for_inc_3");
+    let for_inc = func.cfg.get_block("for_inc_3").unwrap();
+    assert_eq!(for_inc.instructions.len(), 0);
+    assert_branch!(for_inc, "for_start_1");
     let for_end = func.cfg.get_block("for_end_4").unwrap();
     assert_eq!(for_end.instructions.len(), 0);
     assert_return_literal!(for_end, IrType::Void, IrLiteralValue::I32(0));
@@ -967,20 +826,7 @@ fn test_generate_grouping_expression() {
     assert_eq!(func.cfg.entry_label, "entry_test");
     let entry_block = func.cfg.get_block("entry_test").unwrap();
     assert_eq!(entry_block.instructions.len(), 1);
-    match entry_block.instructions[0].clone().kind {
-        InstructionKind::Binary {
-            op,
-            left,
-            right,
-            ty,
-        } => {
-            assert_eq!(op, IrBinaryOp::Add);
-            assert_eq!(ty, IrType::I32);
-            assert_eq!(left.kind, ValueKind::Literal(IrLiteralValue::I32(10)));
-            assert_eq!(right.kind, ValueKind::Literal(IrLiteralValue::I32(20)));
-        }
-        other => panic!("Unexpected kind: {:?}", other),
-    }
+    assert_binary_instruction!(entry_block.instructions[0].clone(), IrBinaryOp::Add, IrType::I32, ValueKind::Literal(IrLiteralValue::I32(10)), ValueKind::Literal(IrLiteralValue::I32(20)));
 }
 
 #[test]
@@ -1008,63 +854,13 @@ fn test_generate_array_literal_with_elements() {
     let entry_block = func.cfg.get_block("entry_test").unwrap();
     assert_eq!(entry_block.instructions.len(), 7);
 
-    match entry_block.instructions[0].clone().kind {
-        InstructionKind::Alloca { ty } => {
-            assert_eq!(ty, IrType::Array(Box::new(IrType::I32), 3));
-        }
-        other => panic!("Unexpected kind: {:?}", other),
-    }
-
-    match entry_block.instructions[1].clone().kind {
-        InstructionKind::GetElementPtr { base, index, element_ty } => {
-            assert_eq!(base.kind, ValueKind::Temporary(0)); // Array base
-            assert_eq!(index.kind, ValueKind::Literal(IrLiteralValue::I32(0)));
-            assert_eq!(element_ty, IrType::I32);
-        }
-        other => panic!("Unexpected kind: {:?}", other),
-    }
-
-    match entry_block.instructions[2].clone().kind {
-        InstructionKind::Store { value, dest } => {
-            assert_eq!(value.kind, ValueKind::Literal(IrLiteralValue::I32(10)));
-            assert_eq!(dest.kind, ValueKind::Temporary(1)); // First element
-        }
-        other => panic!("Unexpected kind: {:?}", other),
-    }
-
-    match entry_block.instructions[3].clone().kind {
-        InstructionKind::GetElementPtr { base, index, element_ty } => {
-            assert_eq!(base.kind, ValueKind::Temporary(0)); // Array base
-            assert_eq!(index.kind, ValueKind::Literal(IrLiteralValue::I32(1)));
-            assert_eq!(element_ty, IrType::I32);
-        }
-        other => panic!("Unexpected kind: {:?}", other),
-    }
-
-    match entry_block.instructions[4].clone().kind {
-        InstructionKind::Store { value, dest } => {
-            assert_eq!(value.kind, ValueKind::Literal(IrLiteralValue::I32(20)));
-            assert_eq!(dest.kind, ValueKind::Temporary(2)); // Second element
-        }
-        other => panic!("Unexpected kind: {:?}", other),
-    }
-
-    match entry_block.instructions[5].clone().kind {
-        InstructionKind::GetElementPtr { base, index, element_ty } => {
-            assert_eq!(base.kind, ValueKind::Temporary(0)); // Array base
-            assert_eq!(index.kind, ValueKind::Literal(IrLiteralValue::I32(2)));
-            assert_eq!(element_ty, IrType::I32);
-        }
-        other => panic!("Unexpected kind: {:?}", other),
-    }
-
-    match entry_block.instructions[6].clone().kind {
-        InstructionKind::Store { value, dest } => {
-            assert_eq!(value.kind, ValueKind::Literal(IrLiteralValue::I32(30)));
-            assert_eq!(dest.kind, ValueKind::Temporary(3)); // Third element
-        }
-        other => panic!("Unexpected kind: {:?}", other),
-    }
+    assert_alloca_instruction!(entry_block.instructions[0].clone(), IrType::Array(Box::new(IrType::I32), 3));
+    assert_gep_instruction!(entry_block.instructions[1].clone(), ValueKind::Temporary(0), ValueKind::Literal(IrLiteralValue::I32(0)), IrType::I32);
+    assert_store_instruction!(entry_block.instructions[2].clone(), ValueKind::Literal(IrLiteralValue::I32(10)), ValueKind::Temporary(1));
+    assert_gep_instruction!(entry_block.instructions[3].clone(), ValueKind::Temporary(0), ValueKind::Literal(IrLiteralValue::I32(1)), IrType::I32);
+    assert_store_instruction!(entry_block.instructions[4].clone(), ValueKind::Literal(IrLiteralValue::I32(20)), ValueKind::Temporary(2));
+    assert_gep_instruction!(entry_block.instructions[5].clone(), ValueKind::Temporary(0), ValueKind::Literal(IrLiteralValue::I32(2)), IrType::I32);
+    assert_store_instruction!(entry_block.instructions[6].clone(), ValueKind::Literal(IrLiteralValue::I32(30)), ValueKind::Temporary(3));
 }
 
 #[test]
@@ -1133,15 +929,7 @@ fn test_generate_binary_all_operations() {
         assert_eq!(func.cfg.entry_label, "entry_test");
         let entry_block = func.cfg.get_block("entry_test").unwrap();
         assert_eq!(entry_block.instructions.len(), 1);
-        match entry_block.instructions[0].clone().kind {
-            InstructionKind::Binary { op, left, right, ty } => {
-                assert_eq!(op, expected_ir_op);
-                assert_eq!(ty, IrType::I32);
-                assert_eq!(left.kind, ValueKind::Literal(IrLiteralValue::I32(10)));
-                assert_eq!(right.kind, ValueKind::Literal(IrLiteralValue::I32(20)));
-            }
-            other => panic!("Unexpected kind: {:?}", other),
-        }
+        assert_binary_instruction!(entry_block.instructions[0].clone(), expected_ir_op, IrType::I32, ValueKind::Literal(IrLiteralValue::I32(10)), ValueKind::Literal(IrLiteralValue::I32(20)));
     }
 }
 
