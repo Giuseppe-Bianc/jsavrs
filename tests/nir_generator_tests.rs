@@ -1382,3 +1382,66 @@ fn test_generate_boolean_literals() {
         }
     }
 }
+
+#[test]
+fn test_generate_char_literal() {
+    let ast = vec![function_declaration(
+        "test".to_string(),
+        vec![],
+        Type::Char,
+        vec![Stmt::Return {
+            value: Some(char_lit("A")),
+            span: dummy_span(),
+        }],
+    )];
+
+    let mut generator = NIrGenerator::default();
+    let (functions, ir_errors) = generator.generate(ast);
+    assert_eq!(ir_errors.len(), 0);
+    assert_eq!(functions.len(), 1);
+    let func = &functions[0];
+    assert_eq!(func.cfg.blocks.len(), 1);
+    assert_eq!(func.cfg.entry_label, "entry_test");
+    let entry_block = func.cfg.get_block("entry_test").unwrap();
+
+    match &entry_block.terminator.kind {
+        TerminatorKind::Return { value, ty } => {
+            assert_eq!(*ty, IrType::Char);
+            match &value.kind {
+                ValueKind::Literal(IrLiteralValue::Char(c)) => assert_eq!(*c, 'A'),
+                _ => panic!("Expected immediate value"),
+            }
+        }
+        other => panic!("Unexpected terminator: {:?}", other),
+    }
+}
+
+#[test]
+fn test_generate_nullptr_literal() {
+    let ast = vec![function_declaration(
+        "test".to_string(),
+        vec![],
+        Type::NullPtr,
+        vec![Stmt::Return {
+            value: Some(nullptr_lit()),
+            span: dummy_span(),
+        }],
+    )];
+
+    let mut generator = NIrGenerator::default();
+    let (functions, ir_errors) = generator.generate(ast);
+    assert_eq!(ir_errors.len(), 0);
+    assert_eq!(functions.len(), 1);
+    let func = &functions[0];
+    assert_eq!(func.cfg.blocks.len(), 1);
+    assert_eq!(func.cfg.entry_label, "entry_test");
+    let entry_block = func.cfg.get_block("entry_test").unwrap();
+
+    match &entry_block.terminator.kind {
+        TerminatorKind::Return { value, ty } => {
+            assert_eq!(*ty, IrType::Pointer(Box::new(IrType::I8)));
+            assert_eq!(value.kind, ValueKind::Literal(IrLiteralValue::I64(0)));
+        }
+        other => panic!("Unexpected terminator: {:?}", other),
+    }
+}
