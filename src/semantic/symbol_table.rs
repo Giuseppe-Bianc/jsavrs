@@ -1,3 +1,4 @@
+//src/semantic/symbol_table.rs
 use crate::error::compile_error::CompileError;
 use crate::location::source_span::SourceSpan;
 use crate::parser::ast::{Parameter, Type};
