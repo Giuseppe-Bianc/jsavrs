@@ -1,6 +1,5 @@
 use insta::assert_snapshot;
 use jsavrs::nir::generator::NIrGenerator;
-use jsavrs::nir::{IrBinaryOp, IrLiteralValue, IrType, IrUnaryOp};
 use jsavrs::parser::ast::{BinaryOp, Expr, LiteralValue, Parameter, Stmt, Type, UnaryOp};
 use jsavrs::tokens::number::Number;
 use jsavrs::utils::*;
@@ -26,7 +25,7 @@ fn test_generate_void_function() {
     )];
 
     let mut generator = NIrGenerator::new();
-    let (functions, ir_errors) = generator.generate(ast);
+    let (functions, _ir_errors) = generator.generate(ast);
     assert_snapshot!(vec_to_string(functions));
     //assert_return_literal!(entry_block, IrType::Void, IrLiteralValue::I32(0));
 }
@@ -42,7 +41,7 @@ fn test_generate_main_function() {
     }];
 
     let mut generator = NIrGenerator::new();
-    let (functions, ir_errors) = generator.generate(ast);
+    let (functions, _ir_errors) = generator.generate(ast);
     assert_eq!(functions.len(), 1);
 
     assert_snapshot!(vec_to_string(functions));
@@ -61,7 +60,7 @@ fn test_generate_binary_expression() {
     )];
 
     let mut generator = NIrGenerator::new();
-    let (functions, ir_errors) = generator.generate(ast);
+    let (functions, _ir_errors) = generator.generate(ast);
     assert_snapshot!(vec_to_string(functions));
 }
 
@@ -80,7 +79,7 @@ fn test_generate_variable_assignment() {
     )];
 
     let mut generator = NIrGenerator::new();
-    let (functions, ir_errors) = generator.generate(ast);
+    let (functions, _ir_errors) = generator.generate(ast);
 
     assert_snapshot!(vec_to_string(functions));
 }
@@ -103,7 +102,7 @@ fn test_generate_if_statement() {
     )];
 
     let mut generator = NIrGenerator::new();
-    let (functions, ir_errors) = generator.generate(ast);
+    let (functions, _ir_errors) = generator.generate(ast);
     assert_snapshot!(vec_to_string(functions));
 }
 
@@ -124,7 +123,7 @@ fn test_generate_nested_expressions() {
     )];
 
     let mut generator = NIrGenerator::new();
-    let (functions, ir_errors) = generator.generate(ast);
+    let (functions, _ir_errors) = generator.generate(ast);
     assert_snapshot!(vec_to_string(functions));
 }
 
@@ -145,7 +144,7 @@ fn test_generate_custom_type() {
     )];
 
     let mut generator = NIrGenerator::new();
-    let (functions, ir_errors) = generator.generate(ast);
+    let (functions, _ir_errors) = generator.generate(ast);
     assert_snapshot!(vec_to_string(functions));
 }
 
@@ -164,7 +163,7 @@ fn test_generate_array_type() {
     )];
 
     let mut generator = NIrGenerator::new();
-    let (functions, ir_errors) = generator.generate(ast);
+    let (functions, _ir_errors) = generator.generate(ast);
     assert_snapshot!(vec_to_string(functions));
 }
 
@@ -179,7 +178,7 @@ fn test_generate_missing_return() {
     }];
 
     let mut generator = NIrGenerator::new();
-    let (functions, ir_errors) = generator.generate(ast);
+    let (functions, _ir_errors) = generator.generate(ast);
     assert_snapshot!(vec_to_string(functions));
 }
 
@@ -207,7 +206,7 @@ fn test_generate_multiple_functions() {
     ];
 
     let mut generator = NIrGenerator::new();
-    let (functions, ir_errors) = generator.generate(ast);
+    let (functions, _ir_errors) = generator.generate(ast);
     assert_snapshot!(vec_to_string(functions));
 }
 
@@ -225,7 +224,7 @@ fn test_generate_string_literal() {
     }];
 
     let mut generator = NIrGenerator::new();
-    let (functions, ir_errors) = generator.generate(ast);
+    let (functions, _ir_errors) = generator.generate(ast);
     assert_snapshot!(vec_to_string(functions));
 }
 
@@ -243,7 +242,7 @@ fn test_generate_nullptr() {
     }];
 
     let mut generator = NIrGenerator::new();
-    let (functions, ir_errors) = generator.generate(ast);
+    let (functions, _ir_errors) = generator.generate(ast);
     assert_snapshot!(vec_to_string(functions));
 }
 
@@ -275,7 +274,7 @@ fn test_generate_simple_block() {
     )];
 
     let mut generator = NIrGenerator::new();
-    let (functions, ir_errors) = generator.generate(ast);
+    let (functions, _ir_errors) = generator.generate(ast);
     assert_snapshot!(vec_to_string(functions));
 }
 
@@ -315,7 +314,7 @@ fn test_generate_simple_while_loop() {
     )];
 
     let mut generator = NIrGenerator::new();
-    let (functions, ir_errors) = generator.generate(ast);
+    let (functions, _ir_errors) = generator.generate(ast);
     assert_snapshot!(vec_to_string(functions));
 }
 
@@ -353,7 +352,7 @@ fn test_generate_for_loop_basic() {
     )];
 
     let mut generator = NIrGenerator::new();
-    let (functions, ir_errors) = generator.generate(ast);
+    let (functions, _ir_errors) = generator.generate(ast);
     assert_snapshot!(vec_to_string(functions));
 }
 
@@ -383,7 +382,7 @@ fn test_generate_for_loop_with_break() {
     )];
 
     let mut generator = NIrGenerator::new();
-    let (functions, ir_errors) = generator.generate(ast);
+    let (functions, _ir_errors) = generator.generate(ast);
     assert_snapshot!(vec_to_string(functions));
 }
 
@@ -413,7 +412,7 @@ fn test_generate_for_loop_with_continue() {
     )];
 
     let mut generator = NIrGenerator::new();
-    let (functions, ir_errors) = generator.generate(ast);
+    let (functions, _ir_errors) = generator.generate(ast);
     assert_snapshot!(vec_to_string(functions));
 }
 
@@ -434,7 +433,7 @@ fn test_generate_grouping_expression() {
     )];
 
     let mut generator = NIrGenerator::new();
-    let (functions, ir_errors) = generator.generate(ast);
+    let (functions, _ir_errors) = generator.generate(ast);
     assert_snapshot!(vec_to_string(functions));
 }
 
@@ -454,7 +453,7 @@ fn test_generate_array_literal_with_elements() {
     )];
 
     let mut generator = NIrGenerator::new();
-    let (functions, ir_errors) = generator.generate(ast);
+    let (functions, _ir_errors) = generator.generate(ast);
     assert_snapshot!(vec_to_string(functions));
 }
 
@@ -471,34 +470,34 @@ fn test_default_implementation() {
     )];
 
     let mut generator = NIrGenerator::default();
-    let (functions, ir_errors) = generator.generate(ast);
+    let (functions, _ir_errors) = generator.generate(ast);
     assert_snapshot!(vec_to_string(functions));
 }
 
 #[test]
 fn test_generate_binary_all_operations() {
     let test_cases = vec![
-        (BinaryOp::Add, IrBinaryOp::Add),
-        (BinaryOp::Subtract, IrBinaryOp::Subtract),
-        (BinaryOp::Multiply, IrBinaryOp::Multiply),
-        (BinaryOp::Divide, IrBinaryOp::Divide),
-        (BinaryOp::Modulo, IrBinaryOp::Modulo),
-        (BinaryOp::Equal, IrBinaryOp::Equal),
-        (BinaryOp::NotEqual, IrBinaryOp::NotEqual),
-        (BinaryOp::Less, IrBinaryOp::Less),
-        (BinaryOp::LessEqual, IrBinaryOp::LessEqual),
-        (BinaryOp::Greater, IrBinaryOp::Greater),
-        (BinaryOp::GreaterEqual, IrBinaryOp::GreaterEqual),
-        (BinaryOp::And, IrBinaryOp::And),
-        (BinaryOp::Or, IrBinaryOp::Or),
-        (BinaryOp::BitwiseAnd, IrBinaryOp::BitwiseAnd),
-        (BinaryOp::BitwiseOr, IrBinaryOp::BitwiseOr),
-        (BinaryOp::BitwiseXor, IrBinaryOp::BitwiseXor),
-        (BinaryOp::ShiftLeft, IrBinaryOp::ShiftLeft),
-        (BinaryOp::ShiftRight, IrBinaryOp::ShiftRight),
+        BinaryOp::Add,
+        BinaryOp::Subtract,
+        BinaryOp::Multiply,
+        BinaryOp::Divide,
+        BinaryOp::Modulo,
+        BinaryOp::Equal,
+        BinaryOp::NotEqual,
+        BinaryOp::Less,
+        BinaryOp::LessEqual,
+        BinaryOp::Greater,
+        BinaryOp::GreaterEqual,
+        BinaryOp::And,
+        BinaryOp::Or,
+        BinaryOp::BitwiseAnd,
+        BinaryOp::BitwiseOr,
+        BinaryOp::BitwiseXor,
+        BinaryOp::ShiftLeft,
+        BinaryOp::ShiftRight,
     ];
 
-    for (ast_op, expected_ir_op) in test_cases {
+    for ast_op in test_cases {
         let ast = vec![function_declaration(
             "test".to_string(),
             vec![],
@@ -510,19 +509,16 @@ fn test_generate_binary_all_operations() {
         )];
 
         let mut generator = NIrGenerator::default();
-        let (functions, ir_errors) = generator.generate(ast);
+        let (functions, _ir_errors) = generator.generate(ast);
         assert_snapshot!(vec_to_string(functions));
     }
 }
 
 #[test]
 fn test_generate_unary_expression() {
-    let test_cases = vec![
-        (UnaryOp::Negate, IrUnaryOp::Negate),
-        (UnaryOp::Not, IrUnaryOp::Not),
-    ];
+    let test_cases = vec![UnaryOp::Negate, UnaryOp::Not];
 
-    for (ast_op, expected_ir_op) in test_cases {
+    for ast_op in test_cases {
         let ast = vec![function_declaration(
             "test".to_string(),
             vec![],
@@ -534,7 +530,7 @@ fn test_generate_unary_expression() {
         )];
 
         let mut generator = NIrGenerator::default();
-        let (functions, ir_errors) = generator.generate(ast);
+        let (functions, _ir_errors) = generator.generate(ast);
         assert_snapshot!(vec_to_string(functions));
     }
 }
@@ -542,29 +538,17 @@ fn test_generate_unary_expression() {
 #[test]
 fn test_generate_integer_literals() {
     let test_cases = vec![
-        (Number::I8(42), IrLiteralValue::I8(42), IrType::I8),
-        (Number::I16(1000), IrLiteralValue::I16(1000), IrType::I16),
-        (Number::I32(32000), IrLiteralValue::I32(32000), IrType::I32),
-        (
-            Number::Integer(2_000_000_000),
-            IrLiteralValue::I64(2_000_000_000),
-            IrType::I64,
-        ),
-        (Number::U8(255), IrLiteralValue::U8(255), IrType::U8),
-        (Number::U16(65535), IrLiteralValue::U16(65535), IrType::U16),
-        (
-            Number::U32(4_000_000_000),
-            IrLiteralValue::U32(4_000_000_000),
-            IrType::U32,
-        ),
-        (
-            Number::UnsignedInteger(18_000_000_000_000_000_000),
-            IrLiteralValue::U64(18_000_000_000_000_000_000),
-            IrType::U64,
-        ),
+        Number::I8(42),
+        Number::I16(1000),
+        Number::I32(32000),
+        Number::Integer(2_000_000_000),
+        Number::U8(255),
+        Number::U16(65535),
+        Number::U32(4_000_000_000),
+        Number::UnsignedInteger(18_000_000_000_000_000_000),
     ];
 
-    for (num, expected_value, expected_type) in test_cases {
+    for num in test_cases {
         let ast = vec![function_declaration(
             "test".to_string(),
             vec![],
@@ -589,7 +573,7 @@ fn test_generate_integer_literals() {
         )];
 
         let mut generator = NIrGenerator::default();
-        let (functions, ir_errors) = generator.generate(ast);
+        let (functions, _ir_errors) = generator.generate(ast);
         assert_snapshot!(vec_to_string(functions));
     }
 }
@@ -597,29 +581,13 @@ fn test_generate_integer_literals() {
 #[test]
 fn test_generate_float_literals() {
     let test_cases = vec![
-        (
-            Number::Float32(3.14),
-            IrLiteralValue::F32(3.14),
-            IrType::F32,
-        ),
-        (
-            Number::Float64(123.456),
-            IrLiteralValue::F64(123.456),
-            IrType::F64,
-        ),
-        (
-            Number::Scientific32(2.0, 2),
-            IrLiteralValue::F32(4.0),
-            IrType::F32,
-        ),
-        (
-            Number::Scientific64(10.0, 3),
-            IrLiteralValue::F64(1000.0),
-            IrType::F64,
-        ),
+        Number::Float32(3.14),
+        Number::Float64(123.456),
+        Number::Scientific32(2.0, 2),
+        Number::Scientific64(10.0, 3),
     ];
 
-    for (num, expected_value, expected_type) in test_cases {
+    for num in test_cases {
         let ast = vec![function_declaration(
             "test".to_string(),
             vec![],
@@ -640,19 +608,16 @@ fn test_generate_float_literals() {
         )];
 
         let mut generator = NIrGenerator::default();
-        let (functions, ir_errors) = generator.generate(ast);
+        let (functions, _ir_errors) = generator.generate(ast);
         assert_snapshot!(vec_to_string(functions));
     }
 }
 
 #[test]
 fn test_generate_boolean_literals() {
-    let test_cases = vec![
-        (true, IrLiteralValue::Bool(true)),
-        (false, IrLiteralValue::Bool(false)),
-    ];
+    let test_cases = vec![true, false];
 
-    for (b, expected_value) in test_cases {
+    for b in test_cases {
         let ast = vec![function_declaration(
             "test".to_string(),
             vec![],
@@ -664,7 +629,7 @@ fn test_generate_boolean_literals() {
         )];
 
         let mut generator = NIrGenerator::default();
-        let (functions, ir_errors) = generator.generate(ast);
+        let (functions, _ir_errors) = generator.generate(ast);
         assert_snapshot!(vec_to_string(functions));
     }
 }
@@ -682,7 +647,7 @@ fn test_generate_char_literal() {
     )];
 
     let mut generator = NIrGenerator::default();
-    let (functions, ir_errors) = generator.generate(ast);
+    let (functions, _ir_errors) = generator.generate(ast);
     assert_snapshot!(vec_to_string(functions));
 }
 
@@ -699,6 +664,6 @@ fn test_generate_nullptr_literal() {
     )];
 
     let mut generator = NIrGenerator::default();
-    let (functions, ir_errors) = generator.generate(ast);
+    let (functions, _ir_errors) = generator.generate(ast);
     assert_snapshot!(vec_to_string(functions));
 }
