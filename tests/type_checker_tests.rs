@@ -515,7 +515,7 @@ fn test_non_function_variable_call() {
 
     let errors = typecheck(ast);
     assert_eq!(errors.len(), 1);
-    assert_eq!(errors[0].message(), Some("'x' is not a function"));
+    assert_eq!(errors[0].message(), Some("Undefined function 'x'"));
 }
 
 #[test]

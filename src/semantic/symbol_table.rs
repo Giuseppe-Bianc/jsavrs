@@ -1,4 +1,4 @@
-//src/semantic/symbol_table.rs
+// src/semantic/symbol_table.rs
 use crate::error::compile_error::CompileError;
 use crate::location::source_span::SourceSpan;
 use crate::parser::ast::{Parameter, Type};
@@ -28,26 +28,45 @@ pub struct FunctionSymbol {
     pub defined_at: SourceSpan,
 }
 
+#[derive(Debug, Clone, Copy, PartialEq, Eq)]
+pub enum ScopeKind {
+    Global,
+    Function,
+    Block,
+    //Struct,
+}
+
+#[derive(Debug, Clone, PartialEq)]
+pub struct Scope {
+    pub kind: ScopeKind,
+    pub symbols: HashMap<String, Symbol>,
+    pub defined_at: Option<SourceSpan>,
+}
+
 #[derive(Debug, Default, Clone, PartialEq)]
 pub struct SymbolTable {
-    scopes: Vec<HashMap<String, Symbol>>,
+    scopes: Vec<Scope>,
     current_function: Option<FunctionSymbol>,
 }
 
 impl SymbolTable {
     pub fn new() -> Self {
         Self {
-            scopes: vec![HashMap::new()], // Global scope
+            scopes: vec![Scope {
+                kind: ScopeKind::Global,
+                symbols: HashMap::new(),
+                defined_at: None,
+            }],
             current_function: None,
         }
     }
 
-    pub fn push_scope(&mut self) {
-        self.scopes.push(HashMap::new());
-    }
-
-    pub fn scope_count(&self) -> usize {
-        self.scopes.len()
+    pub fn push_scope(&mut self, kind: ScopeKind, defined_at: Option<SourceSpan>) {
+        self.scopes.push(Scope {
+            kind,
+            symbols: HashMap::new(),
+            defined_at,
+        });
     }
 
     pub fn pop_scope(&mut self) {
@@ -56,13 +75,32 @@ impl SymbolTable {
         }
     }
 
-    pub fn declare(&mut self, name: &str, symbol: Symbol) -> Result<(), CompileError> {
-        let current_scope = self.scopes.last_mut().expect("Always at least one scope");
+    pub fn scope_count(&self) -> usize {
+        self.scopes.len()
+    }
 
-        if current_scope.contains_key(name) {
+    pub fn current_scope(&self) -> Option<&Scope> {
+        self.scopes.last()
+    }
+
+    pub fn current_scope_mut(&mut self) -> Option<&mut Scope> {
+        self.scopes.last_mut()
+    }
+
+    /*pub fn current_scope_kind(&self) -> Option<ScopeKind> {
+        self.current_scope().map(|s| s.kind)
+    }*/
+
+    pub fn declare(&mut self, name: &str, symbol: Symbol) -> Result<(), CompileError> {
+        let current_scope = self.current_scope_mut().expect("At least one scope");
+
+        if current_scope.symbols.contains_key(name) {
             return Err(CompileError::TypeError {
-                message: format!("Duplicate identifier '{name}' in same scope"),
-                span: match current_scope.get(name) {
+                message: format!(
+                    "Identifier '{}' already declared in this {:?} scope",
+                    name, current_scope.kind
+                ),
+                span: match current_scope.symbols.get(name) {
                     Some(Symbol::Variable(v)) => v.defined_at.clone(),
                     Some(Symbol::Function(f)) => f.defined_at.clone(),
                     _ => SourceSpan::default(),
@@ -70,13 +108,13 @@ impl SymbolTable {
             });
         }
 
-        current_scope.insert(name.to_string(), symbol);
+        current_scope.symbols.insert(name.to_string(), symbol);
         Ok(())
     }
 
     pub fn lookup(&self, name: &str) -> Option<Symbol> {
         for scope in self.scopes.iter().rev() {
-            if let Some(sym) = scope.get(name) {
+            if let Some(sym) = scope.symbols.get(name) {
                 return Some(sym.clone());
             }
         }
@@ -107,5 +145,9 @@ impl SymbolTable {
 
     pub fn current_function(&self) -> Option<&FunctionSymbol> {
         self.current_function.as_ref()
+    }
+
+    pub fn current_function_return_type(&self) -> Option<Type> {
+        self.current_function().map(|f| f.return_type.clone())
     }
 }

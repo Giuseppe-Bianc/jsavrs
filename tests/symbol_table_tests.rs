@@ -1,7 +1,7 @@
 use jsavrs::error::compile_error::CompileError;
 use jsavrs::location::source_span::SourceSpan;
 use jsavrs::parser::ast::{Parameter, Type};
-use jsavrs::semantic::symbol_table::{FunctionSymbol, Symbol, SymbolTable, VariableSymbol};
+use jsavrs::semantic::symbol_table::{FunctionSymbol, ScopeKind, Symbol, SymbolTable, VariableSymbol};
 use jsavrs::utils::{
     create_func_symbol, create_span, create_var_symbol, dummy_span,
     func_from_symbol, int_type, var_from_symbol,
@@ -23,7 +23,7 @@ fn shadowing_across_scopes() {
     let local_var = create_var_symbol("x", true);
 
     table.declare("x", global_var.clone()).unwrap();
-    table.push_scope();
+    table.push_scope(ScopeKind::Block, None);
     table.declare("x", local_var.clone()).unwrap();
 
     // Should find local variable in inner scope
@@ -48,7 +48,7 @@ fn duplicate_declaration_same_scope() {
 
     // Verify error message content
     if let Err(CompileError::TypeError { message, .. }) = result {
-        assert!(message.contains("Duplicate identifier"));
+        assert!(message.contains("already declared in this Global scope"));
     } else {
         panic!("Expected TypeError");
     }
@@ -90,11 +90,11 @@ fn scope_isolation() {
     let mut table = SymbolTable::new();
     table.declare("a", create_var_symbol("a", true)).unwrap();
 
-    table.push_scope();
+    table.push_scope(ScopeKind::Block, None);
     assert_eq!(table.lookup("a"), Some(create_var_symbol("a", true))); // Can see parent
     table.declare("b", create_var_symbol("b", false)).unwrap();
 
-    table.push_scope();
+    table.push_scope(ScopeKind::Block, None);
     assert_eq!(table.lookup("b"), Some(create_var_symbol("b", false))); // Can see grandparent
 
     table.pop_scope();
@@ -165,7 +165,7 @@ fn function_symbol_in_nested_scopes() {
     let local_func = create_func_symbol("foo");
 
     table.declare("foo", global_func.clone()).unwrap();
-    table.push_scope();
+    table.push_scope(ScopeKind::Block, None);
     table.declare("foo", local_func.clone()).unwrap();
 
     // Compare inner function symbols
@@ -225,7 +225,7 @@ fn duplicate_variable_error_span() {
     // Verify error type and that it uses the first declaration's span
     match err {
         CompileError::TypeError { message, span } => {
-            assert!(message.contains("Duplicate identifier 'x' in same scope"));
+            assert!(message.contains("Identifier 'x' already declared in this Global scope"));
             assert_eq!(span, span1);
         }
         _ => panic!("Expected TypeError"),
@@ -258,7 +258,7 @@ fn duplicate_function_error_span() {
     // Verify error type and that it uses the first declaration's span
     match err {
         CompileError::TypeError { message, span } => {
-            assert!(message.contains("Duplicate identifier 'func' in same scope"));
+            assert!(message.contains("Identifier 'func' already declared in this Global scope"));
             assert_eq!(span, span1);
         }
         _ => panic!("Expected TypeError"),
@@ -290,7 +290,7 @@ fn duplicate_unknown_symbol_type_uses_default_span() {
     // Verify error type and default span
     match err {
         CompileError::TypeError { message, span } => {
-            assert!(message.contains("Duplicate identifier 'x' in same scope"));
+            assert!(message.contains("Identifier 'x' already declared in this Global scope"));
             assert_eq!(span, SourceSpan::default());
         }
         _ => panic!("Expected TypeError with default span"),

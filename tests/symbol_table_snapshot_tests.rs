@@ -1,6 +1,6 @@
 use insta::assert_debug_snapshot;
 use jsavrs::parser::ast::{Parameter, Type};
-use jsavrs::semantic::symbol_table::{FunctionSymbol, Symbol, SymbolTable, VariableSymbol};
+use jsavrs::semantic::symbol_table::{FunctionSymbol, ScopeKind, Symbol, SymbolTable, VariableSymbol};
 use jsavrs::utils::{create_func_symbol, create_span, create_var_symbol, dummy_span, int_type};
 
 #[test]
@@ -19,7 +19,7 @@ fn shadowing_across_scopes() {
     let local_var = create_var_symbol("x", true);
 
     table.declare("x", global_var.clone()).unwrap();
-    table.push_scope();
+    table.push_scope(ScopeKind::Block, None);
     table.declare("x", local_var.clone()).unwrap();
 
     // Should find local variable in inner scope
@@ -79,11 +79,11 @@ fn scope_isolation() {
     let mut table = SymbolTable::new();
     table.declare("a", create_var_symbol("a", true)).unwrap();
 
-    table.push_scope();
+    table.push_scope(ScopeKind::Block, None);
     assert_debug_snapshot!(table.lookup("a")); // Can see parent
     table.declare("b", create_var_symbol("b", false)).unwrap();
 
-    table.push_scope();
+    table.push_scope(ScopeKind::Block, None);
     assert_debug_snapshot!(table.lookup("b")); // Can see grandparent
 
     table.pop_scope();
@@ -146,7 +146,7 @@ fn function_symbol_in_nested_scopes() {
     let local_func = create_func_symbol("foo");
 
     table.declare("foo", global_func.clone()).unwrap();
-    table.push_scope();
+    table.push_scope(ScopeKind::Block, None);
     table.declare("foo", local_func.clone()).unwrap();
 
     // Compare inner function symbols

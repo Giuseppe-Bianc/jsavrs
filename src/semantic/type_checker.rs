@@ -8,7 +8,6 @@ use crate::tokens::number::Number;
 pub struct TypeChecker {
     symbol_table: SymbolTable,
     errors: Vec<CompileError>,
-    current_function_return_type: Option<Type>,
     in_loop: usize,
 }
 
@@ -32,7 +31,6 @@ impl TypeChecker {
         Self {
             symbol_table: SymbolTable::new(),
             errors: Vec::new(),
-            current_function_return_type: None,
             in_loop: 0,
         }
     }
@@ -84,6 +82,7 @@ impl TypeChecker {
                 is_mutable,
                 initializers: _,
                 span,
+                ..
             } => self.process_var_declaration(variables, type_annotation, *is_mutable, span),
             Stmt::Function {
                 name,
@@ -140,19 +139,17 @@ impl TypeChecker {
         span: &SourceSpan,
     ) {
         // Declare function symbol
-        let func_symbol = Symbol::Function(FunctionSymbol {
+        let func_symbol = FunctionSymbol {
             name: name.to_string(),
             parameters: parameters.to_vec(),
             return_type: return_type.clone(),
             defined_at: span.clone(),
-        });
-        self.declare_symbol(name, func_symbol);
+        };
+        self.declare_symbol(name, Symbol::Function(func_symbol.clone()));
 
-        // Create new scope for parameters
-        self.symbol_table.push_scope();
+        self.symbol_table.enter_function(func_symbol);
+        self.symbol_table.push_scope(ScopeKind::Function, Some(span.clone()));
         self.declare_parameters(parameters);
-
-        // Process function body
         self.process_block(body);
         // Note: Scope not popped to retain symbols for second pass
     }
@@ -203,11 +200,8 @@ impl TypeChecker {
     #[allow(clippy::collapsible_if)]
     fn visit_stmt(&mut self, stmt: &Stmt) {
         match stmt {
-            Stmt::Block {
-                statements,
-                span: _,
-            } => {
-                self.symbol_table.push_scope();
+            Stmt::Block { statements, span } => {
+                self.symbol_table.push_scope(ScopeKind::Block, Some(span.clone()));
                 for stmt in statements {
                     self.visit_stmt(stmt);
                 }
@@ -216,28 +210,24 @@ impl TypeChecker {
             Stmt::Function {
                 name: _,
                 parameters: _,
-                return_type,
+                return_type: _,
                 body,
                 span: _,
             } => {
-                // Set current function context
-                let old_return_type = self
-                    .current_function_return_type
-                    .replace(return_type.clone());
-
                 // Process function body
                 for stmt in body {
                     self.visit_stmt(stmt);
                 }
 
-                self.current_function_return_type = old_return_type;
+                self.symbol_table.pop_scope();
+                self.symbol_table.exit_function();
             }
-            Stmt::MainFunction { body, span: _ } => {
-                let old_return_type = self.current_function_return_type.replace(Type::Void);
+            Stmt::MainFunction { body, .. } => {
                 for stmt in body {
                     self.visit_stmt(stmt);
                 }
-                self.current_function_return_type = old_return_type;
+                self.symbol_table.pop_scope();
+                self.symbol_table.exit_function();
             }
             Stmt::VarDeclaration {
                 variables,
@@ -458,48 +448,37 @@ impl TypeChecker {
                     span: var_span,
                 } = &**callee
                 {
-                    if let Some(symbol) = self.symbol_table.lookup(name) {
-                        match symbol {
-                            Symbol::Function(func) => {
-                                // Validate argument count
-                                if arguments.len() != func.parameters.len() {
+                    if let Some(func) = self.symbol_table.lookup_function(name) {
+                        // Valida argomenti
+                        if arguments.len() != func.parameters.len() {
+                            self.ptype_error(
+                                format!(
+                                    "Function '{name}' expects {} arguments, found {}",
+                                    func.parameters.len(),
+                                    arguments.len()
+                                ),
+                                span.clone(),
+                            );
+                        }
+
+                        // Validate argument types
+                        for (i, (arg, param)) in arguments.iter().zip(&func.parameters).enumerate()
+                        {
+                            if let Some(arg_type) = self.visit_expr(arg) {
+                                if !self.is_assignable(&arg_type, &param.type_annotation) {
                                     self.ptype_error(
                                         format!(
-                                            "Function '{name}' expects {} arguments, found {}",
-                                            func.parameters.len(),
-                                            arguments.len()
+                                            "Argument {}: expected {}, found {}",
+                                            i + 1,
+                                            param.type_annotation,
+                                            arg_type
                                         ),
-                                        span.clone(),
-                                    )
+                                        arg.span().clone(),
+                                    );
                                 }
-
-                                // Validate argument types
-                                for (i, (arg, param)) in
-                                    arguments.iter().zip(&func.parameters).enumerate()
-                                {
-                                    if let Some(arg_type) = self.visit_expr(arg) {
-                                        if !self.is_assignable(&arg_type, &param.type_annotation) {
-                                            self.ptype_error(
-                                                format!(
-                                                    "Argument {}: expected {}, found {}",
-                                                    i + 1,
-                                                    param.type_annotation,
-                                                    arg_type
-                                                ),
-                                                arg.span().clone(),
-                                            )
-                                        }
-                                    }
-                                }
-                                return Some(func.return_type.clone());
-                            }
-                            _ => {
-                                self.ptype_error(
-                                    format!("'{name}' is not a function"),
-                                    var_span.clone(),
-                                );
                             }
                         }
+                        return Some(func.return_type.clone());
                     } else {
                         self.ptype_error(format!("Undefined function '{name}'"), var_span.clone());
                     }
@@ -813,7 +792,7 @@ impl TypeChecker {
     /// Controlla la validità di un'istruzione return con errori dettagliati
     fn check_return_statement(&mut self, value: &Option<Expr>, span: &SourceSpan) {
         // Clona il tipo di ritorno per evitare conflitti di prestito
-        let expected_type = self.current_function_return_type.clone();
+        let expected_type = self.symbol_table.current_function_return_type();
 
         let Some(expected) = expected_type else {
             self.ptype_error("Return statement outside function".to_string(), span.clone());
