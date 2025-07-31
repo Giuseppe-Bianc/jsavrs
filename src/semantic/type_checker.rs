@@ -286,29 +286,7 @@ impl TypeChecker {
                 }
             }
             Stmt::Return { value, span } => {
-                if let Some(expected) = &self.current_function_return_type.clone() {
-                    match value {
-                        Some(expr) => {
-                            if let Some(actual) = self.visit_expr(expr) {
-                                if !self.is_assignable(&actual, expected) {
-                                    self.ptype_error(format!(
-                                        "Return type mismatch: expected {expected}, found {actual}",
-                                    ), expr.span().clone());
-                                }
-                            }
-                        }
-                        None if *expected != Type::Void => self.ptype_error(
-                            format!("Function requires return type {expected}, found void"),
-                            span.clone(),
-                        ),
-                        _ => {}
-                    }
-                } else {
-                    self.ptype_error(
-                        "Return statement outside function".to_string(),
-                        span.clone(),
-                    );
-                }
+                self.check_return_statement(value, span);
             }
             Stmt::Break { span } | Stmt::Continue { span } => {
                 if self.in_loop == 0 {
@@ -830,6 +808,50 @@ impl TypeChecker {
 
         // Fallback to I64
         Type::I64
+    }
+
+    /// Controlla la validità di un'istruzione return con errori dettagliati
+    fn check_return_statement(&mut self, value: &Option<Expr>, span: &SourceSpan) {
+        // Clona il tipo di ritorno per evitare conflitti di prestito
+        let expected_type = self.current_function_return_type.clone();
+
+        let Some(expected) = expected_type else {
+            self.ptype_error("Return statement outside function".to_string(), span.clone());
+            return;
+        };
+
+        match value {
+            Some(expr) => self.check_non_void_return(expr, &expected),
+            None => self.check_void_return(&expected, span),
+        }
+    }
+
+    /// Controlla return con valore (non void)
+    fn check_non_void_return(&mut self, expr: &Expr, expected_type: &Type) {
+        let Some(actual_type) = self.visit_expr(expr) else { return };
+
+        if !self.is_assignable(&actual_type, expected_type) {
+            self.ptype_error(
+                format!(
+                    "Return type mismatch: expected {}, found {}",
+                    expected_type, actual_type
+                ),
+                expr.span().clone(),
+            );
+        }
+    }
+
+    /// Controlla return senza valore (void)
+    fn check_void_return(&mut self, expected_type: &Type, span: &SourceSpan) {
+        if *expected_type != Type::Void {
+            self.ptype_error(
+                format!(
+                    "Function requires return type {}, found void",
+                    expected_type
+                ),
+                span.clone(),
+            );
+        }
     }
 }
 
