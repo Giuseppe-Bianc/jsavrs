@@ -8,7 +8,7 @@ use crate::tokens::number::Number;
 pub struct TypeChecker {
     symbol_table: SymbolTable,
     errors: Vec<CompileError>,
-    current_function: Option<Type>,
+    //current_function: Option<Type>,
     in_loop: bool,
     return_type_stack: Vec<Type>,
 }
@@ -32,7 +32,7 @@ impl TypeChecker {
         TypeChecker {
             symbol_table: SymbolTable::new(),
             errors: Vec::new(),
-            current_function: None,
+            //current_function: None,
             in_loop: false,
             return_type_stack: Vec::new(),
         }
