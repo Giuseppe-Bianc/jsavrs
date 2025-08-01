@@ -87,9 +87,9 @@ impl SymbolTable {
         self.scopes.last_mut()
     }
 
-    /*pub fn current_scope_kind(&self) -> Option<ScopeKind> {
+    pub fn current_scope_kind(&self) -> Option<ScopeKind> {
         self.current_scope().map(|s| s.kind)
-    }*/
+    }
 
     pub fn declare(&mut self, name: &str, symbol: Symbol) -> Result<(), CompileError> {
         let current_scope = self.current_scope_mut().expect("At least one scope");
@@ -112,25 +112,35 @@ impl SymbolTable {
         Ok(())
     }
 
-    pub fn lookup(&self, name: &str) -> Option<Symbol> {
+    // Helper method to find symbols with a custom filter
+    fn find_symbol<F, T>(&self, name: &str, filter: F) -> Option<T>
+    where
+        F: Fn(&Symbol) -> Option<T>,
+    {
         for scope in self.scopes.iter().rev() {
             if let Some(sym) = scope.symbols.get(name) {
-                return Some(sym.clone());
+                if let Some(result) = filter(sym) {
+                    return Some(result);
+                }
             }
         }
         None
     }
 
+    pub fn lookup(&self, name: &str) -> Option<Symbol> {
+        self.find_symbol(name, |sym| Some(sym.clone()))
+    }
+
     pub fn lookup_function(&self, name: &str) -> Option<FunctionSymbol> {
-        self.lookup(name).and_then(|sym| match sym {
-            Symbol::Function(f) => Some(f),
+        self.find_symbol(name, |sym| match sym {
+            Symbol::Function(f) => Some(f.clone()),
             _ => None,
         })
     }
 
     pub fn lookup_variable(&self, name: &str) -> Option<VariableSymbol> {
-        self.lookup(name).and_then(|sym| match sym {
-            Symbol::Variable(v) => Some(v),
+        self.find_symbol(name, |sym| match sym {
+            Symbol::Variable(v) => Some(v.clone()),
             _ => None,
         })
     }

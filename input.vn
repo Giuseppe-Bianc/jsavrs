@@ -1,4 +1,5 @@
 fun a(num1: i8, num2: i8): i8 {
+    return 0i8
 }
 // single line comment
 main {
@@ -29,9 +30,13 @@ main {
 	var arr: i64[5] = {1, 2, 3, 4, 5}
 	//5-5=5
 
+	{
+	 var a2: i8 = b + 1i8
+	}
+
 	for (;;) { break }
 	for (var i:i32 = 0i32; i < 10i32; i = i + 1i32) { break }
 	while (true) { break }
-	a(1i8, 2i8) = 3i8
-	//var x: i8 = a(1i8, 2i8) + 3i8
+	//a(1i8, 2i8) = 3i8
+	var x: i8 = a(1i8, 2i8) + 3i8
 }
