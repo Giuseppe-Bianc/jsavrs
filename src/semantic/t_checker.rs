@@ -38,6 +38,14 @@ impl TypeChecker {
         }
     }
 
+    // Helper method for type errors
+    fn type_error(&mut self, message: impl Into<String>, span: &SourceSpan) {
+        self.errors.push(CompileError::TypeError {
+            message: message.into(),
+            span: span.clone(),
+        });
+    }
+
     pub fn check(&mut self, statements: &[Stmt]) -> Vec<CompileError> {
         self.visit_statements(statements);
         std::mem::take(&mut self.errors)
@@ -116,28 +124,25 @@ impl TypeChecker {
         span: &SourceSpan,
     ) {
         if variables.len() != initializers.len() {
-            self.errors.push(CompileError::TypeError {
-                message: format!(
+            self.type_error(
+                format!(
                     "Expected {} initializers, found {}",
                     variables.len(),
                     initializers.len()
                 ),
-                span: span.clone(),
-            });
+                span,
+            );
             return;
         }
 
-        for (i, (var_name, init_expr)) in variables.iter().zip(initializers).enumerate() {
+        for (var_name, init_expr) in variables.iter().zip(initializers) {
             let init_type = self.visit_expr(init_expr);
 
             if !self.is_assignable(&init_type, type_annotation) {
-                self.errors.push(CompileError::TypeError {
-                    message: format!(
-                        "Cannot assign {} to {} of type {}",
-                        init_type, var_name, type_annotation
-                    ),
-                    span: init_expr.span().clone(),
-                });
+                self.type_error(
+                    format!("Cannot assign {init_type} to {var_name} of type {type_annotation}"),
+                    init_expr.span(),
+                );
             }
 
             self.declare_symbol(
@@ -190,10 +195,7 @@ impl TypeChecker {
         self.visit_statements(body);
 
         if *return_type != Type::Void && !self.function_has_return(body) {
-            self.errors.push(CompileError::TypeError {
-                message: "Function may not return a value".to_string(),
-                span: span.clone(),
-            });
+            self.type_error("Function may not return a value", span);
         }
 
         self.return_type_stack.pop();
@@ -220,10 +222,10 @@ impl TypeChecker {
     ) {
         let cond_type = self.visit_expr(condition);
         if cond_type != Type::Bool {
-            self.errors.push(CompileError::TypeError {
-                message: format!("If condition must be bool, found {}", cond_type),
-                span: condition.span().clone(),
-            });
+            self.type_error(
+                format!("If condition must be bool, found {cond_type}"),
+                condition.span(),
+            );
         }
 
         self.symbol_table
@@ -242,10 +244,10 @@ impl TypeChecker {
     fn visit_while(&mut self, condition: &Expr, body: &[Stmt], span: &SourceSpan) {
         let cond_type = self.visit_expr(condition);
         if cond_type != Type::Bool {
-            self.errors.push(CompileError::TypeError {
-                message: format!("While condition must be bool, found {}", cond_type),
-                span: condition.span().clone(),
-            });
+            self.type_error(
+                format!("While condition must be bool, found {cond_type}"),
+                condition.span(),
+            );
         }
 
         let was_in_loop = self.in_loop;
@@ -277,10 +279,10 @@ impl TypeChecker {
         if let Some(cond) = condition {
             let cond_type = self.visit_expr(cond);
             if cond_type != Type::Bool {
-                self.errors.push(CompileError::TypeError {
-                    message: format!("For condition must be bool, found {}", cond_type),
-                    span: cond.span().clone(),
-                });
+                self.type_error(
+                    format!("For condition must be bool, found {cond_type}"),
+                    cond.span(),
+                );
             }
         }
 
@@ -309,48 +311,38 @@ impl TypeChecker {
 
         match (value, &expected_type) {
             (Some(expr), Type::Void) => {
-                self.errors.push(CompileError::TypeError {
-                    message: "Cannot return a value from void function".to_string(),
-                    span: expr.span().clone(),
-                });
+                self.type_error("Cannot return a value from void function", expr.span());
             }
             (Some(expr), _) => {
                 let actual_type = self.visit_expr(expr);
                 if !self.is_assignable(&actual_type, &expected_type) {
-                    self.errors.push(CompileError::TypeError {
-                        message: format!(
-                            "Return type mismatch, expected {} found {}",
-                            expected_type, actual_type
+                    self.type_error(
+                        format!(
+                            "Return type mismatch, expected {expected_type} found {actual_type}"
                         ),
-                        span: expr.span().clone(),
-                    });
+                        expr.span(),
+                    );
                 }
             }
             (None, Type::Void) => {}
             (None, _) => {
-                self.errors.push(CompileError::TypeError {
-                    message: format!("Expected return value of type {}", expected_type),
-                    span: span.clone(),
-                });
+                self.type_error(
+                    format!("Expected return value of type {expected_type}"),
+                    span,
+                );
             }
         }
     }
 
     fn visit_break(&mut self, span: &SourceSpan) {
         if !self.in_loop {
-            self.errors.push(CompileError::TypeError {
-                message: "Break statement outside loop".to_string(),
-                span: span.clone(),
-            });
+            self.type_error("Break statement outside loop", span);
         }
     }
 
     fn visit_continue(&mut self, span: &SourceSpan) {
         if !self.in_loop {
-            self.errors.push(CompileError::TypeError {
-                message: "Continue statement outside loop".to_string(),
-                span: span.clone(),
-            });
+            self.type_error("Continue statement outside loop", span);
         }
     }
 
@@ -406,13 +398,10 @@ impl TypeChecker {
                 left_type = common_type.clone();
                 right_type = common_type;
             } else {
-                self.errors.push(CompileError::TypeError {
-                    message: format!(
-                        "Bitwise operations require integer types, found {} and {}",
-                        left_type, right_type
-                    ),
-                    span: span.clone(),
-                });
+                self.type_error(
+                    format!("Bitwise operations require integer types, found {left_type} and {right_type}"),
+                    span,
+                );
                 return Type::Void;
             }
         } else if matches!(
@@ -438,13 +427,10 @@ impl TypeChecker {
         }
 
         if !self.are_compatible(&left_type, &right_type) {
-            self.errors.push(CompileError::TypeError {
-                message: format!(
-                    "Type mismatch in binary operation: {} and {}",
-                    left_type, right_type
-                ),
-                span: span.clone(),
-            });
+            self.type_error(
+                format!("Type mismatch in binary operation: {left_type} and {right_type}"),
+                span,
+            );
             return Type::Void;
         }
 
@@ -455,10 +441,10 @@ impl TypeChecker {
             | BinaryOp::Divide
             | BinaryOp::Modulo => {
                 if !self.is_numeric(&left_type) {
-                    self.errors.push(CompileError::TypeError {
-                        message: format!("Arithmetic operation not supported for {}", left_type),
-                        span: left.span().clone(),
-                    });
+                    self.type_error(
+                        format!("Arithmetic operation not supported for {left_type}"),
+                        left.span(),
+                    );
                 }
                 left_type
             }
@@ -470,10 +456,10 @@ impl TypeChecker {
             | BinaryOp::GreaterEqual => Type::Bool,
             BinaryOp::And | BinaryOp::Or => {
                 if left_type != Type::Bool {
-                    self.errors.push(CompileError::TypeError {
-                        message: format!("Logical operation requires bool, found {}", left_type),
-                        span: left.span().clone(),
-                    });
+                    self.type_error(
+                        format!("Logical operation requires bool, found {left_type}"),
+                        left.span(),
+                    );
                 }
                 Type::Bool
             }
@@ -491,19 +477,19 @@ impl TypeChecker {
         match op {
             UnaryOp::Negate => {
                 if !self.is_numeric(&expr_type) {
-                    self.errors.push(CompileError::TypeError {
-                        message: format!("Negation requires numeric type, found {}", expr_type),
-                        span: expr.span().clone(),
-                    });
+                    self.type_error(
+                        format!("Negation requires numeric type, found {expr_type}"),
+                        expr.span(),
+                    );
                 }
                 expr_type
             }
             UnaryOp::Not => {
                 if expr_type != Type::Bool {
-                    self.errors.push(CompileError::TypeError {
-                        message: format!("Logical not requires bool, found {}", expr_type),
-                        span: expr.span().clone(),
-                    });
+                    self.type_error(
+                        format!("Logical not requires bool, found {expr_type}"),
+                        expr.span(),
+                    );
                 }
                 Type::Bool
             }
@@ -537,11 +523,10 @@ impl TypeChecker {
 
     fn visit_array_literal(&mut self, elements: &[Expr], span: &SourceSpan) -> Type {
         if elements.is_empty() {
-            self.errors.push(CompileError::TypeError {
-                message: "Array literals must have at least one element for type inference"
-                    .to_string(),
-                span: span.clone(),
-            });
+            self.type_error(
+                "Array literals must have at least one element for type inference",
+                span,
+            );
             return Type::Void;
         }
 
@@ -549,13 +534,12 @@ impl TypeChecker {
         for element in &elements[1..] {
             let element_type = self.visit_expr(element);
             if element_type != first_type {
-                self.errors.push(CompileError::TypeError {
-                    message: format!(
-                        "Array element type mismatch: expected {}, found {}",
-                        first_type, element_type
+                self.type_error(
+                    format!(
+                        "Array element type mismatch: expected {first_type}, found {element_type}"
                     ),
-                    span: element.span().clone(),
-                });
+                    element.span(),
+                );
             }
         }
 
@@ -573,15 +557,9 @@ impl TypeChecker {
             Some(var) => var.ty.clone(),
             None => {
                 if self.symbol_table.lookup_function(name).is_some() {
-                    self.errors.push(CompileError::TypeError {
-                        message: format!("'{}' is a function, not a variable", name),
-                        span: span.clone(),
-                    });
+                    self.type_error(format!("'{name}' is a function, not a variable"), span);
                 } else {
-                    self.errors.push(CompileError::TypeError {
-                        message: format!("Undefined variable '{}'", name),
-                        span: span.clone(),
-                    });
+                    self.type_error(format!("Undefined variable '{name}'"), span);
                 }
                 Type::Void
             }
@@ -593,18 +571,15 @@ impl TypeChecker {
             Expr::Variable { name, span } => match self.symbol_table.lookup_variable(name) {
                 Some(var) => {
                     if !var.mutable {
-                        self.errors.push(CompileError::TypeError {
-                            message: format!("Cannot assign to immutable variable '{}'", name),
-                            span: span.clone(),
-                        });
+                        self.type_error(
+                            format!("Cannot assign to immutable variable '{name}'"),
+                            span,
+                        );
                     }
                     var.ty.clone()
                 }
                 None => {
-                    self.errors.push(CompileError::TypeError {
-                        message: format!("Undefined variable '{}'", name),
-                        span: span.clone(),
-                    });
+                    self.type_error(format!("Undefined variable '{name}'"), span);
                     Type::Void
                 }
             },
@@ -613,18 +588,15 @@ impl TypeChecker {
                 if let Type::Array(element_type, _) = array_type {
                     *element_type
                 } else {
-                    self.errors.push(CompileError::TypeError {
-                        message: format!("Cannot index non-array type {}", array_type),
-                        span: array.span().clone(),
-                    });
+                    self.type_error(
+                        format!("Cannot index non-array type {array_type}"),
+                        array.span(),
+                    );
                     Type::Void
                 }
             }
             _ => {
-                self.errors.push(CompileError::TypeError {
-                    message: "Invalid assignment target".to_string(),
-                    span: target.span().clone(),
-                });
+                self.type_error("Invalid assignment target", target.span());
                 Type::Void
             }
         };
@@ -632,10 +604,10 @@ impl TypeChecker {
         let value_type = self.visit_expr(value);
 
         if !self.is_assignable(&value_type, &target_type) {
-            self.errors.push(CompileError::TypeError {
-                message: format!("Cannot assign {} to {}", value_type, target_type),
-                span: value.span().clone(),
-            });
+            self.type_error(
+                format!("Cannot assign {value_type} to {target_type}"),
+                value.span(),
+            );
         }
 
         target_type
@@ -652,38 +624,35 @@ impl TypeChecker {
         let func = match self.symbol_table.lookup_function(&callee_name) {
             Some(func) => func,
             None => {
-                self.errors.push(CompileError::TypeError {
-                    message: format!("Undefined function '{}'", callee_name),
-                    span: callee.span().clone(),
-                });
+                self.type_error(format!("Undefined function '{callee_name}'"), callee.span());
                 return Type::Void;
             }
         };
 
         if arguments.len() != func.parameters.len() {
-            self.errors.push(CompileError::TypeError {
-                message: format!(
+            self.type_error(
+                format!(
                     "Expected {} arguments, found {}",
                     func.parameters.len(),
                     arguments.len()
                 ),
-                span: span.clone(),
-            });
+                span,
+            );
             return func.return_type.clone();
         }
 
         for (i, (arg, param)) in arguments.iter().zip(&func.parameters).enumerate() {
             let arg_type = self.visit_expr(arg);
             if !self.is_assignable(&arg_type, &param.type_annotation) {
-                self.errors.push(CompileError::TypeError {
-                    message: format!(
+                self.type_error(
+                    format!(
                         "Argument {}: expected {}, found {}",
                         i + 1,
                         param.type_annotation,
                         arg_type
                     ),
-                    span: arg.span().clone(),
-                });
+                    arg.span(),
+                );
             }
         }
 
@@ -695,19 +664,19 @@ impl TypeChecker {
         let index_type = self.visit_expr(index);
 
         if !self.is_integer_type(&index_type) {
-            self.errors.push(CompileError::TypeError {
-                message: format!("Array index must be integer, found {}", index_type),
-                span: index.span().clone(),
-            });
+            self.type_error(
+                format!("Array index must be integer, found {index_type}"),
+                index.span(),
+            );
         }
 
         if let Type::Array(element_type, _) = array_type {
             *element_type
         } else {
-            self.errors.push(CompileError::TypeError {
-                message: format!("Cannot index non-array type {}", array_type),
-                span: array.span().clone(),
-            });
+            self.type_error(
+                format!("Cannot index non-array type {array_type}"),
+                array.span(),
+            );
             Type::Void
         }
     }
@@ -846,8 +815,7 @@ impl TypeChecker {
     }
 }
 
-
-impl Default for crate::semantic::type_checker::TypeChecker {
+impl Default for TypeChecker {
     fn default() -> Self {
         Self::new()
     }
