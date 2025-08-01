@@ -3,7 +3,6 @@ use crate::error::compile_error::CompileError;
 use crate::location::source_span::SourceSpan;
 use crate::parser::ast::*;
 use crate::semantic::symbol_table::*;
-use std::collections::HashMap;
 use crate::tokens::number::Number;
 
 pub struct TypeChecker {
@@ -13,6 +12,20 @@ pub struct TypeChecker {
     in_loop: bool,
     return_type_stack: Vec<Type>,
 }
+
+// Gerarchia per la promozione dei tipi numerici
+const HIERARCHY: [Type; 10] = [
+    Type::F64,
+    Type::F32,
+    Type::U64,
+    Type::I64,
+    Type::U32,
+    Type::I32,
+    Type::U16,
+    Type::I16,
+    Type::U8,
+    Type::I8,
+];
 
 impl TypeChecker {
     pub fn new() -> Self {
@@ -54,7 +67,13 @@ impl TypeChecker {
                 is_mutable,
                 initializers,
                 span,
-            } => self.visit_var_declaration(variables, type_annotation, *is_mutable, initializers, span),
+            } => self.visit_var_declaration(
+                variables,
+                type_annotation,
+                *is_mutable,
+                initializers,
+                span,
+            ),
             Stmt::Function {
                 name,
                 parameters,
@@ -68,7 +87,11 @@ impl TypeChecker {
                 else_branch,
                 span,
             } => self.visit_if(condition, then_branch, else_branch.as_deref(), span),
-            Stmt::While { condition, body, span } => self.visit_while(condition, body, span),
+            Stmt::While {
+                condition,
+                body,
+                span,
+            } => self.visit_while(condition, body, span),
             Stmt::For {
                 initializer,
                 condition,
@@ -111,9 +134,7 @@ impl TypeChecker {
                 self.errors.push(CompileError::TypeError {
                     message: format!(
                         "Cannot assign {} to {} of type {}",
-                        init_type,
-                        var_name,
-                        type_annotation
+                        init_type, var_name, type_annotation
                     ),
                     span: init_expr.span().clone(),
                 });
@@ -147,10 +168,7 @@ impl TypeChecker {
             defined_at: span.clone(),
         };
 
-        self.declare_symbol(
-            name,
-            Symbol::Function(func_symbol.clone()),
-        );
+        self.declare_symbol(name, Symbol::Function(func_symbol.clone()));
 
         self.symbol_table
             .push_scope(ScopeKind::Function, Some(span.clone()));
@@ -287,11 +305,7 @@ impl TypeChecker {
     }
 
     fn visit_return(&mut self, value: Option<&Expr>, span: &SourceSpan) {
-        let expected_type = self
-            .return_type_stack
-            .last()
-            .cloned()
-            .unwrap_or(Type::Void);
+        let expected_type = self.return_type_stack.last().cloned().unwrap_or(Type::Void);
 
         match (value, &expected_type) {
             (Some(expr), Type::Void) => {
@@ -342,21 +356,67 @@ impl TypeChecker {
 
     fn visit_expr(&mut self, expr: &Expr) -> Type {
         match expr {
-            Expr::Binary { left, op, right, span } => self.visit_binary_expr(left, op, right, span),
+            Expr::Binary {
+                left,
+                op,
+                right,
+                span,
+            } => self.visit_binary_expr(left, op, right, span),
             Expr::Unary { op, expr, span } => self.visit_unary_expr(op, expr, span),
             Expr::Grouping { expr, span } => self.visit_expr(expr),
             Expr::Literal { value, span } => self.visit_literal(value, span),
             Expr::ArrayLiteral { elements, span } => self.visit_array_literal(elements, span),
             Expr::Variable { name, span } => self.visit_variable(name, span),
-            Expr::Assign { target, value, span } => self.visit_assign(target, value, span),
-            Expr::Call { callee, arguments, span } => self.visit_call(callee, arguments, span),
+            Expr::Assign {
+                target,
+                value,
+                span,
+            } => self.visit_assign(target, value, span),
+            Expr::Call {
+                callee,
+                arguments,
+                span,
+            } => self.visit_call(callee, arguments, span),
             Expr::ArrayAccess { array, index, span } => self.visit_array_access(array, index, span),
         }
     }
 
-    fn visit_binary_expr(&mut self, left: &Expr, op: &BinaryOp, right: &Expr, span: &SourceSpan) -> Type {
-        let left_type = self.visit_expr(left);
-        let right_type = self.visit_expr(right);
+    fn visit_binary_expr(
+        &mut self,
+        left: &Expr,
+        op: &BinaryOp,
+        right: &Expr,
+        span: &SourceSpan,
+    ) -> Type {
+        let mut left_type = self.visit_expr(left);
+        let mut right_type = self.visit_expr(right);
+
+        // Applica la promozione numerica per operazioni aritmetiche, di confronto e bitwise
+        if matches!(
+            op,
+            BinaryOp::Add
+                | BinaryOp::Subtract
+                | BinaryOp::Multiply
+                | BinaryOp::Divide
+                | BinaryOp::Modulo
+                | BinaryOp::Equal
+                | BinaryOp::NotEqual
+                | BinaryOp::Less
+                | BinaryOp::LessEqual
+                | BinaryOp::Greater
+                | BinaryOp::GreaterEqual
+                | BinaryOp::BitwiseAnd
+                | BinaryOp::BitwiseOr
+                | BinaryOp::BitwiseXor
+                | BinaryOp::ShiftLeft
+                | BinaryOp::ShiftRight
+        ) && self.is_numeric(&left_type)
+            && self.is_numeric(&right_type)
+        {
+            let common_type = self.promote_numeric_types(&left_type, &right_type);
+            left_type = common_type.clone();
+            right_type = common_type;
+        }
 
         if !self.are_compatible(&left_type, &right_type) {
             self.errors.push(CompileError::TypeError {
@@ -370,7 +430,11 @@ impl TypeChecker {
         }
 
         match op {
-            BinaryOp::Add | BinaryOp::Subtract | BinaryOp::Multiply | BinaryOp::Divide | BinaryOp::Modulo => {
+            BinaryOp::Add
+            | BinaryOp::Subtract
+            | BinaryOp::Multiply
+            | BinaryOp::Divide
+            | BinaryOp::Modulo => {
                 if !self.is_numeric(&left_type) {
                     self.errors.push(CompileError::TypeError {
                         message: format!("Arithmetic operation not supported for {}", left_type),
@@ -394,7 +458,11 @@ impl TypeChecker {
                 }
                 Type::Bool
             }
-            BinaryOp::BitwiseAnd | BinaryOp::BitwiseOr | BinaryOp::BitwiseXor | BinaryOp::ShiftLeft | BinaryOp::ShiftRight => {
+            BinaryOp::BitwiseAnd
+            | BinaryOp::BitwiseOr
+            | BinaryOp::BitwiseXor
+            | BinaryOp::ShiftLeft
+            | BinaryOp::ShiftRight => {
                 if !self.is_integer_type(&left_type) {
                     self.errors.push(CompileError::TypeError {
                         message: format!("Bitwise operation requires integer, found {}", left_type),
@@ -459,7 +527,8 @@ impl TypeChecker {
     fn visit_array_literal(&mut self, elements: &[Expr], span: &SourceSpan) -> Type {
         if elements.is_empty() {
             self.errors.push(CompileError::TypeError {
-                message: "Array literals must have at least one element for type inference".to_string(),
+                message: "Array literals must have at least one element for type inference"
+                    .to_string(),
                 span: span.clone(),
             });
             return Type::Void;
@@ -510,26 +579,24 @@ impl TypeChecker {
 
     fn visit_assign(&mut self, target: &Expr, value: &Expr, span: &SourceSpan) -> Type {
         let target_type = match target {
-            Expr::Variable { name, span } => {
-                match self.symbol_table.lookup_variable(name) {
-                    Some(var) => {
-                        if !var.mutable {
-                            self.errors.push(CompileError::TypeError {
-                                message: format!("Cannot assign to immutable variable '{}'", name),
-                                span: span.clone(),
-                            });
-                        }
-                        var.ty.clone()
-                    }
-                    None => {
+            Expr::Variable { name, span } => match self.symbol_table.lookup_variable(name) {
+                Some(var) => {
+                    if !var.mutable {
                         self.errors.push(CompileError::TypeError {
-                            message: format!("Undefined variable '{}'", name),
+                            message: format!("Cannot assign to immutable variable '{}'", name),
                             span: span.clone(),
                         });
-                        Type::Void
                     }
+                    var.ty.clone()
                 }
-            }
+                None => {
+                    self.errors.push(CompileError::TypeError {
+                        message: format!("Undefined variable '{}'", name),
+                        span: span.clone(),
+                    });
+                    Type::Void
+                }
+            },
             Expr::ArrayAccess { array, index, span } => {
                 let array_type = self.visit_expr(array);
                 if let Type::Array(element_type, _) = array_type {
@@ -555,10 +622,7 @@ impl TypeChecker {
 
         if !self.is_assignable(&value_type, &target_type) {
             self.errors.push(CompileError::TypeError {
-                message: format!(
-                    "Cannot assign {} to {}",
-                    value_type, target_type
-                ),
+                message: format!("Cannot assign {} to {}", value_type, target_type),
                 span: value.span().clone(),
             });
         }
@@ -637,16 +701,32 @@ impl TypeChecker {
         }
     }
 
+    // Funzione per la promozione automatica dei tipi numerici
+    pub fn promote_numeric_types(&self, t1: &Type, t2: &Type) -> Type {
+        // Trova il tipo con rango più alto nella gerarchia
+        for ty in &HIERARCHY {
+            if t1 == ty || t2 == ty {
+                return ty.clone();
+            }
+        }
+        // Fallback a I64
+        Type::I64
+    }
+
     // FUNZIONI DI VERIFICA TIPI
     pub fn is_assignable(&self, source: &Type, target: &Type) -> bool {
         match (source, target) {
             // Promozioni numeriche
             (Type::I8, Type::I16 | Type::I32 | Type::I64 | Type::F32 | Type::F64) => true,
             (Type::I16, Type::I32 | Type::I64 | Type::F32 | Type::F64) => true,
-            (Type::I32, Type::I64 | Type::F64) => true,
+            (Type::I32, Type::I64 | Type::F32 | Type::F64) => true,
+            (Type::I64, Type::F64) => true,
+
             (Type::U8, Type::U16 | Type::U32 | Type::U64 | Type::F32 | Type::F64) => true,
             (Type::U16, Type::U32 | Type::U64 | Type::F32 | Type::F64) => true,
-            (Type::U32, Type::U64 | Type::F64) => true,
+            (Type::U32, Type::U64 | Type::F32 | Type::F64) => true,
+            (Type::U64, Type::F64) => true,
+
             (Type::F32, Type::F64) => true,
 
             // Nullptr assegnabile a tipi puntatore
@@ -710,9 +790,16 @@ impl TypeChecker {
     fn is_numeric(&self, ty: &Type) -> bool {
         matches!(
             ty,
-            Type::I8 | Type::I16 | Type::I32 | Type::I64
-                | Type::U8 | Type::U16 | Type::U32 | Type::U64
-                | Type::F32 | Type::F64
+            Type::I8
+                | Type::I16
+                | Type::I32
+                | Type::I64
+                | Type::U8
+                | Type::U16
+                | Type::U32
+                | Type::U64
+                | Type::F32
+                | Type::F64
         )
     }
 

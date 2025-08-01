@@ -38,5 +38,5 @@ main {
 	for (var i:i32 = 0i32; i < 10i32; i = i + 1i32) { break }
 	while (true) { break }
 	//a(1i8, 2i8) = 3i8
-	var x: i8 = a(1i8, 2i8) + 3i8
+	//var x: i8 = a(1i8, 2i8) + 3i8
 }
