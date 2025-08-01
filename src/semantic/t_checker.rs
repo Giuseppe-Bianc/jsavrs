@@ -845,3 +845,10 @@ impl TypeChecker {
         false
     }
 }
+
+
+impl Default for crate::semantic::type_checker::TypeChecker {
+    fn default() -> Self {
+        Self::new()
+    }
+}
