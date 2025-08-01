@@ -391,8 +391,31 @@ impl TypeChecker {
         let mut left_type = self.visit_expr(left);
         let mut right_type = self.visit_expr(right);
 
-        // Applica la promozione numerica per operazioni aritmetiche, di confronto e bitwise
+        // Distinzione tra operatori bitwise e altri operatori numerici
         if matches!(
+            op,
+            BinaryOp::BitwiseAnd
+                | BinaryOp::BitwiseOr
+                | BinaryOp::BitwiseXor
+                | BinaryOp::ShiftLeft
+                | BinaryOp::ShiftRight
+        ) {
+            // Solo tipi interi sono ammessi per operatori bitwise
+            if self.is_integer_type(&left_type) && self.is_integer_type(&right_type) {
+                let common_type = self.promote_numeric_types(&left_type, &right_type);
+                left_type = common_type.clone();
+                right_type = common_type;
+            } else {
+                self.errors.push(CompileError::TypeError {
+                    message: format!(
+                        "Bitwise operations require integer types, found {} and {}",
+                        left_type, right_type
+                    ),
+                    span: span.clone(),
+                });
+                return Type::Void;
+            }
+        } else if matches!(
             op,
             BinaryOp::Add
                 | BinaryOp::Subtract
@@ -405,14 +428,10 @@ impl TypeChecker {
                 | BinaryOp::LessEqual
                 | BinaryOp::Greater
                 | BinaryOp::GreaterEqual
-                | BinaryOp::BitwiseAnd
-                | BinaryOp::BitwiseOr
-                | BinaryOp::BitwiseXor
-                | BinaryOp::ShiftLeft
-                | BinaryOp::ShiftRight
         ) && self.is_numeric(&left_type)
             && self.is_numeric(&right_type)
         {
+            // Promozione numerica standard per operatori aritmetici e di confronto
             let common_type = self.promote_numeric_types(&left_type, &right_type);
             left_type = common_type.clone();
             right_type = common_type;
@@ -462,15 +481,7 @@ impl TypeChecker {
             | BinaryOp::BitwiseOr
             | BinaryOp::BitwiseXor
             | BinaryOp::ShiftLeft
-            | BinaryOp::ShiftRight => {
-                if !self.is_integer_type(&left_type) {
-                    self.errors.push(CompileError::TypeError {
-                        message: format!("Bitwise operation requires integer, found {}", left_type),
-                        span: left.span().clone(),
-                    });
-                }
-                left_type
-            }
+            | BinaryOp::ShiftRight => left_type,
         }
     }
 
@@ -709,8 +720,9 @@ impl TypeChecker {
                 return ty.clone();
             }
         }
-        // Fallback a I64
-        Type::I64
+        // This should never happen if HIERARCHY contains all numeric types
+        // Return the first type as a fallback to maintain type safety
+        t1.clone()
     }
 
     // FUNZIONI DI VERIFICA TIPI
