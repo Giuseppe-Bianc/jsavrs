@@ -518,7 +518,7 @@ fn test_empty_block_stmt() {
     let output = pretty_print_stmt(&stmt);
     let stripped = strip_ansi_codes(&output);
 
-    assert_eq!(stripped.trim(), "└── Block");
+    assert_eq!(stripped.trim(), "└── Block: (empty)");
 }
 
 #[test]
@@ -1044,7 +1044,7 @@ fn test_main() {
     let stripped = strip_ansi_codes(&output);
     let expected = "\
 └── MainFunction
-    └── Block";
+    └── Block: (empty)";
     assert_eq!(stripped.trim(), expected);
 }
 
