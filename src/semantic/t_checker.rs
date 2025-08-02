@@ -576,7 +576,11 @@ impl TypeChecker {
                     Type::Void
                 }
             },
-            Expr::ArrayAccess { array, index: _ , span } => {
+            Expr::ArrayAccess {
+                array,
+                index: _,
+                span,
+            } => {
                 let array_type = self.visit_expr(array);
                 if let Type::Array(element_type, _) = array_type {
                     *element_type
@@ -689,11 +693,22 @@ impl TypeChecker {
         t1.clone()
     }
 
-    // FUNZIONI DI VERIFICA TIPI
-    #[allow(clippy::borrowed_box, clippy::only_used_in_recursion)]
+    // Helper function to extract integer size from an expression (non-recursive)
+    fn get_size(&self, expr: &Expr) -> Option<i64> {
+        if let Expr::Literal {
+            value: LiteralValue::Number(Number::Integer(n)),
+            ..
+        } = expr
+        {
+            Some(*n)
+        } else {
+            None
+        }
+    }
+
     pub fn is_assignable(&self, source: &Type, target: &Type) -> bool {
         match (source, target) {
-            // Promozioni numeriche
+            // Numeric promotions
             (Type::I8, Type::I16 | Type::I32 | Type::I64 | Type::F32 | Type::F64) => true,
             (Type::I16, Type::I32 | Type::I64 | Type::F32 | Type::F64) => true,
             (Type::I32, Type::I64 | Type::F32 | Type::F64) => true,
@@ -706,42 +721,33 @@ impl TypeChecker {
 
             (Type::F32, Type::F64) => true,
 
-            // Nullptr assegnabile a tipi puntatore
+            // Nullptr assignable to pointer types
             (Type::NullPtr, Type::Array(_, _) | Type::Vector(_) | Type::Custom(_)) => true,
 
-            // Char assegnabile a String
+            // Char assignable to String
             (Type::Char, Type::String) => true,
 
-            // Array: richiede tipi compatibili e dimensioni uguali
+            // Array: requires compatible types and equal sizes
             (Type::Array(source_elem, source_size), Type::Array(target_elem, target_size)) => {
-                if !self.is_assignable(source_elem, target_elem) {
+                // Convert &Box<Type> to &Type via dereferencing
+                if !self.is_assignable(&**source_elem, &**target_elem) {
                     return false;
                 }
 
-                let get_size = |expr: &Box<Expr>| {
-                    if let Expr::Literal {
-                        value: LiteralValue::Number(Number::Integer(n)),
-                        ..
-                    } = &**expr
-                    {
-                        Some(*n)
-                    } else {
-                        None
-                    }
-                };
-
-                match (get_size(source_size), get_size(target_size)) {
+                // Use the extracted helper function
+                match (self.get_size(source_size), self.get_size(target_size)) {
                     (Some(source_val), Some(target_val)) => source_val == target_val,
                     _ => false,
                 }
             }
 
-            // Vector: richiede tipi elemento compatibili
+            // Vector: requires compatible element types
             (Type::Vector(source_elem), Type::Vector(target_elem)) => {
-                self.is_assignable(source_elem, target_elem)
+                // Convert &Box<Type> to &Type
+                self.is_assignable(&**source_elem, &**target_elem)
             }
 
-            // Tipi identici
+            // Identical types
             _ => source == target,
         }
     }
