@@ -812,8 +812,7 @@ impl TypeChecker {
         if !self.is_assignable(&actual_type, expected_type) {
             self.ptype_error(
                 format!(
-                    "Return type mismatch: expected {}, found {}",
-                    expected_type, actual_type
+                    "Return type mismatch: expected {expected_type}, found {actual_type}"
                 ),
                 expr.span().clone(),
             );
@@ -825,8 +824,7 @@ impl TypeChecker {
         if *expected_type != Type::Void {
             self.ptype_error(
                 format!(
-                    "Function requires return type {}, found void",
-                    expected_type
+                    "Function requires return type {expected_type}, found void",
                 ),
                 span.clone(),
             );

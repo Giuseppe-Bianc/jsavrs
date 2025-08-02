@@ -614,7 +614,7 @@ impl TypeChecker {
             return Type::Void;
         };
 
-        let func = match self.symbol_table.lookup_function(&callee_name) {
+        let func = match self.symbol_table.lookup_function(callee_name) {
             Some(func) => func,
             None => {
                 self.type_error(format!("Undefined function '{callee_name}'"), callee.span());
@@ -690,6 +690,7 @@ impl TypeChecker {
     }
 
     // FUNZIONI DI VERIFICA TIPI
+    #[allow(clippy::borrowed_box, clippy::only_used_in_recursion)]
     pub fn is_assignable(&self, source: &Type, target: &Type) -> bool {
         match (source, target) {
             // Promozioni numeriche
@@ -779,6 +780,7 @@ impl TypeChecker {
         )
     }
 
+    #[allow(clippy::only_used_in_recursion)]
     fn function_has_return(&self, body: &[Stmt]) -> bool {
         for stmt in body {
             match stmt {
