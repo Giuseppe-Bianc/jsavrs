@@ -158,14 +158,7 @@ impl TypeChecker {
         }
     }
 
-    fn visit_function(
-        &mut self,
-        name: &str,
-        parameters: &[Parameter],
-        return_type: &Type,
-        body: &[Stmt],
-        span: &SourceSpan,
-    ) {
+    fn visit_function(&mut self, name: &str, parameters: &[Parameter], return_type: &Type, body: &[Stmt], span: &SourceSpan ) {
         let func_symbol = FunctionSymbol {
             name: name.to_string(),
             parameters: parameters.to_vec(),
@@ -203,14 +196,7 @@ impl TypeChecker {
     }
 
     fn visit_main_function(&mut self, body: &[Stmt], span: &SourceSpan) {
-        self.symbol_table
-            .push_scope(ScopeKind::Function, Some(span.clone()));
-        self.return_type_stack.push(Type::Void);
-
-        self.visit_statements(body);
-
-        self.return_type_stack.pop();
-        self.symbol_table.pop_scope();
+        self.visit_function("main", &[], &Type::Void, body, span);
     }
 
     fn visit_if(
