@@ -158,7 +158,14 @@ impl TypeChecker {
         }
     }
 
-    fn visit_function(&mut self, name: &str, parameters: &[Parameter], return_type: &Type, body: &[Stmt], span: &SourceSpan ) {
+    fn visit_function(
+        &mut self,
+        name: &str,
+        parameters: &[Parameter],
+        return_type: &Type,
+        body: &[Stmt],
+        span: &SourceSpan,
+    ) {
         let func_symbol = FunctionSymbol {
             name: name.to_string(),
             parameters: parameters.to_vec(),
@@ -204,7 +211,7 @@ impl TypeChecker {
         condition: &Expr,
         then_branch: &[Stmt],
         else_branch: Option<&[Stmt]>,
-        span: &SourceSpan,
+        _span: &SourceSpan,
     ) {
         let cond_type = self.visit_expr(condition);
         if cond_type != Type::Bool {
@@ -227,7 +234,7 @@ impl TypeChecker {
         }
     }
 
-    fn visit_while(&mut self, condition: &Expr, body: &[Stmt], span: &SourceSpan) {
+    fn visit_while(&mut self, condition: &Expr, body: &[Stmt], _span: &SourceSpan) {
         let cond_type = self.visit_expr(condition);
         if cond_type != Type::Bool {
             self.type_error(
@@ -341,7 +348,7 @@ impl TypeChecker {
                 span,
             } => self.visit_binary_expr(left, op, right, span),
             Expr::Unary { op, expr, span } => self.visit_unary_expr(op, expr, span),
-            Expr::Grouping { expr, span } => self.visit_expr(expr),
+            Expr::Grouping { expr, span: _ } => self.visit_expr(expr),
             Expr::Literal { value, span } => self.visit_literal(value, span),
             Expr::ArrayLiteral { elements, span } => self.visit_array_literal(elements, span),
             Expr::Variable { name, span } => self.visit_variable(name, span),
@@ -457,7 +464,7 @@ impl TypeChecker {
         }
     }
 
-    fn visit_unary_expr(&mut self, op: &UnaryOp, expr: &Expr, span: &SourceSpan) -> Type {
+    fn visit_unary_expr(&mut self, op: &UnaryOp, expr: &Expr, _span: &SourceSpan) -> Type {
         let expr_type = self.visit_expr(expr);
 
         match op {
@@ -482,7 +489,7 @@ impl TypeChecker {
         }
     }
 
-    fn visit_literal(&mut self, value: &LiteralValue, span: &SourceSpan) -> Type {
+    fn visit_literal(&mut self, value: &LiteralValue, _span: &SourceSpan) -> Type {
         match value {
             LiteralValue::Number(n) => self.type_of_number(n),
             LiteralValue::StringLit(_) => Type::String,
@@ -552,7 +559,7 @@ impl TypeChecker {
         }
     }
 
-    fn visit_assign(&mut self, target: &Expr, value: &Expr, span: &SourceSpan) -> Type {
+    fn visit_assign(&mut self, target: &Expr, value: &Expr, _span: &SourceSpan) -> Type {
         let target_type = match target {
             Expr::Variable { name, span } => match self.symbol_table.lookup_variable(name) {
                 Some(var) => {
@@ -569,15 +576,12 @@ impl TypeChecker {
                     Type::Void
                 }
             },
-            Expr::ArrayAccess { array, index, span } => {
+            Expr::ArrayAccess { array, index: _ , span } => {
                 let array_type = self.visit_expr(array);
                 if let Type::Array(element_type, _) = array_type {
                     *element_type
                 } else {
-                    self.type_error(
-                        format!("Cannot index non-array type {array_type}"),
-                        array.span(),
-                    );
+                    self.type_error(format!("Cannot index non-array type {array_type}"), span);
                     Type::Void
                 }
             }
@@ -600,17 +604,23 @@ impl TypeChecker {
     }
 
     fn visit_call(&mut self, callee: &Expr, arguments: &[Expr], span: &SourceSpan) -> Type {
-        let callee_type = self.visit_expr(callee);
         let callee_name = if let Expr::Variable { name, .. } = callee {
-            name.clone()
+            name
         } else {
-            "".to_string()
+            self.type_error("Callee must be a function name", callee.span());
+            for arg in arguments {
+                self.visit_expr(arg);
+            }
+            return Type::Void;
         };
 
         let func = match self.symbol_table.lookup_function(&callee_name) {
             Some(func) => func,
             None => {
                 self.type_error(format!("Undefined function '{callee_name}'"), callee.span());
+                for arg in arguments {
+                    self.visit_expr(arg);
+                }
                 return Type::Void;
             }
         };
@@ -624,7 +634,6 @@ impl TypeChecker {
                 ),
                 span,
             );
-            return func.return_type.clone();
         }
 
         for (i, (arg, param)) in arguments.iter().zip(&func.parameters).enumerate() {
@@ -645,7 +654,7 @@ impl TypeChecker {
         func.return_type.clone()
     }
 
-    fn visit_array_access(&mut self, array: &Expr, index: &Expr, span: &SourceSpan) -> Type {
+    fn visit_array_access(&mut self, array: &Expr, index: &Expr, _span: &SourceSpan) -> Type {
         let array_type = self.visit_expr(array);
         let index_type = self.visit_expr(index);
 

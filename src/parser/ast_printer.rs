@@ -528,11 +528,21 @@ fn print_stmt(
             statements,
             span: _span,
         } => {
-            append_line(output, indent, is_last, styles.clone().keyword, "Block");
-            let new_indent = get_indent(indent, true);
-            for (i, stmt) in statements.iter().enumerate() {
-                let is_last_stmt = i == statements.len() - 1;
-                print_stmt(stmt, &new_indent, is_last_stmt, output, styles);
+            if statements.is_empty() {
+                append_line(
+                    output,
+                    indent,
+                    is_last,
+                    styles.clone().keyword,
+                    "Block: (empty)",
+                );
+            } else {
+                append_line(output, indent, is_last, styles.clone().keyword, "Block");
+                let new_indent = get_indent(indent, is_last);
+                for (i, stmt) in statements.iter().enumerate() {
+                    let is_last_stmt = i == statements.len() - 1;
+                    print_stmt(stmt, &new_indent, is_last_stmt, output, styles);
+                }
             }
         }
         Stmt::Return { value, span: _span } => {
