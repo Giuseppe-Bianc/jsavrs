@@ -113,6 +113,7 @@ impl SymbolTable {
     }
 
     // Helper method to find symbols with a custom filter
+    #[allow(clippy::collapsible_if)]
     fn find_symbol<F, T>(&self, name: &str, filter: F) -> Option<T>
     where
         F: Fn(&Symbol) -> Option<T>,
