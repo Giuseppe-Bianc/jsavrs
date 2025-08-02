@@ -744,7 +744,7 @@ impl TypeChecker {
             // Vector: requires compatible element types
             (Type::Vector(source_elem), Type::Vector(target_elem)) => {
                 // Convert &Box<Type> to &Type
-                self.is_assignable(&**source_elem, &**target_elem)
+                self.is_assignable(source_elem, target_elem)
             }
 
             // Identical types
