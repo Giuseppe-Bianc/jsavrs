@@ -195,7 +195,7 @@ impl TypeChecker {
         self.visit_statements(body);
 
         if *return_type != Type::Void && !self.function_has_return(body) {
-            self.type_error("Function may not return a value", span);
+            self.type_error("Not all code paths return a value", span);
         }
 
         self.return_type_stack.pop();
