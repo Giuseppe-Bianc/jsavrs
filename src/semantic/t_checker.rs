@@ -730,7 +730,7 @@ impl TypeChecker {
             // Array: requires compatible types and equal sizes
             (Type::Array(source_elem, source_size), Type::Array(target_elem, target_size)) => {
                 // Convert &Box<Type> to &Type via dereferencing
-                if !self.is_assignable(&**source_elem, &**target_elem) {
+                if !self.is_assignable(source_elem,target_elem) {
                     return false;
                 }
 
