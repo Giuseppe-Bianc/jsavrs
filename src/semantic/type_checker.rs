@@ -124,7 +124,7 @@ impl TypeChecker {
         if variables.len() != initializers.len() {
             self.type_error(
                 format!(
-                    "Expected {} initializers, found {}",
+                    "Variable declaration requires {} initializers but {} were provided",
                     variables.len(),
                     initializers.len()
                 ),
@@ -197,7 +197,7 @@ impl TypeChecker {
         self.visit_statements(body);
 
         if *return_type != Type::Void && !self.function_has_return(body) {
-            self.type_error("Not all code paths return a value", span);
+            self.type_error(format!("Function '{name}' may not return value in all code paths (expected return type: {return_type})"), span);
         }
 
         self.return_type_stack.pop();
@@ -218,7 +218,7 @@ impl TypeChecker {
         if let Some(cond_type) = self.visit_expr(condition) {
             if cond_type != Type::Bool {
                 self.type_error(
-                    format!("If condition must be bool, found {cond_type}"),
+                    format!("Condition in 'if' statement must be boolean, found {cond_type}"),
                     condition.span(),
                 );
             }
@@ -241,7 +241,7 @@ impl TypeChecker {
         if let Some(cond_type) = self.visit_expr(condition) {
             if cond_type != Type::Bool {
                 self.type_error(
-                    format!("While condition must be bool, found {cond_type}"),
+                    format!("Condition in 'while' loop must be boolean, found {cond_type}"),
                     condition.span(),
                 );
             }
@@ -306,7 +306,7 @@ impl TypeChecker {
 
     fn visit_return(&mut self, value: Option<&Expr>, span: &SourceSpan) {
         if self.return_type_stack.is_empty() {
-            self.type_error("Return statement outside function", span);
+            self.type_error("Return statement must be inside function body", span);
             return;
         }
         let expected_type = self.return_type_stack.last().cloned().unwrap_or(Type::Void);
@@ -320,7 +320,7 @@ impl TypeChecker {
                     if !self.is_assignable(&actual_type, &expected_type) {
                         self.type_error(
                             format!(
-                                "Return type mismatch, expected {expected_type} found {actual_type}"
+                                "Return type mismatch: expected {expected_type} found {actual_type}"
                             ),
                             expr.span(),
                         );
@@ -568,7 +568,7 @@ impl TypeChecker {
                 if let Some(prev) = &element_type {
                     if !self.is_same_type(prev, &ty) {
                         self.type_error(
-                            format!("Array elements must be of the same type, found {prev} and {ty}"),
+                            format!("All array elements must be same type, found mixed types: {prev} and {ty}"),
                             element.span(),
                         )
                     }
@@ -597,7 +597,7 @@ impl TypeChecker {
             Some(var) => Some(var.ty.clone()),
             None => {
                 if self.symbol_table.lookup_function(name).is_some() {
-                    self.type_error(format!("'{name}' is a function, not a variable"), span);
+                    self.type_error(format!("'{name}' is a function and cannot be used as variable"), span);
                 } else {
                     self.type_error(format!("Undefined variable '{name}'"), span);
                 }
@@ -633,7 +633,7 @@ impl TypeChecker {
                 }
             }
             _ => {
-                self.type_error("Invalid assignment target", target.span());
+                self.type_error("Invalid left-hand side in assignment", target.span());
                 return None;
             }
         };
@@ -668,7 +668,7 @@ impl TypeChecker {
         let func = match self.symbol_table.lookup_function(callee_name) {
             Some(func) => func,
             None => {
-                self.type_error(format!("Undefined function '{callee_name}'"), callee.span());
+                self.type_error(format!("Undefined function: '{callee_name}'"), callee.span());
                 for arg in arguments {
                     self.visit_expr(arg);
                 }
@@ -693,7 +693,7 @@ impl TypeChecker {
                 if !self.is_assignable(&arg_type, &param.type_annotation) {
                     self.type_error(
                         format!(
-                            "Argument {}: expected {}, found {}",
+                            "Argument {} type mismatch: expected {}, found {}",
                             i + 1,
                             param.type_annotation,
                             arg_type
@@ -713,7 +713,7 @@ impl TypeChecker {
 
         if !self.is_integer_type(&index_type) {
             self.type_error(
-                format!("Array index must be integer, found {index_type}"),
+                format!("Array index must be integer type, found {index_type}"),
                 index.span(),
             );
             return None;
@@ -723,7 +723,7 @@ impl TypeChecker {
             Some(*element_type)
         } else {
             self.type_error(
-                format!("Cannot index non-array type {array_type}"),
+                format!("Cannot index into non-array type {array_type}"),
                 array.span(),
             );
             None

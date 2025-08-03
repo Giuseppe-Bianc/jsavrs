@@ -95,7 +95,7 @@ add(1i32, \"two\")";
     assert_eq!(errors.len(), 1);
     assert_eq!(
         errors[0].message(),
-        Some("Argument 2: expected i32, found string")
+        Some("Argument 2 type mismatch: expected i32, found string")
     );
 }
 
@@ -109,7 +109,7 @@ fn test_return_type_mismatch() {
     assert_eq!(errors.len(), 1);
     assert_eq!(
         errors[0].message(),
-        Some("Return type mismatch, expected i32 found bool")
+        Some("Return type mismatch: expected i32 found bool")
     );
 }
 
@@ -158,7 +158,7 @@ fn test_mismatched_types_in_array_literal() {
     assert_eq!(errors.len(), 1);
     assert_eq!(
         errors[0].message(),
-        Some("Array elements must be of the same type, found i32 and char")
+        Some("All array elements must be same type, found mixed types: i32 and char")
     );
 }
 
@@ -171,7 +171,7 @@ fn test_array_invalid_index_access() {
     assert_eq!(errors.len(), 1);
     assert_eq!(
         errors[0].message(),
-        Some("Array index must be integer, found char")
+        Some("Array index must be integer type, found char")
     );
 }
 
@@ -249,7 +249,7 @@ fn test_indexing_a_non_array_type() {
 
     let errors = typecheck(ast);
     assert_eq!(errors.len(), 1);
-    assert_eq!(errors[0].message(), Some("Cannot index non-array type i32"));
+    assert_eq!(errors[0].message(), Some("Cannot index into non-array type i32"));
 }
 
 #[test]
@@ -426,7 +426,7 @@ fn test_if_invalid_condition() {
     assert_eq!(errors.len(), 1);
     assert_eq!(
         errors[0].message(),
-        Some("If condition must be bool, found i64")
+        Some("Condition in 'if' statement must be boolean, found i64")
     );
 }
 
@@ -448,7 +448,7 @@ fn test_return_outside_of_function() {
     assert_eq!(errors.len(), 1);
     assert_eq!(
         errors[0].message(),
-        Some("Return statement outside function")
+        Some("Return statement must be inside function body")
     );
 }
 
@@ -498,7 +498,7 @@ fn test_assign_to_array_access_whit_nullptr_index() {
     assert_eq!(errors.len(), 1);
     assert_eq!(
         errors[0].message(),
-        Some("Array index must be integer, found nullptr")
+        Some("Array index must be integer type, found nullptr")
     );
 }
 
@@ -509,7 +509,7 @@ fn test_assign_to_a_non_array() {
 
     let errors = typecheck(ast);
     assert_eq!(errors.len(), 1);
-    assert_eq!(errors[0].message(), Some("Cannot index non-array type i32"));
+    assert_eq!(errors[0].message(), Some("Cannot index into non-array type i32"));
 }
 
 #[test]
@@ -519,7 +519,7 @@ fn test_non_function_variable_call() {
 
     let errors = typecheck(ast);
     assert_eq!(errors.len(), 1);
-    assert_eq!(errors[0].message(), Some("Undefined function 'x'"));
+    assert_eq!(errors[0].message(), Some("Undefined function: 'x'"));
 }
 
 #[test]
@@ -530,7 +530,7 @@ fn test_undefined_function_call() {
     assert_eq!(errors.len(), 1);
     assert_eq!(
         errors[0].message(),
-        Some("Undefined function 'undefined_function'")
+        Some("Undefined function: 'undefined_function'")
     );
 }
 
@@ -548,7 +548,7 @@ fn test_while_loop_invalid_condition() {
     assert_eq!(errors.len(), 1);
     assert_eq!(
         errors[0].message(),
-        Some("While condition must be bool, found i32")
+        Some("Condition in 'while' loop must be boolean, found i32")
     );
 }
 
