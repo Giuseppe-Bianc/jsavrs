@@ -49,5 +49,7 @@ jobs:
           files: coverage.xml
           token: ${{ secrets.CODECOV_TOKEN }}
           flags: ${{ matrix.os }}-rust-${{ matrix.toolchain }}
+          slug: Giuseppe-Bianc/jsavrs
           verbose: true
           disable_search: true  # DISABILITA RICERCA AUTOMATICA FILE
+          fail_ci_if_error: true
