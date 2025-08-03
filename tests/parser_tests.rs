@@ -433,7 +433,7 @@ fn test_unclosed_parenthesis() {
     assert!(!errors.is_empty());
     assert_eq!(
         errors[0].message().unwrap(),
-        "Expected ')' in end of grouping but found end of file"
+        "Expected ')' in end of grouping, found end of file.\nHelp: Try adding a ')'"
     );
     assert_eq!(expr.len(), 0);
 }
@@ -597,7 +597,7 @@ fn test_function_call_unclosed_paren() {
     assert!(!errors.is_empty());
     assert_eq!(
         errors[0].message().unwrap(),
-        "Expected ')' in end of function call arguments but found end of file"
+        "Expected ')' in end of function call arguments, found end of file.\nHelp: Try adding a ')'"
     );
     assert_eq!(expr.len(), 0);
 }
@@ -948,7 +948,7 @@ fn test_function_parameter_errors() {
     assert!(!errors.is_empty());
     assert_eq!(
         errors[0].message().unwrap(),
-        "Expected ':' in after parameter name but found ','"
+        "Expected ':' in after parameter name, found ','.\nHelp: Try adding a ':'"
     );
 }
 
@@ -1120,12 +1120,13 @@ fn test_full_for_loop() {
     assert_eq!(
         statements[0],
         Stmt::For {
-            initializer: Some(Box::from(var_declaration(vec!["i".to_string()], Type::I32, true, vec![num_lit(0)]))),
-            condition: Some(binary_expr(
-                variable_expr("i"),
-                BinaryOp::Less,
-                num_lit(10)
-            )),
+            initializer: Some(Box::from(var_declaration(
+                vec!["i".to_string()],
+                Type::I32,
+                true,
+                vec![num_lit(0)]
+            ))),
+            condition: Some(binary_expr(variable_expr("i"), BinaryOp::Less, num_lit(10))),
             increment: None,
             body: vec![],
             span: dummy_span(),
@@ -1631,7 +1632,7 @@ fn vector_declaration() {
         expr[0],
         Stmt::VarDeclaration {
             variables: vec!["arr".into()],
-            type_annotation: Type::Vector(Box::new(Type::I8), ),
+            type_annotation: Type::Vector(Box::new(Type::I8),),
             is_mutable: true,
             initializers: vec![Expr::ArrayLiteral {
                 elements: vec![
@@ -1837,7 +1838,7 @@ fn test_var_no_initializer() {
     assert!(!errors.is_empty());
     assert_eq!(
         errors[0].message().unwrap(),
-        "Expected '=' in after type annotation but found end of file"
+        "Expected '=' in after type annotation, found end of file.\nHelp: Try adding a '='"
     );
 }
 
@@ -1851,7 +1852,7 @@ fn test_unclose_array_literal() {
     assert!(!errors.is_empty());
     assert_eq!(
         errors[0].message().unwrap(),
-        "Expected '}' in end of array literal but found end of file"
+        "Expected '}' in end of array literal, found end of file.\nHelp: Try adding a '}'"
     );
     assert!(!expr.is_empty());
 }
@@ -1864,7 +1865,10 @@ fn test_var_invaild_type() {
     let parser = JsavParser::new(tokens);
     let (_expr, errors) = parser.parse();
     assert!(!errors.is_empty());
-    assert_eq!(errors[0].message().unwrap(), "Invalid type: number '5'");
+    assert_eq!(
+        errors[0].message().unwrap(),
+        "Invalid type specification, expected primitive type or custom identifier: number '5'"
+    );
 }
 
 #[test]

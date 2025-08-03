@@ -267,7 +267,10 @@ impl JsavParser {
                 .unwrap_or_else(|| start_token.span.clone())
         });
 
-        let span = start_token.span.merged(&end_span).unwrap_or(start_token.span);
+        let span = start_token
+            .span
+            .merged(&end_span)
+            .unwrap_or(start_token.span);
 
         Some(Stmt::For {
             initializer,
@@ -298,7 +301,10 @@ impl JsavParser {
                 Type::Custom(name.clone())
             }
             _ => {
-                self.syntax_error("Invalid type", &token);
+                self.syntax_error(
+                    "Invalid type specification, expected primitive type or custom identifier",
+                    &token,
+                );
                 return None;
             }
         };
@@ -371,7 +377,10 @@ impl JsavParser {
         }
 
         if variables.len() != initializers.len() {
-            self.syntax_error("Number of initializers does not match number of variables", &start_token);
+            self.syntax_error(format!(
+                "Declaration mismatch: {} variables but {} initializers.\nHelp: Each variable must have exactly one initializer",
+                variables.len(), initializers.len()
+            ), &start_token);
         }
 
         Some(Stmt::VarDeclaration {
@@ -625,9 +634,9 @@ impl JsavParser {
     }
 
     // Improved syntax_error for clearer messages
-    fn syntax_error(&mut self, message: &str, token: &Token) {
+    fn syntax_error(&mut self, message: impl Into<String>, token: &Token) {
         self.errors.push(CompileError::SyntaxError {
-            message: format!("{}: {}", message, &token.kind),
+            message: format!("{}: {}", message.into(), &token.kind),
             span: token.span.clone(),
         });
     }
@@ -649,7 +658,9 @@ impl JsavParser {
                 .map(|t| t.span.clone())
                 .unwrap_or_default();
 
-            let error_message = format!("Expected {expected} in {context} but found {found_str}");
+            let error_message = format!(
+                "Expected {expected} in {context}, found {found_str}.\nHelp: Try adding a {expected}"
+            );
             self.errors.push(CompileError::SyntaxError {
                 message: error_message,
                 span,

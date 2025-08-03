@@ -626,11 +626,7 @@ impl TypeChecker {
             },
             Expr::ArrayAccess { array, index, span } => {
                 // Delegate to visit_array_access to check both array and index
-                if let Some(element_type) = self.visit_array_access(array, index, span) {
-                    element_type
-                } else {
-                    return None;
-                }
+                self.visit_array_access(array, index, span)?
             }
             _ => {
                 self.type_error("Invalid left-hand side in assignment", target.span());
