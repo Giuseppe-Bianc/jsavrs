@@ -1632,7 +1632,7 @@ fn vector_declaration() {
         expr[0],
         Stmt::VarDeclaration {
             variables: vec!["arr".into()],
-            type_annotation: Type::Vector(Box::new(Type::I8),),
+            type_annotation: Type::Vector(Box::new(Type::I8)),
             is_mutable: true,
             initializers: vec![Expr::ArrayLiteral {
                 elements: vec![
