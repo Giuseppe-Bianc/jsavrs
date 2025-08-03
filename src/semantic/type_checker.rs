@@ -26,6 +26,7 @@ const HIERARCHY: [Type; 10] = [
     Type::I8,
 ];
 
+#[allow(clippy::collapsible_if)]
 impl TypeChecker {
     pub fn new() -> Self {
         TypeChecker {
