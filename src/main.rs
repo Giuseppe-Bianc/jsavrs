@@ -8,8 +8,8 @@ use jsavrs::lexer::Lexer;
 use jsavrs::nir::generator::NIrGenerator;
 use jsavrs::parser::ast_printer::pretty_print_stmt;
 use jsavrs::parser::jsav_parser::JsavParser;
-//use jsavrs::semantic::type_checker::TypeChecker;
-use jsavrs::semantic::t_checker::TypeChecker;
+use jsavrs::semantic::type_checker::TypeChecker;
+//use jsavrs::semantic::t_checker::TypeChecker;
 use jsavrs::time::timer::{AutoTimer, Timer};
 use jsavrs::{error::compile_error::CompileError, lexer::lexer_tokenize_with_errors};
 use std::process;
@@ -100,7 +100,7 @@ fn main() -> Result<(), CompileError> {
     println!("type checking done");
     if !type_check_errors.is_empty() {
         eprintln!("{}", error_reporter.report_errors(type_check_errors));
-        ()
+        process::exit(-1);
     }
 
     let mut generator = NIrGenerator::new();

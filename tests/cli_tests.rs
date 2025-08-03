@@ -59,7 +59,7 @@ fn verbose_flag_works() {
     path.push("test.vn");
 
     // Create temporary test file
-    std::fs::write(&path, "fun a(num1: i8, num2: i8): i8 {}").unwrap();
+    std::fs::write(&path, "fun a(num1: i8, num2: i8): i8 { return 0i8 }").unwrap();
 
     cmd.arg("-i").arg(&path).arg("-v").assert().success();
 
@@ -74,7 +74,7 @@ fn long_flag_works() {
     path.push("test2.vn");
 
     // Create temporary test file
-    std::fs::write(&path, "fun a(num1: i8, num2: i8): i8 {}").unwrap();
+    std::fs::write(&path, "fun a(num1: i8, num2: i8): i8 { return 0i8 }").unwrap();
 
     cmd.arg("--input").arg(&path).arg("-v").assert().success();
 
@@ -89,7 +89,7 @@ fn long_verbose_flag_works() {
     path.push("test3.vn");
 
     // Create temporary test file
-    std::fs::write(&path, "fun a(num1: i8, num2: i8): i8 {}").unwrap();
+    std::fs::write(&path, "fun a(num1: i8, num2: i8): i8 { return 0i8 }").unwrap();
 
     cmd.arg("--input")
         .arg(&path)

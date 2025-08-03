@@ -145,7 +145,7 @@ fn test_empty_array_literal() {
     assert_eq!(errors.len(), 1);
     assert_eq!(
         errors[0].message(),
-        Some("Array literal must have at least one element")
+        Some("Array literals must have at least one element for type inference")
     );
 }
 
@@ -501,6 +501,7 @@ fn test_assign_to_array_access_whit_nullptr_index() {
         Some("Array index must be integer, found nullptr")
     );
 }
+
 #[test]
 fn test_assign_to_a_non_array() {
     let ast = "var arr: i32 = 2i32
@@ -508,7 +509,7 @@ fn test_assign_to_a_non_array() {
 
     let errors = typecheck(ast);
     assert_eq!(errors.len(), 1);
-    assert_eq!(errors[0].message(), Some("Indexing non-array type i32"));
+    assert_eq!(errors[0].message(), Some("Cannot index non-array type i32"));
 }
 
 #[test]

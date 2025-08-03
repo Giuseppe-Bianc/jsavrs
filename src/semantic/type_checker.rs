@@ -8,7 +8,6 @@ use crate::tokens::number::Number;
 pub struct TypeChecker {
     symbol_table: SymbolTable,
     errors: Vec<CompileError>,
-    //current_function: Option<Type>,
     in_loop: bool,
     return_type_stack: Vec<Type>,
 }
@@ -32,7 +31,6 @@ impl TypeChecker {
         TypeChecker {
             symbol_table: SymbolTable::new(),
             errors: Vec::new(),
-            //current_function: None,
             in_loop: false,
             return_type_stack: Vec::new(),
         }
@@ -138,14 +136,16 @@ impl TypeChecker {
         for (var_name, init_expr) in variables.iter().zip(initializers) {
             let init_type = self.visit_expr(init_expr);
 
-            if !self.is_assignable(&init_type, type_annotation) {
-                self.type_error(
-                    format!(
-                        "Cannot assign {init_type} to {type_annotation} for variable '{var_name}'"
-                    ),
-                    init_expr.span(),
-                );
+            // Solo se l'espressione ha prodotto un tipo valido
+            if let Some(init_type) = init_type {
+                if !self.is_assignable(&init_type, type_annotation) {
+                    self.type_error(
+                        format!("Cannot assign {init_type} to {type_annotation} for variable '{var_name}'"),
+                        init_expr.span(),
+                    );
+                }
             }
+
 
             self.declare_symbol(
                 var_name,
@@ -215,12 +215,13 @@ impl TypeChecker {
         else_branch: Option<&[Stmt]>,
         _span: &SourceSpan,
     ) {
-        let cond_type = self.visit_expr(condition);
-        if cond_type != Type::Bool {
-            self.type_error(
-                format!("If condition must be bool, found {cond_type}"),
-                condition.span(),
-            );
+        if let Some(cond_type) = self.visit_expr(condition) {
+            if cond_type != Type::Bool {
+                self.type_error(
+                    format!("If condition must be bool, found {cond_type}"),
+                    condition.span(),
+                );
+            }
         }
 
         self.symbol_table
@@ -237,12 +238,13 @@ impl TypeChecker {
     }
 
     fn visit_while(&mut self, condition: &Expr, body: &[Stmt], _span: &SourceSpan) {
-        let cond_type = self.visit_expr(condition);
-        if cond_type != Type::Bool {
-            self.type_error(
-                format!("While condition must be bool, found {cond_type}"),
-                condition.span(),
-            );
+        if let Some(cond_type) = self.visit_expr(condition) {
+            if cond_type != Type::Bool {
+                self.type_error(
+                    format!("While condition must be bool, found {cond_type}"),
+                    condition.span(),
+                );
+            }
         }
 
         let was_in_loop = self.in_loop;
@@ -272,12 +274,13 @@ impl TypeChecker {
         }
 
         if let Some(cond) = condition {
-            let cond_type = self.visit_expr(cond);
-            if cond_type != Type::Bool {
-                self.type_error(
-                    format!("For loop condition must be bool, found {cond_type}"),
-                    cond.span(),
-                );
+            if let Some(cond_type) = self.visit_expr(cond) {
+                if cond_type != Type::Bool {
+                    self.type_error(
+                        format!("For loop condition must be bool, found {cond_type}"),
+                        cond.span(),
+                    );
+                }
             }
         }
 
@@ -313,14 +316,15 @@ impl TypeChecker {
                 self.type_error("Cannot return a value from void function", expr.span());
             }
             (Some(expr), _) => {
-                let actual_type = self.visit_expr(expr);
-                if !self.is_assignable(&actual_type, &expected_type) {
-                    self.type_error(
-                        format!(
-                            "Return type mismatch, expected {expected_type} found {actual_type}"
-                        ),
-                        expr.span(),
-                    );
+                if let Some(actual_type) = self.visit_expr(expr) {
+                    if !self.is_assignable(&actual_type, &expected_type) {
+                        self.type_error(
+                            format!(
+                                "Return type mismatch, expected {expected_type} found {actual_type}"
+                            ),
+                            expr.span(),
+                        );
+                    }
                 }
             }
             (None, Type::Void) => {}
@@ -345,7 +349,7 @@ impl TypeChecker {
         }
     }
 
-    fn visit_expr(&mut self, expr: &Expr) -> Type {
+    fn visit_expr(&mut self, expr: &Expr) -> Option<Type> {
         match expr {
             Expr::Binary {
                 left,
@@ -378,9 +382,9 @@ impl TypeChecker {
         op: &BinaryOp,
         right: &Expr,
         span: &SourceSpan,
-    ) -> Type {
-        let mut left_type = self.visit_expr(left);
-        let mut right_type = self.visit_expr(right);
+    ) -> Option<Type> {
+        let mut left_type = self.visit_expr(left)?;
+        let mut right_type = self.visit_expr(right)?;
 
         // Distinzione tra operatori bitwise e altri operatori numerici
         if matches!(
@@ -401,7 +405,7 @@ impl TypeChecker {
                     format!("Bitwise operator '{op:?}' require integer operand types, found {left_type} and {right_type}"),
                     span,
                 );
-                return Type::Void;
+                return None;
             }
         } else if matches!(
             op,
@@ -456,10 +460,10 @@ impl TypeChecker {
                 ),
             };
             self.type_error(message, span);
-            return Type::Void;
+            return None;
         }
 
-        match op {
+        Some(match op {
             BinaryOp::Add
             | BinaryOp::Subtract
             | BinaryOp::Multiply
@@ -493,11 +497,11 @@ impl TypeChecker {
             | BinaryOp::BitwiseXor
             | BinaryOp::ShiftLeft
             | BinaryOp::ShiftRight => left_type,
-        }
+        })
     }
 
-    fn visit_unary_expr(&mut self, op: &UnaryOp, expr: &Expr, _span: &SourceSpan) -> Type {
-        let expr_type = self.visit_expr(expr);
+    fn visit_unary_expr(&mut self, op: &UnaryOp, expr: &Expr, _span: &SourceSpan) -> Option<Type> {
+        let expr_type = self.visit_expr(expr)?;
 
         match op {
             UnaryOp::Negate => {
@@ -506,8 +510,9 @@ impl TypeChecker {
                         format!("Negation requires numeric type operand, found {expr_type}"),
                         expr.span(),
                     );
+                    return None;
                 }
-                expr_type
+                Some(expr_type)
             }
             UnaryOp::Not => {
                 if expr_type != Type::Bool {
@@ -515,20 +520,21 @@ impl TypeChecker {
                         format!("Logical not requires boolean type operand, found {expr_type}"),
                         expr.span(),
                     );
+                    return None;
                 }
-                Type::Bool
+                Some(Type::Bool)
             }
         }
     }
 
-    fn visit_literal(&mut self, value: &LiteralValue, _span: &SourceSpan) -> Type {
-        match value {
+    fn visit_literal(&mut self, value: &LiteralValue, _span: &SourceSpan) -> Option<Type> {
+        Some(match value {
             LiteralValue::Number(n) => self.type_of_number(n),
             LiteralValue::StringLit(_) => Type::String,
             LiteralValue::CharLit(_) => Type::Char,
             LiteralValue::Bool(_) => Type::Bool,
             LiteralValue::Nullptr => Type::NullPtr,
-        }
+        })
     }
 
     pub fn type_of_number(&self, n: &Number) -> Type {
@@ -546,52 +552,61 @@ impl TypeChecker {
         }
     }
 
-    fn visit_array_literal(&mut self, elements: &[Expr], span: &SourceSpan) -> Type {
+    fn visit_array_literal(&mut self, elements: &[Expr], span: &SourceSpan) -> Option<Type> {
         if elements.is_empty() {
             self.type_error(
                 "Array literals must have at least one element for type inference",
                 span,
             );
-            return Type::Void;
+            return None; // Ritorna None dopo aver segnalato l'errore
         }
 
-        let first_type = self.visit_expr(&elements[0]);
-        for element in &elements[1..] {
-            let element_type = self.visit_expr(element);
-            if element_type != first_type {
-                self.type_error(
-                    format!(
-                        "Array elements must be of the same type, found {first_type} and {element_type}"
-                    ),
-                    element.span(),
-                );
+        let len = elements.len();
+        let mut element_type = None;
+        for element in elements {
+            if let Some(ty) = self.visit_expr(element) {
+                if let Some(prev) = &element_type {
+                    if !self.is_same_type(prev, &ty) {
+                        self.type_error(
+                            format!("Array elements must be of the same type, found {prev} and {ty}"),
+                            element.span(),
+                        )
+                    }
+                } else {
+                    element_type = Some(ty);
+                }
             }
         }
 
-        Type::Array(
-            Box::new(first_type),
-            Box::new(Expr::Literal {
-                value: LiteralValue::Number(Number::Integer(elements.len() as i64)),
+        element_type.map(|ty| {
+            // Create proper size expression with actual length
+            let size_expr = Expr::Literal {
+                value: LiteralValue::Number(Number::Integer(len as i64)),
                 span: span.clone(),
-            }),
-        )
+            };
+            Type::Array(Box::new(ty), Box::new(size_expr))
+        })
     }
 
-    fn visit_variable(&mut self, name: &str, span: &SourceSpan) -> Type {
+    fn is_same_type(&self, t1: &Type, t2: &Type) -> bool {
+        t1 == t2
+    }
+
+    fn visit_variable(&mut self, name: &str, span: &SourceSpan) -> Option<Type> {
         match self.symbol_table.lookup_variable(name) {
-            Some(var) => var.ty.clone(),
+            Some(var) => Some(var.ty.clone()),
             None => {
                 if self.symbol_table.lookup_function(name).is_some() {
                     self.type_error(format!("'{name}' is a function, not a variable"), span);
                 } else {
                     self.type_error(format!("Undefined variable '{name}'"), span);
                 }
-                Type::Void
+                None
             }
         }
     }
 
-    fn visit_assign(&mut self, target: &Expr, value: &Expr, _span: &SourceSpan) -> Type {
+    fn visit_assign(&mut self, target: &Expr, value: &Expr, _span: &SourceSpan) -> Option<Type> {
         let target_type = match target {
             Expr::Variable { name, span } => match self.symbol_table.lookup_variable(name) {
                 Some(var) => {
@@ -600,34 +615,30 @@ impl TypeChecker {
                             format!("Cannot assign to immutable variable '{name}'"),
                             span,
                         );
+                        return None;
                     }
                     var.ty.clone()
                 }
                 None => {
                     self.type_error(format!("Undefined variable '{name}'"), span);
-                    Type::Void
+                    return None;
                 }
             },
-            Expr::ArrayAccess {
-                array,
-                index: _,
-                span,
-            } => {
-                let array_type = self.visit_expr(array);
-                if let Type::Array(element_type, _) = array_type {
-                    *element_type
+            Expr::ArrayAccess { array, index, span } => {
+                // Delegate to visit_array_access to check both array and index
+                if let Some(element_type) = self.visit_array_access(array, index, span) {
+                    element_type
                 } else {
-                    self.type_error(format!("Cannot index non-array type {array_type}"), span);
-                    return Type::Void
+                    return None;
                 }
             }
             _ => {
                 self.type_error("Invalid assignment target", target.span());
-                Type::Void
+                return None;
             }
         };
 
-        let value_type = self.visit_expr(value);
+        let value_type = self.visit_expr(value)?;
 
         if !self.is_assignable(&value_type, &target_type) {
             // Create specific error message for array elements
@@ -640,10 +651,10 @@ impl TypeChecker {
             self.type_error(message, value.span());
         }
 
-        target_type
+        Some(target_type)
     }
 
-    fn visit_call(&mut self, callee: &Expr, arguments: &[Expr], span: &SourceSpan) -> Type {
+    fn visit_call(&mut self, callee: &Expr, arguments: &[Expr], span: &SourceSpan) -> Option<Type> {
         let callee_name = if let Expr::Variable { name, .. } = callee {
             name
         } else {
@@ -651,7 +662,7 @@ impl TypeChecker {
             for arg in arguments {
                 self.visit_expr(arg);
             }
-            return Type::Void;
+            return None;
         };
 
         let func = match self.symbol_table.lookup_function(callee_name) {
@@ -661,12 +672,11 @@ impl TypeChecker {
                 for arg in arguments {
                     self.visit_expr(arg);
                 }
-                return Type::Void;
+                return None;
             }
         };
 
         if arguments.len() != func.parameters.len() {
-            // Updated error message to include function name
             self.type_error(
                 format!(
                     "Function '{}' expects {} arguments, found {}",
@@ -679,42 +689,44 @@ impl TypeChecker {
         }
 
         for (i, (arg, param)) in arguments.iter().zip(&func.parameters).enumerate() {
-            let arg_type = self.visit_expr(arg);
-            if !self.is_assignable(&arg_type, &param.type_annotation) {
-                self.type_error(
-                    format!(
-                        "Argument {}: expected {}, found {}",
-                        i + 1,
-                        param.type_annotation,
-                        arg_type
-                    ),
-                    arg.span(),
-                );
+            if let Some(arg_type) = self.visit_expr(arg) {
+                if !self.is_assignable(&arg_type, &param.type_annotation) {
+                    self.type_error(
+                        format!(
+                            "Argument {}: expected {}, found {}",
+                            i + 1,
+                            param.type_annotation,
+                            arg_type
+                        ),
+                        arg.span(),
+                    );
+                }
             }
         }
 
-        func.return_type.clone()
+        Some(func.return_type.clone())
     }
 
-    fn visit_array_access(&mut self, array: &Expr, index: &Expr, _span: &SourceSpan) -> Type {
-        let array_type = self.visit_expr(array);
-        let index_type = self.visit_expr(index);
+    fn visit_array_access(&mut self, array: &Expr, index: &Expr, _span: &SourceSpan) -> Option<Type> {
+        let array_type = self.visit_expr(array)?;
+        let index_type = self.visit_expr(index)?;
 
         if !self.is_integer_type(&index_type) {
             self.type_error(
                 format!("Array index must be integer, found {index_type}"),
                 index.span(),
             );
+            return None;
         }
 
         if let Type::Array(element_type, _) = array_type {
-            *element_type
+            Some(*element_type)
         } else {
             self.type_error(
                 format!("Cannot index non-array type {array_type}"),
                 array.span(),
             );
-            Type::Void
+            None
         }
     }
 
