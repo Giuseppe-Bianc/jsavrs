@@ -2,8 +2,8 @@ use insta::assert_debug_snapshot;
 use insta::assert_snapshot;
 use jsavrs::error::compile_error::CompileError;
 use jsavrs::location::{source_location::SourceLocation, source_span::SourceSpan};
-use jsavrs::{make_error, make_error_lineless};
 use jsavrs::utils::t_span;
+use jsavrs::{make_error, make_error_lineless};
 use std::sync::Arc;
 
 #[test]
@@ -22,25 +22,25 @@ fn test_asm_generator_error_display() {
 }
 
 #[test]
-fn test_lexer_error_display_with_help() {
+fn test_lexer_error_display_fmt_with_help() {
     make_error!(error, LexerError, 1, Some("Check the syntax".to_string()));
     assert_snapshot!(error);
 }
 
 #[test]
-fn test_parser_error_display_with_help() {
+fn test_parser_error_display_fmt_with_help() {
     make_error!(error, SyntaxError, 2, Some("Ensure all brackets are closed".to_string()));
     assert_snapshot!(error);
 }
 
 #[test]
-fn test_type_error_display_with_help() {
+fn test_type_error_display_with_fmt_help() {
     make_error!(error, TypeError, 3, Some("Check variable types".to_string()));
     assert_snapshot!(error);
 }
 
 #[test]
-fn test_ir_error_display_with_help() {
+fn test_ir_error_display_with_fmt_help() {
     make_error!(error, IrGeneratorError, 4, Some("Check the IR generation".to_string()));
     assert_snapshot!(error);
 }
@@ -69,10 +69,10 @@ generate_display_test!(test_lexer_error_display, LexerError, 1);
 generate_display_test!(test_parser_error_display, SyntaxError, 2);
 generate_display_test!(test_type_error_display, TypeError, 3);
 generate_display_test!(test_ir_error_display, IrGeneratorError, 4);
-generate_display_test!(test_lexer_error_display_whit_help, LexerError, 1, Some("Check the syntax".to_string()));
-generate_display_test!(test_parser_error_display_whit_help, SyntaxError, 2, Some("Ensure all brackets are closed".to_string()));
-generate_display_test!(test_type_error_display_whit_help, TypeError, 3, Some("Check variable types".to_string()));
-
+generate_display_test!(test_lexer_error_display_with_help, LexerError, 1, Some("Check the syntax".to_string()));
+generate_display_test!(test_parser_error_display_with_help,SyntaxError, 2, Some("Ensure all brackets are closed".to_string()));
+generate_display_test!(test_type_error_display_with_help, TypeError, 3, Some("Check variable types".to_string()));
+generate_display_test!(test_ir_error_display_with_help, IrGeneratorError, 4, Some("Check the IR generation".to_string()));
 macro_rules! generate_message_test {
     ($test_name:ident, $error_type:ident, $line:expr) => {
         #[test]

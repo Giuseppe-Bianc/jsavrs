@@ -433,8 +433,9 @@ fn test_unclosed_parenthesis() {
     assert!(!errors.is_empty());
     assert_eq!(
         errors[0].message().unwrap(),
-        "Expected ')' in end of grouping, found end of file.\nHelp: Try adding a ')'"
+        "Expected ')' in end of grouping, found end of file."
     );
+    assert_eq!(errors[0].help().unwrap(), "Try adding a ')'");
     assert_eq!(expr.len(), 0);
 }
 
@@ -597,7 +598,11 @@ fn test_function_call_unclosed_paren() {
     assert!(!errors.is_empty());
     assert_eq!(
         errors[0].message().unwrap(),
-        "Expected ')' in end of function call arguments, found end of file.\nHelp: Try adding a ')'"
+        "Expected ')' in end of function call arguments, found end of file."
+    );
+    assert_eq!(
+        errors[0].help().unwrap(),
+        "Try adding a ')'"
     );
     assert_eq!(expr.len(), 0);
 }
@@ -948,8 +953,9 @@ fn test_function_parameter_errors() {
     assert!(!errors.is_empty());
     assert_eq!(
         errors[0].message().unwrap(),
-        "Expected ':' in after parameter name, found ','.\nHelp: Try adding a ':'"
+        "Expected ':' in after parameter name, found ','."
     );
+    assert_eq!(errors[0].help().unwrap(), "Try adding a ':'");
 }
 
 #[test]
@@ -1838,8 +1844,9 @@ fn test_var_no_initializer() {
     assert!(!errors.is_empty());
     assert_eq!(
         errors[0].message().unwrap(),
-        "Expected '=' in after type annotation, found end of file.\nHelp: Try adding a '='"
+        "Expected '=' in after type annotation, found end of file."
     );
+    assert_eq!(errors[0].help().unwrap(), "Try adding a '='");
 }
 
 #[test]
@@ -1852,8 +1859,9 @@ fn test_unclose_array_literal() {
     assert!(!errors.is_empty());
     assert_eq!(
         errors[0].message().unwrap(),
-        "Expected '}' in end of array literal, found end of file.\nHelp: Try adding a '}'"
+        "Expected '}' in end of array literal, found end of file."
     );
+    assert_eq!(errors[0].help().unwrap(), "Try adding a '}'");
     assert!(!expr.is_empty());
 }
 

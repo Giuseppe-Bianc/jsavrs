@@ -378,7 +378,7 @@ impl JsavParser {
 
         if variables.len() != initializers.len() {
             self.syntax_error(format!(
-                "Declaration mismatch: {} variables but {} initializers.\nHelp: Each variable must have exactly one initializer",
+                "Declaration mismatch: {} variables but {} initializers.\nhelp: Each variable must have exactly one initializer",
                 variables.len(), initializers.len()
             ), &start_token);
         }
@@ -586,7 +586,7 @@ impl JsavParser {
             self.errors.push(CompileError::SyntaxError {
                 message: "Invalid left-hand side in assignment".to_string(),
                 span: left.span().clone(),
-                help: None
+                help: None,
             });
             return None;
         }
@@ -639,7 +639,7 @@ impl JsavParser {
         self.errors.push(CompileError::SyntaxError {
             message: format!("{}: {}", message.into(), &token.kind),
             span: token.span.clone(),
-            help: None
+            help: None,
         });
     }
 
@@ -660,13 +660,12 @@ impl JsavParser {
                 .map(|t| t.span.clone())
                 .unwrap_or_default();
 
-            let error_message = format!(
-                "Expected {expected} in {context}, found {found_str}.\nHelp: Try adding a {expected}"
-            );
+            let error_message = format!("Expected {expected} in {context}, found {found_str}.");
+            let help_message = format!("Try adding a {expected}");
             self.errors.push(CompileError::SyntaxError {
                 message: error_message,
                 span,
-                help: None
+                help: Some(help_message),
             });
             false
         }

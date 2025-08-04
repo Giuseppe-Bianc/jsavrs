@@ -1,6 +1,6 @@
 use jsavrs::error::compile_error::CompileError;
 use jsavrs::error::error_reporter::ErrorReporter;
-use jsavrs::lexer::{lexer_tokenize_with_errors, Lexer};
+use jsavrs::lexer::{Lexer, lexer_tokenize_with_errors};
 use jsavrs::location::line_tracker::LineTracker;
 use jsavrs::utils::{create_span, strip_ansi_codes};
 use std::io;
@@ -31,7 +31,7 @@ Location: test:line 1:column 5 - line 1:column 6
 }
 
 #[test]
-fn lexer_error_single_line_whit_error() {
+fn lexer_error_single_line_with_error() {
     let source = "fn main() { let x = 42; }";
     let line_tracker = LineTracker::new("test", source.to_string());
     let reporter = ErrorReporter::new(line_tracker);
@@ -81,7 +81,7 @@ Location: test:line 1:column 5 - line 1:column 6
 }
 
 #[test]
-fn type_error_single_line_whit_error() {
+fn type_error_single_line_with_error() {
     let source = "fn main() { let x = 42; }";
     let line_tracker = LineTracker::new("test", source.to_string());
     let reporter = ErrorReporter::new(line_tracker);
@@ -130,7 +130,7 @@ Location: test:line 1:column 5 - line 1:column 6
 }
 
 #[test]
-fn ir_gen_error_single_line_whit_error() {
+fn ir_gen_error_single_line_with_error() {
     let source = "fn main() { let x = 42; }";
     let line_tracker = LineTracker::new("test", source.to_string());
     let reporter = ErrorReporter::new(line_tracker);
@@ -199,7 +199,7 @@ Location: test:line 1:column 12 - line 3:column 5
 }
 
 #[test]
-fn syntax_error_multi_line_whit_error() {
+fn syntax_error_multi_line_with_error() {
     let source = "fn main() {\n    let x = 42;\n    println!(\"hello\");\n}";
     let line_tracker = LineTracker::new("test", source.to_string());
     let reporter = ErrorReporter::new(line_tracker);

@@ -68,11 +68,11 @@ macro_rules! generate_display_test {
         fn $test_name() {
             make_error!(error, $error_type, $line, $help);
             let expected = format!(
-                "Unexpected token \"@\" at test_file:line {}:column 1 - line {}:column 2\nHelp: {}",
+                "Unexpected token \"@\" at test_file:line {}:column 1 - line {}:column 2\nhelp: {}",
                 $line, $line, $help.unwrap()
             );
             assert_eq!(
-                format!("{} at {}\nHelp: {}", error.message().unwrap(), error.span().unwrap(), error.help().unwrap()),
+                format!("{} at {}\nhelp: {}", error.message().unwrap(), error.span().unwrap(), error.help().unwrap()),
                 expected
             );
         }
@@ -236,5 +236,13 @@ fn test_get_message_non_lexer_error() {
 fn test_get_help_non_lexer_error() {
     let io_error = std::io::Error::new(std::io::ErrorKind::NotFound, "File not found");
     let error: CompileError = io_error.into();
+    assert_eq!(error.help(), None);
+}
+
+#[test]
+fn test_set_help_non_lexer_error() {
+    let io_error = std::io::Error::new(std::io::ErrorKind::NotFound, "File not found");
+    let mut error: CompileError = io_error.into();
+    error.set_help(Some("This is a help message".to_string()));
     assert_eq!(error.help(), None);
 }
