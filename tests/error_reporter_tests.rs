@@ -31,6 +31,32 @@ Location: test:line 1:column 5 - line 1:column 6
 }
 
 #[test]
+fn lexer_error_single_line_whit_error() {
+    let source = "fn main() { let x = 42; }";
+    let line_tracker = LineTracker::new("test", source.to_string());
+    let reporter = ErrorReporter::new(line_tracker);
+
+    let errors = vec![CompileError::LexerError {
+        message: "Invalid character '#'".to_string(),
+        span: create_span("test", 1, 5, 1, 6),
+        help: Some("This is a test error".to_string()),
+    }];
+
+    let report = reporter.report_errors(errors);
+    let stripped = strip_ansi_codes(&report);
+
+    let expected = "\
+ERROR LEX: Invalid character '#'
+Location: test:line 1:column 5 - line 1:column 6
+   1 │ fn main() { let x = 42; }
+     │     ^
+help: This is a test error
+";
+    assert_eq!(stripped, expected);
+}
+
+
+#[test]
 fn type_error_single_line() {
     let source = "fn main() { let x = 42; }";
     let line_tracker = LineTracker::new("test", source.to_string());
@@ -50,6 +76,31 @@ ERROR TYPE: Invalid character '#'
 Location: test:line 1:column 5 - line 1:column 6
    1 │ fn main() { let x = 42; }
      │     ^
+";
+    assert_eq!(stripped, expected);
+}
+
+#[test]
+fn type_error_single_line_whit_error() {
+    let source = "fn main() { let x = 42; }";
+    let line_tracker = LineTracker::new("test", source.to_string());
+    let reporter = ErrorReporter::new(line_tracker);
+
+    let errors = vec![CompileError::TypeError {
+        message: "Invalid character '#'".to_string(),
+        span: create_span("test", 1, 5, 1, 6),
+        help: Some("This is a test error".to_string()),
+    }];
+
+    let report = reporter.report_errors(errors);
+    let stripped = strip_ansi_codes(&report);
+
+    let expected = "\
+ERROR TYPE: Invalid character '#'
+Location: test:line 1:column 5 - line 1:column 6
+   1 │ fn main() { let x = 42; }
+     │     ^
+help: This is a test error
 ";
     assert_eq!(stripped, expected);
 }
@@ -79,12 +130,37 @@ Location: test:line 1:column 5 - line 1:column 6
 }
 
 #[test]
+fn ir_gen_error_single_line_whit_error() {
+    let source = "fn main() { let x = 42; }";
+    let line_tracker = LineTracker::new("test", source.to_string());
+    let reporter = ErrorReporter::new(line_tracker);
+
+    let errors = vec![CompileError::IrGeneratorError {
+        message: "Invalid character '#'".to_string(),
+        span: create_span("test", 1, 5, 1, 6),
+        help: Some("This is a test error".to_string()),
+    }];
+
+    let report = reporter.report_errors(errors);
+    let stripped = strip_ansi_codes(&report);
+
+    let expected = "\
+ERROR IR GEN: Invalid character '#'
+Location: test:line 1:column 5 - line 1:column 6
+   1 │ fn main() { let x = 42; }
+     │     ^
+help: This is a test error
+";
+    assert_eq!(stripped, expected);
+}
+
+#[test]
 fn asm_gen_error_single_line() {
     let source = "fn main() { let x = 42; }";
     let line_tracker = LineTracker::new("test", source.to_string());
     let reporter = ErrorReporter::new(line_tracker);
 
-    let errors = vec![CompileError::AsmGeneratorError { message: "invalid asm".to_string(), help: None }];
+    let errors = vec![CompileError::AsmGeneratorError { message: "invalid asm".to_string() }];
 
     let report = reporter.report_errors(errors);
     let stripped = strip_ansi_codes(&report);
@@ -118,6 +194,32 @@ Location: test:line 1:column 12 - line 3:column 5
    1 │ fn main() {
      │            ^
      │ ... (error spans lines 1-3)
+";
+    assert_eq!(stripped, expected);
+}
+
+#[test]
+fn syntax_error_multi_line_whit_error() {
+    let source = "fn main() {\n    let x = 42;\n    println!(\"hello\");\n}";
+    let line_tracker = LineTracker::new("test", source.to_string());
+    let reporter = ErrorReporter::new(line_tracker);
+
+    let errors = vec![CompileError::SyntaxError {
+        message: "Mismatched brackets".to_string(),
+        span: create_span("test", 1, 12, 3, 5),
+        help: Some("Check your brackets".to_string()),
+    }];
+
+    let report = reporter.report_errors(errors);
+    let stripped = strip_ansi_codes(&report);
+
+    let expected = "\
+ERROR SYNTAX: Mismatched brackets
+Location: test:line 1:column 12 - line 3:column 5
+   1 │ fn main() {
+     │            ^
+     │ ... (error spans lines 1-3)
+help: Check your brackets
 ";
     assert_eq!(stripped, expected);
 }

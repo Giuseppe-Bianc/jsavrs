@@ -19,19 +19,27 @@ impl ErrorReporter {
         errors
             .into_iter()
             .map(|error| match error {
-                CompileError::LexerError { message, span, help } => {
-                    self.format_error("LEX", &message, &span)
-                }
-                CompileError::SyntaxError { message, span,  help } => {
-                    self.format_error("SYNTAX", &message, &span)
-                }
-                CompileError::TypeError { message, span,  help } => {
-                    self.format_error("TYPE", &message, &span)
-                }
-                CompileError::IrGeneratorError { message, span,  help } => {
-                    self.format_error("IR GEN", &message, &span)
-                }
-                CompileError::AsmGeneratorError{ message,  help } => format!(
+                CompileError::LexerError {
+                    message,
+                    span,
+                    help,
+                } => self.format_error("LEX", &message, &span, help.as_deref()),
+                CompileError::SyntaxError {
+                    message,
+                    span,
+                    help,
+                } => self.format_error("SYNTAX", &message, &span, help.as_deref()),
+                CompileError::TypeError {
+                    message,
+                    span,
+                    help,
+                } => self.format_error("TYPE", &message, &span, help.as_deref()),
+                CompileError::IrGeneratorError {
+                    message,
+                    span,
+                    help,
+                } => self.format_error("IR GEN", &message, &span, help.as_deref()),
+                CompileError::AsmGeneratorError { message} => format!(
                     "{} {}: {}\n",
                     style("ERROR:").red().bold(),
                     style("ASM GEN").red(),
@@ -48,7 +56,13 @@ impl ErrorReporter {
     }
 
     /// Formats an error with source context and visual indicators
-    fn format_error(&self, category: &str, message: &str, span: &SourceSpan) -> String {
+    fn format_error(
+        &self,
+        category: &str,
+        message: &str,
+        span: &SourceSpan,
+        help: Option<&str>,
+    ) -> String {
         let start_line = span.start.line;
         let start_col = span.start.column;
         let end_line = span.end.line;
@@ -102,6 +116,15 @@ impl ErrorReporter {
                     end_line
                 );
             }
+        }
+
+        if let Some(help) = help {
+            let _ = writeln!(
+                &mut output,
+                "{} {}",
+                style("help:").blue().bold(),
+                style(help).green()
+            );
         }
 
         output

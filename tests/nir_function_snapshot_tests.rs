@@ -217,6 +217,7 @@ fn test_terminator_targets() {
         TerminatorKind::Return { value: create_dummy_value(), ty: IrType::Void },
         dummy_span(),
     );
+    assert_debug_snapshot!(return_term);
 
     let branch_term = Terminator::new(
         TerminatorKind::Branch { label: "target".to_string() },

@@ -59,12 +59,9 @@ pub enum CompileError {
         help: Option<String>,
     },
 
-    #[error("Assembly generation error: {message}{}",
-        .help.as_ref().map_or(String::new(), |h| format!("\nhelp: {}", h))
-    )]
+    #[error("Assembly generation error: {message}")]
     AsmGeneratorError {
         message: String,
-        help: Option<String>,
     },
 
     /// I/O operation failure during compilation (e.g., file access issues).
@@ -133,6 +130,16 @@ impl CompileError {
         }
     }
 
+    pub fn help(&self) -> Option<&str> {
+        match self {
+            CompileError::LexerError { help, .. } => help.as_deref(),
+            CompileError::SyntaxError { help, .. } => help.as_deref(),
+            CompileError::TypeError { help, .. } => help.as_deref(),
+            CompileError::IrGeneratorError { help, .. } => help.as_deref(),
+            _ => None,
+        }
+    }
+
     /// Updates the error message for `LexerError` and `SyntaxError` variants.
     ///
     /// No effect on `IoError` variant.
@@ -191,6 +198,17 @@ impl CompileError {
             CompileError::SyntaxError { span, .. } => *span = new_span,
             CompileError::TypeError { span, .. } => *span = new_span,
             CompileError::IrGeneratorError { span, .. } => *span = new_span,
+            _ => {}
+        }
+    }
+
+    pub fn set_help(&mut self, new_help: Option<String>) {
+        match self {
+            CompileError::LexerError { help, .. } => *help = new_help,
+            CompileError::SyntaxError { help, .. } => *help = new_help,
+            CompileError::TypeError { help, .. } => *help = new_help,
+            CompileError::IrGeneratorError { help, .. } => *help = new_help,
+            //CompileError::AsmGeneratorError { help, .. } => *help = new_help, // Added this line
             _ => {}
         }
     }

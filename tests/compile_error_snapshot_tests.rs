@@ -17,10 +17,34 @@ fn test_io_error_display() {
 fn test_asm_generator_error_display() {
     let error = CompileError::AsmGeneratorError {
         message: "Invalid assembly code".to_string(),
-        help: None,
     };
     assert_snapshot!(error);
 }
+
+#[test]
+fn test_lexer_error_display_with_help() {
+    make_error!(error, LexerError, 1, Some("Check the syntax".to_string()));
+    assert_snapshot!(error);
+}
+
+#[test]
+fn test_parser_error_display_with_help() {
+    make_error!(error, SyntaxError, 2, Some("Ensure all brackets are closed".to_string()));
+    assert_snapshot!(error);
+}
+
+#[test]
+fn test_type_error_display_with_help() {
+    make_error!(error, TypeError, 3, Some("Check variable types".to_string()));
+    assert_snapshot!(error);
+}
+
+#[test]
+fn test_ir_error_display_with_help() {
+    make_error!(error, IrGeneratorError, 4, Some("Check the IR generation".to_string()));
+    assert_snapshot!(error);
+}
+
 
 macro_rules! generate_display_test {
     ($test_name:ident, $error_type:ident, $line:expr) => {
@@ -31,12 +55,23 @@ macro_rules! generate_display_test {
             assert_snapshot!(display);
         }
     };
+    ($test_name:ident, $error_type:ident, $line:expr, $help:expr) => {
+        #[test]
+        fn $test_name() {
+            make_error!(error, $error_type, $line, $help);
+            let display =  format!("{} at {}\nHelp: {}", error.message().unwrap(), error.span().unwrap(), error.help().unwrap());
+            assert_snapshot!(display);
+        }
+    };
 }
 
 generate_display_test!(test_lexer_error_display, LexerError, 1);
 generate_display_test!(test_parser_error_display, SyntaxError, 2);
 generate_display_test!(test_type_error_display, TypeError, 3);
 generate_display_test!(test_ir_error_display, IrGeneratorError, 4);
+generate_display_test!(test_lexer_error_display_whit_help, LexerError, 1, Some("Check the syntax".to_string()));
+generate_display_test!(test_parser_error_display_whit_help, SyntaxError, 2, Some("Ensure all brackets are closed".to_string()));
+generate_display_test!(test_type_error_display_whit_help, TypeError, 3, Some("Check variable types".to_string()));
 
 macro_rules! generate_message_test {
     ($test_name:ident, $error_type:ident, $line:expr) => {
@@ -73,6 +108,21 @@ generate_span_test!(test_lexer_error_span, LexerError, 1);
 generate_span_test!(test_parser_error_span, SyntaxError, 2);
 generate_span_test!(test_type_error_span, TypeError, 3);
 generate_span_test!(test_ir_error_span, IrGeneratorError, 4);
+
+macro_rules! generate_help_test {
+    ($test_name:ident, $error_type:ident, $line:expr) => {
+        #[test]
+        fn $test_name() {
+            make_error!(error, $error_type, $line, Some("Check the syntax".to_string()));
+            assert_debug_snapshot!(error.help().unwrap());
+        }
+    };
+}
+
+generate_help_test!(test_lexer_error_help, LexerError, 1);
+generate_help_test!(test_parser_error_help, SyntaxError, 2);
+generate_help_test!(test_type_error_help, TypeError, 3);
+generate_help_test!(test_ir_error_help, IrGeneratorError, 4);
 
 macro_rules! generate_set_message_test {
     ($test_name:ident, $error_type:ident, $line:expr) => {
@@ -122,6 +172,22 @@ generate_set_span_test!(test_set_span_parser, SyntaxError, 2, 3);
 generate_set_span_test!(test_set_span_type, TypeError, 3, 4);
 generate_set_span_test!(test_set_span_ir_generator, IrGeneratorError, 4, 5);
 
+macro_rules! generate_set_help_test {
+    ($test_name:ident, $error_type:ident, $line:expr) => {
+        #[test]
+        fn $test_name() {
+            make_error!(mut error, $error_type, $line, Some("Check the syntax".to_string()));
+            error.set_help(Some("Check the syntax2".to_string()));
+            assert_debug_snapshot!(error.help().unwrap());
+        }
+    };
+}
+
+generate_set_help_test!(test_lexer_error_set_help, LexerError, 1);
+generate_set_help_test!(test_parser_error_set_help, SyntaxError, 2);
+generate_set_help_test!(test_type_error_set_help, TypeError, 3);
+generate_set_help_test!(test_ir_error_set_help, IrGeneratorError, 4);
+
 #[test]
 fn test_set_message_not_lexer_error() {
     let io_error = std::io::Error::new(std::io::ErrorKind::NotFound, "File not found");
@@ -153,4 +219,11 @@ fn test_get_message_non_lexer_error() {
     let io_error = std::io::Error::new(std::io::ErrorKind::NotFound, "File not found");
     let error: CompileError = io_error.into();
     assert_debug_snapshot!(error.message());
+}
+
+#[test]
+fn test_get_help_non_lexer_error() {
+    let io_error = std::io::Error::new(std::io::ErrorKind::NotFound, "File not found");
+    let error: CompileError = io_error.into();
+    assert_debug_snapshot!(error.help());
 }
