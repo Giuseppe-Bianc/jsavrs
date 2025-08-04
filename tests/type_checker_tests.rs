@@ -709,6 +709,28 @@ fn test_is_assignable_nullptr() {
 }
 
 #[test]
+fn test_void_function_return_value() {
+    // Void function returning value should error
+    let input = "fun log() { return 42i32 }";
+    let errors = typecheck(input);
+    assert_eq!(errors.len(), 1);
+    assert_eq!(
+        errors[0].message(),
+        Some("Cannot return a value from void function")
+    );
+}
+
+#[test]
+fn test_return_in_void_function_without_value() {
+    let ast = "fun void_fn() {
+        return
+    }";
+
+    let errors = typecheck(ast);
+    assert!(errors.is_empty(), "Unexpected errors: {:?}", errors);
+}
+
+#[test]
 fn test_promote_numeric_types_behaviour() {
     let tc = TypeChecker::new();
 
