@@ -586,6 +586,7 @@ impl JsavParser {
             self.errors.push(CompileError::SyntaxError {
                 message: "Invalid left-hand side in assignment".to_string(),
                 span: left.span().clone(),
+                help: None
             });
             return None;
         }
@@ -638,6 +639,7 @@ impl JsavParser {
         self.errors.push(CompileError::SyntaxError {
             message: format!("{}: {}", message.into(), &token.kind),
             span: token.span.clone(),
+            help: None
         });
     }
 
@@ -664,6 +666,7 @@ impl JsavParser {
             self.errors.push(CompileError::SyntaxError {
                 message: error_message,
                 span,
+                help: None
             });
             false
         }

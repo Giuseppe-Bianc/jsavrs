@@ -19,19 +19,19 @@ impl ErrorReporter {
         errors
             .into_iter()
             .map(|error| match error {
-                CompileError::LexerError { message, span } => {
+                CompileError::LexerError { message, span, help } => {
                     self.format_error("LEX", &message, &span)
                 }
-                CompileError::SyntaxError { message, span } => {
+                CompileError::SyntaxError { message, span,  help } => {
                     self.format_error("SYNTAX", &message, &span)
                 }
-                CompileError::TypeError { message, span } => {
+                CompileError::TypeError { message, span,  help } => {
                     self.format_error("TYPE", &message, &span)
                 }
-                CompileError::IrGeneratorError { message, span } => {
+                CompileError::IrGeneratorError { message, span,  help } => {
                     self.format_error("IR GEN", &message, &span)
                 }
-                CompileError::AsmGeneratorError{ message } => format!(
+                CompileError::AsmGeneratorError{ message,  help } => format!(
                     "{} {}: {}\n",
                     style("ERROR:").red().bold(),
                     style("ASM GEN").red(),

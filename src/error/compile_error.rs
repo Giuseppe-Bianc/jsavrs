@@ -17,26 +17,55 @@ pub enum CompileError {
     /// Contains:
     /// - `message`: Human-readable error description
     /// - `span`: Source location where the error occurred
-    #[error("{message} at {span}")]
-    LexerError { message: String, span: SourceSpan },
+    #[error("{message} at {span}{}",
+        .help.as_ref().map_or(String::new(), |h| format!("\nhelp: {}", h))
+    )]
+    LexerError {
+        message: String,
+        span: SourceSpan,
+        help: Option<String>,
+    },
 
     /// Syntax error indicating invalid program structure.
     ///
     /// Contains:
     /// - `message`: Description of the syntax violation
     /// - `span`: Location of the problematic syntax
-    #[error("Syntax error: {message} at {span}")]
-    SyntaxError { message: String, span: SourceSpan },
+    #[error("Syntax error: {message} at {span}{}",
+        .help.as_ref().map_or(String::new(), |h| format!("\nhelp: {}", h))
+    )]
+    SyntaxError {
+        message: String,
+        span: SourceSpan,
+        help: Option<String>,
+    },
 
     /// Type checking error
-    #[error("Type error: {message} at {span}")]
-    TypeError { message: String, span: SourceSpan },
+    #[error("Type error: {message} at {span}{}",
+        .help.as_ref().map_or(String::new(), |h| format!("\nhelp: {}", h))
+    )]
+    TypeError {
+        message: String,
+        span: SourceSpan,
+        help: Option<String>,
+    },
 
-    #[error("Type error: {message} at {span}")]
-    IrGeneratorError { message: String, span: SourceSpan },
+    #[error("Ir generator error: {message} at {span}{}",
+        .help.as_ref().map_or(String::new(), |h| format!("\nhelp: {}", h))
+    )]
+    IrGeneratorError {
+        message: String,
+        span: SourceSpan,
+        help: Option<String>,
+    },
 
-    #[error("Assembly generation error: {message}")]
-    AsmGeneratorError { message: String },
+    #[error("Assembly generation error: {message}{}",
+        .help.as_ref().map_or(String::new(), |h| format!("\nhelp: {}", h))
+    )]
+    AsmGeneratorError {
+        message: String,
+        help: Option<String>,
+    },
 
     /// I/O operation failure during compilation (e.g., file access issues).
     ///
@@ -59,6 +88,7 @@ impl CompileError {
     /// let err = CompileError::LexerError {
     ///     message: "Invalid token".to_string(),
     ///     span: SourceSpan::default(),
+    ///     help: None,
     /// };
     /// assert_eq!(err.message(), Some("Invalid token"));
     /// ```
@@ -68,7 +98,7 @@ impl CompileError {
             CompileError::SyntaxError { message, .. } => Some(message),
             CompileError::TypeError { message, .. } => Some(message),
             CompileError::IrGeneratorError { message, .. } => Some(message),
-            CompileError::AsmGeneratorError { message } => Some(message),
+            CompileError::AsmGeneratorError { message, .. } => Some(message),
             _ => None,
         }
     }
@@ -89,6 +119,7 @@ impl CompileError {
     /// let err = CompileError::SyntaxError {
     ///     message: "Unexpected token".to_string(),
     ///     span: span.clone(),
+    ///     help: None,
     /// };
     /// assert_eq!(err.span(), Some(&span));
     /// ```
@@ -116,6 +147,7 @@ impl CompileError {
     /// let mut err = CompileError::LexerError {
     ///     message: "Old message".to_string(),
     ///     span: SourceSpan::default(),
+    ///     help: None,
     /// };
     /// err.set_message("New message".to_string());
     /// assert_eq!(err.message(), Some("New message"));
@@ -126,7 +158,7 @@ impl CompileError {
             CompileError::SyntaxError { message, .. } => *message = new_message,
             CompileError::TypeError { message, .. } => *message = new_message,
             CompileError::IrGeneratorError { message, .. } => *message = new_message,
-            CompileError::AsmGeneratorError { message } => *message = new_message,
+            CompileError::AsmGeneratorError { message, .. } => *message = new_message,
             _ => {}
         }
     }
@@ -147,6 +179,7 @@ impl CompileError {
     /// let mut err = CompileError::SyntaxError {
     ///     message: String::new(),
     ///     span: SourceSpan::new(Arc::from("file"), SourceLocation::new(1,1,1), SourceLocation::new(1,1,1)),
+    ///     help: None,
     /// };
     /// let new_span = SourceSpan::new(Arc::from("file"), SourceLocation::new(1,2,1), SourceLocation::new(1,2,1));
     /// err.set_span(new_span.clone());

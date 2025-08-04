@@ -42,6 +42,7 @@ impl TypeChecker {
         self.errors.push(CompileError::TypeError {
             message: message.into(),
             span: span.clone(),
+            help: None,
         });
     }
 

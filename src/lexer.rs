@@ -51,6 +51,7 @@ impl<'a> Lexer<'a> {
             Err(_) => Err(CompileError::LexerError {
                 message: format!("Invalid token: {:?}", self.inner.slice()),
                 span,
+                help: None,
             }),
         })
     }
@@ -96,7 +97,7 @@ fn collect_error_updates(errors: &[CompileError], tokens: &[Token]) -> Updates {
 
     for (eidx, error) in errors.iter().enumerate() {
         match error {
-            CompileError::LexerError { message, span } if message == "Invalid token: \"#\"" => {
+            CompileError::LexerError { message, span, .. } if message == "Invalid token: \"#\"" => {
                 process_hashtag_error(
                     eidx,
                     span,
@@ -144,6 +145,7 @@ pub fn process_hashtag_error(
                             CompileError::LexerError {
                                 message: msg.to_string(),
                                 span: merged,
+                                help: None
                             },
                         );
                         to_remove.insert(tidx);

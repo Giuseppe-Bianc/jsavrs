@@ -254,6 +254,7 @@ macro_rules! make_error {
         let $var = CompileError::$error_type {
             message: "Unexpected token \"@\"".to_string(),
             span: t_span($line),
+            help: None,
         };
     };
     // Mutable binding
@@ -261,6 +262,7 @@ macro_rules! make_error {
         let mut $var = CompileError::$error_type {
             message: "Unexpected token \"@\"".to_string(),
             span: t_span($line),
+            help: None,
         };
     };
 }
@@ -272,12 +274,14 @@ macro_rules! make_error_lineless {
     ($var:ident, $error_type:ident) => {
         let $var = CompileError::$error_type {
             message: "Unexpected token \"@\"".to_string(),
+            help: None,
         };
     };
     // Mutable binding
     (mut $var:ident, $error_type:ident) => {
         let mut $var = CompileError::$error_type {
             message: "Unexpected token \"@\"".to_string(),
+            help: None,
         };
     };
 }

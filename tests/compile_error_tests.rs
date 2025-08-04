@@ -15,6 +15,7 @@ fn test_io_error_display() {
 fn test_asm_generator_error_display() {
     let error = CompileError::AsmGeneratorError {
         message: "Invalid assembly code".to_string(),
+        help: None,
     };
     assert_eq!(format!("{}", error), "Assembly generation error: Invalid assembly code");
 }

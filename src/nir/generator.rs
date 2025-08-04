@@ -81,7 +81,7 @@ impl NIrGenerator {
     }
 
     fn new_error(&mut self, message: String, span: SourceSpan) {
-        self.errors.push(CompileError::IrGeneratorError { message, span });
+        self.errors.push(CompileError::IrGeneratorError { message, span, help: None });
     }
 
     fn add_branch_if_needed(&mut self, func: &mut Function, target_label: &str, span: SourceSpan) {

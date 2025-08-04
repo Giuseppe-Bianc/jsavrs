@@ -224,7 +224,7 @@ fn duplicate_variable_error_span() {
 
     // Verify error type and that it uses the first declaration's span
     match err {
-        CompileError::TypeError { message, span } => {
+        CompileError::TypeError { message, span, help } => {
             assert!(message.contains("Identifier 'x' already declared in this Global scope"));
             assert_eq!(span, span1);
         }
@@ -257,7 +257,7 @@ fn duplicate_function_error_span() {
 
     // Verify error type and that it uses the first declaration's span
     match err {
-        CompileError::TypeError { message, span } => {
+        CompileError::TypeError { message, span, help } => {
             assert!(message.contains("Identifier 'func' already declared in this Global scope"));
             assert_eq!(span, span1);
         }
@@ -289,7 +289,7 @@ fn duplicate_unknown_symbol_type_uses_default_span() {
 
     // Verify error type and default span
     match err {
-        CompileError::TypeError { message, span } => {
+        CompileError::TypeError { message, span, help } => {
             assert!(message.contains("Identifier 'x' already declared in this Global scope"));
             assert_eq!(span, SourceSpan::default());
         }

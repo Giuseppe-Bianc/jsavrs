@@ -15,6 +15,7 @@ fn lexer_error_single_line() {
     let errors = vec![CompileError::LexerError {
         message: "Invalid character '#'".to_string(),
         span: create_span("test", 1, 5, 1, 6),
+        help: None,
     }];
 
     let report = reporter.report_errors(errors);
@@ -38,6 +39,7 @@ fn type_error_single_line() {
     let errors = vec![CompileError::TypeError {
         message: "Invalid character '#'".to_string(),
         span: create_span("test", 1, 5, 1, 6),
+        help: None,
     }];
 
     let report = reporter.report_errors(errors);
@@ -61,6 +63,7 @@ fn ir_gen_error_single_line() {
     let errors = vec![CompileError::IrGeneratorError {
         message: "Invalid character '#'".to_string(),
         span: create_span("test", 1, 5, 1, 6),
+        help: None,
     }];
 
     let report = reporter.report_errors(errors);
@@ -81,7 +84,7 @@ fn asm_gen_error_single_line() {
     let line_tracker = LineTracker::new("test", source.to_string());
     let reporter = ErrorReporter::new(line_tracker);
 
-    let errors = vec![CompileError::AsmGeneratorError { message: "invalid asm".to_string() }];
+    let errors = vec![CompileError::AsmGeneratorError { message: "invalid asm".to_string(), help: None }];
 
     let report = reporter.report_errors(errors);
     let stripped = strip_ansi_codes(&report);
@@ -103,6 +106,7 @@ fn syntax_error_multi_line() {
     let errors = vec![CompileError::SyntaxError {
         message: "Mismatched brackets".to_string(),
         span: create_span("test", 1, 12, 3, 5),
+        help: None,
     }];
 
     let report = reporter.report_errors(errors);
@@ -149,10 +153,12 @@ fn multiple_errors() {
         CompileError::LexerError {
             message: "Unterminated string".to_string(),
             span: create_span("test", 2, 7, 2, 8),
+            help: None,
         },
         CompileError::SyntaxError {
             message: "Expected semicolon".to_string(),
             span: create_span("test", 1, 10, 1, 11),
+            help: None,
         },
     ];
 
@@ -183,6 +189,7 @@ fn line_out_of_bounds() {
     let errors = vec![CompileError::LexerError {
         message: "Invalid token".to_string(),
         span: create_span("test", 5, 1, 5, 2), // Linea inesistente
+        help: None,
     }];
 
     let report = reporter.report_errors(errors);

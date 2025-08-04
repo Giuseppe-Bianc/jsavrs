@@ -247,6 +247,7 @@ impl BinaryOp {
                 return Err(CompileError::SyntaxError {
                     message: format!("Invalid binary operator: {:?}", token.kind),
                     span: token.clone().span,
+                    help: None,
                 });
             }
         };
