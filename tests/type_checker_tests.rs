@@ -33,6 +33,17 @@ fn test_var_declaration_in_main() {
 }
 
 #[test]
+fn test_var_declaration_mismatched_num_of_inic() {
+    let input = "var x: i32, y:f64 = 42i32";
+    let errors = typecheck(input);
+    assert_eq!(errors.len(), 2);
+    assert_eq!(
+        errors[0].message(),
+        Some("Variable declaration requires 1 initializers but 0 were provided")
+    );
+}
+
+#[test]
 fn test_var_declaration_in_main_using_typecheck_default() {
     let input = "main { var x: i32 = 42i32 }";
     let errors = typecheckd(input);
