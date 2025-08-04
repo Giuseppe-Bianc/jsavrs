@@ -18,7 +18,7 @@ pub enum CompileError {
     /// - `message`: Human-readable error description
     /// - `span`: Source location where the error occurred
     #[error("{message} at {span}{}",
-        .help.as_ref().map_or(String::new(), |h| format!("\nhelp: {}", h))
+        .help.as_ref().map_or(String::new(), |h| format!("\nhelp: {h}"))
     )]
     LexerError {
         message: String,
@@ -32,7 +32,7 @@ pub enum CompileError {
     /// - `message`: Description of the syntax violation
     /// - `span`: Location of the problematic syntax
     #[error("Syntax error: {message} at {span}{}",
-        .help.as_ref().map_or(String::new(), |h| format!("\nhelp: {}", h))
+        .help.as_ref().map_or(String::new(), |h| format!("\nhelp: {h}"))
     )]
     SyntaxError {
         message: String,
@@ -42,7 +42,7 @@ pub enum CompileError {
 
     /// Type checking error
     #[error("Type error: {message} at {span}{}",
-        .help.as_ref().map_or(String::new(), |h| format!("\nhelp: {}", h))
+        .help.as_ref().map_or(String::new(), |h| format!("\nhelp: {h}"))
     )]
     TypeError {
         message: String,
@@ -51,7 +51,7 @@ pub enum CompileError {
     },
 
     #[error("Ir generator error: {message} at {span}{}",
-        .help.as_ref().map_or(String::new(), |h| format!("\nhelp: {}", h))
+        .help.as_ref().map_or(String::new(), |h| format!("\nhelp: {h}"))
     )]
     IrGeneratorError {
         message: String,
