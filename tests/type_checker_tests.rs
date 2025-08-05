@@ -814,10 +814,48 @@ fn test_promote_numeric_types_behaviour() {
 
     // Symmetric behaviour
     assert_eq!(tc.promote_numeric_types(&Type::F32, &Type::U8), Type::F32);
+    assert_eq!(tc.promote_numeric_types(&Type::I16, &Type::F32), Type::F32);
+    assert_eq!(tc.promote_numeric_types(&Type::F64, &Type::I32), Type::F64);
+    assert_eq!(tc.promote_numeric_types(&Type::U64, &Type::U32), Type::U64);
 
-    // If neither type matches hierarchy, fallback to I64
+    // Same type should remain unchanged
+    assert_eq!(tc.promote_numeric_types(&Type::I32, &Type::I32), Type::I32);
+    assert_eq!(tc.promote_numeric_types(&Type::F32, &Type::F32), Type::F32);
+    assert_eq!(tc.promote_numeric_types(&Type::U16, &Type::U16), Type::U16);
+
+    // Mixed integer/float promotions
+    assert_eq!(tc.promote_numeric_types(&Type::I16, &Type::F64), Type::F64);
+    assert_eq!(tc.promote_numeric_types(&Type::U32, &Type::F32), Type::F32);
+    assert_eq!(tc.promote_numeric_types(&Type::F64, &Type::I8), Type::F64);
+    assert_eq!(tc.promote_numeric_types(&Type::F32, &Type::U64), Type::F32);
+
+    // Unsigned/signed promotions
+    assert_eq!(tc.promote_numeric_types(&Type::U8, &Type::I16), Type::I16);
+    assert_eq!(tc.promote_numeric_types(&Type::I16, &Type::U32), Type::U32);
+    assert_eq!(tc.promote_numeric_types(&Type::U32, &Type::I64), Type::I64);
+    assert_eq!(tc.promote_numeric_types(&Type::I8, &Type::U64), Type::U64);
+
+    // Non-numeric types fallback to first type
     assert_eq!(
         tc.promote_numeric_types(&Type::Bool, &Type::String),
         Type::Bool
+    );
+    assert_eq!(
+        tc.promote_numeric_types(&Type::String, &Type::Bool),
+        Type::String
+    );
+    assert_eq!(
+        tc.promote_numeric_types(&Type::Char, &Type::Bool),
+        Type::Char
+    );
+
+    // Mixed numeric and non-numeric
+    assert_eq!(
+        tc.promote_numeric_types(&Type::I32, &Type::String),
+        Type::I32
+    );
+    assert_eq!(
+        tc.promote_numeric_types(&Type::Bool, &Type::F64),
+        Type::F64
     );
 }
