@@ -731,6 +731,78 @@ fn test_return_in_void_function_without_value() {
 }
 
 #[test]
+fn test_bitwise_and_valid() {
+    let ast = "10i32 & 20i32";
+    let errors = typecheck(ast);
+    assert!(errors.is_empty(), "Unexpected errors: {:?}", errors);
+}
+
+#[test]
+fn test_bitwise_or_valid() {
+    let ast = "10i32 | 20i32";
+    let errors = typecheck(ast);
+    assert!(errors.is_empty(), "Unexpected errors: {:?}", errors);
+}
+
+#[test]
+fn test_bitwise_xor_valid() {
+    let ast = "10i32 ^ 20i32";
+    let errors = typecheck(ast);
+    assert!(errors.is_empty(), "Unexpected errors: {:?}", errors);
+}
+
+#[test]
+fn test_shift_left_valid() {
+    let ast = "10i32 << 2i32";
+    let errors = typecheck(ast);
+    assert!(errors.is_empty(), "Unexpected errors: {:?}", errors);
+}
+
+#[test]
+fn test_bitwise_and_invalid() {
+    let ast = "true & 20i32";
+    let errors = typecheck(ast);
+    assert_eq!(errors.len(), 1);
+    assert_eq!(
+        errors[0].message(),
+        Some("Bitwise operator 'BitwiseAnd' require integer operand types, found bool and i32")
+    );
+}
+
+#[test]
+fn test_bitwise_xor_invalid() {
+    let ast = "10i32 ^ \"string\"";
+    let errors = typecheck(ast);
+    assert_eq!(errors.len(), 1);
+    assert_eq!(
+        errors[0].message(),
+        Some("Bitwise operator 'BitwiseXor' require integer operand types, found i32 and string")
+    );
+}
+
+#[test]
+fn test_shift_left_invalid() {
+    let ast = "10i32 << true";
+    let errors = typecheck(ast);
+    assert_eq!(errors.len(), 1);
+    assert_eq!(
+        errors[0].message(),
+        Some("Bitwise operator 'ShiftLeft' require integer operand types, found i32 and bool")
+    );
+}
+
+#[test]
+fn test_shift_right_invalid() {
+    let ast = "\"text\" >> 2i32";
+    let errors = typecheck(ast);
+    assert_eq!(errors.len(), 1);
+    assert_eq!(
+        errors[0].message(),
+        Some("Bitwise operator 'ShiftRight' require integer operand types, found string and i32")
+    );
+}
+
+#[test]
 fn test_promote_numeric_types_behaviour() {
     let tc = TypeChecker::new();
 
