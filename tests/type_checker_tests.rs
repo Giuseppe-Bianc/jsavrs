@@ -731,6 +731,31 @@ fn test_return_in_void_function_without_value() {
 }
 
 #[test]
+fn test_return_in_void_function_in_inf() {
+    let ast = "fun void_fn() {
+        if (true) {
+            return
+        }
+    }";
+
+    let errors = typecheck(ast);
+    assert!(errors.is_empty(), "Unexpected errors: {:?}", errors);
+}
+
+#[test]
+fn test_return_in_void_function_in_else() {
+    let ast = "fun void_fn() {
+        if (false) {
+        } else {
+            return
+        }
+    }";
+
+    let errors = typecheck(ast);
+    assert!(errors.is_empty(), "Unexpected errors: {:?}", errors);
+}
+
+#[test]
 fn test_bitwise_and_valid() {
     let ast = "10i32 & 20i32";
     let errors = typecheck(ast);
