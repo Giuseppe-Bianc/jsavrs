@@ -1,6 +1,6 @@
 use jsavrs::error::compile_error::CompileError;
 use jsavrs::lexer::{lexer_tokenize_with_errors, Lexer};
-use jsavrs::parser::ast::{Expr, Type};
+use jsavrs::parser::ast::{Expr, LiteralValue, Type};
 use jsavrs::parser::jsav_parser::JsavParser;
 use jsavrs::semantic::type_checker::TypeChecker;
 use jsavrs::tokens::number::Number;
@@ -668,12 +668,16 @@ fn test_is_assignable_exact_and_promotions() {
     // Exact matches
     assert!(tc.is_assignable(&Type::I32, &Type::I32));
     assert!(tc.is_assignable(&Type::F64, &Type::F64));
+    assert!(tc.is_assignable(&Type::String, &Type::String));
 
     // Signed promotions
     assert!(tc.is_assignable(&Type::I8, &Type::I16));
     assert!(tc.is_assignable(&Type::I8, &Type::F32));
     assert!(tc.is_assignable(&Type::I16, &Type::F64));
     assert!(tc.is_assignable(&Type::I32, &Type::I64));
+    // Additional signed promotions
+    assert!(tc.is_assignable(&Type::I16, &Type::I32));
+    assert!(tc.is_assignable(&Type::I64, &Type::F64)); // Nuovo test
 
     // Unsigned promotions
     assert!(tc.is_assignable(&Type::U8, &Type::U16));
@@ -684,28 +688,100 @@ fn test_is_assignable_exact_and_promotions() {
     assert!(tc.is_assignable(&Type::U16, &Type::U64));
     assert!(tc.is_assignable(&Type::U16, &Type::F32));
     assert!(tc.is_assignable(&Type::U16, &Type::F64));
+    // Additional unsigned promotions
+    assert!(tc.is_assignable(&Type::U32, &Type::F32));
+    assert!(tc.is_assignable(&Type::U64, &Type::F64)); // Nuovo test
 
     // Float promotions
     assert!(tc.is_assignable(&Type::F32, &Type::F64));
+
+    // Char to String promotion
+    assert!(tc.is_assignable(&Type::Char, &Type::String));
 
     // Incompatible types
     assert!(!tc.is_assignable(&Type::I8, &Type::U8));
     assert!(!tc.is_assignable(&Type::F64, &Type::F32));
     assert!(!tc.is_assignable(&Type::U16, &Type::I32));
+    assert!(!tc.is_assignable(&Type::Char, &Type::I32));
+    assert!(!tc.is_assignable(&Type::I64, &Type::F32)); // Nuovo test negativo
+    assert!(!tc.is_assignable(&Type::U64, &Type::F32)); // Nuovo test negativo
 }
 
 #[test]
 fn test_is_assignable_nullptr() {
     let tc = TypeChecker::new();
+    let span = dummy_span();
 
     // NullPtr assignable to Array and Vector
-    let array_ty = Type::Array(Box::new(Type::I32), Box::new(Expr::null_expr(dummy_span())));
+    let array_ty = Type::Array(Box::new(Type::I32), Box::new(Expr::Literal {
+        value: LiteralValue::Number(Number::Integer(0)),
+        span: span.clone()
+    }));
     let vector_ty = Type::Vector(Box::new(Type::I8));
     assert!(tc.is_assignable(&Type::NullPtr, &array_ty));
     assert!(tc.is_assignable(&Type::NullPtr, &vector_ty));
 
     // NullPtr not assignable to non-pointer
     assert!(!tc.is_assignable(&Type::NullPtr, &Type::I32));
+    assert!(!tc.is_assignable(&Type::NullPtr, &Type::String));
+}
+
+#[test]
+fn test_is_assignable_arrays_and_vectors() {
+    let tc = TypeChecker::new();
+    let span = dummy_span();
+
+    // Array tests
+    let array_i32_5 = Type::Array(Box::new(Type::I32), Box::new(Expr::Literal {
+        value: LiteralValue::Number(Number::Integer(5)),
+        span: span.clone()
+    }));
+    let array_i32_5_again = Type::Array(Box::new(Type::I32), Box::new(Expr::Literal {
+        value: LiteralValue::Number(Number::Integer(5)),
+        span: span.clone()
+    }));
+    let array_i32_10 = Type::Array(Box::new(Type::I32), Box::new(Expr::Literal {
+        value: LiteralValue::Number(Number::Integer(10)),
+        span: span.clone()
+    }));
+    let array_i8_5 = Type::Array(Box::new(Type::I8), Box::new(Expr::Literal {
+        value: LiteralValue::Number(Number::Integer(5)),
+        span: span.clone()
+    }));
+    let array_i16_5 = Type::Array(Box::new(Type::I16), Box::new(Expr::Literal {
+        value: LiteralValue::Number(Number::Integer(5)),
+        span: span.clone()
+    }));
+    let array_u8_5 = Type::Array(Box::new(Type::U8), Box::new(Expr::Literal {
+        value: LiteralValue::Number(Number::Integer(5)),
+        span: span.clone()
+    }));
+
+    // Same array type and size -> allowed
+    assert!(tc.is_assignable(&array_i32_5, &array_i32_5_again));
+
+    // Same element type, different size -> disallowed
+    assert!(!tc.is_assignable(&array_i32_5, &array_i32_10));
+
+    // Assignable element types and same size -> allowed
+    assert!(tc.is_assignable(&array_i8_5, &array_i16_5));
+
+    // Non-assignable element types -> disallowed
+    assert!(!tc.is_assignable(&array_i8_5, &array_u8_5));
+
+    // Vector tests
+    let vector_i8 = Type::Vector(Box::new(Type::I8));
+    let vector_i16 = Type::Vector(Box::new(Type::I16));
+    let vector_u8 = Type::Vector(Box::new(Type::U8));
+
+    // Same vector type -> allowed
+    assert!(tc.is_assignable(&vector_i8, &vector_i8));
+
+    // Assignable element types -> allowed
+    assert!(tc.is_assignable(&vector_i8, &vector_i16));
+
+    // Non-assignable element types -> disallowed
+    assert!(!tc.is_assignable(&vector_i8, &vector_u8));
 }
 
 #[test]
