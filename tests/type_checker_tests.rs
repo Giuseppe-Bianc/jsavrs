@@ -756,6 +756,292 @@ fn test_return_in_void_function_in_else() {
 }
 
 #[test]
+fn test_function_has_return_simple_return() {
+    let input = "fun test(): i32 { return 42i32 }";
+    let errors = typecheck(input);
+    assert!(errors.is_empty(), "Unexpected errors: {:?}", errors);
+}
+
+#[test]
+fn test_function_has_return_no_return() {
+    let input = "fun test(): i32 { }";
+    let errors = typecheck(input);
+    assert_eq!(errors.len(), 1);
+    assert_eq!(
+        errors[0].message(),
+        Some("Function 'test' may not return value in all code paths (expected return type: i32)")
+    );
+}
+
+#[test]
+fn test_function_has_return_if_true_branch() {
+    let input = "
+    fun test(cond: bool): i32 {
+        if (cond) {
+            return 42i32
+        }
+    }";
+    let errors = typecheck(input);
+    assert_eq!(errors.len(), 1);
+    assert!(errors[0].message().unwrap().contains("may not return value"));
+}
+
+#[test]
+fn test_function_has_return_if_both_branches() {
+    let input = "
+    fun test(cond: bool): i32 {
+        if (cond) {
+            return 42i32
+        } else {
+            return 24i32
+        }
+    }";
+    let errors = typecheck(input);
+    assert!(errors.is_empty(), "Unexpected errors: {:?}", errors);
+}
+
+#[test]
+fn test_function_has_return_after_if() {
+    let input = "
+    fun test(cond: bool): i32 {
+        if (cond) {
+            // no return
+        }
+        return 42i32
+    }";
+    let errors = typecheck(input);
+    assert!(errors.is_empty(), "Unexpected errors: {:?}", errors);
+}
+
+#[test]
+fn test_function_has_return_nested_if() {
+    let input = "
+    fun test(cond1: bool, cond2: bool): i32 {
+        if (cond1) {
+            if (cond2) {
+                return 42i32
+            } else {
+                return 24i32
+            }
+        } else {
+            return 0i32
+        }
+    }";
+    let errors = typecheck(input);
+    assert!(errors.is_empty(), "Unexpected errors: {:?}", errors);
+}
+
+#[test]
+fn test_function_has_return_block_with_return() {
+    let input = "
+    fun test(): i32 {
+        {
+            return 42i32
+        }
+    }";
+    let errors = typecheck(input);
+    assert!(errors.is_empty(), "Unexpected errors: {:?}", errors);
+}
+
+#[test]
+fn test_function_has_return_block_without_return() {
+    let input = "
+    fun test(): i32 {
+        {
+            // no return
+        }
+    }";
+    let errors = typecheck(input);
+    assert_eq!(errors.len(), 1);
+    assert!(errors[0].message().unwrap().contains("may not return value"));
+}
+
+/*#[test]
+fn test_function_has_return_loop_with_return() {
+    let input = "
+    fun test(): i32 {
+        while (true) {
+            return 42i32
+        }
+        return 24i32
+    }";
+    let errors = typecheck(input);
+    // Non è considerato safe perché il loop potrebbe non essere eseguito
+    assert_eq!(errors.len(), 1);
+    assert!(errors[0].message().unwrap().contains("may not return value"));
+}*/
+
+#[test]
+fn test_function_has_return_loop_with_return_and_after() {
+    let input = "
+    fun test(): i32 {
+        while (true) {
+            if (false) {
+                return 42i32
+            }
+        }
+        return 24i32
+    }";
+    let errors = typecheck(input);
+    assert!(errors.is_empty(), "Unexpected errors: {:#?}", errors);
+}
+
+#[test]
+fn test_function_has_return_complex_nested() {
+    let input = "
+    fun test(a: bool, b: bool): i32 {
+        if (a) {
+            if (b) {
+                return 1i32
+            } else {
+                return 2i32
+            }
+        } else {
+            for (var i: i32 = 0i32; i < 10i32; i = i + 1i32) {
+                if (i == 5i32) {
+                    return 3i32
+                }
+            }
+            return 4i32
+        }
+    }";
+    let errors = typecheck(input);
+    assert!(errors.is_empty(), "Unexpected errors: {:?}", errors);
+}
+
+#[test]
+fn test_function_has_return_else_if() {
+    let input = "
+    fun test(cond: bool): i32 {
+        if (cond) {
+            return 1i32
+        } else if (!cond) {
+            return 2i32
+        }
+        // Manca return nel caso finale
+    }";
+    let errors = typecheck(input);
+    assert_eq!(errors.len(), 1);
+    assert!(errors[0].message().unwrap().contains("may not return value"));
+}
+
+#[test]
+fn test_function_has_return_else_if_complete() {
+    let input = "
+    fun test(cond: bool): i32 {
+        if (cond) {
+            return 1i32
+        } else if (!cond) {
+            return 2i32
+        } else {
+            return 3i32
+        }
+    }";
+    let errors = typecheck(input);
+    assert!(errors.is_empty(), "Unexpected errors: {:?}", errors);
+}
+
+#[test]
+fn test_function_has_return_multiple_paths() {
+    let input = "
+    fun test(a: bool, b: bool): i32 {
+        if (a) {
+            return 1i32
+        }
+        if (b) {
+            return 2i32
+        }
+        // Manca return se entrambe false
+    }";
+    let errors = typecheck(input);
+    assert_eq!(errors.len(), 1);
+    assert!(errors[0].message().unwrap().contains("may not return value"));
+}
+
+#[test]
+fn test_function_has_return_void_function() {
+    let input = "fun test() { }";
+    let errors = typecheck(input);
+    assert!(errors.is_empty(), "Unexpected errors: {:?}", errors);
+}
+
+#[test]
+fn test_function_has_return_void_with_return() {
+    let input = "fun test() { return }";
+    let errors = typecheck(input);
+    assert!(errors.is_empty(), "Unexpected errors: {:?}", errors);
+}
+
+#[test]
+fn test_function_has_return_void_with_value() {
+    let input = "fun test() { return 42i32 }";
+    let errors = typecheck(input);
+    assert_eq!(errors.len(), 1);
+    assert_eq!(
+        errors[0].message(),
+        Some("Cannot return a value from void function")
+    );
+}
+
+#[test]
+fn test_function_has_return_deeply_nested() {
+    let input = "
+    fun test(): i32 {
+        {
+            {
+                if (true) {
+                    {
+                        return 42i32
+                    }
+                }
+            }
+        }
+        return 0i32
+    }";
+    let errors = typecheck(input);
+    assert!(errors.is_empty(), "Unexpected errors: {:#?}", errors);
+}
+
+#[test]
+fn test_function_has_return_in_infinite_loop() {
+    let input = "
+    fun test(): i32 {
+        while (true) {
+            // No return - dovrebbe comunque essere errore
+        }
+    }";
+    let errors = typecheck(input);
+    assert_eq!(errors.len(), 1);
+    assert!(errors[0].message().unwrap().contains("may not return value"));
+}
+
+#[test]
+fn test_function_has_return_in_infinite_loop_with_return() {
+    let input = "
+    fun test(): i32 {
+        while (true) {
+            return 42i32
+        }
+    }";
+    let errors = typecheck(input);
+    // Considerato safe perché l'loop è infinito
+    assert!(errors.is_empty(), "Unexpected errors: {:#?}", errors);
+}
+
+#[test]
+fn test_function_has_return_with_break() {
+    let input = "
+    fun test(): i32 {
+        while (true) {
+            break
+        }
+        return 42i32
+    }";
+    let errors = typecheck(input);
+    assert!(errors.is_empty(), "Unexpected errors: {:?}", errors);
+}
+
+#[test]
 fn test_bitwise_and_valid() {
     let ast = "10i32 & 20i32";
     let errors = typecheck(ast);

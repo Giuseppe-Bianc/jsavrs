@@ -852,11 +852,23 @@ impl TypeChecker {
 
                     if then_has_return && else_has_return {
                         return true;
+                    } else {
+                        continue;
                     }
                 }
                 Stmt::Block { statements, .. } => {
                     if self.function_has_return(statements) {
                         return true;
+                    } else {
+                        continue;
+                    }
+                }
+                Stmt::While { body: loop_body, .. } | Stmt::For { body: loop_body, .. } => {
+                    if self.function_has_return(loop_body) {
+                        // Considera solo loop con corpo che ritorna
+                        return true;
+                    } else {
+                        continue;
                     }
                 }
                 _ => {}
