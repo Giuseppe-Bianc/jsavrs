@@ -216,24 +216,28 @@ impl JsavParser {
         })
     }
 
+    fn parse_for_initializer(&mut self) -> Option<Box<Stmt>> {
+        if self.match_token(&TokenKind::Semicolon) {
+            // Inizializzatore vuoto
+            return None;
+        }
+
+        let stmt = if self.check(&TokenKind::KeywordVar) || self.check(&TokenKind::KeywordConst) {
+            self.parse_var_declaration()
+        } else {
+            self.parse_expression_stmt()
+        };
+
+        self.expect(&TokenKind::Semicolon, "after for loop initializer");
+        stmt.map(Box::new)
+    }
+
     fn parse_for(&mut self) -> Option<Stmt> {
         let start_token = self.advance()?.clone(); // 'for'
         self.expect(&TokenKind::OpenParen, "after 'for'");
 
         // 1. Parse initializer (può essere var/const, espressione o vuoto)
-        let initializer = if self.match_token(&TokenKind::Semicolon) {
-            None // Inizializzatore vuoto
-        } else if self.check(&TokenKind::KeywordVar) {
-            // Dichiarazione var/const
-            let stmt = self.parse_var_declaration();
-            self.expect(&TokenKind::Semicolon, "after for loop initializer");
-            stmt.map(Box::new)
-        } else {
-            // Espressione
-            let stmt = self.parse_expression_stmt();
-            self.expect(&TokenKind::Semicolon, "after for loop initializer");
-            stmt.map(Box::new)
-        };
+        let initializer = self.parse_for_initializer();
 
         // 2. Parse condition (opzionale)
         let condition = if self.check(&TokenKind::Semicolon) {
@@ -333,15 +337,15 @@ impl JsavParser {
 
     #[allow(clippy::if_same_then_else)]
     fn parse_var_declaration(&mut self) -> Option<Stmt> {
-        let (start_token, is_mutable) = if self.match_token(&TokenKind::KeywordConst) {
-            (self.previous().unwrap().clone(), false)
-        } else if self.match_token(&TokenKind::KeywordVar) {
-            (self.previous().unwrap().clone(), true)
-        } else {
-            let token = self.previous().unwrap().clone();
-            self.syntax_error("Expected 'const' or 'var'", &token);
-            return None;
-        };
+        let (start_token, is_mutable) = self
+            .match_token(&TokenKind::KeywordConst)
+            .then(|| self.previous().map(|t| (t.clone(), false)))
+            .flatten()
+            .or_else(|| {
+                self.match_token(&TokenKind::KeywordVar)
+                    .then(|| self.previous().map(|t| (t.clone(), true)))
+                    .flatten()
+            })?;
 
         let mut variables = Vec::new();
         while let Some(name) = self.consume_identifier() {
