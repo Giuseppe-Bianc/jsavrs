@@ -96,6 +96,15 @@ fn test_function_call_not_using_variable() {
 }
 
 #[test]
+fn test_function_call_not_using_variable_arguments() {
+    let ast = "num[0](1i8, 2i32)";
+
+    let errors = typecheck(ast);
+    assert_eq!(errors.len(), 1);
+    assert_eq!(errors[0].message(), Some("Callee must be a function name"));
+}
+
+#[test]
 fn test_function_call_argument_mismatch() {
     let ast = "fun add(a: i32, b: i32): i32 {
     return a + b
