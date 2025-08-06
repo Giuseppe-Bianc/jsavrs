@@ -44,7 +44,8 @@ impl JsavParser {
             TokenKind::KeywordReturn => self.parse_return(),
             TokenKind::KeywordWhile => self.parse_while(),
             TokenKind::KeywordFor => self.parse_for(),
-            TokenKind::KeywordBreak | TokenKind::KeywordContinue => self.parse_break_continue(),
+            TokenKind::KeywordBreak => self.parse_break(),
+            TokenKind::KeywordContinue => self.parse_continue(),
             TokenKind::OpenBrace => self.parse_block_stmt(),
             _ => self.parse_expression_stmt(),
         }
@@ -64,15 +65,18 @@ impl JsavParser {
             span: function_span,
         })
     }
+    fn parse_break(&mut self) -> Option<Stmt> {
+        let span = self.advance_and_get_span()?;
+        Some(Stmt::Break { span })
+    }
+    fn parse_continue(&mut self) -> Option<Stmt> {
+        let span = self.advance_and_get_span()?;
+        Some(Stmt::Continue { span })
+    }
 
-    fn parse_break_continue(&mut self) -> Option<Stmt> {
+    fn advance_and_get_span(&mut self) -> Option<SourceSpan> {
         let token = self.advance()?; // Use reference
-        let span = token.span.clone();
-        match token.kind {
-            TokenKind::KeywordBreak => Some(Stmt::Break { span }),
-            TokenKind::KeywordContinue => Some(Stmt::Continue { span }),
-            _ => None,
-        }
+        Some(token.span.clone())
     }
 
     fn parse_block_stmt(&mut self) -> Option<Stmt> {
