@@ -296,3 +296,110 @@ fn duplicate_unknown_symbol_type_uses_default_span() {
         _ => panic!("Expected TypeError with default span"),
     }
 }
+
+#[test]
+fn test_current_scope_kind() {
+    let mut table = SymbolTable::new();
+    assert_eq!(table.current_scope_kind(), Some(ScopeKind::Global));
+
+    table.push_scope(ScopeKind::Function, None);
+    assert_eq!(table.current_scope_kind(), Some(ScopeKind::Function));
+
+    table.push_scope(ScopeKind::Block, None);
+    assert_eq!(table.current_scope_kind(), Some(ScopeKind::Block));
+
+    table.pop_scope();
+    assert_eq!(table.current_scope_kind(), Some(ScopeKind::Function));
+
+    table.pop_scope();
+    assert_eq!(table.current_scope_kind(), Some(ScopeKind::Global));
+}
+
+#[test]
+fn test_current_function_return_type() {
+    let mut table = SymbolTable::new();
+    assert_eq!(table.current_function_return_type(), None);
+
+    let void_func = FunctionSymbol {
+        name: "void_func".to_string(),
+        parameters: Vec::new(),
+        return_type: Type::Void,
+        defined_at: dummy_span(),
+    };
+
+    let int_func = FunctionSymbol {
+        name: "int_func".to_string(),
+        parameters: vec![Parameter {
+            name: "arg".to_string(),
+            type_annotation: Type::I32,
+            span: dummy_span(),
+        }],
+        return_type: Type::I32,
+        defined_at: dummy_span(),
+    };
+
+    table.enter_function(void_func);
+    assert_eq!(table.current_function_return_type(), Some(Type::Void));
+
+    table.exit_function();
+    assert_eq!(table.current_function_return_type(), None);
+
+    table.enter_function(int_func);
+    assert_eq!(table.current_function_return_type(), Some(Type::I32));
+}
+
+#[test]
+fn test_scope_stack_management() {
+    let mut table = SymbolTable::new();
+    assert_eq!(table.scope_count(), 1);
+
+    table.push_scope(ScopeKind::Function, None);
+    table.push_scope(ScopeKind::Block, None);
+    assert_eq!(table.scope_count(), 3);
+
+    table.pop_scope();
+    assert_eq!(table.scope_count(), 2);
+    assert_eq!(table.current_scope_kind(), Some(ScopeKind::Function));
+
+    table.pop_scope();
+    assert_eq!(table.scope_count(), 1);
+    assert_eq!(table.current_scope_kind(), Some(ScopeKind::Global));
+
+    // Try popping global scope (should be no-op)
+    table.pop_scope();
+    table.pop_scope();
+    table.pop_scope();
+    assert_eq!(table.scope_count(), 1);
+}
+
+#[test]
+fn test_lookup_in_specific_scope() {
+    let mut table = SymbolTable::new();
+    let global_var = create_var_symbol("a", true);
+    let func_var = create_var_symbol("b", false);
+    let block_var = create_var_symbol("c", true);
+
+    table.declare("a", global_var.clone()).unwrap();
+
+    table.push_scope(ScopeKind::Function, None);
+    table.declare("b", func_var.clone()).unwrap();
+
+    table.push_scope(ScopeKind::Block, None);
+    table.declare("c", block_var.clone()).unwrap();
+
+    // Verify lookups in deepest scope
+    assert_eq!(table.lookup("a"), Some(global_var.clone()));
+    assert_eq!(table.lookup("b"), Some(func_var.clone()));
+    assert_eq!(table.lookup("c"), Some(block_var.clone()));
+
+    // Verify lookups after popping scopes
+    table.pop_scope();
+    assert_eq!(table.lookup("a"), Some(global_var.clone()));
+    assert_eq!(table.lookup("b"), Some(func_var.clone()));
+    assert_eq!(table.lookup("c"), None);
+
+    table.pop_scope();
+    assert_eq!(table.lookup("a"), Some(global_var));
+    assert_eq!(table.lookup("b"), None);
+    assert_eq!(table.lookup("c"), None);
+}
