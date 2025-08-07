@@ -631,7 +631,6 @@ impl TypeChecker {
                 self.visit_array_access(array, index, span)?
             }
             _ => {
-                self.type_error("Invalid left-hand side in assignment", target.span());
                 return None;
             }
         };

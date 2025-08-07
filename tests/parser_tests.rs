@@ -1705,9 +1705,7 @@ fn test_function_inputs() {
     );
 }
 
-// Add these tests to the existing test module
 
-// Test for line 259: peek() in parse_stmt
 #[test]
 fn test_peek_in_parse_stmt() {
     let tokens = create_tokens(vec![TokenKind::Eof]);

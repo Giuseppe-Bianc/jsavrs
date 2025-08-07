@@ -218,7 +218,7 @@ impl JsavParser {
 
     fn parse_for_initializer(&mut self) -> Option<Box<Stmt>> {
         if self.match_token(&TokenKind::Semicolon) {
-            // Inizializzatore vuoto
+            // Empty initializer
             return None;
         }
 
@@ -312,6 +312,7 @@ impl JsavParser {
                 self.syntax_error(
                     "Invalid type specification, expected primitive type or custom identifier",
                     &token,
+                    Some("Try using a primitive type (like i32, f64) or a custom type identifier"),
                 );
                 return None;
             }
@@ -356,7 +357,11 @@ impl JsavParser {
         }
 
         if variables.is_empty() {
-            self.syntax_error("Expected at least one variable name", &start_token);
+            self.syntax_error(
+                "Expected at least one variable name",
+                &start_token,
+                Some("Provide at least one variable name after 'var' or 'const'"),
+            );
             return None;
         }
 
@@ -364,7 +369,10 @@ impl JsavParser {
         let type_ann = match self.parse_type() {
             Some(t) => t,
             None => {
-                self.report_peek_error("Invalid type specification");
+                self.report_peek_error(
+                    "Invalid type specification",
+                    Some("Try using a primitive type or a custom type identifier"),
+                );
                 Type::Void
             }
         };
@@ -375,7 +383,10 @@ impl JsavParser {
             match self.parse_expr(0) {
                 Some(expr) => initializers.push(expr),
                 None => {
-                    self.report_peek_error("Expected initializer expression");
+                    self.report_peek_error(
+                        "Expected initializer expression",
+                        Some("Provide an expression to initialize the variable (e.g., 42, \"text\", variable_name)"),
+                    );
                     break;
                 }
             }
@@ -385,10 +396,15 @@ impl JsavParser {
         }
 
         if variables.len() != initializers.len() {
-            self.syntax_error(format!(
-                "Declaration mismatch: {} variables but {} initializers.\nhelp: Each variable must have exactly one initializer",
-                variables.len(), initializers.len()
-            ), &start_token);
+            self.syntax_error(
+                format!(
+                    "Declaration mismatch: {} variables but {} initializers",
+                    variables.len(),
+                    initializers.len()
+                ),
+                &start_token,
+                Some("Each variable must have exactly one initializer expression"),
+            );
         }
 
         Some(Stmt::VarDeclaration {
@@ -400,9 +416,9 @@ impl JsavParser {
         })
     }
 
-    fn report_peek_error(&mut self, message: &str) {
+    fn report_peek_error(&mut self, message: &str, help: Option<&str>) {
         if let Some(token) = &self.peek().cloned() {
-            self.syntax_error(message, token);
+            self.syntax_error(message, token, help);
         }
     }
 
@@ -416,7 +432,11 @@ impl JsavParser {
                 Some(s.clone())
             }
             _ => {
-                self.syntax_error("Expected identifier after the 'var' or 'const'", &token);
+                self.syntax_error(
+                    "Expected identifier",
+                    &token,
+                    Some("An identifier must start with a letter/underscore and contain only alphanumeric characters"),
+                );
                 None
             }
         }
@@ -464,7 +484,11 @@ impl JsavParser {
                 })
             }
             _ => {
-                self.syntax_error("Unexpected token", &token);
+                self.syntax_error(
+                    "Unexpected token",
+                    &token,
+                    Some("Expected an expression (number, string, variable, or operator)"),
+                );
                 None
             }
         }
@@ -504,7 +528,11 @@ impl JsavParser {
             // Array access
             TokenKind::OpenBracket => self.parse_array_access(left, token),
             _ => {
-                self.syntax_error("Unexpected operator", &token);
+                self.syntax_error(
+                    "Unexpected operator",
+                    &token,
+                    Some("This operator is not supported in this context"),
+                );
                 None
             }
         }
@@ -591,10 +619,12 @@ impl JsavParser {
         let valid = matches!(&left, Expr::Variable { .. } | Expr::ArrayAccess { .. });
 
         if !valid {
+            let help_msg = "Only variables and array elements can be assigned to. Consider using a variable name or an array access expression.";
+
             self.errors.push(CompileError::SyntaxError {
                 message: "Invalid left-hand side in assignment".to_string(),
                 span: left.span().clone(),
-                help: None,
+                help: Some(help_msg.to_string()),
             });
             return None;
         }
@@ -642,12 +672,12 @@ impl JsavParser {
             .unwrap_or(start_token.span.clone())
     }
 
-    // Improved syntax_error for clearer messages
-    fn syntax_error(&mut self, message: impl Into<String>, token: &Token) {
+    fn syntax_error(&mut self, message: impl Into<String>, token: &Token, help: Option<&str>) {
+        let message_str = message.into();
         self.errors.push(CompileError::SyntaxError {
-            message: format!("{}: {}", message.into(), &token.kind),
+            message: format!("{}: {}", message_str, &token.kind),
             span: token.span.clone(),
-            help: None,
+            help: help.map(|s| s.to_string()),
         });
     }
 
