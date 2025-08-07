@@ -7,6 +7,9 @@ use thiserror::Error;
 /// This enum categorizes errors into:
 /// - Lexical analysis errors
 /// - Syntax parsing errors
+/// - Type checking errors
+/// - Intermediate representation generation errors
+/// - Assembly generation errors
 /// - General I/O errors
 ///
 /// Each variant carries context-specific information about the error's nature and location.
@@ -17,6 +20,7 @@ pub enum CompileError {
     /// Contains:
     /// - `message`: Human-readable error description
     /// - `span`: Source location where the error occurred
+    /// - `help`: Optional guidance for fixing the error
     #[error("{message} at {span}{}",
         .help.as_ref().map_or(String::new(), |h| format!("\nhelp: {h}"))
     )]
@@ -31,6 +35,7 @@ pub enum CompileError {
     /// Contains:
     /// - `message`: Description of the syntax violation
     /// - `span`: Location of the problematic syntax
+    /// - `help`: Optional guidance for fixing the error
     #[error("Syntax error: {message} at {span}{}",
         .help.as_ref().map_or(String::new(), |h| format!("\nhelp: {h}"))
     )]
@@ -40,7 +45,12 @@ pub enum CompileError {
         help: Option<String>,
     },
 
-    /// Type checking error
+    /// Type checking error indicating type mismatches or unsupported operations.
+    ///
+    /// Contains:
+    /// - `message`: Description of the type error
+    /// - `span`: Location where the type error occurred
+    /// - `help`: Optional guidance for fixing the error
     #[error("Type error: {message} at {span}{}",
         .help.as_ref().map_or(String::new(), |h| format!("\nhelp: {h}"))
     )]
@@ -50,6 +60,12 @@ pub enum CompileError {
         help: Option<String>,
     },
 
+    /// Error during intermediate representation (IR) generation.
+    ///
+    /// Contains:
+    /// - `message`: Description of the IR generation failure
+    /// - `span`: Location associated with the error
+    /// - `help`: Optional guidance for fixing the error
     #[error("Ir generator error: {message} at {span}{}",
         .help.as_ref().map_or(String::new(), |h| format!("\nhelp: {h}"))
     )]
@@ -59,6 +75,10 @@ pub enum CompileError {
         help: Option<String>,
     },
 
+    /// Error during assembly code generation.
+    ///
+    /// Contains:
+    /// - `message`: Description of the assembly generation failure
     #[error("Assembly generation error: {message}")]
     AsmGeneratorError {
         message: String,
@@ -75,7 +95,7 @@ impl CompileError {
     /// Returns the error message for variants that carry messages.
     ///
     /// Returns:
-    /// - `Some(&str)` for `LexerError`/`SyntaxError` variants
+    /// - `Some(&str)` for error variants with messages
     /// - `None` for `IoError` variant
     ///
     /// # Examples
@@ -95,7 +115,7 @@ impl CompileError {
             CompileError::SyntaxError { message, .. } => Some(message),
             CompileError::TypeError { message, .. } => Some(message),
             CompileError::IrGeneratorError { message, .. } => Some(message),
-            CompileError::AsmGeneratorError { message, .. } => Some(message),
+            CompileError::AsmGeneratorError { message } => Some(message),
             _ => None,
         }
     }
@@ -103,8 +123,8 @@ impl CompileError {
     /// Returns the source location span for relevant error variants.
     ///
     /// Returns:
-    /// - `Some(&SourceSpan)` for `LexerError`/`SyntaxError`
-    /// - `None` for `IoError`
+    /// - `Some(&SourceSpan)` for variants with associated locations
+    /// - `None` for variants without location information
     ///
     /// # Examples
     /// ```
@@ -130,6 +150,23 @@ impl CompileError {
         }
     }
 
+    /// Returns optional help guidance for fixing the error.
+    ///
+    /// Returns:
+    /// - `Some(&str)` if help guidance exists
+    /// - `None` if no help is available
+    ///
+    /// # Examples
+    /// ```
+    /// use jsavrs::error::compile_error::CompileError;
+    /// use jsavrs::location::source_span::SourceSpan;
+    /// let err = CompileError::TypeError {
+    ///     message: "Type mismatch".to_string(),
+    ///     span: SourceSpan::default(),
+    ///     help: Some("Try adding a type annotation".to_string()),
+    /// };
+    /// assert_eq!(err.help(), Some("Try adding a type annotation"));
+    /// ```
     pub fn help(&self) -> Option<&str> {
         match self {
             CompileError::LexerError { help, .. } => help.as_deref(),
@@ -140,9 +177,9 @@ impl CompileError {
         }
     }
 
-    /// Updates the error message for `LexerError` and `SyntaxError` variants.
+    /// Updates the error message for variants that carry messages.
     ///
-    /// No effect on `IoError` variant.
+    /// No effect on variants without message fields.
     ///
     /// # Arguments
     /// * `new_message` - Replacement error message
@@ -165,14 +202,14 @@ impl CompileError {
             CompileError::SyntaxError { message, .. } => *message = new_message,
             CompileError::TypeError { message, .. } => *message = new_message,
             CompileError::IrGeneratorError { message, .. } => *message = new_message,
-            CompileError::AsmGeneratorError { message, .. } => *message = new_message,
+            CompileError::AsmGeneratorError { message } => *message = new_message,
             _ => {}
         }
     }
 
-    /// Updates the source span for `LexerError` and `SyntaxError` variants.
+    /// Updates the source span for variants that carry location information.
     ///
-    /// No effect on `IoError` variant.
+    /// No effect on variants without span fields.
     ///
     /// # Arguments
     /// * `new_span` - Replacement source location
@@ -202,13 +239,31 @@ impl CompileError {
         }
     }
 
+    /// Updates the help guidance for relevant error variants.
+    ///
+    /// No effect on variants without help fields.
+    ///
+    /// # Arguments
+    /// * `new_help` - New help message (or `None` to remove existing help)
+    ///
+    /// # Examples
+    /// ```
+    /// use jsavrs::error::compile_error::CompileError;
+    /// use jsavrs::location::source_span::SourceSpan;
+    /// let mut err = CompileError::TypeError {
+    ///     message: "Type mismatch".to_string(),
+    ///     span: SourceSpan::default(),
+    ///     help: None,
+    /// };
+    /// err.set_help(Some("Try adding a type annotation".to_string()));
+    /// assert_eq!(err.help(), Some("Try adding a type annotation"));
+    /// ```
     pub fn set_help(&mut self, new_help: Option<String>) {
         match self {
             CompileError::LexerError { help, .. } => *help = new_help,
             CompileError::SyntaxError { help, .. } => *help = new_help,
             CompileError::TypeError { help, .. } => *help = new_help,
             CompileError::IrGeneratorError { help, .. } => *help = new_help,
-            //CompileError::AsmGeneratorError { help, .. } => *help = new_help, // Added this line
             _ => {}
         }
     }
