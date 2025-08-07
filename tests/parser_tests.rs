@@ -1828,7 +1828,7 @@ fn test_var_no_name() {
     assert!(!errors.is_empty());
     assert_eq!(
         errors[0].message().unwrap(),
-        "Expected identifier after the 'var' or 'const': end of file"
+        "Expected identifier: end of file"
     );
 }
 
