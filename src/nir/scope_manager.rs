@@ -1,3 +1,4 @@
+// src/nir/scope_manager.rs
 use super::scope::Scope;
 use super::types::ScopeId;
 use crate::nir::Value;
@@ -55,8 +56,10 @@ impl ScopeManager {
     }
 
     pub fn add_symbol(&mut self, name: String, value: Value) {
+        let mut valcopy = value.clone();
+        valcopy.scope = Some(self.current_scope);
         self.scopes.get_mut(&self.current_scope).unwrap()
-            .insert(name, value);
+            .insert(name, valcopy);
     }
 
     pub fn lookup(&self, name: &str) -> Option<&Value> {
@@ -90,5 +93,11 @@ impl ScopeManager {
                 return None;
             }
         }
+    }
+}
+
+impl Default for ScopeManager {
+    fn default() -> Self {
+        Self::new()
     }
 }

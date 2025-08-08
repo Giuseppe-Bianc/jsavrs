@@ -27,12 +27,24 @@ impl ScopeId {
     }
 }
 
+impl Default for ScopeId {
+    fn default() -> Self {
+        ScopeId::new()
+    }
+}
+
 #[derive(Debug, Clone, PartialEq, Eq, Hash, Copy)]
 pub struct ResourceId(Uuid);
 
 impl ResourceId {
     pub fn new() -> Self {
         ResourceId(Uuid::new_v4())
+    }
+}
+
+impl Default for ResourceId {
+    fn default() -> Self {
+        ResourceId::new()
     }
 }
 
