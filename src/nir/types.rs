@@ -1,6 +1,7 @@
-use crate::location::source_span::SourceSpan;
 // src/nir/types.rs
+use crate::location::source_span::SourceSpan;
 use std::fmt;
+use uuid::Uuid;
 
 #[derive(Debug, Clone, PartialEq, Eq, Hash)]
 pub enum IrType {
@@ -13,6 +14,40 @@ pub enum IrType {
     Array(Box<IrType>, usize),
     Custom(String, SourceSpan), // Added source span
     Struct(String, Vec<IrType>, SourceSpan), // New struct type
+    Scope(ScopeId),
+    Resource(ResourceId),
+}
+
+#[derive(Debug, Clone, PartialEq, Eq, Hash, Copy)]
+pub struct ScopeId(Uuid);
+
+impl ScopeId {
+    pub fn new() -> Self {
+        ScopeId(Uuid::new_v4())
+    }
+}
+
+#[derive(Debug, Clone, PartialEq, Eq, Hash, Copy)]
+pub struct ResourceId(Uuid);
+
+impl ResourceId {
+    pub fn new() -> Self {
+        ResourceId(Uuid::new_v4())
+    }
+}
+
+// Implementazione Display per ScopeId
+impl fmt::Display for ScopeId {
+    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
+        write!(f, "{}", self.0)
+    }
+}
+
+// Implementazione Display per ResourceId
+impl fmt::Display for ResourceId {
+    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
+        write!(f, "{}", self.0)
+    }
 }
 
 impl fmt::Display for IrType {
@@ -39,6 +74,8 @@ impl fmt::Display for IrType {
                 let fields_str = fields.iter().map(|t| t.to_string()).collect::<Vec<_>>().join(", ");
                 write!(f, "struct {name} {{ {fields_str} }}")
             }
+            IrType::Scope(id) => write!(f, "scope<{id}>"),
+            IrType::Resource(id) => write!(f, "resource<{id}>"),
         }
     }
 }

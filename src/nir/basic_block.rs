@@ -1,17 +1,18 @@
 // src/nir/basic_block.rs
 use super::{instruction::*, terminator::*};
 use crate::location::source_span::SourceSpan;
-// src/nir/basic_block.rs
+use super::types::ScopeId;
 use std::fmt;
 
 #[derive(Debug, Clone, PartialEq)]
 pub struct BasicBlock {
     pub label: String,
-    pub source_span: SourceSpan, // Added source span
+    pub source_span: SourceSpan,
     pub instructions: Vec<Instruction>,
     pub terminator: Terminator,
     pub predecessors: Vec<String>,
-    pub dominator_info: Option<DominatorInfo>, // For optimization passes
+    pub dominator_info: Option<DominatorInfo>,
+    pub scope: Option<ScopeId>,
 }
 
 #[derive(Debug, Clone, PartialEq)]
@@ -29,6 +30,7 @@ impl BasicBlock {
             terminator: Terminator::new(TerminatorKind::Unreachable, SourceSpan::default()),
             predecessors: Vec::new(),
             dominator_info: None,
+            scope: None,
         }
     }
 
@@ -37,13 +39,23 @@ impl BasicBlock {
             self.predecessors.push(pred_label);
         }
     }
+
+    pub fn with_scope(mut self, scope: ScopeId) -> Self {
+        self.scope = Some(scope);
+        self
+    }
 }
 
 impl fmt::Display for BasicBlock {
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
+        if let Some(scope) = self.scope {
+            writeln!(f, "// Scope: {scope}")?;
+        }
+
         if !self.predecessors.is_empty() {
             writeln!(f, "// Predecessors: {}", self.predecessors.join(", "))?;
         }
+
         writeln!(f, "{}:", self.label)?;
         for inst in &self.instructions {
             writeln!(f, "  {inst}")?;

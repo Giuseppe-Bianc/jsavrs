@@ -8,7 +8,7 @@ pub use self::{
     constant::IrConstantValue, debug_info::ValueDebugInfo, kind::ValueKind, literal::IrLiteralValue,
 };
 
-use super::types::IrType;
+use super::types::{IrType, ScopeId};
 use crate::location::source_span::SourceSpan;
 use std::fmt;
 
@@ -18,6 +18,7 @@ pub struct Value {
     pub kind: ValueKind,
     pub ty: IrType,
     pub debug_info: Option<ValueDebugInfo>,
+    pub scope: Option<ScopeId>,
 }
 
 impl Value {
@@ -28,6 +29,7 @@ impl Value {
             kind: ValueKind::Literal(imm),
             ty,
             debug_info: None,
+            scope: None,
         }
     }
 
@@ -37,6 +39,7 @@ impl Value {
             kind: ValueKind::Constant(imm),
             ty,
             debug_info: None,
+            scope: None,
         }
     }
 
@@ -46,6 +49,7 @@ impl Value {
             kind: ValueKind::Local(name),
             ty,
             debug_info: None,
+            scope: None,
         }
     }
 
@@ -55,6 +59,7 @@ impl Value {
             kind: ValueKind::Global(name),
             ty,
             debug_info: None,
+            scope: None,
         }
     }
 
@@ -64,6 +69,7 @@ impl Value {
             kind: ValueKind::Temporary(id),
             ty,
             debug_info: None,
+            scope: None,
         }
     }
 
@@ -72,6 +78,11 @@ impl Value {
             name,
             source_span: span,
         });
+        self
+    }
+
+    pub fn with_scope(mut self, scope: ScopeId) -> Self {
+        self.scope = Some(scope);
         self
     }
 

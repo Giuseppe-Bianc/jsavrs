@@ -1,5 +1,5 @@
 // src/nir/function.rs
-use super::{basic_block::BasicBlock, types::IrType};
+use super::{basic_block::BasicBlock, types::IrType, ScopeId, ScopeManager};
 use crate::location::source_span::SourceSpan;
 use std::{collections::{HashMap, HashSet}, fmt};
 
@@ -56,7 +56,8 @@ pub struct Function {
     pub return_type: IrType,
     pub cfg: Cfg,
     pub local_vars: HashMap<String, IrType>,
-    pub attributes: FunctionAttributes, // Added function attributes
+    pub attributes: FunctionAttributes,
+    pub scope_manager: ScopeManager,
 }
 
 #[derive(Debug, Clone, PartialEq, Default)]
@@ -90,6 +91,7 @@ impl Function {
             cfg: Cfg::new(format!("entry_{name}").as_str()),
             local_vars: HashMap::new(),
             attributes: FunctionAttributes::default(),
+            scope_manager: ScopeManager::new(),
         }
     }
 
@@ -103,6 +105,14 @@ impl Function {
 
     pub fn add_edge(&mut self, from: &str, to: &str) {
         self.cfg.add_edge(from, to);
+    }
+
+    pub fn enter_scope(&mut self) -> ScopeId {
+        self.scope_manager.enter_scope()
+    }
+
+    pub fn exit_scope(&mut self) {
+        self.scope_manager.exit_scope();
     }
 }
 

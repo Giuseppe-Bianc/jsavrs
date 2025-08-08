@@ -9,18 +9,18 @@ use crate::tokens::number::Number;
 use std::collections::HashMap;
 
 pub struct NIrGenerator {
-    current_function: Option<String>,
+    _current_function: Option<String>,
     current_block: Option<BasicBlock>,
     current_block_label: Option<String>,
-    symbol_table: HashMap<String, Value>,
+    scope_manager: ScopeManager,
     temp_counter: u64,
     block_counter: usize,
     errors: Vec<CompileError>,
-    value_types: HashMap<String, IrType>,
     break_stack: Vec<String>,
     continue_stack: Vec<String>,
     type_context: TypeContext,
     _next_value_id: u64,
+    access_controller: AccessController,
 }
 
 #[derive(Debug, Default)]
@@ -32,19 +32,22 @@ struct TypeContext {
 #[allow(clippy::collapsible_if, clippy::collapsible_else_if)]
 impl NIrGenerator {
     pub fn new() -> Self {
+        let scope_manager = ScopeManager::new();
+        let access_controller = AccessController::new(&scope_manager);
+
         Self {
-            current_function: None,
+            _current_function: None,
             current_block: None,
             current_block_label: None,
-            symbol_table: HashMap::new(),
+            scope_manager,
             temp_counter: 0,
             block_counter: 0,
             errors: Vec::new(),
-            value_types: HashMap::new(),
             break_stack: Vec::new(),
             continue_stack: Vec::new(),
             type_context: TypeContext::default(),
             _next_value_id: 1,
+            access_controller,
         }
     }
 
@@ -162,6 +165,11 @@ impl NIrGenerator {
         self.break_stack.clear();
         self.continue_stack.clear();
         self.start_block(func, format!("entry_{}", func.name).as_str(), span);
+        self.scope_manager = func.scope_manager.clone();
+        self.access_controller = AccessController::new(&self.scope_manager);
+
+        func.enter_scope();
+        self.scope_manager = func.scope_manager.clone();
 
         // Add function parameters to symbol table
         for param in &func.parameters {
@@ -171,8 +179,7 @@ impl NIrGenerator {
                 param.attributes.source_span.clone().unwrap_or_default(),
             );
 
-            self.symbol_table.insert(param.name.clone(), value.clone());
-            self.value_types.insert(temp.clone().to_string(), param.ty.clone());
+            self.scope_manager.add_symbol(param.name.clone(), value.clone());
         }
 
         for stmt in body {
@@ -199,10 +206,7 @@ impl NIrGenerator {
         }
 
         self.finalize_current_block(func);
-
-        self.symbol_table.clear();
-        self.value_types.clear();
-        self.current_function = None;
+        func.exit_scope();
     }
 
     fn generate_stmt(&mut self, func: &mut Function, stmt: Stmt) {
@@ -216,10 +220,12 @@ impl NIrGenerator {
             Stmt::Return { value, span } => {
                 self.generate_return(func, value, span);
             }
-            Stmt::Block { statements, span: _ } => {
+            Stmt::Block { statements, span:_ } => {
+                self.scope_manager.enter_scope();
                 for stmt in statements {
                     self.generate_stmt(func, stmt);
                 }
+                self.scope_manager.exit_scope();
             }
             Stmt::If { condition, then_branch, else_branch, span } => {
                 self.generate_if(func, condition, then_branch, else_branch, span);
@@ -228,7 +234,9 @@ impl NIrGenerator {
                 self.generate_while(func, condition, body, span);
             }
             Stmt::For { initializer, condition, increment, body, span } => {
+                self.scope_manager.enter_scope();
                 self.generate_for(func, initializer, condition, increment, body, span);
+                self.scope_manager.exit_scope();
             }
             Stmt::Break { span } => {
                 self.handle_break(func, span);
@@ -266,11 +274,11 @@ impl NIrGenerator {
                     self.add_instruction(store_inst);
                 }
 
-                self.symbol_table.insert(var.clone(), ptr_value);
+                self.scope_manager.add_symbol(var.clone(), ptr_value);
             } else {
                 if let Some(init) = initializers.get(i) {
                     let value = self.generate_expr(func, init.clone());
-                    self.symbol_table.insert(var.clone(), value.with_debug_info(Some(var.clone()), span.clone()));
+                    self.scope_manager.add_symbol(var.clone(), value.with_debug_info(Some(var.clone()), span.clone()));
                 } else {
                     self.new_error(format!("Constant '{var}' must be initialized"), span.clone());
                 }
@@ -313,20 +321,24 @@ impl NIrGenerator {
         );
 
         self.start_block(func, &then_label, span.clone());
+        self.scope_manager.enter_scope();
         for stmt in then_branch {
             self.generate_stmt(func, stmt);
         }
-
+        self.scope_manager.exit_scope();
         self.add_branch_if_needed(func, &merge_label, span.clone());
 
         self.start_block(func, &else_label, span.clone());
         if let Some(else_stmts) = else_branch {
+            self.scope_manager.enter_scope();
             for stmt in else_stmts {
                 self.generate_stmt(func, stmt);
             }
+            self.scope_manager.exit_scope();
         }
 
         self.add_branch_if_needed(func, &merge_label, span.clone());
+
         self.start_block(func, &merge_label, span);
     }
 
@@ -361,9 +373,11 @@ impl NIrGenerator {
         self.continue_stack.push(loop_start_label.clone());
 
         self.start_block(func, &loop_body_label, span.clone());
+        self.scope_manager.enter_scope();
         for stmt in body {
             self.generate_stmt(func, stmt);
         }
+        self.scope_manager.exit_scope();
 
         self.break_stack.pop();
         self.continue_stack.pop();
@@ -411,10 +425,11 @@ impl NIrGenerator {
         self.continue_stack.push(loop_inc_label.clone());
 
         self.start_block(func, &loop_bd_label, span.clone());
+        self.scope_manager.enter_scope();
         for stmt in body {
             self.generate_stmt(func, stmt);
         }
-
+        self.scope_manager.exit_scope();
         self.break_stack.pop();
         self.continue_stack.pop();
 
@@ -504,36 +519,16 @@ impl NIrGenerator {
     fn generate_literal(&mut self, value: LiteralValue, span: SourceSpan) -> Value {
         match value {
             LiteralValue::Number(num) => match num {
-                Number::I8(i) => {
-                    Value::new_literal(IrLiteralValue::I8(i)).with_debug_info(None, span)
-                }
-                Number::I16(i) => {
-                    Value::new_literal(IrLiteralValue::I16(i)).with_debug_info(None, span)
-                }
-                Number::I32(i) => {
-                    Value::new_literal(IrLiteralValue::I32(i)).with_debug_info(None, span)
-                }
-                Number::Integer(i) => {
-                    Value::new_literal(IrLiteralValue::I64(i)).with_debug_info(None, span)
-                }
-                Number::U8(u) => {
-                    Value::new_literal(IrLiteralValue::U8(u)).with_debug_info(None, span)
-                }
-                Number::U16(u) => {
-                    Value::new_literal(IrLiteralValue::U16(u)).with_debug_info(None, span)
-                }
-                Number::U32(u) => {
-                    Value::new_literal(IrLiteralValue::U32(u)).with_debug_info(None, span)
-                }
-                Number::UnsignedInteger(u) => {
-                    Value::new_literal(IrLiteralValue::U64(u)).with_debug_info(None, span)
-                }
-                Number::Float32(f) => {
-                    Value::new_literal(IrLiteralValue::F32(f)).with_debug_info(None, span)
-                }
-                Number::Float64(f) => {
-                    Value::new_literal(IrLiteralValue::F64(f)).with_debug_info(None, span)
-                }
+                Number::I8(i) => Value::new_literal(IrLiteralValue::I8(i)).with_debug_info(None, span),
+                Number::I16(i) => Value::new_literal(IrLiteralValue::I16(i)).with_debug_info(None, span),
+                Number::I32(i) => Value::new_literal(IrLiteralValue::I32(i)).with_debug_info(None, span),
+                Number::Integer(i) => Value::new_literal(IrLiteralValue::I64(i)).with_debug_info(None, span),
+                Number::U8(u) => Value::new_literal(IrLiteralValue::U8(u)).with_debug_info(None, span),
+                Number::U16(u) => Value::new_literal(IrLiteralValue::U16(u)).with_debug_info(None, span),
+                Number::U32(u) => Value::new_literal(IrLiteralValue::U32(u)).with_debug_info(None, span),
+                Number::UnsignedInteger(u) => Value::new_literal(IrLiteralValue::U64(u)).with_debug_info(None, span),
+                Number::Float32(f) => Value::new_literal(IrLiteralValue::F32(f)).with_debug_info(None, span),
+                Number::Float64(f) => Value::new_literal(IrLiteralValue::F64(f)).with_debug_info(None, span),
                 Number::Scientific32(f, i) => {
                     let value = f.powi(i);
                     Value::new_literal(IrLiteralValue::F32(value)).with_debug_info(None, span)
@@ -543,20 +538,10 @@ impl NIrGenerator {
                     Value::new_literal(IrLiteralValue::F64(value)).with_debug_info(None, span)
                 }
             },
-            LiteralValue::Bool(b) => {
-                Value::new_literal(IrLiteralValue::Bool(b)).with_debug_info(None, span)
-            }
-            LiteralValue::StringLit(s) => {
-                Value::new_constant(IrConstantValue::String{string: s}, IrType::String)
-                    .with_debug_info(None, span)
-            }
-            LiteralValue::CharLit(c) => {
-                Value::new_literal(IrLiteralValue::Char(c.chars().next().unwrap_or('\0')))
-                    .with_debug_info(None, span)
-            }
-            LiteralValue::Nullptr => {
-                Value::new_literal(IrLiteralValue::I64(0)).with_debug_info(None, span)
-            }
+            LiteralValue::Bool(b) => Value::new_literal(IrLiteralValue::Bool(b)).with_debug_info(None, span),
+            LiteralValue::StringLit(s) => Value::new_constant(IrConstantValue::String{string: s}, IrType::String).with_debug_info(None, span),
+            LiteralValue::CharLit(c) => Value::new_literal(IrLiteralValue::Char(c.chars().next().unwrap_or('\0'))).with_debug_info(None, span),
+            LiteralValue::Nullptr => Value::new_literal(IrLiteralValue::I64(0)).with_debug_info(None, span),
         }
     }
 
@@ -588,7 +573,7 @@ impl NIrGenerator {
     }
 
     fn generate_variable(&mut self, name: String, span: SourceSpan) -> Value {
-        self.symbol_table.get(&name).cloned().unwrap_or_else(|| {
+        self.scope_manager.lookup(&name).cloned().unwrap_or_else(|| {
             self.new_error(format!("Undefined variable '{name}'"), span.clone());
             Value::new_literal(IrLiteralValue::I32(0)).with_debug_info(None, span)
         })
@@ -618,7 +603,8 @@ impl NIrGenerator {
     fn start_block(&mut self, func: &mut Function, label: &str, span: SourceSpan) {
         self.finalize_current_block(func);
 
-        let mut new_block = BasicBlock::new(label, span);
+        let mut new_block = BasicBlock::new(label, span)
+            .with_scope(self.scope_manager.current_scope());
 
         if let Some(preds) = func.cfg.predecessors.get(label) {
             for pred in preds {

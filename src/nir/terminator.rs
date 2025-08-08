@@ -1,5 +1,5 @@
 // src/nir/terminator.rs
-use super::{IrType, Value};
+use super::{IrType, Value, ScopeId, ResourceId};
 use crate::location::source_span::SourceSpan;
 use std::fmt;
 use std::fmt::Write;
@@ -7,7 +7,7 @@ use std::fmt::Write;
 #[derive(Debug, Clone, PartialEq)]
 pub struct Terminator {
     pub kind: TerminatorKind,
-    pub debug_info: DebugInfo, // Added debug info
+    pub debug_info: DebugInfo,
 }
 
 #[derive(Debug, Clone, PartialEq)]
@@ -40,6 +40,9 @@ pub enum TerminatorKind {
         cases: Vec<(Value, String)>,
     },
     Unreachable,
+    EnterScope(ScopeId),
+    ExitScope(ScopeId),
+    ReleaseResource(ResourceId),
 }
 
 impl Terminator {
@@ -54,9 +57,7 @@ impl Terminator {
                 true_label,
                 false_label,
                 ..
-            } => {
-                vec![true_label.clone(), false_label.clone()]
-            }
+            } => vec![true_label.clone(), false_label.clone()],
             TerminatorKind::Switch {
                 cases,
                 default_label,
@@ -117,6 +118,9 @@ impl fmt::Display for Terminator {
                 possible_labels,
             } => write!(f, "ibr {address} [{}]", possible_labels.join(", ")),
             TerminatorKind::Unreachable => write!(f, "unreachable"),
+            TerminatorKind::EnterScope(id) => write!(f, "enter_scope {id}"),
+            TerminatorKind::ExitScope(id) => write!(f, "exit_scope {id}"),
+            TerminatorKind::ReleaseResource(id) => write!(f, "release_resource {id}"),
         }
     }
 }

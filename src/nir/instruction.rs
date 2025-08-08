@@ -1,5 +1,5 @@
 // src/nir/instruction.rs
-use super::{IrType, Value};
+use super::{IrType, Value, ScopeId, ResourceId};
 use crate::{
     location::source_span::SourceSpan,
     parser::ast::{BinaryOp, UnaryOp},
@@ -28,7 +28,6 @@ pub enum VectorOp {
     Div,
     DotProduct,
     Shuffle,
-    // ... other vector operations ...
 }
 
 impl fmt::Display for VectorOp {
@@ -47,8 +46,9 @@ impl fmt::Display for VectorOp {
 #[derive(Debug, Clone, PartialEq)]
 pub struct Instruction {
     pub kind: InstructionKind,
-    pub result: Option<Value>, // Added result value
+    pub result: Option<Value>,
     pub debug_info: DebugInfo,
+    pub scope: Option<ScopeId>,
 }
 
 #[derive(Debug, Clone, PartialEq)]
@@ -104,6 +104,15 @@ pub enum InstructionKind {
         op: VectorOp,
         operands: Vec<Value>,
         ty: IrType,
+    },
+    CreateScope {
+        parent: Option<ScopeId>,
+    },
+    DestroyScope {
+        scope: ScopeId,
+    },
+    AcquireResource {
+        resource: ResourceId,
     },
 }
 
@@ -175,11 +184,17 @@ impl Instruction {
             kind,
             result: None,
             debug_info: DebugInfo { source_span: span },
+            scope: None,
         }
     }
 
     pub fn with_result(mut self, result: Value) -> Self {
         self.result = Some(result);
+        self
+    }
+
+    pub fn with_scope(mut self, scope: ScopeId) -> Self {
+        self.scope = Some(scope);
         self
     }
 }
@@ -224,6 +239,19 @@ impl fmt::Display for Instruction {
                     .collect::<Vec<_>>()
                     .join(", ");
                 write!(f, "{result_str} vector.{op} {operands_str} : {ty}")
+            }
+            InstructionKind::CreateScope { parent } => {
+                if let Some(parent_id) = parent {
+                    write!(f, "{result_str}create_scope parent={parent_id}")
+                } else {
+                    write!(f, "{result_str}create_scope")
+                }
+            }
+            InstructionKind::DestroyScope { scope } => {
+                write!(f, "{result_str}destroy_scope scope={scope}")
+            }
+            InstructionKind::AcquireResource { resource } => {
+                write!(f, "{result_str}acquire_resource resource={resource}")
             }
         }
     }
