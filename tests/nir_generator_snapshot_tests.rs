@@ -1,15 +1,41 @@
+use std::collections::HashMap;
 use insta::assert_snapshot;
 use jsavrs::nir::generator::NIrGenerator;
 use jsavrs::parser::ast::{BinaryOp, Expr, LiteralValue, Parameter, Stmt, Type, UnaryOp};
 use jsavrs::tokens::number::Number;
 use jsavrs::utils::*;
 use std::fmt::Display;
+// tests/nir_generator_snapshot_tests.rs
+use regex::Regex;
+use lazy_static::lazy_static;
+
+lazy_static! {
+    static ref UUID_REGEX: Regex = Regex::new(
+        r"[0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{12}"
+    ).unwrap();
+}
+
+fn sanitize_uuids(input: &str) -> String {
+    let mut counter = 0;
+    let mut mapping = HashMap::new();
+
+    UUID_REGEX.replace_all(input, |captures: &regex::Captures| {
+        let uuid = captures.get(0).unwrap().as_str();
+        let id = *mapping.entry(uuid.to_string()).or_insert_with(|| {
+            let id = counter;
+            counter += 1;
+            id
+        });
+        format!("SCOPE_{}", id)
+    }).to_string()
+}
 
 fn vec_to_string<T: Display>(vec: Vec<T>) -> String {
-    vec.into_iter()
+    let result = vec.into_iter()
         .map(|x| x.to_string())
         .collect::<Vec<_>>()
-        .join(" ")
+        .join(" ");
+    sanitize_uuids(result.as_str())
 }
 
 #[test]

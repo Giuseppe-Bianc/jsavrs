@@ -28,6 +28,7 @@ impl AccessRules {
     }
 }
 
+#[allow(dead_code)]
 pub struct AccessController {
     scopes: std::collections::HashMap<ScopeId, super::scope::Scope>,
     current_scope: ScopeId,

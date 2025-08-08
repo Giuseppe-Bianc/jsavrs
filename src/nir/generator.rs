@@ -173,7 +173,7 @@ impl NIrGenerator {
 
         // Add function parameters to symbol table
         for param in &func.parameters {
-            let temp = self.new_temp();
+            //let temp = self.new_temp();
             let value = Value::new_local(param.name.clone(), param.ty.clone()).with_debug_info(
                 Some(param.name.clone()),
                 param.attributes.source_span.clone().unwrap_or_default(),
@@ -244,7 +244,10 @@ impl NIrGenerator {
             Stmt::Continue { span } => {
                 self.handle_continue(func, span);
             }
-            other => self.new_error("Unsupported statement type".to_string(), other.span().clone()),
+            other => self.new_error(
+                "Unsupported statement type".to_string(),
+                other.span().clone(),
+            ),
         }
     }
 
