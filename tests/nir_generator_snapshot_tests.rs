@@ -31,11 +31,13 @@ fn sanitize_uuids(input: &str) -> String {
 }
 
 fn vec_to_string<T: Display>(vec: Vec<T>) -> String {
-    let result = vec.into_iter()
-        .map(|x| x.to_string())
-        .collect::<Vec<_>>()
-        .join(" ");
-    sanitize_uuids(result.as_str())
+    sanitize_uuids(
+        vec.into_iter()
+            .map(|x| x.to_string())
+            .collect::<Vec<_>>()
+            .join(" ")
+            .as_str(),
+    )
 }
 
 #[test]

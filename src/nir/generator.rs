@@ -245,7 +245,7 @@ impl NIrGenerator {
                 self.handle_continue(func, span);
             }
             other => self.new_error(
-                "Unsupported statement type".to_string(),
+                format!("Unsupported statement: {:?}", other),
                 other.span().clone(),
             ),
         }
