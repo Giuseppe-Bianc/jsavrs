@@ -18,6 +18,7 @@ use std::{
     path::Path,
     //process,
 };
+use jsavrs::ir::IrBuilder;
 //use jsavrs::asm::generator::{AsmGenerator, TargetOS};
 
 #[allow(clippy::explicit_auto_deref, clippy::unused_unit)]
@@ -103,7 +104,7 @@ fn main() -> Result<(), CompileError> {
         process::exit(-1);
     }
 
-    let mut generator = NIrGenerator::new();
+    /*let mut generator = NIrGenerator::new();
     let nir_timer = Timer::new("NIR Generation");
     let (nfunctions, ir_errors) = generator.generate(statements.clone());
     println!("{nir_timer}");
@@ -122,7 +123,14 @@ fn main() -> Result<(), CompileError> {
         }
     } else {
         println!("{} functions generated", nfunctions.len());
-    }
+    }*/
+
+    let mut buidler =  IrBuilder::new(file_path.as_os_str().to_str().unwrap().to_string());
+    let nir_timer = Timer::new("NIR Generation");
+    let module = buidler.build(statements.clone());
+    println!("{nir_timer}");
+    println!("{module:#?}");
+
 
 
     /*let mut asm_gen = AsmGenerator::new(if cfg!(windows) { TargetOS::Windows } else { TargetOS::Linux });

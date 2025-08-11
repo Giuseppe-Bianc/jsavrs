@@ -1,7 +1,7 @@
+//src/nir/scope.rs
 use std::collections::HashMap;
 use crate::nir::{ScopeId, Value};
 
-//src/nir/scope.rs
 #[derive(Debug, Clone, PartialEq)]
 pub struct Scope {
     pub symbols: HashMap<String, Value>,
