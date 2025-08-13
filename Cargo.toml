@@ -19,7 +19,7 @@ name = "jsavrs"
 path = "src/main.rs"
 
 [dependencies]
-clap = { version = "4.5.43", features = ["cargo", "derive"] }
+clap = { version = "4.5.45", features = ["cargo", "derive"] }
 console = "0.16.0"
 logos = "0.15.1"
 thiserror = "2.0.14"
