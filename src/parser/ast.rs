@@ -5,7 +5,7 @@ use crate::tokens::number::Number;
 use crate::tokens::token::Token;
 use crate::tokens::token_kind::TokenKind;
 
-#[derive(Debug, Clone, PartialEq)]
+#[derive(Debug, Clone, Hash, Eq, PartialEq)]
 pub enum Expr {
     Binary {
         left: Box<Expr>,
@@ -54,7 +54,7 @@ pub enum Expr {
     // Additional expressions as needed
 }
 
-#[derive(Debug, Clone, PartialEq)]
+#[derive(Debug, Clone, Hash,Eq,PartialEq)]
 pub enum BinaryOp {
     Add,
     Subtract,
@@ -76,13 +76,13 @@ pub enum BinaryOp {
     ShiftRight,
 }
 
-#[derive(Debug, Clone, PartialEq)]
+#[derive(Debug, Clone, Hash, Eq,PartialEq)]
 pub enum UnaryOp {
     Negate,
     Not,
 }
 
-#[derive(Debug, Clone, PartialEq)]
+#[derive(Debug, Clone, Hash, Eq, PartialEq)]
 pub enum LiteralValue {
     Number(Number),
     StringLit(String),
@@ -91,7 +91,7 @@ pub enum LiteralValue {
     Nullptr,
 }
 
-#[derive(Debug, Clone, PartialEq)]
+#[derive(Debug, Clone, Hash,PartialEq)]
 pub enum Stmt {
     Expression {
         expr: Expr,
@@ -255,14 +255,14 @@ impl BinaryOp {
     }
 }
 
-#[derive(Debug, Clone, PartialEq)]
+#[derive(Debug, Clone, Hash,PartialEq)]
 pub struct Parameter {
     pub name: String,
     pub type_annotation: Type,
     pub span: SourceSpan,
 }
 
-#[derive(Debug, Clone, PartialEq)]
+#[derive(Debug, Clone, Hash,Eq, PartialEq)]
 pub enum Type {
     I8,
     I16,
