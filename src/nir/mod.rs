@@ -9,6 +9,8 @@ pub mod generator;
 mod scope;
 mod scope_manager;
 mod access_control;
+mod module;
+//mod validator;
 
 pub use basic_block::BasicBlock;
 pub use function::{Cfg, Function, FunctionAttributes, IrParameter, ParamAttributes};
@@ -19,3 +21,4 @@ pub use value::{IrConstantValue, IrLiteralValue, Value, ValueDebugInfo, ValueKin
 pub use access_control::{AccessController, AccessRules, Operation};
 pub use scope::Scope;
 pub use scope_manager::ScopeManager;
+pub use module::{Module, TargetTriple, DataLayout};

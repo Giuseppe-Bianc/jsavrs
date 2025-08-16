@@ -18,6 +18,8 @@ use std::{
     path::Path,
     //process,
 };
+use jsavrs::nir::Module;
+//use jsavrs::llir::module::Module;
 //use jsavrs::asm::generator::{AsmGenerator, TargetOS};
 
 #[allow(clippy::explicit_auto_deref, clippy::unused_unit)]
@@ -116,13 +118,20 @@ fn main() -> Result<(), CompileError> {
 
     println!("NIR generation done");
 
+    let mut module = Module::new(file_path.to_str().unwrap().to_string());
     if args.verbose {
         for nfunc in &nfunctions {
-            println!("{nfunc}");
+            //println!("{nfunc}");
+            module.add_function(nfunc.clone());
         }
     } else {
         println!("{} functions generated", nfunctions.len());
     }
+    // Print the module
+    if args.verbose {
+        println!("{module}");
+    }
+
 
     /*let mut buidler =  IrBuilder::new(file_path.as_os_str().to_str().unwrap().to_string());
     let nir_timer = Timer::new("NIR Generation");
