@@ -474,11 +474,48 @@ impl NIrGenerator {
             Expr::ArrayLiteral { elements, span } => {
                 self.generate_array_literal(func, elements, span)
             }
+            Expr::ArrayAccess { array, index, span } => {
+                self.generate_array_access(func, *array, *index, span)
+            }
             other => {
                 self.new_error("Unsupported expression type".to_string(), other.span().clone());
                 Value::new_literal(IrLiteralValue::I32(0))
             }
         }
+    }
+
+    /// Genera l'accesso ad array: calcola l'indirizzo dell'elemento con GEP
+    /// e restituisce un puntatore all'elemento. Non esegue il Load per mantenere
+    /// la compatibilità con l'uso attuale dei puntatori nelle espressioni.
+    fn generate_array_access(&mut self, func: &mut Function, array: Expr, index: Expr, span: SourceSpan) -> Value {
+        let base_val = self.generate_expr(func, array);
+        let index_val = self.generate_expr(func, index);
+
+        // Deduzione del tipo elemento: gestiamo sia puntatore ad array che array diretto
+        let element_ty = match &base_val.ty {
+            IrType::Pointer(inner) => match inner.as_ref() {
+                IrType::Array(elem_ty, _) => *elem_ty.clone(),
+                other => other.clone(), // fallback: puntatore a elemento già puntato
+            },
+            IrType::Array(elem_ty, _) => *elem_ty.clone(),
+            other => {
+                // Caso inatteso: segnaliamo ma proseguiamo con un fallback sicuro (i32)
+                self.new_error(
+                    format!("Array access on non-array type: {other}"),
+                    span.clone(),
+                );
+                IrType::I32
+            }
+        };
+
+        let tmp = self.new_temp();
+        let gep = Instruction::new(
+            InstructionKind::GetElementPtr { base: base_val, index: index_val, element_ty: element_ty.clone() },
+            span.clone(),
+        ).with_result(Value::new_temporary(tmp, IrType::Pointer(Box::new(element_ty))));
+
+        self.add_instruction(gep.clone());
+        gep.result.unwrap()
     }
 
     fn generate_array_literal(&mut self, func: &mut Function, elements: Vec<Expr>, span: SourceSpan) -> Value {
@@ -610,8 +647,21 @@ impl NIrGenerator {
             .with_scope(self.scope_manager.current_scope());
 
         if let Some(preds) = func.cfg.predecessors.get(label) {
-            for pred in preds {
-                new_block.add_predecessor(pred.clone());
+            // Ordiniamo i predecessori per suffisso numerico (se presente), poi per label
+            let mut preds_vec: Vec<_> = preds.iter().cloned().collect();
+            preds_vec.sort_by(|a, b| {
+                fn suffix_num(s: &str) -> Option<usize> {
+                    s.rsplit_once('_').and_then(|(_, tail)| tail.parse::<usize>().ok())
+                }
+                match (suffix_num(a), suffix_num(b)) {
+                    (Some(na), Some(nb)) => na.cmp(&nb).then_with(|| a.cmp(b)),
+                    (Some(_), None) => std::cmp::Ordering::Less,
+                    (None, Some(_)) => std::cmp::Ordering::Greater,
+                    (None, None) => a.cmp(b),
+                }
+            });
+            for pred in preds_vec {
+                new_block.add_predecessor(pred);
             }
         }
 

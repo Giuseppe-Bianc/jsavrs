@@ -1,5 +1,5 @@
 // src/nir/instruction.rs
-use super::{IrType, Value, ScopeId, ResourceId};
+use super::{IrType, Value, ScopeId};
 use crate::{
     location::source_span::SourceSpan,
     parser::ast::{BinaryOp, UnaryOp},
@@ -104,15 +104,6 @@ pub enum InstructionKind {
         op: VectorOp,
         operands: Vec<Value>,
         ty: IrType,
-    },
-    CreateScope {
-        parent: Option<ScopeId>,
-    },
-    DestroyScope {
-        scope: ScopeId,
-    },
-    AcquireResource {
-        resource: ResourceId,
     },
 }
 
@@ -239,20 +230,7 @@ impl fmt::Display for Instruction {
                     .collect::<Vec<_>>()
                     .join(", ");
                 write!(f, "{result_str} vector.{op} {operands_str} : {ty}")
-            }
-            InstructionKind::CreateScope { parent } => {
-                if let Some(parent_id) = parent {
-                    write!(f, "{result_str}create_scope parent={parent_id}")
-                } else {
-                    write!(f, "{result_str}create_scope")
-                }
-            }
-            InstructionKind::DestroyScope { scope } => {
-                write!(f, "{result_str}destroy_scope scope={scope}")
-            }
-            InstructionKind::AcquireResource { resource } => {
-                write!(f, "{result_str}acquire_resource resource={resource}")
-            }
+            },
         }
     }
 }

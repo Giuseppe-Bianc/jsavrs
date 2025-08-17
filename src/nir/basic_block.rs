@@ -53,7 +53,20 @@ impl fmt::Display for BasicBlock {
         }
 
         if !self.predecessors.is_empty() {
-            writeln!(f, "// Predecessors: {}", self.predecessors.join(", "))?;
+            // Ordina per suffisso numerico crescente se presente, altrimenti lessicografico
+            let mut preds = self.predecessors.clone();
+            preds.sort_by(|a, b| {
+                fn suffix_num(s: &str) -> Option<usize> {
+                    s.rsplit_once('_').and_then(|(_, tail)| tail.parse::<usize>().ok())
+                }
+                match (suffix_num(a), suffix_num(b)) {
+                    (Some(na), Some(nb)) => na.cmp(&nb).then_with(|| a.cmp(b)),
+                    (Some(_), None) => std::cmp::Ordering::Less,
+                    (None, Some(_)) => std::cmp::Ordering::Greater,
+                    (None, None) => a.cmp(b),
+                }
+            });
+            writeln!(f, "// Predecessors: {}", preds.join(", "))?;
         }
 
         writeln!(f, "{}:", self.label)?;
