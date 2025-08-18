@@ -105,11 +105,11 @@ impl Module {
 
 impl fmt::Display for Module {
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
-        write!(f, "module {} {{\n", self.name)?;
-        write!(f, "data_layout = {};\n", self.data_layout)?;
-        write!(f, "target_triple = {};\n", self.target_triple)?;
+        writeln!(f, "module {} {{", self.name)?;
+        writeln!(f, "data_layout = {};", self.data_layout)?;
+        writeln!(f, "target_triple = {};", self.target_triple)?;
         for function in &self.functions {
-            write!(f, "{}\n", function)?;
+            writeln!(f, "{}", function)?;
         }
         write!(f, "}}")
     }
