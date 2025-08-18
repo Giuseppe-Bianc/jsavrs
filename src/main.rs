@@ -1,5 +1,6 @@
 // run --package jsavrs --bin jsavrs -- -i C:/dev/visualStudio/transpiler/Vandior/input.vn -v
 use clap::Parser;
+use std::fmt::Write;
 use console::style;
 use jsavrs::cli::Args;
 use jsavrs::error::error_reporter::ErrorReporter;
@@ -63,13 +64,21 @@ fn main() -> Result<(), CompileError> {
 
     // Print tokens with color if verbose
     if args.verbose {
-        for token in tokens.clone() {
-            println!(
-                "{} {}",
-                style(format!("{:?}", token.kind)).green(),
-                style(format!("at {}", token.span)).dim()
-            );
+        let mut buffer = String::with_capacity(tokens.len() * 100);
+        if tokens.len() > 1000 {
+            println!("{} tokens found", tokens.len());
+        } else {
+            for token in &tokens.clone() {
+                let _ = write!(
+                    buffer,
+                    "{} {}",
+                    style(format!("{:?}", token.kind)).green(),
+                    style(format!("at {}", token.span)).dim()
+                );
+                buffer.push('\n');
+            }
         }
+        print!("{}", buffer);
     } else {
         println!("{} tokens found", tokens.len());
     }
@@ -78,6 +87,8 @@ fn main() -> Result<(), CompileError> {
     let parse_timer = Timer::new("Parser");
     let (statements, parer_errors) = parse.parse();
     println!("{parse_timer}");
+    let num_statements = statements.iter().len();
+    let num_statements_str = format!("{} statements found", num_statements);
     if !parer_errors.is_empty() {
         eprintln!("{}", error_reporter.report_errors(parer_errors));
         ()
@@ -88,11 +99,15 @@ fn main() -> Result<(), CompileError> {
     //Print statements with color if verbose
     if args.verbose {
         //println!("{}", pretty_print(&statements.unwrap()));
-        for stat in &statements {
-            println!("{}", pretty_print_stmt(stat));
+        if num_statements > 5{
+            println!("{num_statements_str}");
+        } else {
+            for stat in &statements {
+                println!("{}", pretty_print_stmt(stat));
+            }
         }
     } else {
-        println!("{} statements found", statements.iter().len());
+        println!("{num_statements_str}");
     }
 
     let type_check_timer = Timer::new("Type Checking");

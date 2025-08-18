@@ -137,7 +137,6 @@ impl TypeChecker {
 
         for (var_name, init_expr) in variables.iter().zip(initializers) {
             let init_type = self.visit_expr(init_expr);
-
             // Solo se l'espressione ha prodotto un tipo valido
             if let Some(init_type) = init_type {
                 if !self.is_assignable(&init_type, type_annotation) {
@@ -147,7 +146,6 @@ impl TypeChecker {
                     );
                 }
             }
-
 
             self.declare_symbol(
                 var_name,
@@ -176,13 +174,10 @@ impl TypeChecker {
             return_type: return_type.clone(),
             defined_at: span.clone(),
         };
-
         self.declare_symbol(name, Symbol::Function(func_symbol.clone()));
-
         self.symbol_table
             .push_scope(ScopeKind::Function, Some(span.clone()));
         self.return_type_stack.push(return_type.clone());
-
         for param in parameters {
             self.declare_symbol(
                 &param.name,
@@ -195,13 +190,10 @@ impl TypeChecker {
                 }),
             );
         }
-
         self.visit_statements(body);
-
         if *return_type != Type::Void && !self.function_has_return(body) {
             self.type_error(format!("Function '{name}' may not return value in all code paths (expected return type: {return_type})"), span);
         }
-
         self.return_type_stack.pop();
         self.symbol_table.pop_scope();
     }
@@ -225,12 +217,10 @@ impl TypeChecker {
                 );
             }
         }
-
         self.symbol_table
             .push_scope(ScopeKind::Block, Some(condition.span().clone()));
         self.visit_statements(then_branch);
         self.symbol_table.pop_scope();
-
         if let Some(else_branch) = else_branch {
             self.symbol_table
                 .push_scope(ScopeKind::Block, Some(condition.span().clone()));
@@ -248,15 +238,12 @@ impl TypeChecker {
                 );
             }
         }
-
         let was_in_loop = self.in_loop;
         self.in_loop = true;
-
         self.symbol_table
             .push_scope(ScopeKind::Block, Some(condition.span().clone()));
         self.visit_statements(body);
         self.symbol_table.pop_scope();
-
         self.in_loop = was_in_loop;
     }
 
@@ -270,11 +257,9 @@ impl TypeChecker {
     ) {
         self.symbol_table
             .push_scope(ScopeKind::Block, Some(span.clone()));
-
         if let Some(init) = initializer {
             self.visit_stmt(init);
         }
-
         if let Some(cond) = condition {
             if let Some(cond_type) = self.visit_expr(cond) {
                 if cond_type != Type::Bool {
@@ -285,16 +270,12 @@ impl TypeChecker {
                 }
             }
         }
-
         if let Some(inc) = increment {
             self.visit_expr(inc);
         }
-
         let was_in_loop = self.in_loop;
         self.in_loop = true;
-
         self.visit_statements(body);
-
         self.in_loop = was_in_loop;
         self.symbol_table.pop_scope();
     }
@@ -312,7 +293,6 @@ impl TypeChecker {
             return;
         }
         let expected_type = self.return_type_stack.last().cloned().unwrap_or(Type::Void);
-
         match (value, &expected_type) {
             (Some(expr), Type::Void) => {
                 self.type_error("Cannot return a value from void function", expr.span());
@@ -387,7 +367,6 @@ impl TypeChecker {
     ) -> Option<Type> {
         let mut left_type = self.visit_expr(left)?;
         let mut right_type = self.visit_expr(right)?;
-
         // Distinzione tra operatori bitwise e altri operatori numerici
         if matches!(
             op,
@@ -430,7 +409,6 @@ impl TypeChecker {
             left_type = common_type.clone();
             right_type = common_type;
         }
-
         if !self.are_compatible(&left_type, &right_type) {
             let message = match op {
                 BinaryOp::And | BinaryOp::Or => {
@@ -464,7 +442,6 @@ impl TypeChecker {
             self.type_error(message, span);
             return None;
         }
-
         Some(match op {
             BinaryOp::Add
             | BinaryOp::Subtract
@@ -504,7 +481,6 @@ impl TypeChecker {
 
     fn visit_unary_expr(&mut self, op: &UnaryOp, expr: &Expr, _span: &SourceSpan) -> Option<Type> {
         let expr_type = self.visit_expr(expr)?;
-
         match op {
             UnaryOp::Negate => {
                 if !self.is_numeric(&expr_type) {
@@ -562,7 +538,6 @@ impl TypeChecker {
             );
             return None; // Ritorna None dopo aver segnalato l'errore
         }
-
         let len = elements.len();
         let mut element_type = None;
         for element in elements {
@@ -579,7 +554,6 @@ impl TypeChecker {
                 }
             }
         }
-
         element_type.map(|ty| {
             // Create proper size expression with actual length
             let size_expr = Expr::Literal {
@@ -590,8 +564,48 @@ impl TypeChecker {
         })
     }
 
+    // Updated is_same_type to handle array types properly
     fn is_same_type(&self, t1: &Type, t2: &Type) -> bool {
-        t1 == t2
+        match (t1, t2) {
+            (Type::Array(elem1, size1), Type::Array(elem2, size2)) => {
+                // First check if element types are the same
+                if !self.is_same_type(elem1, elem2) {
+                    return false;
+                }
+
+                // Then compare the sizes by evaluating the expressions
+                match (self.get_size(size1), self.get_size(size2)) {
+                    (Some(s1), Some(s2)) => s1 == s2,
+                    _ => false,
+                }
+            }
+            _ => t1 == t2,
+        }
+    }
+
+    // Updated get_size to handle all integer types and return u64
+    fn get_size(&self, expr: &Expr) -> Option<u64> {
+        if let Expr::Literal { value, .. } = expr {
+            match value {
+                LiteralValue::Number(Number::I8(n)) => Some(*n as u64),
+                LiteralValue::Number(Number::I16(n)) => Some(*n as u64),
+                LiteralValue::Number(Number::I32(n)) => Some(*n as u64),
+                LiteralValue::Number(Number::Integer(n)) => {
+                    if *n >= 0 {
+                        Some(*n as u64)
+                    } else {
+                        None
+                    }
+                }
+                LiteralValue::Number(Number::U8(n)) => Some(*n as u64),
+                LiteralValue::Number(Number::U16(n)) => Some(*n as u64),
+                LiteralValue::Number(Number::U32(n)) => Some(*n as u64),
+                LiteralValue::Number(Number::UnsignedInteger(n)) => Some(*n),
+                _ => None,
+            }
+        } else {
+            None
+        }
     }
 
     fn visit_variable(&mut self, name: &str, span: &SourceSpan) -> Option<Type> {
@@ -634,9 +648,7 @@ impl TypeChecker {
                 return None;
             }
         };
-
         let value_type = self.visit_expr(value)?;
-
         if !self.is_assignable(&value_type, &target_type) {
             // Create specific error message for array elements
             let message = match target {
@@ -647,7 +659,6 @@ impl TypeChecker {
             };
             self.type_error(message, value.span());
         }
-
         Some(target_type)
     }
 
@@ -661,7 +672,6 @@ impl TypeChecker {
             }
             return None;
         };
-
         let func = match self.symbol_table.lookup_function(callee_name) {
             Some(func) => func,
             None => {
@@ -672,7 +682,6 @@ impl TypeChecker {
                 return None;
             }
         };
-
         if arguments.len() != func.parameters.len() {
             self.type_error(
                 format!(
@@ -684,7 +693,6 @@ impl TypeChecker {
                 span,
             );
         }
-
         for (i, (arg, param)) in arguments.iter().zip(&func.parameters).enumerate() {
             if let Some(arg_type) = self.visit_expr(arg) {
                 if !self.is_assignable(&arg_type, &param.type_annotation) {
@@ -700,14 +708,12 @@ impl TypeChecker {
                 }
             }
         }
-
         Some(func.return_type.clone())
     }
 
     fn visit_array_access(&mut self, array: &Expr, index: &Expr, _span: &SourceSpan) -> Option<Type> {
         let array_type = self.visit_expr(array)?;
         let index_type = self.visit_expr(index)?;
-
         if !self.is_integer_type(&index_type) {
             self.type_error(
                 format!("Array index must be integer type, found {index_type}"),
@@ -715,7 +721,6 @@ impl TypeChecker {
             );
             return None;
         }
-
         if let Type::Array(element_type, _) = array_type {
             Some(*element_type)
         } else {
@@ -740,19 +745,6 @@ impl TypeChecker {
         t1.clone()
     }
 
-    // Helper function to extract integer size from an expression (non-recursive)
-    fn get_size(&self, expr: &Expr) -> Option<i64> {
-        if let Expr::Literal {
-            value: LiteralValue::Number(Number::Integer(n)),
-            ..
-        } = expr
-        {
-            Some(*n)
-        } else {
-            None
-        }
-    }
-
     pub fn is_assignable(&self, source: &Type, target: &Type) -> bool {
         match (source, target) {
             // Numeric promotions
@@ -760,40 +752,32 @@ impl TypeChecker {
             (Type::I16, Type::I32 | Type::I64 | Type::F32 | Type::F64) => true,
             (Type::I32, Type::I64 | Type::F32 | Type::F64) => true,
             (Type::I64, Type::F64) => true,
-
             (Type::U8, Type::U16 | Type::U32 | Type::U64 | Type::F32 | Type::F64) => true,
             (Type::U16, Type::U32 | Type::U64 | Type::F32 | Type::F64) => true,
             (Type::U32, Type::U64 | Type::F32 | Type::F64) => true,
             (Type::U64, Type::F64) => true,
-
             (Type::F32, Type::F64) => true,
-
             // Nullptr assignable to pointer types
             (Type::NullPtr, Type::Array(_, _) | Type::Vector(_) | Type::Custom(_)) => true,
-
             // Char assignable to String
             (Type::Char, Type::String) => true,
-
             // Array: requires compatible types and equal sizes
             (Type::Array(source_elem, source_size), Type::Array(target_elem, target_size)) => {
                 // Convert &Box<Type> to &Type via dereferencing
                 if !self.is_assignable(source_elem, target_elem) {
                     return false;
                 }
-
-                // Use the extracted helper function
+                // Use the updated helper function
                 match (self.get_size(source_size), self.get_size(target_size)) {
                     (Some(source_val), Some(target_val)) => source_val == target_val,
                     _ => false,
                 }
             }
-
             // Vector: requires compatible element types
             (Type::Vector(source_elem), Type::Vector(target_elem)) => {
                 // Convert &Box<Type> to &Type
                 self.is_assignable(source_elem, target_elem)
             }
-
             // Identical types
             _ => source == target,
         }
@@ -848,7 +832,6 @@ impl TypeChecker {
                         .as_ref()
                         .map(|b| self.function_has_return(b))
                         .unwrap_or(false);
-
                     if then_has_return && else_has_return {
                         return true;
                     } else {

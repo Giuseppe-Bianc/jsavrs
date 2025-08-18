@@ -291,7 +291,7 @@ impl JsavParser {
 
     fn parse_type(&mut self) -> Option<Type> {
         let token = self.advance()?.clone();
-        let mut type_ = match &token.kind {
+        let mut base_type = match &token.kind {
             TokenKind::TypeI8 => Type::I8,
             TokenKind::TypeI16 => Type::I16,
             TokenKind::TypeI32 => Type::I32,
@@ -318,22 +318,29 @@ impl JsavParser {
             }
         };
 
+        // Collect dimensions in a vector instead of nesting immediately
+        let mut dimensions = Vec::new();
         while self.match_token(&TokenKind::OpenBracket) {
             let size_expr = self.parse_expr(0)?;
             self.expect(&TokenKind::CloseBracket, "after array size");
-            type_ = Type::Array(Box::new(type_), Box::new(size_expr));
+            dimensions.push(size_expr);
+        }
+
+        // Apply dimensions in reverse order
+        for size in dimensions.into_iter().rev() {
+            base_type = Type::Array(Box::new(base_type), Box::new(size));
         }
 
         #[allow(clippy::collapsible_if)]
-        if let Type::Custom(name) = &type_ {
+        if let Type::Custom(name) = &base_type {
             if name == "vector" && self.match_token(&TokenKind::Less) {
                 let inner_type = self.parse_type()?;
                 self.expect(&TokenKind::Greater, "after vector inner type");
-                type_ = Type::Vector(Box::new(inner_type));
+                base_type = Type::Vector(Box::new(inner_type));
             }
         }
 
-        Some(type_)
+        Some(base_type)
     }
 
     #[allow(clippy::if_same_then_else)]

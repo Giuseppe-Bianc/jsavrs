@@ -6,39 +6,41 @@ main {
     /*
     multi line comment
     */
-	//var arr: i8[] = {1, 2, 3} // vector
-	//var arr2: i8[3] = {1, 2, 3} // array
-	//var a, b: i8 = (1 + 4 + (12 + 3) * 3), 12
-	var a: i64 = 1 + 4 - (12 + 3) / 3
-	var b: i8 = 12i8
-	var c: char = 'a'
-	//(1 + 4 + (12 + 3) * 3)
-	if (a == 1 + (1 + 2)) {
-		//break
-	} else if (a == 2) {
+    //var arr: i8[] = {1, 2, 3} // vector
+    //var arr2: i8[3] = {1, 2, 3} // array
+    //var a, b: i8 = (1 + 4 + (12 + 3) * 3), 12
+    var a: i64 = 1 + 4 - (12 + 3) / 3
+    var b: i8 = 12i8
+    var c: char = 'a'
+    //(1 + 4 + (12 + 3) * 3)
+    if (a == 1 + (1 + 2)) {
+        //break
+    } else if (a == 2) {
         a = 2
     } else {
         a = 3
     }
-	{
-	}
-	if (true) {
-	    if(false) {
+    {
+    }
+    if (true) {
+        if(false) {
             return
         }
-	}
-	var arr: i64[5] = {1, 2, 3, 4, 5}
-	//5-5=5
+    }
+    var arr: i64[5] = {1, 2, 3, 4, 5}
+    //5-5=5
 
-	{
-	 var a2: i8 = b + 1i8
-	}
+    {
+     var a2: i8 = b + 1i8
+    }
 
-	for (;;) { break }
-	for (var i:i32 = 0i32; i < 10i32; i = i + 1i32) { break }
-	while (true) { break }
-	//a(1i8, 2i8) = 3i8
-	//var x: i8 = a(1i8, 2i8) + 3i8
-	//var arr3: i32[2] = {}
-	//arr3[0]
+
+    for (;;) { break }
+    for (var i:i32 = 0i32; i < 10i32; i = i + 1i32) { break }
+    while (true) { break }
+    //a(1i8, 2i8) = 3i8
+    //var x: i8 = a(1i8, 2i8) + 3i8
+    //var arr3: i32[2] = {}
+    //arr3[0]
+    var matrix: i8[2][3] = {{1i8, 2i8, 3i8}, {4i8, 5i8, 6i8}}
 }
