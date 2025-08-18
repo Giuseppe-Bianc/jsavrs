@@ -164,9 +164,12 @@ impl NIrGenerator {
     fn generate_function_body(&mut self, func: &mut Function, body: Vec<Stmt>, span: SourceSpan) {
         self.break_stack.clear();
         self.continue_stack.clear();
-        self.start_block(func, format!("entry_{}", func.name).as_str(), span);
+        // Establish function scope before creating the entry block
+        func.enter_scope();
         self.scope_manager = func.scope_manager.clone();
         self.access_controller = AccessController::new(&self.scope_manager);
+        let entry_label = format!("entry_{}", func.name);
+        self.start_block(func, &entry_label, span);
 
         func.enter_scope();
         self.scope_manager = func.scope_manager.clone();

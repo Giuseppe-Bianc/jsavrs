@@ -576,6 +576,7 @@ impl TypeChecker {
                 // Then compare the sizes by evaluating the expressions
                 match (self.get_size(size1), self.get_size(size2)) {
                     (Some(s1), Some(s2)) => s1 == s2,
+                    (None, None) => size1 == size2,
                     _ => false,
                 }
             }
