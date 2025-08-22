@@ -1,6 +1,5 @@
 // run --package jsavrs --bin jsavrs -- -i C:/dev/visualStudio/transpiler/Vandior/input.vn -v
 use clap::Parser;
-use std::fmt::Write;
 use console::style;
 use jsavrs::cli::Args;
 use jsavrs::error::error_reporter::ErrorReporter;
@@ -19,7 +18,6 @@ use std::{
     path::Path,
     //process,
 };
-use jsavrs::nir::Module;
 //use jsavrs::llir::module::Module;
 //use jsavrs::asm::generator::{AsmGenerator, TargetOS};
 
@@ -63,25 +61,7 @@ fn main() -> Result<(), CompileError> {
     }
 
     // Print tokens with color if verbose
-    if args.verbose {
-        let mut buffer = String::with_capacity(tokens.len() * 100);
-        if tokens.len() > 1000 {
-            println!("{} tokens found", tokens.len());
-        } else {
-            for token in &tokens.clone() {
-                let _ = write!(
-                    buffer,
-                    "{} {}",
-                    style(format!("{:?}", token.kind)).green(),
-                    style(format!("at {}", token.span)).dim()
-                );
-                buffer.push('\n');
-            }
-        }
-        print!("{}", buffer);
-    } else {
-        println!("{} tokens found", tokens.len());
-    }
+    println!("{} tokens found", tokens.len());
 
     let parse = JsavParser::new(tokens);
     let parse_timer = Timer::new("Parser");
@@ -91,7 +71,7 @@ fn main() -> Result<(), CompileError> {
     let num_statements_str = format!("{} statements found", num_statements);
     if !parer_errors.is_empty() {
         eprintln!("{}", error_reporter.report_errors(parer_errors));
-        ()
+        process::exit(-1);
     }
 
     println!("parsing done");
@@ -122,7 +102,7 @@ fn main() -> Result<(), CompileError> {
 
     let mut generator = NIrGenerator::new();
     let nir_timer = Timer::new("NIR Generation");
-    let (nfunctions, ir_errors) = generator.generate(statements.clone());
+    let (module, ir_errors) = generator.generate(statements.clone(), file_path.to_str().unwrap());
     println!("{nir_timer}");
 
 
@@ -133,15 +113,6 @@ fn main() -> Result<(), CompileError> {
 
     println!("NIR generation done");
 
-    let mut module = Module::new(file_path.to_str().unwrap().to_string());
-    if args.verbose {
-        for nfunc in &nfunctions {
-            //println!("{nfunc}");
-            module.add_function(nfunc.clone());
-        }
-    } else {
-        println!("{} functions generated", nfunctions.len());
-    }
     // Print the module
     if args.verbose {
         println!("{module}");

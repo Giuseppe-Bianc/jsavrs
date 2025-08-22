@@ -14,8 +14,6 @@ pub enum IrType {
     Array(Box<IrType>, usize),
     Custom(String, SourceSpan), // Added source span
     Struct(String, Vec<IrType>, SourceSpan), // New struct type
-    Scope(ScopeId),
-    Resource(ResourceId),
 }
 
 #[derive(Debug, Clone, PartialEq, Eq, Hash, Copy)]
@@ -86,8 +84,6 @@ impl fmt::Display for IrType {
                 let fields_str = fields.iter().map(|t| t.to_string()).collect::<Vec<_>>().join(", ");
                 write!(f, "struct {name} {{ {fields_str} }}")
             }
-            IrType::Scope(id) => write!(f, "scope<{id}>"),
-            IrType::Resource(id) => write!(f, "resource<{id}>"),
         }
     }
 }

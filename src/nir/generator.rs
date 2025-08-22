@@ -55,8 +55,10 @@ impl NIrGenerator {
         self.current_block.as_ref().is_some_and(|b| !b.terminator.is_terminator())
     }
 
-    pub fn generate(&mut self, stmts: Vec<Stmt>) -> (Vec<Function>, Vec<CompileError>) {
-        let mut functions = Vec::new();
+    pub fn generate(&mut self, stmts: Vec<Stmt>, module_name: &str) -> (Module, Vec<CompileError>) {
+        //let mut functions = Vec::new();
+        let mut module = Module::new(module_name.into());
+
 
         for stmt in stmts {
             match stmt {
@@ -64,12 +66,12 @@ impl NIrGenerator {
                     let mut func =
                         self.create_function(&name, &parameters, return_type, span.clone());
                     self.generate_function_body(&mut func, body, span);
-                    functions.push(func);
+                    module.add_function(func);
                 }
                 Stmt::MainFunction { body, span } => {
                     let mut func = self.create_function("main", &[], Type::Void, span.clone());
                     self.generate_function_body(&mut func, body, span);
-                    functions.push(func);
+                    module.add_function(func);
                 }
                 other => {
                     self.new_error(
@@ -80,7 +82,7 @@ impl NIrGenerator {
             }
         }
 
-        (functions, std::mem::take(&mut self.errors))
+        (module, std::mem::take(&mut self.errors))
     }
 
     fn new_error(&mut self, message: String, span: SourceSpan) {

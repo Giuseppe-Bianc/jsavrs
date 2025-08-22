@@ -38,9 +38,10 @@ main {
     for (;;) { break }
     for (var i:i32 = 0i32; i < 10i32; i = i + 1i32) { break }
     while (true) { break }
-    //a(1i8, 2i8) = 3i8
+    var matrix: i8[2][3] = {{1i8, 2i8, 3i8}, {4i8, 5i8, 6i8}}
     //var x: i8 = a(1i8, 2i8) + 3i8
     //var arr3: i32[2] = {}
     //arr3[0]
-    var matrix: i8[2][3] = {{1i8, 2i8, 3i8}, {4i8, 5i8, 6i8}}
+    //a(1i8, 2i8) = 3i8
+
 }

@@ -165,10 +165,10 @@ fn test_generate_function_with_return() {
     )];
 
     let mut generator = NIrGenerator::new();
-    let (functions, ir_errors) = generator.generate(ast);
+    let (functions, ir_errors) = generator.generate(ast, "test_file.vn");
     assert_eq!(ir_errors.len(), 0);
-    assert_eq!(functions.len(), 1);
-    let func = &functions[0];
+    assert_eq!(functions.functions.len(), 1);
+    let func = &functions.functions[0];
     assert_eq!(func.name, "test");
     assert_eq!(func.return_type, IrType::I32);
     assert_eq!(func.cfg.blocks.len(), 1);
@@ -192,10 +192,10 @@ fn test_generate_void_function() {
     )];
 
     let mut generator = NIrGenerator::new();
-    let (functions, ir_errors) = generator.generate(ast);
+    let (functions, ir_errors) = generator.generate(ast, "test_file.vn");
     assert_eq!(ir_errors.len(), 0);
-    assert_eq!(functions.len(), 1);
-    let func = &functions[0];
+    assert_eq!(functions.functions.len(), 1);
+    let func = &functions.functions[0];
     assert_eq!(func.name, "void_func");
     assert_eq!(func.return_type, IrType::Void);
     assert_eq!(func.cfg.blocks.len(), 1);
@@ -216,10 +216,10 @@ fn test_generate_main_function() {
     }];
 
     let mut generator = NIrGenerator::new();
-    let (functions, ir_errors) = generator.generate(ast);
+    let (functions, ir_errors) = generator.generate(ast, "test_file.vn");
     assert_eq!(ir_errors.len(), 0);
-    assert_eq!(functions.len(), 1);
-    let func = &functions[0];
+    assert_eq!(functions.functions.len(), 1);
+    let func = &functions.functions[0];
     assert_eq!(func.name, "main");
     assert_eq!(func.return_type, IrType::Void);
     assert_eq!(func.cfg.blocks.len(), 1);
@@ -243,14 +243,14 @@ fn test_generate_binary_expression() {
     )];
 
     let mut generator = NIrGenerator::new();
-    let (functions, ir_errors) = generator.generate(ast);
+    let (functions, ir_errors) = generator.generate(ast, "test_file.vn");
 
     // Verifica assenza errori
     assert_eq!(ir_errors.len(), 0);
 
     // Verifica struttura funzione
-    assert_eq!(functions.len(), 1);
-    let func = &functions[0];
+    assert_eq!(functions.functions.len(), 1);
+    let func = &functions.functions[0];
     assert_eq!(func.name, "test");
     assert_eq!(func.return_type, IrType::I32);
 
@@ -282,14 +282,14 @@ fn test_generate_variable_assignment() {
     )];
 
     let mut generator = NIrGenerator::new();
-    let (functions, ir_errors) = generator.generate(ast);
+    let (functions, ir_errors) = generator.generate(ast, "test_file.vn");
 
     // Verifica assenza errori
     assert_eq!(ir_errors.len(), 0);
 
     // Verifica struttura funzione
-    assert_eq!(functions.len(), 1);
-    let func = &functions[0];
+    assert_eq!(functions.functions.len(), 1);
+    let func = &functions.functions[0];
     assert_eq!(func.name, "test");
     assert_eq!(func.return_type, IrType::Void);
 
@@ -326,10 +326,10 @@ fn test_generate_if_statement() {
     )];
 
     let mut generator = NIrGenerator::new();
-    let (functions, ir_errors) = generator.generate(ast);
+    let (functions, ir_errors) = generator.generate(ast, "test_file.vn");
     assert_eq!(ir_errors.len(), 0);
-    assert_eq!(functions.len(), 1);
-    let func = &functions[0];
+    assert_eq!(functions.functions.len(), 1);
+    let func = &functions.functions[0];
     assert_eq!(func.cfg.blocks.len(), 4);
     assert_eq!(func.cfg.entry_label, "entry_test");
     let entry_block = func.cfg.get_block("entry_test").unwrap();
@@ -362,10 +362,10 @@ fn test_generate_nested_expressions() {
     )];
 
     let mut generator = NIrGenerator::new();
-    let (functions, ir_errors) = generator.generate(ast);
+    let (functions, ir_errors) = generator.generate(ast, "test_file.vn");
     assert_eq!(ir_errors.len(), 0);
-    assert_eq!(functions.len(), 1);
-    let func = &functions[0];
+    assert_eq!(functions.functions.len(), 1);
+    let func = &functions.functions[0];
     assert_eq!(func.cfg.blocks.len(), 1);
     assert_eq!(func.cfg.entry_label, "entry_test");
     let entry_block = func.cfg.get_block("entry_test").unwrap();
@@ -404,10 +404,10 @@ fn test_generate_custom_type() {
     )];
 
     let mut generator = NIrGenerator::new();
-    let (functions, ir_errors) = generator.generate(ast);
+    let (functions, ir_errors) = generator.generate(ast, "test_file.vn");
     assert_eq!(ir_errors.len(), 0);
-    assert_eq!(functions.len(), 1);
-    let func = &functions[0];
+    assert_eq!(functions.functions.len(), 1);
+    let func = &functions.functions[0];
     assert_eq!(
         func.parameters[0].ty,
         IrType::Custom("MyType".to_string(), dummy_span())
@@ -433,10 +433,10 @@ fn test_generate_array_type() {
     )];
 
     let mut generator = NIrGenerator::new();
-    let (functions, ir_errors) = generator.generate(ast);
+    let (functions, ir_errors) = generator.generate(ast, "test_file.vn");
     assert_eq!(ir_errors.len(), 0);
-    assert_eq!(functions.len(), 1);
-    let func = &functions[0];
+    assert_eq!(functions.functions.len(), 1);
+    let func = &functions.functions[0];
     assert_eq!(func.cfg.blocks.len(), 1);
     assert_eq!(func.cfg.entry_label, "entry_test");
     let entry_block = func.cfg.get_block("entry_test").unwrap();
@@ -457,10 +457,10 @@ fn test_generate_missing_return() {
     }];
 
     let mut generator = NIrGenerator::new();
-    let (functions, ir_errors) = generator.generate(ast);
+    let (functions, ir_errors) = generator.generate(ast, "test_file.vn");
     assert_eq!(ir_errors.len(), 0);
-    assert_eq!(functions.len(), 1);
-    let func = &functions[0];
+    assert_eq!(functions.functions.len(), 1);
+    let func = &functions.functions[0];
     assert_eq!(func.cfg.blocks.len(), 1);
     assert_eq!(func.cfg.entry_label, "entry_test");
     let entry_block = func.cfg.get_block("entry_test").unwrap();
@@ -491,11 +491,11 @@ fn test_generate_multiple_functions() {
     ];
 
     let mut generator = NIrGenerator::new();
-    let (functions, ir_errors) = generator.generate(ast);
+    let (functions, ir_errors) = generator.generate(ast, "test_file.vn");
     assert_eq!(ir_errors.len(), 0);
-    assert_eq!(functions.len(), 2);
-    assert_eq!(functions[0].name, "func1");
-    assert_eq!(functions[1].name, "func2");
+    assert_eq!(functions.functions.len(), 2);
+    assert_eq!(functions.functions[0].name, "func1");
+    assert_eq!(functions.functions[1].name, "func2");
 }
 
 #[test]
@@ -512,10 +512,10 @@ fn test_generate_string_literal() {
     }];
 
     let mut generator = NIrGenerator::new();
-    let (functions, ir_errors) = generator.generate(ast);
+    let (functions, ir_errors) = generator.generate(ast , "test_file.vn");
     assert_eq!(ir_errors.len(), 0);
-    assert_eq!(functions.len(), 1);
-    let func = &functions[0];
+    assert_eq!(functions.functions.len(), 1);
+    let func = &functions.functions[0];
     assert_eq!(func.cfg.blocks.len(), 1);
     assert_eq!(func.cfg.entry_label, "entry_test");
     let entry_block = func.cfg.get_block("entry_test").unwrap();
@@ -536,10 +536,10 @@ fn test_generate_nullptr() {
     }];
 
     let mut generator = NIrGenerator::new();
-    let (functions, ir_errors) = generator.generate(ast);
+    let (functions, ir_errors) = generator.generate(ast, "test_file.vn");
     assert_eq!(ir_errors.len(), 0);
-    assert_eq!(functions.len(), 1);
-    let func = &functions[0];
+    assert_eq!(functions.functions.len(), 1);
+    let func = &functions.functions[0];
     assert_eq!(func.cfg.blocks.len(), 1);
     assert_eq!(func.cfg.entry_label, "entry_test");
     let entry_block = func.cfg.get_block("entry_test").unwrap();
@@ -574,10 +574,10 @@ fn test_generate_simple_block() {
     )];
 
     let mut generator = NIrGenerator::new();
-    let (functions, ir_errors) = generator.generate(ast);
+    let (functions, ir_errors) = generator.generate(ast, "test_file.vn");
     assert_eq!(ir_errors.len(), 0);
-    assert_eq!(functions.len(), 1);
-    let func = &functions[0];
+    assert_eq!(functions.functions.len(), 1);
+    let func = &functions.functions[0];
     assert_eq!(func.cfg.blocks.len(), 1);
     assert_eq!(func.cfg.entry_label, "entry_test");
     let entry_block = func.cfg.get_block("entry_test").unwrap();
@@ -619,10 +619,10 @@ fn test_generate_simple_while_loop() {
     )];
 
     let mut generator = NIrGenerator::new();
-    let (functions, ir_errors) = generator.generate(ast);
+    let (functions, ir_errors) = generator.generate(ast, "test_file.vn");
     assert_eq!(ir_errors.len(), 0);
-    assert_eq!(functions.len(), 1);
-    let func = &functions[0];
+    assert_eq!(functions.functions.len(), 1);
+    let func = &functions.functions[0];
     assert_eq!(func.cfg.blocks.len(), 4);
     assert_eq!(func.cfg.entry_label, "entry_test");
     let entry_block = func.cfg.get_block("entry_test").unwrap();
@@ -680,10 +680,10 @@ fn test_generate_for_loop_basic() {
     )];
 
     let mut generator = NIrGenerator::new();
-    let (functions, ir_errors) = generator.generate(ast);
+    let (functions, ir_errors) = generator.generate(ast, "test_file.vn");
     assert_eq!(ir_errors.len(), 0);
-    assert_eq!(functions.len(), 1);
-    let func = &functions[0];
+    assert_eq!(functions.functions.len(), 1);
+    let func = &functions.functions[0];
     // Verify block structure: entry, for_start, for_body, for_inc, for_end
     assert_eq!(func.cfg.blocks.len(), 5);
     assert_eq!(func.cfg.entry_label, "entry_test");
@@ -729,10 +729,10 @@ fn test_generate_for_loop_with_break() {
     )];
 
     let mut generator = NIrGenerator::new();
-    let (functions, ir_errors) = generator.generate(ast);
+    let (functions, ir_errors) = generator.generate(ast, "test_file.vn");
     assert_eq!(ir_errors.len(), 0);
-    assert_eq!(functions.len(), 1);
-    let func = &functions[0];
+    assert_eq!(functions.functions.len(), 1);
+    let func = &functions.functions[0];
     // Verify block structure: entry, for_start, for_body, for_inc, for_end
     assert_eq!(func.cfg.blocks.len(), 5);
     assert_eq!(func.cfg.entry_label, "entry_test");
@@ -778,10 +778,10 @@ fn test_generate_for_loop_with_continue() {
     )];
 
     let mut generator = NIrGenerator::new();
-    let (functions, ir_errors) = generator.generate(ast);
+    let (functions, ir_errors) = generator.generate(ast, "test_file.vn");
     assert_eq!(ir_errors.len(), 0);
-    assert_eq!(functions.len(), 1);
-    let func = &functions[0];
+    assert_eq!(functions.functions.len(), 1);
+    let func = &functions.functions[0];
     // Verify block structure: entry, for_start, for_body, for_inc, for_end
     assert_eq!(func.cfg.blocks.len(), 5);
     assert_eq!(func.cfg.entry_label, "entry_test");
@@ -818,10 +818,10 @@ fn test_generate_grouping_expression() {
     )];
 
     let mut generator = NIrGenerator::new();
-    let (functions, ir_errors) = generator.generate(ast);
+    let (functions, ir_errors) = generator.generate(ast, "test_file.vn");
     assert_eq!(ir_errors.len(), 0);
-    assert_eq!(functions.len(), 1);
-    let func = &functions[0];
+    assert_eq!(functions.functions.len(), 1);
+    let func = &functions.functions[0];
     assert_eq!(func.cfg.blocks.len(), 1);
     assert_eq!(func.cfg.entry_label, "entry_test");
     let entry_block = func.cfg.get_block("entry_test").unwrap();
@@ -845,10 +845,10 @@ fn test_generate_array_literal_with_elements() {
     )];
 
     let mut generator = NIrGenerator::new();
-    let (functions, ir_errors) = generator.generate(ast);
+    let (functions, ir_errors) = generator.generate(ast, "test_file.vn");
     assert_eq!(ir_errors.len(), 0);
-    assert_eq!(functions.len(), 1);
-    let func = &functions[0];
+    assert_eq!(functions.functions.len(), 1);
+    let func = &functions.functions[0];
     assert_eq!(func.cfg.blocks.len(), 1);
     assert_eq!(func.cfg.entry_label, "entry_test");
     let entry_block = func.cfg.get_block("entry_test").unwrap();
@@ -876,10 +876,10 @@ fn test_default_implementation() {
     )];
 
     let mut generator = NIrGenerator::default();
-    let (functions, ir_errors) = generator.generate(ast);
+    let (functions, ir_errors) = generator.generate(ast, "test_file.vn");
     assert_eq!(ir_errors.len(), 0);
-    assert_eq!(functions.len(), 1);
-    let func = &functions[0];
+    assert_eq!(functions.functions.len(), 1);
+    let func = &functions.functions[0];
     assert_eq!(func.cfg.blocks.len(), 1);
     assert_eq!(func.cfg.entry_label, "entry_test");
     let entry_block = func.cfg.get_block("entry_test").unwrap();
@@ -921,10 +921,10 @@ fn test_generate_binary_all_operations() {
         )];
 
         let mut generator = NIrGenerator::default();
-        let (functions, ir_errors) = generator.generate(ast);
+        let (functions, ir_errors) = generator.generate(ast, "test_file.vn");
         assert_eq!(ir_errors.len(), 0);
-        assert_eq!(functions.len(), 1);
-        let func = &functions[0];
+        assert_eq!(functions.functions.len(), 1);
+        let func = &functions.functions[0];
         assert_eq!(func.cfg.blocks.len(), 1);
         assert_eq!(func.cfg.entry_label, "entry_test");
         let entry_block = func.cfg.get_block("entry_test").unwrap();
@@ -952,10 +952,10 @@ fn test_generate_unary_expression() {
         )];
 
         let mut generator = NIrGenerator::default();
-        let (functions, ir_errors) = generator.generate(ast);
+        let (functions, ir_errors) = generator.generate(ast, "test_file.vn");
         assert_eq!(ir_errors.len(), 0);
-        assert_eq!(functions.len(), 1);
-        let func = &functions[0];
+        assert_eq!(functions.functions.len(), 1);
+        let func = &functions.functions[0];
         assert_eq!(func.cfg.blocks.len(), 1);
         assert_eq!(func.cfg.entry_label, "entry_test");
         let entry_block = func.cfg.get_block("entry_test").unwrap();
@@ -1022,10 +1022,10 @@ fn test_generate_integer_literals() {
         )];
 
         let mut generator = NIrGenerator::default();
-        let (functions, ir_errors) = generator.generate(ast);
+        let (functions, ir_errors) = generator.generate(ast, "test_file.vn");
         assert_eq!(ir_errors.len(), 0);
-        assert_eq!(functions.len(), 1);
-        let func = &functions[0];
+        assert_eq!(functions.functions.len(), 1);
+        let func = &functions.functions[0];
         assert_eq!(func.cfg.blocks.len(), 1);
         assert_eq!(func.cfg.entry_label, "entry_test");
         let entry_block = func.cfg.get_block("entry_test").unwrap();
@@ -1089,10 +1089,10 @@ fn test_generate_float_literals() {
         )];
 
         let mut generator = NIrGenerator::default();
-        let (functions, ir_errors) = generator.generate(ast);
+        let (functions, ir_errors) = generator.generate(ast, "test_file.vn");
         assert_eq!(ir_errors.len(), 0);
-        assert_eq!(functions.len(), 1);
-        let func = &functions[0];
+        assert_eq!(functions.functions.len(), 1);
+        let func = &functions.functions[0];
         assert_eq!(func.cfg.blocks.len(), 1);
         assert_eq!(func.cfg.entry_label, "entry_test");
         let entry_block = func.cfg.get_block("entry_test").unwrap();
@@ -1129,10 +1129,10 @@ fn test_generate_boolean_literals() {
         )];
 
         let mut generator = NIrGenerator::default();
-        let (functions, ir_errors) = generator.generate(ast);
+        let (functions, ir_errors) = generator.generate(ast, "test_file.vn");
         assert_eq!(ir_errors.len(), 0);
-        assert_eq!(functions.len(), 1);
-        let func = &functions[0];
+        assert_eq!(functions.functions.len(), 1);
+        let func = &functions.functions[0];
         assert_eq!(func.cfg.blocks.len(), 1);
         assert_eq!(func.cfg.entry_label, "entry_test");
         let entry_block = func.cfg.get_block("entry_test").unwrap();
@@ -1163,10 +1163,10 @@ fn test_generate_char_literal() {
     )];
 
     let mut generator = NIrGenerator::default();
-    let (functions, ir_errors) = generator.generate(ast);
+    let (functions, ir_errors) = generator.generate(ast, "test_file.vn");
     assert_eq!(ir_errors.len(), 0);
-    assert_eq!(functions.len(), 1);
-    let func = &functions[0];
+    assert_eq!(functions.functions.len(), 1);
+    let func = &functions.functions[0];
     assert_eq!(func.cfg.blocks.len(), 1);
     assert_eq!(func.cfg.entry_label, "entry_test");
     let entry_block = func.cfg.get_block("entry_test").unwrap();
@@ -1196,10 +1196,10 @@ fn test_generate_nullptr_literal() {
     )];
 
     let mut generator = NIrGenerator::default();
-    let (functions, ir_errors) = generator.generate(ast);
+    let (functions, ir_errors) = generator.generate(ast, "test_file.vn");
     assert_eq!(ir_errors.len(), 0);
-    assert_eq!(functions.len(), 1);
-    let func = &functions[0];
+    assert_eq!(functions.functions.len(), 1);
+    let func = &functions.functions[0];
     assert_eq!(func.cfg.blocks.len(), 1);
     assert_eq!(func.cfg.entry_label, "entry_test");
     let entry_block = func.cfg.get_block("entry_test").unwrap();
