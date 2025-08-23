@@ -17,11 +17,15 @@ Whether you're a developer looking for a customizable compiler or someone intere
 
 ## Features
 
-- **High Performance**: Built with Rust, `jsavrs` ensures fast compilation times and efficient resource usage.
-- **Cross-Platform**: Designed to work seamlessly across different operating systems.
-- **Ease of Use**: Simple APIs and clear documentation make it accessible to developers of all skill levels.
-- **Extensibility**: Modular design allows for easy customization and integration with other tools.
-- **100% Rust**: Fully implemented in Rust, ensuring safety, concurrency, and modern language features.
+- **High Performance**: The implementation in Rust enables `jsavrs` to achieve optimal compilation speeds through efficient memory management and processor utilization. The framework incorporates advanced optimization techniques that reduce compilation time while maintaining the integrity of the generated output. Performance benchmarks demonstrate significant improvements over traditional compiler implementations, particularly in projects with extensive codebases.
+
+- **Cross-Platform Compatibility**: `jsavrs` operates seamlessly across major operating systems including Windows, macOS, and various Linux distributions. This cross-platform functionality is achieved through abstraction layers that isolate system-specific operations, ensuring consistent behavior regardless of the host environment. The compatibility extends to different processor architectures, supporting both x86 and ARM-based systems.
+
+- **User-Friendly Interface**: The framework provides a well-structured application programming interface (API) that simplifies integration with existing development environments. The API design follows established software engineering principles, with clear separation of concerns and intuitive method signatures. Comprehensive documentation accompanies the framework, offering detailed explanations, practical examples, and best practices to facilitate implementation.
+
+- **Extensible Architecture**: Built with a modular design philosophy, `jsavrs` allows for straightforward customization and extension. The component-based structure enables developers to modify specific compilation phases, add support for new programming languages, or integrate specialized optimization passes without requiring extensive reengineering of the core system. This extensibility is supported by well-defined interfaces and comprehensive documentation of the extension points.
+
+- **Complete Rust Implementation**: The entire codebase is implemented in Rust, leveraging the language's stringent compile-time safety guarantees, including memory safety and thread safety. This implementation choice eliminates entire classes of vulnerabilities commonly found in compilers implemented in less safe languages. The use of Rust's ownership model and concurrency primitives ensures predictable performance characteristics, even under heavy workloads.
 
 ## Table of Contents
 
@@ -40,75 +44,106 @@ Whether you're a developer looking for a customizable compiler or someone intere
 
 ### Prerequisites
 
-- **Rust**: Ensure you have Rust installed. You can install it using [rustup](https://rustup.rs/).
-- **Cargo**: Rust's package manager (installed with Rust).
+- **Rust Programming Language**: A functional Rust development environment is required for building and utilizing `jsavrs`. Rust is a systems programming language that emphasizes performance, reliability, and productivity. The recommended installation method is through [rustup](https://rustup.rs/), the official Rust toolchain installer. Rustup manages Rust versions and associated components, ensuring compatibility and facilitating updates. The installation process establishes the Rust compiler, cargo (the package manager), and standard libraries.
 
-### Steps
+- **Cargo Package Manager**: Cargo is included with Rust installations and serves as the primary build system and dependency manager for Rust projects. It automates the process of downloading, compiling, and managing dependencies, while also providing standardized workflows for building, testing, and documenting Rust applications. Proficiency with Cargo commands is essential for effective utilization of the `jsavrs` framework.
 
-1. Clone the repository:
+### Installation Procedure
+
+The following procedure outlines the steps necessary to obtain, compile, and verify the `jsavrs` compiler framework. These instructions assume familiarity with command-line operations and basic software development practices.
+
+1. **Repository Acquisition**
+   
+   The initial step involves obtaining a local copy of the source code repository. This is accomplished through the Git version control system, which facilitates tracking of changes and collaboration among developers. Execute the following commands in your terminal:
    ```bash
    git clone https://github.com/Giuseppe-Bianc/jsavrs.git
    cd jsavrs
    ```
-2. Build the project:
+   The first command creates a local copy of the repository in a directory named `jsavrs`, while the second command changes the current working directory to this newly created directory.
+
+2. **Project Compilation**
+   
+   Once the repository has been obtained, the source code must be compiled into executable form. This process is managed by Cargo, which resolves dependencies, compiles source files, and links the resulting object files. For an optimized production build, execute:
    ```bash
    cargo build --release
    ```
-3. Run the tests:
+   This command instructs Cargo to compile the project in release mode, which applies performance optimizations at the cost of increased compilation time. The resulting executable files are placed in the `target/release` directory within the project structure.
+
+3. **Verification Through Testing**
+   
+   To ensure the correct functioning of the compiled framework, the included test suite should be executed. This comprehensive suite validates the behavior of individual components and their interactions, providing assurance of the system's reliability. Execute the following command:
    ```bash
    cargo test
    ```
+   Cargo will compile and run all tests, reporting the results in a structured format. Successful completion of the test suite indicates that the framework is functioning as intended in the current environment.
 
 ## Usage
 
 ### Basic Usage
 
-To use `jsavrs`, you can run the compiled binary with the following command:
+The `jsavrs` compiler operates through a command-line interface that accepts source files and various configuration parameters. The fundamental usage pattern involves specifying an input file for compilation:
 
 ```bash
-./jsavrs input_file.rs
+./jsavrs -i input_file.vn
 ```
 
-This will compile the specified Rust file and output the result to the default location.
+In this example, `input_file.vn` represents a source file written in a language supported by the compiler. The `-i` flag explicitly designates the input file, though this may be optional in some configurations. Upon execution, the compiler processes the source code through its various phases—including lexical analysis, syntax parsing, semantic analysis, optimization, and code generation—producing an output file in the designated location. The specific format and location of the output depend on the compiler's configuration and the target platform.
 
 ### Advanced Usage
 
-You can customize the behavior of `jsavrs` using command-line flags:
+The compiler framework provides numerous options for customizing the compilation process. These options enable users to control output generation, diagnostic reporting, optimization levels, and other aspects of compilation behavior.
 
-- Specify an output directory:
+* **Output Directory Specification**
+  
+  By default, the compiler places generated files in a predetermined location. Users may specify an alternative output directory using the `--output` parameter:
   ```bash
-  ./jsavrs input_file.rs --output ./build
+  ./jsavrs input_file.vn --output ./build
   ```
-- Enable verbose logging:
-  ```bash
-  ./jsavrs input_file.rs --verbose
-  ```
-- Compile multiple files:
-  ```bash
-  ./jsavrs file1.rs file2.rs file3.rs
-  ```
+  This command directs the compiler to place all generated files in the `./build` directory, creating it if necessary. This functionality facilitates integration with complex build systems and project structures.
 
-For a full list of options, run:
+* **Verbose Logging**
+  
+  For diagnostic purposes or detailed understanding of the compilation process, the `--verbose` flag enables comprehensive logging:
+  ```bash
+  ./jsavrs input_file.vn --verbose
+  ```
+  When enabled, this option produces detailed information about each compilation phase, including intermediate representations, optimization decisions, and resource utilization metrics. This information is valuable for performance analysis, debugging, and educational purposes.
 
-```bash
-./jsavrs --help
-```
+* **Multiple File Compilation**
+  
+  The compiler supports processing multiple source files in a single invocation:
+  ```bash
+  ./jsavrs file1.vn file2.vn file3.vn
+  ```
+  This capability is particularly useful for projects with modular codebases, ensuring consistent compilation settings across all components and potentially enabling cross-module optimizations.
+
+* **Comprehensive Option Reference**
+  
+  A complete listing of available command-line options and their functions can be obtained using the built-in help system:
+  ```bash
+  ./jsavrs --help
+  ```
+  This command displays detailed documentation for all supported parameters, including syntax, default values, and usage examples. This reference serves as the definitive guide for compiler configuration.
 
 ## Testing
 
-`jsavrs` includes a comprehensive suite of tests to ensure reliability and correctness. To run the tests, use the
-following command:
+The `jsavrs` project incorporates a comprehensive testing methodology designed to ensure correctness, reliability, and performance. The test suite encompasses multiple levels of verification, including unit tests for individual functions, integration tests for component interactions, and regression tests for known issues. This multi-faceted approach to quality assurance provides confidence in the compiler's behavior across diverse scenarios and input conditions.
 
+To execute the complete test suite, utilize the following command:
 ```bash
 cargo test
 ```
 
-### Adding New Tests
+This command compiles and runs all tests defined within the project, presenting a summary of results including the number of tests passed, failed, and ignored. Detailed output is available for failed tests, facilitating diagnosis and resolution of issues.
 
-If you add new features or fix bugs, ensure you write corresponding tests. Tests are located in the `tests` directory
-and follow Rust's standard testing conventions.
+### Test Development Guidelines
 
-Example of a unit test:
+When extending the compiler or addressing defects, corresponding tests should be developed to verify the correctness of the implementation. All test files reside within the `tests` directory and adhere to Rust's testing conventions. This systematic approach to test development ensures that new functionality operates as intended and that modifications do not introduce unintended side effects.
+
+#### Example of a Unit Test
+
+A unit test verifies the correctness of an individual function or module in isolation. The following example
+demonstrates a simple unit test:
 
 ```rust
 #[test]
@@ -117,37 +152,63 @@ fn test_example() {
 }
 ```
 
+In this example, the test confirms that the arithmetic operation produces the expected result. Unit tests should be
+concise, deterministic, and focused on verifying a single aspect of functionality.
+
+By consistently integrating new tests alongside feature development and bug fixes, developers contribute to a robust,
+maintainable, and reliable codebase.
+
+
 ## Contributing
 
-Contributions are welcome! If you have suggestions or improvements, please open an issue or submit a pull request.
+The `jsavrs` project welcomes contributions from the development community and recognizes that collaborative efforts enhance the quality, functionality, and sustainability of the framework. Individuals interested in contributing are encouraged to participate through various channels, including issue reporting, feature suggestions, code contributions, and documentation improvements.
 
-### Steps to Contribute
+All submissions undergo a thorough review process to ensure they align with the project's technical standards, design principles, and long-term objectives. To facilitate efficient evaluation and integration, contributors should provide clear, comprehensive documentation of their submissions, including detailed descriptions of problems addressed, implementation approaches, and potential impacts on existing functionality.
 
-1. Fork the repository.
-2. Create a new branch:
+### Contribution Process
+
+1. **Repository Forking**
+   
+   Begin by creating a personal fork of the project repository. This establishes an independent development environment where changes can be implemented and tested without affecting the main codebase.
+
+2. **Branch Creation**
+   
+   Create a dedicated branch for your contribution, employing a naming convention that reflects the nature of the work:
    ```bash
    git checkout -b feature/your-feature-name
    ```
-3. Make your changes and write appropriate tests.
-4. Run the tests:
+   This isolation prevents interference with other development efforts and simplifies the eventual integration process.
+
+3. **Implementation**
+   
+   Develop your modifications following established coding standards, architectural patterns, and best practices. Ensure that your implementation addresses the intended requirements while maintaining compatibility with existing functionality.
+
+4. **Testing**
+   
+   Develop appropriate tests to verify the correctness of your implementation. Execute the complete test suite to confirm that your changes do not introduce regressions:
    ```bash
    cargo test
    ```
-5. Submit a pull request.
+   Comprehensive testing is essential to validate the functionality and reliability of contributions.
 
-### Code Style
+5. **Pull Request Submission**
+   
+   Once your implementation is complete and tested, submit a pull request for review. Provide a detailed description of your changes, including the rationale, approach, and any relevant considerations that may assist reviewers in evaluating your submission.
 
-Please follow Rust's standard formatting guidelines. You can format your code using `rustfmt`:
+### Code Style Standards
+
+To maintain consistency and readability throughout the codebase, all contributions must adhere to established formatting conventions. The project utilizes `rustfmt`, Rust's official formatting tool, to standardize code presentation:
 
 ```bash
 cargo fmt
 ```
 
+This command automatically applies formatting rules to the codebase, ensuring consistent indentation, spacing, line breaks, and other stylistic elements. Regular use of `rustfmt` during development and prior to submission simplifies the review process and reduces potential conflicts arising from stylistic differences.
+
 ## License
 
-This project is licensed under the Apache-2.0 License. See the [LICENSE](LICENSE) file for details.
+The `jsavrs` project is distributed under the terms of the Apache License, Version 2.0. This permissive open-source license permits use, modification, and distribution under specific conditions. For complete details regarding rights, limitations, and obligations, please refer to the [LICENSE](LICENSE) file included with the project.
 
 ## Contact
 
-For questions, feature requests, or to report bugs, open an issue on 
-[GitHub](https://github.com/Giuseppe-Bianc/jsavrs/issues).
+For inquiries regarding the use of the `jsavrs` framework, proposals for new features, or reports of technical issues, please contact the development team through the project's [GitHub repository](https://github.com/Giuseppe-Bianc/jsavrs/issues). When submitting inquiries or reports, please provide comprehensive information including detailed descriptions of the issue, steps to reproduce the problem
