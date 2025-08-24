@@ -14,7 +14,7 @@ fn help_displays_correctly() {
         .assert()
         .success()
         .stdout(predicate::str::contains("Usage"))
-        .stdout(predicate::str::contains("-i, --input <INPUT>"));
+        .stdout(predicate::str::contains("-i, --input <FILE>"));
 }
 
 #[test]
