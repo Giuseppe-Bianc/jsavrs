@@ -102,6 +102,7 @@ impl fmt::Display for Value {
             ValueKind::Global(name) => write!(f, "@{name}")?,
             ValueKind::Temporary(id) => write!(f, "t{id}")?,
         };
+        #[allow(clippy::collapsible_if)]
         if let Some(di) = &self.debug_info {
             if let Some(name) = &di.name {
                 write!(f, " ({name})")?;
