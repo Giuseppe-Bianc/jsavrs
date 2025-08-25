@@ -1322,17 +1322,53 @@ fn test_get_size() {
     let checker = TypeChecker::new();
 
     // Positive integers
+    let expr_i8 = Expr::Literal {
+        value: LiteralValue::Number(Number::I8(42)),
+        span: dummy_span(),
+    };
+    assert_eq!(checker.get_size(&expr_i8), Some(42));
+
+    let expr_i16 = Expr::Literal {
+        value: LiteralValue::Number(Number::I16(100)),
+        span: dummy_span(),
+    };
+    assert_eq!(checker.get_size(&expr_i16), Some(100));
+
     let expr_i32 = Expr::Literal {
         value: LiteralValue::Number(Number::I32(42)),
         span: dummy_span(),
     };
     assert_eq!(checker.get_size(&expr_i32), Some(42));
 
-    let expr_u64 = Expr::Literal {
-        value: LiteralValue::Number(Number::UnsignedInteger(100)),
+    let expr_i64 = Expr::Literal {
+        value: LiteralValue::Number(Number::Integer(100)),
         span: dummy_span(),
     };
-    assert_eq!(checker.get_size(&expr_u64), Some(100));
+    assert_eq!(checker.get_size(&expr_i64), Some(100));
+
+    let expr_u8 = Expr::Literal {
+        value: LiteralValue::Number(Number::U8(200)),
+        span: dummy_span(),
+    };
+    assert_eq!(checker.get_size(&expr_u8), Some(200));
+
+    let expr_u16 = Expr::Literal {
+        value: LiteralValue::Number(Number::U16(300)),
+        span: dummy_span(),
+    };
+    assert_eq!(checker.get_size(&expr_u16), Some(300));
+
+    let expr_u32 = Expr::Literal {
+        value: LiteralValue::Number(Number::U32(400)),
+        span: dummy_span(),
+    };
+    assert_eq!(checker.get_size(&expr_u32), Some(400));
+
+    let expr_u64 = Expr::Literal {
+        value: LiteralValue::Number(Number::UnsignedInteger(500)),
+        span: dummy_span(),
+    };
+    assert_eq!(checker.get_size(&expr_u64), Some(500));
 
     // Zero
     let expr_zero = Expr::Literal {
