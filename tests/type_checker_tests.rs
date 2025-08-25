@@ -1255,3 +1255,116 @@ fn test_promote_numeric_types_behaviour() {
         Type::F64
     );
 }
+
+#[test]
+fn test_is_same_type_primitive() {
+    let checker = TypeChecker::new();
+
+    // Identical primitive types
+    assert!(checker.is_same_type(&Type::I32, &Type::I32));
+    assert!(checker.is_same_type(&Type::F64, &Type::F64));
+    assert!(checker.is_same_type(&Type::Bool, &Type::Bool));
+
+    // Different primitive types
+    assert!(!checker.is_same_type(&Type::I32, &Type::I64));
+    assert!(!checker.is_same_type(&Type::F32, &Type::F64));
+    assert!(!checker.is_same_type(&Type::Bool, &Type::String));
+}
+
+#[test]
+fn test_is_same_type_array() {
+    let checker = TypeChecker::new();
+
+    // Create size expressions
+    let size_expr_5 = Expr::Literal {
+        value: LiteralValue::Number(Number::Integer(5)),
+        span: dummy_span(),
+    };
+    let size_expr_10 = Expr::Literal {
+        value: LiteralValue::Number(Number::Integer(10)),
+        span: dummy_span(),
+    };
+
+    // Same element type and size
+    let array1 = Type::Array(Box::new(Type::I32), Box::new(size_expr_5.clone()));
+    let array2 = Type::Array(Box::new(Type::I32), Box::new(size_expr_5.clone()));
+    assert!(checker.is_same_type(&array1, &array2));
+
+    // Same element type but different sizes
+    let array3 = Type::Array(Box::new(Type::I32), Box::new(size_expr_10.clone()));
+    assert!(!checker.is_same_type(&array1, &array3));
+
+    // Different element types but same size
+    let array4 = Type::Array(Box::new(Type::F64), Box::new(size_expr_5.clone()));
+    assert!(!checker.is_same_type(&array1, &array4));
+
+    // Nested arrays
+    let nested1 = Type::Array(
+        Box::new(Type::Array(Box::new(Type::I32), Box::new(size_expr_5.clone()))),
+        Box::new(size_expr_5.clone()),
+    );
+    let nested2 = Type::Array(
+        Box::new(Type::Array(Box::new(Type::I32), Box::new(size_expr_5.clone()))),
+        Box::new(size_expr_5.clone()),
+    );
+    assert!(checker.is_same_type(&nested1, &nested2));
+
+    // Nested arrays with different inner size
+    let nested3 = Type::Array(
+        Box::new(Type::Array(Box::new(Type::I32), Box::new(size_expr_10.clone()))),
+        Box::new(size_expr_5.clone()),
+    );
+    assert!(!checker.is_same_type(&nested1, &nested3));
+}
+
+#[test]
+fn test_get_size() {
+    let checker = TypeChecker::new();
+
+    // Positive integers
+    let expr_i32 = Expr::Literal {
+        value: LiteralValue::Number(Number::I32(42)),
+        span: dummy_span(),
+    };
+    assert_eq!(checker.get_size(&expr_i32), Some(42));
+
+    let expr_u64 = Expr::Literal {
+        value: LiteralValue::Number(Number::UnsignedInteger(100)),
+        span: dummy_span(),
+    };
+    assert_eq!(checker.get_size(&expr_u64), Some(100));
+
+    // Zero
+    let expr_zero = Expr::Literal {
+        value: LiteralValue::Number(Number::I8(0)),
+        span: dummy_span(),
+    };
+    assert_eq!(checker.get_size(&expr_zero), Some(0));
+
+    // Negative integer (should return None)
+    let expr_negative = Expr::Literal {
+        value: LiteralValue::Number(Number::Integer(-5)),
+        span: dummy_span(),
+    };
+    assert_eq!(checker.get_size(&expr_negative), None);
+
+    // Non-integer literals (should return None)
+    let expr_float = Expr::Literal {
+        value: LiteralValue::Number(Number::Float64(3.14)),
+        span: dummy_span(),
+    };
+    assert_eq!(checker.get_size(&expr_float), None);
+
+    let expr_bool = Expr::Literal {
+        value: LiteralValue::Bool(true),
+        span: dummy_span(),
+    };
+    assert_eq!(checker.get_size(&expr_bool), None);
+
+    // Non-literal expression (should return None)
+    let expr_variable = Expr::Variable {
+        name: "x".to_string(),
+        span: dummy_span(),
+    };
+    assert_eq!(checker.get_size(&expr_variable), None);
+}

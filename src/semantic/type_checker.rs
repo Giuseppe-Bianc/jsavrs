@@ -565,7 +565,7 @@ impl TypeChecker {
     }
 
     // Updated is_same_type to handle array types properly
-    fn is_same_type(&self, t1: &Type, t2: &Type) -> bool {
+    pub fn is_same_type(&self, t1: &Type, t2: &Type) -> bool {
         match (t1, t2) {
             (Type::Array(elem1, size1), Type::Array(elem2, size2)) => {
                 // First check if element types are the same
@@ -585,7 +585,7 @@ impl TypeChecker {
     }
 
     // Updated get_size to handle all integer types and return u64
-    fn get_size(&self, expr: &Expr) -> Option<u64> {
+    pub fn get_size(&self, expr: &Expr) -> Option<u64> {
         if let Expr::Literal { value, .. } = expr {
             match value {
                 LiteralValue::Number(Number::I8(n)) => Some(*n as u64),
