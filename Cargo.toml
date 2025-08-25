@@ -23,7 +23,7 @@ clap = { version = "4.5.45", features = ["cargo", "derive"] }
 console = "0.16.0"
 logos = "0.15.1"
 thiserror = "2.0.16"
-regex = "1.11.1"
+regex = "1.11.2"
 uuid = { version = "1.18.0" , features = ["v4"] }
 
 
