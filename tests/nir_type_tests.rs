@@ -1,9 +1,26 @@
 // tests/nir_type_tests.rs
 use jsavrs::location::source_span::SourceSpan;
-use jsavrs::nir::IrType;
-use jsavrs::nir::ScopeId;
-use jsavrs::nir::ResourceId;
+use jsavrs::nir::{IrType, ResourceId, ScopeId};
+use std::fmt::{Debug, Display};
 use uuid::Uuid;
+
+fn assert_default_uuid_is_unique_and_valid<T>()
+where
+    T: Default + Display + Eq + Debug,
+{
+    let id1 = T::default();
+    let id2 = T::default();
+
+    assert_ne!(id1, id2, "Default values should be unique across calls");
+    assert!(
+        Uuid::parse_str(&id1.to_string()).is_ok(),
+        "Default value must format as a valid UUID"
+    );
+    assert!(
+        Uuid::parse_str(&id2.to_string()).is_ok(),
+        "Default value must format as a valid UUID"
+    );
+}
 
 #[test]
 fn test_ir_type_display() {
@@ -24,8 +41,18 @@ fn test_ir_type_display() {
         (IrType::Void, "void"),
         (IrType::Pointer(Box::new(IrType::I32)), "*i32"),
         (IrType::Array(Box::new(IrType::I32), 10), "[i32; 10]"),
-        (IrType::Custom("MyCustomType".to_string(), SourceSpan::default()), "MyCustomType"),
-        (IrType::Struct("MyStruct".to_string(), vec![IrType::I32, IrType::F64], SourceSpan::default()), "struct MyStruct { i32, f64 }"),
+        (
+            IrType::Custom("MyCustomType".to_string(), SourceSpan::default()),
+            "MyCustomType",
+        ),
+        (
+            IrType::Struct(
+                "MyStruct".to_string(),
+                vec![IrType::I32, IrType::F64],
+                SourceSpan::default(),
+            ),
+            "struct MyStruct { i32, f64 }",
+        ),
     ];
 
     for (ty, expected) in types {
@@ -36,28 +63,12 @@ fn test_ir_type_display() {
 
 #[test]
 fn test_scope_id_default() {
-    // Genera due valori di default
-    let id1 = ScopeId::default();
-    let id2 = ScopeId::default();
-
-    // Verifica che siano diversi
-    assert_ne!(id1, id2, "I valori di default di ScopeId devono essere univoci");
-
-    // Verifica che siano UUID validi
-    assert!(Uuid::parse_str(&id1.to_string()).is_ok(), "ScopeId default deve essere un UUID valido");
-    assert!(Uuid::parse_str(&id2.to_string()).is_ok(), "ScopeId default deve essere un UUID valido");
+    // Ensure default values are unique and format as valid UUIDs
+    assert_default_uuid_is_unique_and_valid::<ScopeId>();
 }
 
 #[test]
 fn test_resource_id_default() {
-    // Genera due valori di default
-    let id1 = ResourceId::default();
-    let id2 = ResourceId::default();
-
-    // Verifica che siano diversi
-    assert_ne!(id1, id2, "I valori di default di ResourceId devono essere univoci");
-
-    // Verifica che siano UUID validi
-    assert!(Uuid::parse_str(&id1.to_string()).is_ok(), "ResourceId default deve essere un UUID valido");
-    assert!(Uuid::parse_str(&id2.to_string()).is_ok(), "ResourceId default deve essere un UUID valido");
+    // Ensure default values are unique and format as valid UUIDs
+    assert_default_uuid_is_unique_and_valid::<ResourceId>();
 }
