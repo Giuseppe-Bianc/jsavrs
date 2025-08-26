@@ -40,9 +40,9 @@ pub enum TerminatorKind {
         cases: Vec<(Value, String)>,
     },
     Unreachable,
-    EnterScope(ScopeId),
+    /*EnterScope(ScopeId),
     ExitScope(ScopeId),
-    ReleaseResource(ResourceId),
+    ReleaseResource(ResourceId),*/
 }
 
 impl Terminator {
@@ -118,9 +118,9 @@ impl fmt::Display for Terminator {
                 possible_labels,
             } => write!(f, "ibr {address} [{}]", possible_labels.join(", ")),
             TerminatorKind::Unreachable => write!(f, "unreachable"),
-            TerminatorKind::EnterScope(id) => write!(f, "enter_scope {id}"),
+            /*TerminatorKind::EnterScope(id) => write!(f, "enter_scope {id}"),
             TerminatorKind::ExitScope(id) => write!(f, "exit_scope {id}"),
-            TerminatorKind::ReleaseResource(id) => write!(f, "release_resource {id}"),
+            TerminatorKind::ReleaseResource(id) => write!(f, "release_resource {id}"),*/
         }
     }
 }
