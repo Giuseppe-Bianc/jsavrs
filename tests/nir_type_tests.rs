@@ -1,5 +1,9 @@
+// tests/nir_type_tests.rs
 use jsavrs::location::source_span::SourceSpan;
 use jsavrs::nir::IrType;
+use jsavrs::nir::ScopeId;
+use jsavrs::nir::ResourceId;
+use uuid::Uuid;
 
 #[test]
 fn test_ir_type_display() {
@@ -28,4 +32,32 @@ fn test_ir_type_display() {
         let output = format!("{}", ty);
         assert_eq!(output, expected);
     }
+}
+
+#[test]
+fn test_scope_id_default() {
+    // Genera due valori di default
+    let id1 = ScopeId::default();
+    let id2 = ScopeId::default();
+
+    // Verifica che siano diversi
+    assert_ne!(id1, id2, "I valori di default di ScopeId devono essere univoci");
+
+    // Verifica che siano UUID validi
+    assert!(Uuid::parse_str(&id1.to_string()).is_ok(), "ScopeId default deve essere un UUID valido");
+    assert!(Uuid::parse_str(&id2.to_string()).is_ok(), "ScopeId default deve essere un UUID valido");
+}
+
+#[test]
+fn test_resource_id_default() {
+    // Genera due valori di default
+    let id1 = ResourceId::default();
+    let id2 = ResourceId::default();
+
+    // Verifica che siano diversi
+    assert_ne!(id1, id2, "I valori di default di ResourceId devono essere univoci");
+
+    // Verifica che siano UUID validi
+    assert!(Uuid::parse_str(&id1.to_string()).is_ok(), "ResourceId default deve essere un UUID valido");
+    assert!(Uuid::parse_str(&id2.to_string()).is_ok(), "ResourceId default deve essere un UUID valido");
 }
