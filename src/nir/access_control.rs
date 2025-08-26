@@ -1,5 +1,7 @@
+// src/nir/access_control.rs
 use super::types::{ScopeId, ResourceId};
 
+#[derive(Debug, Clone, PartialEq, Eq, Hash)]
 pub enum Operation {
     Read,
     Write,
@@ -17,6 +19,17 @@ pub struct AccessRules {
 }
 
 impl AccessRules {
+    // Add a public constructor
+    pub fn new(read: bool, write: bool, execute: bool, allocate: bool, deallocate: bool) -> Self {
+        AccessRules {
+            read,
+            write,
+            execute,
+            allocate,
+            deallocate,
+        }
+    }
+
     pub fn allows(&self, operation: Operation) -> bool {
         match operation {
             Operation::Read => self.read,
