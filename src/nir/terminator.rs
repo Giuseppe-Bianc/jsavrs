@@ -1,5 +1,5 @@
 // src/nir/terminator.rs
-use super::{IrType, Value, ScopeId, ResourceId};
+use super::{IrType, Value};
 use crate::location::source_span::SourceSpan;
 use std::fmt;
 use std::fmt::Write;
