@@ -1,9 +1,6 @@
-use jsavrs::nir::{
-    CastKind, Instruction, InstructionKind, IrBinaryOp, IrConstantValue, IrLiteralValue, IrType,
-    IrUnaryOp, Value, VectorOp,
-};
-use jsavrs::utils::dummy_span;
 // tests/nir_instruction_tests.rs
+use jsavrs::nir::{CastKind, Instruction, InstructionKind, IrBinaryOp, IrConstantValue, IrLiteralValue, IrType, IrUnaryOp, ScopeId, Value, VectorOp};
+use jsavrs::utils::dummy_span;
 
 #[test]
 fn test_alloca_instruction() {
@@ -480,4 +477,34 @@ fn test_all_unary_ops() {
             format!("t{} = {} {} i32", res_idx, op_str, operand)
         );
     }
+}
+
+#[test]
+fn test_instruction_with_scope() {
+    let ty = IrType::I32;
+    let scope_id = ScopeId::new();
+    let inst = Instruction::new(InstructionKind::Alloca { ty }, dummy_span())
+        .with_scope(scope_id);
+
+    assert_eq!(inst.scope, Some(scope_id));
+}
+
+#[test]
+fn test_instruction_without_scope() {
+    let ty = IrType::I32;
+    let inst = Instruction::new(InstructionKind::Alloca { ty }, dummy_span());
+
+    assert_eq!(inst.scope, None);
+}
+
+#[test]
+fn test_instruction_with_scope_and_result() {
+    let ty = IrType::I32;
+    let scope_id = ScopeId::new();
+    let inst = Instruction::new(InstructionKind::Alloca { ty: ty.clone() }, dummy_span())
+        .with_result(Value::new_temporary(1, ty))
+        .with_scope(scope_id);
+
+    assert_eq!(inst.scope, Some(scope_id));
+    assert!(inst.result.is_some());
 }
