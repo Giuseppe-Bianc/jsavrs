@@ -22,6 +22,12 @@ impl ValueId {
     }
 }
 
+impl Default for ValueId {
+    fn default() -> Self {
+        Self::new()
+    }
+}
+
 impl fmt::Display for ValueId {
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
         write!(f, "{}", self.0)
