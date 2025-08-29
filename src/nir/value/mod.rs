@@ -11,10 +11,27 @@ pub use self::{
 use super::types::{IrType, ScopeId};
 use crate::location::source_span::SourceSpan;
 use std::fmt;
+use uuid::Uuid;
+
+#[derive(Debug, Clone, PartialEq, Eq, Hash)]
+pub struct ValueId(Uuid);
+
+impl ValueId {
+    pub fn new() -> Self {
+        ValueId(Uuid::new_v4())
+    }
+}
+
+impl fmt::Display for ValueId {
+    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
+        write!(f, "{}", self.0)
+    }
+}
+
 
 #[derive(Debug, Clone, PartialEq)]
 pub struct Value {
-    pub id: u64,
+    pub id: ValueId,
     pub kind: ValueKind,
     pub ty: IrType,
     pub debug_info: Option<ValueDebugInfo>,
@@ -25,7 +42,7 @@ impl Value {
     pub fn new_literal(imm: IrLiteralValue) -> Self {
         let ty: IrType = (&imm).into();
         Value {
-            id: Self::next_id(),
+            id: ValueId::new(),
             kind: ValueKind::Literal(imm),
             ty,
             debug_info: None,
@@ -35,7 +52,7 @@ impl Value {
 
     pub fn new_constant(imm: IrConstantValue, ty: IrType) -> Self {
         Value {
-            id: Self::next_id(),
+            id: ValueId::new(),
             kind: ValueKind::Constant(imm),
             ty,
             debug_info: None,
@@ -45,7 +62,7 @@ impl Value {
 
     pub fn new_local(name: String, ty: IrType) -> Self {
         Value {
-            id: Self::next_id(),
+            id: ValueId::new(),
             kind: ValueKind::Local(name),
             ty,
             debug_info: None,
@@ -55,7 +72,7 @@ impl Value {
 
     pub fn new_global(name: String, ty: IrType) -> Self {
         Value {
-            id: Self::next_id(),
+            id: ValueId::new(),
             kind: ValueKind::Global(name),
             ty,
             debug_info: None,
@@ -65,7 +82,7 @@ impl Value {
 
     pub fn new_temporary(id: u64, ty: IrType) -> Self {
         Value {
-            id,
+            id: ValueId::new(),
             kind: ValueKind::Temporary(id),
             ty,
             debug_info: None,
@@ -86,11 +103,11 @@ impl Value {
         self
     }
 
-    fn next_id() -> u64 {
+    /*fn next_id() -> u64 {
         use std::sync::atomic::{AtomicU64, Ordering};
         static COUNTER: AtomicU64 = AtomicU64::new(1);
         COUNTER.fetch_add(1, Ordering::Relaxed)
-    }
+    }*/
 }
 
 impl fmt::Display for Value {
