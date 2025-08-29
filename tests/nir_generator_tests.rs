@@ -1206,3 +1206,83 @@ fn test_generate_nullptr_literal() {
 
     assert_return_nullptr!(entry_block);
 }
+
+
+
+#[test]
+fn test_generate_array_access_assignment() {
+    // Creiamo un AST che dichiara un array e assegna un valore a un elemento
+    let ast = vec![function_declaration(
+        "test".to_string(),
+        vec![],
+        Type::Void,
+        vec![
+            // Dichiarazione di un array di 3 interi
+            var_declaration(
+                vec!["arr".to_string()],
+                Type::Array(Box::new(Type::I32), Box::new(num_lit(3))),
+                true,
+                vec![],
+            ),
+            // Assegnazione a un elemento dell'array: arr[1] = 42
+            Stmt::Expression {
+                expr: Expr::Assign {
+                    target: Box::new(Expr::ArrayAccess {
+                        array: Box::new(variable_expr("arr")),
+                        index: Box::new(num_lit_i32(1)),
+                        span: dummy_span(),
+                    }),
+                    value: Box::new(num_lit_i32(42)),
+                    span: dummy_span(),
+                },
+            },
+        ],
+    )];
+
+    let mut generator = NIrGenerator::new();
+    let (functions, ir_errors) = generator.generate(ast, "test_file.vn");
+
+    // Verifica che non ci siano errori
+    assert_eq!(ir_errors.len(), 0);
+    assert_eq!(functions.functions.len(), 1);
+
+    let func = &functions.functions[0];
+    assert_eq!(func.name, "test");
+    assert_eq!(func.return_type, IrType::Void);
+
+    // Verifica la struttura del CFG
+    assert_eq!(func.cfg.blocks.len(), 1);
+    assert_eq!(func.cfg.entry_label, "entry_test");
+
+    let entry_block = func.cfg.get_block("entry_test").unwrap();
+
+    // Dovremmo avere 3 istruzioni: alloca, gep e store
+    assert_eq!(entry_block.instructions.len(), 3);
+
+    // Verifica l'istruzione di allocazione per l'array
+    let alloca_inst = &entry_block.instructions[0];
+    assert_alloca_instruction!(alloca_inst, IrType::Array(Box::new(IrType::I32), 3));
+
+    // Verifica l'istruzione GEP per l'accesso all'array
+    let gep_inst = &entry_block.instructions[1];
+    assert_gep_instruction!(
+        gep_inst,
+        ValueKind::Temporary(0),  // base: puntatore all'array
+        ValueKind::Literal(IrLiteralValue::I32(1)),  // indice: 1
+        IrType::I32  // tipo dell'elemento
+    );
+
+    // Verifica il tipo del risultato del GEP
+    assert_eq!(
+        gep_inst.result.as_ref().unwrap().ty,
+        IrType::Pointer(Box::new(IrType::I32))
+    );
+
+    // Verifica l'istruzione di store
+    let store_inst = &entry_block.instructions[2];
+    assert_store_instruction!(
+        store_inst,
+        ValueKind::Literal(IrLiteralValue::I32(42)),  // valore da memorizzare
+        ValueKind::Temporary(1)  // destinazione: risultato del GEP
+    );
+}
