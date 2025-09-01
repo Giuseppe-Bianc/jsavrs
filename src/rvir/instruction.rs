@@ -6,7 +6,7 @@ use crate::{
 };
 use std::fmt;
 
-#[derive(Debug, Clone, PartialEq)]
+#[derive(Debug, Clone, Copy, PartialEq)]
 pub enum RCastKind {
     IntToPtr,
     PtrToInt,
@@ -20,7 +20,7 @@ pub enum RCastKind {
     Bitcast,
 }
 
-#[derive(Debug, Clone, PartialEq)]
+#[derive(Debug, Clone, Copy, PartialEq)]
 pub enum RVectorOp {
     Add,
     Sub,
@@ -203,14 +203,14 @@ impl fmt::Display for RInstruction {
             RInstructionKind::Store { value, dest } => write!(f, "store {value} to {dest}"),
             RInstructionKind::Load { src, ty } => write!(f, "{result_str}load {ty} from {src}"),
             RInstructionKind::Binary { op, left, right, ty } => write!(f, "{result_str}{op} {left} {right}, {ty}"),
-            RInstructionKind::Unary { op, operand, ty } => write!(f, "{result_str}{op} {operand} {ty}"),
+            RInstructionKind::Unary { op, operand, ty } => write!(f, "{result_str}{op} {operand}, {ty}"),
             RInstructionKind::Call { func, args, ty } => {
                 let args_str = args
                     .iter()
                     .map(|arg| arg.to_string())
                     .collect::<Vec<_>>()
                     .join(", ");
-                write!(f, "{result_str}{func}({args_str}) : {ty}")
+                write!(f, "{result_str} call {func}({args_str}) : {ty}")
             }
             RInstructionKind::GetElementPtr { base, index, element_ty } => write!(f, "{result_str} getelementptr {base}, {index} : {element_ty}"),
             RInstructionKind::Cast { kind: _, value, from_ty, to_ty } => write!(f, "{result_str} cast {value} from {from_ty} to {to_ty}"),

@@ -2,7 +2,7 @@
 use crate::rvir::RIrType;
 use std::fmt;
 
-#[derive(Debug, Clone, PartialEq)]
+#[derive(Debug, Clone, Copy, PartialEq)]
 pub enum RIrLiteralValue {
     I8(i8),
     I16(i16),

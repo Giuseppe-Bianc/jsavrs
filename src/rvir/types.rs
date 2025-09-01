@@ -46,14 +46,14 @@ impl Default for RResourceId {
     }
 }
 
-// Implementazione Display per ScopeId
+// Display implementation for RScopeId
 impl fmt::Display for RScopeId {
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
         write!(f, "{}", self.0)
     }
 }
 
-// Implementazione Display per ResourceId
+// Display implementation for RResourceId
 impl fmt::Display for RResourceId {
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
         write!(f, "{}", self.0)
@@ -81,7 +81,11 @@ impl fmt::Display for RIrType {
             RIrType::Array(element_type, size) => write!(f, "[{element_type}; {size}]"),
             RIrType::Custom(name, _) => write!(f, "{name}"),
             RIrType::Struct(name, fields, _) => {
-                let fields_str = fields.iter().map(|t| t.1.to_string()).collect::<Vec<_>>().join(", ");
+                let fields_str = fields
+                    .iter()
+                    .map(|(field_name, ty)| format!("{field_name}: {ty}"))
+                    .collect::<Vec<_>>()
+                    .join(", ");
                 write!(f, "struct {name} {{ {fields_str} }}")
             }
         }

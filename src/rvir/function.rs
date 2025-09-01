@@ -34,9 +34,9 @@ pub struct Function {
     pub name: String,
     pub parameters: Vec<IrParameter>,
     pub return_type: RIrType,
-    pub cfg: ControlFlowGraph,
+    pub(crate) cfg: ControlFlowGraph,
     pub attributes: FunctionAttributes,
-    pub scope_manager: RScopeManager,
+    pub(crate) scope_manager: RScopeManager,
 }
 
 impl Function {

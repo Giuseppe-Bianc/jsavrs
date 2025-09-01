@@ -1,6 +1,6 @@
-//src/nir/scope.rs
+//src/rvir/scope.rs
 use std::collections::HashMap;
-use crate::rvir::{RScopeId, RValue};
+use super::{RScopeId, RValue};
 
 #[derive(Debug, Clone, PartialEq)]
 pub struct RScope {

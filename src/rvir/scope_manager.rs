@@ -1,4 +1,4 @@
-// src/nir/scope_manager.rs
+// src/rvir/scope_manager.rs
 use super::scope::RScope;
 use super::types::RScopeId;
 use crate::rvir::RValue;
@@ -33,7 +33,7 @@ impl RScopeManager {
 
         self.scopes
             .get_mut(&self.current_scope)
-            .unwrap()
+            .expect("current scope must exist in scopes map")
             .children
             .push(new_id);
 
@@ -49,31 +49,32 @@ impl RScopeManager {
     }
 
     // Nuovo metodo pubblico per ottenere una copia della mappa degli scope
-    pub fn get_scopes(&self) -> HashMap<RScopeId, RScope> {
-        self.scopes.clone()
+    pub fn get_scopes(&self) -> &HashMap<RScopeId, RScope> {
+        &self.scopes
     }
 
     pub fn current_scope(&self) -> RScopeId {
         self.current_scope
     }
 
-    pub fn add_symbol(&mut self, name: String, mut value: RValue) {
+    pub fn add_symbol(&mut self, name: impl Into<String>, mut value: RValue) {
         value.scope = Some(self.current_scope);
-        self.scopes
+        let scope = self.scopes
             .get_mut(&self.current_scope)
             .expect("current scope must exist in scopes map")
-            .insert(name, value);
+            .insert(name.into(), value);
     }
 
     pub fn lookup(&self, name: &str) -> Option<&RValue> {
         let mut current = self.current_scope;
 
         loop {
-            if let Some(value) = self.scopes[&current].get(name) {
+            let scope = self.scopes.get(&current).expect("scope id must exist");
+            if let Some(value) = scope.get(name) {
                 return Some(value);
             }
 
-            if let Some(parent) = self.scopes[&current].parent {
+            if let Some(parent) = scope.parent {
                 current = parent;
             } else {
                 return None;

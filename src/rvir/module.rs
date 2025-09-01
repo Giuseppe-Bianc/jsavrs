@@ -2,7 +2,7 @@ use std::fmt;
 use super::Function;
 
 /// Descrive il layout dei dati per diversi target.
-#[derive(Debug, Clone, PartialEq)]
+#[derive(Debug, Clone, Copy, PartialEq, Eq, Hash)]
 pub enum DataLayout {
     LinuxX86_64,
     LinuxAArch64,
@@ -31,7 +31,7 @@ impl fmt::Display for DataLayout {
 }
 
 /// Identifica la tripletta di destinazione (arch-os-environment).
-#[derive(Debug, Clone, PartialEq)]
+#[derive(Debug, Clone, Copy, PartialEq, Eq, Hash)]
 pub enum TargetTriple {
     X86_64UnknownLinuxGnu,
     X86_64PcWindowsGnu,
@@ -61,7 +61,7 @@ impl fmt::Display for TargetTriple {
     }
 }
 
-/// Rappresenta un modulo NIR (Intermediate Representation).
+/// Rappresenta un modulo IR (Intermediate Representation).
 #[derive(Debug, Clone)]
 pub struct Module {
     pub name: String,
@@ -72,9 +72,9 @@ pub struct Module {
 
 impl Module {
     /// Crea un nuovo modulo con nome specificato e impostazioni predefinite.
-    pub fn new(name: String) -> Self {
+    pub fn new(name: impl Into<String>) -> Self {
         Self {
-            name,
+            name: name.into(),
             functions: Vec::new(),
             data_layout: DataLayout::LinuxX86_64,
             target_triple: TargetTriple::X86_64UnknownLinuxGnu,
@@ -137,9 +137,9 @@ impl fmt::Display for Module {
             writeln!(f, "  // No functions")?;
         } else {
             for function in &self.functions {
-                write!(f, "  {}", function)?;
-                if !function.to_string().ends_with('\n') {
-                    writeln!(f)?;
+                let s = function.to_string();
+                for line in s.trim_end_matches('\n').lines() {
+                    writeln!(f, "  {line}")?;
                 }
             }
         }

@@ -13,7 +13,7 @@ use crate::location::source_span::SourceSpan;
 use std::fmt;
 use uuid::Uuid;
 
-#[derive(Debug, Clone, PartialEq, Eq, Hash)]
+#[derive(Debug, Copy, Clone, PartialEq, Eq, Hash)]
 pub struct RValueId(Uuid);
 
 impl RValueId {
@@ -86,10 +86,10 @@ impl RValue {
         }
     }
 
-    pub fn new_temporary(id: u64, ty: RIrType) -> Self {
+    pub fn new_temporary(tmp_id: u64, ty: RIrType) -> Self {
         RValue {
             id: RValueId::new(),
-            kind: RValueKind::Temporary(id),
+            kind: RValueKind::Temporary(tmp_id),
             ty,
             debug_info: None,
             scope: None,
@@ -125,11 +125,8 @@ impl fmt::Display for RValue {
             RValueKind::Global(name) => write!(f, "@{name}")?,
             RValueKind::Temporary(id) => write!(f, "t{id}")?,
         };
-        #[allow(clippy::collapsible_if)]
-        if let Some(di) = &self.debug_info {
-            if let Some(name) = &di.name {
-                write!(f, " ({name})")?;
-            }
+        if let Some(name) = self.debug_info.as_ref().and_then(|di| di.name.as_ref()) {
+            write!(f, " ({name})")?;
         }
         Ok(())
     }

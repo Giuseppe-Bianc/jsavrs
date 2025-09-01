@@ -3,9 +3,9 @@ use super::*;
 use crate::error::compile_error::CompileError;
 use crate::location::source_span::SourceSpan;
 use crate::parser::ast::*;
-use crate::tokens::number::Number;
-use std::collections::HashMap;
-use crate::nir::{AccessController, ScopeManager};
+//use crate::tokens::number::Number;
+//use std::collections::HashMap;
+///use crate::nir::{AccessController, ScopeManager};
 
 pub struct RIrGenerator {
     current_block: Option<RBasicBlock>,
@@ -36,12 +36,12 @@ impl RIrGenerator {
         }
     }
 
-    fn new_error(&mut self, message: String, span: SourceSpan) {
-        self.errors.push(CompileError::IrGeneratorError { message, span, help: None });
+    fn new_error(&mut self, message: impl Into<String>, span: SourceSpan) {
+        self.errors.push(CompileError::IrGeneratorError { message: message.into(), span, help: None });
     }
 
     pub fn generate(&mut self, stmts: Vec<Stmt>, module_name: &str) -> (Module, Vec<CompileError>) {
-        let mut module = Module::new(module_name.into());
+        let mut module = Module::new(module_name);
         for stmt in stmts {
             self.visit_stmt(&stmt, &mut module);
         }
@@ -57,7 +57,7 @@ impl RIrGenerator {
             Stmt::MainFunction {body, span } => {}
             other => {
                 self.new_error(
-                    "Unsupported top-level statement".to_string(),
+                    "Unsupported top-level statement",
                     other.span().clone(),
                 );
             }

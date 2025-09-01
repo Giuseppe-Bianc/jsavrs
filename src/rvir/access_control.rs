@@ -1,7 +1,7 @@
 // src/rvir/access_control.rs
-use super::types::{RScopeId, RResourceId};
+use super::types::{RResourceId, RScopeId};
 
-#[derive(Debug, Clone, PartialEq, Eq, Hash)]
+#[derive(Debug, Clone, Copy, PartialEq, Eq, Hash)]
 pub enum ROperation {
     Read,
     Write,
@@ -10,6 +10,7 @@ pub enum ROperation {
     Deallocate,
 }
 
+#[derive(Debug, Clone, Copy, Default, PartialEq, Eq)]
 pub struct RAccessRules {
     read: bool,
     write: bool,
@@ -20,7 +21,13 @@ pub struct RAccessRules {
 
 impl RAccessRules {
     // Add a public constructor
-    pub fn new(read: bool, write: bool, execute: bool, allocate: bool, deallocate: bool) -> Self {
+    pub const fn new(
+        read: bool,
+        write: bool,
+        execute: bool,
+        allocate: bool,
+        deallocate: bool,
+    ) -> Self {
         RAccessRules {
             read,
             write,
@@ -50,14 +57,13 @@ pub struct RAccessController {
 impl RAccessController {
     pub fn new(scope_manager: &super::scope_manager::RScopeManager) -> Self {
         RAccessController {
-            scopes: scope_manager.get_scopes(),
+            scopes: scope_manager.get_scopes().clone(),
             current_scope: scope_manager.current_scope(),
         }
     }
-
     pub fn check_access(&self, _resource: RResourceId, _operation: ROperation) -> bool {
-        // Implementazione completa dipende dalla logica specifica
-        // Esempio: verifica se il current scope o un suo parent possiede la risorsa
-        true // Placeholder
+        // TODO: implement real access evaluation.
+        // For safety, deny by default (e.g., require explicit allow in the current or ancestor scope).
+        false
     }
 }
