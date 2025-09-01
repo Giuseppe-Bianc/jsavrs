@@ -1,0 +1,24 @@
+mod terminator;
+mod types;
+mod value;
+mod instruction;
+mod basic_block;
+mod access_control;
+mod scope;
+mod scope_manager;
+mod cfg;
+mod function;
+mod module;
+pub mod generator;
+
+pub use terminator::{RTerminator, RTerminatorKind};
+pub use types::{RIrType, RResourceId, RScopeId};
+pub use value::{RIrConstantValue, RIrLiteralValue, RValue, RValueDebugInfo, RValueKind};
+pub use instruction::{RCastKind, RInstruction, RInstructionKind, RIrBinaryOp, RIrUnaryOp, RVectorOp};
+pub use basic_block::RBasicBlock;
+pub use access_control::{RAccessController, RAccessRules, ROperation};
+pub use scope::RScope;
+pub use scope_manager::RScopeManager;
+pub use cfg::ControlFlowGraph;
+pub use function::{Function, FunctionAttributes, IrParameter, ParamAttributes};
+pub use module::{Module, TargetTriple, DataLayout};

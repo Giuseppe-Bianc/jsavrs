@@ -9,5 +9,6 @@ pub mod semantic;
 pub mod time;
 pub mod tokens;
 pub mod utils;
+pub mod rvir;
 //pub mod llir;
 //pub mod asm;

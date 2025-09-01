@@ -18,6 +18,7 @@ use std::{
     path::Path,
     //process,
 };
+use jsavrs::rvir::generator::RIrGenerator;
 //use jsavrs::llir::module::Module;
 //use jsavrs::asm::generator::{AsmGenerator, TargetOS};
 
@@ -100,7 +101,7 @@ fn main() -> Result<(), CompileError> {
         process::exit(-1);
     }
 
-    let mut generator = NIrGenerator::new();
+    /*let mut generator = NIrGenerator::new();
     let nir_timer = Timer::new("NIR Generation");
     let (module, ir_errors) = generator.generate(statements.clone(), file_path.to_str().unwrap());
     println!("{nir_timer}");
@@ -115,22 +116,31 @@ fn main() -> Result<(), CompileError> {
 
     // Print the module
     if args.verbose {
+        println!("{module:?}");
         println!("{module}");
-    }
-
+    }*/
 
     /*let mut buidler =  IrBuilder::new(file_path.as_os_str().to_str().unwrap().to_string());
     let nir_timer = Timer::new("NIR Generation");
     let module = buidler.build(statements.clone());
     println!("{nir_timer}");
     println!("{module:#?}");*/
-
+    let mut generator = RIrGenerator::new();
+    let rir_timer = Timer::new("RIR Generation");
+    let (module, rir_errors) = generator.generate(statements.clone(), file_path.to_str().unwrap());
+    println!("{rir_timer}");
+    if !rir_errors.is_empty() {
+        eprintln!("{}", error_reporter.report_errors(rir_errors));
+        process::exit(-1);
+    }
+    println!("RIR generation done");
+    if args.verbose {
+        println!("{module}");
+    }
 
 
     /*let mut asm_gen = AsmGenerator::new(if cfg!(windows) { TargetOS::Windows } else { TargetOS::Linux });
     let (nasm_code, asm_error) = asm_gen.generate(functions);
-
     std::fs::write("output.asm", nasm_code)?;*/
-
     Ok(())
 }
