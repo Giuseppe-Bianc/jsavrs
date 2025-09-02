@@ -1,5 +1,5 @@
-use std::fmt;
 // src/rvir/function.rs
+use std::fmt;
 use super::cfg::ControlFlowGraph;
 use super::scope_manager::RScopeManager;
 use super::types::{RIrType, RScopeId};

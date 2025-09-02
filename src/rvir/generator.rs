@@ -52,20 +52,22 @@ impl RIrGenerator {
     pub fn generate(&mut self, stmts: Vec<Stmt>, module_name: &str) -> (Module, Vec<CompileError>) {
         let mut module = Module::new(module_name);
         for stmt in stmts {
-            self.visit_stmt(&stmt, &mut module);
+            self.visit_top_stmt(&stmt, &mut module); // Process the statement in the  global scope
         }
         (module, std::mem::take(&mut self.errors))
     }
 
-    fn visit_stmt(&mut self, stmt: &Stmt, module: &mut Module) {
+    fn visit_top_stmt(&mut self, stmt: &Stmt, module: &mut Module) {
         match stmt {
             Stmt::Function { name, parameters, return_type, body:_, span} => {
                 let mut func =
                     self.create_function(&name, &parameters, return_type.clone(), span.clone());
+                //create function body here
                 module.add_function(func);
             }
             Stmt::MainFunction {body:_, span } => {
                 let mut func = self.create_function("main", &[], Type::Void, span.clone());
+                //create function body here
                 module.add_function(func);
             }
             other => {
