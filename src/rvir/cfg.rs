@@ -1,14 +1,13 @@
 // src/rvir/cfg.rs
-use petgraph::graph::{DiGraph, NodeIndex};
-use petgraph::visit::Dfs;
-use std::collections::HashMap;
-
 use super::basic_block::RBasicBlock;
 use super::instruction::RInstruction;
 use super::terminator::RTerminator;
 use super::types::RIrType;
 use super::value::RValue;
 use crate::location::source_span::SourceSpan;
+use petgraph::graph::{DiGraph, NodeIndex};
+use petgraph::visit::Dfs;
+use std::collections::{HashMap, HashSet};
 
 #[derive(Debug, Clone)]
 pub struct ControlFlowGraph {
@@ -37,7 +36,8 @@ impl ControlFlowGraph {
     }
 
     pub fn find_block_by_label(&self, label: &str) -> Option<NodeIndex> {
-        self.graph.node_indices()
+        self.graph
+            .node_indices()
             .find(|&idx| self.graph[idx].label == label)
     }
 
@@ -132,9 +132,11 @@ impl ControlFlowGraph {
         }
 
         // Verifica che tutti i target dei terminator esistano
+        let label_set: std::collections::HashSet<&str> =
+            self.blocks().map(|b| b.label.as_str()).collect();
         for block in self.blocks() {
             for target_label in block.terminator.get_targets() {
-                if self.find_block_by_label(&target_label).is_none() {
+                if !label_set.contains(target_label.as_str()) {
                     return Err(format!(
                         "Blocco '{}' riferisce a un blocco inesistente '{}'",
                         block.label, target_label

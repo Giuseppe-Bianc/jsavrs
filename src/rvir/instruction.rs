@@ -6,7 +6,7 @@ use crate::{
 };
 use std::fmt;
 
-#[derive(Debug, Clone, Copy, PartialEq)]
+#[derive(Debug, Clone, Copy, PartialEq, Eq, Hash)]
 pub enum RCastKind {
     IntToPtr,
     PtrToInt,
@@ -20,7 +20,7 @@ pub enum RCastKind {
     Bitcast,
 }
 
-#[derive(Debug, Clone, Copy, PartialEq)]
+#[derive(Debug, Clone, Copy, PartialEq, Eq, Hash)]
 pub enum RVectorOp {
     Add,
     Sub,

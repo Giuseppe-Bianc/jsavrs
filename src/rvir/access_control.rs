@@ -37,7 +37,7 @@ impl RAccessRules {
         }
     }
 
-    pub fn allows(&self, operation: ROperation) -> bool {
+    pub const fn allows(&self, operation: ROperation) -> bool {
         match operation {
             ROperation::Read => self.read,
             ROperation::Write => self.write,

@@ -5,7 +5,7 @@ use crate::location::source_span::SourceSpan;
 use crate::parser::ast::*;
 //use crate::tokens::number::Number;
 //use std::collections::HashMap;
-///use crate::nir::{AccessController, ScopeManager};
+//use crate::nir::{AccessController, ScopeManager};
 
 pub struct RIrGenerator {
     current_block: Option<RBasicBlock>,
@@ -57,7 +57,7 @@ impl RIrGenerator {
             Stmt::MainFunction {body, span } => {}
             other => {
                 self.new_error(
-                    "Unsupported top-level statement",
+                    format!("Unsupported top-level statement: {:?}", other),
                     other.span().clone(),
                 );
             }

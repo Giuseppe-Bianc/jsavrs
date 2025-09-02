@@ -48,7 +48,7 @@ impl Default for RResourceId {
 
 // Display implementation for RScopeId
 impl fmt::Display for RScopeId {
-    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
+    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {  
         write!(f, "{}", self.0)
     }
 }

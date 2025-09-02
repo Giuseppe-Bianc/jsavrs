@@ -3,13 +3,11 @@ use clap::Parser;
 use console::style;
 use jsavrs::cli::Args;
 use jsavrs::error::error_reporter::ErrorReporter;
-//use jsavrs::ir::generator::IrGenerator;
 use jsavrs::lexer::Lexer;
-use jsavrs::nir::generator::NIrGenerator;
+//use jsavrs::nir::generator::NIrGenerator;
 use jsavrs::parser::ast_printer::pretty_print_stmt;
 use jsavrs::parser::jsav_parser::JsavParser;
 use jsavrs::semantic::type_checker::TypeChecker;
-//use jsavrs::semantic::t_checker::TypeChecker;
 use jsavrs::time::timer::{AutoTimer, Timer};
 use jsavrs::{error::compile_error::CompileError, lexer::lexer_tokenize_with_errors};
 use std::process;
@@ -19,7 +17,6 @@ use std::{
     //process,
 };
 use jsavrs::rvir::generator::RIrGenerator;
-//use jsavrs::llir::module::Module;
 //use jsavrs::asm::generator::{AsmGenerator, TargetOS};
 
 #[allow(clippy::explicit_auto_deref, clippy::unused_unit)]
@@ -58,7 +55,7 @@ fn main() -> Result<(), CompileError> {
     println!("{lexer_timer}");
     if !lexer_errors.is_empty() {
         eprintln!("{}", error_reporter.report_errors(lexer_errors));
-        process::exit(-1);
+        process::exit(1);
     }
 
     // Print tokens with color if verbose
@@ -72,7 +69,7 @@ fn main() -> Result<(), CompileError> {
     let num_statements_str = format!("{} statements found", num_statements);
     if !parer_errors.is_empty() {
         eprintln!("{}", error_reporter.report_errors(parer_errors));
-        process::exit(-1);
+        process::exit(1);
     }
 
     println!("parsing done");
@@ -98,7 +95,7 @@ fn main() -> Result<(), CompileError> {
     println!("type checking done");
     if !type_check_errors.is_empty() {
         eprintln!("{}", error_reporter.report_errors(type_check_errors));
-        process::exit(-1);
+        process::exit(1);
     }
 
     /*let mut generator = NIrGenerator::new();
@@ -109,7 +106,7 @@ fn main() -> Result<(), CompileError> {
 
     if !ir_errors.is_empty() {
         eprintln!("{}", error_reporter.report_errors(ir_errors));
-        process::exit(-1);
+        process::exit(1);
     }
 
     println!("NIR generation done");
@@ -131,7 +128,7 @@ fn main() -> Result<(), CompileError> {
     println!("{rir_timer}");
     if !rir_errors.is_empty() {
         eprintln!("{}", error_reporter.report_errors(rir_errors));
-        process::exit(-1);
+        process::exit(1);
     }
     println!("RIR generation done");
     if args.verbose {
