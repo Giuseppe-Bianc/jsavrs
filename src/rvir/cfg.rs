@@ -2,12 +2,12 @@
 use super::basic_block::RBasicBlock;
 use super::instruction::RInstruction;
 use super::terminator::RTerminator;
-use super::types::RIrType;
-use super::value::RValue;
-use crate::location::source_span::SourceSpan;
+//use super::types::RIrType;
+//use super::value::RValue;
+//use crate::location::source_span::SourceSpan;
 use petgraph::graph::{DiGraph, NodeIndex};
 use petgraph::visit::Dfs;
-use std::collections::{HashMap, HashSet};
+use std::collections::HashSet;
 
 #[derive(Debug, Clone)]
 pub struct ControlFlowGraph {
@@ -132,7 +132,7 @@ impl ControlFlowGraph {
         }
 
         // Verifica che tutti i target dei terminator esistano
-        let label_set: std::collections::HashSet<&str> =
+        let label_set: HashSet<&str> =
             self.blocks().map(|b| b.label.as_str()).collect();
         for block in self.blocks() {
             for target_label in block.terminator.get_targets() {

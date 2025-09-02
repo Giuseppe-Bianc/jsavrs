@@ -59,7 +59,7 @@ impl RScopeManager {
 
     pub fn add_symbol(&mut self, name: impl Into<String>, mut value: RValue) {
         value.scope = Some(self.current_scope);
-        let scope = self.scopes
+        self.scopes
             .get_mut(&self.current_scope)
             .expect("current scope must exist in scopes map")
             .insert(name.into(), value);
