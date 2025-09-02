@@ -1,11 +1,10 @@
-use std::collections::HashMap;
 // src/rvir/generator.rs
 use super::*;
 use crate::error::compile_error::CompileError;
 use crate::location::source_span::SourceSpan;
 use crate::parser::ast::*;
 use crate::tokens::number::Number;
-//use std::collections::HashMap;
+use std::collections::HashMap;
 //use crate::nir::{AccessController, ScopeManager};
 
 pub struct RIrGenerator {
