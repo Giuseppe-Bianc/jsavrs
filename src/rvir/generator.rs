@@ -5,7 +5,6 @@ use crate::location::source_span::SourceSpan;
 use crate::parser::ast::*;
 use crate::tokens::number::Number;
 use std::collections::HashMap;
-//use crate::nir::{AccessController, ScopeManager};
 
 pub struct RIrGenerator {
     current_block: Option<RBasicBlock>,
@@ -18,6 +17,7 @@ pub struct RIrGenerator {
     continue_stack: Vec<String>,
     type_context: TypeContext,
     access_controller: RAccessController,
+    root_scope: Option<RScopeId>
 }
 
 #[derive(Debug, Default)]
@@ -41,6 +41,7 @@ impl RIrGenerator {
             continue_stack: Vec::new(),
             access_controller,
             type_context: TypeContext::default(),
+            root_scope: scope_manager.root_scope(),
         }
     }
 
@@ -49,7 +50,7 @@ impl RIrGenerator {
     }
 
     pub fn generate(&mut self, stmts: Vec<Stmt>, module_name: &str) -> (Module, Vec<CompileError>) {
-        let mut module = Module::new(module_name);
+        let mut module = Module::new(module_name, self.root_scope);
         for stmt in stmts {
             self.visit_top_stmt(&stmt, &mut module); // Process the statement in the  global scope
         }
@@ -140,6 +141,27 @@ impl RIrGenerator {
         self.break_stack.clear();
         self.continue_stack.clear();
         func.enter_scope();
+        // Here you would generate the actual body of the function
+        let entry_label = format!("entry_{}", func.name);
+        func.add_block(&entry_label, _span.clone());
+        self.current_block_label = Some(entry_label.clone());
+        self.current_block = func.cfg.get_block_mut(&entry_label).cloned();
+
+        if let Some(block) = &self.current_block {
+            if matches!(block.terminator.kind, RTerminatorKind::Unreachable) {
+                let return_value = match func.return_type {
+                    RIrType::Void => RValue::new_literal(RIrLiteralValue::I32(0)),
+                    _ => RValue::new_literal(RIrLiteralValue::I32(0)),
+                };
+                func.set_terminator(self.current_block_label.clone().unwrap().as_str(), RTerminator::new(
+                    RTerminatorKind::Return {
+                        value: return_value,
+                        ty: func.return_type.clone(),
+                    },
+                    SourceSpan::default(),
+                ));
+            }
+        }
         func.exit_scope();
         self.scope_manager.append_manager(&func.scope_manager);
     }

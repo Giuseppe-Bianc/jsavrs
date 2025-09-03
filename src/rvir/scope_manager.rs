@@ -98,8 +98,20 @@ impl RScopeManager {
         }
     }
 
+    pub fn root_scope(&self) -> Option<RScopeId> {
+        Some(self.root_scope)
+    }
+
     pub fn append_manager(&mut self, other: &RScopeManager) {
         let root_id = self.root_scope;
+        debug_assert!(
+            other
+                .scopes
+                .keys()
+                .filter(|id| **id != other.root_scope)
+                .all(|id| !self.scopes.contains_key(id)),
+            "RScopeId collision: append_manager would overwrite existing scopes"
+        );
 
         for (scope_id, scope) in other.scopes.iter() {
             // Salta lo scope se è la root del manager da accodare

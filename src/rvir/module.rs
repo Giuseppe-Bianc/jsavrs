@@ -1,5 +1,5 @@
 use std::fmt;
-use super::Function;
+use super::{Function, RScopeId};
 
 /// Descrive il layout dei dati per diversi target.
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Hash)]
@@ -68,16 +68,18 @@ pub struct Module {
     pub functions: Vec<Function>,
     pub data_layout: DataLayout,
     pub target_triple: TargetTriple,
+    root_scope: Option<RScopeId>, // Root scope ID for the module settable only at creation
 }
 
 impl Module {
     /// Crea un nuovo modulo con nome specificato e impostazioni predefinite.
-    pub fn new(name: impl Into<String>) -> Self {
+    pub fn new(name: impl Into<String>, root_scope: Option<RScopeId>) -> Self {
         Self {
             name: name.into(),
             functions: Vec::new(),
             data_layout: DataLayout::LinuxX86_64,
             target_triple: TargetTriple::X86_64UnknownLinuxGnu,
+            root_scope,
         }
     }
 
@@ -132,6 +134,7 @@ impl fmt::Display for Module {
         writeln!(f, "module {} {{", self.name)?;
         writeln!(f, "  data_layout = \"{}\";", self.data_layout)?;
         writeln!(f, "  target_triple = \"{}\";", self.target_triple)?;
+        writeln!(f, "  root scope = \"{}\"", self.root_scope.unwrap())?;
 
         if self.functions.is_empty() {
             writeln!(f, "  // No functions")?;

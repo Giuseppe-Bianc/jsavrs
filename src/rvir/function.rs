@@ -100,9 +100,18 @@ impl fmt::Display for Function {
             .collect::<Vec<_>>().join(", ");
 
         writeln!(f, "function {} ({}) -> {}:", self.name, params_str, self.return_type)?;
-        writeln!(f, "blocks:")?;
+        let  bloscks_len = self.cfg.blocks().count();
+        if bloscks_len == 0 {
+            writeln!(f, "<empty>")?;
+            return Ok(());
+        } else if bloscks_len == 1 {
+            writeln!(f, "block:")?;
+        } else {
+            writeln!(f, "blocks:")?;
+        }
+
         for block in self.cfg.blocks() {
-            writeln!(f, "  {}", block)?;
+            writeln!(f, "{}", block)?;
         }
 
         Ok(())
