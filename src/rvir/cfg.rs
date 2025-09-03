@@ -27,8 +27,7 @@ impl ControlFlowGraph {
     }
 
     pub fn add_block(&mut self, block: RBasicBlock) -> NodeIndex {
-        let node_index = self.graph.add_node(block);
-        node_index
+        self.graph.add_node(block)
     }
 
     pub fn add_edge(&mut self, from: NodeIndex, to: NodeIndex) {

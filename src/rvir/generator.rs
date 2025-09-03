@@ -22,7 +22,7 @@ pub struct RIrGenerator {
 
 #[derive(Debug, Default)]
 struct TypeContext {
-    structs: HashMap<String, (Vec<(String,RIrType)>, SourceSpan)>,
+    structs: HashMap<String, (Vec<(String, RIrType)>, SourceSpan)>,
     _aliases: HashMap<String, RIrType>,
 }
 
@@ -33,7 +33,7 @@ impl RIrGenerator {
         Self {
             current_block: None,
             current_block_label: None,
-            scope_manager,
+            scope_manager: scope_manager.clone(),
             temp_counter: 0,
             block_counter: 0,
             errors: Vec::new(),
@@ -58,15 +58,15 @@ impl RIrGenerator {
 
     fn visit_top_stmt(&mut self, stmt: &Stmt, module: &mut Module) {
         match stmt {
-            Stmt::Function { name, parameters, return_type, body:_, span} => {
+            Stmt::Function { name, parameters, return_type, body, span} => {
                 let mut func =
-                    self.create_function(&name, &parameters, return_type.clone(), span.clone());
-                //create function body here
-                module.add_function(func);
+                    self.create_function(name, parameters, return_type.clone(), span.clone());
+                self.generate_function_body(&mut func, body.clone(), span.clone());
+                module.add_function(func.clone());
             }
-            Stmt::MainFunction {body:_, span } => {
+            Stmt::MainFunction { body, span } => {
                 let mut func = self.create_function("main", &[], Type::Void, span.clone());
-                //create function body here
+                self.generate_function_body(&mut func, body.clone(), span.clone());
                 module.add_function(func);
             }
             other => {
@@ -134,5 +134,19 @@ impl RIrGenerator {
             Type::Void => RIrType::Void,
             Type::NullPtr => RIrType::Pointer(Box::new(RIrType::I8)),
         }
+    }
+
+    fn generate_function_body(&mut self, func: &mut Function, _body: Vec<Stmt>, _span: SourceSpan) {
+        self.break_stack.clear();
+        self.continue_stack.clear();
+        func.enter_scope();
+        func.exit_scope();
+        self.scope_manager.append_manager(&func.scope_manager);
+    }
+}
+
+impl Default for RIrGenerator {
+    fn default() -> Self {
+        Self::new()
     }
 }

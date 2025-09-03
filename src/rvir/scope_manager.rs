@@ -97,6 +97,52 @@ impl RScopeManager {
             }
         }
     }
+
+    pub fn append_manager(&mut self, other: &RScopeManager) {
+        let root_id = self.root_scope;
+
+        for (scope_id, scope) in other.scopes.iter() {
+            // Salta lo scope se è la root del manager da accodare
+            if *scope_id == other.root_scope {
+                continue;
+            }
+
+            let mut new_scope = scope.clone();
+
+            // Se lo scope era figlio della root dell'altro manager, ora diventa figlio della root del nostro
+            if let Some(parent_id) = new_scope.parent {
+                if parent_id == other.root_scope {
+                    new_scope.parent = Some(root_id);
+                    new_scope.depth = self.scopes[&root_id].depth + 1;
+                    self.scopes
+                        .get_mut(&root_id)
+                        .unwrap()
+                        .children
+                        .push(*scope_id);
+                } else {
+                    // Mantieni lo stesso parent per gli altri scope
+                    new_scope.depth = self
+                        .scopes
+                        .get(&parent_id)
+                        .map_or(new_scope.depth, |p| p.depth + 1);
+                }
+            } else {
+                // Scope senza parent: lo colleghiamo alla root
+                new_scope.parent = Some(root_id);
+                new_scope.depth = self.scopes[&root_id].depth + 1;
+                self.scopes
+                    .get_mut(&root_id)
+                    .unwrap()
+                    .children
+                    .push(*scope_id);
+            }
+
+            self.scopes.insert(*scope_id, new_scope);
+        }
+
+        // Aggiorniamo current_scope al last scope del manager accodato se esiste
+        self.current_scope = other.current_scope;
+    }
 }
 
 impl Default for RScopeManager {

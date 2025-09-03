@@ -49,6 +49,7 @@ impl RAccessRules {
 }
 
 #[allow(dead_code)]
+#[derive(Debug)]
 pub struct RAccessController {
     scopes: std::collections::HashMap<RScopeId, super::scope::RScope>,
     current_scope: RScopeId,
