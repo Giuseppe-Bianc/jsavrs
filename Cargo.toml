@@ -24,7 +24,7 @@ console = "0.16.0"
 logos = "0.15.1"
 thiserror = "2.0.16"
 regex = "1.11.2"
-uuid = { version = "1.18.0" , features = ["v4"] }
+uuid = { version = "1.18.1" , features = ["v4"] }
 petgraph = "0.8.2"
 
 
