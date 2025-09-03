@@ -134,7 +134,11 @@ impl fmt::Display for Module {
         writeln!(f, "module {} {{", self.name)?;
         writeln!(f, "  data_layout = \"{}\";", self.data_layout)?;
         writeln!(f, "  target_triple = \"{}\";", self.target_triple)?;
-        writeln!(f, "  root scope = \"{}\"", self.root_scope.unwrap())?;
+        if let Some(rs) = self.root_scope {
+            writeln!(f, "  root_scope = \"{}\";", rs)?;
+        } else {
+            writeln!(f, "  // root_scope: none")?;
+        }
 
         if self.functions.is_empty() {
             writeln!(f, "  // No functions")?;
