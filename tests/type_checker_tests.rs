@@ -1399,7 +1399,7 @@ fn test_get_size() {
 
     // Non-literal expression (should return None)
     let expr_variable = Expr::Variable {
-        name: "x".to_string(),
+        name: "x".into(),
         span: dummy_span(),
     };
     assert_eq!(checker.get_size(&expr_variable), None);

@@ -3,6 +3,7 @@ use super::scope::RScope;
 use super::types::RScopeId;
 use crate::rvir::RValue;
 use std::collections::HashMap;
+use std::sync::Arc;
 
 #[derive(Debug, Clone, PartialEq)]
 pub struct RScopeManager {
@@ -57,7 +58,7 @@ impl RScopeManager {
         self.current_scope
     }
 
-    pub fn add_symbol(&mut self, name: impl Into<String>, mut value: RValue) {
+    pub fn add_symbol(&mut self, name: impl Into<Arc<str>>, mut value: RValue) {
         value.scope = Some(self.current_scope);
         self.scopes
             .get_mut(&self.current_scope)

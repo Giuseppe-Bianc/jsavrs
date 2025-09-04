@@ -3,6 +3,7 @@ use crate::error::compile_error::CompileError;
 use crate::location::source_span::SourceSpan;
 use crate::parser::ast::{Parameter, Type};
 use std::collections::HashMap;
+use std::sync::Arc;
 
 #[derive(Debug, Clone, PartialEq)]
 pub enum Symbol {
@@ -13,7 +14,7 @@ pub enum Symbol {
 
 #[derive(Debug, Clone, PartialEq)]
 pub struct VariableSymbol {
-    pub name: String,
+    pub name: Arc<str>,
     pub ty: Type,
     pub mutable: bool,
     pub defined_at: SourceSpan,

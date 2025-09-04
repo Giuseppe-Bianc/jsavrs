@@ -194,10 +194,10 @@ fn identifiers() {
     assert_eq!(
         tokens,
         vec![
-            IdentifierAscii("foo".to_string()),
-            IdentifierAscii("_bar42".to_string()),
-            IdentifierUnicode("変数".to_string()),
-            IdentifierUnicode("ñøπ".to_string()),
+            IdentifierAscii("foo".into()),
+            IdentifierAscii("_bar42".into()),
+            IdentifierUnicode("変数".into()),
+            IdentifierUnicode("ñøπ".into()),
             Eof
         ]
     );
@@ -240,10 +240,10 @@ fn string_char_literals() {
     assert_eq!(
         tokens,
         vec![
-            StringLiteral("Hello\\n".to_string()),
-            CharLiteral("a".to_string()),
-            StringLiteral("Escape\\\"Me".to_string()),
-            CharLiteral("\\'".to_string()),
+            StringLiteral("Hello\\n".into()),
+            CharLiteral("a".into()),
+            StringLiteral("Escape\\\"Me".into()),
+            CharLiteral("\\'".into()),
             Eof
         ]
     );
@@ -313,7 +313,7 @@ fn whitespace_handling() {
     let input = "  \t\n\u{00A0}x"; // Various whitespace chars
     let tokens = lex_kinds(input);
     let tokens: Vec<TokenKind> = tokens.into_iter().map(|t| t.unwrap()).collect();
-    assert_eq!(tokens, vec![IdentifierAscii("x".to_string()), Eof]);
+    assert_eq!(tokens, vec![IdentifierAscii("x".into()), Eof]);
 }
 
 #[allow(clippy::approx_constant)]
@@ -325,12 +325,12 @@ fn mixed_expression() {
     assert_eq!(
         tokens,
         vec![
-            IdentifierAscii("x".to_string()),
+            IdentifierAscii("x".into()),
             Equal,
             Numeric(Integer(42)),
             Plus,
             OpenParen,
-            IdentifierAscii("y".to_string()),
+            IdentifierAscii("y".into()),
             Star,
             Numeric(Float64(3.14)),
             CloseParen,
@@ -352,7 +352,7 @@ fn iterator_collects_all_tokens() {
         vec![
             Numeric(Integer(42)),
             Plus,
-            IdentifierAscii("x".to_string()),
+            IdentifierAscii("x".into()),
             Eof,
         ]
     );
@@ -403,8 +403,8 @@ fn iterator_mixed_valid_invalid_valid() {
     let (tokens, errors) = lexer_tokenize_with_errors(&mut lexer);
     assert_eq!(tokens.len(), 3);
     assert_eq!(errors.len(), 1);
-    assert_eq!(tokens[0].kind, IdentifierAscii("a".to_string()));
-    assert_eq!(tokens[1].kind, IdentifierAscii("b".to_string()));
+    assert_eq!(tokens[0].kind, IdentifierAscii("a".into()));
+    assert_eq!(tokens[1].kind, IdentifierAscii("b".into()));
     assert_eq!(tokens[2].kind, Eof);
     assert_eq!(
         errors[0].to_string(),

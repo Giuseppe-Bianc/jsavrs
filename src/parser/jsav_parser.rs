@@ -1,3 +1,4 @@
+use std::sync::Arc;
 // src/parser/jsav_parser.rs
 use crate::error::compile_error::CompileError;
 use crate::location::source_span::SourceSpan;
@@ -135,7 +136,7 @@ impl JsavParser {
         let mut params = Vec::new();
         while !self.check(&TokenKind::CloseParen) && !self.is_at_end() {
             let param_start = self.peek()?.clone();
-            let name = self.consume_identifier()?;
+            let name = self.consume_identifier()?.into();
             let name_span = self.previous()?.span.clone();
             self.expect(&TokenKind::Colon, "after parameter name");
             let type_ann = self.parse_type()?;
@@ -306,7 +307,7 @@ impl JsavParser {
             TokenKind::TypeString => Type::String,
             TokenKind::TypeBool => Type::Bool,
             TokenKind::IdentifierAscii(name) | TokenKind::IdentifierUnicode(name) => {
-                Type::Custom(name.clone())
+                Type::Custom(name.clone().into())
             }
             _ => {
                 self.syntax_error(
@@ -333,7 +334,7 @@ impl JsavParser {
 
         #[allow(clippy::collapsible_if)]
         if let Type::Custom(name) = &base_type {
-            if name == "vector" && self.match_token(&TokenKind::Less) {
+            if **name == *"vector" && self.match_token(&TokenKind::Less) {
                 let inner_type = self.parse_type()?;
                 self.expect(&TokenKind::Greater, "after vector inner type");
                 base_type = Type::Vector(Box::new(inner_type));
@@ -429,7 +430,7 @@ impl JsavParser {
         }
     }
 
-    fn consume_identifier(&mut self) -> Option<String> {
+    fn consume_identifier(&mut self) -> Option<Arc<str>> {
         // Capture token first to avoid overlapping borrows
         let token = self.peek()?.clone();
 

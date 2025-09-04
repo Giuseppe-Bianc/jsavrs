@@ -7,6 +7,7 @@ use crate::nir::instruction::{Instruction, InstructionKind, IrBinaryOp, IrUnaryO
 use crate::parser::ast::*;
 use crate::tokens::number::Number;
 use std::collections::HashMap;
+use std::sync::Arc;
 
 pub struct NIrGenerator {
     _current_function: Option<String>,
@@ -99,7 +100,7 @@ impl NIrGenerator {
         let ir_params = params.iter().map(|param| {
             let ty = self.map_type(&param.type_annotation);
             IrParameter {
-                name: param.name.clone(),
+                name: param.name.clone().to_string(),
                 ty: ty.clone(),
                 attributes: ParamAttributes {
                     source_span: Some(param.span.clone()),
@@ -132,10 +133,10 @@ impl NIrGenerator {
             Type::String => IrType::String,
             Type::Bool => IrType::Bool,
             Type::Custom(name) => {
-                if let Some((fields, span)) = self.type_context.structs.get(name) {
-                    IrType::Struct(name.clone(), fields.clone(), span.clone())
+                if let Some((fields, span)) = self.type_context.structs.get(name.as_ref()) {
+                    IrType::Struct(name.to_string(), fields.clone(), span.clone())
                 } else {
-                    IrType::Custom(name.clone(), SourceSpan::default())
+                    IrType::Custom(name.to_string(), SourceSpan::default())
                 }
             }
             Type::Array(element_type, size_expr) => {
@@ -180,11 +181,11 @@ impl NIrGenerator {
         for param in &func.parameters {
             //let temp = self.new_temp();
             let value = Value::new_local(param.name.clone(), param.ty.clone()).with_debug_info(
-                Some(param.name.clone()),
+                Some(param.name.clone().into()),
                 param.attributes.source_span.clone().unwrap_or_default(),
             );
 
-            self.scope_manager.add_symbol(param.name.clone(), value.clone());
+            self.scope_manager.add_symbol(param.name.clone().into(), value.clone());
         }
 
         for stmt in body {
@@ -256,7 +257,7 @@ impl NIrGenerator {
         }
     }
 
-    fn generate_var_declaration(&mut self, func: &mut Function, variables: Vec<String>, type_annotation: Type, initializers: Vec<Expr>, is_mutable: bool, span: SourceSpan) {
+    fn generate_var_declaration(&mut self, func: &mut Function, variables: Vec<Arc<str>>, type_annotation: Type, initializers: Vec<Expr>, is_mutable: bool, span: SourceSpan) {
         let ty: IrType = self.map_type(&type_annotation);
 
         for (i, var) in variables.iter().enumerate() {
@@ -617,7 +618,7 @@ impl NIrGenerator {
         unary_inst.result.unwrap()
     }
 
-    fn generate_variable(&mut self, name: String, span: SourceSpan) -> Value {
+    fn generate_variable(&mut self, name: Arc<str>, span: SourceSpan) -> Value {
         self.scope_manager.lookup(&name).cloned().unwrap_or_else(|| {
             self.new_error(format!("Undefined variable '{name}'"), span.clone());
             Value::new_literal(IrLiteralValue::I32(0)).with_debug_info(None, span)

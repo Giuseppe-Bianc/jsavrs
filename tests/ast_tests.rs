@@ -274,7 +274,7 @@ expr_span_test!(test_expr_literal_span, |s| Expr::Literal {
 });
 
 expr_span_test!(test_expr_variable_span, |s| Expr::Variable {
-    name: "x".to_string(),
+    name: "x".into(),
     span: s,
 });
 expr_span_test!(test_expr_assign_span, |s| Expr::Assign {
@@ -311,7 +311,7 @@ fn test_stmt_expression_span() {
 }
 
 stmt_span_test!(test_stmt_var_declaration_span, |s| Stmt::VarDeclaration {
-    variables: vec!["x".to_string()],
+    variables: vec!["x".into()],
     type_annotation: Type::I32,
     initializers: vec![],
     is_mutable: true,
@@ -319,7 +319,7 @@ stmt_span_test!(test_stmt_var_declaration_span, |s| Stmt::VarDeclaration {
 });
 
 stmt_span_test!(test_stmt_const_declaration_span, |s| Stmt::VarDeclaration {
-    variables: vec!["x".to_string()],
+    variables: vec!["x".into()],
     type_annotation: Type::I32,
     initializers: vec![],
     is_mutable: false,
@@ -327,7 +327,7 @@ stmt_span_test!(test_stmt_const_declaration_span, |s| Stmt::VarDeclaration {
 });
 
 stmt_span_test!(test_stmt_function_span, |s| Stmt::Function {
-    name: "foo".to_string(),
+    name: "foo".into(),
     parameters: vec![],
     return_type: Type::Void,
     body: vec![],
@@ -403,7 +403,7 @@ fn test_stmt_expression() {
 #[test]
 fn test_var_declaration_multiple_vars() {
     let stmt = var_declaration(
-        vec!["x".to_string(), "y".to_string()],
+        vec!["x".into(), "y".into()],
         Type::I32,
         true,
         vec![num_lit(1), num_lit(2)],
@@ -428,15 +428,15 @@ fn test_var_declaration_multiple_vars() {
 #[test]
 fn test_function_with_parameters() {
     let stmt = function_declaration(
-        "sum".to_string(),
+        "sum".into(),
         vec![
             Parameter {
-                name: "a".to_string(),
+                name: "a".into(),
                 type_annotation: Type::I32,
                 span: dummy_span(),
             },
             Parameter {
-                name: "b".to_string(),
+                name: "b".into(),
                 type_annotation: Type::I32,
                 span: dummy_span(),
             },
@@ -561,7 +561,7 @@ fn test_return_stmt_with_value() {
 #[test]
 fn test_complex_type_declaration() {
     let stmt = var_declaration(
-        vec!["matrix".to_string()],
+        vec!["matrix".into()],
         Type::Array(Box::new(Type::F64), Box::new(nullptr_lit())),
         true,
         vec![],
@@ -583,7 +583,7 @@ fn test_complex_type_declaration() {
 #[test]
 fn test_complex_type_const_declaration() {
     let stmt = var_declaration(
-        vec!["matrix".to_string()],
+        vec!["matrix".into()],
         Type::Array(Box::new(Type::F64), Box::new(nullptr_lit())),
         false,
         vec![],
@@ -667,7 +667,7 @@ fn test_while_not_empty_body() {
 fn test_for() {
     let stmt = Stmt::For {
         initializer: Some(Box::from(var_declaration(
-            vec!["x".to_string()],
+            vec!["x".into()],
             Type::I32,
             true,
             vec![num_lit(1)],
@@ -699,7 +699,7 @@ fn test_for() {
 fn test_for_complete() {
     let stmt = Stmt::For {
         initializer: Some(Box::from(var_declaration(
-            vec!["x".to_string()],
+            vec!["x".into()],
             Type::I32,
             true,
             vec![num_lit(1)],
@@ -750,7 +750,7 @@ fn test_for_complete() {
 fn test_for_not_empty_body() {
     let stmt = Stmt::For {
         initializer: Some(Box::from(var_declaration(
-            vec!["x".to_string()],
+            vec!["x".into()],
             Type::I32,
             true,
             vec![num_lit(1)],
@@ -785,7 +785,7 @@ fn test_for_not_empty_body() {
 fn test_for_complete_not_empty_body() {
     let stmt = Stmt::For {
         initializer: Some(Box::from(var_declaration(
-            vec!["x".to_string()],
+            vec!["x".into()],
             Type::I32,
             true,
             vec![num_lit(1)],
@@ -838,20 +838,20 @@ fn test_for_complete_not_empty_body() {
 #[test]
 fn test_edge_case_multiple_parameters() {
     let stmt = function_declaration(
-        "func".to_string(),
+        "func".into(),
         vec![
             Parameter {
-                name: "a".to_string(),
+                name: "a".into(),
                 type_annotation: Type::I32,
                 span: dummy_span(),
             },
             Parameter {
-                name: "b".to_string(),
+                name: "b".into(),
                 type_annotation: Type::I32,
                 span: dummy_span(),
             },
             Parameter {
-                name: "c".to_string(),
+                name: "c".into(),
                 type_annotation: Type::I32,
                 span: dummy_span(),
             },
@@ -884,7 +884,7 @@ macro_rules! test_type_output {
     ($name:ident, $typ:expr, $type_str:expr) => {
         #[test]
         fn $name() {
-            let stmt = function_declaration("func".to_string(), vec![], $typ, vec![]);
+            let stmt = function_declaration("func".into(), vec![], $typ, vec![]);
 
             let output = pretty_print_stmt(&stmt);
             let stripped = strip_ansi_codes(&output);
@@ -917,7 +917,7 @@ test_type_output!(test_char_output, Type::Char, "char");
 test_type_output!(test_string_output, Type::String, "string");
 test_type_output!(test_bool_output, Type::Bool, "bool");
 test_type_output!(test_void_output, Type::Void, "void");
-test_type_output!(test_custom_output, Type::Custom("inin".to_string()), "inin");
+test_type_output!(test_custom_output, Type::Custom("inin".into()), "inin");
 
 #[test]
 fn test_corner_case_deeply_nested_if() {
@@ -956,7 +956,7 @@ fn test_corner_case_deeply_nested_if() {
 #[test]
 fn test_corner_case_complex_return_type() {
     let stmt = function_declaration(
-        "getVector".to_string(),
+        "getVector".into(),
         vec![],
         Type::Vector(Box::new(Type::Array(
             Box::new(Type::I32),

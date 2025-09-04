@@ -11,6 +11,7 @@ pub use self::{
 use super::types::{RIrType, RScopeId};
 use crate::location::source_span::SourceSpan;
 use std::fmt;
+use std::sync::Arc;
 use uuid::Uuid;
 
 #[derive(Debug, Copy, Clone, PartialEq, Eq, Hash)]
@@ -66,7 +67,7 @@ impl RValue {
         }
     }
 
-    pub fn new_local(name: String, ty: RIrType) -> Self {
+    pub fn new_local(name: Arc<str>, ty: RIrType) -> Self {
         RValue {
             id: RValueId::new(),
             kind: RValueKind::Local(name),
@@ -76,7 +77,7 @@ impl RValue {
         }
     }
 
-    pub fn new_global(name: String, ty: RIrType) -> Self {
+    pub fn new_global(name: Arc<str>, ty: RIrType) -> Self {
         RValue {
             id: RValueId::new(),
             kind: RValueKind::Global(name),
@@ -96,7 +97,7 @@ impl RValue {
         }
     }
 
-    pub fn with_debug_info(mut self, name: Option<String>, span: SourceSpan) -> Self {
+    pub fn with_debug_info(mut self, name: Option<Arc<str>>, span: SourceSpan) -> Self {
         self.debug_info = Some(RValueDebugInfo {
             name,
             source_span: span,

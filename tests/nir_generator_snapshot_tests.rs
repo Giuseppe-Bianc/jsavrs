@@ -61,7 +61,7 @@ fn module_redaceted(module: Module) -> String {
 #[test]
 fn test_generate_void_function() {
     let ast = vec![function_declaration(
-        "void_func".to_string(),
+        "void_func".into(),
         vec![],
         Type::Void,
         vec![Stmt::Return {
@@ -96,7 +96,7 @@ fn test_generate_main_function() {
 #[test]
 fn test_generate_binary_expression() {
     let ast = vec![function_declaration(
-        "test".to_string(),
+        "test".into(),
         vec![],
         Type::I32,
         vec![Stmt::Return {
@@ -113,11 +113,11 @@ fn test_generate_binary_expression() {
 #[test]
 fn test_generate_variable_assignment() {
     let ast = vec![function_declaration(
-        "test".to_string(),
+        "test".into(),
         vec![],
         Type::Void,
         vec![
-            var_declaration(vec!["x".to_string()], Type::I32, true, vec![]),
+            var_declaration(vec!["x".into()], Type::I32, true, vec![]),
             Stmt::Expression {
                 expr: assign_expr(variable_expr("x"), num_lit_i32(10)),
             },
@@ -133,7 +133,7 @@ fn test_generate_variable_assignment() {
 #[test]
 fn test_generate_if_statement() {
     let ast = vec![function_declaration(
-        "test".to_string(),
+        "test".into(),
         vec![],
         Type::Void,
         vec![Stmt::If {
@@ -155,7 +155,7 @@ fn test_generate_if_statement() {
 #[test]
 fn test_generate_nested_expressions() {
     let ast = vec![function_declaration(
-        "test".to_string(),
+        "test".into(),
         vec![],
         Type::I32,
         vec![Stmt::Return {
@@ -176,13 +176,13 @@ fn test_generate_nested_expressions() {
 #[test]
 fn test_generate_custom_type() {
     let ast = vec![function_declaration(
-        "test".to_string(),
+        "test".into(),
         vec![Parameter {
-            name: "param".to_string(),
-            type_annotation: Type::Custom("MyType".to_string()),
+            name: "param".into(),
+            type_annotation: Type::Custom("MyType".into()),
             span: dummy_span(),
         }],
-        Type::Custom("MyType".to_string()),
+        Type::Custom("MyType".into()),
         vec![Stmt::Return {
             value: Some(variable_expr("param")),
             span: dummy_span(),
@@ -197,11 +197,11 @@ fn test_generate_custom_type() {
 #[test]
 fn test_generate_array_type() {
     let ast = vec![function_declaration(
-        "test".to_string(),
+        "test".into(),
         vec![],
         Type::Void,
         vec![var_declaration(
-            vec!["arr".to_string()],
+            vec!["arr".into()],
             Type::Array(Box::new(Type::I32), Box::new(num_lit(10))),
             true,
             vec![],
@@ -216,7 +216,7 @@ fn test_generate_array_type() {
 #[test]
 fn test_generate_missing_return() {
     let ast = vec![Stmt::Function {
-        name: "test".to_string(),
+        name: "test".into(),
         parameters: vec![],
         return_type: Type::I32,
         body: vec![],
@@ -232,7 +232,7 @@ fn test_generate_missing_return() {
 fn test_generate_multiple_functions() {
     let ast = vec![
         function_declaration(
-            "func1".to_string(),
+            "func1".into(),
             vec![],
             Type::Void,
             vec![Stmt::Return {
@@ -241,7 +241,7 @@ fn test_generate_multiple_functions() {
             }],
         ),
         function_declaration(
-            "func2".to_string(),
+            "func2".into(),
             vec![],
             Type::Void,
             vec![Stmt::Return {
@@ -259,7 +259,7 @@ fn test_generate_multiple_functions() {
 #[test]
 fn test_generate_string_literal() {
     let ast = vec![Stmt::Function {
-        name: "test".to_string(),
+        name: "test".into(),
         parameters: vec![],
         return_type: Type::String,
         body: vec![Stmt::Return {
@@ -277,7 +277,7 @@ fn test_generate_string_literal() {
 #[test]
 fn test_generate_nullptr() {
     let ast = vec![Stmt::Function {
-        name: "test".to_string(),
+        name: "test".into(),
         parameters: vec![],
         return_type: Type::NullPtr,
         body: vec![Stmt::Return {
@@ -295,13 +295,13 @@ fn test_generate_nullptr() {
 #[test]
 fn test_generate_simple_block() {
     let ast = vec![function_declaration(
-        "test".to_string(),
+        "test".into(),
         vec![],
         Type::Void,
         vec![
             Stmt::Block {
                 statements: vec![
-                    var_declaration(vec!["y".to_string()], Type::I32, true, vec![num_lit_i32(5)]),
+                    var_declaration(vec!["y".into()], Type::I32, true, vec![num_lit_i32(5)]),
                     Stmt::Expression {
                         expr: Expr::Assign {
                             target: Box::new(variable_expr("y")),
@@ -327,12 +327,12 @@ fn test_generate_simple_block() {
 #[test]
 fn test_generate_simple_while_loop() {
     let ast = vec![function_declaration(
-        "test".to_string(),
+        "test".into(),
         vec![],
         Type::Void,
         vec![
             var_declaration(
-                vec!["counter".to_string()],
+                vec!["counter".into()],
                 Type::I32,
                 true,
                 vec![num_lit_i32(0)],
@@ -367,12 +367,12 @@ fn test_generate_simple_while_loop() {
 #[test]
 fn test_generate_for_loop_basic() {
     let ast = vec![function_declaration(
-        "test".to_string(),
+        "test".into(),
         vec![],
         Type::Void,
         vec![Stmt::For {
             initializer: Some(Box::new(Stmt::VarDeclaration {
-                variables: vec!["i".to_string()],
+                variables: vec!["i".into()],
                 type_annotation: Type::I32,
                 is_mutable: true,
                 initializers: vec![num_lit_i32(0)],
@@ -405,12 +405,12 @@ fn test_generate_for_loop_basic() {
 #[test]
 fn test_generate_for_loop_with_break() {
     let ast = vec![function_declaration(
-        "test".to_string(),
+        "test".into(),
         vec![],
         Type::Void,
         vec![Stmt::For {
             initializer: Some(Box::new(Stmt::VarDeclaration {
-                variables: vec!["i".to_string()],
+                variables: vec!["i".into()],
                 type_annotation: Type::I32,
                 is_mutable: true,
                 initializers: vec![num_lit_i32(0)],
@@ -435,12 +435,12 @@ fn test_generate_for_loop_with_break() {
 #[test]
 fn test_generate_for_loop_with_continue() {
     let ast = vec![function_declaration(
-        "test".to_string(),
+        "test".into(),
         vec![],
         Type::Void,
         vec![Stmt::For {
             initializer: Some(Box::new(Stmt::VarDeclaration {
-                variables: vec!["i".to_string()],
+                variables: vec!["i".into()],
                 type_annotation: Type::I32,
                 is_mutable: true,
                 initializers: vec![num_lit_i32(0)],
@@ -465,7 +465,7 @@ fn test_generate_for_loop_with_continue() {
 #[test]
 fn test_generate_grouping_expression() {
     let ast = vec![function_declaration(
-        "test".to_string(),
+        "test".into(),
         vec![],
         Type::I32,
         vec![Stmt::Return {
@@ -486,7 +486,7 @@ fn test_generate_grouping_expression() {
 #[test]
 fn test_generate_array_literal_with_elements() {
     let ast = vec![function_declaration(
-        "test".to_string(),
+        "test".into(),
         vec![],
         Type::Array(Box::new(Type::I32), Box::new(num_lit(3))),
         vec![Stmt::Return {
@@ -506,7 +506,7 @@ fn test_generate_array_literal_with_elements() {
 #[test]
 fn test_default_implementation() {
     let ast = vec![function_declaration(
-        "test".to_string(),
+        "test".into(),
         vec![],
         Type::I32,
         vec![Stmt::Return {
@@ -545,7 +545,7 @@ fn test_generate_binary_all_operations() {
 
     for ast_op in test_cases {
         let ast = vec![function_declaration(
-            "test".to_string(),
+            "test".into(),
             vec![],
             Type::I32,
             vec![Stmt::Return {
@@ -566,7 +566,7 @@ fn test_generate_unary_expression() {
 
     for ast_op in test_cases {
         let ast = vec![function_declaration(
-            "test".to_string(),
+            "test".into(),
             vec![],
             Type::I32,
             vec![Stmt::Return {
@@ -596,7 +596,7 @@ fn test_generate_integer_literals() {
 
     for num in test_cases {
         let ast = vec![function_declaration(
-            "test".to_string(),
+            "test".into(),
             vec![],
             match num {
                 Number::I8(_) => Type::I8,
@@ -635,7 +635,7 @@ fn test_generate_float_literals() {
 
     for num in test_cases {
         let ast = vec![function_declaration(
-            "test".to_string(),
+            "test".into(),
             vec![],
             match num {
                 Number::Float32(_) => Type::F32,
@@ -665,7 +665,7 @@ fn test_generate_boolean_literals() {
 
     for b in test_cases {
         let ast = vec![function_declaration(
-            "test".to_string(),
+            "test".into(),
             vec![],
             Type::Bool,
             vec![Stmt::Return {
@@ -683,7 +683,7 @@ fn test_generate_boolean_literals() {
 #[test]
 fn test_generate_char_literal() {
     let ast = vec![function_declaration(
-        "test".to_string(),
+        "test".into(),
         vec![],
         Type::Char,
         vec![Stmt::Return {
@@ -700,7 +700,7 @@ fn test_generate_char_literal() {
 #[test]
 fn test_generate_nullptr_literal() {
     let ast = vec![function_declaration(
-        "test".to_string(),
+        "test".into(),
         vec![],
         Type::NullPtr,
         vec![Stmt::Return {

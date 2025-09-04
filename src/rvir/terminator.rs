@@ -3,6 +3,7 @@ use super::{RIrType, RValue};
 use crate::location::source_span::SourceSpan;
 use std::fmt;
 use std::fmt::Write;
+use std::sync::Arc;
 
 #[derive(Debug, Clone, PartialEq)]
 pub struct RTerminator {
@@ -22,12 +23,12 @@ pub enum RTerminatorKind {
         ty: RIrType,
     },
     Branch {
-        label: String,
+        label: Arc<str>,
     },
     ConditionalBranch {
         condition: RValue,
-        true_label: String,
-        false_label: String,
+        true_label: Arc<str>,
+        false_label: Arc<str>,
     },
     IndirectBranch {
         address: RValue,
@@ -49,12 +50,12 @@ impl RTerminator {
 
     pub fn get_targets(&self) -> Vec<String> {
         match &self.kind {
-            RTerminatorKind::Branch { label } => vec![label.clone()],
+            RTerminatorKind::Branch { label } => vec![label.clone().to_string()],
             RTerminatorKind::ConditionalBranch {
                 true_label,
                 false_label,
                 ..
-            } => vec![true_label.clone(), false_label.clone()],
+            } => vec![true_label.clone().to_string(), false_label.clone().to_string()],
             RTerminatorKind::Switch {
                 cases,
                 default_label,

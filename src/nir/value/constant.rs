@@ -1,12 +1,13 @@
 // src/nir/value/constant.rs
 use super::Value;
 use std::fmt;
+use std::sync::Arc;
 
 #[derive(Debug, Clone, PartialEq)]
 pub enum IrConstantValue {
-    String { string: String },
+    String { string: Arc<str> },
     Array { elements: Vec<Value> },
-    Struct { name: String, elements: Vec<Value> },
+    Struct { name: Arc<str>, elements: Vec<Value> },
 }
 
 impl fmt::Display for IrConstantValue {

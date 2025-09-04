@@ -21,13 +21,7 @@ pub struct RAccessRules {
 
 impl RAccessRules {
     // Add a public constructor
-    pub const fn new(
-        read: bool,
-        write: bool,
-        execute: bool,
-        allocate: bool,
-        deallocate: bool,
-    ) -> Self {
+    pub const fn new(read: bool, write: bool, execute: bool, allocate: bool, deallocate: bool ) -> Self {
         RAccessRules {
             read,
             write,

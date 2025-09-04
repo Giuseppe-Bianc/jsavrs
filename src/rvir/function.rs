@@ -1,5 +1,6 @@
 // src/rvir/function.rs
 use std::fmt;
+use std::sync::Arc;
 use super::cfg::ControlFlowGraph;
 use super::scope_manager::RScopeManager;
 use super::types::{RIrType, RScopeId};
@@ -17,7 +18,7 @@ pub struct FunctionAttributes {
 
 #[derive(Debug, Clone, PartialEq)]
 pub struct IrParameter {
-    pub name: String,
+    pub name: Arc<str>,
     pub ty: RIrType,
     pub attributes: ParamAttributes,
 }

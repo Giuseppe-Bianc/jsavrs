@@ -47,9 +47,9 @@ fn duplicate_declaration_same_scope() {
 fn function_symbol_tracking() {
     let mut table = SymbolTable::new();
     let func = FunctionSymbol {
-        name: "foo".to_string(),
+        name: "foo".into(),
         parameters: vec![Parameter {
-            name: "arg".to_string(),
+            name: "arg".into(),
             type_annotation: Type::I8, // Use correct field name
             span: dummy_span(),
         }],
@@ -120,7 +120,7 @@ fn precise_error_span_reporting() {
     let span2 = create_span("test_file", 15, 25, 15, 35);
 
     let first_var = Symbol::Variable(VariableSymbol {
-        name: "x".to_string(),
+        name: "x".into(),
         ty: int_type(),
         mutable: true,
         defined_at: span1.clone(),
@@ -128,7 +128,7 @@ fn precise_error_span_reporting() {
     });
 
     let second_var = Symbol::Variable(VariableSymbol {
-        name: "x".to_string(),
+        name: "x".into(),
         ty: int_type(),
         mutable: false,
         defined_at: span2.clone(),
@@ -178,14 +178,14 @@ fn duplicate_function_error_span() {
     let span2 = create_span("file", 10, 1, 10, 10);
 
     let first_func = Symbol::Function(FunctionSymbol {
-        name: "func".to_string(),
+        name: "func".into(),
         parameters: Vec::new(),
         return_type: Type::Void,
         defined_at: span1.clone(),
     });
 
     let second_func = Symbol::Function(FunctionSymbol {
-        name: "func".to_string(),
+        name: "func".into(),
         parameters: Vec::new(),
         return_type: Type::Void,
         defined_at: span2.clone(),
@@ -204,7 +204,7 @@ fn duplicate_unknown_symbol_type_uses_default_span() {
 
     // Create a variable symbol for duplicate declaration
     let var_symbol = Symbol::Variable(VariableSymbol {
-        name: "x".to_string(),
+        name: "x".into(),
         ty: int_type(),
         mutable: true,
         defined_at: create_span("file", 5, 1, 5, 2),

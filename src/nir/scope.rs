@@ -1,10 +1,11 @@
 //src/nir/scope.rs
 use std::collections::HashMap;
+use std::sync::Arc;
 use crate::nir::{ScopeId, Value};
 
 #[derive(Debug, Clone, PartialEq)]
 pub struct Scope {
-    pub symbols: HashMap<String, Value>,
+    pub symbols: HashMap<Arc<str>, Value>,
     pub parent: Option<ScopeId>,
     pub children: Vec<ScopeId>,
     pub depth: usize,
@@ -20,7 +21,7 @@ impl Scope {
         }
     }
 
-    pub fn insert(&mut self, name: String, value: Value) {
+    pub fn insert(&mut self, name: Arc<str>, value: Value) {
         self.symbols.insert(name, value);
     }
 

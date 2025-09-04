@@ -16,7 +16,7 @@ fn value_creation_and_properties() {
     // Constant value
     let const_val = Value::new_constant(
         IrConstantValue::String {
-            string: "test".to_string(),
+            string: "test".into(),
         },
         IrType::String,
     );
@@ -24,7 +24,7 @@ fn value_creation_and_properties() {
     assert_eq!(const_val.ty, IrType::String);
 
     // Local value
-    let local_val = Value::new_local("var".to_string(), IrType::Bool);
+    let local_val = Value::new_local("var".into(), IrType::Bool);
     assert!(matches!(local_val.kind, ValueKind::Local(_)));
     assert_eq!(local_val.ty, IrType::Bool);
 
@@ -37,10 +37,10 @@ fn value_creation_and_properties() {
 #[test]
 fn value_with_debug_info() {
     let mut val = Value::new_literal(IrLiteralValue::Bool(true));
-    val = val.with_debug_info(Some("debug_var".to_string()), dummy_span());
+    val = val.with_debug_info(Some("debug_var".into()), dummy_span());
 
     let debug_info = val.debug_info.as_ref().unwrap();
-    assert_eq!(debug_info.name, Some("debug_var".to_string()));
+    assert_eq!(debug_info.name, Some("debug_var".into()));
     assert_eq!(debug_info.source_span, dummy_span());
 }
 
@@ -82,14 +82,14 @@ fn value_display_formatting() {
 
     let struct_val = Value::new_constant(
         IrConstantValue::Struct {
-            name: "Point".to_string(),
+            name: "Point".into(),
             elements: vec![
                 Value::new_literal(IrLiteralValue::I32(10)),
                 Value::new_literal(IrLiteralValue::I32(20)),
             ],
         },
         IrType::Struct(
-            "Point".to_string(),
+            "Point".into(),
             vec![IrType::I32, IrType::I32],
             dummy_span(),
         ),
@@ -98,11 +98,11 @@ fn value_display_formatting() {
 
     // Local/Global/Temporary
     assert_eq!(
-        format!("{}", Value::new_local("foo".to_string(), IrType::I32)),
+        format!("{}", Value::new_local("foo".into(), IrType::I32)),
         "%foo"
     );
     assert_eq!(
-        format!("{}", Value::new_global("bar".to_string(), IrType::I32)),
+        format!("{}", Value::new_global("bar".into(), IrType::I32)),
         "@bar"
     );
     assert_eq!(
@@ -159,15 +159,15 @@ fn constant_value_display_edge_cases() {
     assert_eq!(format!("{}", mixed_array), "[1i32, true]");
 
     // String with escapes
-    let string_val = IrConstantValue::String { string:"line1\nline2\"tab\t".to_string()};
+    let string_val = IrConstantValue::String { string:"line1\nline2\"tab\t".into()};
     assert_eq!(format!("{}", string_val), "\"line1\\nline2\\\"tab\\t\"");
 
     // Empty struct
-    let empty_struct = IrConstantValue::Struct { name:"Empty".to_string(), elements: Vec::new()};
+    let empty_struct = IrConstantValue::Struct { name:"Empty".into(), elements: Vec::new()};
     assert_eq!(format!("{}", empty_struct), "Empty<>");
 
     // Struct with special characters in name
-    let struct_val = IrConstantValue::Struct { name: "My$Struct".to_string(), elements:  Vec::new()};
+    let struct_val = IrConstantValue::Struct { name: "My$Struct".into(), elements:  Vec::new()};
     assert_eq!(format!("{}", struct_val), "My$Struct<>");
 }
 
@@ -177,13 +177,13 @@ fn value_kind_variants() {
     let literal = ValueKind::Literal(IrLiteralValue::I32(42));
     assert!(matches!(literal, ValueKind::Literal(_)));
 
-    let constant = ValueKind::Constant(IrConstantValue::String { string: "test".to_string()});
+    let constant = ValueKind::Constant(IrConstantValue::String { string: "test".into()});
     assert!(matches!(constant, ValueKind::Constant(_)));
 
-    let local = ValueKind::Local("var".to_string());
+    let local = ValueKind::Local("var".into());
     assert!(matches!(local, ValueKind::Local(_)));
 
-    let global = ValueKind::Global("global".to_string());
+    let global = ValueKind::Global("global".into());
     assert!(matches!(global, ValueKind::Global(_)));
 
     let temp = ValueKind::Temporary(123);
@@ -194,11 +194,11 @@ fn value_kind_variants() {
 #[test]
 fn debug_info_creation() {
     let debug_info = ValueDebugInfo {
-        name: Some("var".to_string()),
+        name: Some("var".into()),
         source_span: dummy_span(),
     };
 
-    assert_eq!(debug_info.name, Some("var".to_string()));
+    assert_eq!(debug_info.name, Some("var".into()));
     assert_eq!(debug_info.source_span, dummy_span());
 
     let no_name = ValueDebugInfo {

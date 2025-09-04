@@ -1,4 +1,5 @@
 use std::fmt;
+use std::sync::Arc;
 use super::{Function, RScopeId};
 
 /// Descrive il layout dei dati per diversi target.
@@ -64,7 +65,7 @@ impl fmt::Display for TargetTriple {
 /// Rappresenta un modulo IR (Intermediate Representation).
 #[derive(Debug, Clone)]
 pub struct Module {
-    pub name: String,
+    pub name: Arc<str>,
     pub functions: Vec<Function>,
     pub data_layout: DataLayout,
     pub target_triple: TargetTriple,
@@ -73,7 +74,7 @@ pub struct Module {
 
 impl Module {
     /// Crea un nuovo modulo con nome specificato e impostazioni predefinite.
-    pub fn new(name: impl Into<String>, root_scope: Option<RScopeId>) -> Self {
+    pub fn new(name: impl Into<Arc<str>>, root_scope: Option<RScopeId>) -> Self {
         Self {
             name: name.into(),
             functions: Vec::new(),

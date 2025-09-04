@@ -1,3 +1,4 @@
+use std::sync::Arc;
 // src/semantic/type_checker.rs
 use crate::error::compile_error::CompileError;
 use crate::location::source_span::SourceSpan;
@@ -76,7 +77,7 @@ impl TypeChecker {
                 initializers,
                 span,
             } => self.visit_var_declaration(
-                variables,
+                variables.to_vec(),
                 type_annotation,
                 *is_mutable,
                 initializers,
@@ -117,7 +118,7 @@ impl TypeChecker {
 
     fn visit_var_declaration(
         &mut self,
-        variables: &[String],
+        variables: Vec<Arc<str>>,
         type_annotation: &Type,
         is_mutable: bool,
         initializers: &[Expr],
@@ -150,7 +151,7 @@ impl TypeChecker {
             self.declare_symbol(
                 var_name,
                 Symbol::Variable(VariableSymbol {
-                    name: var_name.clone(),
+                    name: var_name.clone().into(),
                     ty: type_annotation.clone(),
                     mutable: is_mutable,
                     defined_at: span.clone(),

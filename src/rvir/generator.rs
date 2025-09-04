@@ -6,6 +6,7 @@ use crate::parser::ast::*;
 use crate::tokens::number::Number;
 use std::collections::HashMap;
 
+#[allow(dead_code)]
 pub struct RIrGenerator {
     current_block: Option<RBasicBlock>,
     current_block_label: Option<String>,
@@ -20,12 +21,15 @@ pub struct RIrGenerator {
     root_scope: Option<RScopeId>,
 }
 
+#[allow(dead_code)]
 #[derive(Debug, Default)]
 struct TypeContext {
     structs: HashMap<String, (Vec<(String, RIrType)>, SourceSpan)>,
-    _aliases: HashMap<String, RIrType>,
+    aliases: HashMap<String, RIrType>,
 }
 
+
+#[allow(dead_code)] // implementation  still in progress
 impl RIrGenerator {
     pub fn new() -> Self {
         let scope_manager = RScopeManager::new();
@@ -63,13 +67,7 @@ impl RIrGenerator {
 
     fn visit_top_stmt(&mut self, stmt: &Stmt, module: &mut Module) {
         match stmt {
-            Stmt::Function {
-                name,
-                parameters,
-                return_type,
-                body,
-                span,
-            } => {
+            Stmt::Function { name, parameters, return_type, body, span} => {
                 let mut func =
                     self.create_function(name, parameters, return_type.clone(), span.clone());
                 self.generate_function_body(&mut func, body.clone(), span.clone());
@@ -89,13 +87,7 @@ impl RIrGenerator {
         }
     }
 
-    fn create_function(
-        &mut self,
-        name: &str,
-        parameters: &[Parameter],
-        return_type: Type,
-        span: SourceSpan,
-    ) -> Function {
+    fn create_function(&mut self,  name: &str, parameters: &[Parameter],  return_type: Type,  span: SourceSpan ) -> Function {
         let ir_params = parameters
             .iter()
             .map(|param| {
@@ -133,11 +125,12 @@ impl RIrGenerator {
             Type::String => RIrType::String,
             Type::Bool => RIrType::Bool,
             Type::Custom(name) => {
-                if let Some((fields, span)) = self.type_context.structs.get(name) {
+                if let Some((fields, span)) = self.type_context.structs.get(name.as_ref()) {
                     RIrType::Struct(name.clone(), fields.clone(), span.clone())
                 } else {
                     RIrType::Custom(name.clone(), SourceSpan::default())
                 }
+
             }
             Type::Array(element_type, size_expr) => {
                 if let Expr::Literal {
@@ -156,15 +149,24 @@ impl RIrGenerator {
         }
     }
 
-    fn generate_function_body(&mut self, func: &mut Function, _body: Vec<Stmt>, _span: SourceSpan) {
+    fn generate_function_body(&mut self, func: &mut Function, _body: Vec<Stmt>, span: SourceSpan) {
         self.break_stack.clear();
         self.continue_stack.clear();
         func.enter_scope();
         // Here you would generate the actual body of the function
         let entry_label = format!("entry_{}", func.name);
-        func.add_block(&entry_label, _span.clone());
+        func.add_block(&entry_label, span.clone());
         self.current_block_label = Some(entry_label.clone());
         self.current_block = func.cfg.get_block_mut(&entry_label).cloned();
+
+
+        // Add parameters to scope
+        for param in &func.parameters {
+            let param_value = RValue::new_local(param.name.clone(), param.ty.clone())
+                .with_debug_info(Some(param.name.clone()), span.clone())
+                .with_scope(func.scope_manager.current_scope());
+            func.scope_manager.add_symbol(&*param.name, param_value);
+        }
 
         if let Some(block) = &self.current_block
             && matches!(block.terminator.kind, RTerminatorKind::Unreachable) {
@@ -184,6 +186,14 @@ impl RIrGenerator {
         func.exit_scope();
         self.scope_manager.append_manager(&func.scope_manager);
     }
+
+    // Helper minima per generazione
+
+    fn next_block_label(&mut self, prefix: &str) -> String {
+        let lbl = format!("{}_{}", prefix, self.block_counter);
+        self.block_counter += 1;
+        lbl
+    }
 }
 
 impl Default for RIrGenerator {
@@ -191,3 +201,4 @@ impl Default for RIrGenerator {
         Self::new()
     }
 }
+

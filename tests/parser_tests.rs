@@ -116,12 +116,12 @@ literal_test!(
 );
 literal_test!(
     test_literal_string,
-    TokenKind::StringLiteral("assssss".to_string()),
+    TokenKind::StringLiteral("assssss".into()),
     string_lit("assssss")
 );
 literal_test!(
     test_literal_char,
-    TokenKind::CharLiteral("a".to_string()),
+    TokenKind::CharLiteral("a".into()),
     char_lit("a")
 );
 
@@ -854,7 +854,7 @@ fn test_nested_parsing_errors() {
 #[test]
 fn test_nested_unknown_binding_power() {
     let tokens = create_tokens(vec![
-        TokenKind::IdentifierAscii("assssss".to_string()),
+        TokenKind::IdentifierAscii("assssss".into()),
         TokenKind::PlusEqual,
         TokenKind::Numeric(Number::Integer(5)),
         TokenKind::Eof,
@@ -1127,7 +1127,7 @@ fn test_full_for_loop() {
         statements[0],
         Stmt::For {
             initializer: Some(Box::from(var_declaration(
-                vec!["i".to_string()],
+                vec!["i".into()],
                 Type::I32,
                 true,
                 vec![num_lit(0)]
@@ -1252,7 +1252,7 @@ macro_rules! test_var_decl {
             assert_eq!(
                 statements[0],
                 Stmt::VarDeclaration {
-                    variables: vec![$var_name.to_string()],
+                    variables: vec![$var_name.into()],
                     type_annotation: $type,
                     is_mutable: true,
                     initializers: vec![Expr::Literal {
@@ -1447,7 +1447,7 @@ test_var_decl!(
     "var b: char = 'a'",                    // input
     "b",                                    // var_name
     Type::Char,                             // tipo atteso,
-    LiteralValue::CharLit("a".to_string()), // valore letterale
+    LiteralValue::CharLit("a".into()), // valore letterale
     // span
     1,
     15,
@@ -1469,7 +1469,7 @@ test_var_decl!(
     "var b: string = \"a\"",                  // input
     "b",                                      // var_name
     Type::String,                             // tipo atteso,
-    LiteralValue::StringLit("a".to_string()), // valore letterale
+    LiteralValue::StringLit("a".into()), // valore letterale
     // span
     1,
     17,
@@ -1490,8 +1490,8 @@ test_var_decl!(
     test_string_decl,
     "var b: custom = \"a\"",                  // input
     "b",                                      // var_name
-    Type::Custom("custom".to_string()),       // tipo atteso,
-    LiteralValue::StringLit("a".to_string()), // valore letterale
+    Type::Custom("custom".into()),       // tipo atteso,
+    LiteralValue::StringLit("a".into()), // valore letterale
     // span
     1,
     17,

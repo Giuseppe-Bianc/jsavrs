@@ -11,6 +11,7 @@ pub use self::{
 use super::types::{IrType, ScopeId};
 use crate::location::source_span::SourceSpan;
 use std::fmt;
+use std::sync::Arc;
 use uuid::Uuid;
 
 #[derive(Debug, Clone, PartialEq, Eq, Hash)]
@@ -96,7 +97,7 @@ impl Value {
         }
     }
 
-    pub fn with_debug_info(mut self, name: Option<String>, span: SourceSpan) -> Self {
+    pub fn with_debug_info(mut self, name: Option<Arc<str>>, span: SourceSpan) -> Self {
         self.debug_info = Some(ValueDebugInfo {
             name,
             source_span: span,

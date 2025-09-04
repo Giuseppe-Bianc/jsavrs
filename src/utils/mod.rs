@@ -114,14 +114,14 @@ pub fn nullptr_lit() -> Expr {
 
 pub fn string_lit(s: &str) -> Expr {
     Expr::Literal {
-        value: LiteralValue::StringLit(s.to_string()),
+        value: LiteralValue::StringLit(s.into()),
         span: dummy_span(),
     }
 }
 
 pub fn char_lit(c: &str) -> Expr {
     Expr::Literal {
-        value: LiteralValue::CharLit(c.to_string()),
+        value: LiteralValue::CharLit(c.into()),
         span: dummy_span(),
     }
 }
@@ -173,7 +173,7 @@ pub fn call_expr(callee: Expr, arguments: Vec<Expr>) -> Expr {
     }
 }
 pub fn var_declaration(
-    variables: Vec<String>,
+    variables: Vec<Arc<str>>,
     type_annotation: Type,
     is_mutable: bool,
     initializers: Vec<Expr>,
@@ -187,7 +187,7 @@ pub fn var_declaration(
     }
 }
 pub fn function_declaration(
-    name: String,
+    name: Arc<str>,
     parameters: Vec<Parameter>,
     return_type: Type,
     body: Vec<Stmt>,
@@ -287,13 +287,13 @@ macro_rules! make_error_lineless {
     // Immutable binding
     ($var:ident, $error_type:ident) => {
         let $var = CompileError::$error_type {
-            message: "Unexpected token \"@\"".to_string()
+            message: "Unexpected token \"@\"".to_string(),
         };
     };
     // Mutable binding
     (mut $var:ident, $error_type:ident) => {
         let mut $var = CompileError::$error_type {
-            message: "Unexpected token \"@\"".to_string()
+            message: "Unexpected token \"@\"".to_string(),
         };
     };
 }
@@ -304,7 +304,7 @@ pub fn int_type() -> Type {
 
 pub fn create_var_symbol(name: &str, mutable: bool) -> Symbol {
     Symbol::Variable(VariableSymbol {
-        name: name.to_string(),
+        name: name.into(),
         ty: int_type(),
         mutable,
         defined_at: dummy_span(),

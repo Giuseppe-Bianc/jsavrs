@@ -1,6 +1,7 @@
 // src/rvir/types.rs
 use crate::location::source_span::SourceSpan;
 use std::fmt;
+use std::sync::Arc;
 use uuid::Uuid;
 
 #[derive(Debug, Clone, PartialEq, Eq, Hash)]
@@ -12,8 +13,8 @@ pub enum RIrType {
     Void,
     Pointer(Box<RIrType>),
     Array(Box<RIrType>, usize),
-    Custom(String, SourceSpan), // Added source span
-    Struct(String, Vec<(String,RIrType)>, SourceSpan), // New struct type
+    Custom(Arc<str>, SourceSpan), // Added source span
+    Struct(Arc<str>, Vec<(String,RIrType)>, SourceSpan), // New struct type
 }
 
 #[derive(Debug, Clone, PartialEq, Eq, Hash, Copy)]

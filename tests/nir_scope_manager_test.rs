@@ -148,7 +148,7 @@ fn test_add_symbol() {
     let mut manager = ScopeManager::new();
     let current_scope = manager.current_scope();
     let value = Value::new_literal(IrLiteralValue::I32(42));
-    manager.add_symbol("x".to_string(), value.clone());
+    manager.add_symbol("x".into(), value.clone());
     // Expected behavior:
     // - The symbol should be added to the current scope
     // - The value should have the scope set
@@ -169,7 +169,7 @@ fn test_lookup_symbol_in_current_scope() {
     // Input: creation of a ScopeManager, adding a symbol and looking it up
     let mut manager = ScopeManager::new();
     let value = Value::new_literal(IrLiteralValue::I32(42));
-    manager.add_symbol("x".to_string(), value.clone());
+    manager.add_symbol("x".into(), value.clone());
     // Expected behavior:
     // - The lookup should find the symbol in the current scope
     // Actual output:
@@ -188,7 +188,7 @@ fn test_lookup_symbol_in_parent_scope() {
     // creating a new scope and looking up the symbol
     let mut manager = ScopeManager::new();
     let value = Value::new_literal(IrLiteralValue::I32(42));
-    manager.add_symbol("x".to_string(), value.clone());
+    manager.add_symbol("x".into(), value.clone());
     // Enter a new scope
     manager.enter_scope();
     // Expected behavior:
@@ -222,11 +222,11 @@ fn test_symbol_shadowing() {
     // creating a new scope, adding a symbol with the same name and looking it up
     let mut manager = ScopeManager::new();
     let root_value = Value::new_literal(IrLiteralValue::I32(42));
-    manager.add_symbol("x".to_string(), root_value.clone());
+    manager.add_symbol("x".into(), root_value.clone());
     // Enter a new scope
     manager.enter_scope();
     let child_value = Value::new_literal(IrLiteralValue::I32(100));
-    manager.add_symbol("x".to_string(), child_value.clone());
+    manager.add_symbol("x".into(), child_value.clone());
     // Expected behavior:
     // - The lookup should find the symbol in the current scope (shadowing)
     // Actual output:
@@ -245,13 +245,13 @@ fn test_lookup_in_deep_hierarchy() {
     // Input: creation of a deep scope hierarchy and adding symbols at different levels
     let mut manager = ScopeManager::new();
     let root_value = Value::new_literal(IrLiteralValue::I32(1));
-    manager.add_symbol("x".to_string(), root_value.clone());
+    manager.add_symbol("x".into(), root_value.clone());
     manager.enter_scope(); // scope1
     let scope1_value = Value::new_literal(IrLiteralValue::I32(2));
-    manager.add_symbol("y".to_string(), scope1_value.clone());
+    manager.add_symbol("y".into(), scope1_value.clone());
     manager.enter_scope(); // scope2
     let scope2_value = Value::new_literal(IrLiteralValue::I32(3));
-    manager.add_symbol("z".to_string(), scope2_value.clone());
+    manager.add_symbol("z".into(), scope2_value.clone());
     manager.enter_scope(); // scope3
     // Expected behavior:
     // - The lookup of 'x' should find the value in the root scope
@@ -286,7 +286,7 @@ fn test_lookup_mut_symbol_in_current_scope() {
     // Input: creation of a ScopeManager, adding a symbol and mutable lookup
     let mut manager = ScopeManager::new();
     let value = Value::new_literal(IrLiteralValue::I32(42));
-    manager.add_symbol("x".to_string(), value);
+    manager.add_symbol("x".into(), value);
     // Expected behavior:
     // - The mutable lookup should find the symbol in the current scope
     // - It should be possible to get a mutable reference to the value
@@ -304,7 +304,7 @@ fn test_lookup_mut_symbol_in_parent_scope() {
     // creating a new scope and mutable lookup of the symbol
     let mut manager = ScopeManager::new();
     let value = Value::new_literal(IrLiteralValue::I32(42));
-    manager.add_symbol("x".to_string(), value);
+    manager.add_symbol("x".into(), value);
     // Enter a new scope
     manager.enter_scope();
     // Expected behavior:
@@ -340,7 +340,7 @@ fn test_get_scopes() {
     manager.exit_scope();
     // Add a symbol to scope1
     let value = Value::new_literal(IrLiteralValue::I32(42));
-    manager.add_symbol("x".to_string(), value);
+    manager.add_symbol("x".into(), value);
     // Expected behavior:
     // - Should get a copy of all scopes
     // - The copy should contain all created scopes
@@ -384,15 +384,15 @@ fn test_multiple_scopes_with_same_name() {
     let mut manager = ScopeManager::new();
     // Add 'x' to the root scope
     let root_value = Value::new_literal(IrLiteralValue::I32(1));
-    manager.add_symbol("x".to_string(), root_value.clone());
+    manager.add_symbol("x".into(), root_value.clone());
     // Enter a new scope and add 'x'
     manager.enter_scope();
     let scope1_value = Value::new_literal(IrLiteralValue::I32(2));
-    manager.add_symbol("x".to_string(), scope1_value.clone());
+    manager.add_symbol("x".into(), scope1_value.clone());
     // Enter another scope and add 'x'
     manager.enter_scope();
     let scope2_value = Value::new_literal(IrLiteralValue::I32(3));
-    manager.add_symbol("x".to_string(), scope2_value.clone());
+    manager.add_symbol("x".into(), scope2_value.clone());
     // Expected behavior:
     // - In each scope, the lookup of 'x' should find the local value
     // - Values in parent scopes should be inaccessible directly when there is shadowing
@@ -476,7 +476,7 @@ fn test_deeply_nested_scopes() {
         manager.enter_scope();
         // Add a symbol with a unique name in each scope
         let value = Value::new_literal(IrLiteralValue::I32(i));
-        manager.add_symbol(format!("x_{}", i), value);
+        manager.add_symbol(format!("x_{}", i).into(), value);
     }
     // Expected behavior:
     // - There should be 101 scopes in total (root + 100 children)
@@ -513,9 +513,9 @@ fn test_add_duplicate_symbol_in_same_scope() {
     // Input: creation of a ScopeManager and adding the same symbol twice
     let mut manager = ScopeManager::new();
     let value1 = Value::new_literal(IrLiteralValue::I32(42));
-    manager.add_symbol("x".to_string(), value1);
+    manager.add_symbol("x".into(), value1);
     let value2 = Value::new_literal(IrLiteralValue::I32(100));
-    manager.add_symbol("x".to_string(), value2.clone());
+    manager.add_symbol("x".into(), value2.clone());
     // Expected behavior:
     // - The second value should overwrite the first
     // Actual output:
@@ -541,7 +541,7 @@ fn test_memory_management() {
                 manager.enter_scope();
                 // Add some symbols
                 let value = Value::new_literal(IrLiteralValue::I32(42));
-                manager.add_symbol("x".to_string(), value);
+                manager.add_symbol("x".into(), value);
             }
             for _ in 0..5 {
                 manager.exit_scope();
@@ -561,16 +561,16 @@ fn test_symbols_with_special_names() {
     let mut manager = ScopeManager::new();
     // Symbol with empty string
     let value1 = Value::new_literal(IrLiteralValue::I32(1));
-    manager.add_symbol("".to_string(), value1.clone());
+    manager.add_symbol("".into(), value1.clone());
     // Symbol with special characters
     let value2 = Value::new_literal(IrLiteralValue::I32(2));
-    manager.add_symbol("!@#$%^&*()".to_string(), value2.clone());
+    manager.add_symbol("!@#$%^&*()".into(), value2.clone());
     // Symbol with spaces
     let value3 = Value::new_literal(IrLiteralValue::I32(3));
-    manager.add_symbol("nome con spazi".to_string(), value3.clone());
+    manager.add_symbol("nome con spazi".into(), value3.clone());
     // Unicode symbol
     let value4 = Value::new_literal(IrLiteralValue::I32(4));
-    manager.add_symbol("こんにちは".to_string(), value4.clone());
+    manager.add_symbol("こんにちは".into(), value4.clone());
     // Expected behavior:
     // - All symbols should be added correctly
     // - It should be possible to retrieve them
@@ -603,12 +603,12 @@ fn test_lookup_in_scope_with_multiple_children() {
     let mut manager = ScopeManager::new();
     // Add a symbol to the root scope
     let root_value = Value::new_literal(IrLiteralValue::I32(0));
-    manager.add_symbol("x".to_string(), root_value.clone());
+    manager.add_symbol("x".into(), root_value.clone());
     // Create scope1 and store its ID
     manager.enter_scope(); // scope1
     let _scope1_id = manager.current_scope();
     let scope1_value = Value::new_literal(IrLiteralValue::I32(1));
-    manager.add_symbol("y".to_string(), scope1_value.clone());
+    manager.add_symbol("y".into(), scope1_value.clone());
     // Verify that we can find 'x' and 'y' in scope1
     let found_x = manager.lookup("x");
     assert!(found_x.is_some(), "Should find 'x' in the root scope from scope1");
@@ -629,7 +629,7 @@ fn test_lookup_in_scope_with_multiple_children() {
     // Create scope2
     manager.enter_scope(); // scope2
     let scope2_value = Value::new_literal(IrLiteralValue::I32(2));
-    manager.add_symbol("z".to_string(), scope2_value.clone());
+    manager.add_symbol("z".into(), scope2_value.clone());
     // Verify that we can find 'x' and 'z' in scope2, but not 'y'
     let found_x = manager.lookup("x");
     assert!(found_x.is_some(), "Should find 'x' in the root scope from scope2");
@@ -651,7 +651,7 @@ fn test_lookup_in_scope_with_multiple_children() {
     // Create scope3
     manager.enter_scope(); // scope3
     let scope3_value = Value::new_literal(IrLiteralValue::I32(3));
-    manager.add_symbol("w".to_string(), scope3_value.clone());
+    manager.add_symbol("w".into(), scope3_value.clone());
     // Verify that we can find 'x' and 'w' in scope3, but not 'y' or 'z'
     let found_x = manager.lookup("x");
     assert!(found_x.is_some(), "Should find 'x' in the root scope from scope3");
@@ -692,7 +692,7 @@ fn test_scope_with_many_symbols() {
     // Add 1000 symbols
     for i in 0..1000 {
         let value = Value::new_literal(IrLiteralValue::I32(i));
-        manager.add_symbol(format!("symbol_{}", i), value);
+        manager.add_symbol(format!("symbol_{}", i).into(), value);
     }
     // Expected behavior:
     // - All symbols should be added correctly

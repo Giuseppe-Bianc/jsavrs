@@ -3,6 +3,7 @@ use super::scope::Scope;
 use super::types::ScopeId;
 use crate::nir::Value;
 use std::collections::HashMap;
+use std::sync::Arc;
 
 #[derive(Debug, Clone, PartialEq)]
 pub struct ScopeManager {
@@ -57,7 +58,7 @@ impl ScopeManager {
         self.current_scope
     }
 
-    pub fn add_symbol(&mut self, name: String, mut value: Value) {
+    pub fn add_symbol(&mut self, name: Arc<str>, mut value: Value) {
         value.scope = Some(self.current_scope);
         self.scopes
             .get_mut(&self.current_scope)

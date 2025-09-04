@@ -2,6 +2,7 @@
 use crate::tokens::number::Number;
 use logos::Logos;
 use std::fmt;
+use std::sync::Arc;
 
 /// Parses a numeric literal token into a structured [`Number`] representation.
 ///
@@ -329,13 +330,16 @@ pub enum TokenKind {
 
     // Identifiers
     /// ASCII identifiers (letters, digits, underscores)
-    #[regex(r"[a-zA-Z_][a-zA-Z0-9_]*", |lex| lex.slice().to_string(), priority = 2)]
-    IdentifierAscii(String),
+    #[regex(r"[a-zA-Z_][a-zA-Z0-9_]*", |lex| Arc::from(lex.slice()), priority = 2)]
+    IdentifierAscii(Arc<str>),
 
     /// Unicode identifiers (supports international characters)
-    #[regex(r"[\p{Letter}\p{Mark}_][\p{Letter}\p{Mark}\p{Number}_]*", |lex| lex.slice().to_string(), priority = 1
+    #[regex(
+    r"[\p{Letter}\p{Mark}_][\p{Letter}\p{Mark}\p{Number}_]*",
+    |lex| Arc::from(lex.slice()),
+    priority = 1
     )]
-    IdentifierUnicode(String),
+    IdentifierUnicode(Arc<str>),
 
     /// Numeric literals (supports integer, float, scientific, and multi-char suffixes)
     #[regex(
@@ -358,15 +362,15 @@ pub enum TokenKind {
     Hexadecimal(Number),
 
     /// String literals (captures content without quotes)
-    #[regex(r#""([^"\\]|\\.)*""#, |lex| lex.slice()[1..lex.slice().len()-1].to_string())]
-    StringLiteral(String),
+    #[regex(r#""([^"\\]|\\.)*""#, |lex| Arc::from(&lex.slice()[1..lex.slice().len()-1]))]
+    StringLiteral(Arc<str>),
 
     /// Character literals (captures content without quotes)
     #[regex(r#"'([^'\\]|\\.)'"#, |lex| {
         let s = lex.slice();
-        s[1..s.len()-1].to_string()
+        Arc::from(&s[1..s.len()-1])
     })]
-    CharLiteral(String),
+    CharLiteral(Arc<str>),
 
     // Parentheses
     #[token("(")]

@@ -14,7 +14,7 @@ fn create_bool_value(v: bool) -> Value {
 fn return_terminator_edge_cases() {
     // Valore con caratteri speciali
     let string_val = Value::new_constant(
-        IrConstantValue::String{string: "\n\t\\\"".to_string()},
+        IrConstantValue::String{string: "\n\t\\\"".into()},
         IrType::String,
     );
 

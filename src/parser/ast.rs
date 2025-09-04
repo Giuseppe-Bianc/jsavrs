@@ -1,3 +1,4 @@
+use std::sync::Arc;
 //src/parser/ast.rs
 use crate::error::compile_error::CompileError;
 use crate::location::source_span::SourceSpan;
@@ -33,7 +34,7 @@ pub enum Expr {
     },
 
     Variable {
-        name: String,
+        name: Arc<str>,
         span: SourceSpan,
     },
     Assign {
@@ -85,8 +86,8 @@ pub enum UnaryOp {
 #[derive(Debug, Clone, Hash, Eq, PartialEq)]
 pub enum LiteralValue {
     Number(Number),
-    StringLit(String),
-    CharLit(String),
+    StringLit(Arc<str>),
+    CharLit(Arc<str>),
     Bool(bool),
     Nullptr,
 }
@@ -97,14 +98,14 @@ pub enum Stmt {
         expr: Expr,
     },
     VarDeclaration {
-        variables: Vec<String>,
+        variables: Vec<Arc<str>>,
         type_annotation: Type,
         is_mutable: bool,
         initializers: Vec<Expr>,
         span: SourceSpan,
     },
     Function {
-        name: String,
+        name: Arc<str>,
         parameters: Vec<Parameter>,
         return_type: Type,
         body: Vec<Stmt>,
@@ -189,14 +190,14 @@ impl Expr {
         Some(Expr::null_expr(span))
     }
 
-    pub fn new_string_literal(value: String, span: SourceSpan) -> Option<Expr> {
+    pub fn new_string_literal(value: Arc<str>, span: SourceSpan) -> Option<Expr> {
         Some(Expr::Literal {
             value: LiteralValue::StringLit(value),
             span,
         })
     }
 
-    pub fn new_char_literal(value: String, span: SourceSpan) -> Option<Expr> {
+    pub fn new_char_literal(value: Arc<str>, span: SourceSpan) -> Option<Expr> {
         Some(Expr::Literal {
             value: LiteralValue::CharLit(value),
             span,
@@ -255,9 +256,9 @@ impl BinaryOp {
     }
 }
 
-#[derive(Debug, Clone, Hash,PartialEq)]
+#[derive(Debug, Clone, Hash, PartialEq)]
 pub struct Parameter {
-    pub name: String,
+    pub name: Arc<str>,
     pub type_annotation: Type,
     pub span: SourceSpan,
 }
@@ -277,7 +278,7 @@ pub enum Type {
     Char,
     String,
     Bool,
-    Custom(String),
+    Custom(Arc<str>),
     Array(Box<Type>, Box<Expr>),
     Vector(Box<Type>),
     Void,

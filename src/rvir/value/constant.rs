@@ -1,12 +1,13 @@
 // src/rvir/value/constant.rs
 use super::RValue;
 use std::fmt;
+use std::sync::Arc;
 
 #[derive(Debug, Clone, PartialEq)]
 pub enum RIrConstantValue {
-    String { string: String },
+    String { string: Arc<str> },
     Array { elements: Vec<RValue> },
-    Struct { name: String, elements: Vec<RValue> },
+    Struct { name: Arc<str>, elements: Vec<RValue> },
 }
 
 impl fmt::Display for RIrConstantValue {

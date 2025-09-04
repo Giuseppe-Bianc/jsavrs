@@ -1,10 +1,11 @@
 //src/rvir/scope.rs
 use std::collections::HashMap;
+use std::sync::Arc;
 use super::{RScopeId, RValue};
 
 #[derive(Debug, Clone, PartialEq)]
 pub struct RScope {
-    pub symbols: HashMap<String, RValue>,
+    pub symbols: HashMap<Arc<str>, RValue>,
     pub parent: Option<RScopeId>,
     pub children: Vec<RScopeId>,
     pub depth: usize,
@@ -20,7 +21,7 @@ impl RScope {
         }
     }
 
-    pub fn insert(&mut self, name: String, value: RValue) {
+    pub fn insert(&mut self, name: Arc<str>, value: RValue) {
         self.symbols.insert(name, value);
     }
 

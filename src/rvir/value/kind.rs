@@ -1,3 +1,4 @@
+use std::sync::Arc;
 // src/rvir/value/kind.rs
 use super::{constant::RIrConstantValue, literal::RIrLiteralValue};
 
@@ -5,7 +6,7 @@ use super::{constant::RIrConstantValue, literal::RIrLiteralValue};
 pub enum RValueKind {
     Literal(RIrLiteralValue),
     Constant(RIrConstantValue),
-    Local(String),
-    Global(String),
+    Local(Arc<str>),
+    Global(Arc<str>),
     Temporary(u64),
 }

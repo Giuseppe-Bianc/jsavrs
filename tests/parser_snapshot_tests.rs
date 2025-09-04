@@ -60,9 +60,9 @@ literal_test!(test_literal_bool, TokenKind::KeywordBool(true));
 literal_test!(test_literal_nullptr, TokenKind::KeywordNullptr);
 literal_test!(
     test_literal_string,
-    TokenKind::StringLiteral("assssss".to_string())
+    TokenKind::StringLiteral("assssss".into())
 );
-literal_test!(test_literal_char, TokenKind::CharLiteral("a".to_string()));
+literal_test!(test_literal_char, TokenKind::CharLiteral("a".into()));
 
 // Test per operatori binari usando la macro
 binary_op_test!(test_add, TokenKind::Plus, BinaryOp::Add);
@@ -581,7 +581,7 @@ fn test_nested_parsing_errors() {
 #[test]
 fn test_nested_unknown_binding_power() {
     let tokens = create_tokens(vec![
-        TokenKind::IdentifierAscii("assssss".to_string()),
+        TokenKind::IdentifierAscii("assssss".into()),
         TokenKind::PlusEqual,
         TokenKind::Numeric(Number::Integer(5)),
         TokenKind::Eof,
@@ -792,7 +792,7 @@ test_var_decl!(
     "var b: char = 'a'",                    // input
     "b",                                    // var_name
     Type::Char,                             // tipo atteso,
-    LiteralValue::CharLit("a".to_string()), // valore letterale
+    LiteralValue::CharLit("a".into()), // valore letterale
 );
 
 test_var_decl!(
@@ -800,15 +800,15 @@ test_var_decl!(
     "var b: string = \"a\"",                  // input
     "b",                                      // var_name
     Type::String,                             // tipo atteso,
-    LiteralValue::StringLit("a".to_string()), // valore letterale
+    LiteralValue::StringLit("a".into()), // valore letterale
 );
 
 test_var_decl!(
     test_string_decl,
     "var b: custom = \"a\"",                  // input
     "b",                                      // var_name
-    Type::Custom("custom".to_string()),       // tipo atteso,
-    LiteralValue::StringLit("a".to_string()), // valore letterale
+    Type::Custom("custom".into()),       // tipo atteso,
+    LiteralValue::StringLit("a".into()), // valore letterale
 );
 
 test_var_decl!(
