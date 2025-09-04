@@ -187,8 +187,7 @@ impl RIrGenerator {
         self.scope_manager.append_manager(&func.scope_manager);
     }
 
-    // Helper minima per generazione
-
+    // Helper methods for generation
     fn next_block_label(&mut self, prefix: &str) -> String {
         let lbl = format!("{}_{}", prefix, self.block_counter);
         self.block_counter += 1;

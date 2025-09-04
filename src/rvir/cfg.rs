@@ -38,7 +38,7 @@ impl ControlFlowGraph {
     pub fn find_block_by_label(&self, label: &str) -> Option<NodeIndex> {
         self.graph
             .node_indices()
-            .find(|&idx| self.graph[idx].label == label.into())
+            .find(|&idx| self.graph[idx].label.as_ref() == label)
     }
 
     pub fn get_block(&self, label: &str) -> Option<&RBasicBlock> {

@@ -55,7 +55,7 @@ pub enum Expr {
     // Additional expressions as needed
 }
 
-#[derive(Debug, Clone, Hash,Eq,PartialEq)]
+#[derive(Debug, Clone, Hash, Eq, PartialEq)]
 pub enum BinaryOp {
     Add,
     Subtract,
@@ -77,7 +77,7 @@ pub enum BinaryOp {
     ShiftRight,
 }
 
-#[derive(Debug, Clone, Hash, Eq,PartialEq)]
+#[derive(Debug, Clone, Hash, Eq, PartialEq)]
 pub enum UnaryOp {
     Negate,
     Not,
@@ -92,7 +92,7 @@ pub enum LiteralValue {
     Nullptr,
 }
 
-#[derive(Debug, Clone, Hash,PartialEq)]
+#[derive(Debug, Clone, Hash, PartialEq)]
 pub enum Stmt {
     Expression {
         expr: Expr,
@@ -256,14 +256,14 @@ impl BinaryOp {
     }
 }
 
-#[derive(Debug, Clone, Hash, PartialEq)]
+#[derive(Debug, Clone, Hash, Eq, PartialEq)]
 pub struct Parameter {
     pub name: Arc<str>,
     pub type_annotation: Type,
     pub span: SourceSpan,
 }
 
-#[derive(Debug, Clone, Hash,Eq, PartialEq)]
+#[derive(Debug, Clone, Hash, Eq, PartialEq)]
 pub enum Type {
     I8,
     I16,
@@ -308,7 +308,8 @@ impl std::fmt::Display for Type {
                 if let Expr::Literal {
                     value: LiteralValue::Number(Number::Integer(size)),
                     ..
-                } = **size_expr {
+                } = **size_expr
+                {
                     write!(f, "[{element_type}; {size}]")
                 } else {
                     write!(f, "[{element_type}; <expr>]")
