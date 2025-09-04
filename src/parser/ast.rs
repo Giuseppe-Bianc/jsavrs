@@ -92,7 +92,7 @@ pub enum LiteralValue {
     Nullptr,
 }
 
-#[derive(Debug, Clone, Hash, PartialEq)]
+#[derive(Debug, Clone, Hash, Eq, PartialEq)]
 pub enum Stmt {
     Expression {
         expr: Expr,
@@ -308,7 +308,7 @@ impl std::fmt::Display for Type {
                 if let Expr::Literal {
                     value: LiteralValue::Number(Number::Integer(size)),
                     ..
-                } = **size_expr
+                } = size_expr.as_ref()
                 {
                     write!(f, "[{element_type}; {size}]")
                 } else {
