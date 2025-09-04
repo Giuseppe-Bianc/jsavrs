@@ -1,6 +1,27 @@
 use crate::parser::ast::{Expr, LiteralValue, Stmt};
 use console::Style;
 
+enum BranchType {
+    Last,
+    Middle,
+}
+
+impl BranchType {
+    fn symbol(&self) -> &'static str {
+        match self {
+            BranchType::Last => "└── ",
+            BranchType::Middle => "├── ",
+        }
+    }
+
+    fn indent_continuation(&self) -> &'static str {
+        match self {
+            BranchType::Last => "    ",
+            BranchType::Middle => "│   ",
+        }
+    }
+}
+
 #[derive(Debug, Clone, PartialEq)]
 struct StyleManager {
     pub operator: Style,
@@ -106,9 +127,9 @@ fn print_expr(expr: &Expr, indent: &str, is_last: bool, output: &mut String, sty
 
             for (i, arg) in arguments.iter().enumerate() {
                 let is_last_arg = i == arguments.len() - 1;
-                let arg_indent = get_indent(&args_indent, is_last); // FIX: Use is_last_arg
+                let arg_indent = get_indent(&args_indent, is_last);
                 append_line(output, &arg_indent, is_last_arg, styles.structure.clone(), "Arg:");
-                let child_indent = get_indent(&arg_indent, is_last_arg); // FIX: Use is_last_arg
+                let child_indent = get_indent(&arg_indent, is_last_arg);
                 print_expr(arg, &child_indent, true, output, styles);
             }
         }
@@ -141,11 +162,13 @@ fn print_expr(expr: &Expr, indent: &str, is_last: bool, output: &mut String, sty
 }
 
 fn get_indent(indent: &str, is_last: bool) -> String {
-    format!("{}{}", indent, if is_last { "    " } else { "│   " })
+    let branch_type = if is_last { BranchType::Last } else { BranchType::Middle };
+    format!("{}{}", indent, branch_type.indent_continuation())
 }
 
 fn append_line(output: &mut String, indent: &str, is_last: bool, style: Style, text: &str) {
-    let branch = if is_last { "└── " } else { "├── " };
+    let branch_type = if is_last { BranchType::Last } else { BranchType::Middle };
+    let branch = branch_type.symbol();
     let styled_text = style.apply_to(text);
     output.push_str(&format!("{indent}{branch}{styled_text}\n"));
 }
