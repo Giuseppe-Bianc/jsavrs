@@ -55,8 +55,7 @@ pub fn pretty_print(expr: &Expr) -> String {
     output
 }
 
-/// Funzione helper per stampare liste di figli con indentazione corretta
-fn print_children<T, F>(children: &[T], indent: &str, output: &mut String, styles: &StyleManager, mut print_fn: F)
+/// Helper function to print lists of children with correct indentationfn print_children<T, F>(children: &[T], indent: &str, output: &mut String, styles: &StyleManager, mut print_fn: F)
 where
     F: FnMut(&T, &str, BranchType, &mut String, &StyleManager),
 {
