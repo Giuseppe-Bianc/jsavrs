@@ -1,10 +1,10 @@
-use std::sync::Arc;
 // src/semantic/type_checker.rs
 use crate::error::compile_error::CompileError;
 use crate::location::source_span::SourceSpan;
 use crate::parser::ast::*;
 use crate::semantic::symbol_table::*;
 use crate::tokens::number::Number;
+use std::sync::Arc;
 
 pub struct TypeChecker {
     symbol_table: SymbolTable,
@@ -151,7 +151,7 @@ impl TypeChecker {
             self.declare_symbol(
                 var_name,
                 Symbol::Variable(VariableSymbol {
-                    name: var_name.clone().into(),
+                    name: var_name.clone(),
                     ty: type_annotation.clone(),
                     mutable: is_mutable,
                     defined_at: span.clone(),
@@ -436,9 +436,7 @@ impl TypeChecker {
                         "Comparison operator '{op:?}' requires compatible types, found {left_type} and {right_type}"
                     )
                 }
-                _ => format!(
-                    "Type mismatch in binary operation: {left_type} and {right_type}"
-                ),
+                _ => format!("Type mismatch in binary operation: {left_type} and {right_type}"),
             };
             self.type_error(message, span);
             return None;
@@ -585,20 +583,19 @@ impl TypeChecker {
         }
     }
 
+    fn signed_to_size<T: Into<i64> + Copy>(&self, n: T) -> Option<u64> {
+        n.into().try_into().ok()
+    }
+
     // Updated get_size to handle all integer types and return u64
     pub fn get_size(&self, expr: &Expr) -> Option<u64> {
         if let Expr::Literal { value, .. } = expr {
             match value {
-                LiteralValue::Number(Number::I8(n)) => Some(*n as u64),
-                LiteralValue::Number(Number::I16(n)) => Some(*n as u64),
-                LiteralValue::Number(Number::I32(n)) => Some(*n as u64),
-                LiteralValue::Number(Number::Integer(n)) => {
-                    if *n >= 0 {
-                        Some(*n as u64)
-                    } else {
-                        None
-                    }
-                }
+                LiteralValue::Number(Number::I8(n)) => self.signed_to_size(*n),
+                LiteralValue::Number(Number::I16(n)) => self.signed_to_size(*n),
+                LiteralValue::Number(Number::I32(n)) => self.signed_to_size(*n),
+                LiteralValue::Number(Number::Integer(n)) => self.signed_to_size(*n),
+                // Tipi unsigned (già efficienti)
                 LiteralValue::Number(Number::U8(n)) => Some(*n as u64),
                 LiteralValue::Number(Number::U16(n)) => Some(*n as u64),
                 LiteralValue::Number(Number::U32(n)) => Some(*n as u64),
@@ -713,7 +710,12 @@ impl TypeChecker {
         Some(func.return_type.clone())
     }
 
-    fn visit_array_access(&mut self, array: &Expr, index: &Expr, _span: &SourceSpan) -> Option<Type> {
+    fn visit_array_access(
+        &mut self,
+        array: &Expr,
+        index: &Expr,
+        _span: &SourceSpan,
+    ) -> Option<Type> {
         let array_type = self.visit_expr(array)?;
         let index_type = self.visit_expr(index)?;
         if !self.is_integer_type(&index_type) {
@@ -847,7 +849,12 @@ impl TypeChecker {
                         continue;
                     }
                 }
-                Stmt::While { body: loop_body, .. } | Stmt::For { body: loop_body, .. } => {
+                Stmt::While {
+                    body: loop_body, ..
+                }
+                | Stmt::For {
+                    body: loop_body, ..
+                } => {
                     if self.function_has_return(loop_body) {
                         // Considera solo loop con corpo che ritorna
                         return true;

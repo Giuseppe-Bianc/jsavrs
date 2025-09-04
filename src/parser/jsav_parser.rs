@@ -136,7 +136,7 @@ impl JsavParser {
         let mut params = Vec::new();
         while !self.check(&TokenKind::CloseParen) && !self.is_at_end() {
             let param_start = self.peek()?.clone();
-            let name = self.consume_identifier()?.into();
+            let name = self.consume_identifier()?;
             let name_span = self.previous()?.span.clone();
             self.expect(&TokenKind::Colon, "after parameter name");
             let type_ann = self.parse_type()?;
@@ -307,7 +307,7 @@ impl JsavParser {
             TokenKind::TypeString => Type::String,
             TokenKind::TypeBool => Type::Bool,
             TokenKind::IdentifierAscii(name) | TokenKind::IdentifierUnicode(name) => {
-                Type::Custom(name.clone().into())
+                Type::Custom(name.clone())
             }
             _ => {
                 self.syntax_error(
