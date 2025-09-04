@@ -1,15 +1,15 @@
-use std::collections::HashMap;
 use insta::assert_snapshot;
 use jsavrs::nir::generator::NIrGenerator;
+use jsavrs::nir::Module;
 use jsavrs::parser::ast::{BinaryOp, Expr, LiteralValue, Parameter, Stmt, Type, UnaryOp};
 use jsavrs::tokens::number::Number;
 use jsavrs::utils::*;
-use std::fmt::Display;
+use lazy_static::lazy_static;
 // tests/nir_generator_snapshot_tests.rs
 use regex::Regex;
+use std::collections::HashMap;
+use std::fmt::Display;
 use std::fmt::Write;
-use lazy_static::lazy_static;
-use jsavrs::nir::Module;
 
 lazy_static! {
     static ref UUID_REGEX: Regex = Regex::new(

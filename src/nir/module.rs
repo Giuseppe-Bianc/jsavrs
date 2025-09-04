@@ -1,5 +1,5 @@
-use std::fmt;
 use crate::nir::Function;
+use std::fmt;
 
 /// Descrive il layout dei dati per diversi target.
 #[derive(Debug, Clone, PartialEq)]

@@ -1,7 +1,7 @@
+use super::types::ScopeId;
 // src/nir/basic_block.rs
 use super::{instruction::*, terminator::*};
 use crate::location::source_span::SourceSpan;
-use super::types::ScopeId;
 use std::fmt;
 
 #[derive(Debug, Clone, PartialEq)]

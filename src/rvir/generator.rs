@@ -67,7 +67,7 @@ impl RIrGenerator {
 
     fn visit_top_stmt(&mut self, stmt: &Stmt, module: &mut Module) {
         match stmt {
-            Stmt::Function { name, parameters, return_type, body, span} => {
+            Stmt::Function { name, parameters, return_type, body, span } => {
                 let mut func =
                     self.create_function(name, parameters, return_type.clone(), span.clone());
                 self.generate_function_body(&mut func, body.clone(), span.clone());
@@ -87,7 +87,7 @@ impl RIrGenerator {
         }
     }
 
-    fn create_function(&mut self,  name: &str, parameters: &[Parameter],  return_type: Type,  span: SourceSpan ) -> Function {
+    fn create_function(&mut self, name: &str, parameters: &[Parameter], return_type: Type, span: SourceSpan) -> Function {
         let ir_params = parameters
             .iter()
             .map(|param| {
@@ -130,7 +130,6 @@ impl RIrGenerator {
                 } else {
                     RIrType::Custom(name.clone(), SourceSpan::default())
                 }
-
             }
             Type::Array(element_type, size_expr) => {
                 if let Expr::Literal {
@@ -175,12 +174,12 @@ impl RIrGenerator {
                 _ => RValue::new_literal(RIrLiteralValue::I32(0)),
             };
             func.set_terminator(self.current_block_label.clone().unwrap().as_str(), RTerminator::new(
-                    RTerminatorKind::Return {
-                        value: return_value,
-                        ty: func.return_type.clone(),
-                    },
-                    SourceSpan::default(),
-                ));
+                RTerminatorKind::Return {
+                    value: return_value,
+                    ty: func.return_type.clone(),
+                },
+                SourceSpan::default(),
+            ));
         }
 
         func.exit_scope();

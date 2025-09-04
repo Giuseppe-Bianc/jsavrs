@@ -1,7 +1,7 @@
+use crate::nir::{ScopeId, Value};
 //src/nir/scope.rs
 use std::collections::HashMap;
 use std::sync::Arc;
-use crate::nir::{ScopeId, Value};
 
 #[derive(Debug, Clone, PartialEq)]
 pub struct Scope {

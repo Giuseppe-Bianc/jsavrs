@@ -145,7 +145,7 @@ pub fn process_hashtag_error(
                             CompileError::LexerError {
                                 message: msg.to_string(),
                                 span: merged,
-                                help: None
+                                help: None,
                             },
                         );
                         to_remove.insert(tidx);

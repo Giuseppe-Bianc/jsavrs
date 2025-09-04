@@ -1,5 +1,5 @@
 // src/nir/access_control.rs
-use super::types::{ScopeId, ResourceId};
+use super::types::{ResourceId, ScopeId};
 
 #[derive(Debug, Clone, PartialEq, Eq, Hash)]
 pub enum Operation {

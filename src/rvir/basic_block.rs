@@ -1,7 +1,7 @@
+use super::types::RScopeId;
 // src/rvir/basic_block.rs
 use super::{instruction::*, terminator::*};
 use crate::location::source_span::SourceSpan;
-use super::types::RScopeId;
 use std::fmt;
 use std::sync::Arc;
 

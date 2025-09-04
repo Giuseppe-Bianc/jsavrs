@@ -496,7 +496,7 @@ fn test_deeply_nested_scopes() {
         match found_value.unwrap().kind {
             ValueKind::Literal(IrLiteralValue::I32(val)) => {
                 assert_eq!(val, i, "The value of 'x_{}' should be {}", i, i);
-            },
+            }
             _ => panic!("The symbol 'x_{}' should be an I32 literal", i),
         }
     }
@@ -705,7 +705,7 @@ fn test_scope_with_many_symbols() {
         match found_value.unwrap().kind {
             ValueKind::Literal(IrLiteralValue::I32(val)) => {
                 assert_eq!(val, i, "The value of 'symbol_{}' should be {}", i, i);
-            },
+            }
             _ => panic!("The symbol 'symbol_{}' should be an I32 literal", i),
         }
     }

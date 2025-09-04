@@ -1,9 +1,9 @@
-use std::sync::Arc;
 use jsavrs::tokens::number::Number;
 use jsavrs::tokens::number::Number::*;
 use jsavrs::tokens::token_kind::TokenKind::*;
 use jsavrs::tokens::token_kind::{handle_suffix, split_numeric_and_suffix, TokenKind};
 use logos::Logos;
+use std::sync::Arc;
 
 // Helper function to assert token matching
 fn assert_token(input: &str, expected: TokenKind) {
@@ -141,7 +141,7 @@ fn test_eof_and_ignored() {
 
 #[test]
 fn test_identifier_ascii_normal() {
-    let ident : Arc<str> = "foo".into();
+    let ident: Arc<str> = "foo".into();
     assert_eq!(
         IdentifierAscii(ident.clone()).to_string(),
         format!("identifier '{ident}'")
@@ -150,13 +150,13 @@ fn test_identifier_ascii_normal() {
 
 #[test]
 fn test_identifier_ascii_empty() {
-    let ident : Arc<str> = "".into();
+    let ident: Arc<str> = "".into();
     assert_eq!(IdentifierAscii(ident.clone()).to_string(), "identifier ''");
 }
 
 #[test]
 fn test_identifier_unicode() {
-    let ident : Arc<str> = "προεδομή".into(); // qualche stringa Unicode
+    let ident: Arc<str> = "προεδομή".into(); // qualche stringa Unicode
     assert_eq!(
         IdentifierUnicode(ident.clone()).to_string(),
         format!("identifier '{ident}'")
@@ -192,7 +192,7 @@ fn test_string_literal_with_quotes_inside() {
 
 #[test]
 fn test_char_literal_simple() {
-    let c: Arc<str>= "x".into();
+    let c: Arc<str> = "x".into();
     assert_eq!(
         CharLiteral(c.clone()).to_string(),
         format!("character literal '{c}'")

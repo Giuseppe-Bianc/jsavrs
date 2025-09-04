@@ -1,6 +1,6 @@
-use std::sync::Arc;
 // src/rvir/value/kind.rs
 use super::{constant::RIrConstantValue, literal::RIrLiteralValue};
+use std::sync::Arc;
 
 #[derive(Debug, Clone, PartialEq)]
 pub enum RValueKind {

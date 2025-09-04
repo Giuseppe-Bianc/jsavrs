@@ -39,7 +39,7 @@ impl ErrorReporter {
                     span,
                     help,
                 } => self.format_error("IR GEN", &message, &span, help.as_deref()),
-                CompileError::AsmGeneratorError { message} => format!(
+                CompileError::AsmGeneratorError { message } => format!(
                     "{} {}: {}\n",
                     style("ERROR:").red().bold(),
                     style("ASM GEN").red(),

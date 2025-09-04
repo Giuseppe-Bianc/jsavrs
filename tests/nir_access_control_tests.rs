@@ -1,5 +1,5 @@
 // test/nir_access_control_tests.rs
-use jsavrs::nir::{AccessRules, AccessController, Operation, ScopeManager, ResourceId};
+use jsavrs::nir::{AccessController, AccessRules, Operation, ResourceId, ScopeManager};
 
 // Tests for AccessRules
 #[test]

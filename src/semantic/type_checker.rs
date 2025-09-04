@@ -116,14 +116,7 @@ impl TypeChecker {
         }
     }
 
-    fn visit_var_declaration(
-        &mut self,
-        variables: Vec<Arc<str>>,
-        type_annotation: &Type,
-        is_mutable: bool,
-        initializers: &[Expr],
-        span: &SourceSpan,
-    ) {
+    fn visit_var_declaration(&mut self, variables: Vec<Arc<str>>, type_annotation: &Type, is_mutable: bool, initializers: &[Expr], span: &SourceSpan) {
         if variables.len() != initializers.len() {
             self.type_error(
                 format!(
@@ -612,7 +605,10 @@ impl TypeChecker {
             Some(var) => Some(var.ty.clone()),
             None => {
                 if self.symbol_table.lookup_function(name).is_some() {
-                    self.type_error(format!("'{name}' is a function and cannot be used as variable"), span);
+                    self.type_error(
+                        format!("'{name}' is a function and cannot be used as variable"),
+                        span,
+                    );
                 } else {
                     self.type_error(format!("Undefined variable '{name}'"), span);
                 }
@@ -674,7 +670,10 @@ impl TypeChecker {
         let func = match self.symbol_table.lookup_function(callee_name) {
             Some(func) => func,
             None => {
-                self.type_error(format!("Undefined function: '{callee_name}'"), callee.span());
+                self.type_error(
+                    format!("Undefined function: '{callee_name}'"),
+                    callee.span(),
+                );
                 for arg in arguments {
                     self.visit_expr(arg);
                 }

@@ -133,7 +133,6 @@ ERROR: ASM GEN: invalid asm
 }
 
 
-
 #[test]
 fn syntax_error_multi_line() {
     let source = "fn main() {\n    let x = 42;\n    println!(\"hello\");\n}";

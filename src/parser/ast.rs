@@ -1,10 +1,10 @@
-use std::sync::Arc;
 //src/parser/ast.rs
 use crate::error::compile_error::CompileError;
 use crate::location::source_span::SourceSpan;
 use crate::tokens::number::Number;
 use crate::tokens::token::Token;
 use crate::tokens::token_kind::TokenKind;
+use std::sync::Arc;
 
 #[derive(Debug, Clone, Hash, Eq, PartialEq)]
 pub enum Expr {

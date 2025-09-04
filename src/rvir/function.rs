@@ -1,12 +1,12 @@
-// src/rvir/function.rs
-use std::fmt;
-use std::sync::Arc;
 use super::cfg::ControlFlowGraph;
 use super::scope_manager::RScopeManager;
 use super::types::{RIrType, RScopeId};
 //use super::value::RValue;
 use crate::location::source_span::SourceSpan;
 use crate::rvir::{RBasicBlock, RInstruction, RTerminator};
+// src/rvir/function.rs
+use std::fmt;
+use std::sync::Arc;
 
 #[derive(Debug, Clone, PartialEq, Default)]
 pub struct FunctionAttributes {
@@ -101,7 +101,7 @@ impl fmt::Display for Function {
             .collect::<Vec<_>>().join(", ");
 
         writeln!(f, "function {} ({}) -> {}:", self.name, params_str, self.return_type)?;
-        let  bloscks_len = self.cfg.blocks().count();
+        let bloscks_len = self.cfg.blocks().count();
         if bloscks_len == 0 {
             writeln!(f, "<empty>")?;
             return Ok(());

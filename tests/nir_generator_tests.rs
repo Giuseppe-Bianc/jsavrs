@@ -512,7 +512,7 @@ fn test_generate_string_literal() {
     }];
 
     let mut generator = NIrGenerator::new();
-    let (functions, ir_errors) = generator.generate(ast , "test_file.vn");
+    let (functions, ir_errors) = generator.generate(ast, "test_file.vn");
     assert_eq!(ir_errors.len(), 0);
     assert_eq!(functions.functions.len(), 1);
     let func = &functions.functions[0];
@@ -1206,7 +1206,6 @@ fn test_generate_nullptr_literal() {
 
     assert_return_nullptr!(entry_block);
 }
-
 
 
 #[test]

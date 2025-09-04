@@ -95,15 +95,15 @@ impl ControlFlowGraph {
         }
     }
 
-    pub fn blocks(&self) -> impl Iterator<Item = &RBasicBlock> {
+    pub fn blocks(&self) -> impl Iterator<Item=&RBasicBlock> {
         self.graph.node_weights()
     }
 
-    pub fn blocks_mut(&mut self) -> impl Iterator<Item = &mut RBasicBlock> {
+    pub fn blocks_mut(&mut self) -> impl Iterator<Item=&mut RBasicBlock> {
         self.graph.node_weights_mut()
     }
 
-    pub fn dfs_post_order(&self) -> Box<dyn Iterator<Item = NodeIndex> + '_> {
+    pub fn dfs_post_order(&self) -> Box<dyn Iterator<Item=NodeIndex> + '_> {
         if let Some(entry_idx) = self.get_entry_block_index() {
             let mut dfs = Dfs::new(&self.graph, entry_idx);
             Box::new(std::iter::from_fn(move || dfs.next(&self.graph)))

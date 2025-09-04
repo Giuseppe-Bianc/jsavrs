@@ -1,8 +1,8 @@
-use std::sync::Arc;
 use insta::assert_debug_snapshot;
 use jsavrs::tokens::number::Number;
 use jsavrs::tokens::token_kind::{split_numeric_and_suffix, TokenKind};
 use logos::Logos;
+use std::sync::Arc;
 
 #[test]
 fn test_empty_slice_for_split_numeric_and_suffix() {
@@ -108,19 +108,19 @@ fn test_eof_and_ignored() {
 
 #[test]
 fn test_identifier_ascii_normal() {
-    let ident : Arc<str> = "foo".into();
+    let ident: Arc<str> = "foo".into();
     assert_debug_snapshot!(TokenKind::IdentifierAscii(ident.clone()).to_string());
 }
 
 #[test]
 fn test_identifier_ascii_empty() {
-    let ident : Arc<str> = "".into();
+    let ident: Arc<str> = "".into();
     assert_debug_snapshot!(TokenKind::IdentifierAscii(ident.clone()).to_string());
 }
 
 #[test]
 fn test_identifier_unicode() {
-    let ident : Arc<str> = "προεδομή".into(); // qualche stringa Unicode
+    let ident: Arc<str> = "προεδομή".into(); // qualche stringa Unicode
     assert_debug_snapshot!(TokenKind::IdentifierUnicode(ident.clone()).to_string());
 }
 
@@ -139,25 +139,25 @@ fn test_numeric_integer() {
 
 #[test]
 fn test_string_literal_simple() {
-    let s:Arc<str> = "hello".into();
+    let s: Arc<str> = "hello".into();
     assert_debug_snapshot!(TokenKind::StringLiteral(s.clone()).to_string());
 }
 
 #[test]
 fn test_string_literal_with_quotes_inside() {
-    let s:Arc<str> = "he said \"ciao\"".into();
+    let s: Arc<str> = "he said \"ciao\"".into();
     assert_debug_snapshot!(TokenKind::StringLiteral(s.clone()).to_string());
 }
 
 #[test]
 fn test_char_literal_simple() {
-    let c:Arc<str> = "x".into();
+    let c: Arc<str> = "x".into();
     assert_debug_snapshot!(TokenKind::CharLiteral(c.clone()).to_string());
 }
 
 #[test]
 fn test_char_literal_unicode() {
-    let c:Arc<str> = "ψ".into();
+    let c: Arc<str> = "ψ".into();
     assert_debug_snapshot!(TokenKind::CharLiteral(c.clone()).to_string());
 }
 

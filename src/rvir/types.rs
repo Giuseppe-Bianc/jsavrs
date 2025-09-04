@@ -6,15 +6,24 @@ use uuid::Uuid;
 
 #[derive(Debug, Clone, PartialEq, Eq, Hash)]
 pub enum RIrType {
-    I8, I16, I32, I64,
-    U8, U16, U32, U64,
-    F32, F64, Bool,
-    Char, String,
+    I8,
+    I16,
+    I32,
+    I64,
+    U8,
+    U16,
+    U32,
+    U64,
+    F32,
+    F64,
+    Bool,
+    Char,
+    String,
     Void,
     Pointer(Box<RIrType>),
     Array(Box<RIrType>, usize),
     Custom(Arc<str>, SourceSpan), // Added source span
-    Struct(Arc<str>, Vec<(String,RIrType)>, SourceSpan), // New struct type
+    Struct(Arc<str>, Vec<(String, RIrType)>, SourceSpan), // New struct type
 }
 
 #[derive(Debug, Clone, PartialEq, Eq, Hash, Copy)]
@@ -49,7 +58,7 @@ impl Default for RResourceId {
 
 // Display implementation for RScopeId
 impl fmt::Display for RScopeId {
-    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {  
+    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
         write!(f, "{}", self.0)
     }
 }

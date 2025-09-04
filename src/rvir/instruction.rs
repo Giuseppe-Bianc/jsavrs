@@ -1,5 +1,5 @@
 // src/rvir/instruction.rs
-use super::{RIrType, RValue, RScopeId};
+use super::{RIrType, RScopeId, RValue};
 use crate::{
     location::source_span::SourceSpan,
     parser::ast::{BinaryOp, UnaryOp},
@@ -230,7 +230,7 @@ impl fmt::Display for RInstruction {
                     .collect::<Vec<_>>()
                     .join(", ");
                 write!(f, "{result_str} vector.{op} {operands_str} : {ty}")
-            },
+            }
         }
     }
 }

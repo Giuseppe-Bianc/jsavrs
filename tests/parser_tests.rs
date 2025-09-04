@@ -650,7 +650,7 @@ fn test_invalid_binary_operator() {
         // Verify error details
         let err = result.unwrap_err();
         match err {
-            CompileError::SyntaxError { message, span, help:_ } => {
+            CompileError::SyntaxError { message, span, help: _ } => {
                 assert_eq!(
                     message,
                     format!("Invalid binary operator: {:?}", kind),

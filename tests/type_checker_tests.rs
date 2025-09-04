@@ -724,7 +724,7 @@ fn test_is_assignable_nullptr() {
     // NullPtr assignable to Array and Vector
     let array_ty = Type::Array(Box::new(Type::I32), Box::new(Expr::Literal {
         value: LiteralValue::Number(Number::Integer(0)),
-        span: span.clone()
+        span: span.clone(),
     }));
     let vector_ty = Type::Vector(Box::new(Type::I8));
     assert!(tc.is_assignable(&Type::NullPtr, &array_ty));
@@ -743,27 +743,27 @@ fn test_is_assignable_arrays_and_vectors() {
     // Array tests
     let array_i32_5 = Type::Array(Box::new(Type::I32), Box::new(Expr::Literal {
         value: LiteralValue::Number(Number::Integer(5)),
-        span: span.clone()
+        span: span.clone(),
     }));
     let array_i32_5_again = Type::Array(Box::new(Type::I32), Box::new(Expr::Literal {
         value: LiteralValue::Number(Number::Integer(5)),
-        span: span.clone()
+        span: span.clone(),
     }));
     let array_i32_10 = Type::Array(Box::new(Type::I32), Box::new(Expr::Literal {
         value: LiteralValue::Number(Number::Integer(10)),
-        span: span.clone()
+        span: span.clone(),
     }));
     let array_i8_5 = Type::Array(Box::new(Type::I8), Box::new(Expr::Literal {
         value: LiteralValue::Number(Number::Integer(5)),
-        span: span.clone()
+        span: span.clone(),
     }));
     let array_i16_5 = Type::Array(Box::new(Type::I16), Box::new(Expr::Literal {
         value: LiteralValue::Number(Number::Integer(5)),
-        span: span.clone()
+        span: span.clone(),
     }));
     let array_u8_5 = Type::Array(Box::new(Type::U8), Box::new(Expr::Literal {
         value: LiteralValue::Number(Number::Integer(5)),
-        span: span.clone()
+        span: span.clone(),
     }));
 
     // Same array type and size -> allowed

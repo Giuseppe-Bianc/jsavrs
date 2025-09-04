@@ -7,6 +7,7 @@ use jsavrs::lexer::Lexer;
 //use jsavrs::nir::generator::NIrGenerator;
 use jsavrs::parser::ast_printer::pretty_print_stmt;
 use jsavrs::parser::jsav_parser::JsavParser;
+use jsavrs::rvir::generator::RIrGenerator;
 use jsavrs::semantic::type_checker::TypeChecker;
 use jsavrs::time::timer::{AutoTimer, Timer};
 use jsavrs::{error::compile_error::CompileError, lexer::lexer_tokenize_with_errors};
@@ -16,7 +17,6 @@ use std::{
     path::Path,
     //process,
 };
-use jsavrs::rvir::generator::RIrGenerator;
 //use jsavrs::asm::generator::{AsmGenerator, TargetOS};
 
 #[allow(clippy::explicit_auto_deref, clippy::unused_unit)]
@@ -77,7 +77,7 @@ fn main() -> Result<(), CompileError> {
     //Print statements with color if verbose
     if args.verbose {
         //println!("{}", pretty_print(&statements.unwrap()));
-        if num_statements > 5{
+        if num_statements > 5 {
             println!("{num_statements_str}");
         } else {
             for stat in &statements {

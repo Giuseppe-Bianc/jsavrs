@@ -1,5 +1,5 @@
 // src/nir/instruction.rs
-use super::{IrType, Value, ScopeId};
+use super::{IrType, ScopeId, Value};
 use crate::{
     location::source_span::SourceSpan,
     parser::ast::{BinaryOp, UnaryOp},
@@ -230,7 +230,7 @@ impl fmt::Display for Instruction {
                     .collect::<Vec<_>>()
                     .join(", ");
                 write!(f, "{result_str} vector.{op} {operands_str} : {ty}")
-            },
+            }
         }
     }
 }

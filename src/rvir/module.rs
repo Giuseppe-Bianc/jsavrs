@@ -1,6 +1,6 @@
+use super::{Function, RScopeId};
 use std::fmt;
 use std::sync::Arc;
-use super::{Function, RScopeId};
 
 /// Descrive il layout dei dati per diversi target.
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Hash)]

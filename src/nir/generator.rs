@@ -226,7 +226,7 @@ impl NIrGenerator {
             Stmt::Return { value, span } => {
                 self.generate_return(func, value, span);
             }
-            Stmt::Block { statements, span:_ } => {
+            Stmt::Block { statements, span: _ } => {
                 self.scope_manager.enter_scope();
                 for stmt in statements {
                     self.generate_stmt(func, stmt);
@@ -585,7 +585,7 @@ impl NIrGenerator {
                 }
             },
             LiteralValue::Bool(b) => Value::new_literal(IrLiteralValue::Bool(b)).with_debug_info(None, span),
-            LiteralValue::StringLit(s) => Value::new_constant(IrConstantValue::String{string: s}, IrType::String).with_debug_info(None, span),
+            LiteralValue::StringLit(s) => Value::new_constant(IrConstantValue::String { string: s }, IrType::String).with_debug_info(None, span),
             LiteralValue::CharLit(c) => Value::new_literal(IrLiteralValue::Char(c.chars().next().unwrap_or('\0'))).with_debug_info(None, span),
             LiteralValue::Nullptr => Value::new_literal(IrLiteralValue::I64(0)).with_debug_info(None, span),
         }

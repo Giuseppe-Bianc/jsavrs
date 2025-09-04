@@ -148,26 +148,28 @@ fn literal_value_display_edge_cases() {
 #[test]
 fn constant_value_display_edge_cases() {
     // Empty array
-    let empty_array = IrConstantValue::Array { elements: Vec::new()};
+    let empty_array = IrConstantValue::Array { elements: Vec::new() };
     assert_eq!(format!("{}", empty_array), "[]");
 
     // Array with different types
-    let mixed_array = IrConstantValue::Array { elements: vec![
-        Value::new_literal(IrLiteralValue::I32(1)),
-        Value::new_literal(IrLiteralValue::Bool(true)),
-    ]};
+    let mixed_array = IrConstantValue::Array {
+        elements: vec![
+            Value::new_literal(IrLiteralValue::I32(1)),
+            Value::new_literal(IrLiteralValue::Bool(true)),
+        ]
+    };
     assert_eq!(format!("{}", mixed_array), "[1i32, true]");
 
     // String with escapes
-    let string_val = IrConstantValue::String { string:"line1\nline2\"tab\t".into()};
+    let string_val = IrConstantValue::String { string: "line1\nline2\"tab\t".into() };
     assert_eq!(format!("{}", string_val), "\"line1\\nline2\\\"tab\\t\"");
 
     // Empty struct
-    let empty_struct = IrConstantValue::Struct { name:"Empty".into(), elements: Vec::new()};
+    let empty_struct = IrConstantValue::Struct { name: "Empty".into(), elements: Vec::new() };
     assert_eq!(format!("{}", empty_struct), "Empty<>");
 
     // Struct with special characters in name
-    let struct_val = IrConstantValue::Struct { name: "My$Struct".into(), elements:  Vec::new()};
+    let struct_val = IrConstantValue::Struct { name: "My$Struct".into(), elements: Vec::new() };
     assert_eq!(format!("{}", struct_val), "My$Struct<>");
 }
 
@@ -177,7 +179,7 @@ fn value_kind_variants() {
     let literal = ValueKind::Literal(IrLiteralValue::I32(42));
     assert!(matches!(literal, ValueKind::Literal(_)));
 
-    let constant = ValueKind::Constant(IrConstantValue::String { string: "test".into()});
+    let constant = ValueKind::Constant(IrConstantValue::String { string: "test".into() });
     assert!(matches!(constant, ValueKind::Constant(_)));
 
     let local = ValueKind::Local("var".into());

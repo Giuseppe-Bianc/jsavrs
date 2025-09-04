@@ -1,7 +1,7 @@
+use super::{RScopeId, RValue};
 //src/rvir/scope.rs
 use std::collections::HashMap;
 use std::sync::Arc;
-use super::{RScopeId, RValue};
 
 #[derive(Debug, Clone, PartialEq)]
 pub struct RScope {

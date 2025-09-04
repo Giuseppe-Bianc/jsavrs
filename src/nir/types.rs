@@ -5,10 +5,19 @@ use uuid::Uuid;
 
 #[derive(Debug, Clone, PartialEq, Eq, Hash)]
 pub enum IrType {
-    I8, I16, I32, I64,
-    U8, U16, U32, U64,
-    F32, F64, Bool,
-    Char, String,
+    I8,
+    I16,
+    I32,
+    I64,
+    U8,
+    U16,
+    U32,
+    U64,
+    F32,
+    F64,
+    Bool,
+    Char,
+    String,
     Void,
     Pointer(Box<IrType>),
     Array(Box<IrType>, usize),

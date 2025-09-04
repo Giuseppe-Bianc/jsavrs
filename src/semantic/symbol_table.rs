@@ -106,7 +106,7 @@ impl SymbolTable {
                     Some(Symbol::Function(f)) => f.defined_at.clone(),
                     _ => SourceSpan::default(),
                 },
-                help: None
+                help: None,
             });
         }
 
