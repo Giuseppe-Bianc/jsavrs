@@ -14,7 +14,6 @@ impl BranchType {
             BranchType::Middle => "├── ",
         }
     }
-
     fn indent_continuation(&self) -> &'static str {
         match self {
             BranchType::Last => "    ",
@@ -55,7 +54,8 @@ pub fn pretty_print(expr: &Expr) -> String {
     output
 }
 
-/// Helper function to print lists of children with correct indentationfn print_children<T, F>(children: &[T], indent: &str, output: &mut String, styles: &StyleManager, mut print_fn: F)
+/// Helper function to print lists of children with correct indentation
+fn print_children<T, F>(children: &[T], indent: &str, output: &mut String, styles: &StyleManager, mut print_fn: F)
 where
     F: FnMut(&T, &str, BranchType, &mut String, &StyleManager),
 {
