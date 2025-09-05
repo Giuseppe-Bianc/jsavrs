@@ -161,12 +161,17 @@ impl std::fmt::Display for SourceSpan {
 /// let expected = if cfg!(unix) { "../module/file.lang" } else { "..\\module\\file.lang" };
 /// assert_eq!(truncate_path(path, 2), expected);
 /// ```
+
 pub fn truncate_path(path: &Path, depth: usize) -> String {
     let components: Vec<_> = path.components().collect();
     let len = components.len();
-    if len <= depth {
-        components.iter().collect::<PathBuf>().display().to_string()
+
+    let truncated = if len <= depth {
+        PathBuf::from_iter(&components)
     } else {
-        PathBuf::from("..").join(components[len - depth..].iter().collect::<PathBuf>()).display().to_string()
-    }
+        let tail = &components[len - depth..];
+        PathBuf::from("..").join(PathBuf::from_iter(tail))
+    };
+
+    truncated.display().to_string()
 }
