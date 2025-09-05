@@ -1,5 +1,5 @@
 use crate::time::time_values::{MFACTOR, SECONDS_FACTOR, TILE_PADDING};
-use crate::time::times::{simple_format, TimePrintFn, Times};
+use crate::time::times::{TimePrintFn, Times, simple_format};
 use crate::time::value_label::ValueLabel;
 use std::fmt;
 use std::ops::{Div, DivAssign};
@@ -108,15 +108,11 @@ pub struct AutoTimer {
 
 impl AutoTimer {
     pub fn new(title: &str) -> Self {
-        AutoTimer {
-            timer: Timer::new(title),
-        }
+        AutoTimer { timer: Timer::new(title) }
     }
 
     pub fn with_formatter(title: &str, time_print: TimePrintFn) -> Self {
-        AutoTimer {
-            timer: Timer::with_formatter(title, time_print),
-        }
+        AutoTimer { timer: Timer::with_formatter(title, time_print) }
     }
 }
 

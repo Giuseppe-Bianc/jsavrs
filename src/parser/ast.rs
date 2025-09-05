@@ -8,50 +8,17 @@ use std::sync::Arc;
 
 #[derive(Debug, Clone, Hash, Eq, PartialEq)]
 pub enum Expr {
-    Binary {
-        left: Box<Expr>,
-        op: BinaryOp,
-        right: Box<Expr>,
-        span: SourceSpan,
-    },
-    Unary {
-        op: UnaryOp,
-        expr: Box<Expr>,
-        span: SourceSpan,
-    },
-    Grouping {
-        expr: Box<Expr>,
-        span: SourceSpan,
-    },
-    Literal {
-        value: LiteralValue,
-        span: SourceSpan,
-    },
+    Binary { left: Box<Expr>, op: BinaryOp, right: Box<Expr>, span: SourceSpan },
+    Unary { op: UnaryOp, expr: Box<Expr>, span: SourceSpan },
+    Grouping { expr: Box<Expr>, span: SourceSpan },
+    Literal { value: LiteralValue, span: SourceSpan },
 
-    ArrayLiteral {
-        elements: Vec<Expr>,
-        span: SourceSpan,
-    },
+    ArrayLiteral { elements: Vec<Expr>, span: SourceSpan },
 
-    Variable {
-        name: Arc<str>,
-        span: SourceSpan,
-    },
-    Assign {
-        target: Box<Expr>,
-        value: Box<Expr>,
-        span: SourceSpan,
-    },
-    Call {
-        callee: Box<Expr>,
-        arguments: Vec<Expr>,
-        span: SourceSpan,
-    },
-    ArrayAccess {
-        array: Box<Expr>,
-        index: Box<Expr>,
-        span: SourceSpan,
-    },
+    Variable { name: Arc<str>, span: SourceSpan },
+    Assign { target: Box<Expr>, value: Box<Expr>, span: SourceSpan },
+    Call { callee: Box<Expr>, arguments: Vec<Expr>, span: SourceSpan },
+    ArrayAccess { array: Box<Expr>, index: Box<Expr>, span: SourceSpan },
     // Additional expressions as needed
 }
 
@@ -177,25 +144,16 @@ impl Expr {
     }
 
     pub fn null_expr(span: SourceSpan) -> Expr {
-        Expr::Literal {
-            value: LiteralValue::Nullptr,
-            span,
-        }
+        Expr::Literal { value: LiteralValue::Nullptr, span }
     }
 
     // Helper methods for literals
     pub fn new_number_literal(value: Number, span: SourceSpan) -> Option<Expr> {
-        Some(Expr::Literal {
-            value: LiteralValue::Number(value),
-            span,
-        })
+        Some(Expr::Literal { value: LiteralValue::Number(value), span })
     }
 
     pub fn new_bool_literal(value: bool, span: SourceSpan) -> Option<Expr> {
-        Some(Expr::Literal {
-            value: LiteralValue::Bool(value),
-            span,
-        })
+        Some(Expr::Literal { value: LiteralValue::Bool(value), span })
     }
 
     pub fn new_nullptr_literal(span: SourceSpan) -> Option<Expr> {
@@ -203,17 +161,11 @@ impl Expr {
     }
 
     pub fn new_string_literal(value: Arc<str>, span: SourceSpan) -> Option<Expr> {
-        Some(Expr::Literal {
-            value: LiteralValue::StringLit(value),
-            span,
-        })
+        Some(Expr::Literal { value: LiteralValue::StringLit(value), span })
     }
 
     pub fn new_char_literal(value: Arc<str>, span: SourceSpan) -> Option<Expr> {
-        Some(Expr::Literal {
-            value: LiteralValue::CharLit(value),
-            span,
-        })
+        Some(Expr::Literal { value: LiteralValue::CharLit(value), span })
     }
 }
 
@@ -301,35 +253,31 @@ pub enum Type {
 impl std::fmt::Display for Type {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
         match self {
-            Type::I8 => f.write_str( "i8"),
-            Type::I16 => f.write_str( "i16"),
-            Type::I32 => f.write_str( "i32"),
-            Type::I64 => f.write_str( "i64"),
-            Type::U8 => f.write_str( "u8"),
-            Type::U16 => f.write_str( "u16"),
-            Type::U32 => f.write_str( "u32"),
-            Type::U64 => f.write_str( "u64"),
-            Type::F32 => f.write_str( "f32"),
-            Type::F64 => f.write_str( "f64"),
-            Type::Char => f.write_str( "char"),
-            Type::String => f.write_str( "string"),
-            Type::Bool => f.write_str( "bool"),
-            Type::Custom(name) =>  f.write_str(name),
+            Type::I8 => f.write_str("i8"),
+            Type::I16 => f.write_str("i16"),
+            Type::I32 => f.write_str("i32"),
+            Type::I64 => f.write_str("i64"),
+            Type::U8 => f.write_str("u8"),
+            Type::U16 => f.write_str("u16"),
+            Type::U32 => f.write_str("u32"),
+            Type::U64 => f.write_str("u64"),
+            Type::F32 => f.write_str("f32"),
+            Type::F64 => f.write_str("f64"),
+            Type::Char => f.write_str("char"),
+            Type::String => f.write_str("string"),
+            Type::Bool => f.write_str("bool"),
+            Type::Custom(name) => f.write_str(name),
             Type::Array(element_type, size_expr) => {
                 // Simplified representation since we can't evaluate expressions here
-                if let Expr::Literal {
-                    value: LiteralValue::Number(Number::Integer(size)),
-                    ..
-                } = size_expr.as_ref()
-                {
+                if let Expr::Literal { value: LiteralValue::Number(Number::Integer(size)), .. } = size_expr.as_ref() {
                     write!(f, "[{element_type}; {size}]")
                 } else {
                     write!(f, "[{element_type}; <expr>]")
                 }
             }
             Type::Vector(element_type) => write!(f, "Vector<{element_type}>"),
-            Type::Void => f.write_str( "void"),
-            Type::NullPtr => f.write_str( "nullptr"),
+            Type::Void => f.write_str("void"),
+            Type::NullPtr => f.write_str("nullptr"),
         }
     }
 }

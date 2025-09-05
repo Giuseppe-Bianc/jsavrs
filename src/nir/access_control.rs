@@ -21,13 +21,7 @@ pub struct AccessRules {
 impl AccessRules {
     // Add a public constructor
     pub fn new(read: bool, write: bool, execute: bool, allocate: bool, deallocate: bool) -> Self {
-        AccessRules {
-            read,
-            write,
-            execute,
-            allocate,
-            deallocate,
-        }
+        AccessRules { read, write, execute, allocate, deallocate }
     }
 
     pub fn allows(&self, operation: Operation) -> bool {
@@ -49,10 +43,7 @@ pub struct AccessController {
 
 impl AccessController {
     pub fn new(scope_manager: &super::scope_manager::ScopeManager) -> Self {
-        AccessController {
-            scopes: scope_manager.get_scopes(),
-            current_scope: scope_manager.current_scope(),
-        }
+        AccessController { scopes: scope_manager.get_scopes(), current_scope: scope_manager.current_scope() }
     }
 
     pub fn check_access(&self, _resource: ResourceId, _operation: Operation) -> bool {

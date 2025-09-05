@@ -1,4 +1,6 @@
-use jsavrs::nir::{BasicBlock, Instruction, InstructionKind, IrBinaryOp, IrLiteralValue, IrType, TerminatorKind, Value};
+use jsavrs::nir::{
+    BasicBlock, Instruction, InstructionKind, IrBinaryOp, IrLiteralValue, IrType, TerminatorKind, Value,
+};
 use jsavrs::utils::dummy_span;
 
 #[test]
@@ -39,14 +41,10 @@ fn test_block_display_whit_instruction() {
     let right = Value::new_literal(IrLiteralValue::I32(200i32));
 
     let inst = Instruction::new(
-        InstructionKind::Binary {
-            op: IrBinaryOp::Add,
-            left: left.clone(),
-            right: right.clone(),
-            ty: IrType::I32,
-        },
+        InstructionKind::Binary { op: IrBinaryOp::Add, left: left.clone(), right: right.clone(), ty: IrType::I32 },
         dummy_span(),
-    ).with_result(Value::new_temporary(1000, IrType::I32));
+    )
+    .with_result(Value::new_temporary(1000, IrType::I32));
     block.instructions.push(inst);
     assert_eq!(block.to_string(), "entry:\n  t1000 = add 100i32 200i32, i32\n  unreachable");
 }
@@ -57,14 +55,10 @@ fn test_block_display_whit_instruction_and_predecessor() {
     let right = Value::new_literal(IrLiteralValue::I32(200i32));
 
     let inst = Instruction::new(
-        InstructionKind::Binary {
-            op: IrBinaryOp::Add,
-            left: left.clone(),
-            right: right.clone(),
-            ty: IrType::I32,
-        },
+        InstructionKind::Binary { op: IrBinaryOp::Add, left: left.clone(), right: right.clone(), ty: IrType::I32 },
         dummy_span(),
-    ).with_result(Value::new_temporary(1000, IrType::I32));
+    )
+    .with_result(Value::new_temporary(1000, IrType::I32));
     block.add_predecessor("prev".to_string());
     block.instructions.push(inst);
     assert_eq!(block.to_string(), "// Predecessors: prev\nentry:\n  t1000 = add 100i32 200i32, i32\n  unreachable");

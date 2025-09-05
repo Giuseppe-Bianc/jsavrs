@@ -1,7 +1,7 @@
 use insta::assert_snapshot;
 use jsavrs::error::compile_error::CompileError;
 use jsavrs::error::error_reporter::ErrorReporter;
-use jsavrs::lexer::{lexer_tokenize_with_errors, Lexer};
+use jsavrs::lexer::{Lexer, lexer_tokenize_with_errors};
 use jsavrs::location::line_tracker::LineTracker;
 use jsavrs::utils::{create_span, strip_ansi_codes};
 use std::io;
@@ -42,7 +42,6 @@ fn lexer_error_single_line_whit_error() {
 
     assert_snapshot!(stripped);
 }
-
 
 #[test]
 fn type_error_single_line() {
@@ -132,7 +131,6 @@ ERROR: ASM GEN: invalid asm
     assert_eq!(stripped, expected);
 }
 
-
 #[test]
 fn syntax_error_multi_line() {
     let source = "fn main() {\n    let x = 42;\n    println!(\"hello\");\n}";
@@ -174,10 +172,7 @@ fn io_error() {
     let line_tracker = LineTracker::new("test", "".to_string());
     let reporter = ErrorReporter::new(line_tracker);
 
-    let errors = vec![CompileError::IoError(io::Error::new(
-        io::ErrorKind::NotFound,
-        "File not found",
-    ))];
+    let errors = vec![CompileError::IoError(io::Error::new(io::ErrorKind::NotFound, "File not found"))];
 
     let report = reporter.report_errors(errors);
     let stripped = strip_ansi_codes(&report);
@@ -193,10 +188,7 @@ fn multiple_errors() {
     let reporter = ErrorReporter::new(line_tracker);
 
     let errors = vec![
-        CompileError::IoError(io::Error::new(
-            io::ErrorKind::PermissionDenied,
-            "Access denied",
-        )),
+        CompileError::IoError(io::Error::new(io::ErrorKind::PermissionDenied, "Access denied")),
         CompileError::LexerError {
             message: "Unterminated string".to_string(),
             span: create_span("test", 2, 7, 2, 8),

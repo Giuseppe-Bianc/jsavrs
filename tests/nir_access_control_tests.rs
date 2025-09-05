@@ -159,13 +159,8 @@ fn test_check_access_currently_always_returns_true() {
     let controller = AccessController::new(&scope_manager);
     let resource_id = ResourceId::new();
     // Test per ogni tipo di operazione
-    let operations = [
-        Operation::Read,
-        Operation::Write,
-        Operation::Execute,
-        Operation::Allocate,
-        Operation::Deallocate,
-    ];
+    let operations =
+        [Operation::Read, Operation::Write, Operation::Execute, Operation::Allocate, Operation::Deallocate];
     // Comportamento atteso: Tutte le operazioni dovrebbero essere permesse (implementazione placeholder)
     for operation in operations {
         let result = controller.check_access(resource_id, operation.clone());
@@ -178,11 +173,7 @@ fn test_check_access_with_different_resources() {
     // Input: Un AccessController e diverse risorse
     let scope_manager = ScopeManager::new();
     let controller = AccessController::new(&scope_manager);
-    let resource_ids = [
-        ResourceId::new(),
-        ResourceId::new(),
-        ResourceId::new(),
-    ];
+    let resource_ids = [ResourceId::new(), ResourceId::new(), ResourceId::new()];
     // Comportamento atteso: Tutte le risorse dovrebbero avere accesso permesso
     for resource_id in resource_ids {
         let result = controller.check_access(resource_id, Operation::Read);

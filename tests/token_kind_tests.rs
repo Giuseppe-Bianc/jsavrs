@@ -1,7 +1,7 @@
 use jsavrs::tokens::number::Number;
 use jsavrs::tokens::number::Number::*;
 use jsavrs::tokens::token_kind::TokenKind::*;
-use jsavrs::tokens::token_kind::{handle_suffix, split_numeric_and_suffix, TokenKind};
+use jsavrs::tokens::token_kind::{TokenKind, handle_suffix, split_numeric_and_suffix};
 use logos::Logos;
 use std::sync::Arc;
 
@@ -142,10 +142,7 @@ fn test_eof_and_ignored() {
 #[test]
 fn test_identifier_ascii_normal() {
     let ident: Arc<str> = "foo".into();
-    assert_eq!(
-        IdentifierAscii(ident.clone()).to_string(),
-        format!("identifier '{ident}'")
-    );
+    assert_eq!(IdentifierAscii(ident.clone()).to_string(), format!("identifier '{ident}'"));
 }
 
 #[test]
@@ -157,10 +154,7 @@ fn test_identifier_ascii_empty() {
 #[test]
 fn test_identifier_unicode() {
     let ident: Arc<str> = "προεδομή".into(); // qualche stringa Unicode
-    assert_eq!(
-        IdentifierUnicode(ident.clone()).to_string(),
-        format!("identifier '{ident}'")
-    );
+    assert_eq!(IdentifierUnicode(ident.clone()).to_string(), format!("identifier '{ident}'"));
 }
 
 #[test]
@@ -175,37 +169,25 @@ fn test_numeric_integer() {
 #[test]
 fn test_string_literal_simple() {
     let s: Arc<str> = "hello".into();
-    assert_eq!(
-        StringLiteral(s.clone()).to_string(),
-        format!("string literal \"{s}\"")
-    );
+    assert_eq!(StringLiteral(s.clone()).to_string(), format!("string literal \"{s}\""));
 }
 
 #[test]
 fn test_string_literal_with_quotes_inside() {
     let s: Arc<str> = "he said \"ciao\"".into();
-    assert_eq!(
-        StringLiteral(s.clone()).to_string(),
-        format!("string literal \"{s}\"")
-    );
+    assert_eq!(StringLiteral(s.clone()).to_string(), format!("string literal \"{s}\""));
 }
 
 #[test]
 fn test_char_literal_simple() {
     let c: Arc<str> = "x".into();
-    assert_eq!(
-        CharLiteral(c.clone()).to_string(),
-        format!("character literal '{c}'")
-    );
+    assert_eq!(CharLiteral(c.clone()).to_string(), format!("character literal '{c}'"));
 }
 
 #[test]
 fn test_char_literal_unicode() {
     let c: Arc<str> = "ψ".into();
-    assert_eq!(
-        CharLiteral(c.clone()).to_string(),
-        format!("character literal '{c}'")
-    );
+    assert_eq!(CharLiteral(c.clone()).to_string(), format!("character literal '{c}'"));
 }
 
 #[test]

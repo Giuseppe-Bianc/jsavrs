@@ -1,15 +1,15 @@
+mod access_control;
+mod basic_block;
+mod cfg;
+mod function;
+pub mod generator;
+mod instruction;
+mod module;
+mod scope;
+mod scope_manager;
 mod terminator;
 mod types;
 mod value;
-mod instruction;
-mod basic_block;
-mod access_control;
-mod scope;
-mod scope_manager;
-mod cfg;
-mod function;
-mod module;
-pub mod generator;
 
 pub use access_control::{RAccessController, RAccessRules, ROperation};
 pub use basic_block::RBasicBlock;

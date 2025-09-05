@@ -13,12 +13,7 @@ pub struct Scope {
 
 impl Scope {
     pub fn new(parent: Option<ScopeId>, depth: usize) -> Self {
-        Scope {
-            symbols: HashMap::new(),
-            parent,
-            children: Vec::new(),
-            depth,
-        }
+        Scope { symbols: HashMap::new(), parent, children: Vec::new(), depth }
     }
 
     pub fn insert(&mut self, name: Arc<str>, value: Value) {

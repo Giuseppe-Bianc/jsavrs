@@ -1,7 +1,10 @@
 // src/nir/function.rs
-use super::{basic_block::BasicBlock, types::IrType, ScopeId, ScopeManager};
+use super::{ScopeId, ScopeManager, basic_block::BasicBlock, types::IrType};
 use crate::location::source_span::SourceSpan;
-use std::{collections::{HashMap, HashSet}, fmt};
+use std::{
+    collections::{HashMap, HashSet},
+    fmt,
+};
 
 /// Control Flow Graph representation
 #[derive(Debug, Clone, PartialEq)]
@@ -118,8 +121,8 @@ impl Function {
 
 impl fmt::Display for Function {
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
-        let params_str = self.parameters.iter().map(|param| format!("{}: {}", param.name, param.ty))
-            .collect::<Vec<_>>().join(", ");
+        let params_str =
+            self.parameters.iter().map(|param| format!("{}: {}", param.name, param.ty)).collect::<Vec<_>>().join(", ");
 
         writeln!(f, "function {} ({}) -> {}:", self.name, params_str, self.return_type)?;
 

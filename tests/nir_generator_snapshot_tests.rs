@@ -1,6 +1,6 @@
 use insta::assert_snapshot;
-use jsavrs::nir::generator::NIrGenerator;
 use jsavrs::nir::Module;
+use jsavrs::nir::generator::NIrGenerator;
 use jsavrs::parser::ast::{BinaryOp, Expr, LiteralValue, Parameter, Stmt, Type, UnaryOp};
 use jsavrs::tokens::number::Number;
 use jsavrs::utils::*;
@@ -12,34 +12,29 @@ use std::fmt::Display;
 use std::fmt::Write;
 
 lazy_static! {
-    static ref UUID_REGEX: Regex = Regex::new(
-        r"[0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{12}"
-    ).unwrap();
+    static ref UUID_REGEX: Regex =
+        Regex::new(r"[0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{12}").unwrap();
 }
 
 fn sanitize_uuids(input: &str) -> String {
     let mut counter = 0;
     let mut mapping = HashMap::new();
 
-    UUID_REGEX.replace_all(input, |captures: &regex::Captures| {
-        let uuid = captures.get(0).unwrap().as_str();
-        let id = *mapping.entry(uuid.to_string()).or_insert_with(|| {
-            let id = counter;
-            counter += 1;
-            id
-        });
-        format!("SCOPE_{}", id)
-    }).to_string()
+    UUID_REGEX
+        .replace_all(input, |captures: &regex::Captures| {
+            let uuid = captures.get(0).unwrap().as_str();
+            let id = *mapping.entry(uuid.to_string()).or_insert_with(|| {
+                let id = counter;
+                counter += 1;
+                id
+            });
+            format!("SCOPE_{}", id)
+        })
+        .to_string()
 }
 
 fn vec_to_string<T: Display>(vec: Vec<T>) -> String {
-    sanitize_uuids(
-        vec.into_iter()
-            .map(|x| x.to_string())
-            .collect::<Vec<_>>()
-            .join(" ")
-            .as_str(),
-    )
+    sanitize_uuids(vec.into_iter().map(|x| x.to_string()).collect::<Vec<_>>().join(" ").as_str())
 }
 
 fn module_redaceted(module: Module) -> String {
@@ -64,10 +59,7 @@ fn test_generate_void_function() {
         "void_func".into(),
         vec![],
         Type::Void,
-        vec![Stmt::Return {
-            value: None,
-            span: dummy_span(),
-        }],
+        vec![Stmt::Return { value: None, span: dummy_span() }],
     )];
 
     let mut generator = NIrGenerator::new();
@@ -78,13 +70,8 @@ fn test_generate_void_function() {
 
 #[test]
 fn test_generate_main_function() {
-    let ast = vec![Stmt::MainFunction {
-        body: vec![Stmt::Return {
-            value: None,
-            span: dummy_span(),
-        }],
-        span: dummy_span(),
-    }];
+    let ast =
+        vec![Stmt::MainFunction { body: vec![Stmt::Return { value: None, span: dummy_span() }], span: dummy_span() }];
 
     let mut generator = NIrGenerator::new();
     let (functions, _ir_errors) = generator.generate(ast, "test_file.vn");
@@ -118,9 +105,7 @@ fn test_generate_variable_assignment() {
         Type::Void,
         vec![
             var_declaration(vec!["x".into()], Type::I32, true, vec![]),
-            Stmt::Expression {
-                expr: assign_expr(variable_expr("x"), num_lit_i32(10)),
-            },
+            Stmt::Expression { expr: assign_expr(variable_expr("x"), num_lit_i32(10)) },
         ],
     )];
 
@@ -138,10 +123,7 @@ fn test_generate_if_statement() {
         Type::Void,
         vec![Stmt::If {
             condition: bool_lit(true),
-            then_branch: vec![Stmt::Return {
-                value: None,
-                span: dummy_span(),
-            }],
+            then_branch: vec![Stmt::Return { value: None, span: dummy_span() }],
             else_branch: None,
             span: dummy_span(),
         }],
@@ -177,16 +159,9 @@ fn test_generate_nested_expressions() {
 fn test_generate_custom_type() {
     let ast = vec![function_declaration(
         "test".into(),
-        vec![Parameter {
-            name: "param".into(),
-            type_annotation: Type::Custom("MyType".into()),
-            span: dummy_span(),
-        }],
+        vec![Parameter { name: "param".into(), type_annotation: Type::Custom("MyType".into()), span: dummy_span() }],
         Type::Custom("MyType".into()),
-        vec![Stmt::Return {
-            value: Some(variable_expr("param")),
-            span: dummy_span(),
-        }],
+        vec![Stmt::Return { value: Some(variable_expr("param")), span: dummy_span() }],
     )];
 
     let mut generator = NIrGenerator::new();
@@ -235,19 +210,13 @@ fn test_generate_multiple_functions() {
             "func1".into(),
             vec![],
             Type::Void,
-            vec![Stmt::Return {
-                value: None,
-                span: dummy_span(),
-            }],
+            vec![Stmt::Return { value: None, span: dummy_span() }],
         ),
         function_declaration(
             "func2".into(),
             vec![],
             Type::Void,
-            vec![Stmt::Return {
-                value: None,
-                span: dummy_span(),
-            }],
+            vec![Stmt::Return { value: None, span: dummy_span() }],
         ),
     ];
 
@@ -262,10 +231,7 @@ fn test_generate_string_literal() {
         name: "test".into(),
         parameters: vec![],
         return_type: Type::String,
-        body: vec![Stmt::Return {
-            value: Some(string_lit("hello")),
-            span: dummy_span(),
-        }],
+        body: vec![Stmt::Return { value: Some(string_lit("hello")), span: dummy_span() }],
         span: dummy_span(),
     }];
 
@@ -280,10 +246,7 @@ fn test_generate_nullptr() {
         name: "test".into(),
         parameters: vec![],
         return_type: Type::NullPtr,
-        body: vec![Stmt::Return {
-            value: Some(nullptr_lit()),
-            span: dummy_span(),
-        }],
+        body: vec![Stmt::Return { value: Some(nullptr_lit()), span: dummy_span() }],
         span: dummy_span(),
     }];
 
@@ -312,10 +275,7 @@ fn test_generate_simple_block() {
                 ],
                 span: dummy_span(),
             },
-            Stmt::Return {
-                value: None,
-                span: dummy_span(),
-            },
+            Stmt::Return { value: None, span: dummy_span() },
         ],
     )];
 
@@ -331,31 +291,19 @@ fn test_generate_simple_while_loop() {
         vec![],
         Type::Void,
         vec![
-            var_declaration(
-                vec!["counter".into()],
-                Type::I32,
-                true,
-                vec![num_lit_i32(0)],
-            ),
+            var_declaration(vec!["counter".into()], Type::I32, true, vec![num_lit_i32(0)]),
             Stmt::While {
                 condition: binary_expr(variable_expr("counter"), BinaryOp::Less, num_lit_i32(5)),
                 body: vec![Stmt::Expression {
                     expr: Expr::Assign {
                         target: Box::new(variable_expr("counter")),
-                        value: Box::new(binary_expr(
-                            variable_expr("counter"),
-                            BinaryOp::Add,
-                            num_lit_i32(1),
-                        )),
+                        value: Box::new(binary_expr(variable_expr("counter"), BinaryOp::Add, num_lit_i32(1))),
                         span: dummy_span(),
                     },
                 }],
                 span: dummy_span(),
             },
-            Stmt::Return {
-                value: None,
-                span: dummy_span(),
-            },
+            Stmt::Return { value: None, span: dummy_span() },
         ],
     )];
 
@@ -378,18 +326,10 @@ fn test_generate_for_loop_basic() {
                 initializers: vec![num_lit_i32(0)],
                 span: dummy_span(),
             })),
-            condition: Some(binary_expr(
-                variable_expr("i"),
-                BinaryOp::Less,
-                num_lit_i32(10),
-            )),
+            condition: Some(binary_expr(variable_expr("i"), BinaryOp::Less, num_lit_i32(10))),
             increment: Some(Expr::Assign {
                 target: Box::new(variable_expr("i")),
-                value: Box::new(binary_expr(
-                    variable_expr("i"),
-                    BinaryOp::Add,
-                    num_lit_i32(1),
-                )),
+                value: Box::new(binary_expr(variable_expr("i"), BinaryOp::Add, num_lit_i32(1))),
                 span: dummy_span(),
             }),
             body: vec![],
@@ -416,11 +356,7 @@ fn test_generate_for_loop_with_break() {
                 initializers: vec![num_lit_i32(0)],
                 span: dummy_span(),
             })),
-            condition: Some(binary_expr(
-                variable_expr("i"),
-                BinaryOp::Less,
-                num_lit_i32(10),
-            )),
+            condition: Some(binary_expr(variable_expr("i"), BinaryOp::Less, num_lit_i32(10))),
             increment: None,
             body: vec![Stmt::Break { span: dummy_span() }],
             span: dummy_span(),
@@ -446,11 +382,7 @@ fn test_generate_for_loop_with_continue() {
                 initializers: vec![num_lit_i32(0)],
                 span: dummy_span(),
             })),
-            condition: Some(binary_expr(
-                variable_expr("i"),
-                BinaryOp::Less,
-                num_lit_i32(10),
-            )),
+            condition: Some(binary_expr(variable_expr("i"), BinaryOp::Less, num_lit_i32(10))),
             increment: None,
             body: vec![Stmt::Continue { span: dummy_span() }],
             span: dummy_span(),
@@ -469,11 +401,7 @@ fn test_generate_grouping_expression() {
         vec![],
         Type::I32,
         vec![Stmt::Return {
-            value: Some(grouping_expr(binary_expr(
-                num_lit_i32(10),
-                BinaryOp::Add,
-                num_lit_i32(20),
-            ))),
+            value: Some(grouping_expr(binary_expr(num_lit_i32(10), BinaryOp::Add, num_lit_i32(20)))),
             span: dummy_span(),
         }],
     )];
@@ -509,10 +437,7 @@ fn test_default_implementation() {
         "test".into(),
         vec![],
         Type::I32,
-        vec![Stmt::Return {
-            value: Some(num_lit_i32(42)),
-            span: dummy_span(),
-        }],
+        vec![Stmt::Return { value: Some(num_lit_i32(42)), span: dummy_span() }],
     )];
 
     let mut generator = NIrGenerator::default();
@@ -569,10 +494,7 @@ fn test_generate_unary_expression() {
             "test".into(),
             vec![],
             Type::I32,
-            vec![Stmt::Return {
-                value: Some(unary_expr(ast_op, num_lit_i32(42))),
-                span: dummy_span(),
-            }],
+            vec![Stmt::Return { value: Some(unary_expr(ast_op, num_lit_i32(42))), span: dummy_span() }],
         )];
 
         let mut generator = NIrGenerator::default();
@@ -610,10 +532,7 @@ fn test_generate_integer_literals() {
                 _ => Type::I32,
             },
             vec![Stmt::Return {
-                value: Some(Expr::Literal {
-                    value: LiteralValue::Number(num),
-                    span: dummy_span(),
-                }),
+                value: Some(Expr::Literal { value: LiteralValue::Number(num), span: dummy_span() }),
                 span: dummy_span(),
             }],
         )];
@@ -645,10 +564,7 @@ fn test_generate_float_literals() {
                 _ => Type::F32,
             },
             vec![Stmt::Return {
-                value: Some(Expr::Literal {
-                    value: LiteralValue::Number(num),
-                    span: dummy_span(),
-                }),
+                value: Some(Expr::Literal { value: LiteralValue::Number(num), span: dummy_span() }),
                 span: dummy_span(),
             }],
         )];
@@ -668,10 +584,7 @@ fn test_generate_boolean_literals() {
             "test".into(),
             vec![],
             Type::Bool,
-            vec![Stmt::Return {
-                value: Some(bool_lit(b)),
-                span: dummy_span(),
-            }],
+            vec![Stmt::Return { value: Some(bool_lit(b)), span: dummy_span() }],
         )];
 
         let mut generator = NIrGenerator::default();
@@ -686,10 +599,7 @@ fn test_generate_char_literal() {
         "test".into(),
         vec![],
         Type::Char,
-        vec![Stmt::Return {
-            value: Some(char_lit("A")),
-            span: dummy_span(),
-        }],
+        vec![Stmt::Return { value: Some(char_lit("A")), span: dummy_span() }],
     )];
 
     let mut generator = NIrGenerator::default();
@@ -703,10 +613,7 @@ fn test_generate_nullptr_literal() {
         "test".into(),
         vec![],
         Type::NullPtr,
-        vec![Stmt::Return {
-            value: Some(nullptr_lit()),
-            span: dummy_span(),
-        }],
+        vec![Stmt::Return { value: Some(nullptr_lit()), span: dummy_span() }],
     )];
 
     let mut generator = NIrGenerator::default();

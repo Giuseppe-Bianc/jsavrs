@@ -13,39 +13,20 @@ fn create_bool_value(v: bool) -> Value {
 #[test]
 fn return_terminator_edge_cases() {
     // Valore con caratteri speciali
-    let string_val = Value::new_constant(
-        IrConstantValue::String { string: "\n\t\\\"".into() },
-        IrType::String,
-    );
+    let string_val = Value::new_constant(IrConstantValue::String { string: "\n\t\\\"".into() }, IrType::String);
 
-    let term = Terminator::new(
-        TerminatorKind::Return {
-            value: string_val,
-            ty: IrType::String,
-        },
-        dummy_span(),
-    );
+    let term = Terminator::new(TerminatorKind::Return { value: string_val, ty: IrType::String }, dummy_span());
 
     assert!(term.is_terminator());
     assert!(term.get_targets().is_empty());
     assert_eq!(format!("{}", term), "ret \"\\n\\t\\\\\\\"\" string");
 
     // Valori numerici edge
-    let edge_cases = [
-        (i32::MIN, "ret -2147483648i32 i32"),
-        (i32::MAX, "ret 2147483647i32 i32"),
-        (0, "ret 0i32 i32"),
-    ];
+    let edge_cases = [(i32::MIN, "ret -2147483648i32 i32"), (i32::MAX, "ret 2147483647i32 i32"), (0, "ret 0i32 i32")];
 
     for (val, expected) in edge_cases {
         let value = create_i32_value(val);
-        let term = Terminator::new(
-            TerminatorKind::Return {
-                value: value.clone(),
-                ty: IrType::I32,
-            },
-            dummy_span(),
-        );
+        let term = Terminator::new(TerminatorKind::Return { value: value.clone(), ty: IrType::I32 }, dummy_span());
 
         assert_eq!(format!("{}", term), expected);
     }
@@ -124,10 +105,7 @@ fn switch_terminator_edge_cases() {
     );
 
     assert_eq!(term.get_targets(), vec!["case1", "default"]);
-    assert_eq!(
-        format!("{}", term),
-        "switch 42i32 i32: 1i32 => case1, default default"
-    );
+    assert_eq!(format!("{}", term), "switch 42i32 i32: 1i32 => case1, default default");
 
     // Valori estremi nei cases
     let term = Terminator::new(
@@ -153,10 +131,7 @@ fn switch_terminator_edge_cases() {
 fn indirect_branch_edge_cases() {
     // Zero labels
     let term = Terminator::new(
-        TerminatorKind::IndirectBranch {
-            address: create_i32_value(0xABCD),
-            possible_labels: Vec::new(),
-        },
+        TerminatorKind::IndirectBranch { address: create_i32_value(0xABCD), possible_labels: Vec::new() },
         dummy_span(),
     );
 
@@ -194,18 +169,12 @@ fn get_targets_edge_cases() {
             value: create_i32_value(1),
             ty: IrType::I32,
             default_label: "target".to_string(),
-            cases: vec![
-                (create_i32_value(1), "target".to_string()),
-                (create_i32_value(2), "target".to_string()),
-            ],
+            cases: vec![(create_i32_value(1), "target".to_string()), (create_i32_value(2), "target".to_string())],
         },
         dummy_span(),
     );
 
-    assert_eq!(
-        switch_term.get_targets(),
-        vec!["target", "target", "target"]
-    );
+    assert_eq!(switch_term.get_targets(), vec!["target", "target", "target"]);
 
     // ConditionalBranch con target vuoti
     let cond_term = Terminator::new(

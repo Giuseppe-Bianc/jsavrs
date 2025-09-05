@@ -4,9 +4,7 @@ pub mod debug_info;
 pub mod kind;
 pub mod literal;
 
-pub use self::{
-    constant::RIrConstantValue, debug_info::RValueDebugInfo, kind::RValueKind, literal::RIrLiteralValue,
-};
+pub use self::{constant::RIrConstantValue, debug_info::RValueDebugInfo, kind::RValueKind, literal::RIrLiteralValue};
 
 use super::types::{RIrType, RScopeId};
 use crate::location::source_span::SourceSpan;
@@ -35,7 +33,6 @@ impl fmt::Display for RValueId {
     }
 }
 
-
 #[derive(Debug, Clone, PartialEq)]
 pub struct RValue {
     pub id: RValueId,
@@ -48,60 +45,27 @@ pub struct RValue {
 impl RValue {
     pub fn new_literal(imm: RIrLiteralValue) -> Self {
         let ty: RIrType = (&imm).into();
-        RValue {
-            id: RValueId::new(),
-            kind: RValueKind::Literal(imm),
-            ty,
-            debug_info: None,
-            scope: None,
-        }
+        RValue { id: RValueId::new(), kind: RValueKind::Literal(imm), ty, debug_info: None, scope: None }
     }
 
     pub fn new_constant(imm: RIrConstantValue, ty: RIrType) -> Self {
-        RValue {
-            id: RValueId::new(),
-            kind: RValueKind::Constant(imm),
-            ty,
-            debug_info: None,
-            scope: None,
-        }
+        RValue { id: RValueId::new(), kind: RValueKind::Constant(imm), ty, debug_info: None, scope: None }
     }
 
     pub fn new_local(name: Arc<str>, ty: RIrType) -> Self {
-        RValue {
-            id: RValueId::new(),
-            kind: RValueKind::Local(name),
-            ty,
-            debug_info: None,
-            scope: None,
-        }
+        RValue { id: RValueId::new(), kind: RValueKind::Local(name), ty, debug_info: None, scope: None }
     }
 
     pub fn new_global(name: Arc<str>, ty: RIrType) -> Self {
-        RValue {
-            id: RValueId::new(),
-            kind: RValueKind::Global(name),
-            ty,
-            debug_info: None,
-            scope: None,
-        }
+        RValue { id: RValueId::new(), kind: RValueKind::Global(name), ty, debug_info: None, scope: None }
     }
 
     pub fn new_temporary(tmp_id: u64, ty: RIrType) -> Self {
-        RValue {
-            id: RValueId::new(),
-            kind: RValueKind::Temporary(tmp_id),
-            ty,
-            debug_info: None,
-            scope: None,
-        }
+        RValue { id: RValueId::new(), kind: RValueKind::Temporary(tmp_id), ty, debug_info: None, scope: None }
     }
 
     pub fn with_debug_info(mut self, name: Option<Arc<str>>, span: SourceSpan) -> Self {
-        self.debug_info = Some(RValueDebugInfo {
-            name,
-            source_span: span,
-        });
+        self.debug_info = Some(RValueDebugInfo { name, source_span: span });
         self
     }
 

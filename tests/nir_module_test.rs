@@ -4,19 +4,12 @@ use jsavrs::nir::{BasicBlock, DataLayout, Function, IrParameter, IrType, Module,
 
 // Helper function per creare un parametro IR di test
 fn create_test_param(name: &str, ty: IrType) -> IrParameter {
-    IrParameter {
-        name: name.to_string(),
-        ty,
-        attributes: ParamAttributes::default(),
-    }
+    IrParameter { name: name.to_string(), ty, attributes: ParamAttributes::default() }
 }
 
 // Helper function per creare una funzione di test
 fn create_test_function(name: &str) -> Function {
-    let params = vec![
-        create_test_param("a", IrType::I32),
-        create_test_param("b", IrType::F32),
-    ];
+    let params = vec![create_test_param("a", IrType::I32), create_test_param("b", IrType::F32)];
     Function::new(name, params, IrType::Void)
 }
 

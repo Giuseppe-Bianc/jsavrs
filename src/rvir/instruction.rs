@@ -58,53 +58,16 @@ pub struct DebugInfo {
 
 #[derive(Debug, Clone, PartialEq)]
 pub enum RInstructionKind {
-    Alloca {
-        ty: RIrType,
-    },
-    Store {
-        value: RValue,
-        dest: RValue,
-    },
-    Load {
-        src: RValue,
-        ty: RIrType,
-    },
-    Binary {
-        op: RIrBinaryOp,
-        left: RValue,
-        right: RValue,
-        ty: RIrType,
-    },
-    Unary {
-        op: RIrUnaryOp,
-        operand: RValue,
-        ty: RIrType,
-    },
-    Call {
-        func: RValue,
-        args: Vec<RValue>,
-        ty: RIrType,
-    },
-    GetElementPtr {
-        base: RValue,
-        index: RValue,
-        element_ty: RIrType,
-    },
-    Cast {
-        kind: RCastKind,
-        value: RValue,
-        from_ty: RIrType,
-        to_ty: RIrType,
-    },
-    Phi {
-        ty: RIrType,
-        incoming: Vec<(RValue, String)>,
-    },
-    Vector {
-        op: RVectorOp,
-        operands: Vec<RValue>,
-        ty: RIrType,
-    },
+    Alloca { ty: RIrType },
+    Store { value: RValue, dest: RValue },
+    Load { src: RValue, ty: RIrType },
+    Binary { op: RIrBinaryOp, left: RValue, right: RValue, ty: RIrType },
+    Unary { op: RIrUnaryOp, operand: RValue, ty: RIrType },
+    Call { func: RValue, args: Vec<RValue>, ty: RIrType },
+    GetElementPtr { base: RValue, index: RValue, element_ty: RIrType },
+    Cast { kind: RCastKind, value: RValue, from_ty: RIrType, to_ty: RIrType },
+    Phi { ty: RIrType, incoming: Vec<(RValue, String)> },
+    Vector { op: RVectorOp, operands: Vec<RValue>, ty: RIrType },
 }
 
 #[derive(Debug, Clone, PartialEq)]
@@ -171,12 +134,7 @@ impl From<UnaryOp> for RIrUnaryOp {
 
 impl RInstruction {
     pub fn new(kind: RInstructionKind, span: SourceSpan) -> Self {
-        RInstruction {
-            kind,
-            result: None,
-            debug_info: DebugInfo { source_span: span },
-            scope: None,
-        }
+        RInstruction { kind, result: None, debug_info: DebugInfo { source_span: span }, scope: None }
     }
 
     pub fn with_result(mut self, result: RValue) -> Self {
@@ -192,11 +150,7 @@ impl RInstruction {
 
 impl fmt::Display for RInstruction {
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
-        let result_str = if let Some(result) = &self.result {
-            format!("{result} = ")
-        } else {
-            String::new()
-        };
+        let result_str = if let Some(result) = &self.result { format!("{result} = ") } else { String::new() };
 
         match &self.kind {
             RInstructionKind::Alloca { ty } => write!(f, "{result_str}alloca {ty}"),
@@ -205,30 +159,23 @@ impl fmt::Display for RInstruction {
             RInstructionKind::Binary { op, left, right, ty } => write!(f, "{result_str}{op} {left} {right}, {ty}"),
             RInstructionKind::Unary { op, operand, ty } => write!(f, "{result_str}{op} {operand}, {ty}"),
             RInstructionKind::Call { func, args, ty } => {
-                let args_str = args
-                    .iter()
-                    .map(|arg| arg.to_string())
-                    .collect::<Vec<_>>()
-                    .join(", ");
+                let args_str = args.iter().map(|arg| arg.to_string()).collect::<Vec<_>>().join(", ");
                 write!(f, "{result_str} call {func}({args_str}) : {ty}")
             }
-            RInstructionKind::GetElementPtr { base, index, element_ty } => write!(f, "{result_str} getelementptr {base}, {index} : {element_ty}"),
-            RInstructionKind::Cast { kind: _, value, from_ty, to_ty } => write!(f, "{result_str} cast {value} from {from_ty} to {to_ty}"),
+            RInstructionKind::GetElementPtr { base, index, element_ty } => {
+                write!(f, "{result_str} getelementptr {base}, {index} : {element_ty}")
+            }
+            RInstructionKind::Cast { kind: _, value, from_ty, to_ty } => {
+                write!(f, "{result_str} cast {value} from {from_ty} to {to_ty}")
+            }
 
             RInstructionKind::Phi { ty, incoming } => {
-                let incoming_str = incoming
-                    .iter()
-                    .map(|(val, block)| format!("[ {val}, {block} ]"))
-                    .collect::<Vec<_>>()
-                    .join(", ");
+                let incoming_str =
+                    incoming.iter().map(|(val, block)| format!("[ {val}, {block} ]")).collect::<Vec<_>>().join(", ");
                 write!(f, "{result_str} phi {ty} [ {incoming_str} ]")
             }
             RInstructionKind::Vector { op, operands, ty } => {
-                let operands_str = operands
-                    .iter()
-                    .map(|op| op.to_string())
-                    .collect::<Vec<_>>()
-                    .join(", ");
+                let operands_str = operands.iter().map(|op| op.to_string()).collect::<Vec<_>>().join(", ");
                 write!(f, "{result_str} vector.{op} {operands_str} : {ty}")
             }
         }

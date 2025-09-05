@@ -1,9 +1,10 @@
 // src/cli.rs
 use clap::{
-    builder::{
-        styling::{AnsiColor, Effects}, Styles,
-    },
     Parser, ValueHint,
+    builder::{
+        Styles,
+        styling::{AnsiColor, Effects},
+    },
 };
 use std::path::PathBuf;
 
@@ -30,11 +31,7 @@ pub fn custom_styles() -> Styles {
 // Custom parser to enforce .vn extension
 fn parse_vn_file(s: &str) -> Result<PathBuf, String> {
     let p = PathBuf::from(s);
-    let is_vn = p
-        .extension()
-        .and_then(|e| e.to_str())
-        .map(|e| e.eq_ignore_ascii_case("vn"))
-        .unwrap_or(false);
+    let is_vn = p.extension().and_then(|e| e.to_str()).map(|e| e.eq_ignore_ascii_case("vn")).unwrap_or(false);
     if is_vn {
         Ok(p)
     } else {

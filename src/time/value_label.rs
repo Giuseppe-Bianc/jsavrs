@@ -47,10 +47,7 @@ impl ValueLabel {
             _ => TimeUnit::Other(time_label),
         };
 
-        ValueLabel {
-            time_val,
-            time_label: unit,
-        }
+        ValueLabel { time_val, time_label: unit }
     }
 
     pub fn format_time(&self) -> String {

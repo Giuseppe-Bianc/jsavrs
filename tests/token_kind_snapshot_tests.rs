@@ -1,6 +1,6 @@
 use insta::assert_debug_snapshot;
 use jsavrs::tokens::number::Number;
-use jsavrs::tokens::token_kind::{split_numeric_and_suffix, TokenKind};
+use jsavrs::tokens::token_kind::{TokenKind, split_numeric_and_suffix};
 use logos::Logos;
 use std::sync::Arc;
 
@@ -129,10 +129,7 @@ fn test_numeric_integer() {
     // Qui assumiamo che Number::Integer(i64) sia un modo valido per costruire un Number
     let num = Number::Integer(123);
     assert_debug_snapshot!("numeric", TokenKind::Numeric(num.clone()).to_string());
-    assert_debug_snapshot!(
-        "hexadecimal",
-        TokenKind::Hexadecimal(num.clone()).to_string()
-    );
+    assert_debug_snapshot!("hexadecimal", TokenKind::Hexadecimal(num.clone()).to_string());
     assert_debug_snapshot!("octal", TokenKind::Octal(num.clone()).to_string());
     assert_debug_snapshot!("binary", TokenKind::Binary(num.clone()).to_string());
 }
@@ -189,10 +186,7 @@ fn test_all_keywords() {
         TokenKind::KeywordMain,
     ];
 
-    let input_result: Vec<(TokenKind, String)> = mapping
-        .iter()
-        .map(|kind| (kind.clone(), kind.to_string()))
-        .collect();
+    let input_result: Vec<(TokenKind, String)> = mapping.iter().map(|kind| (kind.clone(), kind.to_string())).collect();
 
     assert_debug_snapshot!(input_result);
 }
@@ -216,10 +210,7 @@ fn test_all_primitive_types() {
         TokenKind::TypeBool,
     ];
 
-    let input_result: Vec<(TokenKind, String)> = mapping
-        .iter()
-        .map(|kind| (kind.clone(), kind.to_string()))
-        .collect();
+    let input_result: Vec<(TokenKind, String)> = mapping.iter().map(|kind| (kind.clone(), kind.to_string())).collect();
 
     assert_debug_snapshot!(input_result);
 }
@@ -240,10 +231,7 @@ fn test_punctuation() {
         TokenKind::Dot,
     ];
 
-    let input_result: Vec<(TokenKind, String)> = mapping
-        .iter()
-        .map(|kind| (kind.clone(), kind.to_string()))
-        .collect();
+    let input_result: Vec<(TokenKind, String)> = mapping.iter().map(|kind| (kind.clone(), kind.to_string())).collect();
 
     assert_debug_snapshot!(input_result);
 }
@@ -280,10 +268,7 @@ fn test_operators_single_and_multi_char() {
         TokenKind::ShiftRight,
     ];
 
-    let input_result: Vec<(TokenKind, String)> = mapping
-        .iter()
-        .map(|kind| (kind.clone(), kind.to_string()))
-        .collect();
+    let input_result: Vec<(TokenKind, String)> = mapping.iter().map(|kind| (kind.clone(), kind.to_string())).collect();
 
     assert_debug_snapshot!(input_result);
 }

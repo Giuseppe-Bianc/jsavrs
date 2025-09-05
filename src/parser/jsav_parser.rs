@@ -15,11 +15,7 @@ pub struct JsavParser {
 
 impl JsavParser {
     pub fn new(tokens: Vec<Token>) -> Self {
-        Self {
-            tokens,
-            current: 0,
-            errors: Vec::new(),
-        }
+        Self { tokens, current: 0, errors: Vec::new() }
     }
 
     pub fn parse(mut self) -> (Vec<Stmt>, Vec<CompileError>) {
@@ -56,15 +52,9 @@ impl JsavParser {
         let body = self.parse_block_stmt()?;
         let end_span = body.span();
 
-        let function_span = start_token
-            .span
-            .merged(end_span)
-            .unwrap_or_else(|| start_token.span.clone());
+        let function_span = start_token.span.merged(end_span).unwrap_or_else(|| start_token.span.clone());
 
-        Some(Stmt::MainFunction {
-            body: vec![body],
-            span: function_span,
-        })
+        Some(Stmt::MainFunction { body: vec![body], span: function_span })
     }
     fn parse_break(&mut self) -> Option<Stmt> {
         let span = self.advance_and_get_span()?;
@@ -93,19 +83,12 @@ impl JsavParser {
         }
 
         self.expect(&TokenKind::CloseBrace, "end of block");
-        Some(Stmt::Block {
-            statements,
-            span: self.merged_span(&start_token),
-        })
+        Some(Stmt::Block { statements, span: self.merged_span(&start_token) })
     }
 
     fn parse_return(&mut self) -> Option<Stmt> {
         let start_token = self.advance()?.clone(); // 'return'
-        let return_value = if !self.is_end_of_statement() {
-            Some(self.parse_expr(0)?)
-        } else {
-            None
-        };
+        let return_value = if !self.is_end_of_statement() { Some(self.parse_expr(0)?) } else { None };
 
         Some(Stmt::Return {
             value: return_value.clone(),
@@ -121,10 +104,7 @@ impl JsavParser {
     }
 
     fn calculate_return_span(&self, start: &Token, value: &Option<Expr>) -> SourceSpan {
-        value
-            .as_ref()
-            .and_then(|v| start.span.merged(v.span()))
-            .unwrap_or_else(|| start.span.clone())
+        value.as_ref().and_then(|v| start.span.merged(v.span())).unwrap_or_else(|| start.span.clone())
     }
 
     fn parse_function(&mut self) -> Option<Stmt> {
@@ -141,14 +121,8 @@ impl JsavParser {
             self.expect(&TokenKind::Colon, "after parameter name");
             let type_ann = self.parse_type()?;
             let type_span = self.previous()?.span.clone();
-            let param_span = name_span
-                .merged(&type_span)
-                .unwrap_or_else(|| param_start.span.clone());
-            params.push(Parameter {
-                name,
-                type_annotation: type_ann,
-                span: param_span,
-            });
+            let param_span = name_span.merged(&type_span).unwrap_or_else(|| param_start.span.clone());
+            params.push(Parameter { name, type_annotation: type_ann, span: param_span });
             if !self.match_token(&TokenKind::Comma) {
                 break;
             }
@@ -164,10 +138,7 @@ impl JsavParser {
 
         let body = self.parse_block_stmt()?;
         let end_span = body.span();
-        let function_span = start_token
-            .span
-            .merged(end_span)
-            .unwrap_or_else(|| start_token.span.clone());
+        let function_span = start_token.span.merged(end_span).unwrap_or_else(|| start_token.span.clone());
 
         Some(Stmt::Function {
             name,
@@ -185,18 +156,9 @@ impl JsavParser {
         self.expect(&TokenKind::CloseParen, "after the condition");
         let then_branch = self.parse_block_stmt()?;
 
-        let else_branch = if self.match_token(&TokenKind::KeywordElse) {
-            Some(vec![self.parse_stmt()?])
-        } else {
-            None
-        };
+        let else_branch = if self.match_token(&TokenKind::KeywordElse) { Some(vec![self.parse_stmt()?]) } else { None };
 
-        Some(Stmt::If {
-            condition,
-            then_branch: vec![then_branch],
-            else_branch,
-            span: self.merged_span(&start_token),
-        })
+        Some(Stmt::If { condition, then_branch: vec![then_branch], else_branch, span: self.merged_span(&start_token) })
     }
 
     fn parse_while(&mut self) -> Option<Stmt> {
@@ -206,15 +168,8 @@ impl JsavParser {
         self.expect(&TokenKind::CloseParen, "after the condition");
         let body = self.parse_block_stmt()?;
         let end_span = body.span();
-        let function_span = start_token
-            .span
-            .merged(end_span)
-            .unwrap_or_else(|| start_token.span.clone());
-        Some(Stmt::While {
-            condition,
-            body: vec![body],
-            span: function_span,
-        })
+        let function_span = start_token.span.merged(end_span).unwrap_or_else(|| start_token.span.clone());
+        Some(Stmt::While { condition, body: vec![body], span: function_span })
     }
 
     fn parse_for_initializer(&mut self) -> Option<Box<Stmt>> {
@@ -270,24 +225,15 @@ impl JsavParser {
         };
 
         // Calcola lo span totale (dal token 'for' alla fine del body)
-        let end_span = body.last().map(|s| s.span()).cloned().unwrap_or_else(|| {
-            self.previous()
-                .map(|t| t.span.clone())
-                .unwrap_or_else(|| start_token.span.clone())
-        });
+        let end_span = body
+            .last()
+            .map(|s| s.span())
+            .cloned()
+            .unwrap_or_else(|| self.previous().map(|t| t.span.clone()).unwrap_or_else(|| start_token.span.clone()));
 
-        let span = start_token
-            .span
-            .merged(&end_span)
-            .unwrap_or(start_token.span);
+        let span = start_token.span.merged(&end_span).unwrap_or(start_token.span);
 
-        Some(Stmt::For {
-            initializer,
-            condition,
-            increment,
-            body,
-            span,
-        })
+        Some(Stmt::For { initializer, condition, increment, body, span })
     }
 
     fn parse_type(&mut self) -> Option<Type> {
@@ -306,9 +252,7 @@ impl JsavParser {
             TokenKind::TypeChar => Type::Char,
             TokenKind::TypeString => Type::String,
             TokenKind::TypeBool => Type::Bool,
-            TokenKind::IdentifierAscii(name) | TokenKind::IdentifierUnicode(name) => {
-                Type::Custom(name.clone())
-            }
+            TokenKind::IdentifierAscii(name) | TokenKind::IdentifierUnicode(name) => Type::Custom(name.clone()),
             _ => {
                 self.syntax_error(
                     "Invalid type specification, expected primitive type or custom identifier",
@@ -351,9 +295,7 @@ impl JsavParser {
             .then(|| self.previous().map(|t| (t.clone(), false)))
             .flatten()
             .or_else(|| {
-                self.match_token(&TokenKind::KeywordVar)
-                    .then(|| self.previous().map(|t| (t.clone(), true)))
-                    .flatten()
+                self.match_token(&TokenKind::KeywordVar).then(|| self.previous().map(|t| (t.clone(), true))).flatten()
             })?;
 
         let mut variables = Vec::new();
@@ -405,11 +347,7 @@ impl JsavParser {
 
         if variables.len() != initializers.len() {
             self.syntax_error(
-                format!(
-                    "Declaration mismatch: {} variables but {} initializers",
-                    variables.len(),
-                    initializers.len()
-                ),
+                format!("Declaration mismatch: {} variables but {} initializers", variables.len(), initializers.len()),
                 &start_token,
                 Some("Each variable must have exactly one initializer expression"),
             );
@@ -486,10 +424,7 @@ impl JsavParser {
             TokenKind::OpenParen => self.parse_grouping(token),
             // Variables
             TokenKind::IdentifierAscii(name) | TokenKind::IdentifierUnicode(name) => {
-                Some(Expr::Variable {
-                    name,
-                    span: token.span,
-                })
+                Some(Expr::Variable { name, span: token.span })
             }
             _ => {
                 self.syntax_error(
@@ -549,14 +484,8 @@ impl JsavParser {
     // Parsing operations
     fn parse_unary(&mut self, op: UnaryOp, token: Token) -> Expr {
         let (_, rbp) = unary_binding_power(&token);
-        let expr = self
-            .parse_expr(rbp)
-            .unwrap_or_else(|| Expr::null_expr(token.span.clone()));
-        Expr::Unary {
-            op,
-            expr: Box::new(expr),
-            span: token.span,
-        }
+        let expr = self.parse_expr(rbp).unwrap_or_else(|| Expr::null_expr(token.span.clone()));
+        Expr::Unary { op, expr: Box::new(expr), span: token.span }
     }
 
     fn parse_array_literal(&mut self, start_token: Token) -> Option<Expr> {
@@ -565,10 +494,7 @@ impl JsavParser {
         if !self.expect(&TokenKind::CloseBrace, "end of array literal") {
             return None;
         }
-        Some(Expr::ArrayLiteral {
-            elements,
-            span: self.merged_span(&start_token),
-        })
+        Some(Expr::ArrayLiteral { elements, span: self.merged_span(&start_token) })
     }
 
     fn extract_elements(&mut self, kind: TokenKind, elements: &mut Vec<Expr>) {
@@ -591,15 +517,8 @@ impl JsavParser {
             }
         };
 
-        let right = self
-            .parse_expr(binding_power(&token).1)
-            .unwrap_or_else(|| Expr::null_expr(token.span.clone()));
-        Some(Expr::Binary {
-            left: Box::new(left),
-            op,
-            right: Box::new(right),
-            span: token.span,
-        })
+        let right = self.parse_expr(binding_power(&token).1).unwrap_or_else(|| Expr::null_expr(token.span.clone()));
+        Some(Expr::Binary { left: Box::new(left), op, right: Box::new(right), span: token.span })
     }
 
     fn parse_grouping(&mut self, start_token: Token) -> Option<Expr> {
@@ -607,21 +526,13 @@ impl JsavParser {
         if !self.expect(&TokenKind::CloseParen, "end of grouping") {
             return None;
         }
-        Some(Expr::Grouping {
-            expr: Box::new(expr?),
-            span: self.merged_span(&start_token),
-        })
+        Some(Expr::Grouping { expr: Box::new(expr?), span: self.merged_span(&start_token) })
     }
 
     fn parse_assignment(&mut self, left: Expr, token: Token) -> Option<Expr> {
-        let value = self
-            .parse_expr(1)
-            .unwrap_or_else(|| Expr::null_expr(token.span.clone()));
+        let value = self.parse_expr(1).unwrap_or_else(|| Expr::null_expr(token.span.clone()));
 
-        let span = left
-            .span()
-            .merged(value.span())
-            .unwrap_or(token.span.clone());
+        let span = left.span().merged(value.span()).unwrap_or(token.span.clone());
 
         // Check if left is valid l-value (variable or array access)
         let valid = matches!(&left, Expr::Variable { .. } | Expr::ArrayAccess { .. });
@@ -637,11 +548,7 @@ impl JsavParser {
             return None;
         }
 
-        Some(Expr::Assign {
-            target: Box::new(left),
-            value: Box::new(value),
-            span,
-        })
+        Some(Expr::Assign { target: Box::new(left), value: Box::new(value), span })
     }
 
     fn parse_call(&mut self, callee: Expr, start_token: Token) -> Option<Expr> {
@@ -653,31 +560,19 @@ impl JsavParser {
             return None;
         }
 
-        Some(Expr::Call {
-            callee: Box::new(callee),
-            arguments,
-            span: self.merged_span(&start_token),
-        })
+        Some(Expr::Call { callee: Box::new(callee), arguments, span: self.merged_span(&start_token) })
     }
 
     fn parse_array_access(&mut self, array: Expr, start_token: Token) -> Option<Expr> {
-        let index = self
-            .parse_expr(0)
-            .unwrap_or_else(|| Expr::null_expr(start_token.span.clone()));
+        let index = self.parse_expr(0).unwrap_or_else(|| Expr::null_expr(start_token.span.clone()));
         if !self.expect(&TokenKind::CloseBracket, "end of array access") {
             return None;
         }
-        Some(Expr::ArrayAccess {
-            array: Box::new(array),
-            index: Box::new(index),
-            span: self.merged_span(&start_token),
-        })
+        Some(Expr::ArrayAccess { array: Box::new(array), index: Box::new(index), span: self.merged_span(&start_token) })
     }
 
     fn merged_span(&self, start_token: &Token) -> SourceSpan {
-        self.previous()
-            .and_then(|end| start_token.span.merged(&end.span))
-            .unwrap_or(start_token.span.clone())
+        self.previous().and_then(|end| start_token.span.merged(&end.span)).unwrap_or(start_token.span.clone())
     }
 
     fn syntax_error(&mut self, message: impl Into<String>, token: &Token, help: Option<&str>) {
@@ -696,23 +591,14 @@ impl JsavParser {
         } else {
             let current_token = self.peek().cloned();
             let expected = &kind.clone();
-            let found_str = current_token
-                .as_ref()
-                .map(|t| t.kind.to_string())
-                .unwrap_or_else(|| "end of input".to_string());
+            let found_str =
+                current_token.as_ref().map(|t| t.kind.to_string()).unwrap_or_else(|| "end of input".to_string());
 
-            let span = current_token
-                .as_ref()
-                .map(|t| t.span.clone())
-                .unwrap_or_default();
+            let span = current_token.as_ref().map(|t| t.span.clone()).unwrap_or_default();
 
             let error_message = format!("Expected {expected} in {context}, found {found_str}.");
             let help_message = format!("Try adding a {expected}");
-            self.errors.push(CompileError::SyntaxError {
-                message: error_message,
-                span,
-                help: Some(help_message),
-            });
+            self.errors.push(CompileError::SyntaxError { message: error_message, span, help: Some(help_message) });
             false
         }
     }
@@ -746,8 +632,6 @@ impl JsavParser {
     }
 
     fn is_at_end(&self) -> bool {
-        self.peek()
-            .map(|t| t.kind == TokenKind::Eof)
-            .unwrap_or(true)
+        self.peek().map(|t| t.kind == TokenKind::Eof).unwrap_or(true)
     }
 }

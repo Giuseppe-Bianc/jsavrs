@@ -1,7 +1,4 @@
-use jsavrs::nir::{
-    IrBinaryOp, IrConstantValue, IrLiteralValue, IrType, IrUnaryOp, Value, ValueDebugInfo,
-    ValueKind,
-};
+use jsavrs::nir::{IrBinaryOp, IrConstantValue, IrLiteralValue, IrType, IrUnaryOp, Value, ValueDebugInfo, ValueKind};
 use jsavrs::parser::ast::{BinaryOp, UnaryOp};
 use jsavrs::utils::*;
 
@@ -14,12 +11,7 @@ fn value_creation_and_properties() {
     assert!(literal_val.debug_info.is_none());
 
     // Constant value
-    let const_val = Value::new_constant(
-        IrConstantValue::String {
-            string: "test".into(),
-        },
-        IrType::String,
-    );
+    let const_val = Value::new_constant(IrConstantValue::String { string: "test".into() }, IrType::String);
     assert!(matches!(const_val.kind, ValueKind::Constant(_)));
     assert_eq!(const_val.ty, IrType::String);
 
@@ -47,34 +39,16 @@ fn value_with_debug_info() {
 #[test]
 fn value_display_formatting() {
     // Literal values
-    assert_eq!(
-        format!("{}", Value::new_literal(IrLiteralValue::I8(-10))),
-        "-10i8"
-    );
-    assert_eq!(
-        format!("{}", Value::new_literal(IrLiteralValue::U16(65535))),
-        "65535u16"
-    );
-    assert_eq!(
-        format!("{}", Value::new_literal(IrLiteralValue::F32(3.5))),
-        "3.5f32"
-    );
-    assert_eq!(
-        format!("{}", Value::new_literal(IrLiteralValue::Bool(true))),
-        "true"
-    );
-    assert_eq!(
-        format!("{}", Value::new_literal(IrLiteralValue::Char('"'))),
-        "'\\\"'"
-    );
+    assert_eq!(format!("{}", Value::new_literal(IrLiteralValue::I8(-10))), "-10i8");
+    assert_eq!(format!("{}", Value::new_literal(IrLiteralValue::U16(65535))), "65535u16");
+    assert_eq!(format!("{}", Value::new_literal(IrLiteralValue::F32(3.5))), "3.5f32");
+    assert_eq!(format!("{}", Value::new_literal(IrLiteralValue::Bool(true))), "true");
+    assert_eq!(format!("{}", Value::new_literal(IrLiteralValue::Char('"'))), "'\\\"'");
 
     // Constant values
     let array_val = Value::new_constant(
         IrConstantValue::Array {
-            elements: vec![
-                Value::new_literal(IrLiteralValue::I32(1)),
-                Value::new_literal(IrLiteralValue::I32(2)),
-            ],
+            elements: vec![Value::new_literal(IrLiteralValue::I32(1)), Value::new_literal(IrLiteralValue::I32(2))],
         },
         IrType::Array(Box::new(IrType::I32), 2),
     );
@@ -83,32 +57,16 @@ fn value_display_formatting() {
     let struct_val = Value::new_constant(
         IrConstantValue::Struct {
             name: "Point".into(),
-            elements: vec![
-                Value::new_literal(IrLiteralValue::I32(10)),
-                Value::new_literal(IrLiteralValue::I32(20)),
-            ],
+            elements: vec![Value::new_literal(IrLiteralValue::I32(10)), Value::new_literal(IrLiteralValue::I32(20))],
         },
-        IrType::Struct(
-            "Point".into(),
-            vec![IrType::I32, IrType::I32],
-            dummy_span(),
-        ),
+        IrType::Struct("Point".into(), vec![IrType::I32, IrType::I32], dummy_span()),
     );
     assert_eq!(format!("{}", struct_val), "Point<10i32, 20i32>");
 
     // Local/Global/Temporary
-    assert_eq!(
-        format!("{}", Value::new_local("foo".into(), IrType::I32)),
-        "%foo"
-    );
-    assert_eq!(
-        format!("{}", Value::new_global("bar".into(), IrType::I32)),
-        "@bar"
-    );
-    assert_eq!(
-        format!("{}", Value::new_temporary(123, IrType::F32)),
-        "t123"
-    );
+    assert_eq!(format!("{}", Value::new_local("foo".into(), IrType::I32)), "%foo");
+    assert_eq!(format!("{}", Value::new_global("bar".into(), IrType::I32)), "@bar");
+    assert_eq!(format!("{}", Value::new_temporary(123, IrType::F32)), "t123");
 }
 
 // Tests for IrLiteralValue
@@ -128,10 +86,7 @@ fn literal_value_display_edge_cases() {
     assert_eq!(format!("{}", IrLiteralValue::F32(-0.0)), "-0.0f32");
     assert_eq!(format!("{}", IrLiteralValue::F32(f32::NAN)), "NaNf32");
     assert_eq!(format!("{}", IrLiteralValue::F32(f32::INFINITY)), "inff32");
-    assert_eq!(
-        format!("{}", IrLiteralValue::F32(f32::NEG_INFINITY)),
-        "-inff32"
-    );
+    assert_eq!(format!("{}", IrLiteralValue::F32(f32::NEG_INFINITY)), "-inff32");
 
     // Integer bounds
     assert_eq!(format!("{}", IrLiteralValue::I8(-128)), "-128i8");
@@ -153,10 +108,7 @@ fn constant_value_display_edge_cases() {
 
     // Array with different types
     let mixed_array = IrConstantValue::Array {
-        elements: vec![
-            Value::new_literal(IrLiteralValue::I32(1)),
-            Value::new_literal(IrLiteralValue::Bool(true)),
-        ]
+        elements: vec![Value::new_literal(IrLiteralValue::I32(1)), Value::new_literal(IrLiteralValue::Bool(true))],
     };
     assert_eq!(format!("{}", mixed_array), "[1i32, true]");
 
@@ -195,18 +147,12 @@ fn value_kind_variants() {
 // Tests for ValueDebugInfo
 #[test]
 fn debug_info_creation() {
-    let debug_info = ValueDebugInfo {
-        name: Some("var".into()),
-        source_span: dummy_span(),
-    };
+    let debug_info = ValueDebugInfo { name: Some("var".into()), source_span: dummy_span() };
 
     assert_eq!(debug_info.name, Some("var".into()));
     assert_eq!(debug_info.source_span, dummy_span());
 
-    let no_name = ValueDebugInfo {
-        name: None,
-        source_span: dummy_span(),
-    };
+    let no_name = ValueDebugInfo { name: None, source_span: dummy_span() };
     assert!(no_name.name.is_none());
 }
 #[test]
@@ -236,22 +182,10 @@ fn integer_display_formatting() {
     assert_eq!(format!("{}", IrLiteralValue::I8(127)), "127i8");
     assert_eq!(format!("{}", IrLiteralValue::I16(-32768)), "-32768i16");
     assert_eq!(format!("{}", IrLiteralValue::I16(32767)), "32767i16");
-    assert_eq!(
-        format!("{}", IrLiteralValue::I32(-2147483648)),
-        "-2147483648i32"
-    );
-    assert_eq!(
-        format!("{}", IrLiteralValue::I32(2147483647)),
-        "2147483647i32"
-    );
-    assert_eq!(
-        format!("{}", IrLiteralValue::I64(-9223372036854775808)),
-        "-9223372036854775808i64"
-    );
-    assert_eq!(
-        format!("{}", IrLiteralValue::I64(9223372036854775807)),
-        "9223372036854775807i64"
-    );
+    assert_eq!(format!("{}", IrLiteralValue::I32(-2147483648)), "-2147483648i32");
+    assert_eq!(format!("{}", IrLiteralValue::I32(2147483647)), "2147483647i32");
+    assert_eq!(format!("{}", IrLiteralValue::I64(-9223372036854775808)), "-9223372036854775808i64");
+    assert_eq!(format!("{}", IrLiteralValue::I64(9223372036854775807)), "9223372036854775807i64");
 
     // Limiti degli interi senza segno
     assert_eq!(format!("{}", IrLiteralValue::U8(0)), "0u8");
@@ -259,15 +193,9 @@ fn integer_display_formatting() {
     assert_eq!(format!("{}", IrLiteralValue::U16(0)), "0u16");
     assert_eq!(format!("{}", IrLiteralValue::U16(65535)), "65535u16");
     assert_eq!(format!("{}", IrLiteralValue::U32(0)), "0u32");
-    assert_eq!(
-        format!("{}", IrLiteralValue::U32(4294967295)),
-        "4294967295u32"
-    );
+    assert_eq!(format!("{}", IrLiteralValue::U32(4294967295)), "4294967295u32");
     assert_eq!(format!("{}", IrLiteralValue::U64(0)), "0u64");
-    assert_eq!(
-        format!("{}", IrLiteralValue::U64(18446744073709551615)),
-        "18446744073709551615u64"
-    );
+    assert_eq!(format!("{}", IrLiteralValue::U64(18446744073709551615)), "18446744073709551615u64");
 }
 
 #[test]
@@ -279,10 +207,7 @@ fn float_display_formatting() {
 
     // Numeri frazionari
     assert_eq!(format!("{}", IrLiteralValue::F32(3.14159)), "3.14159f32");
-    assert_eq!(
-        format!("{}", IrLiteralValue::F64(2.718281828459045)),
-        "2.718281828459045f64"
-    );
+    assert_eq!(format!("{}", IrLiteralValue::F64(2.718281828459045)), "2.718281828459045f64");
 
     // Zero negativo
     assert_eq!(format!("{}", IrLiteralValue::F32(-0.0)), "-0.0f32");
@@ -291,16 +216,10 @@ fn float_display_formatting() {
     // Valori speciali
     assert_eq!(format!("{}", IrLiteralValue::F32(f32::NAN)), "NaNf32");
     assert_eq!(format!("{}", IrLiteralValue::F32(f32::INFINITY)), "inff32");
-    assert_eq!(
-        format!("{}", IrLiteralValue::F32(f32::NEG_INFINITY)),
-        "-inff32"
-    );
+    assert_eq!(format!("{}", IrLiteralValue::F32(f32::NEG_INFINITY)), "-inff32");
     assert_eq!(format!("{}", IrLiteralValue::F64(f64::NAN)), "NaNf64");
     assert_eq!(format!("{}", IrLiteralValue::F64(f64::INFINITY)), "inff64");
-    assert_eq!(
-        format!("{}", IrLiteralValue::F64(f64::NEG_INFINITY)),
-        "-inff64"
-    );
+    assert_eq!(format!("{}", IrLiteralValue::F64(f64::NEG_INFINITY)), "-inff64");
 }
 
 #[test]
@@ -335,14 +254,8 @@ fn char_display_formatting() {
     assert_eq!(format!("{}", IrLiteralValue::Char('ß')), "'\\u{df}'");
     assert_eq!(format!("{}", IrLiteralValue::Char('あ')), "'\\u{3042}'");
     assert_eq!(format!("{}", IrLiteralValue::Char('😂')), "'\\u{1f602}'");
-    assert_eq!(
-        format!("{}", IrLiteralValue::Char('\u{FFFF}')),
-        "'\\u{ffff}'"
-    );
-    assert_eq!(
-        format!("{}", IrLiteralValue::Char('\u{10FFFF}')),
-        "'\\u{10ffff}'"
-    );
+    assert_eq!(format!("{}", IrLiteralValue::Char('\u{FFFF}')), "'\\u{ffff}'");
+    assert_eq!(format!("{}", IrLiteralValue::Char('\u{10FFFF}')), "'\\u{10ffff}'");
 
     // Caratteri che richiedono escape Unicode
     assert_eq!(format!("{}", IrLiteralValue::Char('\u{0}')), "'\\u{0}'");
@@ -357,24 +270,12 @@ fn display_precision_edge_cases() {
     assert_eq!(format!("{}", IrLiteralValue::F64(-10.0)), "-10.0f64");
 
     // Numeri con frazioni molto piccole
-    assert_eq!(
-        format!("{}", IrLiteralValue::F32(0.000000001)),
-        "0.000000001f32"
-    );
-    assert_eq!(
-        format!("{}", IrLiteralValue::F64(0.0000000000000001)),
-        "0.0000000000000001f64"
-    );
+    assert_eq!(format!("{}", IrLiteralValue::F32(0.000000001)), "0.000000001f32");
+    assert_eq!(format!("{}", IrLiteralValue::F64(0.0000000000000001)), "0.0000000000000001f64");
 
     // Numeri che sembrano interi ma hanno parte frazionaria
-    assert_eq!(
-        format!("{}", IrLiteralValue::F32(1.0000001)),
-        "1.0000001f32"
-    );
-    assert_eq!(
-        format!("{}", IrLiteralValue::F64(2.000000000000001)),
-        "2.000000000000001f64"
-    );
+    assert_eq!(format!("{}", IrLiteralValue::F32(1.0000001)), "1.0000001f32");
+    assert_eq!(format!("{}", IrLiteralValue::F64(2.000000000000001)), "2.000000000000001f64");
 }
 
 #[test]
@@ -403,28 +304,17 @@ fn test_binary_op_conversion() {
 
     for (input, expected) in test_cases {
         let result: IrBinaryOp = input.clone().into();
-        assert_eq!(
-            result, expected,
-            "Failed conversion for {:?}: expected {:?}, got {:?}",
-            input, expected, result
-        );
+        assert_eq!(result, expected, "Failed conversion for {:?}: expected {:?}, got {:?}", input, expected, result);
     }
 }
 
 #[test]
 fn test_unary_op_conversion() {
     // Test all variants
-    let test_cases = vec![
-        (UnaryOp::Negate, IrUnaryOp::Negate),
-        (UnaryOp::Not, IrUnaryOp::Not),
-    ];
+    let test_cases = vec![(UnaryOp::Negate, IrUnaryOp::Negate), (UnaryOp::Not, IrUnaryOp::Not)];
 
     for (input, expected) in test_cases {
         let result: IrUnaryOp = input.clone().into();
-        assert_eq!(
-            result, expected,
-            "Failed conversion for {:?}: expected {:?}, got {:?}",
-            input, expected, result
-        );
+        assert_eq!(result, expected, "Failed conversion for {:?}: expected {:?}, got {:?}", input, expected, result);
     }
 }

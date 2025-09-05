@@ -12,14 +12,8 @@ where
     let id2 = T::default();
 
     assert_ne!(id1, id2, "Default values should be unique across calls");
-    assert!(
-        Uuid::parse_str(&id1.to_string()).is_ok(),
-        "Default value must format as a valid UUID"
-    );
-    assert!(
-        Uuid::parse_str(&id2.to_string()).is_ok(),
-        "Default value must format as a valid UUID"
-    );
+    assert!(Uuid::parse_str(&id1.to_string()).is_ok(), "Default value must format as a valid UUID");
+    assert!(Uuid::parse_str(&id2.to_string()).is_ok(), "Default value must format as a valid UUID");
 }
 
 #[test]
@@ -41,16 +35,9 @@ fn test_ir_type_display() {
         (IrType::Void, "void"),
         (IrType::Pointer(Box::new(IrType::I32)), "*i32"),
         (IrType::Array(Box::new(IrType::I32), 10), "[i32; 10]"),
+        (IrType::Custom("MyCustomType".to_string(), SourceSpan::default()), "MyCustomType"),
         (
-            IrType::Custom("MyCustomType".to_string(), SourceSpan::default()),
-            "MyCustomType",
-        ),
-        (
-            IrType::Struct(
-                "MyStruct".to_string(),
-                vec![IrType::I32, IrType::F64],
-                SourceSpan::default(),
-            ),
+            IrType::Struct("MyStruct".to_string(), vec![IrType::I32, IrType::F64], SourceSpan::default()),
             "struct MyStruct { i32, f64 }",
         ),
     ];

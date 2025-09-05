@@ -58,53 +58,16 @@ pub struct DebugInfo {
 
 #[derive(Debug, Clone, PartialEq)]
 pub enum InstructionKind {
-    Alloca {
-        ty: IrType,
-    },
-    Store {
-        value: Value,
-        dest: Value,
-    },
-    Load {
-        src: Value,
-        ty: IrType,
-    },
-    Binary {
-        op: IrBinaryOp,
-        left: Value,
-        right: Value,
-        ty: IrType,
-    },
-    Unary {
-        op: IrUnaryOp,
-        operand: Value,
-        ty: IrType,
-    },
-    Call {
-        func: Value,
-        args: Vec<Value>,
-        ty: IrType,
-    },
-    GetElementPtr {
-        base: Value,
-        index: Value,
-        element_ty: IrType,
-    },
-    Cast {
-        kind: CastKind,
-        value: Value,
-        from_ty: IrType,
-        to_ty: IrType,
-    },
-    Phi {
-        ty: IrType,
-        incoming: Vec<(Value, String)>,
-    },
-    Vector {
-        op: VectorOp,
-        operands: Vec<Value>,
-        ty: IrType,
-    },
+    Alloca { ty: IrType },
+    Store { value: Value, dest: Value },
+    Load { src: Value, ty: IrType },
+    Binary { op: IrBinaryOp, left: Value, right: Value, ty: IrType },
+    Unary { op: IrUnaryOp, operand: Value, ty: IrType },
+    Call { func: Value, args: Vec<Value>, ty: IrType },
+    GetElementPtr { base: Value, index: Value, element_ty: IrType },
+    Cast { kind: CastKind, value: Value, from_ty: IrType, to_ty: IrType },
+    Phi { ty: IrType, incoming: Vec<(Value, String)> },
+    Vector { op: VectorOp, operands: Vec<Value>, ty: IrType },
 }
 
 #[derive(Debug, Clone, PartialEq)]
@@ -171,12 +134,7 @@ impl From<UnaryOp> for IrUnaryOp {
 
 impl Instruction {
     pub fn new(kind: InstructionKind, span: SourceSpan) -> Self {
-        Instruction {
-            kind,
-            result: None,
-            debug_info: DebugInfo { source_span: span },
-            scope: None,
-        }
+        Instruction { kind, result: None, debug_info: DebugInfo { source_span: span }, scope: None }
     }
 
     pub fn with_result(mut self, result: Value) -> Self {
@@ -192,11 +150,7 @@ impl Instruction {
 
 impl fmt::Display for Instruction {
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
-        let result_str = if let Some(result) = &self.result {
-            format!("{result} = ")
-        } else {
-            String::new()
-        };
+        let result_str = if let Some(result) = &self.result { format!("{result} = ") } else { String::new() };
 
         match &self.kind {
             InstructionKind::Alloca { ty } => write!(f, "{result_str}alloca {ty}"),
@@ -205,30 +159,23 @@ impl fmt::Display for Instruction {
             InstructionKind::Binary { op, left, right, ty } => write!(f, "{result_str}{op} {left} {right}, {ty}"),
             InstructionKind::Unary { op, operand, ty } => write!(f, "{result_str}{op} {operand} {ty}"),
             InstructionKind::Call { func, args, ty } => {
-                let args_str = args
-                    .iter()
-                    .map(|arg| arg.to_string())
-                    .collect::<Vec<_>>()
-                    .join(", ");
+                let args_str = args.iter().map(|arg| arg.to_string()).collect::<Vec<_>>().join(", ");
                 write!(f, "{result_str}{func}({args_str}) : {ty}")
             }
-            InstructionKind::GetElementPtr { base, index, element_ty } => write!(f, "{result_str} getelementptr {base}, {index} : {element_ty}"),
-            InstructionKind::Cast { kind: _, value, from_ty, to_ty } => write!(f, "{result_str} cast {value} from {from_ty} to {to_ty}"),
+            InstructionKind::GetElementPtr { base, index, element_ty } => {
+                write!(f, "{result_str} getelementptr {base}, {index} : {element_ty}")
+            }
+            InstructionKind::Cast { kind: _, value, from_ty, to_ty } => {
+                write!(f, "{result_str} cast {value} from {from_ty} to {to_ty}")
+            }
 
             InstructionKind::Phi { ty, incoming } => {
-                let incoming_str = incoming
-                    .iter()
-                    .map(|(val, block)| format!("[ {val}, {block} ]"))
-                    .collect::<Vec<_>>()
-                    .join(", ");
+                let incoming_str =
+                    incoming.iter().map(|(val, block)| format!("[ {val}, {block} ]")).collect::<Vec<_>>().join(", ");
                 write!(f, "{result_str} phi {ty} [ {incoming_str} ]")
             }
             InstructionKind::Vector { op, operands, ty } => {
-                let operands_str = operands
-                    .iter()
-                    .map(|op| op.to_string())
-                    .collect::<Vec<_>>()
-                    .join(", ");
+                let operands_str = operands.iter().map(|op| op.to_string()).collect::<Vec<_>>().join(", ");
                 write!(f, "{result_str} vector.{op} {operands_str} : {ty}")
             }
         }

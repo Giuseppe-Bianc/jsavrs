@@ -41,10 +41,7 @@ fn test_i32_display() {
 fn test_unsigned_integer_display() {
     assert_snapshot!("unsigned_0", Number::UnsignedInteger(0).to_string());
     assert_snapshot!("unsigned_42", Number::UnsignedInteger(42).to_string());
-    assert_snapshot!(
-        "unsigned_max",
-        Number::UnsignedInteger(u64::MAX).to_string()
-    );
+    assert_snapshot!("unsigned_max", Number::UnsignedInteger(u64::MAX).to_string());
 }
 
 #[test]
@@ -76,10 +73,7 @@ fn test_float32_display_snapshot() {
     assert_snapshot!("float32_pi", Number::Float32(3.14).to_string());
     assert_snapshot!("float32_neg_e", Number::Float32(-2.71).to_string());
     assert_snapshot!("float32_inf", Number::Float32(f32::INFINITY).to_string());
-    assert_snapshot!(
-        "float32_neg_inf",
-        Number::Float32(f32::NEG_INFINITY).to_string()
-    );
+    assert_snapshot!("float32_neg_inf", Number::Float32(f32::NEG_INFINITY).to_string());
     assert_snapshot!("float32_nan", Number::Float32(f32::NAN).to_string());
 }
 
@@ -91,48 +85,24 @@ fn test_float64_display_snapshot() {
     assert_snapshot!("float64_pi", Number::Float64(3.1415926535).to_string());
     assert_snapshot!("float64_neg_e", Number::Float64(-2.7182818284).to_string());
     assert_snapshot!("float64_inf", Number::Float64(f64::INFINITY).to_string());
-    assert_snapshot!(
-        "float64_neg_inf",
-        Number::Float64(f64::NEG_INFINITY).to_string()
-    );
+    assert_snapshot!("float64_neg_inf", Number::Float64(f64::NEG_INFINITY).to_string());
     assert_snapshot!("float64_nan", Number::Float64(f64::NAN).to_string());
 }
 
 #[test]
 fn test_scientific32_display_snapshot() {
-    assert_snapshot!(
-        "scientific32_1_23e3",
-        Number::Scientific32(1.23, 3).to_string()
-    );
-    assert_snapshot!(
-        "scientific32_4_56e-2",
-        Number::Scientific32(4.56, -2).to_string()
-    );
-    assert_snapshot!(
-        "scientific32_0e10",
-        Number::Scientific32(0.0, 10).to_string()
-    );
-    assert_snapshot!(
-        "scientific32_neg0e-10",
-        Number::Scientific32(-0.0, -10).to_string()
-    );
+    assert_snapshot!("scientific32_1_23e3", Number::Scientific32(1.23, 3).to_string());
+    assert_snapshot!("scientific32_4_56e-2", Number::Scientific32(4.56, -2).to_string());
+    assert_snapshot!("scientific32_0e10", Number::Scientific32(0.0, 10).to_string());
+    assert_snapshot!("scientific32_neg0e-10", Number::Scientific32(-0.0, -10).to_string());
 }
 
 #[test]
 fn test_scientific64_display_snapshot() {
-    assert_snapshot!(
-        "scientific64_1_23456789e5",
-        Number::Scientific64(1.23456789, 5).to_string()
-    );
-    assert_snapshot!(
-        "scientific64_9_87e-3",
-        Number::Scientific64(9.87, -3).to_string()
-    );
+    assert_snapshot!("scientific64_1_23456789e5", Number::Scientific64(1.23456789, 5).to_string());
+    assert_snapshot!("scientific64_9_87e-3", Number::Scientific64(9.87, -3).to_string());
     assert_snapshot!("scientific64_0e0", Number::Scientific64(0.0, 0).to_string());
-    assert_snapshot!(
-        "scientific64_neg0e0",
-        Number::Scientific64(-0.0, 0).to_string()
-    );
+    assert_snapshot!("scientific64_neg0e0", Number::Scientific64(-0.0, 0).to_string());
 }
 
 #[test]
@@ -147,10 +117,7 @@ fn test_extreme_scientific_values_snapshot() {
 #[test]
 fn test_extreme_float_values_snapshot() {
     assert_snapshot!("float64_max", Number::Float64(f64::MAX).to_string());
-    assert_snapshot!(
-        "float64_min_pos",
-        Number::Float64(f64::MIN_POSITIVE).to_string()
-    );
+    assert_snapshot!("float64_min_pos", Number::Float64(f64::MIN_POSITIVE).to_string());
     assert_snapshot!("float64_epsilon", Number::Float64(f64::EPSILON).to_string());
 }
 

@@ -19,50 +19,33 @@ impl ErrorReporter {
         errors
             .into_iter()
             .map(|error| match error {
-                CompileError::LexerError {
-                    message,
-                    span,
-                    help,
-                } => self.format_error("LEX", &message, &span, help.as_deref()),
-                CompileError::SyntaxError {
-                    message,
-                    span,
-                    help,
-                } => self.format_error("SYNTAX", &message, &span, help.as_deref()),
-                CompileError::TypeError {
-                    message,
-                    span,
-                    help,
-                } => self.format_error("TYPE", &message, &span, help.as_deref()),
-                CompileError::IrGeneratorError {
-                    message,
-                    span,
-                    help,
-                } => self.format_error("IR GEN", &message, &span, help.as_deref()),
+                CompileError::LexerError { message, span, help } => {
+                    self.format_error("LEX", &message, &span, help.as_deref())
+                }
+                CompileError::SyntaxError { message, span, help } => {
+                    self.format_error("SYNTAX", &message, &span, help.as_deref())
+                }
+                CompileError::TypeError { message, span, help } => {
+                    self.format_error("TYPE", &message, &span, help.as_deref())
+                }
+                CompileError::IrGeneratorError { message, span, help } => {
+                    self.format_error("IR GEN", &message, &span, help.as_deref())
+                }
                 CompileError::AsmGeneratorError { message } => format!(
                     "{} {}: {}\n",
                     style("ERROR:").red().bold(),
                     style("ASM GEN").red(),
                     style(message).yellow()
                 ),
-                CompileError::IoError(e) => format!(
-                    "{} {}: {}\n",
-                    style("ERROR:").red().bold(),
-                    style("I/O").red(),
-                    style(e).yellow()
-                ),
+                CompileError::IoError(e) => {
+                    format!("{} {}: {}\n", style("ERROR:").red().bold(), style("I/O").red(), style(e).yellow())
+                }
             })
             .collect()
     }
 
     /// Formats an error with source context and visual indicators
-    fn format_error(
-        &self,
-        category: &str,
-        message: &str,
-        span: &SourceSpan,
-        help: Option<&str>,
-    ) -> String {
+    fn format_error(&self, category: &str, message: &str, span: &SourceSpan, help: Option<&str>) -> String {
         let start_line = span.start.line;
         let start_col = span.start.column;
         let end_line = span.end.line;
@@ -93,12 +76,7 @@ impl ErrorReporter {
             let underline = if start_line == end_line {
                 // Single line error
                 let length = (end_col - start_col).max(1);
-                format!(
-                    "{space:>start$}{marker}",
-                    space = "",
-                    start = start_offset,
-                    marker = "^".repeat(length)
-                )
+                format!("{space:>start$}{marker}", space = "", start = start_offset, marker = "^".repeat(length))
             } else {
                 format!("{:>width$}^", "", width = start_offset)
             };
@@ -119,12 +97,7 @@ impl ErrorReporter {
         }
 
         if let Some(help) = help {
-            let _ = writeln!(
-                &mut output,
-                "{} {}",
-                style("help:").blue().bold(),
-                style(help).green()
-            );
+            let _ = writeln!(&mut output, "{} {}", style("help:").blue().bold(), style(help).green());
         }
 
         output

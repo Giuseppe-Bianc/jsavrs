@@ -14,18 +14,8 @@ pub struct TypeChecker {
 }
 
 // Gerarchia per la promozione dei tipi numerici
-const HIERARCHY: [Type; 10] = [
-    Type::F64,
-    Type::F32,
-    Type::U64,
-    Type::I64,
-    Type::U32,
-    Type::I32,
-    Type::U16,
-    Type::I16,
-    Type::U8,
-    Type::I8,
-];
+const HIERARCHY: [Type; 10] =
+    [Type::F64, Type::F32, Type::U64, Type::I64, Type::U32, Type::I32, Type::U16, Type::I16, Type::U8, Type::I8];
 
 #[allow(clippy::collapsible_if)]
 impl TypeChecker {
@@ -40,11 +30,7 @@ impl TypeChecker {
 
     // Helper method for type errors
     fn type_error(&mut self, message: impl Into<String>, span: &SourceSpan) {
-        self.errors.push(CompileError::TypeError {
-            message: message.into(),
-            span: span.clone(),
-            help: None,
-        });
+        self.errors.push(CompileError::TypeError { message: message.into(), span: span.clone(), help: None });
     }
 
     pub fn check(&mut self, statements: &[Stmt]) -> Vec<CompileError> {
@@ -70,44 +56,19 @@ impl TypeChecker {
             Stmt::Expression { expr } => {
                 self.visit_expr(expr);
             }
-            Stmt::VarDeclaration {
-                variables,
-                type_annotation,
-                is_mutable,
-                initializers,
-                span,
-            } => self.visit_var_declaration(
-                variables.to_vec(),
-                type_annotation,
-                *is_mutable,
-                initializers,
-                span,
-            ),
-            Stmt::Function {
-                name,
-                parameters,
-                return_type,
-                body,
-                span,
-            } => self.visit_function(name, parameters, return_type, body, span),
-            Stmt::If {
-                condition,
-                then_branch,
-                else_branch,
-                span,
-            } => self.visit_if(condition, then_branch, else_branch.as_deref(), span),
-            Stmt::While {
-                condition,
-                body,
-                span,
-            } => self.visit_while(condition, body, span),
-            Stmt::For {
-                initializer,
-                condition,
-                increment,
-                body,
-                span,
-            } => self.visit_for(initializer, condition, increment, body, span),
+            Stmt::VarDeclaration { variables, type_annotation, is_mutable, initializers, span } => {
+                self.visit_var_declaration(variables.to_vec(), type_annotation, *is_mutable, initializers, span)
+            }
+            Stmt::Function { name, parameters, return_type, body, span } => {
+                self.visit_function(name, parameters, return_type, body, span)
+            }
+            Stmt::If { condition, then_branch, else_branch, span } => {
+                self.visit_if(condition, then_branch, else_branch.as_deref(), span)
+            }
+            Stmt::While { condition, body, span } => self.visit_while(condition, body, span),
+            Stmt::For { initializer, condition, increment, body, span } => {
+                self.visit_for(initializer, condition, increment, body, span)
+            }
             Stmt::Block { statements, span } => self.visit_block(statements, span),
             Stmt::Return { value, span } => self.visit_return(value.as_ref(), span),
             Stmt::Break { span } => self.visit_break(span),
@@ -116,7 +77,10 @@ impl TypeChecker {
         }
     }
 
-    fn visit_var_declaration(&mut self, variables: Vec<Arc<str>>, type_annotation: &Type, is_mutable: bool, initializers: &[Expr], span: &SourceSpan) {
+    fn visit_var_declaration(
+        &mut self, variables: Vec<Arc<str>>, type_annotation: &Type, is_mutable: bool, initializers: &[Expr],
+        span: &SourceSpan,
+    ) {
         if variables.len() != initializers.len() {
             self.type_error(
                 format!(
@@ -155,12 +119,7 @@ impl TypeChecker {
     }
 
     fn visit_function(
-        &mut self,
-        name: &str,
-        parameters: &[Parameter],
-        return_type: &Type,
-        body: &[Stmt],
-        span: &SourceSpan,
+        &mut self, name: &str, parameters: &[Parameter], return_type: &Type, body: &[Stmt], span: &SourceSpan,
     ) {
         let func_symbol = FunctionSymbol {
             name: name.to_string(),
@@ -169,8 +128,7 @@ impl TypeChecker {
             defined_at: span.clone(),
         };
         self.declare_symbol(name, Symbol::Function(func_symbol.clone()));
-        self.symbol_table
-            .push_scope(ScopeKind::Function, Some(span.clone()));
+        self.symbol_table.push_scope(ScopeKind::Function, Some(span.clone()));
         self.return_type_stack.push(return_type.clone());
         for param in parameters {
             self.declare_symbol(
@@ -186,7 +144,12 @@ impl TypeChecker {
         }
         self.visit_statements(body);
         if *return_type != Type::Void && !self.function_has_return(body) {
-            self.type_error(format!("Function '{name}' may not return value in all code paths (expected return type: {return_type})"), span);
+            self.type_error(
+                format!(
+                    "Function '{name}' may not return value in all code paths (expected return type: {return_type})"
+                ),
+                span,
+            );
         }
         self.return_type_stack.pop();
         self.symbol_table.pop_scope();
@@ -196,13 +159,7 @@ impl TypeChecker {
         self.visit_function("main", &[], &Type::Void, body, span);
     }
 
-    fn visit_if(
-        &mut self,
-        condition: &Expr,
-        then_branch: &[Stmt],
-        else_branch: Option<&[Stmt]>,
-        _span: &SourceSpan,
-    ) {
+    fn visit_if(&mut self, condition: &Expr, then_branch: &[Stmt], else_branch: Option<&[Stmt]>, _span: &SourceSpan) {
         if let Some(cond_type) = self.visit_expr(condition) {
             if cond_type != Type::Bool {
                 self.type_error(
@@ -211,13 +168,11 @@ impl TypeChecker {
                 );
             }
         }
-        self.symbol_table
-            .push_scope(ScopeKind::Block, Some(condition.span().clone()));
+        self.symbol_table.push_scope(ScopeKind::Block, Some(condition.span().clone()));
         self.visit_statements(then_branch);
         self.symbol_table.pop_scope();
         if let Some(else_branch) = else_branch {
-            self.symbol_table
-                .push_scope(ScopeKind::Block, Some(condition.span().clone()));
+            self.symbol_table.push_scope(ScopeKind::Block, Some(condition.span().clone()));
             self.visit_statements(else_branch);
             self.symbol_table.pop_scope();
         }
@@ -234,33 +189,24 @@ impl TypeChecker {
         }
         let was_in_loop = self.in_loop;
         self.in_loop = true;
-        self.symbol_table
-            .push_scope(ScopeKind::Block, Some(condition.span().clone()));
+        self.symbol_table.push_scope(ScopeKind::Block, Some(condition.span().clone()));
         self.visit_statements(body);
         self.symbol_table.pop_scope();
         self.in_loop = was_in_loop;
     }
 
     fn visit_for(
-        &mut self,
-        initializer: &Option<Box<Stmt>>,
-        condition: &Option<Expr>,
-        increment: &Option<Expr>,
-        body: &[Stmt],
+        &mut self, initializer: &Option<Box<Stmt>>, condition: &Option<Expr>, increment: &Option<Expr>, body: &[Stmt],
         span: &SourceSpan,
     ) {
-        self.symbol_table
-            .push_scope(ScopeKind::Block, Some(span.clone()));
+        self.symbol_table.push_scope(ScopeKind::Block, Some(span.clone()));
         if let Some(init) = initializer {
             self.visit_stmt(init);
         }
         if let Some(cond) = condition {
             if let Some(cond_type) = self.visit_expr(cond) {
                 if cond_type != Type::Bool {
-                    self.type_error(
-                        format!("For loop condition must be bool, found {cond_type}"),
-                        cond.span(),
-                    );
+                    self.type_error(format!("For loop condition must be bool, found {cond_type}"), cond.span());
                 }
             }
         }
@@ -275,8 +221,7 @@ impl TypeChecker {
     }
 
     fn visit_block(&mut self, statements: &[Stmt], span: &SourceSpan) {
-        self.symbol_table
-            .push_scope(ScopeKind::Block, Some(span.clone()));
+        self.symbol_table.push_scope(ScopeKind::Block, Some(span.clone()));
         self.visit_statements(statements);
         self.symbol_table.pop_scope();
     }
@@ -295,9 +240,7 @@ impl TypeChecker {
                 if let Some(actual_type) = self.visit_expr(expr) {
                     if !self.is_assignable(&actual_type, &expected_type) {
                         self.type_error(
-                            format!(
-                                "Return type mismatch: expected {expected_type} found {actual_type}"
-                            ),
+                            format!("Return type mismatch: expected {expected_type} found {actual_type}"),
                             expr.span(),
                         );
                     }
@@ -305,10 +248,7 @@ impl TypeChecker {
             }
             (None, Type::Void) => {}
             (None, _) => {
-                self.type_error(
-                    format!("Return type mismatch, expected {expected_type} found Void"),
-                    span,
-                );
+                self.type_error(format!("Return type mismatch, expected {expected_type} found Void"), span);
             }
         }
     }
@@ -327,38 +267,19 @@ impl TypeChecker {
 
     fn visit_expr(&mut self, expr: &Expr) -> Option<Type> {
         match expr {
-            Expr::Binary {
-                left,
-                op,
-                right,
-                span,
-            } => self.visit_binary_expr(left, op, right, span),
+            Expr::Binary { left, op, right, span } => self.visit_binary_expr(left, op, right, span),
             Expr::Unary { op, expr, span } => self.visit_unary_expr(op, expr, span),
             Expr::Grouping { expr, span: _ } => self.visit_expr(expr),
             Expr::Literal { value, span } => self.visit_literal(value, span),
             Expr::ArrayLiteral { elements, span } => self.visit_array_literal(elements, span),
             Expr::Variable { name, span } => self.visit_variable(name, span),
-            Expr::Assign {
-                target,
-                value,
-                span,
-            } => self.visit_assign(target, value, span),
-            Expr::Call {
-                callee,
-                arguments,
-                span,
-            } => self.visit_call(callee, arguments, span),
+            Expr::Assign { target, value, span } => self.visit_assign(target, value, span),
+            Expr::Call { callee, arguments, span } => self.visit_call(callee, arguments, span),
             Expr::ArrayAccess { array, index, span } => self.visit_array_access(array, index, span),
         }
     }
 
-    fn visit_binary_expr(
-        &mut self,
-        left: &Expr,
-        op: &BinaryOp,
-        right: &Expr,
-        span: &SourceSpan,
-    ) -> Option<Type> {
+    fn visit_binary_expr(&mut self, left: &Expr, op: &BinaryOp, right: &Expr, span: &SourceSpan) -> Option<Type> {
         let mut left_type = self.visit_expr(left)?;
         let mut right_type = self.visit_expr(right)?;
         // Distinzione tra operatori bitwise e altri operatori numerici
@@ -377,7 +298,9 @@ impl TypeChecker {
                 right_type = common_type;
             } else {
                 self.type_error(
-                    format!("Bitwise operator '{op:?}' require integer operand types, found {left_type} and {right_type}"),
+                    format!(
+                        "Bitwise operator '{op:?}' require integer operand types, found {left_type} and {right_type}"
+                    ),
                     span,
                 );
                 return None;
@@ -410,14 +333,8 @@ impl TypeChecker {
                         "Logical operator '{op:?}' requires boolean operands types, found {left_type} and {right_type}"
                     )
                 }
-                BinaryOp::Add
-                | BinaryOp::Subtract
-                | BinaryOp::Multiply
-                | BinaryOp::Divide
-                | BinaryOp::Modulo => {
-                    format!(
-                        "Binary operator '{op:?}' requires numeric operands, found {left_type} and {right_type}"
-                    )
+                BinaryOp::Add | BinaryOp::Subtract | BinaryOp::Multiply | BinaryOp::Divide | BinaryOp::Modulo => {
+                    format!("Binary operator '{op:?}' requires numeric operands, found {left_type} and {right_type}")
                 }
                 BinaryOp::Equal
                 | BinaryOp::NotEqual
@@ -435,16 +352,9 @@ impl TypeChecker {
             return None;
         }
         Some(match op {
-            BinaryOp::Add
-            | BinaryOp::Subtract
-            | BinaryOp::Multiply
-            | BinaryOp::Divide
-            | BinaryOp::Modulo => {
+            BinaryOp::Add | BinaryOp::Subtract | BinaryOp::Multiply | BinaryOp::Divide | BinaryOp::Modulo => {
                 if !self.is_numeric(&left_type) {
-                    self.type_error(
-                        format!("Arithmetic operation not supported for {left_type}"),
-                        left.span(),
-                    );
+                    self.type_error(format!("Arithmetic operation not supported for {left_type}"), left.span());
                 }
                 left_type
             }
@@ -456,10 +366,7 @@ impl TypeChecker {
             | BinaryOp::GreaterEqual => Type::Bool,
             BinaryOp::And | BinaryOp::Or => {
                 if left_type != Type::Bool {
-                    self.type_error(
-                        format!("Logical operation requires bool, found {left_type}"),
-                        left.span(),
-                    );
+                    self.type_error(format!("Logical operation requires bool, found {left_type}"), left.span());
                 }
                 Type::Bool
             }
@@ -476,10 +383,7 @@ impl TypeChecker {
         match op {
             UnaryOp::Negate => {
                 if !self.is_numeric(&expr_type) {
-                    self.type_error(
-                        format!("Negation requires numeric type operand, found {expr_type}"),
-                        expr.span(),
-                    );
+                    self.type_error(format!("Negation requires numeric type operand, found {expr_type}"), expr.span());
                     return None;
                 }
                 Some(expr_type)
@@ -524,10 +428,7 @@ impl TypeChecker {
 
     fn visit_array_literal(&mut self, elements: &[Expr], span: &SourceSpan) -> Option<Type> {
         if elements.is_empty() {
-            self.type_error(
-                "Array literals must have at least one element for type inference",
-                span,
-            );
+            self.type_error("Array literals must have at least one element for type inference", span);
             return None; // Ritorna None dopo aver segnalato l'errore
         }
         let len = elements.len();
@@ -548,10 +449,8 @@ impl TypeChecker {
         }
         element_type.map(|ty| {
             // Create proper size expression with actual length
-            let size_expr = Expr::Literal {
-                value: LiteralValue::Number(Number::Integer(len as i64)),
-                span: span.clone(),
-            };
+            let size_expr =
+                Expr::Literal { value: LiteralValue::Number(Number::Integer(len as i64)), span: span.clone() };
             Type::Array(Box::new(ty), Box::new(size_expr))
         })
     }
@@ -605,10 +504,7 @@ impl TypeChecker {
             Some(var) => Some(var.ty.clone()),
             None => {
                 if self.symbol_table.lookup_function(name).is_some() {
-                    self.type_error(
-                        format!("'{name}' is a function and cannot be used as variable"),
-                        span,
-                    );
+                    self.type_error(format!("'{name}' is a function and cannot be used as variable"), span);
                 } else {
                     self.type_error(format!("Undefined variable '{name}'"), span);
                 }
@@ -622,10 +518,7 @@ impl TypeChecker {
             Expr::Variable { name, span } => match self.symbol_table.lookup_variable(name) {
                 Some(var) => {
                     if !var.mutable {
-                        self.type_error(
-                            format!("Cannot assign to immutable variable '{name}'"),
-                            span,
-                        );
+                        self.type_error(format!("Cannot assign to immutable variable '{name}'"), span);
                         return None;
                     }
                     var.ty.clone()
@@ -670,10 +563,7 @@ impl TypeChecker {
         let func = match self.symbol_table.lookup_function(callee_name) {
             Some(func) => func,
             None => {
-                self.type_error(
-                    format!("Undefined function: '{callee_name}'"),
-                    callee.span(),
-                );
+                self.type_error(format!("Undefined function: '{callee_name}'"), callee.span());
                 for arg in arguments {
                     self.visit_expr(arg);
                 }
@@ -709,28 +599,17 @@ impl TypeChecker {
         Some(func.return_type.clone())
     }
 
-    fn visit_array_access(
-        &mut self,
-        array: &Expr,
-        index: &Expr,
-        _span: &SourceSpan,
-    ) -> Option<Type> {
+    fn visit_array_access(&mut self, array: &Expr, index: &Expr, _span: &SourceSpan) -> Option<Type> {
         let array_type = self.visit_expr(array)?;
         let index_type = self.visit_expr(index)?;
         if !self.is_integer_type(&index_type) {
-            self.type_error(
-                format!("Array index must be integer type, found {index_type}"),
-                index.span(),
-            );
+            self.type_error(format!("Array index must be integer type, found {index_type}"), index.span());
             return None;
         }
         if let Type::Array(element_type, _) = array_type {
             Some(*element_type)
         } else {
-            self.type_error(
-                format!("Cannot index into non-array type {array_type}"),
-                array.span(),
-            );
+            self.type_error(format!("Cannot index into non-array type {array_type}"), array.span());
             None
         }
     }
@@ -787,17 +666,7 @@ impl TypeChecker {
     }
 
     fn is_integer_type(&self, ty: &Type) -> bool {
-        matches!(
-            ty,
-            Type::I8
-                | Type::I16
-                | Type::I32
-                | Type::I64
-                | Type::U8
-                | Type::U16
-                | Type::U32
-                | Type::U64
-        )
+        matches!(ty, Type::I8 | Type::I16 | Type::I32 | Type::I64 | Type::U8 | Type::U16 | Type::U32 | Type::U64)
     }
 
     fn are_compatible(&self, t1: &Type, t2: &Type) -> bool {
@@ -825,16 +694,9 @@ impl TypeChecker {
         for stmt in body {
             match stmt {
                 Stmt::Return { .. } => return true,
-                Stmt::If {
-                    then_branch,
-                    else_branch,
-                    ..
-                } => {
+                Stmt::If { then_branch, else_branch, .. } => {
                     let then_has_return = self.function_has_return(then_branch);
-                    let else_has_return = else_branch
-                        .as_ref()
-                        .map(|b| self.function_has_return(b))
-                        .unwrap_or(false);
+                    let else_has_return = else_branch.as_ref().map(|b| self.function_has_return(b)).unwrap_or(false);
                     if then_has_return && else_has_return {
                         return true;
                     } else {
@@ -848,12 +710,7 @@ impl TypeChecker {
                         continue;
                     }
                 }
-                Stmt::While {
-                    body: loop_body, ..
-                }
-                | Stmt::For {
-                    body: loop_body, ..
-                } => {
+                Stmt::While { body: loop_body, .. } | Stmt::For { body: loop_body, .. } => {
                     if self.function_has_return(loop_body) {
                         // Considera solo loop con corpo che ritorna
                         return true;

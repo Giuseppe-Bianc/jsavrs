@@ -1,6 +1,6 @@
 // rust
-use criterion::{criterion_group, criterion_main, BenchmarkId, Criterion, Throughput};
-use jsavrs::lexer::{lexer_tokenize_with_errors, Lexer};
+use criterion::{BenchmarkId, Criterion, Throughput, criterion_group, criterion_main};
+use jsavrs::lexer::{Lexer, lexer_tokenize_with_errors};
 use jsavrs::parser::jsav_parser::JsavParser;
 use std::hint::black_box;
 use std::time::Duration;

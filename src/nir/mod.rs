@@ -1,15 +1,15 @@
 // src/nir/mod.rs
+mod access_control;
 mod basic_block;
 mod function;
+pub mod generator;
 mod instruction;
+mod module;
+mod scope;
+mod scope_manager;
 mod terminator;
 mod types;
 mod value;
-pub mod generator;
-mod scope;
-mod scope_manager;
-mod access_control;
-mod module;
 //mod validator;
 
 pub use access_control::{AccessController, AccessRules, Operation};

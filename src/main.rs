@@ -41,10 +41,7 @@ fn main() -> Result<(), CompileError> {
 
     let mut lexer = Lexer::new(
         file_path.to_str().ok_or_else(|| {
-            CompileError::IoError(std::io::Error::new(
-                std::io::ErrorKind::InvalidData,
-                "Invalid file path",
-            ))
+            CompileError::IoError(std::io::Error::new(std::io::ErrorKind::InvalidData, "Invalid file path"))
         })?,
         &input,
     );
@@ -134,7 +131,6 @@ fn main() -> Result<(), CompileError> {
     if args.verbose {
         println!("{module}");
     }
-
 
     /*let mut asm_gen = AsmGenerator::new(if cfg!(windows) { TargetOS::Windows } else { TargetOS::Linux });
     let (nasm_code, asm_error) = asm_gen.generate(functions);

@@ -1,6 +1,6 @@
 use insta::assert_debug_snapshot;
 use jsavrs::error::compile_error::CompileError;
-use jsavrs::lexer::{lexer_tokenize_with_errors, Lexer};
+use jsavrs::lexer::{Lexer, lexer_tokenize_with_errors};
 use jsavrs::parser::ast::{Expr, Type};
 use jsavrs::parser::jsav_parser::JsavParser;
 use jsavrs::semantic::type_checker::TypeChecker;
@@ -448,38 +448,20 @@ fn test_type_of_number_integer_variants() {
     assert_debug_snapshot!("type_of_number_i8", tc.type_of_number(&Number::I8(0)));
     assert_debug_snapshot!("type_of_number_i16", tc.type_of_number(&Number::I16(0)));
     assert_debug_snapshot!("type_of_number_i32", tc.type_of_number(&Number::I32(0)));
-    assert_debug_snapshot!(
-        "type_of_number_integer",
-        tc.type_of_number(&Number::Integer(42))
-    );
+    assert_debug_snapshot!("type_of_number_integer", tc.type_of_number(&Number::Integer(42)));
     assert_debug_snapshot!("type_of_number_u8", tc.type_of_number(&Number::U8(0)));
     assert_debug_snapshot!("type_of_number_u16", tc.type_of_number(&Number::U16(0)));
     assert_debug_snapshot!("type_of_number_u32", tc.type_of_number(&Number::U32(0)));
-    assert_debug_snapshot!(
-        "type_of_number_unsigned_integer",
-        tc.type_of_number(&Number::UnsignedInteger(42))
-    );
+    assert_debug_snapshot!("type_of_number_unsigned_integer", tc.type_of_number(&Number::UnsignedInteger(42)));
 }
 
 #[test]
 fn test_type_of_number_float_variants() {
     let tc = TypeChecker::new();
-    assert_debug_snapshot!(
-        "type_of_number_float32",
-        tc.type_of_number(&Number::Float32(3.14))
-    );
-    assert_debug_snapshot!(
-        "type_of_number_scientific32",
-        tc.type_of_number(&Number::Scientific32(1.0e2, 2))
-    );
-    assert_debug_snapshot!(
-        "type_of_number_float64",
-        tc.type_of_number(&Number::Float64(2.71838))
-    );
-    assert_debug_snapshot!(
-        "type_of_number_scientific64",
-        tc.type_of_number(&Number::Scientific64(1.0e2, 2))
-    );
+    assert_debug_snapshot!("type_of_number_float32", tc.type_of_number(&Number::Float32(3.14)));
+    assert_debug_snapshot!("type_of_number_scientific32", tc.type_of_number(&Number::Scientific32(1.0e2, 2)));
+    assert_debug_snapshot!("type_of_number_float64", tc.type_of_number(&Number::Float64(2.71838)));
+    assert_debug_snapshot!("type_of_number_scientific64", tc.type_of_number(&Number::Scientific64(1.0e2, 2)));
 }
 
 #[test]
@@ -491,73 +473,28 @@ fn test_is_assignable_exact_and_promotions() {
     assert_debug_snapshot!("exact_match_f64", tc.is_assignable(&Type::F64, &Type::F64));
 
     // Signed promotions
-    assert_debug_snapshot!(
-        "signed_promotion_i8_to_i16",
-        tc.is_assignable(&Type::I8, &Type::I16)
-    );
-    assert_debug_snapshot!(
-        "signed_promotion_i8_to_f32",
-        tc.is_assignable(&Type::I8, &Type::F32)
-    );
-    assert_debug_snapshot!(
-        "signed_promotion_i16_to_f64",
-        tc.is_assignable(&Type::I16, &Type::F64)
-    );
-    assert_debug_snapshot!(
-        "signed_promotion_i32_to_i64",
-        tc.is_assignable(&Type::I32, &Type::I64)
-    );
+    assert_debug_snapshot!("signed_promotion_i8_to_i16", tc.is_assignable(&Type::I8, &Type::I16));
+    assert_debug_snapshot!("signed_promotion_i8_to_f32", tc.is_assignable(&Type::I8, &Type::F32));
+    assert_debug_snapshot!("signed_promotion_i16_to_f64", tc.is_assignable(&Type::I16, &Type::F64));
+    assert_debug_snapshot!("signed_promotion_i32_to_i64", tc.is_assignable(&Type::I32, &Type::I64));
 
     // Unsigned promotions
-    assert_debug_snapshot!(
-        "unsigned_promotion_u8_to_u16",
-        tc.is_assignable(&Type::U8, &Type::U16)
-    );
-    assert_debug_snapshot!(
-        "unsigned_promotion_u8_to_f64",
-        tc.is_assignable(&Type::U8, &Type::F64)
-    );
-    assert_debug_snapshot!(
-        "unsigned_promotion_u32_to_u64",
-        tc.is_assignable(&Type::U32, &Type::U64)
-    );
+    assert_debug_snapshot!("unsigned_promotion_u8_to_u16", tc.is_assignable(&Type::U8, &Type::U16));
+    assert_debug_snapshot!("unsigned_promotion_u8_to_f64", tc.is_assignable(&Type::U8, &Type::F64));
+    assert_debug_snapshot!("unsigned_promotion_u32_to_u64", tc.is_assignable(&Type::U32, &Type::U64));
     // Additional U16 promotions
-    assert_debug_snapshot!(
-        "unsigned_promotion_u16_to_u32",
-        tc.is_assignable(&Type::U16, &Type::U32)
-    );
-    assert_debug_snapshot!(
-        "unsigned_promotion_u16_to_u64",
-        tc.is_assignable(&Type::U16, &Type::U64)
-    );
-    assert_debug_snapshot!(
-        "unsigned_promotion_u16_to_f32",
-        tc.is_assignable(&Type::U16, &Type::F32)
-    );
-    assert_debug_snapshot!(
-        "unsigned_promotion_u16_to_f64",
-        tc.is_assignable(&Type::U16, &Type::F64)
-    );
+    assert_debug_snapshot!("unsigned_promotion_u16_to_u32", tc.is_assignable(&Type::U16, &Type::U32));
+    assert_debug_snapshot!("unsigned_promotion_u16_to_u64", tc.is_assignable(&Type::U16, &Type::U64));
+    assert_debug_snapshot!("unsigned_promotion_u16_to_f32", tc.is_assignable(&Type::U16, &Type::F32));
+    assert_debug_snapshot!("unsigned_promotion_u16_to_f64", tc.is_assignable(&Type::U16, &Type::F64));
 
     // Float promotions
-    assert_debug_snapshot!(
-        "float_promotion_f32_to_f64",
-        tc.is_assignable(&Type::F32, &Type::F64)
-    );
+    assert_debug_snapshot!("float_promotion_f32_to_f64", tc.is_assignable(&Type::F32, &Type::F64));
 
     // Incompatible types
-    assert_debug_snapshot!(
-        "incompatible_i8_to_u8",
-        !tc.is_assignable(&Type::I8, &Type::U8)
-    );
-    assert_debug_snapshot!(
-        "incompatible_f64_to_f32",
-        !tc.is_assignable(&Type::F64, &Type::F32)
-    );
-    assert_debug_snapshot!(
-        "incompatible_u16_to_i32",
-        !tc.is_assignable(&Type::U16, &Type::I32)
-    );
+    assert_debug_snapshot!("incompatible_i8_to_u8", !tc.is_assignable(&Type::I8, &Type::U8));
+    assert_debug_snapshot!("incompatible_f64_to_f32", !tc.is_assignable(&Type::F64, &Type::F32));
+    assert_debug_snapshot!("incompatible_u16_to_i32", !tc.is_assignable(&Type::U16, &Type::I32));
 }
 
 #[test]
@@ -567,20 +504,11 @@ fn test_is_assignable_nullptr() {
     let vector_ty = Type::Vector(Box::new(Type::I8));
 
     // NullPtr assignable to Array and Vector
-    assert_debug_snapshot!(
-        "nullptr_to_array",
-        tc.is_assignable(&Type::NullPtr, &array_ty)
-    );
-    assert_debug_snapshot!(
-        "nullptr_to_vector",
-        tc.is_assignable(&Type::NullPtr, &vector_ty)
-    );
+    assert_debug_snapshot!("nullptr_to_array", tc.is_assignable(&Type::NullPtr, &array_ty));
+    assert_debug_snapshot!("nullptr_to_vector", tc.is_assignable(&Type::NullPtr, &vector_ty));
 
     // NullPtr not assignable to non-pointer
-    assert_debug_snapshot!(
-        "nullptr_to_i32_incompatible",
-        !tc.is_assignable(&Type::NullPtr, &Type::I32)
-    );
+    assert_debug_snapshot!("nullptr_to_i32_incompatible", !tc.is_assignable(&Type::NullPtr, &Type::I32));
 }
 
 #[test]
@@ -588,32 +516,14 @@ fn test_promote_numeric_types_behaviour() {
     let tc = TypeChecker::new();
 
     // Lower-rank gets promoted to higher-rank
-    assert_debug_snapshot!(
-        "promote_i8_to_i16",
-        tc.promote_numeric_types(&Type::I8, &Type::I16)
-    );
-    assert_debug_snapshot!(
-        "promote_u8_to_f32",
-        tc.promote_numeric_types(&Type::U8, &Type::F32)
-    );
-    assert_debug_snapshot!(
-        "promote_i32_to_f64",
-        tc.promote_numeric_types(&Type::I32, &Type::F64)
-    );
-    assert_debug_snapshot!(
-        "promote_u32_to_u64",
-        tc.promote_numeric_types(&Type::U32, &Type::U64)
-    );
+    assert_debug_snapshot!("promote_i8_to_i16", tc.promote_numeric_types(&Type::I8, &Type::I16));
+    assert_debug_snapshot!("promote_u8_to_f32", tc.promote_numeric_types(&Type::U8, &Type::F32));
+    assert_debug_snapshot!("promote_i32_to_f64", tc.promote_numeric_types(&Type::I32, &Type::F64));
+    assert_debug_snapshot!("promote_u32_to_u64", tc.promote_numeric_types(&Type::U32, &Type::U64));
 
     // Symmetric behaviour
-    assert_debug_snapshot!(
-        "symmetric_promotion_f32_and_u8",
-        tc.promote_numeric_types(&Type::F32, &Type::U8)
-    );
+    assert_debug_snapshot!("symmetric_promotion_f32_and_u8", tc.promote_numeric_types(&Type::F32, &Type::U8));
 
     // If neither type matches hierarchy, fallback to I64
-    assert_debug_snapshot!(
-        "fallback_promotion_bool_and_string",
-        tc.promote_numeric_types(&Type::Bool, &Type::String),
-    );
+    assert_debug_snapshot!("fallback_promotion_bool_and_string", tc.promote_numeric_types(&Type::Bool, &Type::String),);
 }

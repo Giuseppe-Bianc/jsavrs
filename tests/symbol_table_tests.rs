@@ -3,8 +3,7 @@ use jsavrs::location::source_span::SourceSpan;
 use jsavrs::parser::ast::{Parameter, Type};
 use jsavrs::semantic::symbol_table::{FunctionSymbol, ScopeKind, Symbol, SymbolTable, VariableSymbol};
 use jsavrs::utils::{
-    create_func_symbol, create_span, create_var_symbol, dummy_span,
-    func_from_symbol, int_type, var_from_symbol,
+    create_func_symbol, create_span, create_var_symbol, dummy_span, func_from_symbol, int_type, var_from_symbol,
 };
 
 #[test]
@@ -121,10 +120,7 @@ fn mixed_symbol_types() {
 
     // Compare inner values instead of Symbol wrappers
     assert_eq!(table.lookup_variable("var"), var_from_symbol(var.clone()));
-    assert_eq!(
-        table.lookup_function("func"),
-        func_from_symbol(func.clone())
-    );
+    assert_eq!(table.lookup_function("func"), func_from_symbol(func.clone()));
 }
 
 #[test]
@@ -169,16 +165,10 @@ fn function_symbol_in_nested_scopes() {
     table.declare("foo", local_func.clone()).unwrap();
 
     // Compare inner function symbols
-    assert_eq!(
-        table.lookup_function("foo"),
-        func_from_symbol(local_func.clone())
-    );
+    assert_eq!(table.lookup_function("foo"), func_from_symbol(local_func.clone()));
     table.pop_scope();
 
-    assert_eq!(
-        table.lookup_function("foo"),
-        func_from_symbol(global_func.clone())
-    );
+    assert_eq!(table.lookup_function("foo"), func_from_symbol(global_func.clone()));
 }
 
 #[test]
@@ -329,11 +319,7 @@ fn test_current_function_return_type() {
 
     let int_func = FunctionSymbol {
         name: "int_func".into(),
-        parameters: vec![Parameter {
-            name: "arg".into(),
-            type_annotation: Type::I32,
-            span: dummy_span(),
-        }],
+        parameters: vec![Parameter { name: "arg".into(), type_annotation: Type::I32, span: dummy_span() }],
         return_type: Type::I32,
         defined_at: dummy_span(),
     };

@@ -1,6 +1,6 @@
 use jsavrs::nir::{
-    BasicBlock, Cfg, Function, FunctionAttributes, Instruction, InstructionKind, IrLiteralValue,
-    IrParameter, IrType, ParamAttributes, Terminator, TerminatorKind, Value,
+    BasicBlock, Cfg, Function, FunctionAttributes, Instruction, InstructionKind, IrLiteralValue, IrParameter, IrType,
+    ParamAttributes, Terminator, TerminatorKind, Value,
 };
 use jsavrs::utils::dummy_span;
 
@@ -48,13 +48,8 @@ fn test_cfg_add_edge() {
 
 #[test]
 fn test_function_creation() {
-    let params = vec![
-        IrParameter {
-            name: "param1".to_string(),
-            ty: IrType::I32,
-            attributes: ParamAttributes::default(),
-        }
-    ];
+    let params =
+        vec![IrParameter { name: "param1".to_string(), ty: IrType::I32, attributes: ParamAttributes::default() }];
     let func = Function::new("test", params.clone(), IrType::Void);
 
     assert_eq!(func.name, "test");
@@ -101,10 +96,7 @@ fn test_basic_block_creation() {
 
     assert_eq!(block.label, "block1");
     assert_eq!(block.instructions.len(), 0);
-    assert_eq!(
-        block.terminator.kind,
-        TerminatorKind::Unreachable
-    );
+    assert_eq!(block.terminator.kind, TerminatorKind::Unreachable);
     assert_eq!(block.predecessors.len(), 0);
     assert!(block.dominator_info.is_none());
 }
@@ -129,31 +121,19 @@ fn test_basic_block_display() {
     let mut block = BasicBlock::new("block1", dummy_span());
 
     // Empty block
-    assert_eq!(
-        format!("{}", block),
-        "block1:\n  unreachable"
-    );
+    assert_eq!(format!("{}", block), "block1:\n  unreachable");
 
     // With predecessors
     block.add_predecessor("pred1".to_string());
     block.add_predecessor("pred2".to_string());
-    assert_eq!(
-        format!("{}", block),
-        "// Predecessors: pred1, pred2\nblock1:\n  unreachable"
-    );
+    assert_eq!(format!("{}", block), "// Predecessors: pred1, pred2\nblock1:\n  unreachable");
 
     // With instructions
     let value = create_dummy_value();
-    let inst = Instruction::new(InstructionKind::Load {
-        src: value.clone(),
-        ty: IrType::I32,
-    }, dummy_span());
+    let inst = Instruction::new(InstructionKind::Load { src: value.clone(), ty: IrType::I32 }, dummy_span());
     block.instructions.push(inst);
 
-    block.terminator = Terminator::new(
-        TerminatorKind::Branch { label: "exit".to_string() },
-        dummy_span(),
-    );
+    block.terminator = Terminator::new(TerminatorKind::Branch { label: "exit".to_string() }, dummy_span());
 
     assert_eq!(
         format!("{}", block),
@@ -174,18 +154,10 @@ fn test_function_display() {
     let mut exit_block = BasicBlock::new("exit", dummy_span());
 
     // Add terminators
-    entry_block.terminator = Terminator::new(
-        TerminatorKind::Branch { label: "block1".to_string() },
-        dummy_span(),
-    );
-    block1.terminator = Terminator::new(
-        TerminatorKind::Branch { label: "exit".to_string() },
-        dummy_span(),
-    );
-    exit_block.terminator = Terminator::new(
-        TerminatorKind::Return { value: create_dummy_value(), ty: IrType::Void },
-        dummy_span(),
-    );
+    entry_block.terminator = Terminator::new(TerminatorKind::Branch { label: "block1".to_string() }, dummy_span());
+    block1.terminator = Terminator::new(TerminatorKind::Branch { label: "exit".to_string() }, dummy_span());
+    exit_block.terminator =
+        Terminator::new(TerminatorKind::Return { value: create_dummy_value(), ty: IrType::Void }, dummy_span());
 
     // Add blocks to function
     func.add_block(entry_block);
@@ -230,11 +202,7 @@ fn test_ir_parameter() {
     let param = IrParameter {
         name: "arg".to_string(),
         ty: IrType::I32,
-        attributes: ParamAttributes {
-            by_val: true,
-            no_alias: true,
-            source_span: Some(dummy_span()),
-        },
+        attributes: ParamAttributes { by_val: true, no_alias: true, source_span: Some(dummy_span()) },
     };
 
     assert_eq!(param.name, "arg");
@@ -248,13 +216,8 @@ fn test_complex_cfg() {
     let mut func = Function::new("complex", vec![], IrType::Void);
 
     // Create blocks
-    let blocks = vec![
-        ("entry", vec!["a", "b"]),
-        ("a", vec!["c"]),
-        ("b", vec!["c"]),
-        ("c", vec!["exit"]),
-        ("exit", vec![]),
-    ];
+    let blocks =
+        vec![("entry", vec!["a", "b"]), ("a", vec!["c"]), ("b", vec!["c"]), ("c", vec!["exit"]), ("exit", vec![])];
 
     // Add blocks
     for (label, _) in &blocks {
@@ -285,16 +248,11 @@ fn test_complex_cfg() {
 
 #[test]
 fn test_terminator_targets() {
-    let return_term = Terminator::new(
-        TerminatorKind::Return { value: create_dummy_value(), ty: IrType::Void },
-        dummy_span(),
-    );
+    let return_term =
+        Terminator::new(TerminatorKind::Return { value: create_dummy_value(), ty: IrType::Void }, dummy_span());
     assert_eq!(return_term.get_targets(), Vec::<String>::new());
 
-    let branch_term = Terminator::new(
-        TerminatorKind::Branch { label: "target".to_string() },
-        dummy_span(),
-    );
+    let branch_term = Terminator::new(TerminatorKind::Branch { label: "target".to_string() }, dummy_span());
     assert_eq!(branch_term.get_targets(), vec!["target"]);
 
     let cond_term = Terminator::new(
@@ -312,10 +270,7 @@ fn test_terminator_targets() {
             value: create_dummy_value(),
             ty: IrType::I32,
             default_label: "default".to_string(),
-            cases: vec![
-                (create_dummy_value(), "case1".to_string()),
-                (create_dummy_value(), "case2".to_string()),
-            ],
+            cases: vec![(create_dummy_value(), "case1".to_string()), (create_dummy_value(), "case2".to_string())],
         },
         dummy_span(),
     );
@@ -336,16 +291,8 @@ fn test_terminator_targets() {
 #[test]
 fn test_function_with_parameters() {
     let params = vec![
-        IrParameter {
-            name: "a".to_string(),
-            ty: IrType::I32,
-            attributes: ParamAttributes::default(),
-        },
-        IrParameter {
-            name: "b".to_string(),
-            ty: IrType::F64,
-            attributes: ParamAttributes::default(),
-        },
+        IrParameter { name: "a".to_string(), ty: IrType::I32, attributes: ParamAttributes::default() },
+        IrParameter { name: "b".to_string(), ty: IrType::F64, attributes: ParamAttributes::default() },
     ];
 
     let func = Function::new("func", params, IrType::Bool);
@@ -391,10 +338,7 @@ fn test_cfg_get_block_mut() {
 
     // Modify entry block
     if let Some(entry) = cfg.get_block_mut("entry") {
-        entry.terminator = Terminator::new(
-            TerminatorKind::Branch { label: "new_target".to_string() },
-            dummy_span(),
-        );
+        entry.terminator = Terminator::new(TerminatorKind::Branch { label: "new_target".to_string() }, dummy_span());
     }
 
     let entry = cfg.get_block("entry").unwrap();
@@ -421,9 +365,7 @@ fn test_function_cfg_accessors() {
     }
 
     let block = func.cfg.get_block("block1").unwrap();
-    assert!(block
-        .predecessors
-        .contains(&"func_pred".to_string()));
+    assert!(block.predecessors.contains(&"func_pred".to_string()));
 }
 
 #[test]
@@ -435,13 +377,9 @@ fn test_cfg_get_block_mut_persists_changes() {
     // Modify block through mutable reference
     {
         let block = cfg.get_block_mut("block1").unwrap();
-        block.instructions.push(Instruction::new(
-            InstructionKind::Load {
-                src: create_dummy_value(),
-                ty: IrType::I32,
-            },
-            dummy_span(),
-        ));
+        block
+            .instructions
+            .push(Instruction::new(InstructionKind::Load { src: create_dummy_value(), ty: IrType::I32 }, dummy_span()));
     }
 
     // Verify changes persisted
@@ -455,15 +393,9 @@ fn test_cfg_get_block_mut_entry_block() {
 
     // Modify entry block
     if let Some(entry) = cfg.get_block_mut("entry") {
-        entry.terminator = Terminator::new(
-            TerminatorKind::Unreachable,
-            dummy_span(),
-        );
+        entry.terminator = Terminator::new(TerminatorKind::Unreachable, dummy_span());
     }
 
     let entry = cfg.get_block("entry").unwrap();
-    assert!(matches!(
-        entry.terminator.kind,
-        TerminatorKind::Unreachable
-    ));
+    assert!(matches!(entry.terminator.kind, TerminatorKind::Unreachable));
 }

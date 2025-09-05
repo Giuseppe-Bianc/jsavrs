@@ -1,5 +1,5 @@
 use jsavrs::location::source_location::SourceLocation;
-use jsavrs::location::source_span::{truncate_path, SourceSpan};
+use jsavrs::location::source_span::{SourceSpan, truncate_path};
 use jsavrs::utils::create_span;
 use std::path::Path;
 use std::sync::Arc;
@@ -33,13 +33,7 @@ truncate_test!(exact_depth, "a/b/c", 3, "a/b/c", "a\\b\\c");
 truncate_test!(shorter_than_depth, "a", 2, "a", "a");
 truncate_test!(depth_zero, "/usr/project/src/main.vn", 0, "../", "..\\");
 truncate_test!(single_component, "file.vn", 2, "file.vn", "file.vn");
-truncate_test!(
-    absolute_path,
-    "/usr/project/src/main.vn",
-    2,
-    "../src/main.vn",
-    "..\\src\\main.vn"
-);
+truncate_test!(absolute_path, "/usr/project/src/main.vn", 2, "../src/main.vn", "..\\src\\main.vn");
 
 // Test formattazione stringa span
 span_str_test!(
@@ -95,16 +89,8 @@ span_str_test!(
 
 #[test]
 fn absolute_path_span() {
-    let path = if cfg!(unix) {
-        "/usr/project/src/main.vn"
-    } else {
-        "C:\\project\\src\\main.vn"
-    };
-    let span = SourceSpan::new(
-        Arc::from(path),
-        SourceLocation::new(5, 3, 20),
-        SourceLocation::new(5, 10, 30),
-    );
+    let path = if cfg!(unix) { "/usr/project/src/main.vn" } else { "C:\\project\\src\\main.vn" };
+    let span = SourceSpan::new(Arc::from(path), SourceLocation::new(5, 3, 20), SourceLocation::new(5, 10, 30));
     let expected = if cfg!(unix) {
         "../src/main.vn:line 5:column 3 - line 5:column 10"
     } else {

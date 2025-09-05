@@ -53,8 +53,7 @@ impl Function {
     }
 
     pub fn add_block(&mut self, label: &str, span: SourceSpan) -> bool {
-        let block = RBasicBlock::new(label, span)
-            .with_scope(self.scope_manager.current_scope());
+        let block = RBasicBlock::new(label, span).with_scope(self.scope_manager.current_scope());
 
         let block_idx = self.cfg.add_block(block);
 
@@ -94,11 +93,10 @@ impl Function {
     }
 }
 
-
 impl fmt::Display for Function {
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
-        let params_str = self.parameters.iter().map(|param| format!("{}: {}", param.name, param.ty))
-            .collect::<Vec<_>>().join(", ");
+        let params_str =
+            self.parameters.iter().map(|param| format!("{}: {}", param.name, param.ty)).collect::<Vec<_>>().join(", ");
 
         writeln!(f, "function {} ({}) -> {}:", self.name, params_str, self.return_type)?;
         let bloscks_len = self.cfg.blocks().count();

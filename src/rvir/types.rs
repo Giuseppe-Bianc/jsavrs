@@ -22,7 +22,7 @@ pub enum RIrType {
     Void,
     Pointer(Box<RIrType>),
     Array(Box<RIrType>, usize),
-    Custom(Arc<str>, SourceSpan), // Added source span
+    Custom(Arc<str>, SourceSpan),                         // Added source span
     Struct(Arc<str>, Vec<(String, RIrType)>, SourceSpan), // New struct type
 }
 
@@ -91,11 +91,8 @@ impl fmt::Display for RIrType {
             RIrType::Array(element_type, size) => write!(f, "[{element_type}; {size}]"),
             RIrType::Custom(name, _) => write!(f, "{name}"),
             RIrType::Struct(name, fields, _) => {
-                let fields_str = fields
-                    .iter()
-                    .map(|(field_name, ty)| format!("{field_name}: {ty}"))
-                    .collect::<Vec<_>>()
-                    .join(", ");
+                let fields_str =
+                    fields.iter().map(|(field_name, ty)| format!("{field_name}: {ty}")).collect::<Vec<_>>().join(", ");
                 write!(f, "struct {name} {{ {fields_str} }}")
             }
         }

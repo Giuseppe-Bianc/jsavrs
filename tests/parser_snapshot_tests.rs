@@ -1,5 +1,5 @@
 use insta::assert_debug_snapshot;
-use jsavrs::lexer::{lexer_tokenize_with_errors, Lexer};
+use jsavrs::lexer::{Lexer, lexer_tokenize_with_errors};
 use jsavrs::parser::ast::*;
 use jsavrs::parser::jsav_parser::JsavParser;
 use jsavrs::parser::precedence::unary_binding_power;
@@ -26,15 +26,9 @@ macro_rules! binary_op_test {
         fn $test_name() {
             let tokens = vec![
                 num_token(3.0),
-                Token {
-                    kind: $token_kind.clone(),
-                    span: dummy_span(),
-                },
+                Token { kind: $token_kind.clone(), span: dummy_span() },
                 num_token(4.0),
-                Token {
-                    kind: TokenKind::Eof,
-                    span: dummy_span(),
-                },
+                Token { kind: TokenKind::Eof, span: dummy_span() },
             ];
             let parser = JsavParser::new(tokens);
             assert_debug_snapshot!(stringify!($test_name), parser.parse());
@@ -58,10 +52,7 @@ macro_rules! unary_op_test {
 literal_test!(test_literal_number, TokenKind::Numeric(Number::Integer(42)));
 literal_test!(test_literal_bool, TokenKind::KeywordBool(true));
 literal_test!(test_literal_nullptr, TokenKind::KeywordNullptr);
-literal_test!(
-    test_literal_string,
-    TokenKind::StringLiteral("assssss".into())
-);
+literal_test!(test_literal_string, TokenKind::StringLiteral("assssss".into()));
 literal_test!(test_literal_char, TokenKind::CharLiteral("a".into()));
 
 // Test per operatori binari usando la macro
@@ -75,36 +66,18 @@ binary_op_test!(test_not_equal, TokenKind::NotEqual, BinaryOp::NotEqual);
 binary_op_test!(test_less, TokenKind::Less, BinaryOp::Less);
 binary_op_test!(test_less_equal, TokenKind::LessEqual, BinaryOp::LessEqual);
 binary_op_test!(test_greater, TokenKind::Greater, BinaryOp::Greater);
-binary_op_test!(
-    test_greater_equal,
-    TokenKind::GreaterEqual,
-    BinaryOp::GreaterEqual
-);
+binary_op_test!(test_greater_equal, TokenKind::GreaterEqual, BinaryOp::GreaterEqual);
 binary_op_test!(test_and, TokenKind::AndAnd, BinaryOp::And);
 binary_op_test!(test_or, TokenKind::OrOr, BinaryOp::Or);
 binary_op_test!(test_bitwise_and, TokenKind::And, BinaryOp::BitwiseAnd);
 binary_op_test!(test_bitwise_or, TokenKind::Or, BinaryOp::BitwiseOr);
 binary_op_test!(test_bitwise_xor, TokenKind::Xor, BinaryOp::BitwiseXor);
 binary_op_test!(test_shift_left, TokenKind::ShiftLeft, BinaryOp::ShiftLeft);
-binary_op_test!(
-    test_shift_right,
-    TokenKind::ShiftRight,
-    BinaryOp::ShiftRight
-);
+binary_op_test!(test_shift_right, TokenKind::ShiftRight, BinaryOp::ShiftRight);
 
 // Test per operatori unari usando la macro
-unary_op_test!(
-    test_unary_negation,
-    TokenKind::Minus,
-    UnaryOp::Negate,
-    TokenKind::Numeric(Number::Integer(5))
-);
-unary_op_test!(
-    test_unary_not,
-    TokenKind::Not,
-    UnaryOp::Not,
-    TokenKind::KeywordBool(true)
-);
+unary_op_test!(test_unary_negation, TokenKind::Minus, UnaryOp::Negate, TokenKind::Numeric(Number::Integer(5)));
+unary_op_test!(test_unary_not, TokenKind::Not, UnaryOp::Not, TokenKind::KeywordBool(true));
 
 macro_rules! test_binary_precedence {
     ($test_name:ident, $first_op:expr, $binary_op:expr) => {
@@ -125,11 +98,7 @@ macro_rules! test_binary_precedence {
 }
 
 test_binary_precedence!(test_binary_precedence_plus, TokenKind::Plus, BinaryOp::Add);
-test_binary_precedence!(
-    test_binary_precedence_minus,
-    TokenKind::Minus,
-    BinaryOp::Subtract
-);
+test_binary_precedence!(test_binary_precedence_minus, TokenKind::Minus, BinaryOp::Subtract);
 
 #[test]
 fn test_grouping() {
@@ -177,12 +146,7 @@ macro_rules! assignment_test {
 
 assignment_test!(
     test_assignment_valid,
-    [
-        TokenKind::IdentifierAscii("x".into()),
-        TokenKind::Equal,
-        TokenKind::Numeric(Number::Integer(5)),
-        TokenKind::Eof,
-    ],
+    [TokenKind::IdentifierAscii("x".into()), TokenKind::Equal, TokenKind::Numeric(Number::Integer(5)), TokenKind::Eof,],
 );
 
 assignment_test!(
@@ -212,12 +176,7 @@ assignment_test!(
 
 assignment_test!(
     test_assignment_invalid_target,
-    [
-        TokenKind::Numeric(Number::Integer(5)),
-        TokenKind::Equal,
-        TokenKind::Numeric(Number::Integer(10)),
-        TokenKind::Eof,
-    ],
+    [TokenKind::Numeric(Number::Integer(5)), TokenKind::Equal, TokenKind::Numeric(Number::Integer(10)), TokenKind::Eof,],
 );
 
 #[test]
@@ -242,10 +201,7 @@ fn test_function_call() {
         Stmt::Expression {
             expr: call_expr(
                 variable_expr("foo"),
-                vec![
-                    num_lit(1),
-                    binary_expr(num_lit(2), BinaryOp::Add, num_lit(3)),
-                ]
+                vec![num_lit(1), binary_expr(num_lit(2), BinaryOp::Add, num_lit(3)),]
             )
         }
     );
@@ -269,10 +225,7 @@ fn test_array_access() {
     assert_eq!(
         expr[0],
         Stmt::Expression {
-            expr: array_access_expr(
-                variable_expr("arr"),
-                binary_expr(num_lit(0), BinaryOp::Add, num_lit(1))
-            )
+            expr: array_access_expr(variable_expr("arr"), binary_expr(num_lit(0), BinaryOp::Add, num_lit(1)))
         }
     );
 }
@@ -291,22 +244,14 @@ fn test_array_access_empty_index() {
 
 #[test]
 fn test_unclosed_parenthesis() {
-    let tokens = create_tokens(vec![
-        TokenKind::OpenParen,
-        TokenKind::Numeric(Number::Integer(5)),
-        TokenKind::Eof,
-    ]);
+    let tokens = create_tokens(vec![TokenKind::OpenParen, TokenKind::Numeric(Number::Integer(5)), TokenKind::Eof]);
     let parser = JsavParser::new(tokens);
     assert_debug_snapshot!(parser.parse());
 }
 
 #[test]
 fn test_unexpected_token() {
-    let tokens = create_tokens(vec![
-        TokenKind::Plus,
-        TokenKind::Numeric(Number::Integer(5)),
-        TokenKind::Eof,
-    ]);
+    let tokens = create_tokens(vec![TokenKind::Plus, TokenKind::Numeric(Number::Integer(5)), TokenKind::Eof]);
     let parser = JsavParser::new(tokens);
     assert_debug_snapshot!(parser.parse());
 }
@@ -336,20 +281,14 @@ fn test_deep_nesting() {
 
 #[test]
 fn test_unary_operators_bp() {
-    let token = Token {
-        kind: TokenKind::Dot,
-        span: dummy_span(),
-    };
+    let token = Token { kind: TokenKind::Dot, span: dummy_span() };
     assert_debug_snapshot!(unary_binding_power(&token));
 }
 
 // Test for line 128-132: Variable with Unicode identifier
 #[test]
 fn test_variable_unicode_identifier() {
-    let tokens = create_tokens(vec![
-        TokenKind::IdentifierUnicode("変数".into()),
-        TokenKind::Eof,
-    ]);
+    let tokens = create_tokens(vec![TokenKind::IdentifierUnicode("変数".into()), TokenKind::Eof]);
     let parser = JsavParser::new(tokens);
     assert_debug_snapshot!(parser.parse());
 }
@@ -396,12 +335,7 @@ fn test_function_call_zero_arguments() {
     let (expr, errors) = parser.parse();
     assert!(errors.is_empty());
     assert_eq!(expr.len(), 1);
-    assert_eq!(
-        expr[0],
-        Stmt::Expression {
-            expr: call_expr(variable_expr("foo"), vec![])
-        }
-    );
+    assert_eq!(expr[0], Stmt::Expression { expr: call_expr(variable_expr("foo"), vec![]) });
 }
 
 // Test for lines 178-179: Unclosed function call
@@ -484,11 +418,7 @@ fn test_chained_array_access() {
 
 #[test]
 fn test_invalid_unary_operator() {
-    let tokens = create_tokens(vec![
-        TokenKind::Star,
-        TokenKind::Numeric(Number::Integer(5)),
-        TokenKind::Eof,
-    ]);
+    let tokens = create_tokens(vec![TokenKind::Star, TokenKind::Numeric(Number::Integer(5)), TokenKind::Eof]);
     let parser = JsavParser::new(tokens);
     assert_debug_snapshot!(parser.parse());
 }
@@ -510,12 +440,8 @@ fn test_nested_function_calls() {
 
 #[test]
 fn test_multiple_errors_in_expression() {
-    let tokens = create_tokens(vec![
-        TokenKind::Plus,
-        TokenKind::Equal,
-        TokenKind::Numeric(Number::Integer(5)),
-        TokenKind::Eof,
-    ]);
+    let tokens =
+        create_tokens(vec![TokenKind::Plus, TokenKind::Equal, TokenKind::Numeric(Number::Integer(5)), TokenKind::Eof]);
     let parser = JsavParser::new(tokens);
     assert_debug_snapshot!(parser.parse());
 }
@@ -647,11 +573,7 @@ fn test_unicode_function_name() {
 
 #[test]
 fn test_block_stmt() {
-    let tokens = create_tokens(vec![
-        TokenKind::OpenBrace,
-        TokenKind::CloseBrace,
-        TokenKind::Eof,
-    ]);
+    let tokens = create_tokens(vec![TokenKind::OpenBrace, TokenKind::CloseBrace, TokenKind::Eof]);
     let parser = JsavParser::new(tokens);
     assert_debug_snapshot!(parser.parse());
 }
@@ -789,24 +711,24 @@ test_var_decl!(
 
 test_var_decl!(
     test_char_decl,
-    "var b: char = 'a'",                    // input
-    "b",                                    // var_name
-    Type::Char,                             // tipo atteso,
+    "var b: char = 'a'",               // input
+    "b",                               // var_name
+    Type::Char,                        // tipo atteso,
     LiteralValue::CharLit("a".into()), // valore letterale
 );
 
 test_var_decl!(
     test_custom_decl,
-    "var b: string = \"a\"",                  // input
-    "b",                                      // var_name
-    Type::String,                             // tipo atteso,
+    "var b: string = \"a\"",             // input
+    "b",                                 // var_name
+    Type::String,                        // tipo atteso,
     LiteralValue::StringLit("a".into()), // valore letterale
 );
 
 test_var_decl!(
     test_string_decl,
-    "var b: custom = \"a\"",                  // input
-    "b",                                      // var_name
+    "var b: custom = \"a\"",             // input
+    "b",                                 // var_name
     Type::Custom("custom".into()),       // tipo atteso,
     LiteralValue::StringLit("a".into()), // valore letterale
 );

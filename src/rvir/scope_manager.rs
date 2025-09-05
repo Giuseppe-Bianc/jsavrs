@@ -20,11 +20,7 @@ impl RScopeManager {
         let mut scopes = HashMap::new();
         scopes.insert(root_id, root_scope);
 
-        RScopeManager {
-            scopes,
-            current_scope: root_id,
-            root_scope: root_id,
-        }
+        RScopeManager { scopes, current_scope: root_id, root_scope: root_id }
     }
 
     pub fn enter_scope(&mut self) -> RScopeId {
@@ -32,11 +28,7 @@ impl RScopeManager {
         let depth = self.scopes[&self.current_scope].depth + 1;
         let new_scope = RScope::new(Some(self.current_scope), depth);
 
-        self.scopes
-            .get_mut(&self.current_scope)
-            .expect("current scope must exist in scopes map")
-            .children
-            .push(new_id);
+        self.scopes.get_mut(&self.current_scope).expect("current scope must exist in scopes map").children.push(new_id);
 
         self.scopes.insert(new_id, new_scope);
         self.current_scope = new_id;
@@ -106,11 +98,7 @@ impl RScopeManager {
     pub fn append_manager(&mut self, other: &RScopeManager) {
         let root_id = self.root_scope;
         debug_assert!(
-            other
-                .scopes
-                .keys()
-                .filter(|id| **id != other.root_scope)
-                .all(|id| !self.scopes.contains_key(id)),
+            other.scopes.keys().filter(|id| **id != other.root_scope).all(|id| !self.scopes.contains_key(id)),
             "RScopeId collision: append_manager would overwrite existing scopes"
         );
 
@@ -127,27 +115,16 @@ impl RScopeManager {
                 if parent_id == other.root_scope {
                     new_scope.parent = Some(root_id);
                     new_scope.depth = self.scopes[&root_id].depth + 1;
-                    self.scopes
-                        .get_mut(&root_id)
-                        .unwrap()
-                        .children
-                        .push(*scope_id);
+                    self.scopes.get_mut(&root_id).unwrap().children.push(*scope_id);
                 } else {
                     // Mantieni lo stesso parent per gli altri scope
-                    new_scope.depth = self
-                        .scopes
-                        .get(&parent_id)
-                        .map_or(new_scope.depth, |p| p.depth + 1);
+                    new_scope.depth = self.scopes.get(&parent_id).map_or(new_scope.depth, |p| p.depth + 1);
                 }
             } else {
                 // Scope senza parent: lo colleghiamo alla root
                 new_scope.parent = Some(root_id);
                 new_scope.depth = self.scopes[&root_id].depth + 1;
-                self.scopes
-                    .get_mut(&root_id)
-                    .unwrap()
-                    .children
-                    .push(*scope_id);
+                self.scopes.get_mut(&root_id).unwrap().children.push(*scope_id);
             }
 
             self.scopes.insert(*scope_id, new_scope);

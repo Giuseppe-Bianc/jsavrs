@@ -28,7 +28,6 @@ struct TypeContext {
     aliases: HashMap<String, RIrType>,
 }
 
-
 #[allow(dead_code)] // implementation  still in progress
 impl RIrGenerator {
     pub fn new() -> Self {
@@ -50,11 +49,7 @@ impl RIrGenerator {
     }
 
     fn new_error(&mut self, message: impl Into<String>, span: SourceSpan) {
-        self.errors.push(CompileError::IrGeneratorError {
-            message: message.into(),
-            span,
-            help: None,
-        });
+        self.errors.push(CompileError::IrGeneratorError { message: message.into(), span, help: None });
     }
 
     pub fn generate(&mut self, stmts: Vec<Stmt>, module_name: &str) -> (Module, Vec<CompileError>) {
@@ -68,8 +63,7 @@ impl RIrGenerator {
     fn visit_top_stmt(&mut self, stmt: &Stmt, module: &mut Module) {
         match stmt {
             Stmt::Function { name, parameters, return_type, body, span } => {
-                let mut func =
-                    self.create_function(name, parameters, return_type.clone(), span.clone());
+                let mut func = self.create_function(name, parameters, return_type.clone(), span.clone());
                 self.generate_function_body(&mut func, body.clone(), span.clone());
                 module.add_function(func.clone());
             }
@@ -79,10 +73,7 @@ impl RIrGenerator {
                 module.add_function(func);
             }
             other => {
-                self.new_error(
-                    format!("Unsupported top-level statement: {:?}", other),
-                    other.span().clone(),
-                );
+                self.new_error(format!("Unsupported top-level statement: {:?}", other), other.span().clone());
             }
         }
     }
@@ -95,10 +86,7 @@ impl RIrGenerator {
                 IrParameter {
                     name: param.name.clone(),
                     ty: ty.clone(),
-                    attributes: ParamAttributes {
-                        source_span: Some(param.span.clone()),
-                        ..Default::default()
-                    },
+                    attributes: ParamAttributes { source_span: Some(param.span.clone()), ..Default::default() },
                 }
             })
             .collect();
@@ -132,11 +120,7 @@ impl RIrGenerator {
                 }
             }
             Type::Array(element_type, size_expr) => {
-                if let Expr::Literal {
-                    value: LiteralValue::Number(Number::Integer(size)),
-                    ..
-                } = **size_expr
-                {
+                if let Expr::Literal { value: LiteralValue::Number(Number::Integer(size)), .. } = **size_expr {
                     RIrType::Array(Box::new(self.map_type(element_type)), size as usize)
                 } else {
                     RIrType::Pointer(Box::new(self.map_type(element_type)))
@@ -158,7 +142,6 @@ impl RIrGenerator {
         self.current_block_label = Some(entry_label.clone());
         self.current_block = func.cfg.get_block_mut(&entry_label).cloned();
 
-
         // Add parameters to scope
         for param in &func.parameters {
             let param_value = RValue::new_local(param.name.clone(), param.ty.clone())
@@ -173,13 +156,13 @@ impl RIrGenerator {
                 RIrType::Void => RValue::new_literal(RIrLiteralValue::I32(0)),
                 _ => RValue::new_literal(RIrLiteralValue::I32(0)),
             };
-            func.set_terminator(self.current_block_label.clone().unwrap().as_str(), RTerminator::new(
-                RTerminatorKind::Return {
-                    value: return_value,
-                    ty: func.return_type.clone(),
-                },
-                SourceSpan::default(),
-            ));
+            func.set_terminator(
+                self.current_block_label.clone().unwrap().as_str(),
+                RTerminator::new(
+                    RTerminatorKind::Return { value: return_value, ty: func.return_type.clone() },
+                    SourceSpan::default(),
+                ),
+            );
         }
 
         func.exit_scope();
@@ -199,4 +182,3 @@ impl Default for RIrGenerator {
         Self::new()
     }
 }
-

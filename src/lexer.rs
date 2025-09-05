@@ -19,12 +19,7 @@ impl<'a> Lexer<'a> {
         let line_tracker = LineTracker::new(file_path, source.to_owned());
         let inner = TokenKind::lexer(source);
         let source_len = source.len();
-        Lexer {
-            inner,
-            line_tracker,
-            eof_emitted: false,
-            source_len,
-        }
+        Lexer { inner, line_tracker, eof_emitted: false, source_len }
     }
 
     pub fn get_line_tracker(&self) -> LineTracker {
@@ -78,10 +73,7 @@ pub fn lexer_tokenize_with_errors(lexer: &mut Lexer) -> (Vec<Token>, Vec<Compile
     post_process_tokens(tokens, errors)
 }
 
-pub fn post_process_tokens(
-    tokens: Vec<Token>,
-    errors: Vec<CompileError>,
-) -> (Vec<Token>, Vec<CompileError>) {
+pub fn post_process_tokens(tokens: Vec<Token>, errors: Vec<CompileError>) -> (Vec<Token>, Vec<CompileError>) {
     let (error_replacements, tokens_to_remove) = collect_error_updates(&errors, &tokens);
     let errors = apply_error_replacements(errors, error_replacements);
     let tokens = filter_removed_tokens(tokens, tokens_to_remove);
@@ -98,14 +90,7 @@ fn collect_error_updates(errors: &[CompileError], tokens: &[Token]) -> Updates {
     for (eidx, error) in errors.iter().enumerate() {
         match error {
             CompileError::LexerError { message, span, .. } if message == "Invalid token: \"#\"" => {
-                process_hashtag_error(
-                    eidx,
-                    span,
-                    tokens,
-                    &token_map,
-                    &mut replacements,
-                    &mut to_remove,
-                );
+                process_hashtag_error(eidx, span, tokens, &token_map, &mut replacements, &mut to_remove);
             }
             _ => continue,
         }
@@ -115,20 +100,12 @@ fn collect_error_updates(errors: &[CompileError], tokens: &[Token]) -> Updates {
 }
 
 fn create_position_map(tokens: &[Token]) -> HashMap<(usize, usize), usize> {
-    tokens
-        .iter()
-        .enumerate()
-        .map(|(i, t)| ((t.span.start.line, t.span.start.column), i))
-        .collect()
+    tokens.iter().enumerate().map(|(i, t)| ((t.span.start.line, t.span.start.column), i)).collect()
 }
 
 pub fn process_hashtag_error(
-    eidx: usize,
-    span: &SourceSpan,
-    tokens: &[Token],
-    token_map: &HashMap<(usize, usize), usize>,
-    replacements: &mut HashMap<usize, CompileError>,
-    to_remove: &mut HashSet<usize>,
+    eidx: usize, span: &SourceSpan, tokens: &[Token], token_map: &HashMap<(usize, usize), usize>,
+    replacements: &mut HashMap<usize, CompileError>, to_remove: &mut HashSet<usize>,
 ) {
     let end_pos = (span.end.line, span.end.column);
 
@@ -142,11 +119,7 @@ pub fn process_hashtag_error(
                     if let Some(merged) = span.merged(&token.span) {
                         replacements.insert(
                             eidx,
-                            CompileError::LexerError {
-                                message: msg.to_string(),
-                                span: merged,
-                                help: None,
-                            },
+                            CompileError::LexerError { message: msg.to_string(), span: merged, help: None },
                         );
                         to_remove.insert(tidx);
                     }
@@ -166,8 +139,7 @@ pub fn get_error_message(s: &str) -> Option<&'static str> {
 }
 
 fn apply_error_replacements(
-    mut errors: Vec<CompileError>,
-    mut replacements: HashMap<usize, CompileError>,
+    mut errors: Vec<CompileError>, mut replacements: HashMap<usize, CompileError>,
 ) -> Vec<CompileError> {
     for (i, error) in errors.iter_mut().enumerate() {
         if let Some(new_err) = replacements.remove(&i) {
@@ -178,10 +150,5 @@ fn apply_error_replacements(
 }
 
 fn filter_removed_tokens(tokens: Vec<Token>, to_remove: HashSet<usize>) -> Vec<Token> {
-    tokens
-        .into_iter()
-        .enumerate()
-        .filter(|(i, _)| !to_remove.contains(i))
-        .map(|(_, t)| t)
-        .collect()
+    tokens.into_iter().enumerate().filter(|(i, _)| !to_remove.contains(i)).map(|(_, t)| t).collect()
 }

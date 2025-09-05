@@ -1,5 +1,8 @@
 // tests/nir_instruction_tests.rs
-use jsavrs::nir::{CastKind, Instruction, InstructionKind, IrBinaryOp, IrConstantValue, IrLiteralValue, IrType, IrUnaryOp, ScopeId, Value, VectorOp};
+use jsavrs::nir::{
+    CastKind, Instruction, InstructionKind, IrBinaryOp, IrConstantValue, IrLiteralValue, IrType, IrUnaryOp, ScopeId,
+    Value, VectorOp,
+};
 use jsavrs::utils::dummy_span;
 
 #[test]
@@ -15,10 +18,7 @@ fn test_alloca_instruction() {
 fn test_store_instruction() {
     let value = Value::new_literal(IrLiteralValue::I32(42));
     let dest = Value::new_local("x".to_string(), IrType::I32);
-    let inst = Instruction::new(
-        InstructionKind::Store { value: value.clone(), dest: dest.clone() },
-        dummy_span(),
-    );
+    let inst = Instruction::new(InstructionKind::Store { value: value.clone(), dest: dest.clone() }, dummy_span());
 
     assert_eq!(format!("{}", inst), "store 42i32 to %x");
 }
@@ -27,10 +27,8 @@ fn test_store_instruction() {
 fn test_load_instruction() {
     let src = Value::new_local("ptr".to_string(), IrType::Pointer(Box::new(IrType::I32)));
     let ty = IrType::I32;
-    let inst = Instruction::new(
-        InstructionKind::Load { src: src.clone(), ty: ty.clone() },
-        dummy_span(),
-    ).with_result(Value::new_temporary(2, ty));
+    let inst = Instruction::new(InstructionKind::Load { src: src.clone(), ty: ty.clone() }, dummy_span())
+        .with_result(Value::new_temporary(2, ty));
 
     assert_eq!(format!("{}", inst), "t2 = load i32 from %ptr");
 }
@@ -42,14 +40,10 @@ fn test_binary_instruction() {
     let ty = IrType::I32;
 
     let inst = Instruction::new(
-        InstructionKind::Binary {
-            op: IrBinaryOp::Add,
-            left: left.clone(),
-            right: right.clone(),
-            ty: ty.clone(),
-        },
+        InstructionKind::Binary { op: IrBinaryOp::Add, left: left.clone(), right: right.clone(), ty: ty.clone() },
         dummy_span(),
-    ).with_result(Value::new_temporary(3, ty));
+    )
+    .with_result(Value::new_temporary(3, ty));
 
     assert_eq!(format!("{}", inst), "t3 = add 10i32 20i32, i32");
 }
@@ -60,13 +54,10 @@ fn test_unary_instruction() {
     let ty = IrType::I32;
 
     let inst = Instruction::new(
-        InstructionKind::Unary {
-            op: IrUnaryOp::Negate,
-            operand: operand.clone(),
-            ty: ty.clone(),
-        },
+        InstructionKind::Unary { op: IrUnaryOp::Negate, operand: operand.clone(), ty: ty.clone() },
         dummy_span(),
-    ).with_result(Value::new_temporary(4, ty));
+    )
+    .with_result(Value::new_temporary(4, ty));
 
     assert_eq!(format!("{}", inst), "t4 = neg 100i32 i32");
 }
@@ -79,13 +70,10 @@ fn test_call_instruction() {
     let ty = IrType::I32;
 
     let inst = Instruction::new(
-        InstructionKind::Call {
-            func: func.clone(),
-            args: vec![arg1.clone(), arg2.clone()],
-            ty: ty.clone(),
-        },
+        InstructionKind::Call { func: func.clone(), args: vec![arg1.clone(), arg2.clone()], ty: ty.clone() },
         dummy_span(),
-    ).with_result(Value::new_temporary(5, ty));
+    )
+    .with_result(Value::new_temporary(5, ty));
 
     assert_eq!(format!("{}", inst), "t5 = %my_func(1i32, 2i32) : i32");
 }
@@ -95,14 +83,8 @@ fn test_call_instruction_no_args() {
     let func = Value::new_local("void_func".to_string(), IrType::Void);
     let ty = IrType::Void;
 
-    let inst = Instruction::new(
-        InstructionKind::Call {
-            func: func.clone(),
-            args: vec![],
-            ty: ty.clone(),
-        },
-        dummy_span(),
-    );
+    let inst =
+        Instruction::new(InstructionKind::Call { func: func.clone(), args: vec![], ty: ty.clone() }, dummy_span());
 
     assert_eq!(format!("{}", inst), "%void_func() : void");
 }
@@ -114,13 +96,10 @@ fn test_gep_instruction() {
     let element_ty = IrType::I32;
 
     let inst = Instruction::new(
-        InstructionKind::GetElementPtr {
-            base: base.clone(),
-            index: index.clone(),
-            element_ty: element_ty.clone(),
-        },
+        InstructionKind::GetElementPtr { base: base.clone(), index: index.clone(), element_ty: element_ty.clone() },
         dummy_span(),
-    ).with_result(Value::new_temporary(6, IrType::Pointer(Box::new(element_ty.clone()))));
+    )
+    .with_result(Value::new_temporary(6, IrType::Pointer(Box::new(element_ty.clone()))));
 
     assert_eq!(format!("{}", inst), "t6 =  getelementptr %arr, 5i32 : i32");
 }
@@ -139,7 +118,8 @@ fn test_cast_instruction() {
             to_ty: to_ty.clone(),
         },
         dummy_span(),
-    ).with_result(Value::new_temporary(7, to_ty));
+    )
+    .with_result(Value::new_temporary(7, to_ty));
 
     assert_eq!(format!("{}", inst), "t7 =  cast 3.14f32 from f32 to i32");
 }
@@ -153,18 +133,13 @@ fn test_phi_instruction() {
     let inst = Instruction::new(
         InstructionKind::Phi {
             ty: ty.clone(),
-            incoming: vec![
-                (val1.clone(), "block1".to_string()),
-                (val2.clone(), "block2".to_string()),
-            ],
+            incoming: vec![(val1.clone(), "block1".to_string()), (val2.clone(), "block2".to_string())],
         },
         dummy_span(),
-    ).with_result(Value::new_temporary(8, ty));
+    )
+    .with_result(Value::new_temporary(8, ty));
 
-    assert_eq!(
-        format!("{}", inst),
-        "t8 =  phi i32 [ [ 10i32, block1 ], [ 20i32, block2 ] ]"
-    );
+    assert_eq!(format!("{}", inst), "t8 =  phi i32 [ [ 10i32, block1 ], [ 20i32, block2 ] ]");
 }
 
 #[test]
@@ -183,19 +158,12 @@ fn test_vectors_instruction() {
 
     for (op, op_str) in ops {
         let inst = Instruction::new(
-            InstructionKind::Vector {
-                op: op.clone(),
-                operands: vec![vec1.clone(), vec2.clone()],
-                ty: ty.clone(),
-            },
+            InstructionKind::Vector { op: op.clone(), operands: vec![vec1.clone(), vec2.clone()], ty: ty.clone() },
             dummy_span(),
         )
-            .with_result(Value::new_temporary(17, ty.clone()));
+        .with_result(Value::new_temporary(17, ty.clone()));
 
-        assert_eq!(
-            format!("{}", inst),
-            format!("t17 =  vector.{} t15, t16 : vec4", op_str)
-        );
+        assert_eq!(format!("{}", inst), format!("t17 =  vector.{} t15, t16 : vec4", op_str));
     }
 }
 
@@ -203,10 +171,7 @@ fn test_vectors_instruction() {
 fn test_instruction_without_result() {
     let value = Value::new_literal(IrLiteralValue::I32(42));
     let dest = Value::new_local("x".to_string(), IrType::I32);
-    let inst = Instruction::new(
-        InstructionKind::Store { value, dest },
-        dummy_span(),
-    );
+    let inst = Instruction::new(InstructionKind::Store { value, dest }, dummy_span());
 
     assert_eq!(format!("{}", inst), "store 42i32 to %x");
 }
@@ -222,7 +187,8 @@ fn test_float_literal_display() {
             ty: IrType::F32,
         },
         dummy_span(),
-    ).with_result(whole);
+    )
+    .with_result(whole);
 
     let inst_frac = Instruction::new(
         InstructionKind::Load {
@@ -230,7 +196,8 @@ fn test_float_literal_display() {
             ty: IrType::F64,
         },
         dummy_span(),
-    ).with_result(fractional);
+    )
+    .with_result(fractional);
 
     assert_eq!(format!("{}", inst_whole), "5.0f32 = load f32 from %ptr");
     assert_eq!(format!("{}", inst_frac), "3.14159f64 = load f64 from %ptr");
@@ -238,23 +205,14 @@ fn test_float_literal_display() {
 
 #[test]
 fn test_string_constant_display() {
-    let string_val = Value::new_constant(
-        IrConstantValue::String { string: "hello\nworld".into() },
-        IrType::String,
-    );
+    let string_val = Value::new_constant(IrConstantValue::String { string: "hello\nworld".into() }, IrType::String);
 
     let inst = Instruction::new(
-        InstructionKind::Store {
-            value: string_val,
-            dest: Value::new_local("s".to_string(), IrType::String),
-        },
+        InstructionKind::Store { value: string_val, dest: Value::new_local("s".to_string(), IrType::String) },
         dummy_span(),
     );
 
-    assert_eq!(
-        format!("{}", inst),
-        r#"store "hello\nworld" to %s"#
-    );
+    assert_eq!(format!("{}", inst), r#"store "hello\nworld" to %s"#);
 }
 
 #[test]
@@ -264,10 +222,7 @@ fn test_array_constant_display() {
         Value::new_literal(IrLiteralValue::I32(2)),
         Value::new_literal(IrLiteralValue::I32(3)),
     ];
-    let array_val = Value::new_constant(
-        IrConstantValue::Array { elements },
-        IrType::Array(Box::new(IrType::I32), 3),
-    );
+    let array_val = Value::new_constant(IrConstantValue::Array { elements }, IrType::Array(Box::new(IrType::I32), 3));
 
     let inst = Instruction::new(
         InstructionKind::Store {
@@ -277,18 +232,12 @@ fn test_array_constant_display() {
         dummy_span(),
     );
 
-    assert_eq!(
-        format!("{}", inst),
-        "store [1i32, 2i32, 3i32] to %arr"
-    );
+    assert_eq!(format!("{}", inst), "store [1i32, 2i32, 3i32] to %arr");
 }
 
 #[test]
 fn test_struct_constant_display() {
-    let fields = vec![
-        Value::new_literal(IrLiteralValue::I32(10)),
-        Value::new_literal(IrLiteralValue::Bool(true)),
-    ];
+    let fields = vec![Value::new_literal(IrLiteralValue::I32(10)), Value::new_literal(IrLiteralValue::Bool(true))];
     let struct_val = Value::new_constant(
         IrConstantValue::Struct { name: "Point".into(), elements: fields },
         IrType::Struct("Point".to_string(), vec![IrType::I32, IrType::Bool], dummy_span()),
@@ -297,24 +246,22 @@ fn test_struct_constant_display() {
     let inst = Instruction::new(
         InstructionKind::Store {
             value: struct_val,
-            dest: Value::new_local("pt".to_string(), IrType::Struct("Point".to_string(), vec![IrType::I32, IrType::Bool], dummy_span())),
+            dest: Value::new_local(
+                "pt".to_string(),
+                IrType::Struct("Point".to_string(), vec![IrType::I32, IrType::Bool], dummy_span()),
+            ),
         },
         dummy_span(),
     );
 
-    assert_eq!(
-        format!("{}", inst),
-        "store Point<10i32, true> to %pt"
-    );
+    assert_eq!(format!("{}", inst), "store Point<10i32, true> to %pt");
 }
 
 #[test]
 fn test_pointer_type_display() {
     let ptr_type = IrType::Pointer(Box::new(IrType::I32));
-    let inst = Instruction::new(
-        InstructionKind::Alloca { ty: ptr_type.clone() },
-        dummy_span(),
-    ).with_result(Value::new_temporary(12, ptr_type));
+    let inst = Instruction::new(InstructionKind::Alloca { ty: ptr_type.clone() }, dummy_span())
+        .with_result(Value::new_temporary(12, ptr_type));
 
     assert_eq!(format!("{}", inst), "t12 = alloca *i32");
 }
@@ -324,48 +271,31 @@ fn test_nested_array_type_display() {
     let inner_array = IrType::Array(Box::new(IrType::I32), 5);
     let outer_array = IrType::Array(Box::new(inner_array), 10);
 
-    let inst = Instruction::new(
-        InstructionKind::Alloca { ty: outer_array.clone() },
-        dummy_span(),
-    ).with_result(Value::new_temporary(13, outer_array));
+    let inst = Instruction::new(InstructionKind::Alloca { ty: outer_array.clone() }, dummy_span())
+        .with_result(Value::new_temporary(13, outer_array));
 
     assert_eq!(format!("{}", inst), "t13 = alloca [[i32; 5]; 10]");
 }
 
 #[test]
 fn test_struct_type_display() {
-    let struct_ty = IrType::Struct(
-        "Point".to_string(),
-        vec![IrType::I32, IrType::I32],
-        dummy_span(),
-    );
+    let struct_ty = IrType::Struct("Point".to_string(), vec![IrType::I32, IrType::I32], dummy_span());
 
-    let inst = Instruction::new(
-        InstructionKind::Alloca { ty: struct_ty.clone() },
-        dummy_span(),
-    ).with_result(Value::new_temporary(14, struct_ty));
+    let inst = Instruction::new(InstructionKind::Alloca { ty: struct_ty.clone() }, dummy_span())
+        .with_result(Value::new_temporary(14, struct_ty));
 
-    assert_eq!(
-        format!("{}", inst),
-        "t14 = alloca struct Point { i32, i32 }"
-    );
+    assert_eq!(format!("{}", inst), "t14 = alloca struct Point { i32, i32 }");
 }
 
 #[test]
 fn test_char_literal_display() {
     let char_val = Value::new_literal(IrLiteralValue::Char('\n'));
     let inst = Instruction::new(
-        InstructionKind::Store {
-            value: char_val,
-            dest: Value::new_local("c".to_string(), IrType::Char),
-        },
+        InstructionKind::Store { value: char_val, dest: Value::new_local("c".to_string(), IrType::Char) },
         dummy_span(),
     );
 
-    assert_eq!(
-        format!("{}", inst),
-        "store '\\n' to %c"
-    );
+    assert_eq!(format!("{}", inst), "store '\\n' to %c");
 }
 
 #[test]
@@ -379,12 +309,10 @@ fn test_bitcast_instruction() {
             to_ty: IrType::Pointer(Box::new(IrType::I8)),
         },
         dummy_span(),
-    ).with_result(Value::new_temporary(18, IrType::Pointer(Box::new(IrType::I8))));
+    )
+    .with_result(Value::new_temporary(18, IrType::Pointer(Box::new(IrType::I8))));
 
-    assert_eq!(
-        format!("{}", inst),
-        "t18 =  cast 1094861636i32 from i32 to *i8"
-    );
+    assert_eq!(format!("{}", inst), "t18 =  cast 1094861636i32 from i32 to *i8");
 }
 
 #[test]
@@ -393,17 +321,12 @@ fn test_phi_single_incoming() {
     let ty = IrType::I32;
 
     let inst = Instruction::new(
-        InstructionKind::Phi {
-            ty: ty.clone(),
-            incoming: vec![(val.clone(), "entry".to_string())],
-        },
+        InstructionKind::Phi { ty: ty.clone(), incoming: vec![(val.clone(), "entry".to_string())] },
         dummy_span(),
-    ).with_result(Value::new_temporary(19, ty));
+    )
+    .with_result(Value::new_temporary(19, ty));
 
-    assert_eq!(
-        format!("{}", inst),
-        "t19 =  phi i32 [ [ 42i32, entry ] ]"
-    );
+    assert_eq!(format!("{}", inst), "t19 =  phi i32 [ [ 42i32, entry ] ]");
 }
 
 #[test]
@@ -435,28 +358,18 @@ fn test_all_binary_ops() {
         let right = Value::new_literal(IrLiteralValue::I32(200 + idx as i32));
 
         let inst = Instruction::new(
-            InstructionKind::Binary {
-                op: op.clone(),
-                left: left.clone(),
-                right: right.clone(),
-                ty: ty.clone(),
-            },
+            InstructionKind::Binary { op: op.clone(), left: left.clone(), right: right.clone(), ty: ty.clone() },
             dummy_span(),
-        ).with_result(Value::new_temporary(1000 + idx as u64, ty.clone()));
+        )
+        .with_result(Value::new_temporary(1000 + idx as u64, ty.clone()));
 
-        assert_eq!(
-            format!("{}", inst),
-            format!("t{} = {} {} {}, i32", 1000 + idx, op_str, left, right)
-        );
+        assert_eq!(format!("{}", inst), format!("t{} = {} {} {}, i32", 1000 + idx, op_str, left, right));
     }
 }
 
 #[test]
 fn test_all_unary_ops() {
-    let ops = vec![
-        (IrUnaryOp::Negate, "neg"),
-        (IrUnaryOp::Not, "not"),
-    ];
+    let ops = vec![(IrUnaryOp::Negate, "neg"), (IrUnaryOp::Not, "not")];
 
     let ty = IrType::I32;
     for (idx, (op, op_str)) in ops.iter().enumerate() {
@@ -464,18 +377,12 @@ fn test_all_unary_ops() {
         let res_idx = 5000 + idx as u64;
 
         let inst = Instruction::new(
-            InstructionKind::Unary {
-                op: op.clone(),
-                operand: operand.clone(),
-                ty: ty.clone(),
-            },
+            InstructionKind::Unary { op: op.clone(), operand: operand.clone(), ty: ty.clone() },
             dummy_span(),
-        ).with_result(Value::new_temporary(res_idx, ty.clone()));
+        )
+        .with_result(Value::new_temporary(res_idx, ty.clone()));
 
-        assert_eq!(
-            format!("{}", inst),
-            format!("t{} = {} {} i32", res_idx, op_str, operand)
-        );
+        assert_eq!(format!("{}", inst), format!("t{} = {} {} i32", res_idx, op_str, operand));
     }
 }
 
@@ -483,8 +390,7 @@ fn test_all_unary_ops() {
 fn test_instruction_with_scope() {
     let ty = IrType::I32;
     let scope_id = ScopeId::new();
-    let inst = Instruction::new(InstructionKind::Alloca { ty }, dummy_span())
-        .with_scope(scope_id);
+    let inst = Instruction::new(InstructionKind::Alloca { ty }, dummy_span()).with_scope(scope_id);
 
     assert_eq!(inst.scope, Some(scope_id));
 }

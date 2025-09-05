@@ -22,13 +22,7 @@ pub struct RAccessRules {
 impl RAccessRules {
     // Add a public constructor
     pub const fn new(read: bool, write: bool, execute: bool, allocate: bool, deallocate: bool) -> Self {
-        RAccessRules {
-            read,
-            write,
-            execute,
-            allocate,
-            deallocate,
-        }
+        RAccessRules { read, write, execute, allocate, deallocate }
     }
 
     pub const fn allows(&self, operation: ROperation) -> bool {
@@ -51,10 +45,7 @@ pub struct RAccessController {
 
 impl RAccessController {
     pub fn new(scope_manager: &super::scope_manager::RScopeManager) -> Self {
-        RAccessController {
-            scopes: scope_manager.get_scopes().clone(),
-            current_scope: scope_manager.current_scope(),
-        }
+        RAccessController { scopes: scope_manager.get_scopes().clone(), current_scope: scope_manager.current_scope() }
     }
     pub fn check_access(&self, _resource: RResourceId, _operation: ROperation) -> bool {
         // TODO: implement real access evaluation.

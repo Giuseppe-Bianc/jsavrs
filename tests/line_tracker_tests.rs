@@ -21,12 +21,7 @@ macro_rules! test_locations {
 }
 
 // Helper for span assertions
-fn assert_span(
-    source: &str,
-    range: std::ops::Range<usize>,
-    start: (usize, usize),
-    end: (usize, usize),
-) {
+fn assert_span(source: &str, range: std::ops::Range<usize>, start: (usize, usize), end: (usize, usize)) {
     let tracker = LineTracker::new("test.txt", source.to_string());
     let span = tracker.span_for(range);
     assert_eq!((span.start.line, span.start.column), start);

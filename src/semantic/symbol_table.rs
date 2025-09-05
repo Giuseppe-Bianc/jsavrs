@@ -53,21 +53,13 @@ pub struct SymbolTable {
 impl SymbolTable {
     pub fn new() -> Self {
         Self {
-            scopes: vec![Scope {
-                kind: ScopeKind::Global,
-                symbols: HashMap::new(),
-                defined_at: None,
-            }],
+            scopes: vec![Scope { kind: ScopeKind::Global, symbols: HashMap::new(), defined_at: None }],
             current_function: None,
         }
     }
 
     pub fn push_scope(&mut self, kind: ScopeKind, defined_at: Option<SourceSpan>) {
-        self.scopes.push(Scope {
-            kind,
-            symbols: HashMap::new(),
-            defined_at,
-        });
+        self.scopes.push(Scope { kind, symbols: HashMap::new(), defined_at });
     }
 
     pub fn pop_scope(&mut self) {
@@ -97,10 +89,7 @@ impl SymbolTable {
 
         if current_scope.symbols.contains_key(name) {
             return Err(CompileError::TypeError {
-                message: format!(
-                    "Identifier '{}' already declared in this {:?} scope",
-                    name, current_scope.kind
-                ),
+                message: format!("Identifier '{}' already declared in this {:?} scope", name, current_scope.kind),
                 span: match current_scope.symbols.get(name) {
                     Some(Symbol::Variable(v)) => v.defined_at.clone(),
                     Some(Symbol::Function(f)) => f.defined_at.clone(),

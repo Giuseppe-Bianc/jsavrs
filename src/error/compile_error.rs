@@ -24,11 +24,7 @@ pub enum CompileError {
     #[error("{message} at {span}{}",
         .help.as_ref().map_or(String::new(), |h| format!("\nhelp: {h}"))
     )]
-    LexerError {
-        message: String,
-        span: SourceSpan,
-        help: Option<String>,
-    },
+    LexerError { message: String, span: SourceSpan, help: Option<String> },
 
     /// Syntax error indicating invalid program structure.
     ///
@@ -39,11 +35,7 @@ pub enum CompileError {
     #[error("Syntax error: {message} at {span}{}",
         .help.as_ref().map_or(String::new(), |h| format!("\nhelp: {h}"))
     )]
-    SyntaxError {
-        message: String,
-        span: SourceSpan,
-        help: Option<String>,
-    },
+    SyntaxError { message: String, span: SourceSpan, help: Option<String> },
 
     /// Type checking error indicating type mismatches or unsupported operations.
     ///
@@ -54,11 +46,7 @@ pub enum CompileError {
     #[error("Type error: {message} at {span}{}",
         .help.as_ref().map_or(String::new(), |h| format!("\nhelp: {h}"))
     )]
-    TypeError {
-        message: String,
-        span: SourceSpan,
-        help: Option<String>,
-    },
+    TypeError { message: String, span: SourceSpan, help: Option<String> },
 
     /// Error during intermediate representation (IR) generation.
     ///
@@ -69,20 +57,14 @@ pub enum CompileError {
     #[error("Ir generator error: {message} at {span}{}",
         .help.as_ref().map_or(String::new(), |h| format!("\nhelp: {h}"))
     )]
-    IrGeneratorError {
-        message: String,
-        span: SourceSpan,
-        help: Option<String>,
-    },
+    IrGeneratorError { message: String, span: SourceSpan, help: Option<String> },
 
     /// Error during assembly code generation.
     ///
     /// Contains:
     /// - `message`: Description of the assembly generation failure
     #[error("Assembly generation error: {message}")]
-    AsmGeneratorError {
-        message: String,
-    },
+    AsmGeneratorError { message: String },
 
     /// I/O operation failure during compilation (e.g., file access issues).
     ///

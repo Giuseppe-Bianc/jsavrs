@@ -13,29 +13,13 @@ use std::{
 
 /// Helper to run a hashtag error scenario and return formatted output
 fn run_hashtag_error(
-    eidx: usize,
-    span: SourceSpan,
-    tokens: Vec<Token>,
-    token_map: HashMap<(usize, usize), usize>,
+    eidx: usize, span: SourceSpan, tokens: Vec<Token>, token_map: HashMap<(usize, usize), usize>,
 ) -> String {
     let mut replacements: HashMap<usize, CompileError> = HashMap::new();
     let mut to_remove: HashSet<usize> = HashSet::new();
-    process_hashtag_error(
-        eidx,
-        &span,
-        &tokens,
-        &token_map,
-        &mut replacements,
-        &mut to_remove,
-    );
+    process_hashtag_error(eidx, &span, &tokens, &token_map, &mut replacements, &mut to_remove);
     let mut out = String::new();
-    writeln!(
-        &mut out,
-        "Replacements count: {}\nToRemove count: {}",
-        replacements.len(),
-        to_remove.len()
-    )
-        .unwrap();
+    writeln!(&mut out, "Replacements count: {}\nToRemove count: {}", replacements.len(), to_remove.len()).unwrap();
     out
 }
 
@@ -61,10 +45,7 @@ fn test_no_token_in_map_snapshot() {
 #[test]
 fn test_non_identifier_token_snapshot() {
     let span = make_span(5, 4, 5, 5);
-    let token = Token {
-        kind: TokenKind::Numeric(Integer(42)),
-        span: make_span(5, 5, 5, 6),
-    };
+    let token = Token { kind: TokenKind::Numeric(Integer(42)), span: make_span(5, 5, 5, 6) };
     let tokens = vec![token];
     let mut token_map = HashMap::new();
     token_map.insert((5, 5), 0);
@@ -75,10 +56,7 @@ fn test_non_identifier_token_snapshot() {
 #[test]
 fn test_identifier_length_gt_one_snapshot() {
     let span = make_span(7, 7, 7, 8);
-    let token = Token {
-        kind: TokenKind::IdentifierAscii("ab".into()),
-        span: make_span(7, 8, 7, 10),
-    };
+    let token = Token { kind: TokenKind::IdentifierAscii("ab".into()), span: make_span(7, 8, 7, 10) };
     let mut token_map = HashMap::new();
     token_map.insert((7, 8), 0);
     let output = run_hashtag_error(2, span, vec![token], token_map);
@@ -88,10 +66,7 @@ fn test_identifier_length_gt_one_snapshot() {
 #[test]
 fn test_get_error_message_none_snapshot() {
     let span = make_span(8, 8, 8, 9);
-    let token = Token {
-        kind: TokenKind::IdentifierAscii("z".into()),
-        span: make_span(8, 9, 8, 10),
-    };
+    let token = Token { kind: TokenKind::IdentifierAscii("z".into()), span: make_span(8, 9, 8, 10) };
     let mut token_map = HashMap::new();
     token_map.insert((8, 9), 0);
     let output = run_hashtag_error(3, span, vec![token], token_map);
@@ -101,21 +76,13 @@ fn test_get_error_message_none_snapshot() {
 #[test]
 fn test_adjacent_spans_merging_snapshot() {
     let error_span = make_span(4, 0, 4, 1);
-    let token = Token {
-        kind: TokenKind::IdentifierAscii("b".into()),
-        span: make_span(4, 1, 4, 2),
-    };
+    let token = Token { kind: TokenKind::IdentifierAscii("b".into()), span: make_span(4, 1, 4, 2) };
     let mut token_map = HashMap::new();
     token_map.insert((4, 1), 0);
     let mut merged = String::new();
     let can_merge = error_span.merged(&token.span).is_some();
     writeln!(&mut merged, "CanMerge: {}", can_merge).unwrap();
-    let replacements = run_hashtag_error(
-        1,
-        error_span.clone(),
-        vec![token.clone()],
-        token_map.clone(),
-    );
+    let replacements = run_hashtag_error(1, error_span.clone(), vec![token.clone()], token_map.clone());
     writeln!(&mut merged, "{}", replacements).unwrap();
     assert_snapshot!(merged);
 }

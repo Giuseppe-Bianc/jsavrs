@@ -32,14 +32,8 @@ fn test_i16_display() {
     assert_eq!(Number::I16(0).to_string(), "0i16");
     assert_eq!(Number::I16(1234).to_string(), "1234i16");
     assert_eq!(Number::I16(-1234).to_string(), "-1234i16");
-    assert_eq!(
-        Number::I16(i16::MAX).to_string(),
-        format!("{}i16", i16::MAX)
-    );
-    assert_eq!(
-        Number::I16(i16::MIN).to_string(),
-        format!("{}i16", i16::MIN)
-    );
+    assert_eq!(Number::I16(i16::MAX).to_string(), format!("{}i16", i16::MAX));
+    assert_eq!(Number::I16(i16::MIN).to_string(), format!("{}i16", i16::MIN));
 }
 
 #[test]
@@ -47,24 +41,15 @@ fn test_i32_display() {
     assert_eq!(Number::I32(0).to_string(), "0i32");
     assert_eq!(Number::I32(123456).to_string(), "123456i32");
     assert_eq!(Number::I32(-123456).to_string(), "-123456i32");
-    assert_eq!(
-        Number::I32(i32::MAX).to_string(),
-        format!("{}i32", i32::MAX)
-    );
-    assert_eq!(
-        Number::I32(i32::MIN).to_string(),
-        format!("{}i32", i32::MIN)
-    );
+    assert_eq!(Number::I32(i32::MAX).to_string(), format!("{}i32", i32::MAX));
+    assert_eq!(Number::I32(i32::MIN).to_string(), format!("{}i32", i32::MIN));
 }
 
 #[test]
 fn test_unsigned_integer_display() {
     assert_eq!(Number::UnsignedInteger(0).to_string(), "0");
     assert_eq!(Number::UnsignedInteger(42).to_string(), "42");
-    assert_eq!(
-        Number::UnsignedInteger(u64::MAX).to_string(),
-        u64::MAX.to_string()
-    );
+    assert_eq!(Number::UnsignedInteger(u64::MAX).to_string(), u64::MAX.to_string());
 }
 
 #[test]
@@ -78,20 +63,14 @@ fn test_u8_display() {
 fn test_u16_display() {
     assert_eq!(Number::U16(0).to_string(), "0u16");
     assert_eq!(Number::U16(1234).to_string(), "1234u16");
-    assert_eq!(
-        Number::U16(u16::MAX).to_string(),
-        format!("{}u16", u16::MAX)
-    );
+    assert_eq!(Number::U16(u16::MAX).to_string(), format!("{}u16", u16::MAX));
 }
 
 #[test]
 fn test_u32_display() {
     assert_eq!(Number::U32(0).to_string(), "0u32");
     assert_eq!(Number::U32(123456).to_string(), "123456u32");
-    assert_eq!(
-        Number::U32(u32::MAX).to_string(),
-        format!("{}u32", u32::MAX)
-    );
+    assert_eq!(Number::U32(u32::MAX).to_string(), format!("{}u32", u32::MAX));
 }
 
 #[allow(clippy::approx_constant)]
@@ -128,10 +107,7 @@ fn test_scientific32_display() {
 
 #[test]
 fn test_scientific64_display() {
-    assert_eq!(
-        Number::Scientific64(1.23456789, 5).to_string(),
-        "1.23456789e5"
-    );
+    assert_eq!(Number::Scientific64(1.23456789, 5).to_string(), "1.23456789e5");
     assert_eq!(Number::Scientific64(9.87, -3).to_string(), "9.87e-3");
     assert_eq!(Number::Scientific64(0.0, 0).to_string(), "0e0");
     assert_eq!(Number::Scientific64(-0.0, 0).to_string(), "-0e0");
@@ -144,23 +120,14 @@ fn test_extreme_scientific_values() {
     assert_eq!(num.to_string(), format!("{}e{}", f64::MAX, i32::MAX));
 
     let num = Number::Scientific64(f64::MIN_POSITIVE, i32::MIN);
-    assert_eq!(
-        num.to_string(),
-        format!("{}e{}", f64::MIN_POSITIVE, i32::MIN)
-    );
+    assert_eq!(num.to_string(), format!("{}e{}", f64::MIN_POSITIVE, i32::MIN));
 }
 
 #[test]
 fn test_extreme_float_values() {
     assert_eq!(Number::Float64(f64::MAX).to_string(), f64::MAX.to_string());
-    assert_eq!(
-        Number::Float64(f64::MIN_POSITIVE).to_string(),
-        f64::MIN_POSITIVE.to_string()
-    );
-    assert_eq!(
-        Number::Float64(f64::EPSILON).to_string(),
-        f64::EPSILON.to_string()
-    );
+    assert_eq!(Number::Float64(f64::MIN_POSITIVE).to_string(), f64::MIN_POSITIVE.to_string());
+    assert_eq!(Number::Float64(f64::EPSILON).to_string(), f64::EPSILON.to_string());
 }
 
 #[test]

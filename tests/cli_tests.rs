@@ -1,7 +1,7 @@
 // tests/cli_tests.rs
 use assert_cmd::Command;
-use clap::error::ErrorKind;
 use clap::Parser;
+use clap::error::ErrorKind;
 use jsavrs::cli::Args;
 use predicates::prelude::*;
 use std::path::PathBuf;
@@ -20,12 +20,7 @@ fn help_displays_correctly() {
 #[test]
 fn version_displays_correctly() {
     let version = format!("{} {}", env!("CARGO_PKG_NAME"), env!("CARGO_PKG_VERSION"));
-    Command::cargo_bin("jsavrs")
-        .unwrap()
-        .arg("--version")
-        .assert()
-        .success()
-        .stdout(predicate::str::contains(version));
+    Command::cargo_bin("jsavrs").unwrap().arg("--version").assert().success().stdout(predicate::str::contains(version));
 }
 
 #[test]
@@ -34,9 +29,7 @@ fn missing_input_argument() {
         .unwrap()
         .assert()
         .failure()
-        .stderr(predicate::str::contains(
-            "required arguments were not provided",
-        ));
+        .stderr(predicate::str::contains("required arguments were not provided"));
 }
 
 #[test]
@@ -45,11 +38,7 @@ fn invalid_file_path() {
     let mut path = PathBuf::from(env!("CARGO_MANIFEST_DIR"));
     path.push("non_existent_file.vn");
 
-    cmd.arg("-i")
-        .arg(path)
-        .assert()
-        .failure()
-        .stderr(predicate::str::contains("I/O"));
+    cmd.arg("-i").arg(path).assert().failure().stderr(predicate::str::contains("I/O"));
 }
 
 #[test]
@@ -91,11 +80,7 @@ fn long_verbose_flag_works() {
     // Create temporary test file
     std::fs::write(&path, "fun a(num1: i8, num2: i8): i8 { return 0i8 }").unwrap();
 
-    cmd.arg("--input")
-        .arg(&path)
-        .arg("--verbose")
-        .assert()
-        .success();
+    cmd.arg("--input").arg(&path).arg("--verbose").assert().success();
 
     // Cleanup
     std::fs::remove_file(&path).unwrap();

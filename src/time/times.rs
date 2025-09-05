@@ -12,12 +12,7 @@ pub struct TimeLabels {
 
 impl Default for TimeLabels {
     fn default() -> Self {
-        Self {
-            seconds: "s",
-            millis: "ms",
-            micro: "us",
-            nano: "ns",
-        }
+        Self { seconds: "s", millis: "ms", micro: "us", nano: "ns" }
     }
 }
 
@@ -29,10 +24,7 @@ pub struct Times {
 
 impl Times {
     pub fn from_nanoseconds(nanoseconds: f64) -> Self {
-        Self {
-            values: TimeValues::from_nanoseconds(nanoseconds),
-            labels: TimeLabels::default(),
-        }
+        Self { values: TimeValues::from_nanoseconds(nanoseconds), labels: TimeLabels::default() }
     }
 
     pub fn get_relevant_timeframe(&self) -> ValueLabel {
@@ -69,8 +61,5 @@ pub fn big_format(title: &str, title_len: usize, time: &ValueLabel) -> String {
         title_len = title_len.saturating_sub(4), // Prevent underflow
         time_len = time_str.len() + 1
     );
-    format!(
-        "\n{:-<total_len$}\n{}\n{:-<total_len$}",
-        "", title_section, ""
-    )
+    format!("\n{:-<total_len$}\n{}\n{:-<total_len$}", "", title_section, "")
 }

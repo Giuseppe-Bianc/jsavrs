@@ -43,7 +43,6 @@ pub enum Number {
     Scientific64(f64, i32),
 }
 
-
 impl PartialEq for Number {
     fn eq(&self, other: &Self) -> bool {
         match (self, other) {

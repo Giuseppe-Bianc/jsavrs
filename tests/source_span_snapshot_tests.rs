@@ -1,5 +1,5 @@
 use jsavrs::location::source_location::SourceLocation;
-use jsavrs::location::source_span::{truncate_path, SourceSpan};
+use jsavrs::location::source_span::{SourceSpan, truncate_path};
 use jsavrs::utils::create_span;
 use std::path::Path;
 use std::sync::Arc;
@@ -10,11 +10,8 @@ macro_rules! truncate_test {
         fn $name() {
             let path = Path::new($path);
             let truncated = truncate_path(path, $depth);
-            let snapshot_name = if cfg!(unix) {
-                concat!(stringify!($name), "_unix")
-            } else {
-                concat!(stringify!($name), "_windows")
-            };
+            let snapshot_name =
+                if cfg!(unix) { concat!(stringify!($name), "_unix") } else { concat!(stringify!($name), "_windows") };
             insta::assert_snapshot!(snapshot_name, truncated);
         }
     };
@@ -26,11 +23,8 @@ macro_rules! span_str_test {
         fn $name() {
             let span = create_span($file, $sl, $sc, $el, $ec);
 
-            let snapshot_name = if cfg!(unix) {
-                concat!(stringify!($name), "_unix")
-            } else {
-                concat!(stringify!($name), "_windows")
-            };
+            let snapshot_name =
+                if cfg!(unix) { concat!(stringify!($name), "_unix") } else { concat!(stringify!($name), "_windows") };
             insta::assert_snapshot!(snapshot_name, span.to_string());
         }
     };
@@ -53,29 +47,13 @@ span_str_test!(minimal_coordinates, "f.vn", 0, 0, 0, 0);
 
 #[test]
 fn absolute_path_span() {
-    let path = if cfg!(unix) {
-        "/usr/project/src/main.vn"
-    } else {
-        "C:\\project\\src\\main.vn"
-    };
+    let path = if cfg!(unix) { "/usr/project/src/main.vn" } else { "C:\\project\\src\\main.vn" };
     let span = SourceSpan::new(
         Arc::from(path),
-        SourceLocation {
-            line: 5,
-            column: 3,
-            absolute_pos: 20,
-        },
-        SourceLocation {
-            line: 5,
-            column: 10,
-            absolute_pos: 30,
-        },
+        SourceLocation { line: 5, column: 3, absolute_pos: 20 },
+        SourceLocation { line: 5, column: 10, absolute_pos: 30 },
     );
-    let snapshot_name = if cfg!(unix) {
-        "absolute_path_span_unix"
-    } else {
-        "absolute_path_span_windows"
-    };
+    let snapshot_name = if cfg!(unix) { "absolute_path_span_unix" } else { "absolute_path_span_windows" };
     insta::assert_snapshot!(snapshot_name, span.to_string());
 }
 

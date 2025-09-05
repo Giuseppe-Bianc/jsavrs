@@ -60,8 +60,6 @@ fn test_times_snapshots() {
 #[test]
 fn test_timer_formatting_snapshots() {
     // Test different formatters
-    let timer = Timer::with_formatter("Custom Format", |title, _, _| {
-        format!("[CUSTOM] {}: 123.456ms", title)
-    });
+    let timer = Timer::with_formatter("Custom Format", |title, _, _| format!("[CUSTOM] {}: 123.456ms", title));
     assert_snapshot!("timer_custom_formatter", &timer.to_string());
 }

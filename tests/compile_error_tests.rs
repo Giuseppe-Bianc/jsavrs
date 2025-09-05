@@ -13,9 +13,7 @@ fn test_io_error_display() {
 
 #[test]
 fn test_asm_generator_error_display() {
-    let error = CompileError::AsmGeneratorError {
-        message: "Invalid assembly code".to_string(),
-    };
+    let error = CompileError::AsmGeneratorError { message: "Invalid assembly code".to_string() };
     assert_eq!(format!("{}", error), "Assembly generation error: Invalid assembly code");
 }
 
@@ -36,7 +34,8 @@ fn test_parser_error_display_with_help() {
 #[test]
 fn test_type_error_display_with_help() {
     make_error!(error, TypeError, 3, Some("Check variable types".to_string()));
-    let expected = "Type error: Unexpected token \"@\" at test_file:line 3:column 1 - line 3:column 2\nhelp: Check variable types";
+    let expected =
+        "Type error: Unexpected token \"@\" at test_file:line 3:column 1 - line 3:column 2\nhelp: Check variable types";
     assert_eq!(format!("{}", error), expected);
 }
 
@@ -47,20 +46,14 @@ fn test_ir_error_display_with_help() {
     assert_eq!(format!("{}", error), expected);
 }
 
-
 macro_rules! generate_display_test {
     ($test_name:ident, $error_type:ident, $line:expr) => {
         #[test]
         fn $test_name() {
             make_error!(error, $error_type, $line);
-            let expected = format!(
-                "Unexpected token \"@\" at test_file:line {}:column 1 - line {}:column 2",
-                $line, $line
-            );
-            assert_eq!(
-                format!("{} at {}", error.message().unwrap(), error.span().unwrap()),
-                expected
-            );
+            let expected =
+                format!("Unexpected token \"@\" at test_file:line {}:column 1 - line {}:column 2", $line, $line);
+            assert_eq!(format!("{} at {}", error.message().unwrap(), error.span().unwrap()), expected);
         }
     };
     ($test_name:ident, $error_type:ident, $line:expr, $help:expr) => {
@@ -69,7 +62,9 @@ macro_rules! generate_display_test {
             make_error!(error, $error_type, $line, $help);
             let expected = format!(
                 "Unexpected token \"@\" at test_file:line {}:column 1 - line {}:column 2\nhelp: {}",
-                $line, $line, $help.unwrap()
+                $line,
+                $line,
+                $help.unwrap()
             );
             assert_eq!(
                 format!("{} at {}\nhelp: {}", error.message().unwrap(), error.span().unwrap(), error.help().unwrap()),
@@ -84,7 +79,12 @@ generate_display_test!(test_parser_error_display, SyntaxError, 2);
 generate_display_test!(test_type_error_display, TypeError, 3);
 generate_display_test!(test_ir_error_display, IrGeneratorError, 4);
 generate_display_test!(test_lexer_error_display_whit_help, LexerError, 1, Some("Check the syntax".to_string()));
-generate_display_test!(test_parser_error_display_whit_help, SyntaxError, 2, Some("Ensure all brackets are closed".to_string()));
+generate_display_test!(
+    test_parser_error_display_whit_help,
+    SyntaxError,
+    2,
+    Some("Ensure all brackets are closed".to_string())
+);
 generate_display_test!(test_type_error_display_whit_help, TypeError, 3, Some("Check variable types".to_string()));
 
 macro_rules! generate_message_test {
@@ -153,8 +153,6 @@ generate_set_message_test!(test_set_message, LexerError, 1);
 generate_set_message_test!(test_set_message_parser, SyntaxError, 2);
 generate_set_message_test!(test_set_message_type, TypeError, 3);
 generate_set_message_test!(test_set_message_ir_generator, IrGeneratorError, 4);
-
-
 
 macro_rules! generate_set_span_test {
     ($test_name:ident, $error_type:ident, $initial_line:expr, $new_line:expr) => {

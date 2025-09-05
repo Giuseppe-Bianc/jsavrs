@@ -369,13 +369,21 @@ fn test_current_scope() {
     // Expected behavior:
     // - After entering a new scope, the current scope should be the new scope
     // Actual output:
-    assert_eq!(manager.current_scope(), new_scope, "After entering a new scope, the current scope should be the new scope");
+    assert_eq!(
+        manager.current_scope(),
+        new_scope,
+        "After entering a new scope, the current scope should be the new scope"
+    );
     // Exit the scope
     manager.exit_scope();
     // Expected behavior:
     // - After exiting, the current scope should return to be the initial scope
     // Actual output:
-    assert_eq!(manager.current_scope(), initial_scope, "After exiting, the current scope should return to be the initial scope");
+    assert_eq!(
+        manager.current_scope(),
+        initial_scope,
+        "After exiting, the current scope should return to be the initial scope"
+    );
 }
 // Test for multiple scopes with the same name in different scopes
 #[test]

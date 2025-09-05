@@ -52,11 +52,7 @@ impl SourceSpan {
         // In production code, should validate:
         // assert!(start <= end, "Span start must come before end");
         // assert!(file_path == other.file_path, "Cannot merge spans from different files");
-        Self {
-            file_path,
-            start,
-            end,
-        }
+        Self { file_path, start, end }
     }
 
     /// Merges another span into this one in-place.
@@ -119,11 +115,7 @@ impl Default for SourceSpan {
     /// Primarily useful for placeholder values. Should not be used for
     /// actual source references.
     fn default() -> Self {
-        SourceSpan {
-            file_path: Arc::from(""),
-            start: SourceLocation::default(),
-            end: SourceLocation::default(),
-        }
+        SourceSpan { file_path: Arc::from(""), start: SourceLocation::default(), end: SourceLocation::default() }
     }
 }
 
@@ -175,9 +167,6 @@ pub fn truncate_path(path: &Path, depth: usize) -> String {
     if len <= depth {
         components.iter().collect::<PathBuf>().display().to_string()
     } else {
-        PathBuf::from("..")
-            .join(components[len - depth..].iter().collect::<PathBuf>())
-            .display()
-            .to_string()
+        PathBuf::from("..").join(components[len - depth..].iter().collect::<PathBuf>()).display().to_string()
     }
 }

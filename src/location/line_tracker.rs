@@ -47,11 +47,7 @@ impl LineTracker {
             )
             .collect();
 
-        Self {
-            line_starts,
-            file_path: Arc::from(file_path),
-            source,
-        }
+        Self { line_starts, file_path: Arc::from(file_path), source }
     }
     /// Converts a byte offset to its corresponding line/column position.
     ///
@@ -84,11 +80,7 @@ impl LineTracker {
     pub fn location_for(&self, offset: usize) -> SourceLocation {
         // Validate offset is within source bounds
         if offset > self.source.len() {
-            panic!(
-                "Offset {} out of bounds for source of length {}",
-                offset,
-                self.source.len()
-            );
+            panic!("Offset {} out of bounds for source of length {}", offset, self.source.len());
         }
 
         match self.line_starts.binary_search(&offset) {
@@ -127,20 +119,13 @@ impl LineTracker {
     /// let span = tracker.span_for(3..8);
     /// ```
     pub fn span_for(&self, range: std::ops::Range<usize>) -> SourceSpan {
-        SourceSpan::new(
-            self.file_path.clone(),
-            self.location_for(range.start),
-            self.location_for(range.end),
-        )
+        SourceSpan::new(self.file_path.clone(), self.location_for(range.start), self.location_for(range.end))
     }
 
     /// Gets a specific line from the source (1-indexed)
     pub fn get_line(&self, line_number: usize) -> Option<&str> {
         let start_index = *self.line_starts.get(line_number.checked_sub(1)?)?;
-        let end_index = self.source[start_index..]
-            .find('\n')
-            .map(|rel| start_index + rel)
-            .unwrap_or(self.source.len());
+        let end_index = self.source[start_index..].find('\n').map(|rel| start_index + rel).unwrap_or(self.source.len());
 
         Some(&self.source[start_index..end_index])
     }

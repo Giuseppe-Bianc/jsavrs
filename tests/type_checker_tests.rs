@@ -1,5 +1,5 @@
 use jsavrs::error::compile_error::CompileError;
-use jsavrs::lexer::{lexer_tokenize_with_errors, Lexer};
+use jsavrs::lexer::{Lexer, lexer_tokenize_with_errors};
 use jsavrs::parser::ast::{Expr, LiteralValue, Type};
 use jsavrs::parser::jsav_parser::JsavParser;
 use jsavrs::semantic::type_checker::TypeChecker;
@@ -37,10 +37,7 @@ fn test_var_declaration_mismatched_num_of_inic() {
     let input = "var x: i32, y:f64 = 42i32";
     let errors = typecheck(input);
     assert_eq!(errors.len(), 2);
-    assert_eq!(
-        errors[0].message(),
-        Some("Variable declaration requires 1 initializers but 0 were provided")
-    );
+    assert_eq!(errors[0].message(), Some("Variable declaration requires 1 initializers but 0 were provided"));
 }
 
 #[test]
@@ -69,10 +66,7 @@ fn test_variable_declaration_type_mismatch() {
     let ast = "var x: i32 = \"test\"";
     let errors = typecheck(ast);
     assert_eq!(errors.len(), 1);
-    assert_eq!(
-        errors[0].message(),
-        Some("Cannot assign string to i32 for variable 'x'")
-    );
+    assert_eq!(errors[0].message(), Some("Cannot assign string to i32 for variable 'x'"));
 }
 
 #[test]
@@ -113,10 +107,7 @@ add(1i32, \"two\")";
 
     let errors = typecheck(ast);
     assert_eq!(errors.len(), 1);
-    assert_eq!(
-        errors[0].message(),
-        Some("Argument 2 type mismatch: expected i32, found string")
-    );
+    assert_eq!(errors[0].message(), Some("Argument 2 type mismatch: expected i32, found string"));
 }
 
 #[test]
@@ -127,10 +118,7 @@ fn test_return_type_mismatch() {
 
     let errors = typecheck(ast);
     assert_eq!(errors.len(), 1);
-    assert_eq!(
-        errors[0].message(),
-        Some("Return type mismatch: expected i32 found bool")
-    );
+    assert_eq!(errors[0].message(), Some("Return type mismatch: expected i32 found bool"));
 }
 
 #[test]
@@ -141,10 +129,7 @@ fn test_return_type_void() {
 
     let errors = typecheck(ast);
     assert_eq!(errors.len(), 1);
-    assert_eq!(
-        errors[0].message(),
-        Some("Return type mismatch, expected i32 found Void")
-    );
+    assert_eq!(errors[0].message(), Some("Return type mismatch, expected i32 found Void"));
 }
 
 #[test]
@@ -163,10 +148,7 @@ fn test_empty_array_literal() {
 
     let errors = typecheck(ast);
     assert_eq!(errors.len(), 1);
-    assert_eq!(
-        errors[0].message(),
-        Some("Array literals must have at least one element for type inference")
-    );
+    assert_eq!(errors[0].message(), Some("Array literals must have at least one element for type inference"));
 }
 
 #[test]
@@ -176,10 +158,7 @@ fn test_mismatched_types_in_array_literal() {
 
     let errors = typecheck(ast);
     assert_eq!(errors.len(), 1);
-    assert_eq!(
-        errors[0].message(),
-        Some("All array elements must be same type, found mixed types: i32 and char")
-    );
+    assert_eq!(errors[0].message(), Some("All array elements must be same type, found mixed types: i32 and char"));
 }
 
 #[test]
@@ -189,10 +168,7 @@ fn test_array_invalid_index_access() {
 
     let errors = typecheck(ast);
     assert_eq!(errors.len(), 1);
-    assert_eq!(
-        errors[0].message(),
-        Some("Array index must be integer type, found char")
-    );
+    assert_eq!(errors[0].message(), Some("Array index must be integer type, found char"));
 }
 
 #[test]
@@ -246,10 +222,7 @@ fn test_immutable_assignment() {
 
     let errors = typecheck(ast);
     assert_eq!(errors.len(), 1);
-    assert_eq!(
-        errors[0].message(),
-        Some("Cannot assign to immutable variable 'x'")
-    );
+    assert_eq!(errors[0].message(), Some("Cannot assign to immutable variable 'x'"));
 }
 
 #[test]
@@ -320,10 +293,7 @@ fn test_binary_arithmetic_invalid() {
 
     let errors = typecheck(ast);
     assert_eq!(errors.len(), 1);
-    assert_eq!(
-        errors[0].message(),
-        Some("Binary operator 'Add' requires numeric operands, found bool and i32")
-    );
+    assert_eq!(errors[0].message(), Some("Binary operator 'Add' requires numeric operands, found bool and i32"));
 }
 
 #[test]
@@ -360,10 +330,7 @@ fn test_logical_operations_invalid() {
 
     let errors = typecheck(ast);
     assert_eq!(errors.len(), 1);
-    assert_eq!(
-        errors[0].message(),
-        Some("Logical operator 'Or' requires boolean operands types, found i32 and bool")
-    );
+    assert_eq!(errors[0].message(), Some("Logical operator 'Or' requires boolean operands types, found i32 and bool"));
 }
 
 #[test]
@@ -400,10 +367,7 @@ fn test_unary_negate_invalid() {
 
     let errors = typecheck(ast);
     assert_eq!(errors.len(), 1);
-    assert_eq!(
-        errors[0].message(),
-        Some("Negation requires numeric type operand, found bool")
-    );
+    assert_eq!(errors[0].message(), Some("Negation requires numeric type operand, found bool"));
 }
 
 #[test]
@@ -420,10 +384,7 @@ fn test_unary_not_invalid() {
 
     let errors = typecheck(ast);
     assert_eq!(errors.len(), 1);
-    assert_eq!(
-        errors[0].message(),
-        Some("Logical not requires boolean type operand, found i32")
-    );
+    assert_eq!(errors[0].message(), Some("Logical not requires boolean type operand, found i32"));
 }
 
 #[test]
@@ -444,10 +405,7 @@ fn test_if_invalid_condition() {
 
     let errors = typecheck(ast);
     assert_eq!(errors.len(), 1);
-    assert_eq!(
-        errors[0].message(),
-        Some("Condition in 'if' statement must be boolean, found i64")
-    );
+    assert_eq!(errors[0].message(), Some("Condition in 'if' statement must be boolean, found i64"));
 }
 
 #[test]
@@ -466,10 +424,7 @@ fn test_return_outside_of_function() {
 
     let errors = typecheck(ast);
     assert_eq!(errors.len(), 1);
-    assert_eq!(
-        errors[0].message(),
-        Some("Return statement must be inside function body")
-    );
+    assert_eq!(errors[0].message(), Some("Return statement must be inside function body"));
 }
 
 #[test]
@@ -481,10 +436,7 @@ add(2i32, 3i32, 4i32)";
 
     let errors = typecheck(ast);
     assert_eq!(errors.len(), 1);
-    assert_eq!(
-        errors[0].message(),
-        Some("Function 'add' expects 2 arguments, found 3")
-    );
+    assert_eq!(errors[0].message(), Some("Function 'add' expects 2 arguments, found 3"));
 }
 /*#[test]
 fn test_invalid_assignment_target() {
@@ -504,10 +456,7 @@ fn test_assign_wrong_type_to_array_access() {
 
     let errors = typecheck(ast);
     assert_eq!(errors.len(), 1);
-    assert_eq!(
-        errors[0].message(),
-        Some("Cannot assign f64 to array element of type i32")
-    );
+    assert_eq!(errors[0].message(), Some("Cannot assign f64 to array element of type i32"));
 }
 #[test]
 fn test_assign_to_array_access_whit_nullptr_index() {
@@ -516,10 +465,7 @@ fn test_assign_to_array_access_whit_nullptr_index() {
 
     let errors = typecheck(ast);
     assert_eq!(errors.len(), 1);
-    assert_eq!(
-        errors[0].message(),
-        Some("Array index must be integer type, found nullptr")
-    );
+    assert_eq!(errors[0].message(), Some("Array index must be integer type, found nullptr"));
 }
 
 #[test]
@@ -548,10 +494,7 @@ fn test_undefined_function_call() {
 
     let errors = typecheck(ast);
     assert_eq!(errors.len(), 1);
-    assert_eq!(
-        errors[0].message(),
-        Some("Undefined function: 'undefined_function'")
-    );
+    assert_eq!(errors[0].message(), Some("Undefined function: 'undefined_function'"));
 }
 
 #[test]
@@ -566,10 +509,7 @@ fn test_while_loop_invalid_condition() {
     let ast = "while (42i32) { }";
     let errors = typecheck(ast);
     assert_eq!(errors.len(), 1);
-    assert_eq!(
-        errors[0].message(),
-        Some("Condition in 'while' loop must be boolean, found i32")
-    );
+    assert_eq!(errors[0].message(), Some("Condition in 'while' loop must be boolean, found i32"));
 }
 
 #[test]
@@ -598,10 +538,7 @@ fn test_for_loop_invalid_condition() {
     let ast = "for (var i: i32 = 0i32; 42i32; i = i + 1i32) { }";
     let errors = typecheck(ast);
     assert_eq!(errors.len(), 1);
-    assert_eq!(
-        errors[0].message(),
-        Some("For loop condition must be bool, found i32")
-    );
+    assert_eq!(errors[0].message(), Some("For loop condition must be bool, found i32"));
 }
 
 #[test]
@@ -617,7 +554,6 @@ fn test_continue_inside_for() {
     let errors = typecheck(ast);
     assert!(errors.is_empty(), "Unexpected errors: {:?}", errors);
 }
-
 
 #[test]
 fn test_nested_loops_with_break_continue() {
@@ -657,17 +593,11 @@ fn test_type_of_number_float_variants() {
     let tc = TypeChecker::new();
     // 32-bit float
     assert_eq!(tc.type_of_number(&Number::Float32(3.14)), Type::F32);
-    assert_eq!(
-        tc.type_of_number(&Number::Scientific32(1.0e2, 2)),
-        Type::F32
-    );
+    assert_eq!(tc.type_of_number(&Number::Scientific32(1.0e2, 2)), Type::F32);
 
     // 64-bit float
     assert_eq!(tc.type_of_number(&Number::Float64(2.71838)), Type::F64);
-    assert_eq!(
-        tc.type_of_number(&Number::Scientific64(1.0e2, 2)),
-        Type::F64
-    );
+    assert_eq!(tc.type_of_number(&Number::Scientific64(1.0e2, 2)), Type::F64);
 }
 
 #[test]
@@ -722,10 +652,10 @@ fn test_is_assignable_nullptr() {
     let span = dummy_span();
 
     // NullPtr assignable to Array and Vector
-    let array_ty = Type::Array(Box::new(Type::I32), Box::new(Expr::Literal {
-        value: LiteralValue::Number(Number::Integer(0)),
-        span: span.clone(),
-    }));
+    let array_ty = Type::Array(
+        Box::new(Type::I32),
+        Box::new(Expr::Literal { value: LiteralValue::Number(Number::Integer(0)), span: span.clone() }),
+    );
     let vector_ty = Type::Vector(Box::new(Type::I8));
     assert!(tc.is_assignable(&Type::NullPtr, &array_ty));
     assert!(tc.is_assignable(&Type::NullPtr, &vector_ty));
@@ -741,30 +671,30 @@ fn test_is_assignable_arrays_and_vectors() {
     let span = dummy_span();
 
     // Array tests
-    let array_i32_5 = Type::Array(Box::new(Type::I32), Box::new(Expr::Literal {
-        value: LiteralValue::Number(Number::Integer(5)),
-        span: span.clone(),
-    }));
-    let array_i32_5_again = Type::Array(Box::new(Type::I32), Box::new(Expr::Literal {
-        value: LiteralValue::Number(Number::Integer(5)),
-        span: span.clone(),
-    }));
-    let array_i32_10 = Type::Array(Box::new(Type::I32), Box::new(Expr::Literal {
-        value: LiteralValue::Number(Number::Integer(10)),
-        span: span.clone(),
-    }));
-    let array_i8_5 = Type::Array(Box::new(Type::I8), Box::new(Expr::Literal {
-        value: LiteralValue::Number(Number::Integer(5)),
-        span: span.clone(),
-    }));
-    let array_i16_5 = Type::Array(Box::new(Type::I16), Box::new(Expr::Literal {
-        value: LiteralValue::Number(Number::Integer(5)),
-        span: span.clone(),
-    }));
-    let array_u8_5 = Type::Array(Box::new(Type::U8), Box::new(Expr::Literal {
-        value: LiteralValue::Number(Number::Integer(5)),
-        span: span.clone(),
-    }));
+    let array_i32_5 = Type::Array(
+        Box::new(Type::I32),
+        Box::new(Expr::Literal { value: LiteralValue::Number(Number::Integer(5)), span: span.clone() }),
+    );
+    let array_i32_5_again = Type::Array(
+        Box::new(Type::I32),
+        Box::new(Expr::Literal { value: LiteralValue::Number(Number::Integer(5)), span: span.clone() }),
+    );
+    let array_i32_10 = Type::Array(
+        Box::new(Type::I32),
+        Box::new(Expr::Literal { value: LiteralValue::Number(Number::Integer(10)), span: span.clone() }),
+    );
+    let array_i8_5 = Type::Array(
+        Box::new(Type::I8),
+        Box::new(Expr::Literal { value: LiteralValue::Number(Number::Integer(5)), span: span.clone() }),
+    );
+    let array_i16_5 = Type::Array(
+        Box::new(Type::I16),
+        Box::new(Expr::Literal { value: LiteralValue::Number(Number::Integer(5)), span: span.clone() }),
+    );
+    let array_u8_5 = Type::Array(
+        Box::new(Type::U8),
+        Box::new(Expr::Literal { value: LiteralValue::Number(Number::Integer(5)), span: span.clone() }),
+    );
 
     // Same array type and size -> allowed
     assert!(tc.is_assignable(&array_i32_5, &array_i32_5_again));
@@ -799,10 +729,7 @@ fn test_void_function_return_value() {
     let input = "fun log() { return 42i32 }";
     let errors = typecheck(input);
     assert_eq!(errors.len(), 1);
-    assert_eq!(
-        errors[0].message(),
-        Some("Cannot return a value from void function")
-    );
+    assert_eq!(errors[0].message(), Some("Cannot return a value from void function"));
 }
 
 #[test]
@@ -1062,10 +989,7 @@ fn test_function_has_return_void_with_value() {
     let input = "fun test() { return 42i32 }";
     let errors = typecheck(input);
     assert_eq!(errors.len(), 1);
-    assert_eq!(
-        errors[0].message(),
-        Some("Cannot return a value from void function")
-    );
+    assert_eq!(errors[0].message(), Some("Cannot return a value from void function"));
 }
 
 #[test]
@@ -1232,28 +1156,13 @@ fn test_promote_numeric_types_behaviour() {
     assert_eq!(tc.promote_numeric_types(&Type::I8, &Type::U64), Type::U64);
 
     // Non-numeric types fallback to first type
-    assert_eq!(
-        tc.promote_numeric_types(&Type::Bool, &Type::String),
-        Type::Bool
-    );
-    assert_eq!(
-        tc.promote_numeric_types(&Type::String, &Type::Bool),
-        Type::String
-    );
-    assert_eq!(
-        tc.promote_numeric_types(&Type::Char, &Type::Bool),
-        Type::Char
-    );
+    assert_eq!(tc.promote_numeric_types(&Type::Bool, &Type::String), Type::Bool);
+    assert_eq!(tc.promote_numeric_types(&Type::String, &Type::Bool), Type::String);
+    assert_eq!(tc.promote_numeric_types(&Type::Char, &Type::Bool), Type::Char);
 
     // Mixed numeric and non-numeric
-    assert_eq!(
-        tc.promote_numeric_types(&Type::I32, &Type::String),
-        Type::I32
-    );
-    assert_eq!(
-        tc.promote_numeric_types(&Type::Bool, &Type::F64),
-        Type::F64
-    );
+    assert_eq!(tc.promote_numeric_types(&Type::I32, &Type::String), Type::I32);
+    assert_eq!(tc.promote_numeric_types(&Type::Bool, &Type::F64), Type::F64);
 }
 
 #[test]
@@ -1276,14 +1185,8 @@ fn test_is_same_type_array() {
     let checker = TypeChecker::new();
 
     // Create size expressions
-    let size_expr_5 = Expr::Literal {
-        value: LiteralValue::Number(Number::Integer(5)),
-        span: dummy_span(),
-    };
-    let size_expr_10 = Expr::Literal {
-        value: LiteralValue::Number(Number::Integer(10)),
-        span: dummy_span(),
-    };
+    let size_expr_5 = Expr::Literal { value: LiteralValue::Number(Number::Integer(5)), span: dummy_span() };
+    let size_expr_10 = Expr::Literal { value: LiteralValue::Number(Number::Integer(10)), span: dummy_span() };
 
     // Same element type and size
     let array1 = Type::Array(Box::new(Type::I32), Box::new(size_expr_5.clone()));
@@ -1322,85 +1225,46 @@ fn test_get_size() {
     let checker = TypeChecker::new();
 
     // Positive integers
-    let expr_i8 = Expr::Literal {
-        value: LiteralValue::Number(Number::I8(42)),
-        span: dummy_span(),
-    };
+    let expr_i8 = Expr::Literal { value: LiteralValue::Number(Number::I8(42)), span: dummy_span() };
     assert_eq!(checker.get_size(&expr_i8), Some(42));
 
-    let expr_i16 = Expr::Literal {
-        value: LiteralValue::Number(Number::I16(100)),
-        span: dummy_span(),
-    };
+    let expr_i16 = Expr::Literal { value: LiteralValue::Number(Number::I16(100)), span: dummy_span() };
     assert_eq!(checker.get_size(&expr_i16), Some(100));
 
-    let expr_i32 = Expr::Literal {
-        value: LiteralValue::Number(Number::I32(42)),
-        span: dummy_span(),
-    };
+    let expr_i32 = Expr::Literal { value: LiteralValue::Number(Number::I32(42)), span: dummy_span() };
     assert_eq!(checker.get_size(&expr_i32), Some(42));
 
-    let expr_i64 = Expr::Literal {
-        value: LiteralValue::Number(Number::Integer(100)),
-        span: dummy_span(),
-    };
+    let expr_i64 = Expr::Literal { value: LiteralValue::Number(Number::Integer(100)), span: dummy_span() };
     assert_eq!(checker.get_size(&expr_i64), Some(100));
 
-    let expr_u8 = Expr::Literal {
-        value: LiteralValue::Number(Number::U8(200)),
-        span: dummy_span(),
-    };
+    let expr_u8 = Expr::Literal { value: LiteralValue::Number(Number::U8(200)), span: dummy_span() };
     assert_eq!(checker.get_size(&expr_u8), Some(200));
 
-    let expr_u16 = Expr::Literal {
-        value: LiteralValue::Number(Number::U16(300)),
-        span: dummy_span(),
-    };
+    let expr_u16 = Expr::Literal { value: LiteralValue::Number(Number::U16(300)), span: dummy_span() };
     assert_eq!(checker.get_size(&expr_u16), Some(300));
 
-    let expr_u32 = Expr::Literal {
-        value: LiteralValue::Number(Number::U32(400)),
-        span: dummy_span(),
-    };
+    let expr_u32 = Expr::Literal { value: LiteralValue::Number(Number::U32(400)), span: dummy_span() };
     assert_eq!(checker.get_size(&expr_u32), Some(400));
 
-    let expr_u64 = Expr::Literal {
-        value: LiteralValue::Number(Number::UnsignedInteger(500)),
-        span: dummy_span(),
-    };
+    let expr_u64 = Expr::Literal { value: LiteralValue::Number(Number::UnsignedInteger(500)), span: dummy_span() };
     assert_eq!(checker.get_size(&expr_u64), Some(500));
 
     // Zero
-    let expr_zero = Expr::Literal {
-        value: LiteralValue::Number(Number::I8(0)),
-        span: dummy_span(),
-    };
+    let expr_zero = Expr::Literal { value: LiteralValue::Number(Number::I8(0)), span: dummy_span() };
     assert_eq!(checker.get_size(&expr_zero), Some(0));
 
     // Negative integer (should return None)
-    let expr_negative = Expr::Literal {
-        value: LiteralValue::Number(Number::Integer(-5)),
-        span: dummy_span(),
-    };
+    let expr_negative = Expr::Literal { value: LiteralValue::Number(Number::Integer(-5)), span: dummy_span() };
     assert_eq!(checker.get_size(&expr_negative), None);
 
     // Non-integer literals (should return None)
-    let expr_float = Expr::Literal {
-        value: LiteralValue::Number(Number::Float64(3.14)),
-        span: dummy_span(),
-    };
+    let expr_float = Expr::Literal { value: LiteralValue::Number(Number::Float64(3.14)), span: dummy_span() };
     assert_eq!(checker.get_size(&expr_float), None);
 
-    let expr_bool = Expr::Literal {
-        value: LiteralValue::Bool(true),
-        span: dummy_span(),
-    };
+    let expr_bool = Expr::Literal { value: LiteralValue::Bool(true), span: dummy_span() };
     assert_eq!(checker.get_size(&expr_bool), None);
 
     // Non-literal expression (should return None)
-    let expr_variable = Expr::Variable {
-        name: "x".into(),
-        span: dummy_span(),
-    };
+    let expr_variable = Expr::Variable { name: "x".into(), span: dummy_span() };
     assert_eq!(checker.get_size(&expr_variable), None);
 }

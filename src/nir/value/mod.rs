@@ -4,9 +4,7 @@ pub mod debug_info;
 pub mod kind;
 pub mod literal;
 
-pub use self::{
-    constant::IrConstantValue, debug_info::ValueDebugInfo, kind::ValueKind, literal::IrLiteralValue,
-};
+pub use self::{constant::IrConstantValue, debug_info::ValueDebugInfo, kind::ValueKind, literal::IrLiteralValue};
 
 use super::types::{IrType, ScopeId};
 use crate::location::source_span::SourceSpan;
@@ -35,7 +33,6 @@ impl fmt::Display for ValueId {
     }
 }
 
-
 #[derive(Debug, Clone, PartialEq)]
 pub struct Value {
     pub id: ValueId,
@@ -48,60 +45,27 @@ pub struct Value {
 impl Value {
     pub fn new_literal(imm: IrLiteralValue) -> Self {
         let ty: IrType = (&imm).into();
-        Value {
-            id: ValueId::new(),
-            kind: ValueKind::Literal(imm),
-            ty,
-            debug_info: None,
-            scope: None,
-        }
+        Value { id: ValueId::new(), kind: ValueKind::Literal(imm), ty, debug_info: None, scope: None }
     }
 
     pub fn new_constant(imm: IrConstantValue, ty: IrType) -> Self {
-        Value {
-            id: ValueId::new(),
-            kind: ValueKind::Constant(imm),
-            ty,
-            debug_info: None,
-            scope: None,
-        }
+        Value { id: ValueId::new(), kind: ValueKind::Constant(imm), ty, debug_info: None, scope: None }
     }
 
     pub fn new_local(name: String, ty: IrType) -> Self {
-        Value {
-            id: ValueId::new(),
-            kind: ValueKind::Local(name),
-            ty,
-            debug_info: None,
-            scope: None,
-        }
+        Value { id: ValueId::new(), kind: ValueKind::Local(name), ty, debug_info: None, scope: None }
     }
 
     pub fn new_global(name: String, ty: IrType) -> Self {
-        Value {
-            id: ValueId::new(),
-            kind: ValueKind::Global(name),
-            ty,
-            debug_info: None,
-            scope: None,
-        }
+        Value { id: ValueId::new(), kind: ValueKind::Global(name), ty, debug_info: None, scope: None }
     }
 
     pub fn new_temporary(id: u64, ty: IrType) -> Self {
-        Value {
-            id: ValueId::new(),
-            kind: ValueKind::Temporary(id),
-            ty,
-            debug_info: None,
-            scope: None,
-        }
+        Value { id: ValueId::new(), kind: ValueKind::Temporary(id), ty, debug_info: None, scope: None }
     }
 
     pub fn with_debug_info(mut self, name: Option<Arc<str>>, span: SourceSpan) -> Self {
-        self.debug_info = Some(ValueDebugInfo {
-            name,
-            source_span: span,
-        });
+        self.debug_info = Some(ValueDebugInfo { name, source_span: span });
         self
     }
 

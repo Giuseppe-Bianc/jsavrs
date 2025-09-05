@@ -60,12 +60,10 @@ impl NIrGenerator {
         //let mut functions = Vec::new();
         let mut module = Module::new(module_name.into());
 
-
         for stmt in stmts {
             match stmt {
                 Stmt::Function { name, parameters, return_type, body, span } => {
-                    let mut func =
-                        self.create_function(&name, &parameters, return_type, span.clone());
+                    let mut func = self.create_function(&name, &parameters, return_type, span.clone());
                     self.generate_function_body(&mut func, body, span);
                     module.add_function(func);
                 }
@@ -75,10 +73,7 @@ impl NIrGenerator {
                     module.add_function(func);
                 }
                 other => {
-                    self.new_error(
-                        "Unsupported top-level statement".to_string(),
-                        other.span().clone(),
-                    );
+                    self.new_error("Unsupported top-level statement".to_string(), other.span().clone());
                 }
             }
         }
@@ -92,22 +87,24 @@ impl NIrGenerator {
 
     fn add_branch_if_needed(&mut self, func: &mut Function, target_label: &str, span: SourceSpan) {
         if self.block_needs_terminator() {
-            self.add_terminator(func, Terminator::new(TerminatorKind::Branch { label: target_label.to_string() }, span));
+            self.add_terminator(
+                func,
+                Terminator::new(TerminatorKind::Branch { label: target_label.to_string() }, span),
+            );
         }
     }
 
     fn create_function(&mut self, name: &str, params: &[Parameter], return_type: Type, span: SourceSpan) -> Function {
-        let ir_params = params.iter().map(|param| {
-            let ty = self.map_type(&param.type_annotation);
-            IrParameter {
-                name: param.name.clone().to_string(),
-                ty: ty.clone(),
-                attributes: ParamAttributes {
-                    source_span: Some(param.span.clone()),
-                    ..Default::default()
-                },
-            }
-        })
+        let ir_params = params
+            .iter()
+            .map(|param| {
+                let ty = self.map_type(&param.type_annotation);
+                IrParameter {
+                    name: param.name.clone().to_string(),
+                    ty: ty.clone(),
+                    attributes: ParamAttributes { source_span: Some(param.span.clone()), ..Default::default() },
+                }
+            })
             .collect();
 
         let ir_return_type = self.map_type(&return_type);
@@ -140,11 +137,7 @@ impl NIrGenerator {
                 }
             }
             Type::Array(element_type, size_expr) => {
-                if let Expr::Literal {
-                    value: LiteralValue::Number(Number::Integer(size)),
-                    ..
-                } = **size_expr
-                {
+                if let Expr::Literal { value: LiteralValue::Number(Number::Integer(size)), .. } = **size_expr {
                     IrType::Array(Box::new(self.map_type(element_type)), size as usize)
                 } else {
                     IrType::Pointer(Box::new(self.map_type(element_type)))
@@ -201,10 +194,7 @@ impl NIrGenerator {
                 self.add_terminator(
                     func,
                     Terminator::new(
-                        TerminatorKind::Return {
-                            value: return_value,
-                            ty: func.return_type.clone(),
-                        },
+                        TerminatorKind::Return { value: return_value, ty: func.return_type.clone() },
                         SourceSpan::default(),
                     ),
                 );
@@ -250,10 +240,7 @@ impl NIrGenerator {
             Stmt::Continue { span } => {
                 self.handle_continue(func, span);
             }
-            other => self.new_error(
-                format!("Unsupported statement: {:?}", other),
-                other.span().clone(),
-            ),
+            other => self.new_error(format!("Unsupported statement: {:?}", other), other.span().clone()),
         }
     }
 
@@ -264,20 +251,17 @@ impl NIrGenerator {
             if is_mutable {
                 let temp_id = self.new_temp();
                 let ptr_ty = IrType::Pointer(Box::new(ty.clone()));
-                let ptr_value = Value::new_temporary(temp_id, ptr_ty)
-                    .with_debug_info(Some(var.clone()), span.clone());
+                let ptr_value = Value::new_temporary(temp_id, ptr_ty).with_debug_info(Some(var.clone()), span.clone());
 
-                let alloca_inst = Instruction::new(InstructionKind::Alloca { ty: ty.clone() }, span.clone()).with_result(ptr_value.clone());
+                let alloca_inst = Instruction::new(InstructionKind::Alloca { ty: ty.clone() }, span.clone())
+                    .with_result(ptr_value.clone());
 
                 self.add_instruction(alloca_inst);
 
                 if let Some(init) = initializers.get(i) {
                     let value_val = self.generate_expr(func, init.clone());
                     let store_inst = Instruction::new(
-                        InstructionKind::Store {
-                            value: value_val,
-                            dest: ptr_value.clone(),
-                        },
+                        InstructionKind::Store { value: value_val, dest: ptr_value.clone() },
                         span.clone(),
                     );
                     self.add_instruction(store_inst);
@@ -296,17 +280,12 @@ impl NIrGenerator {
     }
 
     fn generate_return(&mut self, func: &mut Function, value: Option<Expr>, span: SourceSpan) {
-        let return_value = value.map_or_else(|| Value::new_literal(IrLiteralValue::I32(0)), |expr| self.generate_expr(func, expr));
+        let return_value =
+            value.map_or_else(|| Value::new_literal(IrLiteralValue::I32(0)), |expr| self.generate_expr(func, expr));
 
         self.add_terminator(
             func,
-            Terminator::new(
-                TerminatorKind::Return {
-                    value: return_value,
-                    ty: func.return_type.clone(),
-                },
-                span,
-            ),
+            Terminator::new(TerminatorKind::Return { value: return_value, ty: func.return_type.clone() }, span),
         );
     }
 
@@ -358,10 +337,7 @@ impl NIrGenerator {
 
         self.add_terminator(
             func,
-            Terminator::new(
-                TerminatorKind::Branch { label: loop_start_label.clone() },
-                span.clone(),
-            ),
+            Terminator::new(TerminatorKind::Branch { label: loop_start_label.clone() }, span.clone()),
         );
 
         self.start_block(func, &loop_start_label, span.clone());
@@ -477,12 +453,8 @@ impl NIrGenerator {
             Expr::Variable { name, span } => self.generate_variable(name, span),
             Expr::Assign { target, value, span } => self.generate_assign(func, *target, *value, span),
             Expr::Grouping { expr, span: _ } => self.generate_expr(func, *expr),
-            Expr::ArrayLiteral { elements, span } => {
-                self.generate_array_literal(func, elements, span)
-            }
-            Expr::ArrayAccess { array, index, span } => {
-                self.generate_array_access(func, *array, *index, span)
-            }
+            Expr::ArrayLiteral { elements, span } => self.generate_array_literal(func, elements, span),
+            Expr::ArrayAccess { array, index, span } => self.generate_array_access(func, *array, *index, span),
             other => {
                 self.new_error("Unsupported expression type".to_string(), other.span().clone());
                 Value::new_literal(IrLiteralValue::I32(0))
@@ -506,10 +478,7 @@ impl NIrGenerator {
             IrType::Array(elem_ty, _) => *elem_ty.clone(),
             other => {
                 // Caso inatteso: segnaliamo ma proseguiamo con un fallback sicuro (i32)
-                self.new_error(
-                    format!("Array access on non-array type: {other}"),
-                    span.clone(),
-                );
+                self.new_error(format!("Array access on non-array type: {other}"), span.clone());
                 IrType::I32
             }
         };
@@ -518,7 +487,8 @@ impl NIrGenerator {
         let gep = Instruction::new(
             InstructionKind::GetElementPtr { base: base_val, index: index_val, element_ty: element_ty.clone() },
             span.clone(),
-        ).with_result(Value::new_temporary(tmp, IrType::Pointer(Box::new(element_ty))));
+        )
+        .with_result(Value::new_temporary(tmp, IrType::Pointer(Box::new(element_ty))));
 
         self.add_instruction(gep.clone());
         gep.result.unwrap()
@@ -549,13 +519,21 @@ impl NIrGenerator {
             let index_temp = self.new_temp();
             let index_val = Value::new_literal(IrLiteralValue::I32(index as i32));
 
-            let gep_inst = Instruction::new(InstructionKind::GetElementPtr { base: array_ptr.clone(), index: index_val, element_ty: element_ty.clone() }, span.clone())
-                .with_result(Value::new_temporary(index_temp, IrType::Pointer(Box::new(element_ty.clone()))));
+            let gep_inst = Instruction::new(
+                InstructionKind::GetElementPtr {
+                    base: array_ptr.clone(),
+                    index: index_val,
+                    element_ty: element_ty.clone(),
+                },
+                span.clone(),
+            )
+            .with_result(Value::new_temporary(index_temp, IrType::Pointer(Box::new(element_ty.clone()))));
             self.add_instruction(gep_inst.clone());
 
             let element_ptr = gep_inst.result.unwrap();
 
-            let store_inst = Instruction::new(InstructionKind::Store { value: element_val, dest: element_ptr }, span.clone());
+            let store_inst =
+                Instruction::new(InstructionKind::Store { value: element_val, dest: element_ptr }, span.clone());
             self.add_instruction(store_inst);
         }
 
@@ -585,8 +563,12 @@ impl NIrGenerator {
                 }
             },
             LiteralValue::Bool(b) => Value::new_literal(IrLiteralValue::Bool(b)).with_debug_info(None, span),
-            LiteralValue::StringLit(s) => Value::new_constant(IrConstantValue::String { string: s }, IrType::String).with_debug_info(None, span),
-            LiteralValue::CharLit(c) => Value::new_literal(IrLiteralValue::Char(c.chars().next().unwrap_or('\0'))).with_debug_info(None, span),
+            LiteralValue::StringLit(s) => {
+                Value::new_constant(IrConstantValue::String { string: s }, IrType::String).with_debug_info(None, span)
+            }
+            LiteralValue::CharLit(c) => {
+                Value::new_literal(IrLiteralValue::Char(c.chars().next().unwrap_or('\0'))).with_debug_info(None, span)
+            }
             LiteralValue::Nullptr => Value::new_literal(IrLiteralValue::I64(0)).with_debug_info(None, span),
         }
     }
@@ -598,8 +580,11 @@ impl NIrGenerator {
         let ty = left_val.ty.clone();
         let dest_id = self.new_temp();
 
-        let bin_inst = Instruction::new(InstructionKind::Binary { op: ir_op, left: left_val, right: right_val, ty: ty.clone() }, span.clone())
-            .with_result(Value::new_temporary(dest_id, ty.clone()));
+        let bin_inst = Instruction::new(
+            InstructionKind::Binary { op: ir_op, left: left_val, right: right_val, ty: ty.clone() },
+            span.clone(),
+        )
+        .with_result(Value::new_temporary(dest_id, ty.clone()));
 
         self.add_instruction(bin_inst.clone());
         bin_inst.result.unwrap()
@@ -629,7 +614,8 @@ impl NIrGenerator {
         let target_val = self.generate_expr(func, target);
         let value_val = self.generate_expr(func, value);
 
-        let store_inst = Instruction::new(InstructionKind::Store { value: value_val.clone(), dest: target_val }, span.clone());
+        let store_inst =
+            Instruction::new(InstructionKind::Store { value: value_val.clone(), dest: target_val }, span.clone());
         self.add_instruction(store_inst);
 
         value_val
@@ -649,8 +635,7 @@ impl NIrGenerator {
     fn start_block(&mut self, func: &mut Function, label: &str, span: SourceSpan) {
         self.finalize_current_block(func);
 
-        let mut new_block = BasicBlock::new(label, span)
-            .with_scope(self.scope_manager.current_scope());
+        let mut new_block = BasicBlock::new(label, span).with_scope(self.scope_manager.current_scope());
 
         if let Some(preds) = func.cfg.predecessors.get(label) {
             // Ordiniamo i predecessori per suffisso numerico (se presente), poi per label

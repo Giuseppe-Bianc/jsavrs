@@ -1,6 +1,6 @@
 use jsavrs::time::time_values::TimeValues;
 use jsavrs::time::timer::{AutoTimer, Timer};
-use jsavrs::time::times::{big_format, Times};
+use jsavrs::time::times::{Times, big_format};
 use jsavrs::time::value_label::ValueLabel;
 use std::thread;
 use std::time::Duration;
@@ -183,9 +183,7 @@ fn test_time_it() {
         .find(|s| s.parse::<u32>().is_ok()) // Cerca la prima parola che è un numero
         .expect("No number found in result string");
 
-    let tries = tries_str
-        .parse::<u32>()
-        .expect("Failed to parse tries as u32");
+    let tries = tries_str.parse::<u32>().expect("Failed to parse tries as u32");
 
     // Verifica che abbia eseguito molte iterazioni
     assert!(tries >= 1, "Expected >=1 tries, got {}", tries);
@@ -193,9 +191,7 @@ fn test_time_it() {
 
 #[test]
 fn test_formatters() {
-    let timer = Timer::with_formatter("Custom Formatter", |title, _, time| {
-        format!("CUSTOM: {} - {}", title, time)
-    });
+    let timer = Timer::with_formatter("Custom Formatter", |title, _, time| format!("CUSTOM: {} - {}", title, time));
     timed_task(20);
 
     let output = timer.to_string();
@@ -223,10 +219,7 @@ fn test_edge_cases() {
 
     // Tempo molto grande (>1000s)
     let tv = TimeValues::from_nanoseconds(3.6e15); // 1 ora
-    let times = Times {
-        values: tv,
-        ..Times::from_nanoseconds(0.0)
-    };
+    let times = Times { values: tv, ..Times::from_nanoseconds(0.0) };
     let vl = times.get_relevant_timeframe();
     assert_eq!(vl.time_label(), "s");
     assert!(vl.time_val() > 3600.0);
@@ -302,9 +295,7 @@ fn test_time_it_short_operations() {
         .find(|s| s.parse::<u32>().is_ok()) // Cerca la prima parola che è un numero
         .expect("No number found in result string");
 
-    let tries = tries_str
-        .parse::<u32>()
-        .expect("Failed to parse tries as u32");
+    let tries = tries_str.parse::<u32>().expect("Failed to parse tries as u32");
 
     // Verifica che abbia eseguito molte iterazioni
     assert!(tries >= 100, "Expected >=100 tries, got {}", tries);

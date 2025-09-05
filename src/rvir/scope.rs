@@ -13,12 +13,7 @@ pub struct RScope {
 
 impl RScope {
     pub fn new(parent: Option<RScopeId>, depth: usize) -> Self {
-        RScope {
-            symbols: HashMap::new(),
-            parent,
-            children: Vec::new(),
-            depth,
-        }
+        RScope { symbols: HashMap::new(), parent, children: Vec::new(), depth }
     }
 
     pub fn insert(&mut self, name: Arc<str>, value: RValue) {

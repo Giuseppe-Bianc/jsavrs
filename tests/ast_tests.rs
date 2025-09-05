@@ -1,5 +1,5 @@
 // tets/ast_test.rs
-use jsavrs::lexer::{lexer_tokenize_with_errors, Lexer};
+use jsavrs::lexer::{Lexer, lexer_tokenize_with_errors};
 use jsavrs::parser::ast::*;
 use jsavrs::parser::ast_printer::{pretty_print, pretty_print_stmt};
 use jsavrs::parser::jsav_parser::JsavParser;
@@ -130,10 +130,7 @@ fn test_variable_assignment() {
 fn test_function_call() {
     let callee = variable_expr("foo");
 
-    let args = vec![
-        num_lit(1),
-        binary_expr(num_lit(2), BinaryOp::Add, num_lit(3)),
-    ];
+    let args = vec![num_lit(1), binary_expr(num_lit(2), BinaryOp::Add, num_lit(3))];
     let expr = call_expr(callee, args);
 
     let output = pretty_print(&expr);
@@ -180,11 +177,7 @@ fn test_array_access() {
 #[test]
 fn test_deeply_nested_binary() {
     let expr = binary_expr(
-        binary_expr(
-            binary_expr(num_lit(1), BinaryOp::Add, num_lit(2)),
-            BinaryOp::Add,
-            num_lit(3),
-        ),
+        binary_expr(binary_expr(num_lit(1), BinaryOp::Add, num_lit(2)), BinaryOp::Add, num_lit(3)),
         BinaryOp::Add,
         num_lit(4),
     );
@@ -257,26 +250,13 @@ expr_span_test!(test_expr_array_literal_span, |s| Expr::ArrayLiteral {
     span: s,
 });
 
-expr_span_test!(test_expr_unary_span, |s| Expr::Unary {
-    op: UnaryOp::Negate,
-    expr: Box::new(num_lit(5)),
-    span: s,
-});
+expr_span_test!(test_expr_unary_span, |s| Expr::Unary { op: UnaryOp::Negate, expr: Box::new(num_lit(5)), span: s });
 
-expr_span_test!(test_expr_grouping_span, |s| Expr::Grouping {
-    expr: Box::new(bool_lit(true)),
-    span: s,
-});
+expr_span_test!(test_expr_grouping_span, |s| Expr::Grouping { expr: Box::new(bool_lit(true)), span: s });
 
-expr_span_test!(test_expr_literal_span, |s| Expr::Literal {
-    value: LiteralValue::Nullptr,
-    span: s,
-});
+expr_span_test!(test_expr_literal_span, |s| Expr::Literal { value: LiteralValue::Nullptr, span: s });
 
-expr_span_test!(test_expr_variable_span, |s| Expr::Variable {
-    name: "x".into(),
-    span: s,
-});
+expr_span_test!(test_expr_variable_span, |s| Expr::Variable { name: "x".into(), span: s });
 expr_span_test!(test_expr_assign_span, |s| Expr::Assign {
     target: Box::new(variable_expr("x")),
     value: Box::new(num_lit(3)),
@@ -291,17 +271,11 @@ expr_span_test!(test_expr_call_span, |s| Expr::Call {
 
 expr_span_test!(test_expr_array_access_span, |s| Expr::ArrayAccess {
     array: Box::new(variable_expr("arr")),
-    index: Box::new(Expr::Literal {
-        value: LiteralValue::Number(Number::Integer(0)),
-        span: dummy_span(),
-    }),
+    index: Box::new(Expr::Literal { value: LiteralValue::Number(Number::Integer(0)), span: dummy_span() }),
     span: s,
 });
 
-stmt_span_test!(test_stmt_main_function_span, |s| Stmt::MainFunction {
-    body: vec![],
-    span: s,
-});
+stmt_span_test!(test_stmt_main_function_span, |s| Stmt::MainFunction { body: vec![], span: s });
 
 #[test]
 fn test_stmt_expression_span() {
@@ -335,20 +309,14 @@ stmt_span_test!(test_stmt_function_span, |s| Stmt::Function {
 });
 
 stmt_span_test!(test_stmt_if_span, |s| Stmt::If {
-    condition: Expr::Literal {
-        value: LiteralValue::Bool(true),
-        span: dummy_span(),
-    },
+    condition: Expr::Literal { value: LiteralValue::Bool(true), span: dummy_span() },
     then_branch: vec![],
     else_branch: None,
     span: s,
 });
 
 stmt_span_test!(test_stmt_while_span, |s| Stmt::While {
-    condition: Expr::Literal {
-        value: LiteralValue::Bool(true),
-        span: dummy_span(),
-    },
+    condition: Expr::Literal { value: LiteralValue::Bool(true), span: dummy_span() },
     body: vec![],
     span: s,
 });
@@ -360,15 +328,9 @@ stmt_span_test!(test_stmt_for_span, |s| Stmt::For {
     span: s,
 });
 
-stmt_span_test!(test_stmt_block_span, |s| Stmt::Block {
-    statements: vec![],
-    span: s,
-});
+stmt_span_test!(test_stmt_block_span, |s| Stmt::Block { statements: vec![], span: s });
 
-stmt_span_test!(test_stmt_return_span, |s| Stmt::Return {
-    value: None,
-    span: s,
-});
+stmt_span_test!(test_stmt_return_span, |s| Stmt::Return { value: None, span: s });
 
 stmt_span_test!(test_stmt_break_span, |s| Stmt::Break { span: s });
 stmt_span_test!(test_stmt_continue_span, |s| Stmt::Continue { span: s });
@@ -402,12 +364,7 @@ fn test_stmt_expression() {
 
 #[test]
 fn test_var_declaration_multiple_vars() {
-    let stmt = var_declaration(
-        vec!["x".into(), "y".into()],
-        Type::I32,
-        true,
-        vec![num_lit(1), num_lit(2)],
-    );
+    let stmt = var_declaration(vec!["x".into(), "y".into()], Type::I32, true, vec![num_lit(1), num_lit(2)]);
 
     let output = pretty_print_stmt(&stmt);
     let stripped = strip_ansi_codes(&output);
@@ -430,24 +387,12 @@ fn test_function_with_parameters() {
     let stmt = function_declaration(
         "sum".into(),
         vec![
-            Parameter {
-                name: "a".into(),
-                type_annotation: Type::I32,
-                span: dummy_span(),
-            },
-            Parameter {
-                name: "b".into(),
-                type_annotation: Type::I32,
-                span: dummy_span(),
-            },
+            Parameter { name: "a".into(), type_annotation: Type::I32, span: dummy_span() },
+            Parameter { name: "b".into(), type_annotation: Type::I32, span: dummy_span() },
         ],
         Type::I32,
         vec![Stmt::Return {
-            value: Some(binary_expr(
-                variable_expr("a"),
-                BinaryOp::Add,
-                variable_expr("b"),
-            )),
+            value: Some(binary_expr(variable_expr("a"), BinaryOp::Add, variable_expr("b"))),
             span: dummy_span(),
         }],
     );
@@ -483,12 +428,7 @@ fn test_if_stmt_with_else() {
     let then_branch = vec![Stmt::Expression { expr: num_lit(1) }];
     let else_branch = vec![Stmt::Expression { expr: num_lit(2) }];
 
-    let stmt = Stmt::If {
-        condition,
-        then_branch,
-        else_branch: Some(else_branch),
-        span: dummy_span(),
-    };
+    let stmt = Stmt::If { condition, then_branch, else_branch: Some(else_branch), span: dummy_span() };
 
     let output = pretty_print_stmt(&stmt);
     let stripped = strip_ansi_codes(&output);
@@ -510,10 +450,7 @@ fn test_if_stmt_with_else() {
 
 #[test]
 fn test_empty_block_stmt() {
-    let stmt = Stmt::Block {
-        statements: vec![],
-        span: dummy_span(),
-    };
+    let stmt = Stmt::Block { statements: vec![], span: dummy_span() };
 
     let output = pretty_print_stmt(&stmt);
     let stripped = strip_ansi_codes(&output);
@@ -524,10 +461,7 @@ fn test_empty_block_stmt() {
 #[test]
 fn test_nested_block_stmt() {
     let stmt = Stmt::Block {
-        statements: vec![Stmt::Block {
-            statements: vec![Stmt::Expression { expr: num_lit(42) }],
-            span: dummy_span(),
-        }],
+        statements: vec![Stmt::Block { statements: vec![Stmt::Expression { expr: num_lit(42) }], span: dummy_span() }],
         span: dummy_span(),
     };
 
@@ -544,10 +478,7 @@ fn test_nested_block_stmt() {
 }
 #[test]
 fn test_return_stmt_with_value() {
-    let stmt = Stmt::Return {
-        value: Some(num_lit(42)),
-        span: dummy_span(),
-    };
+    let stmt = Stmt::Return { value: Some(num_lit(42)), span: dummy_span() };
 
     let output = pretty_print_stmt(&stmt);
     let stripped = strip_ansi_codes(&output);
@@ -560,12 +491,8 @@ fn test_return_stmt_with_value() {
 }
 #[test]
 fn test_complex_type_declaration() {
-    let stmt = var_declaration(
-        vec!["matrix".into()],
-        Type::Array(Box::new(Type::F64), Box::new(nullptr_lit())),
-        true,
-        vec![],
-    );
+    let stmt =
+        var_declaration(vec!["matrix".into()], Type::Array(Box::new(Type::F64), Box::new(nullptr_lit())), true, vec![]);
 
     let output = pretty_print_stmt(&stmt);
     let stripped = strip_ansi_codes(&output);
@@ -604,12 +531,7 @@ fn test_complex_type_const_declaration() {
 
 #[test]
 fn test_edge_case_empty_then_branch() {
-    let stmt = Stmt::If {
-        condition: bool_lit(true),
-        then_branch: vec![],
-        else_branch: None,
-        span: dummy_span(),
-    };
+    let stmt = Stmt::If { condition: bool_lit(true), then_branch: vec![], else_branch: None, span: dummy_span() };
 
     let output = pretty_print_stmt(&stmt);
     let stripped = strip_ansi_codes(&output);
@@ -624,11 +546,7 @@ fn test_edge_case_empty_then_branch() {
 
 #[test]
 fn test_while() {
-    let stmt = Stmt::While {
-        condition: bool_lit(true),
-        body: vec![],
-        span: dummy_span(),
-    };
+    let stmt = Stmt::While { condition: bool_lit(true), body: vec![], span: dummy_span() };
 
     let output = pretty_print_stmt(&stmt);
     let stripped = strip_ansi_codes(&output);
@@ -666,12 +584,7 @@ fn test_while_not_empty_body() {
 #[test]
 fn test_for() {
     let stmt = Stmt::For {
-        initializer: Some(Box::from(var_declaration(
-            vec!["x".into()],
-            Type::I32,
-            true,
-            vec![num_lit(1)],
-        ))),
+        initializer: Some(Box::from(var_declaration(vec!["x".into()], Type::I32, true, vec![num_lit(1)]))),
         condition: None,
         increment: None,
         body: vec![],
@@ -698,17 +611,9 @@ fn test_for() {
 #[test]
 fn test_for_complete() {
     let stmt = Stmt::For {
-        initializer: Some(Box::from(var_declaration(
-            vec!["x".into()],
-            Type::I32,
-            true,
-            vec![num_lit(1)],
-        ))),
+        initializer: Some(Box::from(var_declaration(vec!["x".into()], Type::I32, true, vec![num_lit(1)]))),
         condition: Some(binary_expr(variable_expr("x"), BinaryOp::Less, num_lit(2))),
-        increment: Some(assign_expr(
-            variable_expr("x"),
-            binary_expr(variable_expr("x"), BinaryOp::Add, num_lit(1)),
-        )),
+        increment: Some(assign_expr(variable_expr("x"), binary_expr(variable_expr("x"), BinaryOp::Add, num_lit(1)))),
         body: vec![],
         span: dummy_span(),
     };
@@ -749,12 +654,7 @@ fn test_for_complete() {
 #[test]
 fn test_for_not_empty_body() {
     let stmt = Stmt::For {
-        initializer: Some(Box::from(var_declaration(
-            vec!["x".into()],
-            Type::I32,
-            true,
-            vec![num_lit(1)],
-        ))),
+        initializer: Some(Box::from(var_declaration(vec!["x".into()], Type::I32, true, vec![num_lit(1)]))),
         condition: None,
         increment: None,
         body: vec![Stmt::Expression { expr: num_lit(42) }],
@@ -784,17 +684,9 @@ fn test_for_not_empty_body() {
 #[test]
 fn test_for_complete_not_empty_body() {
     let stmt = Stmt::For {
-        initializer: Some(Box::from(var_declaration(
-            vec!["x".into()],
-            Type::I32,
-            true,
-            vec![num_lit(1)],
-        ))),
+        initializer: Some(Box::from(var_declaration(vec!["x".into()], Type::I32, true, vec![num_lit(1)]))),
         condition: Some(binary_expr(variable_expr("x"), BinaryOp::Less, num_lit(2))),
-        increment: Some(assign_expr(
-            variable_expr("x"),
-            binary_expr(variable_expr("x"), BinaryOp::Add, num_lit(1)),
-        )),
+        increment: Some(assign_expr(variable_expr("x"), binary_expr(variable_expr("x"), BinaryOp::Add, num_lit(1)))),
         body: vec![Stmt::Expression { expr: num_lit(42) }],
         span: dummy_span(),
     };
@@ -840,21 +732,9 @@ fn test_edge_case_multiple_parameters() {
     let stmt = function_declaration(
         "func".into(),
         vec![
-            Parameter {
-                name: "a".into(),
-                type_annotation: Type::I32,
-                span: dummy_span(),
-            },
-            Parameter {
-                name: "b".into(),
-                type_annotation: Type::I32,
-                span: dummy_span(),
-            },
-            Parameter {
-                name: "c".into(),
-                type_annotation: Type::I32,
-                span: dummy_span(),
-            },
+            Parameter { name: "a".into(), type_annotation: Type::I32, span: dummy_span() },
+            Parameter { name: "b".into(), type_annotation: Type::I32, span: dummy_span() },
+            Parameter { name: "c".into(), type_annotation: Type::I32, span: dummy_span() },
         ],
         Type::Void,
         vec![],
@@ -928,12 +808,8 @@ fn test_corner_case_deeply_nested_if() {
         span: dummy_span(),
     };
 
-    let stmt = Stmt::If {
-        condition: bool_lit(true),
-        then_branch: vec![inner_if],
-        else_branch: None,
-        span: dummy_span(),
-    };
+    let stmt =
+        Stmt::If { condition: bool_lit(true), then_branch: vec![inner_if], else_branch: None, span: dummy_span() };
 
     let output = pretty_print_stmt(&stmt);
     let stripped = strip_ansi_codes(&output);
@@ -960,10 +836,7 @@ fn test_corner_case_complex_return_type() {
         vec![],
         Type::Vector(Box::new(Type::Array(
             Box::new(Type::I32),
-            Box::new(Expr::Literal {
-                value: LiteralValue::Nullptr,
-                span: dummy_span(),
-            }),
+            Box::new(Expr::Literal { value: LiteralValue::Nullptr, span: dummy_span() }),
         ))),
         vec![],
     );

@@ -17,10 +17,7 @@ pub struct ControlFlowGraph {
 }
 impl ControlFlowGraph {
     pub fn new(entry_label: String) -> Self {
-        ControlFlowGraph {
-            graph: DiGraph::new(),
-            entry_label,
-        }
+        ControlFlowGraph { graph: DiGraph::new(), entry_label }
     }
 
     pub fn entry_label(&self) -> &str {
@@ -36,9 +33,7 @@ impl ControlFlowGraph {
     }
 
     pub fn find_block_by_label(&self, label: &str) -> Option<NodeIndex> {
-        self.graph
-            .node_indices()
-            .find(|&idx| self.graph[idx].label.as_ref() == label)
+        self.graph.node_indices().find(|&idx| self.graph[idx].label.as_ref() == label)
     }
 
     pub fn get_block(&self, label: &str) -> Option<&RBasicBlock> {
@@ -61,11 +56,7 @@ impl ControlFlowGraph {
         self.find_block_by_label(&self.entry_label)
     }
 
-    pub fn add_instruction_to_block(
-        &mut self,
-        block_label: &str,
-        instruction: RInstruction,
-    ) -> bool {
+    pub fn add_instruction_to_block(&mut self, block_label: &str, instruction: RInstruction) -> bool {
         if let Some(block) = self.get_block_mut(block_label) {
             block.instructions.push(instruction);
             true
@@ -84,10 +75,9 @@ impl ControlFlowGraph {
     }
 
     pub fn connect_blocks(&mut self, from_label: &str, to_label: &str) -> bool {
-        if let (Some(from_idx), Some(to_idx)) = (
-            self.find_block_by_label(from_label),
-            self.find_block_by_label(to_label),
-        ) {
+        if let (Some(from_idx), Some(to_idx)) =
+            (self.find_block_by_label(from_label), self.find_block_by_label(to_label))
+        {
             self.add_edge(from_idx, to_idx);
             true
         } else {
@@ -95,15 +85,15 @@ impl ControlFlowGraph {
         }
     }
 
-    pub fn blocks(&self) -> impl Iterator<Item=&RBasicBlock> {
+    pub fn blocks(&self) -> impl Iterator<Item = &RBasicBlock> {
         self.graph.node_weights()
     }
 
-    pub fn blocks_mut(&mut self) -> impl Iterator<Item=&mut RBasicBlock> {
+    pub fn blocks_mut(&mut self) -> impl Iterator<Item = &mut RBasicBlock> {
         self.graph.node_weights_mut()
     }
 
-    pub fn dfs_post_order(&self) -> Box<dyn Iterator<Item=NodeIndex> + '_> {
+    pub fn dfs_post_order(&self) -> Box<dyn Iterator<Item = NodeIndex> + '_> {
         if let Some(entry_idx) = self.get_entry_block_index() {
             let mut dfs = Dfs::new(&self.graph, entry_idx);
             Box::new(std::iter::from_fn(move || dfs.next(&self.graph)))
@@ -115,27 +105,18 @@ impl ControlFlowGraph {
     pub fn verify(&self) -> Result<(), String> {
         // Verifica che esista un blocco di ingresso
         if self.get_entry_block().is_none() {
-            return Err(format!(
-                "CFG non ha un blocco di ingresso con etichetta '{}'",
-                self.entry_label
-            ));
+            return Err(format!("CFG non ha un blocco di ingresso con etichetta '{}'", self.entry_label));
         }
 
         // Verifica che tutti i blocchi abbiano un terminatore
         for block in self.blocks() {
             if !block.terminator.is_terminator() {
-                return Err(format!(
-                    "Blocco '{}' non ha un terminatore valido",
-                    block.label
-                ));
+                return Err(format!("Blocco '{}' non ha un terminatore valido", block.label));
             }
         }
 
         // Verifica che tutti i target dei terminator esistano
-        let label_set: HashSet<Arc<str>> = self
-            .blocks()
-            .map(|b| b.label.clone())
-            .collect();
+        let label_set: HashSet<Arc<str>> = self.blocks().map(|b| b.label.clone()).collect();
 
         for block in self.blocks() {
             for target_label in block.terminator.get_targets() {
