@@ -118,6 +118,7 @@ impl LineTracker {
     /// let tracker = LineTracker::new("test.lang", src.to_string());
     /// let span = tracker.span_for(3..8);
     /// ```
+    #[inline]
     pub fn span_for(&self, range: std::ops::Range<usize>) -> SourceSpan {
         SourceSpan::new(self.file_path.clone(), self.location_for(range.start), self.location_for(range.end))
     }
