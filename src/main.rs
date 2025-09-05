@@ -62,7 +62,7 @@ fn main() -> Result<(), CompileError> {
     let parse_timer = Timer::new("Parser");
     let (statements, parer_errors) = parse.parse();
     println!("{parse_timer}");
-    let num_statements = statements.iter().len();
+    let num_statements = statements.len();
     let num_statements_str = format!("{} statements found", num_statements);
     if !parer_errors.is_empty() {
         eprintln!("{}", error_reporter.report_errors(parer_errors));
