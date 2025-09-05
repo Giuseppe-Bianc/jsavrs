@@ -67,11 +67,7 @@ fn parse_integer<T>(numeric_part: &str, map_fn: fn(T) -> Number) -> Option<Numbe
 where
     T: std::str::FromStr,
 {
-    if is_valid_integer_literal(numeric_part) {
-        numeric_part.parse::<T>().ok().map(map_fn)
-    } else {
-        None
-    }
+    if is_valid_integer_literal(numeric_part) { numeric_part.parse::<T>().ok().map(map_fn) } else { None }
 }
 
 /// Routes numeric literal parsing based on suffix type.
@@ -128,8 +124,7 @@ pub fn is_valid_integer_literal(numeric_part: &str) -> bool {
 /// # Returns
 /// [`Number::Float32`] or [`Number::Scientific32`] if valid
 pub fn handle_float_suffix(numeric_part: &str) -> Option<Number> {
-    parse_scientific(numeric_part, true)
-        .or_else(|| numeric_part.parse::<f32>().ok().map(Number::Float32))
+    parse_scientific(numeric_part, true).or_else(|| numeric_part.parse::<f32>().ok().map(Number::Float32))
 }
 
 /// Parses numeric strings with default suffix (no suffix or 'd').
@@ -197,13 +192,9 @@ pub fn parse_base_number(radix: u32, lex: &mut logos::Lexer<TokenKind>) -> Optio
     };
 
     if suffix_u {
-        u64::from_str_radix(num_str, radix)
-            .ok()
-            .map(Number::UnsignedInteger)
+        u64::from_str_radix(num_str, radix).ok().map(Number::UnsignedInteger)
     } else {
-        i64::from_str_radix(num_str, radix)
-            .ok()
-            .map(Number::Integer)
+        i64::from_str_radix(num_str, radix).ok().map(Number::Integer)
     }
 }
 
@@ -417,10 +408,7 @@ pub enum TokenKind {
     TypeBool,
 
     // Whitespace and comments (skipped by lexer)
-    #[regex(
-        r"[ \t\r\n\f\u{00A0}\u{1680}\u{2000}-\u{200A}\u{202F}\u{205F}\u{3000}]+",
-        logos::skip
-    )]
+    #[regex(r"[ \t\r\n\f\u{00A0}\u{1680}\u{2000}-\u{200A}\u{202F}\u{205F}\u{3000}]+", logos::skip)]
     #[regex(r";")]
     Semicolon,
     Whitespace,
@@ -462,50 +450,50 @@ impl fmt::Display for TokenKind {
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
         match self {
             // Operators
-            TokenKind::Plus => f.write_str( "'+'"),
-            TokenKind::Minus => f.write_str( "'-'"),
-            TokenKind::Star => f.write_str( "'*'"),
-            TokenKind::Slash => f.write_str( "'/'"),
-            TokenKind::PlusEqual => f.write_str( "'+='"),
-            TokenKind::MinusEqual => f.write_str( "'-='"),
-            TokenKind::EqualEqual => f.write_str( "'=='"),
-            TokenKind::NotEqual => f.write_str( "'!='"),
-            TokenKind::Less => f.write_str( "'<'"),
-            TokenKind::Greater => f.write_str( "'>'"),
-            TokenKind::LessEqual => f.write_str( "'<='"),
-            TokenKind::GreaterEqual => f.write_str( "'>='"),
-            TokenKind::PlusPlus => f.write_str( "'++'"),
-            TokenKind::MinusMinus => f.write_str( "'--'"),
-            TokenKind::OrOr => f.write_str( "'||'"),
-            TokenKind::AndAnd => f.write_str( "'&&'"),
-            TokenKind::ShiftLeft => f.write_str( "'<<'"),
-            TokenKind::ShiftRight => f.write_str( "'>>'"),
-            TokenKind::PercentEqual => f.write_str( "'%='"),
-            TokenKind::XorEqual => f.write_str( "'^='"),
-            TokenKind::Not => f.write_str( "'!'"),
-            TokenKind::Xor => f.write_str( "'^'"),
-            TokenKind::Percent => f.write_str( "'%'"),
-            TokenKind::Or => f.write_str( "'|'"),
-            TokenKind::And => f.write_str( "'&'"),
-            TokenKind::Equal => f.write_str( "'='"),
-            TokenKind::Colon => f.write_str( "':'"),
-            TokenKind::Comma => f.write_str( "','"),
-            TokenKind::Dot => f.write_str( "'.'"),
-            TokenKind::Semicolon => f.write_str( "';'"),
+            TokenKind::Plus => f.write_str("'+'"),
+            TokenKind::Minus => f.write_str("'-'"),
+            TokenKind::Star => f.write_str("'*'"),
+            TokenKind::Slash => f.write_str("'/'"),
+            TokenKind::PlusEqual => f.write_str("'+='"),
+            TokenKind::MinusEqual => f.write_str("'-='"),
+            TokenKind::EqualEqual => f.write_str("'=='"),
+            TokenKind::NotEqual => f.write_str("'!='"),
+            TokenKind::Less => f.write_str("'<'"),
+            TokenKind::Greater => f.write_str("'>'"),
+            TokenKind::LessEqual => f.write_str("'<='"),
+            TokenKind::GreaterEqual => f.write_str("'>='"),
+            TokenKind::PlusPlus => f.write_str("'++'"),
+            TokenKind::MinusMinus => f.write_str("'--'"),
+            TokenKind::OrOr => f.write_str("'||'"),
+            TokenKind::AndAnd => f.write_str("'&&'"),
+            TokenKind::ShiftLeft => f.write_str("'<<'"),
+            TokenKind::ShiftRight => f.write_str("'>>'"),
+            TokenKind::PercentEqual => f.write_str("'%='"),
+            TokenKind::XorEqual => f.write_str("'^='"),
+            TokenKind::Not => f.write_str("'!'"),
+            TokenKind::Xor => f.write_str("'^'"),
+            TokenKind::Percent => f.write_str("'%'"),
+            TokenKind::Or => f.write_str("'|'"),
+            TokenKind::And => f.write_str("'&'"),
+            TokenKind::Equal => f.write_str("'='"),
+            TokenKind::Colon => f.write_str("':'"),
+            TokenKind::Comma => f.write_str("','"),
+            TokenKind::Dot => f.write_str("'.'"),
+            TokenKind::Semicolon => f.write_str("';'"),
 
             // Keywords
-            TokenKind::KeywordFun => f.write_str( "'fun'"),
-            TokenKind::KeywordIf => f.write_str( "'if'"),
-            TokenKind::KeywordElse => f.write_str( "'else'"),
-            TokenKind::KeywordReturn => f.write_str( "'return'"),
-            TokenKind::KeywordWhile => f.write_str( "'while'"),
-            TokenKind::KeywordFor => f.write_str( "'for'"),
-            TokenKind::KeywordMain => f.write_str( "'main'"),
-            TokenKind::KeywordVar => f.write_str( "'var'"),
-            TokenKind::KeywordConst => f.write_str( "'const'"),
-            TokenKind::KeywordNullptr => f.write_str( "'nullptr'"),
-            TokenKind::KeywordBreak => f.write_str( "'break'"),
-            TokenKind::KeywordContinue => f.write_str( "'continue'"),
+            TokenKind::KeywordFun => f.write_str("'fun'"),
+            TokenKind::KeywordIf => f.write_str("'if'"),
+            TokenKind::KeywordElse => f.write_str("'else'"),
+            TokenKind::KeywordReturn => f.write_str("'return'"),
+            TokenKind::KeywordWhile => f.write_str("'while'"),
+            TokenKind::KeywordFor => f.write_str("'for'"),
+            TokenKind::KeywordMain => f.write_str("'main'"),
+            TokenKind::KeywordVar => f.write_str("'var'"),
+            TokenKind::KeywordConst => f.write_str("'const'"),
+            TokenKind::KeywordNullptr => f.write_str("'nullptr'"),
+            TokenKind::KeywordBreak => f.write_str("'break'"),
+            TokenKind::KeywordContinue => f.write_str("'continue'"),
             TokenKind::KeywordBool(b) => write!(f, "boolean '{b}'"),
 
             // Identifiers
@@ -524,32 +512,30 @@ impl fmt::Display for TokenKind {
             TokenKind::CharLiteral(c) => write!(f, "character literal '{c}'"),
 
             // Brackets
-            TokenKind::OpenParen => f.write_str( "'('"),
-            TokenKind::CloseParen => f.write_str( "')'"),
-            TokenKind::OpenBracket => f.write_str( "'['"),
-            TokenKind::CloseBracket => f.write_str( "']'"),
-            TokenKind::OpenBrace => f.write_str( "'{{'"),
-            TokenKind::CloseBrace => f.write_str( "'}}'"),
-
-            // Types
-            TokenKind::TypeI8 => f.write_str( "'i8'"),
-            TokenKind::TypeI16 => f.write_str( "'i16'"),
-            TokenKind::TypeI32 => f.write_str( "'i32'"),
-            TokenKind::TypeI64 => f.write_str( "'i64'"),
-            TokenKind::TypeU8 => f.write_str( "'u8'"),
-            TokenKind::TypeU16 => f.write_str( "'u16'"),
-            TokenKind::TypeU32 => f.write_str( "'u32'"),
-            TokenKind::TypeU64 => f.write_str( "'u64'"),
-            TokenKind::TypeF32 => f.write_str( "'f32'"),
-            TokenKind::TypeF64 => f.write_str( "'f64'"),
-            TokenKind::TypeChar => f.write_str( "'char'"),
-            TokenKind::TypeString => f.write_str( "'string'"),
-            TokenKind::TypeBool => f.write_str( "'bool'"),
+            TokenKind::OpenParen => f.write_str("'('"),
+            TokenKind::CloseParen => f.write_str("')'"),
+            TokenKind::OpenBracket => f.write_str("'['"),
+            TokenKind::CloseBracket => f.write_str("']'"),
+            TokenKind::OpenBrace => f.write_str("'{"),
+            TokenKind::CloseBrace => f.write_str("}'"),
+            TokenKind::TypeI8 => f.write_str("'i8'"),
+            TokenKind::TypeI16 => f.write_str("'i16'"),
+            TokenKind::TypeI32 => f.write_str("'i32'"),
+            TokenKind::TypeI64 => f.write_str("'i64'"),
+            TokenKind::TypeU8 => f.write_str("'u8'"),
+            TokenKind::TypeU16 => f.write_str("'u16'"),
+            TokenKind::TypeU32 => f.write_str("'u32'"),
+            TokenKind::TypeU64 => f.write_str("'u64'"),
+            TokenKind::TypeF32 => f.write_str("'f32'"),
+            TokenKind::TypeF64 => f.write_str("'f64'"),
+            TokenKind::TypeChar => f.write_str("'char'"),
+            TokenKind::TypeString => f.write_str("'string'"),
+            TokenKind::TypeBool => f.write_str("'bool'"),
 
             // Special tokens
-            TokenKind::Whitespace => f.write_str( "whitespace"),
-            TokenKind::Comment => f.write_str( "comment"),
-            TokenKind::Eof => f.write_str( "end of file"),
+            TokenKind::Whitespace => f.write_str("whitespace"),
+            TokenKind::Comment => f.write_str("comment"),
+            TokenKind::Eof => f.write_str("end of file"),
         }
     }
 }

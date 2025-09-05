@@ -154,6 +154,8 @@ fn append_line(output: &mut String, indent: &str, branch_type: BranchType, style
 
 // Add the following functions after the print_expr function
 
+/// Pretty-print a single statement AST into a styled, tree-like string.
+/// Mirrors `pretty_print` for expressions.
 pub fn pretty_print_stmt(stmt: &Stmt) -> String {
     let mut output = String::new();
     let styles = StyleManager::new();

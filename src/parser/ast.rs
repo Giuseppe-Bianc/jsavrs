@@ -314,7 +314,7 @@ impl std::fmt::Display for Type {
             Type::Char => f.write_str( "char"),
             Type::String => f.write_str( "string"),
             Type::Bool => f.write_str( "bool"),
-            Type::Custom(name) =>  write!(f, "{name}"),
+            Type::Custom(name) =>  f.write_str(name),
             Type::Array(element_type, size_expr) => {
                 // Simplified representation since we can't evaluate expressions here
                 if let Expr::Literal {
