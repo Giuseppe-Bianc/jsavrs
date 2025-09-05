@@ -92,6 +92,18 @@ pub enum LiteralValue {
     Nullptr,
 }
 
+impl std::fmt::Display for LiteralValue {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        match self {
+            LiteralValue::Number(num) => write!(f, "{num}"),
+            LiteralValue::StringLit(s) => write!(f, "\"{s}\""),
+            LiteralValue::CharLit(c) => write!(f, "'{c}'"),
+            LiteralValue::Bool(b) => write!(f, "{b}"),
+            LiteralValue::Nullptr => f.write_str("nullptr"),
+        }
+    }
+}
+
 #[derive(Debug, Clone, Hash, Eq, PartialEq)]
 pub enum Stmt {
     Expression {
@@ -289,20 +301,20 @@ pub enum Type {
 impl std::fmt::Display for Type {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
         match self {
-            Type::I8 => write!(f, "i8"),
-            Type::I16 => write!(f, "i16"),
-            Type::I32 => write!(f, "i32"),
-            Type::I64 => write!(f, "i64"),
-            Type::U8 => write!(f, "u8"),
-            Type::U16 => write!(f, "u16"),
-            Type::U32 => write!(f, "u32"),
-            Type::U64 => write!(f, "u64"),
-            Type::F32 => write!(f, "f32"),
-            Type::F64 => write!(f, "f64"),
-            Type::Char => write!(f, "char"),
-            Type::String => write!(f, "string"),
-            Type::Bool => write!(f, "bool"),
-            Type::Custom(name) => write!(f, "{name}"),
+            Type::I8 => f.write_str( "i8"),
+            Type::I16 => f.write_str( "i16"),
+            Type::I32 => f.write_str( "i32"),
+            Type::I64 => f.write_str( "i64"),
+            Type::U8 => f.write_str( "u8"),
+            Type::U16 => f.write_str( "u16"),
+            Type::U32 => f.write_str( "u32"),
+            Type::U64 => f.write_str( "u64"),
+            Type::F32 => f.write_str( "f32"),
+            Type::F64 => f.write_str( "f64"),
+            Type::Char => f.write_str( "char"),
+            Type::String => f.write_str( "string"),
+            Type::Bool => f.write_str( "bool"),
+            Type::Custom(name) =>  write!(f, "{name}"),
             Type::Array(element_type, size_expr) => {
                 // Simplified representation since we can't evaluate expressions here
                 if let Expr::Literal {
@@ -316,8 +328,8 @@ impl std::fmt::Display for Type {
                 }
             }
             Type::Vector(element_type) => write!(f, "Vector<{element_type}>"),
-            Type::Void => write!(f, "void"),
-            Type::NullPtr => write!(f, "nullptr"),
+            Type::Void => f.write_str( "void"),
+            Type::NullPtr => f.write_str( "nullptr"),
         }
     }
 }

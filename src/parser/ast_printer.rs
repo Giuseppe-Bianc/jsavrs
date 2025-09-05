@@ -1,4 +1,4 @@
-use crate::parser::ast::{Expr, LiteralValue, Stmt};
+use crate::parser::ast::{Expr, Stmt};
 use console::Style;
 
 #[derive(Debug, Clone, Copy, PartialEq)]
@@ -90,14 +90,7 @@ fn print_expr(expr: &Expr, indent: &str, branch_type: BranchType, output: &mut S
             print_expr(expr, &get_indent(&new_indent, &BranchType::Last), BranchType::Last, output, styles);
         }
         Expr::Literal { value, .. } => {
-            let val_str = match value {
-                LiteralValue::Number(n) => format!("{n}"),
-                LiteralValue::StringLit(s) => format!("\"{s}\""),
-                LiteralValue::CharLit(c) => format!("'{c}'"),
-                LiteralValue::Bool(b) => format!("{b}"),
-                LiteralValue::Nullptr => "nullptr".to_string(),
-            };
-            append_line(output, indent, branch_type, styles.clone().literal, &format!("Literal {val_str}"));
+            append_line(output, indent, branch_type, styles.clone().literal, &format!("Literal {value}"));
         }
         Expr::Variable { name, .. } => {
             append_line(output, indent, branch_type, styles.clone().variable, &format!("Variable '{name}'"));
