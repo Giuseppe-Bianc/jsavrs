@@ -8,12 +8,13 @@ pub struct ValueLabel {
     time_label: TimeUnit, // Cambiato da &'static str a enum TimeUnit
 }
 
+#[repr(u8)]  // More compact representation
 #[derive(Debug, Clone, Copy)]
 enum TimeUnit {
-    Seconds,
-    Milliseconds,
-    Microseconds,
-    Nanoseconds,
+    Seconds = 0,
+    Milliseconds = 1,
+    Microseconds = 2,
+    Nanoseconds = 3,
     Other(&'static str),
 }
 
@@ -30,10 +31,12 @@ impl TimeUnit {
 }
 
 impl ValueLabel {
+    #[inline]
     pub fn time_val(&self) -> f64 {
         self.time_val
     }
 
+    #[inline]
     pub fn time_label(&self) -> &'static str {
         self.time_label.as_str()
     }

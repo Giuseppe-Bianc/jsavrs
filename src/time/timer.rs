@@ -28,10 +28,12 @@ impl Timer {
         }
     }
 
+    #[inline]
     pub fn elapsed(&self) -> Duration {
         self.start.elapsed()
     }
 
+    #[inline]
     pub fn make_time(&self) -> f64 {
         self.elapsed().as_nanos() as f64 / self.cycles as f64
     }
