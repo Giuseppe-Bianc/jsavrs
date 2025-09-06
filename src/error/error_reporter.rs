@@ -9,6 +9,15 @@ pub struct ErrorReporter {
     line_tracker: LineTracker,
 }
 
+fn format_simple_error(error_type: &str, message: impl std::fmt::Display) -> String {
+    format!(
+        "{} {}: {}\n",
+        style("ERROR:").red().bold(),
+        style(error_type).red(),
+        style(message).yellow()
+    )
+}
+
 impl ErrorReporter {
     pub fn new(line_tracker: LineTracker) -> Self {
         Self { line_tracker }
@@ -31,15 +40,8 @@ impl ErrorReporter {
                 CompileError::IrGeneratorError { message, span, help } => {
                     self.format_error("IR GEN", &message, &span, help.as_deref())
                 }
-                CompileError::AsmGeneratorError { message } => format!(
-                    "{} {}: {}\n",
-                    style("ERROR:").red().bold(),
-                    style("ASM GEN").red(),
-                    style(message).yellow()
-                ),
-                CompileError::IoError(e) => {
-                    format!("{} {}: {}\n", style("ERROR:").red().bold(), style("I/O").red(), style(e).yellow())
-                }
+                CompileError::AsmGeneratorError { message } => format_simple_error("ASM GEN", &message),
+                CompileError::IoError(e) => format_simple_error("I/O", format!("{e}").as_str()),
             })
             .collect()
     }

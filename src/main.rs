@@ -19,6 +19,17 @@ use std::{
 };
 //use jsavrs::asm::generator::{AsmGenerator, TargetOS};
 
+// Helper function per gestire e stampare errori I/O
+fn handle_io_error<T: std::fmt::Display>(error_type: &str, e: T) -> T {
+    eprintln!(
+        "{} {}: {}\n",
+        style("ERROR:").red().bold(),
+        style(error_type).red(),
+        style(&e).yellow()
+    );
+    e
+}
+
 #[allow(clippy::explicit_auto_deref, clippy::unused_unit)]
 fn main() -> Result<(), CompileError> {
     let _total_timer = AutoTimer::new("Total Execution"); // Timer totale
@@ -28,21 +39,15 @@ fn main() -> Result<(), CompileError> {
     // Read input file with error styling
     let input = {
         let _io_timer = AutoTimer::new("File I/O");
-        fs::read_to_string(file_path).map_err(|e| {
-            eprintln!(
-                "{} {}: {}",
-                style("ERROR:").red().bold(),
-                style("I/O").red(),
-                style(format!("{e}")).yellow()
-            );
-            e
-        })?
+        fs::read_to_string(file_path)
+            .map_err(|e| handle_io_error("I/O", e))?
     };
 
     let mut lexer = Lexer::new(
         file_path.to_str().ok_or_else(|| {
             CompileError::IoError(std::io::Error::new(std::io::ErrorKind::InvalidData, "Invalid file path"))
-        })?,
+        })
+        .map_err(|e| handle_io_error("I/O", e))?,
         &input,
     );
     let line_tracker = lexer.get_line_tracker();
@@ -113,12 +118,6 @@ fn main() -> Result<(), CompileError> {
         println!("{module:?}");
         println!("{module}");
     }*/
-
-    /*let mut buidler =  IrBuilder::new(file_path.as_os_str().to_str().unwrap().to_string());
-    let nir_timer = Timer::new("NIR Generation");
-    let module = buidler.build(statements.clone());
-    println!("{nir_timer}");
-    println!("{module:#?}");*/
     let mut generator = RIrGenerator::new();
     let rir_timer = Timer::new("RIR Generation");
     let (module, rir_errors) = generator.generate(statements.clone(), file_path.to_str().unwrap());

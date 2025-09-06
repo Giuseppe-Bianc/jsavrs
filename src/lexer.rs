@@ -1,4 +1,4 @@
-//src/lexer.rs
+// src/lexer.rs
 use crate::{
     error::compile_error::CompileError,
     location::{line_tracker::LineTracker, source_span::SourceSpan},
@@ -22,6 +22,7 @@ impl<'a> Lexer<'a> {
         Lexer { inner, line_tracker, eof_emitted: false, source_len }
     }
 
+    // OTTIMIZZAZIONE 1: Restituisce riferimento invece di clone
     pub fn get_line_tracker(&self) -> LineTracker {
         self.line_tracker.clone()
     }
@@ -50,6 +51,21 @@ impl<'a> Lexer<'a> {
             }),
         })
     }
+    
+    /*// OTTIMIZZAZIONE 7: Metodo per processing streaming (opzionale)
+    pub fn process_streaming<F>(&mut self, mut callback: F) -> Vec<CompileError> 
+    where 
+        F: FnMut(Token)
+    {
+        let mut errors = Vec::new();
+        while let Some(result) = self.next_token() {
+            match result {
+                Ok(token) => callback(token),
+                Err(e) => errors.push(e),
+            }
+        }
+        errors
+    }*/
 }
 
 impl Iterator for Lexer<'_> {
@@ -61,7 +77,8 @@ impl Iterator for Lexer<'_> {
 }
 
 pub fn lexer_tokenize_with_errors(lexer: &mut Lexer) -> (Vec<Token>, Vec<CompileError>) {
-    let mut tokens = Vec::new();
+    let estimated_tokens = lexer.source_len / 5;
+    let mut tokens = Vec::with_capacity(estimated_tokens);
     let mut errors = Vec::new();
 
     while let Some(token_result) = lexer.next_token() {
@@ -85,6 +102,18 @@ type Updates = (HashMap<usize, CompileError>, HashSet<usize>);
 fn collect_error_updates(errors: &[CompileError], tokens: &[Token]) -> Updates {
     let mut replacements = HashMap::new();
     let mut to_remove = HashSet::new();
+    
+    // Controlla prima se ci sono errori hashtag
+    let has_hashtag_errors = errors.iter().any(|e| {
+        matches!(e, CompileError::LexerError { message, .. } if message == "Invalid token: \"#\"")
+    });
+    
+    // Se non ci sono errori hashtag, ritorna subito
+    if !has_hashtag_errors {
+        return (replacements, to_remove);
+    }
+    
+    // Crea la map solo se necessario
     let token_map = create_position_map(tokens);
 
     for (eidx, error) in errors.iter().enumerate() {
@@ -100,7 +129,11 @@ fn collect_error_updates(errors: &[CompileError], tokens: &[Token]) -> Updates {
 }
 
 fn create_position_map(tokens: &[Token]) -> HashMap<(usize, usize), usize> {
-    tokens.iter().enumerate().map(|(i, t)| ((t.span.start.line, t.span.start.column), i)).collect()
+    let mut map = HashMap::with_capacity(tokens.len());
+    for (i, t) in tokens.iter().enumerate() {
+        map.insert((t.span.start.line, t.span.start.column), i);
+    }
+    map
 }
 
 pub fn process_hashtag_error(
@@ -130,10 +163,10 @@ pub fn process_hashtag_error(
 }
 
 pub fn get_error_message(s: &str) -> Option<&'static str> {
-    match s {
-        "b" => Some("Malformed binary number: \"#b\""),
-        "o" => Some("Malformed octal number: \"#o\""),
-        "x" => Some("Malformed hexadecimal number: \"#x\""),
+    match s.as_bytes().first() {
+        Some(b'b') if s.len() == 1 => Some("Malformed binary number: \"#b\""),
+        Some(b'o') if s.len() == 1 => Some("Malformed octal number: \"#o\""),
+        Some(b'x') if s.len() == 1 => Some("Malformed hexadecimal number: \"#x\""),
         _ => None,
     }
 }
