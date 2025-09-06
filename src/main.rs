@@ -23,7 +23,7 @@ use std::{
 fn handle_io_error<T: std::fmt::Display>(error_type: &str, e: T) {
     eprintln!("{} {}: {}\n", style("ERROR:").red().bold(), style(error_type).red(), style(e).yellow());
 }
-const UNITS: [&'static str; 5] = ["B", "KB", "MB", "GB", "TB"];
+const UNITS: [&str; 5] = ["B", "KB", "MB", "GB", "TB"];
 const UNIT_LEN: usize = UNITS.len() - 1;
 
 #[inline]
