@@ -101,6 +101,7 @@ impl JsavParser {
         })
     }
 
+    #[inline]
     fn is_end_of_statement(&self) -> bool {
         matches!(
             self.peek().map(|t| t.kind.clone()),
@@ -108,6 +109,7 @@ impl JsavParser {
         )
     }
 
+    #[inline]
     fn calculate_return_span(&self, start: &Token, value: &Option<Expr>) -> SourceSpan {
         value.as_ref().and_then(|v| start.span.merged(v.span())).unwrap_or_else(|| start.span.clone())
     }
