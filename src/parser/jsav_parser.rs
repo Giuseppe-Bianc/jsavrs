@@ -132,6 +132,7 @@ impl JsavParser {
                 break;
             }
         }
+        params.shrink_to_fit();
         self.expect(&TokenKind::CloseParen, "after parameter list");
 
         let return_type = if self.match_token(&TokenKind::Colon) {
@@ -275,6 +276,7 @@ impl JsavParser {
             self.expect(&TokenKind::CloseBracket, "after array size");
             dimensions.push(size_expr);
         }
+        dimensions.shrink_to_fit();
 
         // Apply dimensions in reverse order
         for size in dimensions.into_iter().rev() {
@@ -499,6 +501,7 @@ impl JsavParser {
         if !self.expect(&TokenKind::CloseBrace, "end of array literal") {
             return None;
         }
+        elements.shrink_to_fit();
         Some(Expr::ArrayLiteral { elements, span: self.merged_span(&start_token) })
     }
 
@@ -564,6 +567,7 @@ impl JsavParser {
         if !self.expect(&TokenKind::CloseParen, "end of function call arguments") {
             return None;
         }
+        arguments.shrink_to_fit();
 
         Some(Expr::Call { callee: Box::new(callee), arguments, span: self.merged_span(&start_token) })
     }
