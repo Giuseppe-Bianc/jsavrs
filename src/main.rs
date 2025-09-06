@@ -20,36 +20,54 @@ use std::{
 //use jsavrs::asm::generator::{AsmGenerator, TargetOS};
 
 // Helper function per gestire e stampare errori I/O
-fn handle_io_error<T: std::fmt::Display>(error_type: &str, e: T) -> T {
-    eprintln!(
-        "{} {}: {}\n",
-        style("ERROR:").red().bold(),
-        style(error_type).red(),
-        style(&e).yellow()
-    );
-    e
+fn handle_io_error<T: std::fmt::Display>(error_type: &str, e: T) {
+    eprintln!("{} {}: {}\n", style("ERROR:").red().bold(), style(error_type).red(), style(e).yellow());
 }
+const UNITS: [&'static str; 5] = ["B", "KB", "MB", "GB", "TB"];
+const UNIT_LEN: usize = UNITS.len() - 1;
+
+#[inline]
+fn format_size(bytes: usize) -> (f64, &'static str) {
+    let mut size = bytes as f64;
+    let mut unit = 0;
+
+    while size >= 1024.0 && unit < UNIT_LEN {
+        size /= 1024.0;
+        unit += 1;
+    }
+
+    (size, UNITS[unit])
+}
+
 
 #[allow(clippy::explicit_auto_deref, clippy::unused_unit)]
 fn main() -> Result<(), CompileError> {
-    let _total_timer = AutoTimer::new("Total Execution"); // Timer totale
     let args = Args::parse();
     let file_path: &Path = args.input.as_path();
+    let read_file_timer_name = format!("reading file {}", file_path.display());
 
     // Read input file with error styling
     let input = {
-        let _io_timer = AutoTimer::new("File I/O");
-        fs::read_to_string(file_path)
-            .map_err(|e| handle_io_error("I/O", e))?
+        let _io_timer = AutoTimer::new(&read_file_timer_name);
+
+        fs::read_to_string(file_path).unwrap_or_else(|e| {
+            handle_io_error("I/O", e);
+            process::exit(1); // esce con codice 1
+        })
     };
 
-    let mut lexer = Lexer::new(
-        file_path.to_str().ok_or_else(|| {
-            CompileError::IoError(std::io::Error::new(std::io::ErrorKind::InvalidData, "Invalid file path"))
-        })
-        .map_err(|e| handle_io_error("I/O", e))?,
-        &input,
-    );
+
+    let size_bytes = input.len();
+    let (size, unit) = format_size(size_bytes);
+    println!("total of bytes read: {} {}", size, unit);
+
+    let file_path_str: &str = file_path.to_str().unwrap_or_else(|| {
+        handle_io_error("I/O", std::io::Error::new(std::io::ErrorKind::InvalidData, "Invalid file path"));
+        process::exit(1);
+    });
+
+    let _total_timer = AutoTimer::new("Total Execution"); // Timer totale
+    let mut lexer = Lexer::new(file_path_str, &input);
     let line_tracker = lexer.get_line_tracker();
     let error_reporter: ErrorReporter = ErrorReporter::new(line_tracker);
     let lexer_timer = Timer::new("Lexer Tokenization");
