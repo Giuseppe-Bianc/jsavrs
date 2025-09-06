@@ -576,6 +576,7 @@ impl JsavParser {
         Some(Expr::ArrayAccess { array: Box::new(array), index: Box::new(index), span: self.merged_span(&start_token) })
     }
 
+    #[inline]
     fn merged_span(&self, start_token: &Token) -> SourceSpan {
         self.previous().and_then(|end| start_token.span.merged(&end.span)).unwrap_or(start_token.span.clone())
     }
