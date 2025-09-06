@@ -15,11 +15,11 @@ pub struct JsavParser {
 
 impl JsavParser {
     pub fn new(tokens: Vec<Token>) -> Self {
-        Self { tokens, current: 0, errors: Vec::new() }
+        Self { tokens, current: 0, errors: Vec::with_capacity(8) }
     }
 
     pub fn parse(mut self) -> (Vec<Stmt>, Vec<CompileError>) {
-        let mut statements = Vec::new();
+        let mut statements = Vec::with_capacity(self.tokens.len() / 4);
         while !self.is_at_end() {
             if let Some(stmt) = self.parse_stmt() {
                 statements.push(stmt);
@@ -28,9 +28,12 @@ impl JsavParser {
                 self.advance();
             }
         }
+        statements.shrink_to_fit();
+        self.errors.shrink_to_fit();
         (statements, self.errors)
     }
 
+    #[inline]
     fn parse_stmt(&mut self) -> Option<Stmt> {
         let token = self.peek()?;
         match token.kind {
@@ -56,10 +59,12 @@ impl JsavParser {
 
         Some(Stmt::MainFunction { body: vec![body], span: function_span })
     }
+    #[inline]
     fn parse_break(&mut self) -> Option<Stmt> {
         let span = self.advance_and_get_span()?;
         Some(Stmt::Break { span })
     }
+    #[inline]
     fn parse_continue(&mut self) -> Option<Stmt> {
         let span = self.advance_and_get_span()?;
         Some(Stmt::Continue { span })
@@ -328,7 +333,7 @@ impl JsavParser {
         };
 
         self.expect(&TokenKind::Equal, "after type annotation");
-        let mut initializers = Vec::new();
+        let mut initializers = Vec::with_capacity(variables.len());
         loop {
             match self.parse_expr(0) {
                 Some(expr) => initializers.push(expr),
@@ -603,6 +608,7 @@ impl JsavParser {
         }
     }
 
+    #[inline]
     fn match_token(&mut self, kind: &TokenKind) -> bool {
         if self.check(kind) {
             self.advance();
@@ -612,6 +618,7 @@ impl JsavParser {
         }
     }
 
+    #[inline]
     fn advance(&mut self) -> Option<&Token> {
         if !self.is_at_end() {
             self.current += 1;
@@ -619,18 +626,22 @@ impl JsavParser {
         self.previous()
     }
 
+    #[inline]
     fn previous(&self) -> Option<&Token> {
         self.tokens.get(self.current.saturating_sub(1))
     }
 
+    #[inline]
     fn peek(&self) -> Option<&Token> {
         self.tokens.get(self.current)
     }
 
+    #[inline]
     fn check(&self, kind: &TokenKind) -> bool {
         self.peek().map(|t| &t.kind == kind).unwrap_or(false)
     }
 
+    #[inline]
     fn is_at_end(&self) -> bool {
         self.peek().map(|t| t.kind == TokenKind::Eof).unwrap_or(true)
     }
