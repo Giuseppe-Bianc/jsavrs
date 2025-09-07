@@ -5,8 +5,8 @@ use crate::location::source_span::SourceSpan;
 use crate::parser::ast::*;
 use crate::tokens::number::Number;
 use std::collections::HashMap;
+use std::sync::Arc;
 
-#[allow(dead_code)]
 pub struct RIrGenerator {
     current_block: Option<RBasicBlock>,
     current_block_label: Option<String>,
@@ -17,7 +17,7 @@ pub struct RIrGenerator {
     break_stack: Vec<String>,
     continue_stack: Vec<String>,
     type_context: TypeContext,
-    access_controller: RAccessController,
+    _access_controller: RAccessController,
     root_scope: Option<RScopeId>,
 }
 
@@ -28,7 +28,7 @@ struct TypeContext {
     aliases: HashMap<String, RIrType>,
 }
 
-#[allow(dead_code)] // implementation  still in progress
+#[allow(clippy::collapsible_if, clippy::collapsible_else_if)]
 impl RIrGenerator {
     pub fn new() -> Self {
         let scope_manager = RScopeManager::new();
@@ -42,44 +42,56 @@ impl RIrGenerator {
             errors: Vec::new(),
             break_stack: Vec::new(),
             continue_stack: Vec::new(),
-            access_controller,
+            _access_controller: access_controller,
             type_context: TypeContext::default(),
             root_scope: scope_manager.root_scope(),
         }
     }
 
-    fn new_error(&mut self, message: impl Into<String>, span: SourceSpan) {
-        self.errors.push(CompileError::IrGeneratorError { message: message.into(), span, help: None });
+    fn block_needs_terminator(&self) -> bool {
+        self.current_block.as_ref().is_some_and(|b| !b.terminator.is_terminator())
     }
 
     pub fn generate(&mut self, stmts: Vec<Stmt>, module_name: &str) -> (Module, Vec<CompileError>) {
+        //let mut functions = Vec::new();
         let mut module = Module::new(module_name, self.root_scope);
+
         for stmt in stmts {
-            self.visit_top_stmt(&stmt, &mut module); // Process the statement in the  global scope
+            match stmt {
+                Stmt::Function { name, parameters, return_type, body, span } => {
+                    let mut func = self.create_function(&name, &parameters, return_type, span.clone());
+                    self.generate_function_body(&mut func, body, span);
+                    module.add_function(func);
+                }
+                Stmt::MainFunction { body, span } => {
+                    let mut func = self.create_function("main", &[], Type::Void, span.clone());
+                    self.generate_function_body(&mut func, body, span);
+                    module.add_function(func);
+                }
+                other => {
+                    self.new_error("Unsupported top-level statement".to_string(), other.span().clone());
+                }
+            }
         }
+
         (module, std::mem::take(&mut self.errors))
     }
 
-    fn visit_top_stmt(&mut self, stmt: &Stmt, module: &mut Module) {
-        match stmt {
-            Stmt::Function { name, parameters, return_type, body, span } => {
-                let mut func = self.create_function(name, parameters, return_type.clone(), span.clone());
-                self.generate_function_body(&mut func, body.clone(), span.clone());
-                module.add_function(func.clone());
-            }
-            Stmt::MainFunction { body, span } => {
-                let mut func = self.create_function("main", &[], Type::Void, span.clone());
-                self.generate_function_body(&mut func, body.clone(), span.clone());
-                module.add_function(func);
-            }
-            other => {
-                self.new_error(format!("Unsupported top-level statement: {:?}", other), other.span().clone());
-            }
+    fn new_error(&mut self, message: String, span: SourceSpan) {
+        self.errors.push(CompileError::IrGeneratorError { message, span, help: None });
+    }
+
+    fn add_branch_if_needed(&mut self, func: &mut Function, target_label: &str, span: SourceSpan) {
+        if self.block_needs_terminator() {
+            self.add_terminator(
+                func,
+                RTerminator::new(RTerminatorKind::Branch { label: target_label.into() }, span),
+            );
         }
     }
 
-    fn create_function(&mut self, name: &str, parameters: &[Parameter], return_type: Type, span: SourceSpan) -> Function {
-        let ir_params = parameters
+    fn create_function(&mut self, name: &str, params: &[Parameter], return_type: Type, span: SourceSpan) -> Function {
+        let ir_params = params
             .iter()
             .map(|param| {
                 let ty = self.map_type(&param.type_annotation);
@@ -90,6 +102,7 @@ impl RIrGenerator {
                 }
             })
             .collect();
+
         let ir_return_type = self.map_type(&return_type);
 
         let mut func = Function::new(name, ir_params, ir_return_type);
@@ -132,53 +145,557 @@ impl RIrGenerator {
         }
     }
 
-    fn generate_function_body(&mut self, func: &mut Function, _body: Vec<Stmt>, span: SourceSpan) {
+    fn finalize_current_block(&mut self, func: &mut Function) {
+        if let Some(mut current_block) = self.current_block.take() {
+            let label = current_block.label.clone();
+
+            // Get the block in the CFG and update its instructions and terminator
+            if let Some(cfg_block) = func.cfg.get_block_mut(&label) {
+                // Transfer instructions and terminator to the CFG block
+                cfg_block.instructions = std::mem::take(&mut current_block.instructions);
+                cfg_block.terminator = current_block.terminator.clone();
+                cfg_block.scope = current_block.scope;
+            }
+
+            self.current_block_label = Some(label.to_string());
+        }
+    }
+
+    // Add this new method to handle block connections at the end
+    fn finalize_block_connections(&mut self, func: &mut Function) {
+        // First, collect all the connections we need to make
+        let mut connections = Vec::new();
+        for block in func.cfg.blocks() {
+            let label = block.label.clone();
+            for target in block.terminator.get_targets() {
+                connections.push((label.clone(), target));
+            }
+        }
+
+        // Now apply all the connections without holding the immutable borrow
+        for (from_label, to_label) in connections {
+            func.connect_blocks(&from_label, &to_label);
+        }
+    }
+    fn generate_function_body(&mut self, func: &mut Function, body: Vec<Stmt>, span: SourceSpan) {
         self.break_stack.clear();
         self.continue_stack.clear();
+
+        // Save the current generator scope manager
+        let saved_scope_manager = std::mem::take(&mut self.scope_manager);
+
+        // Establish function scope before creating the entry block
         func.enter_scope();
-        // Here you would generate the actual body of the function
+
+        // Create the entry block using start_block
         let entry_label = format!("entry_{}", func.name);
-        func.add_block(&entry_label, span.clone());
-        self.current_block_label = Some(entry_label.clone());
-        self.current_block = func.cfg.get_block_mut(&entry_label).cloned();
+        self.start_block(func, &entry_label, span.clone());
 
-        // Add parameters to scope
+        // Add function parameters to symbol table
         for param in &func.parameters {
-            let param_value = RValue::new_local(param.name.clone(), param.ty.clone())
-                .with_debug_info(Some(param.name.clone()), span.clone())
-                .with_scope(func.scope_manager.current_scope());
-            func.scope_manager.add_symbol(&*param.name, param_value);
+            let value = RValue::new_local(param.name.clone(), param.ty.clone()).with_debug_info(
+                Some(param.name.clone()),
+                param.attributes.source_span.clone().unwrap_or_default(),
+            );
+            self.scope_manager.add_symbol(param.name.clone(), value.clone());
         }
 
-        if let Some(block) = &self.current_block
-            && matches!(block.terminator.kind, RTerminatorKind::Unreachable) {
-            let return_value = match func.return_type {
-                RIrType::Void => RValue::new_literal(RIrLiteralValue::I32(0)),
-                _ => RValue::new_literal(RIrLiteralValue::I32(0)),
-            };
-            func.set_terminator(
-                self.current_block_label.clone().unwrap().as_str(),
-                RTerminator::new(
-                    RTerminatorKind::Return { value: return_value, ty: func.return_type.clone() },
-                    SourceSpan::default(),
-                ),
-            );
+        // Process all statements
+        for stmt in body {
+            self.generate_stmt(func, stmt);
         }
+
+        // Ensure the last block has a terminator if needed
+        if let Some(block) = &self.current_block {
+            if matches!(block.terminator.kind, RTerminatorKind::Unreachable) {
+                let return_value = match func.return_type {
+                    RIrType::Void => RValue::new_literal(RIrLiteralValue::I32(0)),
+                    _ => RValue::new_literal(RIrLiteralValue::I32(0)),
+                };
+                self.add_terminator(
+                    func,
+                    RTerminator::new(
+                        RTerminatorKind::Return { value: return_value, ty: func.return_type.clone() },
+                        SourceSpan::default(),
+                    ),
+                );
+            }
+        }
+
+        // Finalize the last block
+        self.finalize_current_block(func);
+
+        // Now connect all blocks
+        self.finalize_block_connections(func);
+
+        // Update the function's scope manager with the scopes we created during generation
+        func.scope_manager = self.scope_manager.clone();
+
+        // Restore the generator's scope manager and append the function's scope manager
+        self.scope_manager = saved_scope_manager;
 
         func.exit_scope();
         self.scope_manager.append_manager(&func.scope_manager);
     }
 
-    // Helper methods for generation
-    fn next_block_label(&mut self, prefix: &str) -> String {
-        let lbl = format!("{}_{}", prefix, self.block_counter);
+    fn generate_stmt(&mut self, func: &mut Function, stmt: Stmt) {
+        match stmt {
+            Stmt::Expression { expr } => {
+                self.generate_expr(func, expr);
+            }
+            Stmt::VarDeclaration { variables, type_annotation, initializers, span, is_mutable } => {
+                self.generate_var_declaration(func, variables, type_annotation, initializers, is_mutable, span);
+            }
+            Stmt::Return { value, span } => {
+                self.generate_return(func, value, span);
+            }
+            Stmt::Block { statements, span: _ } => {
+                self.scope_manager.enter_scope();
+                for stmt in statements {
+                    self.generate_stmt(func, stmt);
+                }
+                self.scope_manager.exit_scope();
+            }
+            Stmt::If { condition, then_branch, else_branch, span } => {
+                self.generate_if(func, condition, then_branch, else_branch, span);
+            }
+            Stmt::While { condition, body, span } => {
+                self.generate_while(func, condition, body, span);
+            }
+            Stmt::For { initializer, condition, increment, body, span } => {
+                self.scope_manager.enter_scope();
+                self.generate_for(func, initializer, condition, increment, body, span);
+                self.scope_manager.exit_scope();
+            }
+            Stmt::Break { span } => {
+                self.handle_break(func, span);
+            }
+            Stmt::Continue { span } => {
+                self.handle_continue(func, span);
+            }
+            other => self.new_error(format!("Unsupported statement: {:?}", other), other.span().clone()),
+        }
+    }
+
+    fn generate_var_declaration(&mut self, func: &mut Function, variables: Vec<Arc<str>>, type_annotation: Type, initializers: Vec<Expr>, is_mutable: bool, span: SourceSpan) {
+        let ty: RIrType = self.map_type(&type_annotation);
+
+        for (i, var) in variables.iter().enumerate() {
+            if is_mutable {
+                let temp_id = self.new_temp();
+                let ptr_ty = RIrType::Pointer(Box::new(ty.clone()));
+                let ptr_value = RValue::new_temporary(temp_id, ptr_ty).with_debug_info(Some(var.clone()), span.clone());
+
+                let alloca_inst = RInstruction::new(RInstructionKind::Alloca { ty: ty.clone() }, span.clone())
+                    .with_result(ptr_value.clone());
+
+                self.add_instruction(alloca_inst);
+
+                if let Some(init) = initializers.get(i) {
+                    let value_val = self.generate_expr(func, init.clone());
+                    let store_inst = RInstruction::new(
+                        RInstructionKind::Store { value: value_val, dest: ptr_value.clone() },
+                        span.clone(),
+                    );
+                    self.add_instruction(store_inst);
+                }
+
+                self.scope_manager.add_symbol(var.clone(), ptr_value);
+            } else {
+                if let Some(init) = initializers.get(i) {
+                    let value = self.generate_expr(func, init.clone());
+                    self.scope_manager.add_symbol(var.clone(), value.with_debug_info(Some(var.clone()), span.clone()));
+                } else {
+                    self.new_error(format!("Constant '{var}' must be initialized"), span.clone());
+                }
+            }
+        }
+    }
+
+    fn generate_return(&mut self, func: &mut Function, value: Option<Expr>, span: SourceSpan) {
+        let return_value =
+            value.map_or_else(|| RValue::new_literal(RIrLiteralValue::I32(0)), |expr| self.generate_expr(func, expr));
+
+        self.add_terminator(
+            func,
+            RTerminator::new(RTerminatorKind::Return { value: return_value, ty: func.return_type.clone() }, span),
+        );
+    }
+
+    fn generate_if(&mut self, func: &mut Function, condition: Expr, then_branch: Vec<Stmt>, else_branch: Option<Vec<Stmt>>, span: SourceSpan) {
+        let cond_value = self.generate_expr(func, condition);
+
+        let then_label = self.new_block_label("then");
+        let else_label = self.new_block_label("else");
+        let merge_label = self.new_block_label("merge");
+
+        self.add_terminator(
+            func,
+            RTerminator::new(
+                RTerminatorKind::ConditionalBranch {
+                    condition: cond_value,
+                    true_label: then_label.clone().into(),
+                    false_label: else_label.clone().into(),
+                },
+                span.clone(),
+            ),
+        );
+
+        self.start_block(func, &then_label, span.clone());
+        self.scope_manager.enter_scope();
+        for stmt in then_branch {
+            self.generate_stmt(func, stmt);
+        }
+        self.scope_manager.exit_scope();
+        self.add_branch_if_needed(func, &merge_label, span.clone());
+
+        self.start_block(func, &else_label, span.clone());
+        if let Some(else_stmts) = else_branch {
+            self.scope_manager.enter_scope();
+            for stmt in else_stmts {
+                self.generate_stmt(func, stmt);
+            }
+            self.scope_manager.exit_scope();
+        }
+
+        self.add_branch_if_needed(func, &merge_label, span.clone());
+
+        self.start_block(func, &merge_label, span);
+    }
+
+    fn generate_while(&mut self, func: &mut Function, condition: Expr, body: Vec<Stmt>, span: SourceSpan) {
+        let loop_start_label = self.new_block_label("loop_start");
+        let loop_body_label = self.new_block_label("loop_body");
+        let loop_end_label = self.new_block_label("loop_end");
+
+        self.add_terminator(
+            func,
+            RTerminator::new(RTerminatorKind::Branch { label: loop_start_label.clone().into() }, span.clone()),
+        );
+
+        self.start_block(func, &loop_start_label, span.clone());
+        let cond_value = self.generate_expr(func, condition);
+        self.add_terminator(
+            func,
+            RTerminator::new(
+                RTerminatorKind::ConditionalBranch {
+                    condition: cond_value,
+                    true_label: loop_body_label.clone().into(),
+                    false_label: loop_end_label.clone().into(),
+                },
+                span.clone(),
+            ),
+        );
+
+        self.break_stack.push(loop_end_label.clone());
+        self.continue_stack.push(loop_start_label.clone());
+
+        self.start_block(func, &loop_body_label, span.clone());
+        self.scope_manager.enter_scope();
+        for stmt in body {
+            self.generate_stmt(func, stmt);
+        }
+        self.scope_manager.exit_scope();
+
+        self.break_stack.pop();
+        self.continue_stack.pop();
+
+        self.add_branch_if_needed(func, &loop_start_label, span.clone());
+        self.start_block(func, &loop_end_label, span);
+    }
+
+    fn generate_for(&mut self, func: &mut Function, initializer: Option<Box<Stmt>>, condition: Option<Expr>, increment: Option<Expr>, body: Vec<Stmt>, span: SourceSpan) {
+        let loop_st_label = self.new_block_label("for_start");
+        let loop_bd_label = self.new_block_label("for_body");
+        let loop_inc_label = self.new_block_label("for_inc");
+        let loop_end_label = self.new_block_label("for_end");
+
+        if let Some(init) = initializer {
+            self.generate_stmt(func, *init);
+        }
+
+        self.add_terminator(
+            func,
+
+            RTerminator::new(RTerminatorKind::Branch { label: loop_st_label.clone().into() }, span.clone()),
+        );
+
+        self.start_block(func, &loop_st_label, span.clone());
+
+        let cond_value = if let Some(cond) = condition {
+            self.generate_expr(func, cond)
+        } else {
+            RValue::new_literal(RIrLiteralValue::Bool(true))
+        };
+
+        self.add_terminator(
+            func,
+            RTerminator::new(
+                RTerminatorKind::ConditionalBranch {
+                    condition: cond_value,
+                    true_label: loop_bd_label.clone().into(),
+                    false_label: loop_end_label.clone().into(),
+                },
+                span.clone(),
+            ),
+        );
+
+        self.break_stack.push(loop_end_label.clone());
+        self.continue_stack.push(loop_inc_label.clone());
+
+        self.start_block(func, &loop_bd_label, span.clone());
+        self.scope_manager.enter_scope();
+        for stmt in body {
+            self.generate_stmt(func, stmt);
+        }
+        self.scope_manager.exit_scope();
+        self.break_stack.pop();
+        self.continue_stack.pop();
+
+        self.add_branch_if_needed(func, &loop_inc_label, span.clone());
+
+        self.start_block(func, &loop_inc_label, span.clone());
+        if let Some(inc) = increment {
+            self.generate_expr(func, inc);
+        }
+
+        self.add_branch_if_needed(func, &loop_st_label, span.clone());
+        self.start_block(func, &loop_end_label, span);
+    }
+
+    fn handle_break(&mut self, func: &mut Function, span: SourceSpan) {
+        if let Some(label) = self.break_stack.last() {
+            self.add_terminator(func, RTerminator::new(RTerminatorKind::Branch { label: label.clone().into() }, span));
+        } else {
+            self.new_error("Break outside loop".to_string(), span);
+        }
+    }
+
+    fn handle_continue(&mut self, func: &mut Function, span: SourceSpan) {
+        if let Some(label) = self.continue_stack.last() {
+            self.add_terminator(func, RTerminator::new(RTerminatorKind::Branch { label: label.clone().into() }, span));
+        } else {
+            self.new_error("Continue outside loop".to_string(), span);
+        }
+    }
+
+    fn generate_expr(&mut self, func: &mut Function, expr: Expr) -> RValue {
+        match expr {
+            Expr::Literal { value, span } => self.generate_literal(value, span),
+            Expr::Binary { left, op, right, span } => self.generate_binary(func, *left, op, *right, span),
+            Expr::Unary { op, expr, span } => self.generate_unary(func, op, *expr, span),
+            Expr::Variable { name, span } => self.generate_variable(name, span),
+            Expr::Assign { target, value, span } => self.generate_assign(func, *target, *value, span),
+            Expr::Grouping { expr, span: _ } => self.generate_expr(func, *expr),
+            Expr::ArrayLiteral { elements, span } => self.generate_array_literal(func, elements, span),
+            Expr::ArrayAccess { array, index, span } => self.generate_array_access(func, *array, *index, span),
+            other => {
+                self.new_error("Unsupported expression type".to_string(), other.span().clone());
+                RValue::new_literal(RIrLiteralValue::I32(0))
+            }
+        }
+    }
+
+    /// Genera l'accesso ad array: calcola l'indirizzo dell'elemento con GEP
+    /// e restituisce un puntatore all'elemento. Non esegue il Load per mantenere
+    /// la compatibilità con l'uso attuale dei puntatori nelle espressioni.
+    fn generate_array_access(&mut self, func: &mut Function, array: Expr, index: Expr, span: SourceSpan) -> RValue {
+        let base_val = self.generate_expr(func, array);
+        let index_val = self.generate_expr(func, index);
+
+        // Deduzione del tipo elemento: gestiamo sia puntatore ad array che array diretto
+        let element_ty = match &base_val.ty {
+            RIrType::Pointer(inner) => match inner.as_ref() {
+                RIrType::Array(elem_ty, _) => *elem_ty.clone(),
+                other => other.clone(), // fallback: puntatore a elemento già puntato
+            },
+            RIrType::Array(elem_ty, _) => *elem_ty.clone(),
+            other => {
+                // Caso inatteso: segnaliamo ma proseguiamo con un fallback sicuro (i32)
+                self.new_error(format!("Array access on non-array type: {other}"), span.clone());
+                RIrType::I32
+            }
+        };
+
+        let tmp = self.new_temp();
+        let gep = RInstruction::new(
+            RInstructionKind::GetElementPtr { base: base_val, index: index_val, element_ty: element_ty.clone() },
+            span.clone(),
+        )
+            .with_result(RValue::new_temporary(tmp, RIrType::Pointer(Box::new(element_ty))));
+
+        self.add_instruction(gep.clone());
+        gep.result.unwrap()
+    }
+
+    fn generate_array_literal(&mut self, func: &mut Function, elements: Vec<Expr>, span: SourceSpan) -> RValue {
+        if elements.is_empty() {
+            return RValue::new_literal(RIrLiteralValue::I64(0)); // Null pointer
+        }
+
+        let mut element_vals = Vec::with_capacity(elements.len());
+        for element in elements {
+            element_vals.push(self.generate_expr(func, element));
+        }
+
+        let element_ty = element_vals[0].ty.clone();
+        let array_size = element_vals.len();
+        let array_temp = self.new_temp();
+        let array_ty = RIrType::Array(Box::new(element_ty.clone()), array_size);
+
+        let alloca_inst = RInstruction::new(RInstructionKind::Alloca { ty: array_ty.clone() }, span.clone())
+            .with_result(RValue::new_temporary(array_temp, array_ty.clone()));
+
+        self.add_instruction(alloca_inst.clone());
+        let array_ptr = alloca_inst.result.unwrap();
+
+        for (index, element_val) in element_vals.into_iter().enumerate() {
+            let index_temp = self.new_temp();
+            let index_val = RValue::new_literal(RIrLiteralValue::I32(index as i32));
+
+            let gep_inst = RInstruction::new(
+                RInstructionKind::GetElementPtr {
+                    base: array_ptr.clone(),
+                    index: index_val,
+                    element_ty: element_ty.clone(),
+                },
+                span.clone(),
+            )
+                .with_result(RValue::new_temporary(index_temp, RIrType::Pointer(Box::new(element_ty.clone()))));
+            self.add_instruction(gep_inst.clone());
+
+            let element_ptr = gep_inst.result.unwrap();
+
+            let store_inst =
+                RInstruction::new(RInstructionKind::Store { value: element_val, dest: element_ptr }, span.clone());
+            self.add_instruction(store_inst);
+        }
+
+        array_ptr
+    }
+
+    fn generate_literal(&mut self, value: LiteralValue, span: SourceSpan) -> RValue {
+        match value {
+            LiteralValue::Number(num) => match num {
+                Number::I8(i) => RValue::new_literal(RIrLiteralValue::I8(i)).with_debug_info(None, span),
+                Number::I16(i) => RValue::new_literal(RIrLiteralValue::I16(i)).with_debug_info(None, span),
+                Number::I32(i) => RValue::new_literal(RIrLiteralValue::I32(i)).with_debug_info(None, span),
+                Number::Integer(i) => RValue::new_literal(RIrLiteralValue::I64(i)).with_debug_info(None, span),
+                Number::U8(u) => RValue::new_literal(RIrLiteralValue::U8(u)).with_debug_info(None, span),
+                Number::U16(u) => RValue::new_literal(RIrLiteralValue::U16(u)).with_debug_info(None, span),
+                Number::U32(u) => RValue::new_literal(RIrLiteralValue::U32(u)).with_debug_info(None, span),
+                Number::UnsignedInteger(u) => RValue::new_literal(RIrLiteralValue::U64(u)).with_debug_info(None, span),
+                Number::Float32(f) => RValue::new_literal(RIrLiteralValue::F32(f)).with_debug_info(None, span),
+                Number::Float64(f) => RValue::new_literal(RIrLiteralValue::F64(f)).with_debug_info(None, span),
+                Number::Scientific32(f, i) => {
+                    let value = f.powi(i);
+                    RValue::new_literal(RIrLiteralValue::F32(value)).with_debug_info(None, span)
+                }
+                Number::Scientific64(f, i) => {
+                    let value = f.powi(i);
+                    RValue::new_literal(RIrLiteralValue::F64(value)).with_debug_info(None, span)
+                }
+            },
+            LiteralValue::Bool(b) => RValue::new_literal(RIrLiteralValue::Bool(b)).with_debug_info(None, span),
+            LiteralValue::StringLit(s) => {
+                RValue::new_constant(RIrConstantValue::String { string: s }, RIrType::String).with_debug_info(None, span)
+            }
+            LiteralValue::CharLit(c) => {
+                RValue::new_literal(RIrLiteralValue::Char(c.chars().next().unwrap_or('\0'))).with_debug_info(None, span)
+            }
+            LiteralValue::Nullptr => RValue::new_literal(RIrLiteralValue::I64(0)).with_debug_info(None, span),
+        }
+    }
+
+    fn generate_binary(&mut self, func: &mut Function, left: Expr, op: BinaryOp, right: Expr, span: SourceSpan) -> RValue {
+        let ir_op: RIrBinaryOp = op.into();
+        let left_val = self.generate_expr(func, left);
+        let right_val = self.generate_expr(func, right);
+        let ty = left_val.ty.clone();
+        let dest_id = self.new_temp();
+
+        let bin_inst = RInstruction::new(
+            RInstructionKind::Binary { op: ir_op, left: left_val, right: right_val, ty: ty.clone() },
+            span.clone(),
+        )
+            .with_result(RValue::new_temporary(dest_id, ty.clone()));
+
+        self.add_instruction(bin_inst.clone());
+        bin_inst.result.unwrap()
+    }
+
+    fn generate_unary(&mut self, func: &mut Function, op: UnaryOp, expr: Expr, span: SourceSpan) -> RValue {
+        let ir_op: RIrUnaryOp = op.into();
+        let operand = self.generate_expr(func, expr);
+        let ty = operand.ty.clone();
+        let dest_id = self.new_temp();
+
+        let unary_inst = RInstruction::new(RInstructionKind::Unary { op: ir_op, operand, ty: ty.clone() }, span.clone())
+            .with_result(RValue::new_temporary(dest_id, ty.clone()));
+
+        self.add_instruction(unary_inst.clone());
+        unary_inst.result.unwrap()
+    }
+
+    fn generate_variable(&mut self, name: Arc<str>, span: SourceSpan) -> RValue {
+        self.scope_manager.lookup(&name).cloned().unwrap_or_else(|| {
+            self.new_error(format!("Undefined variable '{name}'"), span.clone());
+            RValue::new_literal(RIrLiteralValue::I32(0)).with_debug_info(None, span)
+        })
+    }
+
+    fn generate_assign(&mut self, func: &mut Function, target: Expr, value: Expr, span: SourceSpan) -> RValue {
+        let target_val = self.generate_expr(func, target);
+        let value_val = self.generate_expr(func, value);
+
+        let store_inst =
+            RInstruction::new(RInstructionKind::Store { value: value_val.clone(), dest: target_val }, span.clone());
+        self.add_instruction(store_inst);
+
+        value_val
+    }
+
+    fn new_temp(&mut self) -> u64 {
+        let id = self.temp_counter;
+        self.temp_counter += 1;
+        id
+    }
+
+    fn new_block_label(&mut self, prefix: &str) -> String {
         self.block_counter += 1;
-        lbl
+        format!("{}_{}", prefix, self.block_counter)
+    }
+
+    fn start_block(&mut self, func: &mut Function, label: &str, span: SourceSpan) {
+        // Finalize the current block first
+        self.finalize_current_block(func);
+
+        // Create a new block
+        let new_block = RBasicBlock::new(label, span.clone()).with_scope(self.scope_manager.current_scope());
+
+        // Add the block to the CFG
+        func.add_block(label, span);
+
+        // Set the new block as current
+        self.current_block = Some(new_block);
+        self.current_block_label = Some(label.to_string());
+    }
+
+    fn add_instruction(&mut self, inst: RInstruction) {
+        if let Some(block) = &mut self.current_block {
+            block.instructions.push(inst);
+        }
+    }
+
+    // Replace the current add_terminator method with this version:
+    fn add_terminator(&mut self, _func: &mut Function, term: RTerminator) {
+        if let Some(block) = &mut self.current_block {
+            block.terminator = term.clone();
+            // Don't connect blocks here - they'll be connected when the block is finalized
+        }
     }
 }
 
 impl Default for RIrGenerator {
-    fn default() -> Self {
-        Self::new()
-    }
+    fn default() -> Self { Self::new() }
 }

@@ -4,6 +4,7 @@ use super::types::{RIrType, RScopeId};
 //use super::value::RValue;
 use crate::location::source_span::SourceSpan;
 use crate::rvir::{RBasicBlock, RInstruction, RTerminator};
+use std::collections::HashMap;
 // src/rvir/function.rs
 use std::fmt;
 use std::sync::Arc;
@@ -36,6 +37,7 @@ pub struct Function {
     pub parameters: Vec<IrParameter>,
     pub return_type: RIrType,
     pub(crate) cfg: ControlFlowGraph,
+    pub local_vars: HashMap<String, RIrType>,
     pub attributes: FunctionAttributes,
     pub(crate) scope_manager: RScopeManager,
 }
@@ -47,6 +49,7 @@ impl Function {
             parameters: params,
             return_type,
             cfg: ControlFlowGraph::new(format!("entry_{name}")),
+            local_vars: HashMap::new(),
             attributes: FunctionAttributes::default(),
             scope_manager: RScopeManager::new(),
         }
