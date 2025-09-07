@@ -198,6 +198,7 @@ fn integer_display_formatting() {
     assert_eq!(format!("{}", IrLiteralValue::U64(18446744073709551615)), "18446744073709551615u64");
 }
 
+#[allow(clippy::approx_constant)]
 #[test]
 fn float_display_formatting() {
     // Numeri interi rappresentati come float

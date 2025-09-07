@@ -88,21 +88,21 @@ fn long_verbose_flag_works() {
 
 #[test]
 fn test_parse_short_options() {
-    let args = Args::try_parse_from(&["jsavrs", "-i", "test.vn", "-v"]).unwrap();
+    let args = Args::try_parse_from(["jsavrs", "-i", "test.vn", "-v"]).unwrap();
     assert_eq!(args.input, PathBuf::from("test.vn"));
     assert!(args.verbose);
 }
 
 #[test]
 fn test_parse_long_options() {
-    let args = Args::try_parse_from(&["jsavrs", "--input", "test.vn", "--verbose"]).unwrap();
+    let args = Args::try_parse_from(["jsavrs", "--input", "test.vn", "--verbose"]).unwrap();
     assert_eq!(args.input, PathBuf::from("test.vn"));
     assert!(args.verbose);
 }
 
 #[test]
 fn test_missing_input() {
-    let result = Args::try_parse_from(&["jsavrs"]);
+    let result = Args::try_parse_from(["jsavrs"]);
     assert!(result.is_err());
     let err = result.unwrap_err();
     assert_eq!(err.kind(), ErrorKind::MissingRequiredArgument);
@@ -110,7 +110,7 @@ fn test_missing_input() {
 
 #[test]
 fn test_unknown_argument() {
-    let result = Args::try_parse_from(&["jsavrs", "-i", "test.vn", "--unknown"]);
+    let result = Args::try_parse_from(["jsavrs", "-i", "test.vn", "--unknown"]);
     assert!(result.is_err());
     let err = result.unwrap_err();
     assert_eq!(err.kind(), ErrorKind::UnknownArgument);
@@ -118,7 +118,7 @@ fn test_unknown_argument() {
 
 #[test]
 fn test_verbose_flag_absence() {
-    let args = Args::try_parse_from(&["jsavrs", "-i", "test.vn"]).unwrap();
+    let args = Args::try_parse_from(["jsavrs", "-i", "test.vn"]).unwrap();
     assert_eq!(args.input, PathBuf::from("test.vn"));
     assert!(!args.verbose);
 }

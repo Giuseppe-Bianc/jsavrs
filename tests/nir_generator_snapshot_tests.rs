@@ -543,6 +543,7 @@ fn test_generate_integer_literals() {
     }
 }
 
+#[allow(clippy::approx_constant)]
 #[test]
 fn test_generate_float_literals() {
     let test_cases = vec![

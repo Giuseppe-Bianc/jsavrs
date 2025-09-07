@@ -189,6 +189,7 @@ fn get_targets_edge_cases() {
     assert_eq!(cond_term.get_targets(), vec!["", ""]);
 }
 
+#[allow(clippy::approx_constant)]
 #[test]
 fn display_floating_point_edge_cases() {
     // Verifica formattazione float interi

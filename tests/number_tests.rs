@@ -170,6 +170,7 @@ fn test_partial_eq_same_variants() {
     assert_eq!(Number::Scientific64(2.0, 20), Number::Scientific64(2.0, 20));
 }
 
+#[allow(clippy::approx_constant)]
 #[test]
 fn test_partial_eq_different_variants() {
     // Test inequality between different variants
@@ -219,11 +220,11 @@ fn test_partial_eq_float_bitwise() {
     let nan4 = f64::from_bits(f64::NAN.to_bits() ^ 1); // Flip one bit in the fraction
     assert_ne!(Number::Float64(nan3), Number::Float64(nan4));
 }
-
+#[allow(clippy::approx_constant)]
 #[test]
 fn test_hash_consistency() {
     // Test that equal values produce the same hash
-    let numbers = vec![
+    let numbers = [
         Number::I8(42),
         Number::I16(1000),
         Number::I32(50000),
@@ -243,6 +244,7 @@ fn test_hash_consistency() {
     }
 }
 
+#[allow(clippy::approx_constant)]
 #[test]
 fn test_hash_different_values() {
     // Test that different values produce different hashes
@@ -259,6 +261,7 @@ fn test_hash_different_values() {
     assert_ne!(hash_number(&num5), hash_number(&num6));
 }
 
+#[allow(clippy::approx_constant)]
 #[test]
 fn test_hash_different_variants() {
     // Test that different variants produce different hashes even with same numeric value

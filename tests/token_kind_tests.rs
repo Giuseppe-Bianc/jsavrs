@@ -1,4 +1,3 @@
-use jsavrs::tokens::number::Number;
 use jsavrs::tokens::number::Number::*;
 use jsavrs::tokens::token_kind::TokenKind::*;
 use jsavrs::tokens::token_kind::{TokenKind, handle_suffix, split_numeric_and_suffix};
@@ -78,7 +77,7 @@ fn test_invalid_scientific_notation() {
     assert_eq!(lex.next().unwrap(), Ok(Numeric(Scientific64(1.0, 2))));
     assert_eq!(lex.next().unwrap(), Ok(IdentifierAscii("e3".into())));
     let mut lex2 = TokenKind::lexer("1.2e3.4"); // Invalid exponent
-    assert!(!lex2.next().unwrap().is_err());
+    assert!(lex2.next().unwrap().is_ok());
 }
 
 #[test]
@@ -159,7 +158,7 @@ fn test_identifier_unicode() {
 
 #[test]
 fn test_numeric_integer() {
-    let num = Number::Integer(123);
+    let num = Integer(123);
     assert_eq!(Numeric(num.clone()).to_string(), "number '123'");
     assert_eq!(Hexadecimal(num.clone()).to_string(), "hexadecimal '123'");
     assert_eq!(Octal(num.clone()).to_string(), "octal '123'");

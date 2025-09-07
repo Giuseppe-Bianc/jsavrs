@@ -877,7 +877,7 @@ fn test_continue_stmt() {
 #[test]
 fn test_array_literal_output() {
     let input = "var arr: i8[5] = {1, 2, 3, 4, 5}";
-    let mut lexer = Lexer::new("test.vn", &input);
+    let mut lexer = Lexer::new("test.vn", input);
     let (tokens, _lex_errors) = lexer_tokenize_with_errors(&mut lexer);
     let parser = JsavParser::new(tokens);
     let (expr, errors) = parser.parse();
@@ -906,7 +906,7 @@ fn test_array_literal_output() {
 #[test]
 fn test_main() {
     let input = "main { }";
-    let mut lexer = Lexer::new("test.vn", &input);
+    let mut lexer = Lexer::new("test.vn", input);
     let (tokens, _lex_errors) = lexer_tokenize_with_errors(&mut lexer);
     let parser = JsavParser::new(tokens);
     let (expr, errors) = parser.parse();

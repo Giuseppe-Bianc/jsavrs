@@ -147,7 +147,7 @@ fn number_edge_cases() {
 
     // Test binary overflow with 64 bits
     let input = "#b1111111111111111111111111111111111111111111111111111111111111111";
-    let mut lexer = Lexer::new("test", &input);
+    let mut lexer = Lexer::new("test", input);
     let (tokens, errors) = lexer_tokenize_with_errors(&mut lexer);
     assert_eq!(tokens.len(), 1);
     assert_eq!(errors.len(), 1);
@@ -167,7 +167,7 @@ fn empty_base_numbers() {
     ];
 
     for (input, expected_msg) in cases {
-        let mut lexer = Lexer::new("test", &input);
+        let mut lexer = Lexer::new("test", input);
         let (tokens, errors) = lexer_tokenize_with_errors(&mut lexer);
         assert_eq!(tokens.len(), 1);
         assert_eq!(errors.len(), 1);
@@ -267,7 +267,7 @@ fn invalid_tokens() {
     ];
 
     for (input, expected) in cases {
-        let mut lexer = Lexer::new("test", &input);
+        let mut lexer = Lexer::new("test", input);
         let (tokens, errors) = lexer_tokenize_with_errors(&mut lexer);
         assert_eq!(tokens.len(), 1);
         assert_eq!(errors.len(), 1);
@@ -326,7 +326,7 @@ fn iterator_empty_input() {
 
 #[test]
 fn iterator_single_invalid_token() {
-    let mut lexer = Lexer::new("test", &"@");
+    let mut lexer = Lexer::new("test", "@");
     let (tokens, errors) = lexer_tokenize_with_errors(&mut lexer);
     assert_eq!(tokens.len(), 1);
     assert_eq!(errors.len(), 1);
@@ -336,7 +336,7 @@ fn iterator_single_invalid_token() {
 
 #[test]
 fn iterator_multiple_invalid_tokens() {
-    let mut lexer = Lexer::new("test", &"@ $");
+    let mut lexer = Lexer::new("test", "@ $");
     let (tokens, errors) = lexer_tokenize_with_errors(&mut lexer);
     assert_eq!(tokens.len(), 1);
     assert_eq!(errors.len(), 2);
@@ -347,7 +347,7 @@ fn iterator_multiple_invalid_tokens() {
 
 #[test]
 fn iterator_mixed_valid_invalid_valid() {
-    let mut lexer = Lexer::new("test", &"a @ b");
+    let mut lexer = Lexer::new("test", "a @ b");
     let (tokens, errors) = lexer_tokenize_with_errors(&mut lexer);
     assert_eq!(tokens.len(), 3);
     assert_eq!(errors.len(), 1);
@@ -369,7 +369,7 @@ fn iterator_eof_emitted_once() {
 #[test]
 fn iterator_multiline_span_tracking() {
     let input = "123\n@\n456";
-    let mut lexer = Lexer::new("test", &input);
+    let mut lexer = Lexer::new("test", input);
     let (tokens, errors) = lexer_tokenize_with_errors(&mut lexer);
     assert_eq!(tokens.len(), 3);
     assert_eq!(errors.len(), 1);
@@ -513,7 +513,7 @@ fn test_get_error_message_none() {
     let span = make_span(8, 8, 8, 9);
 
     // Choose a single‐character identifier that we know get_error_message will return None for.
-    // Typically get_error_message returns Some(...) only for certain “illegal” single chars—
+    // Typically, get_error_message returns Some(...) only for certain “illegal” single chars—
     // here we pick "z" assuming it’s not in your error map.
     let token_span = make_span(8, 9, 8, 10);
     let tok = Token { kind: IdentifierAscii("z".into()), span: token_span.clone() };

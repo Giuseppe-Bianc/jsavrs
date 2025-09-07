@@ -123,7 +123,7 @@ fn test_extreme_float_values_snapshot() {
 
 #[test]
 fn test_display_trait_consistency_snapshot() {
-    let numbers = vec![
+    let numbers = [
         Number::I8(10),
         Number::I16(10),
         Number::I32(10),

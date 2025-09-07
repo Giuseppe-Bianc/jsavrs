@@ -227,7 +227,7 @@ fn line_out_of_bounds() {
 
 #[test]
 fn report_error_from_lexer() {
-    let mut lexer = Lexer::new("test", &"@");
+    let mut lexer = Lexer::new("test", "@");
     let reporter = ErrorReporter::new(lexer.get_line_tracker());
     let (_tokens, errors) = lexer_tokenize_with_errors(&mut lexer);
 

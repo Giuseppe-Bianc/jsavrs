@@ -936,7 +936,7 @@ fn test_full_for_loop() {
 #[test]
 fn if_whit_else_brach() {
     let input = "if (true) { continue } else { break }";
-    let mut lexer = Lexer::new("test.vn", &input);
+    let mut lexer = Lexer::new("test.vn", input);
     let (tokens, _lerrors) = lexer_tokenize_with_errors(&mut lexer);
     let parser = JsavParser::new(tokens);
     let (statements, errors) = parser.parse();
@@ -1355,7 +1355,7 @@ test_var_decl!(
 #[test]
 fn array_declaration() {
     let input = "var arr: i8[5] = {1, 2, 3, 4, 5}";
-    let mut lexer = Lexer::new("test.vn", &input);
+    let mut lexer = Lexer::new("test.vn", input);
     let (tokens, _lex_errors) = lexer_tokenize_with_errors(&mut lexer);
     let parser = JsavParser::new(tokens);
     let (expr, errors) = parser.parse();
@@ -1406,7 +1406,7 @@ fn array_declaration() {
 #[test]
 fn vector_declaration() {
     let input = "var arr: vector<i8> = {1, 2, 3, 4, 5}";
-    let mut lexer = Lexer::new("test.vn", &input);
+    let mut lexer = Lexer::new("test.vn", input);
     let (tokens, _lex_errors) = lexer_tokenize_with_errors(&mut lexer);
     let parser = JsavParser::new(tokens);
     let (expr, errors) = parser.parse();
@@ -1451,7 +1451,7 @@ fn vector_declaration() {
 #[test]
 fn test_function_inputs() {
     let input = "fun a(num1: i8, num2: i8): i8 { }";
-    let mut lexer = Lexer::new("test.vn", &input);
+    let mut lexer = Lexer::new("test.vn", input);
     let (tokens, _lex_errors) = lexer_tokenize_with_errors(&mut lexer);
     let parser = JsavParser::new(tokens);
     let (expr, errors) = parser.parse();
@@ -1583,7 +1583,7 @@ fn test_empty_block_statement() {
 #[test]
 fn test_var_no_name() {
     let input = "var ";
-    let mut lexer = Lexer::new("test.vn", &input);
+    let mut lexer = Lexer::new("test.vn", input);
     let (tokens, _lex_errors) = lexer_tokenize_with_errors(&mut lexer);
     let parser = JsavParser::new(tokens);
     let (_expr, errors) = parser.parse();
@@ -1594,7 +1594,7 @@ fn test_var_no_name() {
 #[test]
 fn test_var_no_initializer() {
     let input = "var eee: i32";
-    let mut lexer = Lexer::new("test.vn", &input);
+    let mut lexer = Lexer::new("test.vn", input);
     let (tokens, _lex_errors) = lexer_tokenize_with_errors(&mut lexer);
     let parser = JsavParser::new(tokens);
     let (_expr, errors) = parser.parse();
@@ -1606,7 +1606,7 @@ fn test_var_no_initializer() {
 #[test]
 fn test_unclose_array_literal() {
     let input = "var eee: i32[2] = {1, 2, 3";
-    let mut lexer = Lexer::new("test.vn", &input);
+    let mut lexer = Lexer::new("test.vn", input);
     let (tokens, _lex_errors) = lexer_tokenize_with_errors(&mut lexer);
     let parser = JsavParser::new(tokens);
     let (expr, errors) = parser.parse();
@@ -1619,7 +1619,7 @@ fn test_unclose_array_literal() {
 #[test]
 fn test_var_invaild_type() {
     let input = "var eee: 5";
-    let mut lexer = Lexer::new("test.vn", &input);
+    let mut lexer = Lexer::new("test.vn", input);
     let (tokens, _lex_errors) = lexer_tokenize_with_errors(&mut lexer);
     let parser = JsavParser::new(tokens);
     let (_expr, errors) = parser.parse();
@@ -1633,7 +1633,7 @@ fn test_var_invaild_type() {
 #[test]
 fn test_main() {
     let input = "main { }";
-    let mut lexer = Lexer::new("test.vn", &input);
+    let mut lexer = Lexer::new("test.vn", input);
     let (tokens, _lex_errors) = lexer_tokenize_with_errors(&mut lexer);
     let parser = JsavParser::new(tokens);
     let (expr, errors) = parser.parse();

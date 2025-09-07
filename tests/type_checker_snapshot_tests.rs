@@ -9,21 +9,21 @@ use jsavrs::utils::dummy_span;
 
 // Test helper
 fn typecheck(ast: &str) -> Vec<CompileError> {
-    let mut lexer = Lexer::new("test.vn", &ast);
+    let mut lexer = Lexer::new("test.vn", ast);
     let (tokens, _lex_errors) = lexer_tokenize_with_errors(&mut lexer);
     let parser = JsavParser::new(tokens);
     let (expr, _errors) = parser.parse();
     let mut checker = TypeChecker::new();
-    checker.check(&*expr)
+    checker.check(&expr)
 }
 
 fn typecheckd(ast: &str) -> Vec<CompileError> {
-    let mut lexer = Lexer::new("test.vn", &ast);
+    let mut lexer = Lexer::new("test.vn", ast);
     let (tokens, _lex_errors) = lexer_tokenize_with_errors(&mut lexer);
     let parser = JsavParser::new(tokens);
     let (expr, _errors) = parser.parse();
     let mut checker = TypeChecker::default();
-    checker.check(&*expr)
+    checker.check(&expr)
 }
 
 #[test]
@@ -455,6 +455,7 @@ fn test_type_of_number_integer_variants() {
     assert_debug_snapshot!("type_of_number_unsigned_integer", tc.type_of_number(&Number::UnsignedInteger(42)));
 }
 
+#[allow(clippy::approx_constant)]
 #[test]
 fn test_type_of_number_float_variants() {
     let tc = TypeChecker::new();

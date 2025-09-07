@@ -104,6 +104,7 @@ fn test_gep_instruction() {
     assert_eq!(format!("{}", inst), "t6 =  getelementptr %arr, 5i32 : i32");
 }
 
+#[allow(clippy::approx_constant)]
 #[test]
 fn test_cast_instruction() {
     let value = Value::new_literal(IrLiteralValue::F32(3.14));
@@ -176,6 +177,7 @@ fn test_instruction_without_result() {
     assert_eq!(format!("{}", inst), "store 42i32 to %x");
 }
 
+#[allow(clippy::approx_constant)]
 #[test]
 fn test_float_literal_display() {
     let whole = Value::new_literal(IrLiteralValue::F32(5.0));
@@ -369,7 +371,7 @@ fn test_all_binary_ops() {
 
 #[test]
 fn test_all_unary_ops() {
-    let ops = vec![(IrUnaryOp::Negate, "neg"), (IrUnaryOp::Not, "not")];
+    let ops = [(IrUnaryOp::Negate, "neg"), (IrUnaryOp::Not, "not")];
 
     let ty = IrType::I32;
     for (idx, (op, op_str)) in ops.iter().enumerate() {

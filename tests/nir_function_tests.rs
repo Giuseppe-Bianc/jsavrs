@@ -185,6 +185,7 @@ exit:
     assert_eq!(format!("{}", func), expected_output);
 }
 
+#[allow(clippy::field_reassign_with_default)]
 #[test]
 fn test_function_attributes() {
     let mut attrs = FunctionAttributes::default();
@@ -221,7 +222,7 @@ fn test_complex_cfg() {
 
     // Add blocks
     for (label, _) in &blocks {
-        let block = BasicBlock::new(*label, dummy_span());
+        let block = BasicBlock::new(label, dummy_span());
         func.add_block(block);
     }
 
