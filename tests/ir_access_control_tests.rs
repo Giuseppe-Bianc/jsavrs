@@ -163,7 +163,7 @@ fn test_check_access_currently_always_returns_true() {
         [Operation::Read, Operation::Write, Operation::Execute, Operation::Allocate, Operation::Deallocate];
     // Comportamento atteso: Tutte le operazioni dovrebbero essere permesse (implementazione placeholder)
     for operation in operations {
-        let result = controller.check_access(resource_id, operation.clone());
+        let result = controller.check_access(resource_id, operation);
         assert!(!result, "Expected check_access to return true for operation {:?} (current implementation)", operation);
     }
 }

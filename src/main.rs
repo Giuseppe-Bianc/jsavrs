@@ -5,7 +5,7 @@ use jsavrs::cli::Args;
 use jsavrs::error::error_reporter::ErrorReporter;
 use jsavrs::lexer::Lexer;
 use jsavrs::ir::generator::NIrGenerator;
-use jsavrs::parser::ast_printer::pretty_print_stmt;
+use jsavrs::printers::ast_printer::pretty_print_stmt;
 use jsavrs::parser::jsav_parser::JsavParser;
 use jsavrs::semantic::type_checker::TypeChecker;
 use jsavrs::time::timer::{AutoTimer, Timer};
@@ -17,7 +17,7 @@ use std::{
     //process,
 };
 use jsavrs::mlir::hir::ast_to_hir::AstToHirTransformer;
-use jsavrs::mlir::hir::hir_printer::pretty_print_stmt_hir;
+use jsavrs::printers::hir_printer::pretty_print_stmt_hir;
 //use jsavrs::asm::generator::{AsmGenerator, TargetOS};
 
 // Helper function per gestire e stampare errori I/O

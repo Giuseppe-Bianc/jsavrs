@@ -1,7 +1,7 @@
 // tets/ast_test.rs
 use jsavrs::lexer::{Lexer, lexer_tokenize_with_errors};
 use jsavrs::parser::ast::*;
-use jsavrs::parser::ast_printer::{pretty_print, pretty_print_stmt};
+use jsavrs::printers::ast_printer::{pretty_print, pretty_print_stmt};
 use jsavrs::parser::jsav_parser::JsavParser;
 use jsavrs::tokens::number::Number;
 use jsavrs::utils::*;

@@ -159,7 +159,7 @@ fn test_vectors_instruction() {
 
     for (op, op_str) in ops {
         let inst = Instruction::new(
-            InstructionKind::Vector { op: op.clone(), operands: vec![vec1.clone(), vec2.clone()], ty: ty.clone() },
+            InstructionKind::Vector { op, operands: vec![vec1.clone(), vec2.clone()], ty: ty.clone() },
             dummy_span(),
         )
         .with_result(Value::new_temporary(17, ty.clone()));

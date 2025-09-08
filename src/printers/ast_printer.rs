@@ -1,55 +1,8 @@
+use crate::parser::ast::{Expr, Stmt};
 use console::Style;
-use crate::mlir::hir::hirimp::{HIRExpr, HIRStmt};
+use crate::printers::branch_type::{BranchType, StyleManager};
 
-#[derive(Debug, Clone, Copy, PartialEq)]
-enum BranchType {
-    Last,
-    Middle,
-}
-
-impl BranchType {
-    fn symbol(&self) -> &'static str {
-        match self {
-            BranchType::Last => "└── ",
-            BranchType::Middle => "├── ",
-        }
-    }
-    fn indent_continuation(&self) -> &'static str {
-        match self {
-            BranchType::Last => "    ",
-            BranchType::Middle => "│   ",
-        }
-    }
-}
-
-#[derive(Debug, Clone, PartialEq)]
-struct StyleManager {
-    pub operator: Style,
-    pub literal: Style,
-    pub variable: Style,
-    pub structure: Style,
-    pub punctuation: Style,
-    pub keyword: Style,
-    pub type_style: Style,
-    pub metadata: Style,
-}
-
-impl StyleManager {
-    fn new() -> Self {
-        Self {
-            operator: Style::new().blue(),
-            literal: Style::new().green(),
-            variable: Style::new().yellow(),
-            structure: Style::new().cyan(),
-            punctuation: Style::new().magenta(),
-            keyword: Style::new().blue(),
-            type_style: Style::new().green(),
-            metadata: Style::new().dim().italic(),
-        }
-    }
-}
-
-pub fn pretty_print_hir(expr: &HIRExpr) -> String {
+pub fn pretty_print(expr: &Expr) -> String {
     let mut output = String::new();
     let styles = StyleManager::new();
     print_expr(expr, "", BranchType::Last, &mut output, &styles);
@@ -67,10 +20,10 @@ where
     }
 }
 
-fn print_expr(expr: &HIRExpr, indent: &str, branch_type: BranchType, output: &mut String, styles: &StyleManager) {
+fn print_expr(expr: &Expr, indent: &str, branch_type: BranchType, output: &mut String, styles: &StyleManager) {
     match expr {
-        HIRExpr::Binary { left, op, right, node_metadata, .. } => {
-            append_line_with_metadata(output, indent, branch_type, styles.clone().operator, &format!("BinaryOp {op:?}"), node_metadata, styles);
+        Expr::Binary { left, op, right, .. } => {
+            append_line(output, indent, branch_type, styles.clone().operator, &format!("BinaryOp {op:?}"));
             // Left child
             let left_indent = get_indent(indent, &branch_type);
             append_line(output, &left_indent, BranchType::Middle, styles.structure.clone(), "Left:");
@@ -79,26 +32,26 @@ fn print_expr(expr: &HIRExpr, indent: &str, branch_type: BranchType, output: &mu
             append_line(output, &right_indent, BranchType::Last, styles.structure.clone(), "Right:");
             print_expr(right, &get_indent(&right_indent, &BranchType::Last), BranchType::Last, output, styles);
         }
-        HIRExpr::Unary { op, expr, node_metadata, .. } => {
-            append_line_with_metadata(output, indent, branch_type, styles.clone().operator, &format!("UnaryOp {op:?}"), node_metadata, styles);
+        Expr::Unary { op, expr, .. } => {
+            append_line(output, indent, branch_type, styles.clone().operator, &format!("UnaryOp {op:?}"));
             let new_indent = get_indent(indent, &branch_type);
             append_line(output, &new_indent, BranchType::Last, styles.structure.clone(), "Expr:");
             print_expr(expr, &get_indent(&new_indent, &BranchType::Last), BranchType::Last, output, styles);
         }
-        HIRExpr::Grouping { expr, node_metadata, .. } => {
-            append_line_with_metadata(output, indent, branch_type, styles.clone().punctuation, "Grouping", node_metadata, styles);
+        Expr::Grouping { expr, .. } => {
+            append_line(output, indent, branch_type, styles.clone().punctuation, "Grouping");
             let new_indent = get_indent(indent, &branch_type);
             append_line(output, &new_indent, BranchType::Last, styles.structure.clone(), "Expr:");
             print_expr(expr, &get_indent(&new_indent, &BranchType::Last), BranchType::Last, output, styles);
         }
-        HIRExpr::Literal { value, node_metadata, .. } => {
-            append_line_with_metadata(output, indent, branch_type, styles.clone().literal, &format!("Literal {value}"), node_metadata, styles);
+        Expr::Literal { value, .. } => {
+            append_line(output, indent, branch_type, styles.clone().literal, &format!("Literal {value}"));
         }
-        HIRExpr::Variable { name, node_metadata, .. } => {
-            append_line_with_metadata(output, indent, branch_type, styles.clone().variable, &format!("Variable '{name}'"), node_metadata, styles);
+        Expr::Variable { name, .. } => {
+            append_line(output, indent, branch_type, styles.clone().variable, &format!("Variable '{name}'"));
         }
-        HIRExpr::Assign { target, value, node_metadata, .. } => {
-            append_line_with_metadata(output, indent, branch_type, styles.clone().variable, "Assignment", node_metadata, styles);
+        Expr::Assign { target, value, .. } => {
+            append_line(output, indent, branch_type, styles.clone().variable, "Assignment");
             let new_indent = get_indent(indent, &branch_type);
             // Target
             append_line(output, &new_indent, BranchType::Middle, styles.structure.clone(), "Target:");
@@ -106,8 +59,8 @@ fn print_expr(expr: &HIRExpr, indent: &str, branch_type: BranchType, output: &mu
             append_line(output, &new_indent, BranchType::Last, styles.structure.clone(), "Value:");
             print_expr(value, &get_indent(&new_indent, &BranchType::Last), BranchType::Last, output, styles);
         }
-        HIRExpr::Call { callee, arguments, node_metadata, .. } => {
-            append_line_with_metadata(output, indent, branch_type, styles.clone().punctuation, "Function Call", node_metadata, styles);
+        Expr::Call { callee, arguments, .. } => {
+            append_line(output, indent, branch_type, styles.clone().punctuation, "Function Call");
             let new_indent = get_indent(indent, &branch_type);
             // Callee
             append_line(output, &new_indent, BranchType::Middle, styles.structure.clone(), "Callee:");
@@ -125,8 +78,8 @@ fn print_expr(expr: &HIRExpr, indent: &str, branch_type: BranchType, output: &mu
                 },
             );
         }
-        HIRExpr::ArrayAccess { array, index, node_metadata, .. } => {
-            append_line_with_metadata(output, indent, branch_type, styles.clone().punctuation, "Array Access", node_metadata, styles);
+        Expr::ArrayAccess { array, index, .. } => {
+            append_line(output, indent, branch_type, styles.clone().punctuation, "Array Access");
             let new_indent = get_indent(indent, &branch_type);
             // Array
             append_line(output, &new_indent, BranchType::Middle, styles.structure.clone(), "Array:");
@@ -134,8 +87,8 @@ fn print_expr(expr: &HIRExpr, indent: &str, branch_type: BranchType, output: &mu
             append_line(output, &new_indent, BranchType::Last, styles.structure.clone(), "Index:");
             print_expr(index, &get_indent(&new_indent, &BranchType::Last), BranchType::Last, output, styles);
         }
-        HIRExpr::ArrayLiteral { elements, node_metadata, .. } => {
-            append_line_with_metadata(output, indent, branch_type, styles.clone().punctuation, "Array Literal", node_metadata, styles);
+        Expr::ArrayLiteral { elements, .. } => {
+            append_line(output, indent, branch_type, styles.clone().punctuation, "Array Literal");
             let new_indent = get_indent(indent, &branch_type);
             append_line(output, &new_indent, BranchType::Last, styles.structure.clone(), "Elements:");
             let elems_indent = get_indent(&new_indent, &BranchType::Last);
@@ -154,43 +107,27 @@ fn append_line(output: &mut String, indent: &str, branch_type: BranchType, style
     output.push_str(&format!("{indent}{branch}{styled_text}\n"));
 }
 
-fn append_line_with_metadata(
-    output: &mut String,
-    indent: &str,
-    branch_type: BranchType,
-    style: Style,
-    text: &str,
-    node_metadata: &crate::mlir::hir::node_metadata::NodeMetadata,
-    styles: &StyleManager
-) {
-    let branch = branch_type.symbol();
-    let styled_text = style.apply_to(text);
-    let metadata_string = format!(" [{}]", node_metadata);
-    let metadata_text = styles.metadata.apply_to(&metadata_string);
-    output.push_str(&format!("{indent}{branch}{styled_text}{metadata_text}\n"));
-}
-
 // Add the following functions after the print_expr function
 
 /// Pretty-print a single statement AST into a styled, tree-like string.
 /// Mirrors `pretty_print` for expressions.
-pub fn pretty_print_stmt_hir(stmt: &HIRStmt) -> String {
+pub fn pretty_print_stmt(stmt: &Stmt) -> String {
     let mut output = String::new();
     let styles = StyleManager::new();
     print_stmt(stmt, "", BranchType::Last, &mut output, &styles);
     output
 }
 
-fn print_stmt(stmt: &HIRStmt, indent: &str, branch_type: BranchType, output: &mut String, styles: &StyleManager) {
+fn print_stmt(stmt: &Stmt, indent: &str, branch_type: BranchType, output: &mut String, styles: &StyleManager) {
     match stmt {
-        HIRStmt::Expression { expr, node_metadata } => {
-            append_line_with_metadata(output, indent, branch_type, styles.clone().keyword, "Expression", node_metadata, styles);
+        Stmt::Expression { expr } => {
+            append_line(output, indent, branch_type, styles.clone().keyword, "Expression");
             let new_indent = get_indent(indent, &branch_type);
             append_line(output, &new_indent, BranchType::Last, styles.structure.clone(), "Expr:");
             print_expr(expr, &get_indent(&new_indent, &BranchType::Last), BranchType::Last, output, styles);
         }
-        HIRStmt::VarDeclaration { variables, type_annotation, is_mutable, initializers, node_metadata, span: _ } => {
-            append_line_with_metadata(output, indent, branch_type, styles.clone().keyword, "VarDeclaration", node_metadata, styles);
+        Stmt::VarDeclaration { variables, type_annotation, is_mutable, initializers, span: _ } => {
+            append_line(output, indent, branch_type, styles.clone().keyword, "VarDeclaration");
             let new_indent = get_indent(indent, &branch_type);
             // Variables
             let vars_label = if *is_mutable { "Variables:" } else { "Constants:" };
@@ -214,8 +151,8 @@ fn print_stmt(stmt: &HIRStmt, indent: &str, branch_type: BranchType, output: &mu
             let init_indent = get_indent(&new_indent, &BranchType::Last);
             print_children(initializers, &init_indent, output, styles, print_expr);
         }
-        HIRStmt::Function { name, parameters, return_type, body, node_metadata, span: _ } => {
-            append_line_with_metadata(output, indent, branch_type, styles.clone().keyword, "Function", node_metadata, styles);
+        Stmt::Function { name, parameters, return_type, body, span: _ } => {
+            append_line(output, indent, branch_type, styles.clone().keyword, "Function");
             let new_indent = get_indent(indent, &branch_type);
             // Name
             append_line(output, &new_indent, BranchType::Middle, styles.structure.clone(), "Name:");
@@ -257,8 +194,8 @@ fn print_stmt(stmt: &HIRStmt, indent: &str, branch_type: BranchType, output: &mu
             append_line(output, &new_indent, BranchType::Last, styles.structure.clone(), "Body:");
             print_children(body, &get_indent(&new_indent, &BranchType::Last), output, styles, print_stmt);
         }
-        HIRStmt::If { condition, then_branch, else_branch, node_metadata, span: _ } => {
-            append_line_with_metadata(output, indent, branch_type, styles.clone().keyword, "If", node_metadata, styles);
+        Stmt::If { condition, then_branch, else_branch, span: _ } => {
+            append_line(output, indent, branch_type, styles.clone().keyword, "If");
             let new_indent = get_indent(indent, &branch_type);
             // Condition
             append_line(output, &new_indent, BranchType::Middle, styles.structure.clone(), "Condition:");
@@ -276,28 +213,28 @@ fn print_stmt(stmt: &HIRStmt, indent: &str, branch_type: BranchType, output: &mu
                 print_children(else_branch, &get_indent(&new_indent, &BranchType::Last), output, styles, print_stmt);
             }
         }
-        HIRStmt::MainFunction { body, node_metadata, span: _ } => {
-            append_line_with_metadata(output, indent, branch_type, styles.clone().keyword, "MainFunction", node_metadata, styles);
+        Stmt::MainFunction { body, span: _ } => {
+            append_line(output, indent, branch_type, styles.clone().keyword, "MainFunction");
             print_children(body, &get_indent(indent, &branch_type), output, styles, print_stmt);
         }
-        HIRStmt::Block { statements, node_metadata, span: _ } => {
+        Stmt::Block { statements, span: _ } => {
             if statements.is_empty() {
-                append_line_with_metadata(output, indent, branch_type, styles.clone().keyword, "Block: (empty)", node_metadata, styles);
+                append_line(output, indent, branch_type, styles.clone().keyword, "Block: (empty)");
             } else {
-                append_line_with_metadata(output, indent, branch_type, styles.clone().keyword, "Block", node_metadata, styles);
+                append_line(output, indent, branch_type, styles.clone().keyword, "Block");
                 print_children(statements, &get_indent(indent, &branch_type), output, styles, print_stmt);
             }
         }
-        HIRStmt::Return { value, node_metadata, span: _ } => {
-            append_line_with_metadata(output, indent, branch_type, styles.clone().keyword, "Return", node_metadata, styles);
+        Stmt::Return { value, span: _ } => {
+            append_line(output, indent, branch_type, styles.clone().keyword, "Return");
             if let Some(expr) = value {
                 let new_indent = get_indent(indent, &branch_type);
                 append_line(output, &new_indent, BranchType::Last, styles.structure.clone(), "Value:");
                 print_expr(expr, &get_indent(&new_indent, &BranchType::Last), BranchType::Last, output, styles);
             }
         }
-        HIRStmt::While { condition, body, node_metadata, span: _ } => {
-            append_line_with_metadata(output, indent, branch_type, styles.clone().keyword, "While", node_metadata, styles);
+        Stmt::While { condition, body, span: _ } => {
+            append_line(output, indent, branch_type, styles.clone().keyword, "While");
             let new_indent = get_indent(indent, &branch_type);
             // Condition
             append_line(output, &new_indent, BranchType::Middle, styles.structure.clone(), "Condition:");
@@ -305,8 +242,8 @@ fn print_stmt(stmt: &HIRStmt, indent: &str, branch_type: BranchType, output: &mu
             append_line(output, &new_indent, BranchType::Last, styles.structure.clone(), "Body:");
             print_children(body, &get_indent(&new_indent, &BranchType::Last), output, styles, print_stmt);
         }
-        HIRStmt::For { initializer, condition, increment, body, node_metadata, span: _ } => {
-            append_line_with_metadata(output, indent, branch_type, styles.clone().keyword, "For", node_metadata, styles);
+        Stmt::For { initializer, condition, increment, body, span: _ } => {
+            append_line(output, indent, branch_type, styles.clone().keyword, "For");
             let new_indent = get_indent(indent, &branch_type);
             // Initializer
             if let Some(init) = initializer {
@@ -330,11 +267,7 @@ fn print_stmt(stmt: &HIRStmt, indent: &str, branch_type: BranchType, output: &mu
             append_line(output, &new_indent, BranchType::Last, styles.structure.clone(), "Body:");
             print_children(body, &get_indent(&new_indent, &BranchType::Last), output, styles, print_stmt);
         }
-        HIRStmt::Break { node_metadata, .. } => {
-            append_line_with_metadata(output, indent, branch_type, styles.clone().keyword, "Break", node_metadata, styles);
-        }
-        HIRStmt::Continue { node_metadata, .. } => {
-            append_line_with_metadata(output, indent, branch_type, styles.clone().keyword, "Continue", node_metadata, styles);
-        }
+        Stmt::Break { .. } => append_line(output, indent, branch_type, styles.clone().keyword, "Break"),
+        Stmt::Continue { .. } => append_line(output, indent, branch_type, styles.clone().keyword, "Continue"),
     }
 }

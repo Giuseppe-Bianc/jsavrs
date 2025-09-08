@@ -245,7 +245,7 @@ fn test_module_with_all_data_layouts() {
 
     for layout in layouts {
         let mut module = Module::new("test_module".to_string(), Some(ScopeId::new()));
-        module.set_data_layout(layout.clone());
+        module.set_data_layout(layout);
 
         // Verifica che il layout sia stato impostato correttamente
         assert_eq!(*module.data_layout(), layout);
@@ -274,7 +274,7 @@ fn test_module_with_all_target_triples() {
 
     for triple in triples {
         let mut module = Module::new("test_module".to_string(), Some(ScopeId::new()));
-        module.set_target_triple(triple.clone());
+        module.set_target_triple(triple);
 
         // Verifica che la tripletta sia stata impostata correttamente
         assert_eq!(*module.target_triple(), triple);
