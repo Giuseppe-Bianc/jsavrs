@@ -1,6 +1,6 @@
 use crate::location::source_location::SourceLocation;
 use crate::location::source_span::SourceSpan;
-use crate::nir::Module;
+use crate::ir::Module;
 use crate::parser::ast::{BinaryOp, Expr, LiteralValue, Parameter, Stmt, Type, UnaryOp};
 use crate::semantic::symbol_table::{FunctionSymbol, Symbol, VariableSymbol};
 use crate::tokens::number::Number;

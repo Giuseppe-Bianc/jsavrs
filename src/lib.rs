@@ -3,7 +3,7 @@ pub mod cli;
 pub mod error;
 pub mod lexer;
 pub mod location;
-pub mod nir;
+pub mod ir;
 pub mod parser;
 pub mod semantic;
 pub mod time;

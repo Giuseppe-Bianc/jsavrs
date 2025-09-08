@@ -4,7 +4,7 @@ use console::style;
 use jsavrs::cli::Args;
 use jsavrs::error::error_reporter::ErrorReporter;
 use jsavrs::lexer::Lexer;
-use jsavrs::nir::generator::NIrGenerator;
+use jsavrs::ir::generator::NIrGenerator;
 use jsavrs::parser::ast_printer::pretty_print_stmt;
 use jsavrs::parser::jsav_parser::JsavParser;
 use jsavrs::semantic::type_checker::TypeChecker;
