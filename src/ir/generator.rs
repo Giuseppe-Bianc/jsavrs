@@ -1,4 +1,4 @@
-// src/nir/generator.rs
+// src/ir/generator.rs
 use super::*;
 use crate::error::compile_error::CompileError;
 use crate::location::source_span::SourceSpan;

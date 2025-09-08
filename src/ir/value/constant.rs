@@ -1,4 +1,4 @@
-// src/nir/value/constant.rs
+// src/ir/value/constant.rs
 use super::Value;
 use std::fmt;
 use std::sync::Arc;

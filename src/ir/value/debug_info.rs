@@ -1,4 +1,4 @@
-// src/nir/value/debug_info.rs
+// src/ir/value/debug_info.rs
 use crate::location::source_span::SourceSpan;
 use std::sync::Arc;
 

@@ -1,5 +1,5 @@
+//src/ir/scope.rs
 use super::{ScopeId, Value};
-//src/nir/scope.rs
 use std::collections::HashMap;
 use std::sync::Arc;
 

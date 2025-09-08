@@ -1,3 +1,4 @@
+// src/ir/module.rs
 use super::{Function, ScopeId};
 use std::fmt;
 use std::sync::Arc;

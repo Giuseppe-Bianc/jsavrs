@@ -1,4 +1,4 @@
-// src/nir/value/kind.rs
+// src/ir/value/kind.rs
 use super::{constant::IrConstantValue, literal::IrLiteralValue};
 use std::sync::Arc;
 

@@ -1,4 +1,4 @@
-// src/nir/instruction.rs
+// src/ir/instruction.rs
 use super::{IrType, ScopeId, Value};
 use crate::{
     location::source_span::SourceSpan,

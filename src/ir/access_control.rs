@@ -1,4 +1,4 @@
-// src/nir/access_control.rs
+// src/ir/access_control.rs
 use super::types::{ResourceId, ScopeId};
 
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Hash)]

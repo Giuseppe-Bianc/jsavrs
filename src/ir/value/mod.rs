@@ -1,4 +1,4 @@
-// src/nir/value/mod.rs
+// src/ir/value/mod.rs
 pub mod constant;
 pub mod debug_info;
 pub mod kind;

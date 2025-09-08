@@ -1,10 +1,7 @@
-// src/nir/cfg.rs
+// src/ir/cfg.rs
 use super::basic_block::BasicBlock;
 use super::instruction::Instruction;
 use super::terminator::Terminator;
-//use super::types::IrType;
-//use super::value::Value;
-//use crate::location::source_span::SourceSpan;
 use petgraph::graph::{DiGraph, NodeIndex};
 use petgraph::visit::Dfs;
 use std::collections::HashSet;

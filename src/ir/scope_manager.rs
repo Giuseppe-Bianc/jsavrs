@@ -1,4 +1,4 @@
-// src/nir/scope_manager.rs
+// src/ir/scope_manager.rs
 use super::scope::Scope;
 use super::types::ScopeId;
 use crate::ir::Value;

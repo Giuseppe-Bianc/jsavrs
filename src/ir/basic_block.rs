@@ -1,5 +1,5 @@
+// src/ir/basic_block.rs
 use super::types::ScopeId;
-// src/nir/basic_block.rs
 use super::{instruction::*, terminator::*};
 use crate::location::source_span::SourceSpan;
 use std::fmt;

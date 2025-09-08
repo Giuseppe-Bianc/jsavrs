@@ -1,11 +1,10 @@
+// src/nir/function.rs
 use super::cfg::ControlFlowGraph;
 use super::scope_manager::ScopeManager;
 use super::types::{IrType, ScopeId};
-//use super::value::Value;
 use crate::location::source_span::SourceSpan;
 use crate::ir::{BasicBlock, Instruction, Terminator};
 use std::collections::HashMap;
-// src/nir/function.rs
 use std::fmt;
 use std::sync::Arc;
 

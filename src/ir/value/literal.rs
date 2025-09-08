@@ -1,4 +1,4 @@
-// src/nir/value/literal.rs
+// src/ir/value/literal.rs
 use crate::ir::IrType;
 use std::fmt;
 

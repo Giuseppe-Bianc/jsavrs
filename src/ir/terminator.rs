@@ -1,4 +1,4 @@
-// src/nir/terminator.rs
+// src/ir/terminator.rs
 use super::{IrType, Value};
 use crate::location::source_span::SourceSpan;
 use std::fmt;

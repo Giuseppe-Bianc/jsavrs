@@ -1,4 +1,4 @@
-// src/nir/types.rs
+// src/ir/types.rs
 use crate::location::source_span::SourceSpan;
 use std::fmt;
 use std::sync::Arc;
