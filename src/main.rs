@@ -16,6 +16,8 @@ use std::{
     path::Path,
     //process,
 };
+use jsavrs::mlir::hir::ast_to_hir::AstToHirTransformer;
+use jsavrs::mlir::hir::hir_printer::pretty_print_stmt_hir;
 //use jsavrs::asm::generator::{AsmGenerator, TargetOS};
 
 // Helper function per gestire e stampare errori I/O
@@ -130,6 +132,17 @@ fn main() -> Result<(), CompileError> {
     // Print the module
     if args.verbose {
         println!("{module}");
+    }
+
+    let mut transformer = AstToHirTransformer::new();
+    let hir_timer = Timer::new("HIR Transformation");
+    let hirstatements = transformer.transform_program(statements)?;
+    println!("{hir_timer}");
+    println!("HIR transformation done");
+    if args.verbose {
+        for stat in &hirstatements {
+            println!("{}", pretty_print_stmt_hir(stat));
+        }
     }
 
     /*let mut asm_gen = AsmGenerator::new(if cfg!(windows) { TargetOS::Windows } else { TargetOS::Linux });

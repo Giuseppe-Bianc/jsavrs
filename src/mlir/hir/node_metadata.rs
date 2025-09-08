@@ -1,4 +1,4 @@
-// src/mlir/hir/node_metadata.rs
+// src/mlir/hirimp/node_metadata.rs
 use std::fmt;
 use uuid::Uuid;
 
@@ -24,7 +24,7 @@ impl fmt::Display for NodeId {
     }
 }
 
-#[derive(Debug, Clone, Copy, PartialEq, Eq, Hash)]
+#[derive(Debug, Clone, Copy, PartialEq, Eq, Hash, Default)]
 pub struct NodeMetadata {
     parent: Option<NodeId>,
     id: NodeId,
@@ -44,13 +44,8 @@ impl NodeMetadata {
 impl fmt::Display for NodeMetadata {
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
         match self.parent {
-            Some(p) => write!(f, "NodeMetadata(id: {}, parent: {})", self.id, p),
-            None => write!(f, "NodeMetadata(id: {}, parent: None)", self.id),
+            Some(parent) => write!(f, "ID:{}::-::P:{}", self.id, parent),
+            None => write!(f, "ID:{}::-::P:-", self.id),
         }
-    }
-}
-impl Default for NodeMetadata {
-    fn default() -> Self {
-        NodeMetadata { parent: None, id: NodeId::new() }
     }
 }

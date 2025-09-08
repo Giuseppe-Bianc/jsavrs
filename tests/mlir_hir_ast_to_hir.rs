@@ -1,6 +1,6 @@
 use std::sync::Arc;
 use jsavrs::mlir::hir::ast_to_hir::AstToHirTransformer;
-use jsavrs::mlir::hir::hir::{HIRExpr, HIRStmt, HIRType};
+use jsavrs::mlir::hir::hirimp::{HIRExpr, HIRStmt, HIRType};
 use jsavrs::parser::ast::{BinaryOp, Expr, LiteralValue, Parameter, Stmt, Type};
 use jsavrs::tokens::number::Number;
 use jsavrs::location::{source_location::SourceLocation, source_span::SourceSpan};

@@ -1,4 +1,4 @@
-//src/mlir/hir/hir.rs
+//src/mlir/hir/hirimp.rs
 use crate::location::source_span::SourceSpan;
 use crate::mlir::hir::node_metadata::{NodeId, NodeMetadata};
 use crate::parser::ast::{BinaryOp, LiteralValue, UnaryOp};

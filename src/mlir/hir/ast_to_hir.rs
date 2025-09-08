@@ -1,5 +1,5 @@
 // src/mlir/hir/ast_to_hir.rs
-use crate::mlir::hir::hir::{HIRExpr, HIRStmt, HIRType, HIRParameter};
+use crate::mlir::hir::hirimp::{HIRExpr, HIRStmt, HIRType, HIRParameter};
 use crate::mlir::hir::node_metadata::{NodeId, NodeMetadata};
 use crate::parser::ast::{Expr, Stmt, Type, Parameter};
 use crate::error::compile_error::CompileError;
