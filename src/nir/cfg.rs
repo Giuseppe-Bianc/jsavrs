@@ -41,11 +41,7 @@ impl ControlFlowGraph {
     }
 
     pub fn get_block_mut(&mut self, label: &str) -> Option<&mut BasicBlock> {
-        if let Some(idx) = self.find_block_by_label(label) {
-            self.graph.node_weight_mut(idx)
-        } else {
-            None
-        }
+        if let Some(idx) = self.find_block_by_label(label) { self.graph.node_weight_mut(idx) } else { None }
     }
 
     pub fn get_entry_block(&self) -> Option<&BasicBlock> {

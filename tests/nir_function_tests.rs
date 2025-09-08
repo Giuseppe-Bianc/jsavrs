@@ -1,8 +1,8 @@
 use std::sync::Arc;
 
 use jsavrs::nir::{
-    BasicBlock, Function, FunctionAttributes, Instruction, InstructionKind, IrLiteralValue, IrParameter, IrType, ControlFlowGraph,
-    ParamAttributes, Terminator, TerminatorKind, Value,
+    BasicBlock, ControlFlowGraph, Function, FunctionAttributes, Instruction, InstructionKind, IrLiteralValue,
+    IrParameter, IrType, ParamAttributes, Terminator, TerminatorKind, Value,
 };
 use jsavrs::utils::{dummy_span, vec_to_string};
 
@@ -50,8 +50,7 @@ fn test_cfg_add_edge() {
 
 #[test]
 fn test_function_creation() {
-    let params =
-        vec![IrParameter { name: "param1".into(), ty: IrType::I32, attributes: ParamAttributes::default() }];
+    let params = vec![IrParameter { name: "param1".into(), ty: IrType::I32, attributes: ParamAttributes::default() }];
     let func = Function::new("test", params.clone(), IrType::Void);
 
     assert_eq!(func.name, "test");
@@ -61,7 +60,6 @@ fn test_function_creation() {
     //assert!(func.cfg.blocks().contains_key("entry_test"));
     assert_eq!(func.local_vars.len(), 0);
 }
-
 
 #[test]
 fn test_function_add_block() {
@@ -134,7 +132,10 @@ fn test_function_display() {
     func.add_block("exit", dummy_span());
     func.set_terminator("entry_test", Terminator::new(TerminatorKind::Branch { label: "block1".into() }, dummy_span()));
     func.set_terminator("block1", Terminator::new(TerminatorKind::Branch { label: "exit".into() }, dummy_span()));
-    func.set_terminator("exit", Terminator::new(TerminatorKind::Return { value: create_dummy_value(), ty: IrType::Void }, dummy_span()));
+    func.set_terminator(
+        "exit",
+        Terminator::new(TerminatorKind::Return { value: create_dummy_value(), ty: IrType::Void }, dummy_span()),
+    );
     // Add edges
 
     let expected_output = r#"function test () -> void:
@@ -321,7 +322,6 @@ fn test_cfg_get_block_mut() {
         _ => panic!("Terminator not modified correctly"),
     }
 }*/
-
 
 #[test]
 fn test_cfg_get_block_mut_persists_changes() {

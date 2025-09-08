@@ -37,7 +37,11 @@ fn test_ir_type_display() {
         (IrType::Array(Box::new(IrType::I32), 10), "[i32; 10]"),
         (IrType::Custom("MyCustomType".into(), SourceSpan::default()), "MyCustomType"),
         (
-            IrType::Struct("MyStruct".into(), vec![("field1".into(), IrType::I32), ("field2".into(), IrType::F64)], SourceSpan::default()),
+            IrType::Struct(
+                "MyStruct".into(),
+                vec![("field1".into(), IrType::I32), ("field2".into(), IrType::F64)],
+                SourceSpan::default(),
+            ),
             "struct MyStruct { field1: i32, field2: f64 }",
         ),
     ];

@@ -32,11 +32,7 @@ pub fn custom_styles() -> Styles {
 fn parse_vn_file(s: &str) -> Result<PathBuf, String> {
     let p = PathBuf::from(s);
     let is_vn = p.extension().and_then(|e| e.to_str()).map(|e| e.eq_ignore_ascii_case("vn")).unwrap_or(false);
-    if is_vn {
-        Ok(p)
-    } else {
-        Err("expected a path to a .vn file".into())
-    }
+    if is_vn { Ok(p) } else { Err("expected a path to a .vn file".into()) }
 }
 
 #[derive(Parser, Debug)]

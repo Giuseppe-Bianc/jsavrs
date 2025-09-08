@@ -38,7 +38,6 @@ fn format_size(bytes: usize) -> (f64, &'static str) {
     (size, UNITS[unit])
 }
 
-
 #[allow(clippy::explicit_auto_deref, clippy::unused_unit)]
 fn main() -> Result<(), CompileError> {
     let args = Args::parse();
@@ -54,7 +53,6 @@ fn main() -> Result<(), CompileError> {
             process::exit(1); // esce con codice 1
         })
     };
-
 
     let size_bytes = input.len();
     let (size, unit) = format_size(size_bytes);
@@ -121,7 +119,6 @@ fn main() -> Result<(), CompileError> {
     let nir_timer = Timer::new("NIR Generation");
     let (module, ir_errors) = generator.generate(statements.clone(), file_path.to_str().unwrap());
     println!("{nir_timer}");
-
 
     if !ir_errors.is_empty() {
         eprintln!("{}", error_reporter.report_errors(ir_errors));

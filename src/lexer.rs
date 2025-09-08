@@ -51,10 +51,10 @@ impl<'a> Lexer<'a> {
             }),
         })
     }
-    
+
     /*// OTTIMIZZAZIONE 7: Metodo per processing streaming (opzionale)
-    pub fn process_streaming<F>(&mut self, mut callback: F) -> Vec<CompileError> 
-    where 
+    pub fn process_streaming<F>(&mut self, mut callback: F) -> Vec<CompileError>
+    where
         F: FnMut(Token)
     {
         let mut errors = Vec::new();
@@ -102,17 +102,17 @@ type Updates = (HashMap<usize, CompileError>, HashSet<usize>);
 fn collect_error_updates(errors: &[CompileError], tokens: &[Token]) -> Updates {
     let mut replacements = HashMap::new();
     let mut to_remove = HashSet::new();
-    
+
     // Controlla prima se ci sono errori hashtag
-    let has_hashtag_errors = errors.iter().any(|e| {
-        matches!(e, CompileError::LexerError { message, .. } if message == "Invalid token: \"#\"")
-    });
-    
+    let has_hashtag_errors = errors
+        .iter()
+        .any(|e| matches!(e, CompileError::LexerError { message, .. } if message == "Invalid token: \"#\""));
+
     // Se non ci sono errori hashtag, ritorna subito
     if !has_hashtag_errors {
         return (replacements, to_remove);
     }
-    
+
     // Crea la map solo se necessario
     let token_map = create_position_map(tokens);
 

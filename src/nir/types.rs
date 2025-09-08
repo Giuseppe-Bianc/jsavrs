@@ -22,7 +22,7 @@ pub enum IrType {
     Void,
     Pointer(Box<IrType>),
     Array(Box<IrType>, usize),
-    Custom(Arc<str>, SourceSpan),                         // Added source span
+    Custom(Arc<str>, SourceSpan),                        // Added source span
     Struct(Arc<str>, Vec<(String, IrType)>, SourceSpan), // New struct type
 }
 

@@ -10,12 +10,7 @@ pub struct ErrorReporter {
 }
 
 fn format_simple_error(error_type: &str, message: impl std::fmt::Display) -> String {
-    format!(
-        "{} {}: {}\n",
-        style("ERROR:").red().bold(),
-        style(error_type).red(),
-        style(message).yellow()
-    )
+    format!("{} {}: {}\n", style("ERROR:").red().bold(), style(error_type).red(), style(message).yellow())
 }
 
 impl ErrorReporter {

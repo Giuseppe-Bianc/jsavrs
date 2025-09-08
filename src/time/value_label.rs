@@ -8,7 +8,7 @@ pub struct ValueLabel {
     time_label: TimeUnit, // Cambiato da &'static str a enum TimeUnit
 }
 
-#[repr(u8)]  // More compact representation
+#[repr(u8)] // More compact representation
 #[derive(Debug, Clone, Copy)]
 enum TimeUnit {
     Seconds = 0,

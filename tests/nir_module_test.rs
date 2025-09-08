@@ -205,7 +205,6 @@ fn test_module_with_complex_function() {
     let mut module = Module::new("complex_module".to_string(), Some(ScopeId::new()));
     let mut function = create_test_function("complex_func");
 
-
     // Aggiungi blocchi base
     function.add_block("block1", SourceSpan::default());
     function.add_block("block2", SourceSpan::default());
@@ -324,7 +323,6 @@ fn test_module_with_duplicate_function_names() {
     assert!(retrieved.is_some());
     assert_eq!(retrieved.unwrap().name, "duplicate_name");
 }
-
 
 #[test]
 fn test_module_getters() {

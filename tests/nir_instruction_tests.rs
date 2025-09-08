@@ -240,20 +240,16 @@ fn test_array_constant_display() {
 #[test]
 fn test_struct_constant_display() {
     let fields = vec![Value::new_literal(IrLiteralValue::I32(10)), Value::new_literal(IrLiteralValue::Bool(true))];
-    let ty: IrType = IrType::Struct("Point".into(), vec![("p1".to_string(), IrType::I32), ("p2".to_string(), IrType::Bool)], dummy_span());
-    let struct_val = Value::new_constant(
-        IrConstantValue::Struct { name: "Point".into(), elements: fields },
-        ty.clone(),
+    let ty: IrType = IrType::Struct(
+        "Point".into(),
+        vec![("p1".to_string(), IrType::I32), ("p2".to_string(), IrType::Bool)],
+        dummy_span(),
     );
+    let struct_val =
+        Value::new_constant(IrConstantValue::Struct { name: "Point".into(), elements: fields }, ty.clone());
 
     let inst = Instruction::new(
-        InstructionKind::Store {
-            value: struct_val,
-            dest: Value::new_local(
-                "pt".into(),
-                ty.clone(),
-            ),
-        },
+        InstructionKind::Store { value: struct_val, dest: Value::new_local("pt".into(), ty.clone()) },
         dummy_span(),
     );
 
@@ -282,7 +278,11 @@ fn test_nested_array_type_display() {
 
 #[test]
 fn test_struct_type_display() {
-    let struct_ty = IrType::Struct("Point".into(), vec![("x".to_string(), IrType::I32), ("y".to_string(), IrType::I32)], dummy_span());
+    let struct_ty = IrType::Struct(
+        "Point".into(),
+        vec![("x".to_string(), IrType::I32), ("y".to_string(), IrType::I32)],
+        dummy_span(),
+    );
 
     let inst = Instruction::new(InstructionKind::Alloca { ty: struct_ty.clone() }, dummy_span())
         .with_result(Value::new_temporary(14, struct_ty));

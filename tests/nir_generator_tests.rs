@@ -314,7 +314,12 @@ fn test_generate_if_statement() {
     assert_eq!(func.cfg.blocks().count(), 4);
     assert_eq!(func.cfg.entry_label, "entry_test");
     let entry_block = func.cfg.get_block("entry_test").unwrap();
-    assert_conditional_branch!(entry_block, ValueKind::Literal(IrLiteralValue::Bool(true)), &Arc::from("then_1"), &Arc::from("else_2"));
+    assert_conditional_branch!(
+        entry_block,
+        ValueKind::Literal(IrLiteralValue::Bool(true)),
+        &Arc::from("then_1"),
+        &Arc::from("else_2")
+    );
     let then_block = func.cfg.get_block("then_1").unwrap();
     assert_eq!(then_block.instructions.len(), 0);
     assert_return_literal!(then_block, &IrType::Void, IrLiteralValue::I32(0));
@@ -609,7 +614,12 @@ fn test_generate_simple_while_loop() {
         ValueKind::Temporary(0),
         ValueKind::Literal(IrLiteralValue::I32(5))
     );
-    assert_conditional_branch!(loop_start, ValueKind::Temporary(1), &Arc::from("loop_body_2"), &Arc::from("loop_end_3"));
+    assert_conditional_branch!(
+        loop_start,
+        ValueKind::Temporary(1),
+        &Arc::from("loop_body_2"),
+        &Arc::from("loop_end_3")
+    );
 
     let loop_body = func.cfg.get_block("loop_body_2").unwrap();
     assert_eq!(loop_body.instructions.len(), 2);

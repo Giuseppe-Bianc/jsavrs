@@ -1,17 +1,17 @@
-use std::collections::HashMap;
-use std::fmt::Display;
 use crate::location::source_location::SourceLocation;
 use crate::location::source_span::SourceSpan;
+use crate::nir::Module;
 use crate::parser::ast::{BinaryOp, Expr, LiteralValue, Parameter, Stmt, Type, UnaryOp};
 use crate::semantic::symbol_table::{FunctionSymbol, Symbol, VariableSymbol};
 use crate::tokens::number::Number;
 use crate::tokens::token::Token;
 use crate::tokens::token_kind::TokenKind;
-use regex::Regex;
-use std::sync::Arc;
 use lazy_static::lazy_static;
-use crate::nir::Module;
+use regex::Regex;
+use std::collections::HashMap;
+use std::fmt::Display;
 use std::fmt::Write;
+use std::sync::Arc;
 
 // Helper to create a dummy SourceSpan
 pub fn dummy_span() -> SourceSpan {
@@ -232,7 +232,6 @@ pub fn func_from_symbol(sym: Symbol) -> Option<FunctionSymbol> {
         _ => None,
     }
 }
-
 
 lazy_static! {
     static ref UUID_REGEX: Regex =
