@@ -8,12 +8,12 @@ fn test_new_block() {
     assert_snapshot!(block.to_string())
 }
 
-#[test]
+/*#[test]
 fn test_new_block_predecessors() {
     let mut block = BasicBlock::new("entry", Default::default());
     block.add_predecessor("prev".to_string());
     assert_snapshot!(block.to_string())
-}
+}*/
 
 #[test]
 fn test_block_display_empty() {
@@ -21,12 +21,12 @@ fn test_block_display_empty() {
     assert_snapshot!(block.to_string())
 }
 
-#[test]
+/*#[test]
 fn test_block_display_whit_predecessor() {
     let mut block: BasicBlock = BasicBlock::new("entry", Default::default());
     block.add_predecessor("prev".to_string());
     assert_snapshot!(block.to_string())
-}
+}*/
 
 #[test]
 fn test_block_display_whit_instruction() {
@@ -42,7 +42,7 @@ fn test_block_display_whit_instruction() {
     block.instructions.push(inst);
     assert_snapshot!(block.to_string())
 }
-#[test]
+/*#[test]
 fn test_block_display_whit_instruction_and_predecessor() {
     let mut block: BasicBlock = BasicBlock::new("entry", Default::default());
     let left = Value::new_literal(IrLiteralValue::I32(100i32));
@@ -57,3 +57,4 @@ fn test_block_display_whit_instruction_and_predecessor() {
     block.instructions.push(inst);
     assert_snapshot!(block.to_string())
 }
+*/

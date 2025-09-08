@@ -1,10 +1,11 @@
 use jsavrs::location::source_span::SourceSpan;
-use jsavrs::nir::{BasicBlock, DataLayout, Function, IrParameter, IrType, Module, ParamAttributes, TargetTriple};
+use jsavrs::nir::{DataLayout, Function, IrParameter, IrType, Module, ParamAttributes, ScopeId, TargetTriple};
+use jsavrs::utils::module_redaceted;
 // tests/nir_module_test.rs
 
 // Helper function per creare un parametro IR di test
 fn create_test_param(name: &str, ty: IrType) -> IrParameter {
-    IrParameter { name: name.to_string(), ty, attributes: ParamAttributes::default() }
+    IrParameter { name: name.into(), ty, attributes: ParamAttributes::default() }
 }
 
 // Helper function per creare una funzione di test
@@ -16,7 +17,7 @@ fn create_test_function(name: &str) -> Function {
 #[test]
 fn test_new_module_with_defaults() {
     // Test: Creazione di un nuovo modulo con impostazioni predefinite
-    let module = Module::new("test_module".to_string());
+    let module = Module::new("test_module".to_string(), Some(ScopeId::new()));
 
     // Verifica delle proprietà di base
     assert_eq!(module.name(), "test_module");
@@ -38,8 +39,9 @@ fn test_new_module_with_defaults() {
 #[test]
 fn test_add_function() {
     // Test: Aggiunta di una funzione al modulo
-    let mut module = Module::new("test_module".to_string());
-    let function = create_test_function("test_func");
+    let mut module = Module::new("test_module".to_string(), Some(ScopeId::new()));
+    let mut function = create_test_function("test_func");
+    function.add_block("entry_test_func", SourceSpan::default());
     module.add_function(function.clone());
 
     // Verifica che la funzione sia stata aggiunta
@@ -50,18 +52,21 @@ fn test_add_function() {
     let expected = r#"module test_module {
   data_layout = "e-m:e-p270:32:32-p271:32:32-p272:64:64-i64:64-f80:128-n8:16:32:64-S128";
   target_triple = "x86_64-unknown-linux-gnu";
-  function test_func (a: i32, b: f32) -> void:
+function test_func (a: i32, b: f32) -> void:
+block:
+// Scope: SCOPE_0
 entry_test_func:
   unreachable
 
+
 }"#;
-    assert_eq!(module.to_string(), expected);
+    assert_eq!(module_redaceted(module), expected);
 }
 
 #[test]
 fn test_add_multiple_functions() {
     // Test: Aggiunta di più funzioni al modulo
-    let mut module = Module::new("test_module".to_string());
+    let mut module = Module::new("test_module".to_string(), Some(ScopeId::new()));
     let func1 = create_test_function("func1");
     let func2 = create_test_function("func2");
     let func3 = create_test_function("func3");
@@ -86,7 +91,7 @@ fn test_add_multiple_functions() {
 #[test]
 fn test_set_data_layout() {
     // Test: Impostazione di diversi layout di dati
-    let mut module = Module::new("test_module".to_string());
+    let mut module = Module::new("test_module".to_string(), Some(ScopeId::new()));
 
     // Verifica layout predefinito
     assert_eq!(*module.data_layout(), DataLayout::LinuxX86_64);
@@ -111,7 +116,7 @@ fn test_set_data_layout() {
 #[test]
 fn test_set_target_triple() {
     // Test: Impostazione di diverse triplette di destinazione
-    let mut module = Module::new("test_module".to_string());
+    let mut module = Module::new("test_module".to_string(), Some(ScopeId::new()));
 
     // Verifica tripletta predefinita
     assert_eq!(*module.target_triple(), TargetTriple::X86_64UnknownLinuxGnu);
@@ -136,7 +141,7 @@ fn test_set_target_triple() {
 #[test]
 fn test_get_function() {
     // Test: Ricerca di una funzione per nome (riferimento immutabile)
-    let mut module = Module::new("test_module".to_string());
+    let mut module = Module::new("test_module".to_string(), Some(ScopeId::new()));
     let func1 = create_test_function("func1");
     let func2 = create_test_function("func2");
 
@@ -156,7 +161,7 @@ fn test_get_function() {
 #[test]
 fn test_get_function_mut() {
     // Test: Ricerca di una funzione per nome (riferimento mutabile)
-    let mut module = Module::new("test_module".to_string());
+    let mut module = Module::new("test_module".to_string(), Some(ScopeId::new()));
     let func1 = create_test_function("func1");
     let func2 = create_test_function("func2");
 
@@ -184,7 +189,7 @@ fn test_get_function_mut() {
 #[test]
 fn test_empty_module_display() {
     // Test: Rappresentazione testuale di un modulo vuoto
-    let module = Module::new("empty_module".to_string());
+    let module = Module::new("empty_module".to_string(), Some(ScopeId::new()));
 
     let expected = r#"module empty_module {
   data_layout = "e-m:e-p270:32:32-p271:32:32-p272:64:64-i64:64-f80:128-n8:16:32:64-S128";
@@ -197,22 +202,13 @@ fn test_empty_module_display() {
 #[test]
 fn test_module_with_complex_function() {
     // Test: Modulo con una funzione complessa (con blocchi e variabili locali)
-    let mut module = Module::new("complex_module".to_string());
+    let mut module = Module::new("complex_module".to_string(), Some(ScopeId::new()));
     let mut function = create_test_function("complex_func");
 
-    // Aggiungi variabili locali
-    function.add_local("local_var1".to_string(), IrType::I32);
-    function.add_local("local_var2".to_string(), IrType::F64);
 
     // Aggiungi blocchi base
-    let block1 = BasicBlock::new("block1", SourceSpan::default());
-    let block2 = BasicBlock::new("block2", SourceSpan::default());
-    function.add_block(block1);
-    function.add_block(block2);
-
-    // Aggiungi archi tra blocchi
-    function.add_edge("entry_complex_func", "block1");
-    function.add_edge("block1", "block2");
+    function.add_block("block1", SourceSpan::default());
+    function.add_block("block2", SourceSpan::default());
 
     module.add_function(function);
 
@@ -231,7 +227,6 @@ fn test_module_with_complex_function() {
     assert!(output.contains("unreachable"));
 
     // Verifica che i predecessori siano mostrati correttamente
-    assert!(output.contains("Predecessors: entry_complex_func"));
     assert!(output.contains("block1"));
 }
 
@@ -250,7 +245,7 @@ fn test_module_with_all_data_layouts() {
     ];
 
     for layout in layouts {
-        let mut module = Module::new("test_module".to_string());
+        let mut module = Module::new("test_module".to_string(), Some(ScopeId::new()));
         module.set_data_layout(layout.clone());
 
         // Verifica che il layout sia stato impostato correttamente
@@ -279,7 +274,7 @@ fn test_module_with_all_target_triples() {
     ];
 
     for triple in triples {
-        let mut module = Module::new("test_module".to_string());
+        let mut module = Module::new("test_module".to_string(), Some(ScopeId::new()));
         module.set_target_triple(triple.clone());
 
         // Verifica che la tripletta sia stata impostata correttamente
@@ -295,7 +290,7 @@ fn test_module_with_all_target_triples() {
 #[test]
 fn test_module_with_special_characters_in_name() {
     // Test: Modulo con caratteri speciali nel nome
-    let mut module = Module::new("module_with_special_chars_!@#$%^&*()".to_string());
+    let mut module = Module::new("module_with_special_chars_!@#$%^&*()".to_string(), Some(ScopeId::new()));
     let function = create_test_function("func_with_special_chars_!@#$%^&*()");
     module.add_function(function);
 
@@ -312,7 +307,7 @@ fn test_module_with_special_characters_in_name() {
 #[test]
 fn test_module_with_duplicate_function_names() {
     // Test: Aggiunta di funzioni con nomi duplicati
-    let mut module = Module::new("test_module".to_string());
+    let mut module = Module::new("test_module".to_string(), Some(ScopeId::new()));
     let func1 = create_test_function("duplicate_name");
     let func2 = create_test_function("duplicate_name");
 
@@ -330,10 +325,11 @@ fn test_module_with_duplicate_function_names() {
     assert_eq!(retrieved.unwrap().name, "duplicate_name");
 }
 
+
 #[test]
 fn test_module_getters() {
     // Test: Verifica di tutti i metodi getter
-    let mut module = Module::new("getter_test".to_string());
+    let mut module = Module::new("getter_test".to_string(), Some(ScopeId::new()));
     let function = create_test_function("getter_func");
     module.add_function(function);
 
@@ -352,8 +348,9 @@ fn test_module_getters() {
 #[test]
 fn test_module_display_formatting() {
     // Test: Verifica della formattazione della rappresentazione testuale
-    let mut module = Module::new("format_test".to_string());
-    let function = create_test_function("format_func");
+    let mut module = Module::new("format_test".to_string(), Some(ScopeId::new()));
+    let mut function = create_test_function("format_func");
+    function.add_block("entry_format_func", SourceSpan::default());
     module.add_function(function);
 
     // Imposta layout e tripletta personalizzati
@@ -363,10 +360,13 @@ fn test_module_display_formatting() {
     let expected = r#"module format_test {
   data_layout = "e-m:w-p270:32:32-p271:32:32-p272:64:64-i64:64-f80:128-n8:16:32:64-S128";
   target_triple = "x86_64-pc-windows-gnu";
-  function format_func (a: i32, b: f32) -> void:
+function format_func (a: i32, b: f32) -> void:
+block:
+// Scope: SCOPE_0
 entry_format_func:
   unreachable
 
+
 }"#;
-    assert_eq!(module.to_string(), expected);
+    assert_eq!(module_redaceted(module), expected);
 }

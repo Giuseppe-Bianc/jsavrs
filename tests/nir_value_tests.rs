@@ -59,7 +59,7 @@ fn value_display_formatting() {
             name: "Point".into(),
             elements: vec![Value::new_literal(IrLiteralValue::I32(10)), Value::new_literal(IrLiteralValue::I32(20))],
         },
-        IrType::Struct("Point".into(), vec![IrType::I32, IrType::I32], dummy_span()),
+        IrType::Struct("Point".into(), vec![("p1".to_string(),IrType::I32), ("p2".to_string(),IrType::I32)], dummy_span()),
     );
     assert_eq!(format!("{}", struct_val), "Point<10i32, 20i32>");
 

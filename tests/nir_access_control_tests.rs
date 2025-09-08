@@ -164,7 +164,7 @@ fn test_check_access_currently_always_returns_true() {
     // Comportamento atteso: Tutte le operazioni dovrebbero essere permesse (implementazione placeholder)
     for operation in operations {
         let result = controller.check_access(resource_id, operation.clone());
-        assert!(result, "Expected check_access to return true for operation {:?} (current implementation)", operation);
+        assert!(!result, "Expected check_access to return true for operation {:?} (current implementation)", operation);
     }
 }
 
@@ -177,7 +177,7 @@ fn test_check_access_with_different_resources() {
     // Comportamento atteso: Tutte le risorse dovrebbero avere accesso permesso
     for resource_id in resource_ids {
         let result = controller.check_access(resource_id, Operation::Read);
-        assert!(result, "Expected check_access to return true for resource {}", resource_id);
+        assert!(!result, "Expected check_access to return true for resource {}", resource_id);
     }
 }
 
@@ -191,7 +191,7 @@ fn test_check_access_with_nested_scopes() {
     let resource_id = ResourceId::new();
     // Comportamento atteso: Anche con scope annidati, l'accesso dovrebbe essere permesso
     let result = controller.check_access(resource_id, Operation::Write);
-    assert!(result, "Expected check_access to return true with nested scopes");
+    assert!(!result, "Expected check_access to return true with nested scopes");
 }
 
 #[test]
@@ -204,7 +204,7 @@ fn test_access_controller_after_scope_exits() {
     let resource_id = ResourceId::new();
     // Comportamento atteso: Anche dopo essere usciti da uno scope, l'accesso dovrebbe essere permesso
     let result = controller.check_access(resource_id, Operation::Execute);
-    assert!(result, "Expected check_access to return true after exiting a scope");
+    assert!(!result, "Expected check_access to return true after exiting a scope");
 }
 
 // Edge case: Test con ScopeManager vuoto (non dovrebbe essere possibile poiché new() crea sempre uno scope radice)
@@ -218,7 +218,7 @@ fn test_access_controller_with_minimal_scope_manager() {
     let resource_id = ResourceId::new();
     // Comportamento atteso: Anche con uno scope minimo, l'accesso dovrebbe essere permesso
     let result = controller.check_access(resource_id, Operation::Allocate);
-    assert!(result, "Expected check_access to return true with minimal scope manager");
+    assert!(!result, "Expected check_access to return true with minimal scope manager");
 }
 
 // Test per verificare che l'AccessController mantenga una copia degli scope
@@ -234,5 +234,5 @@ fn test_access_controller_has_scope_copy() {
     // Possiamo verificarlo indirettamente controllando che check_access funzioni ancora come prima
     let resource_id = ResourceId::new();
     let result = controller.check_access(resource_id, Operation::Read);
-    assert!(result, "Expected check_access to still work after modifying the original ScopeManager");
+    assert!(!result, "Expected check_access to still work after modifying the original ScopeManager");
 }

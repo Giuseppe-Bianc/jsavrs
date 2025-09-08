@@ -17,7 +17,7 @@ fn test_alloca_instruction() {
 #[test]
 fn test_store_instruction() {
     let value = Value::new_literal(IrLiteralValue::I32(42));
-    let dest = Value::new_local("x".to_string(), IrType::I32);
+    let dest = Value::new_local("x".into(), IrType::I32);
     let inst = Instruction::new(InstructionKind::Store { value: value.clone(), dest: dest.clone() }, dummy_span());
 
     assert_eq!(format!("{}", inst), "store 42i32 to %x");
@@ -25,7 +25,7 @@ fn test_store_instruction() {
 
 #[test]
 fn test_load_instruction() {
-    let src = Value::new_local("ptr".to_string(), IrType::Pointer(Box::new(IrType::I32)));
+    let src = Value::new_local("ptr".into(), IrType::Pointer(Box::new(IrType::I32)));
     let ty = IrType::I32;
     let inst = Instruction::new(InstructionKind::Load { src: src.clone(), ty: ty.clone() }, dummy_span())
         .with_result(Value::new_temporary(2, ty));
@@ -64,7 +64,7 @@ fn test_unary_instruction() {
 
 #[test]
 fn test_call_instruction() {
-    let func = Value::new_local("my_func".to_string(), IrType::Custom("fn()".to_string(), dummy_span()));
+    let func = Value::new_local("my_func".into(), IrType::Custom("fn()".into(), dummy_span()));
     let arg1 = Value::new_literal(IrLiteralValue::I32(1));
     let arg2 = Value::new_literal(IrLiteralValue::I32(2));
     let ty = IrType::I32;
@@ -75,23 +75,23 @@ fn test_call_instruction() {
     )
     .with_result(Value::new_temporary(5, ty));
 
-    assert_eq!(format!("{}", inst), "t5 = %my_func(1i32, 2i32) : i32");
+    assert_eq!(format!("{}", inst), "t5 =  call %my_func(1i32, 2i32) : i32");
 }
 
 #[test]
 fn test_call_instruction_no_args() {
-    let func = Value::new_local("void_func".to_string(), IrType::Void);
+    let func = Value::new_local("void_func".into(), IrType::Void);
     let ty = IrType::Void;
 
     let inst =
         Instruction::new(InstructionKind::Call { func: func.clone(), args: vec![], ty: ty.clone() }, dummy_span());
 
-    assert_eq!(format!("{}", inst), "%void_func() : void");
+    assert_eq!(format!("{}", inst), " call %void_func() : void");
 }
 
 #[test]
 fn test_gep_instruction() {
-    let base = Value::new_local("arr".to_string(), IrType::Array(Box::new(IrType::I32), 10));
+    let base = Value::new_local("arr".into(), IrType::Array(Box::new(IrType::I32), 10));
     let index = Value::new_literal(IrLiteralValue::I32(5));
     let element_ty = IrType::I32;
 
@@ -153,9 +153,9 @@ fn test_vectors_instruction() {
         (VectorOp::DotProduct, "vdot"),
         (VectorOp::Shuffle, "vshuffle"),
     ];
-    let vec1 = Value::new_temporary(15, IrType::Custom("vec4".to_string(), dummy_span()));
-    let vec2 = Value::new_temporary(16, IrType::Custom("vec4".to_string(), dummy_span()));
-    let ty = IrType::Custom("vec4".to_string(), dummy_span());
+    let ty = IrType::Custom("vec4".into(), dummy_span());
+    let vec1 = Value::new_temporary(15, ty.clone());
+    let vec2 = Value::new_temporary(16, ty.clone());
 
     for (op, op_str) in ops {
         let inst = Instruction::new(
@@ -171,7 +171,7 @@ fn test_vectors_instruction() {
 #[test]
 fn test_instruction_without_result() {
     let value = Value::new_literal(IrLiteralValue::I32(42));
-    let dest = Value::new_local("x".to_string(), IrType::I32);
+    let dest = Value::new_local("x".into(), IrType::I32);
     let inst = Instruction::new(InstructionKind::Store { value, dest }, dummy_span());
 
     assert_eq!(format!("{}", inst), "store 42i32 to %x");
@@ -185,7 +185,7 @@ fn test_float_literal_display() {
 
     let inst_whole = Instruction::new(
         InstructionKind::Load {
-            src: Value::new_local("ptr".to_string(), IrType::Pointer(Box::new(IrType::F32))),
+            src: Value::new_local("ptr".into(), IrType::Pointer(Box::new(IrType::F32))),
             ty: IrType::F32,
         },
         dummy_span(),
@@ -194,7 +194,7 @@ fn test_float_literal_display() {
 
     let inst_frac = Instruction::new(
         InstructionKind::Load {
-            src: Value::new_local("ptr".to_string(), IrType::Pointer(Box::new(IrType::F64))),
+            src: Value::new_local("ptr".into(), IrType::Pointer(Box::new(IrType::F64))),
             ty: IrType::F64,
         },
         dummy_span(),
@@ -210,7 +210,7 @@ fn test_string_constant_display() {
     let string_val = Value::new_constant(IrConstantValue::String { string: "hello\nworld".into() }, IrType::String);
 
     let inst = Instruction::new(
-        InstructionKind::Store { value: string_val, dest: Value::new_local("s".to_string(), IrType::String) },
+        InstructionKind::Store { value: string_val, dest: Value::new_local("s".into(), IrType::String) },
         dummy_span(),
     );
 
@@ -229,7 +229,7 @@ fn test_array_constant_display() {
     let inst = Instruction::new(
         InstructionKind::Store {
             value: array_val,
-            dest: Value::new_local("arr".to_string(), IrType::Array(Box::new(IrType::I32), 3)),
+            dest: Value::new_local("arr".into(), IrType::Array(Box::new(IrType::I32), 3)),
         },
         dummy_span(),
     );
@@ -240,17 +240,18 @@ fn test_array_constant_display() {
 #[test]
 fn test_struct_constant_display() {
     let fields = vec![Value::new_literal(IrLiteralValue::I32(10)), Value::new_literal(IrLiteralValue::Bool(true))];
+    let ty: IrType = IrType::Struct("Point".into(), vec![("p1".to_string(), IrType::I32), ("p2".to_string(), IrType::Bool)], dummy_span());
     let struct_val = Value::new_constant(
         IrConstantValue::Struct { name: "Point".into(), elements: fields },
-        IrType::Struct("Point".to_string(), vec![IrType::I32, IrType::Bool], dummy_span()),
+        ty.clone(),
     );
 
     let inst = Instruction::new(
         InstructionKind::Store {
             value: struct_val,
             dest: Value::new_local(
-                "pt".to_string(),
-                IrType::Struct("Point".to_string(), vec![IrType::I32, IrType::Bool], dummy_span()),
+                "pt".into(),
+                ty.clone(),
             ),
         },
         dummy_span(),
@@ -281,19 +282,19 @@ fn test_nested_array_type_display() {
 
 #[test]
 fn test_struct_type_display() {
-    let struct_ty = IrType::Struct("Point".to_string(), vec![IrType::I32, IrType::I32], dummy_span());
+    let struct_ty = IrType::Struct("Point".into(), vec![("x".to_string(), IrType::I32), ("y".to_string(), IrType::I32)], dummy_span());
 
     let inst = Instruction::new(InstructionKind::Alloca { ty: struct_ty.clone() }, dummy_span())
         .with_result(Value::new_temporary(14, struct_ty));
 
-    assert_eq!(format!("{}", inst), "t14 = alloca struct Point { i32, i32 }");
+    assert_eq!(format!("{}", inst), "t14 = alloca struct Point { x: i32, y: i32 }");
 }
 
 #[test]
 fn test_char_literal_display() {
     let char_val = Value::new_literal(IrLiteralValue::Char('\n'));
     let inst = Instruction::new(
-        InstructionKind::Store { value: char_val, dest: Value::new_local("c".to_string(), IrType::Char) },
+        InstructionKind::Store { value: char_val, dest: Value::new_local("c".into(), IrType::Char) },
         dummy_span(),
     );
 

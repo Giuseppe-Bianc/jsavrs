@@ -35,14 +35,14 @@ fn return_terminator_edge_cases() {
 #[test]
 fn branch_terminator_edge_cases() {
     // Label vuota
-    let term = Terminator::new(TerminatorKind::Branch { label: "".to_string() }, dummy_span());
+    let term = Terminator::new(TerminatorKind::Branch { label: "".into() }, dummy_span());
 
     assert!(term.is_terminator());
     assert_eq!(term.get_targets(), vec![""]);
     assert_eq!(format!("{}", term), "br ");
 
     // Caratteri speciali
-    let term = Terminator::new(TerminatorKind::Branch { label: "label$@1".to_string() }, dummy_span());
+    let term = Terminator::new(TerminatorKind::Branch { label: "label$@1".into() }, dummy_span());
 
     assert_eq!(format!("{}", term), "br label$@1");
 }
@@ -53,8 +53,8 @@ fn conditional_branch_edge_cases() {
     let term = Terminator::new(
         TerminatorKind::ConditionalBranch {
             condition: create_bool_value(true),
-            true_label: "shared".to_string(),
-            false_label: "shared".to_string(),
+            true_label: "shared".into(),
+            false_label: "shared".into(),
         },
         dummy_span(),
     );
@@ -67,8 +67,8 @@ fn conditional_branch_edge_cases() {
     let term = Terminator::new(
         TerminatorKind::ConditionalBranch {
             condition: create_bool_value(false),
-            true_label: "".to_string(),
-            false_label: "".to_string(),
+            true_label: "".into(),
+            false_label: "".into(),
         },
         dummy_span(),
     );
@@ -180,8 +180,8 @@ fn get_targets_edge_cases() {
     let cond_term = Terminator::new(
         TerminatorKind::ConditionalBranch {
             condition: create_bool_value(true),
-            true_label: "".to_string(),
-            false_label: "".to_string(),
+            true_label: "".into(),
+            false_label: "".into(),
         },
         dummy_span(),
     );

@@ -5,14 +5,15 @@ use jsavrs::nir::{
 use jsavrs::parser::ast::{BinaryOp, Expr, LiteralValue, Parameter, Stmt, Type, UnaryOp};
 use jsavrs::tokens::number::Number;
 use jsavrs::utils::*;
+use std::sync::Arc;
 
 // Macro per verificare i return con valori letterali
 #[macro_export]
 macro_rules! assert_return_literal {
     ($block:expr, $expected_ty:expr, $expected_literal:pat) => {
-        match &$block.terminator.kind {
+        match &$block.terminator().kind {
             TerminatorKind::Return { value, ty } => {
-                assert_eq!(*ty, $expected_ty);
+                assert_eq!(ty, $expected_ty); // Remove the * dereference
                 match &value.kind {
                     ValueKind::Literal($expected_literal) => (),
                     other => panic!("Expected literal value, got {:?}", other),
@@ -27,7 +28,7 @@ macro_rules! assert_return_literal {
 #[macro_export]
 macro_rules! assert_return_constant_string {
     ($block:expr, $expected_str:expr) => {
-        match &$block.terminator.kind {
+        match &$block.terminator().kind {
             TerminatorKind::Return { value, ty } => {
                 assert_eq!(*ty, IrType::String);
                 match &value.kind {
@@ -46,7 +47,7 @@ macro_rules! assert_return_constant_string {
 #[macro_export]
 macro_rules! assert_return_nullptr {
     ($block:expr) => {
-        match &$block.terminator.kind {
+        match &$block.terminator().kind {
             TerminatorKind::Return { value, ty } => {
                 assert_eq!(*ty, IrType::Pointer(Box::new(IrType::I8)));
                 assert_eq!(value.kind, ValueKind::Literal(IrLiteralValue::I64(0)));
@@ -118,7 +119,7 @@ macro_rules! assert_gep_instruction {
 #[macro_export]
 macro_rules! assert_conditional_branch {
     ($block:expr, $expected_condition:expr, $expected_true:expr, $expected_false:expr) => {
-        match &$block.terminator.kind {
+        match &$block.terminator().kind {
             TerminatorKind::ConditionalBranch { condition, true_label, false_label } => {
                 assert_eq!(condition.kind, $expected_condition);
                 assert_eq!(true_label, $expected_true);
@@ -133,7 +134,7 @@ macro_rules! assert_conditional_branch {
 #[macro_export]
 macro_rules! assert_branch {
     ($block:expr, $expected_label:expr) => {
-        match &$block.terminator.kind {
+        match &$block.terminator().kind {
             TerminatorKind::Branch { label } => {
                 assert_eq!(label, $expected_label);
             }
@@ -158,12 +159,12 @@ fn test_generate_function_with_return() {
     let func = &functions.functions[0];
     assert_eq!(func.name, "test");
     assert_eq!(func.return_type, IrType::I32);
-    assert_eq!(func.cfg.blocks.len(), 1);
+    assert_eq!(func.cfg.blocks().count(), 1);
     assert_eq!(func.cfg.entry_label, "entry_test");
     let entry_block = func.cfg.get_block("entry_test").unwrap();
     assert_eq!(entry_block.clone().instructions.len(), 0);
     // VERIFICA TERMINATOR
-    assert_return_literal!(entry_block, IrType::I32, IrLiteralValue::I32(42));
+    assert_return_literal!(entry_block, &IrType::I32, IrLiteralValue::I32(42));
 }
 
 #[test]
@@ -182,11 +183,11 @@ fn test_generate_void_function() {
     let func = &functions.functions[0];
     assert_eq!(func.name, "void_func");
     assert_eq!(func.return_type, IrType::Void);
-    assert_eq!(func.cfg.blocks.len(), 1);
+    assert_eq!(func.cfg.blocks().count(), 1);
     assert_eq!(func.cfg.entry_label, "entry_void_func");
     let entry_block = func.cfg.get_block("entry_void_func").unwrap();
     assert_eq!(entry_block.clone().instructions.len(), 0);
-    assert_return_literal!(entry_block, IrType::Void, IrLiteralValue::I32(0));
+    assert_return_literal!(entry_block, &IrType::Void, IrLiteralValue::I32(0));
 }
 
 #[test]
@@ -201,12 +202,12 @@ fn test_generate_main_function() {
     let func = &functions.functions[0];
     assert_eq!(func.name, "main");
     assert_eq!(func.return_type, IrType::Void);
-    assert_eq!(func.cfg.blocks.len(), 1);
+    assert_eq!(func.cfg.blocks().count(), 1);
     assert_eq!(func.cfg.entry_label, "entry_main");
     let entry_block = func.cfg.get_block("entry_main").unwrap();
     assert_eq!(entry_block.clone().instructions.len(), 0);
     // VERIFICA TERMINATOR
-    assert_return_literal!(entry_block, IrType::Void, IrLiteralValue::I32(0));
+    assert_return_literal!(entry_block, &IrType::Void, IrLiteralValue::I32(0));
 }
 
 #[test]
@@ -234,7 +235,7 @@ fn test_generate_binary_expression() {
     assert_eq!(func.return_type, IrType::I32);
 
     // Verifica struttura CFG
-    assert_eq!(func.cfg.blocks.len(), 1);
+    assert_eq!(func.cfg.blocks().count(), 1);
     assert_eq!(func.cfg.entry_label, "entry_test");
 
     // Verifica contenuto blocco entry
@@ -277,7 +278,7 @@ fn test_generate_variable_assignment() {
     assert_eq!(func.return_type, IrType::Void);
 
     // Verifica struttura CFG
-    assert_eq!(func.cfg.blocks.len(), 1);
+    assert_eq!(func.cfg.blocks().count(), 1);
     assert_eq!(func.cfg.entry_label, "entry_test");
 
     // Verifica contenuto blocco entry
@@ -310,19 +311,19 @@ fn test_generate_if_statement() {
     assert_eq!(ir_errors.len(), 0);
     assert_eq!(functions.functions.len(), 1);
     let func = &functions.functions[0];
-    assert_eq!(func.cfg.blocks.len(), 4);
+    assert_eq!(func.cfg.blocks().count(), 4);
     assert_eq!(func.cfg.entry_label, "entry_test");
     let entry_block = func.cfg.get_block("entry_test").unwrap();
-    assert_conditional_branch!(entry_block, ValueKind::Literal(IrLiteralValue::Bool(true)), "then_1", "else_2");
-    let then_block = func.cfg.blocks.get("then_1").unwrap();
+    assert_conditional_branch!(entry_block, ValueKind::Literal(IrLiteralValue::Bool(true)), &Arc::from("then_1"), &Arc::from("else_2"));
+    let then_block = func.cfg.get_block("then_1").unwrap();
     assert_eq!(then_block.instructions.len(), 0);
-    assert_return_literal!(then_block, IrType::Void, IrLiteralValue::I32(0));
-    let else_block = func.cfg.blocks.get("else_2").unwrap();
+    assert_return_literal!(then_block, &IrType::Void, IrLiteralValue::I32(0));
+    let else_block = func.cfg.get_block("else_2").unwrap();
     assert_eq!(else_block.instructions.len(), 0);
-    assert_branch!(else_block, "merge_3");
-    let merge_block = func.cfg.blocks.get("merge_3").unwrap();
+    assert_branch!(else_block, &Arc::from("merge_3"));
+    let merge_block = func.cfg.get_block("merge_3").unwrap();
     assert_eq!(merge_block.instructions.len(), 0);
-    assert_return_literal!(merge_block, IrType::Void, IrLiteralValue::I32(0));
+    assert_return_literal!(merge_block, &IrType::Void, IrLiteralValue::I32(0));
 }
 
 #[test]
@@ -346,7 +347,7 @@ fn test_generate_nested_expressions() {
     assert_eq!(ir_errors.len(), 0);
     assert_eq!(functions.functions.len(), 1);
     let func = &functions.functions[0];
-    assert_eq!(func.cfg.blocks.len(), 1);
+    assert_eq!(func.cfg.blocks().count(), 1);
     assert_eq!(func.cfg.entry_label, "entry_test");
     let entry_block = func.cfg.get_block("entry_test").unwrap();
     assert_eq!(entry_block.instructions.len(), 3);
@@ -416,7 +417,7 @@ fn test_generate_array_type() {
     assert_eq!(ir_errors.len(), 0);
     assert_eq!(functions.functions.len(), 1);
     let func = &functions.functions[0];
-    assert_eq!(func.cfg.blocks.len(), 1);
+    assert_eq!(func.cfg.blocks().count(), 1);
     assert_eq!(func.cfg.entry_label, "entry_test");
     let entry_block = func.cfg.get_block("entry_test").unwrap();
     assert_eq!(entry_block.instructions.len(), 1);
@@ -440,10 +441,10 @@ fn test_generate_missing_return() {
     assert_eq!(ir_errors.len(), 0);
     assert_eq!(functions.functions.len(), 1);
     let func = &functions.functions[0];
-    assert_eq!(func.cfg.blocks.len(), 1);
+    assert_eq!(func.cfg.blocks().count(), 1);
     assert_eq!(func.cfg.entry_label, "entry_test");
     let entry_block = func.cfg.get_block("entry_test").unwrap();
-    assert_return_literal!(entry_block, IrType::I32, IrLiteralValue::I32(0));
+    assert_return_literal!(entry_block, &IrType::I32, IrLiteralValue::I32(0));
 }
 
 #[test]
@@ -486,7 +487,7 @@ fn test_generate_string_literal() {
     assert_eq!(ir_errors.len(), 0);
     assert_eq!(functions.functions.len(), 1);
     let func = &functions.functions[0];
-    assert_eq!(func.cfg.blocks.len(), 1);
+    assert_eq!(func.cfg.blocks().count(), 1);
     assert_eq!(func.cfg.entry_label, "entry_test");
     let entry_block = func.cfg.get_block("entry_test").unwrap();
     assert_return_constant_string!(entry_block, "hello");
@@ -507,7 +508,7 @@ fn test_generate_nullptr() {
     assert_eq!(ir_errors.len(), 0);
     assert_eq!(functions.functions.len(), 1);
     let func = &functions.functions[0];
-    assert_eq!(func.cfg.blocks.len(), 1);
+    assert_eq!(func.cfg.blocks().count(), 1);
     assert_eq!(func.cfg.entry_label, "entry_test");
     let entry_block = func.cfg.get_block("entry_test").unwrap();
     assert_return_nullptr!(entry_block);
@@ -542,7 +543,7 @@ fn test_generate_simple_block() {
     assert_eq!(ir_errors.len(), 0);
     assert_eq!(functions.functions.len(), 1);
     let func = &functions.functions[0];
-    assert_eq!(func.cfg.blocks.len(), 1);
+    assert_eq!(func.cfg.blocks().count(), 1);
     assert_eq!(func.cfg.entry_label, "entry_test");
     let entry_block = func.cfg.get_block("entry_test").unwrap();
     assert_eq!(entry_block.instructions.len(), 3);
@@ -588,7 +589,7 @@ fn test_generate_simple_while_loop() {
     assert_eq!(ir_errors.len(), 0);
     assert_eq!(functions.functions.len(), 1);
     let func = &functions.functions[0];
-    assert_eq!(func.cfg.blocks.len(), 4);
+    assert_eq!(func.cfg.blocks().count(), 4);
     assert_eq!(func.cfg.entry_label, "entry_test");
     let entry_block = func.cfg.get_block("entry_test").unwrap();
     assert_eq!(entry_block.instructions.len(), 2);
@@ -598,7 +599,7 @@ fn test_generate_simple_while_loop() {
         ValueKind::Literal(IrLiteralValue::I32(0)),
         ValueKind::Temporary(0)
     );
-    assert_branch!(entry_block, "loop_start_1");
+    assert_branch!(entry_block, &Arc::from("loop_start_1"));
     let loop_start = func.cfg.get_block("loop_start_1").unwrap();
     assert_eq!(loop_start.instructions.len(), 1);
     assert_binary_instruction!(
@@ -608,7 +609,7 @@ fn test_generate_simple_while_loop() {
         ValueKind::Temporary(0),
         ValueKind::Literal(IrLiteralValue::I32(5))
     );
-    assert_conditional_branch!(loop_start, ValueKind::Temporary(1), "loop_body_2", "loop_end_3");
+    assert_conditional_branch!(loop_start, ValueKind::Temporary(1), &Arc::from("loop_body_2"), &Arc::from("loop_end_3"));
 
     let loop_body = func.cfg.get_block("loop_body_2").unwrap();
     assert_eq!(loop_body.instructions.len(), 2);
@@ -620,11 +621,11 @@ fn test_generate_simple_while_loop() {
         ValueKind::Literal(IrLiteralValue::I32(1))
     );
     assert_store_instruction!(loop_body.instructions[1].clone(), ValueKind::Temporary(2), ValueKind::Temporary(0));
-    assert_branch!(loop_body, "loop_start_1");
+    assert_branch!(loop_body, &Arc::from("loop_start_1"));
 
     let loop_end = func.cfg.get_block("loop_end_3").unwrap();
     assert_eq!(loop_end.instructions.len(), 0);
-    assert_return_literal!(loop_end, IrType::Void, IrLiteralValue::I32(0));
+    assert_return_literal!(loop_end, &IrType::Void, IrLiteralValue::I32(0));
 }
 
 #[test]
@@ -658,22 +659,22 @@ fn test_generate_for_loop_basic() {
     assert_eq!(functions.functions.len(), 1);
     let func = &functions.functions[0];
     // Verify block structure: entry, for_start, for_body, for_inc, for_end
-    assert_eq!(func.cfg.blocks.len(), 5);
+    assert_eq!(func.cfg.blocks().count(), 5);
     assert_eq!(func.cfg.entry_label, "entry_test");
     let entry_block = func.cfg.get_block("entry_test").unwrap();
-    assert_branch!(entry_block, "for_start_1");
+    assert_branch!(entry_block, &Arc::from("for_start_1"));
     let for_start = func.cfg.get_block("for_start_1").unwrap();
     assert_eq!(for_start.instructions.len(), 1);
-    assert_conditional_branch!(for_start, ValueKind::Temporary(1), "for_body_2", "for_end_4");
+    assert_conditional_branch!(for_start, ValueKind::Temporary(1), &Arc::from("for_body_2"), &Arc::from("for_end_4"));
     let for_body = func.cfg.get_block("for_body_2").unwrap();
     assert_eq!(for_body.instructions.len(), 0);
-    assert_branch!(for_body, "for_inc_3");
+    assert_branch!(for_body, &Arc::from("for_inc_3"));
     let for_inc = func.cfg.get_block("for_inc_3").unwrap();
     assert_eq!(for_inc.instructions.len(), 2);
-    assert_branch!(for_inc, "for_start_1");
+    assert_branch!(for_inc, &Arc::from("for_start_1"));
     let for_end = func.cfg.get_block("for_end_4").unwrap();
     assert_eq!(for_end.instructions.len(), 0);
-    assert_return_literal!(for_end, IrType::Void, IrLiteralValue::I32(0));
+    assert_return_literal!(for_end, &IrType::Void, IrLiteralValue::I32(0));
 }
 
 #[test]
@@ -703,22 +704,22 @@ fn test_generate_for_loop_with_break() {
     assert_eq!(functions.functions.len(), 1);
     let func = &functions.functions[0];
     // Verify block structure: entry, for_start, for_body, for_inc, for_end
-    assert_eq!(func.cfg.blocks.len(), 5);
+    assert_eq!(func.cfg.blocks().count(), 5);
     assert_eq!(func.cfg.entry_label, "entry_test");
     let entry_block = func.cfg.get_block("entry_test").unwrap();
-    assert_branch!(entry_block, "for_start_1");
+    assert_branch!(entry_block, &Arc::from("for_start_1"));
     let for_start = func.cfg.get_block("for_start_1").unwrap();
     assert_eq!(for_start.instructions.len(), 1);
-    assert_conditional_branch!(for_start, ValueKind::Temporary(1), "for_body_2", "for_end_4");
+    assert_conditional_branch!(for_start, ValueKind::Temporary(1), &Arc::from("for_body_2"), &Arc::from("for_end_4"));
     let for_body = func.cfg.get_block("for_body_2").unwrap();
     assert_eq!(for_body.instructions.len(), 0);
-    assert_branch!(for_body, "for_end_4");
+    assert_branch!(for_body, &Arc::from("for_end_4"));
     let for_inc = func.cfg.get_block("for_inc_3").unwrap();
     assert_eq!(for_inc.instructions.len(), 0);
-    assert_branch!(for_inc, "for_start_1");
+    assert_branch!(for_inc, &Arc::from("for_start_1"));
     let for_end = func.cfg.get_block("for_end_4").unwrap();
     assert_eq!(for_end.instructions.len(), 0);
-    assert_return_literal!(for_end, IrType::Void, IrLiteralValue::I32(0));
+    assert_return_literal!(for_end, &IrType::Void, IrLiteralValue::I32(0));
 }
 
 #[test]
@@ -748,22 +749,22 @@ fn test_generate_for_loop_with_continue() {
     assert_eq!(functions.functions.len(), 1);
     let func = &functions.functions[0];
     // Verify block structure: entry, for_start, for_body, for_inc, for_end
-    assert_eq!(func.cfg.blocks.len(), 5);
+    assert_eq!(func.cfg.blocks().count(), 5);
     assert_eq!(func.cfg.entry_label, "entry_test");
     let entry_block = func.cfg.get_block("entry_test").unwrap();
-    assert_branch!(entry_block, "for_start_1");
+    assert_branch!(entry_block, &Arc::from("for_start_1"));
     let for_start = func.cfg.get_block("for_start_1").unwrap();
     assert_eq!(for_start.instructions.len(), 1);
-    assert_conditional_branch!(for_start, ValueKind::Temporary(1), "for_body_2", "for_end_4");
+    assert_conditional_branch!(for_start, ValueKind::Temporary(1), &Arc::from("for_body_2"), &Arc::from("for_end_4"));
     let for_body = func.cfg.get_block("for_body_2").unwrap();
     assert_eq!(for_body.instructions.len(), 0);
-    assert_branch!(for_body, "for_inc_3");
+    assert_branch!(for_body, &Arc::from("for_inc_3"));
     let for_inc = func.cfg.get_block("for_inc_3").unwrap();
     assert_eq!(for_inc.instructions.len(), 0);
-    assert_branch!(for_inc, "for_start_1");
+    assert_branch!(for_inc, &Arc::from("for_start_1"));
     let for_end = func.cfg.get_block("for_end_4").unwrap();
     assert_eq!(for_end.instructions.len(), 0);
-    assert_return_literal!(for_end, IrType::Void, IrLiteralValue::I32(0));
+    assert_return_literal!(for_end, &IrType::Void, IrLiteralValue::I32(0));
 }
 
 #[test]
@@ -783,7 +784,7 @@ fn test_generate_grouping_expression() {
     assert_eq!(ir_errors.len(), 0);
     assert_eq!(functions.functions.len(), 1);
     let func = &functions.functions[0];
-    assert_eq!(func.cfg.blocks.len(), 1);
+    assert_eq!(func.cfg.blocks().count(), 1);
     assert_eq!(func.cfg.entry_label, "entry_test");
     let entry_block = func.cfg.get_block("entry_test").unwrap();
     assert_eq!(entry_block.instructions.len(), 1);
@@ -816,7 +817,7 @@ fn test_generate_array_literal_with_elements() {
     assert_eq!(ir_errors.len(), 0);
     assert_eq!(functions.functions.len(), 1);
     let func = &functions.functions[0];
-    assert_eq!(func.cfg.blocks.len(), 1);
+    assert_eq!(func.cfg.blocks().count(), 1);
     assert_eq!(func.cfg.entry_label, "entry_test");
     let entry_block = func.cfg.get_block("entry_test").unwrap();
     assert_eq!(entry_block.instructions.len(), 7);
@@ -871,10 +872,10 @@ fn test_default_implementation() {
     assert_eq!(ir_errors.len(), 0);
     assert_eq!(functions.functions.len(), 1);
     let func = &functions.functions[0];
-    assert_eq!(func.cfg.blocks.len(), 1);
+    assert_eq!(func.cfg.blocks().count(), 1);
     assert_eq!(func.cfg.entry_label, "entry_test");
     let entry_block = func.cfg.get_block("entry_test").unwrap();
-    assert_return_literal!(entry_block, IrType::I32, IrLiteralValue::I32(42));
+    assert_return_literal!(entry_block, &IrType::I32, IrLiteralValue::I32(42));
 }
 
 #[test]
@@ -916,7 +917,7 @@ fn test_generate_binary_all_operations() {
         assert_eq!(ir_errors.len(), 0);
         assert_eq!(functions.functions.len(), 1);
         let func = &functions.functions[0];
-        assert_eq!(func.cfg.blocks.len(), 1);
+        assert_eq!(func.cfg.blocks().count(), 1);
         assert_eq!(func.cfg.entry_label, "entry_test");
         let entry_block = func.cfg.get_block("entry_test").unwrap();
         assert_eq!(entry_block.instructions.len(), 1);
@@ -947,7 +948,7 @@ fn test_generate_unary_expression() {
         assert_eq!(ir_errors.len(), 0);
         assert_eq!(functions.functions.len(), 1);
         let func = &functions.functions[0];
-        assert_eq!(func.cfg.blocks.len(), 1);
+        assert_eq!(func.cfg.blocks().count(), 1);
         assert_eq!(func.cfg.entry_label, "entry_test");
         let entry_block = func.cfg.get_block("entry_test").unwrap();
         assert_eq!(entry_block.instructions.len(), 1);
@@ -1006,11 +1007,11 @@ fn test_generate_integer_literals() {
         assert_eq!(ir_errors.len(), 0);
         assert_eq!(functions.functions.len(), 1);
         let func = &functions.functions[0];
-        assert_eq!(func.cfg.blocks.len(), 1);
+        assert_eq!(func.cfg.blocks().count(), 1);
         assert_eq!(func.cfg.entry_label, "entry_test");
         let entry_block = func.cfg.get_block("entry_test").unwrap();
 
-        match &entry_block.terminator.kind {
+        match &entry_block.terminator().kind {
             TerminatorKind::Return { value, ty } => {
                 assert_eq!(*ty, expected_type);
                 match &value.kind {
@@ -1055,11 +1056,11 @@ fn test_generate_float_literals() {
         assert_eq!(ir_errors.len(), 0);
         assert_eq!(functions.functions.len(), 1);
         let func = &functions.functions[0];
-        assert_eq!(func.cfg.blocks.len(), 1);
+        assert_eq!(func.cfg.blocks().count(), 1);
         assert_eq!(func.cfg.entry_label, "entry_test");
         let entry_block = func.cfg.get_block("entry_test").unwrap();
 
-        match &entry_block.terminator.kind {
+        match &entry_block.terminator().kind {
             TerminatorKind::Return { value, ty } => {
                 assert_eq!(*ty, expected_type);
                 match &value.kind {
@@ -1089,11 +1090,11 @@ fn test_generate_boolean_literals() {
         assert_eq!(ir_errors.len(), 0);
         assert_eq!(functions.functions.len(), 1);
         let func = &functions.functions[0];
-        assert_eq!(func.cfg.blocks.len(), 1);
+        assert_eq!(func.cfg.blocks().count(), 1);
         assert_eq!(func.cfg.entry_label, "entry_test");
         let entry_block = func.cfg.get_block("entry_test").unwrap();
 
-        match &entry_block.terminator.kind {
+        match &entry_block.terminator().kind {
             TerminatorKind::Return { value, ty } => {
                 assert_eq!(*ty, IrType::Bool);
                 match &value.kind {
@@ -1120,11 +1121,11 @@ fn test_generate_char_literal() {
     assert_eq!(ir_errors.len(), 0);
     assert_eq!(functions.functions.len(), 1);
     let func = &functions.functions[0];
-    assert_eq!(func.cfg.blocks.len(), 1);
+    assert_eq!(func.cfg.blocks().count(), 1);
     assert_eq!(func.cfg.entry_label, "entry_test");
     let entry_block = func.cfg.get_block("entry_test").unwrap();
 
-    match &entry_block.terminator.kind {
+    match &entry_block.terminator().kind {
         TerminatorKind::Return { value, ty } => {
             assert_eq!(*ty, IrType::Char);
             match &value.kind {
@@ -1150,7 +1151,7 @@ fn test_generate_nullptr_literal() {
     assert_eq!(ir_errors.len(), 0);
     assert_eq!(functions.functions.len(), 1);
     let func = &functions.functions[0];
-    assert_eq!(func.cfg.blocks.len(), 1);
+    assert_eq!(func.cfg.blocks().count(), 1);
     assert_eq!(func.cfg.entry_label, "entry_test");
     let entry_block = func.cfg.get_block("entry_test").unwrap();
 
@@ -1194,7 +1195,7 @@ fn test_generate_array_access_assignment() {
     assert_eq!(func.return_type, IrType::Void);
 
     // Verifica la struttura del CFG
-    assert_eq!(func.cfg.blocks.len(), 1);
+    assert_eq!(func.cfg.blocks().count(), 1);
     assert_eq!(func.cfg.entry_label, "entry_test");
 
     let entry_block = func.cfg.get_block("entry_test").unwrap();
