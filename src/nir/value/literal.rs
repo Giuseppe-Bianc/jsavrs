@@ -1,9 +1,9 @@
-// src/rvir/value/literal.rs
-use crate::rvir::RIrType;
+// src/nir/value/literal.rs
+use crate::nir::IrType;
 use std::fmt;
 
 #[derive(Debug, Clone, Copy, PartialEq)]
-pub enum RIrLiteralValue {
+pub enum IrLiteralValue {
     I8(i8),
     I16(i16),
     I32(i32),
@@ -18,52 +18,52 @@ pub enum RIrLiteralValue {
     Char(char),
 }
 
-impl From<&RIrLiteralValue> for RIrType {
-    fn from(imm: &RIrLiteralValue) -> Self {
+impl From<&IrLiteralValue> for IrType {
+    fn from(imm: &IrLiteralValue) -> Self {
         match imm {
-            RIrLiteralValue::I8(_) => RIrType::I8,
-            RIrLiteralValue::I16(_) => RIrType::I16,
-            RIrLiteralValue::I32(_) => RIrType::I32,
-            RIrLiteralValue::I64(_) => RIrType::I64,
-            RIrLiteralValue::U8(_) => RIrType::U8,
-            RIrLiteralValue::U16(_) => RIrType::U16,
-            RIrLiteralValue::U32(_) => RIrType::U32,
-            RIrLiteralValue::U64(_) => RIrType::U64,
-            RIrLiteralValue::F32(_) => RIrType::F32,
-            RIrLiteralValue::F64(_) => RIrType::F64,
-            RIrLiteralValue::Bool(_) => RIrType::Bool,
-            RIrLiteralValue::Char(_) => RIrType::Char,
+            IrLiteralValue::I8(_) => IrType::I8,
+            IrLiteralValue::I16(_) => IrType::I16,
+            IrLiteralValue::I32(_) => IrType::I32,
+            IrLiteralValue::I64(_) => IrType::I64,
+            IrLiteralValue::U8(_) => IrType::U8,
+            IrLiteralValue::U16(_) => IrType::U16,
+            IrLiteralValue::U32(_) => IrType::U32,
+            IrLiteralValue::U64(_) => IrType::U64,
+            IrLiteralValue::F32(_) => IrType::F32,
+            IrLiteralValue::F64(_) => IrType::F64,
+            IrLiteralValue::Bool(_) => IrType::Bool,
+            IrLiteralValue::Char(_) => IrType::Char,
         }
     }
 }
 
-impl fmt::Display for RIrLiteralValue {
+impl fmt::Display for IrLiteralValue {
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
         match self {
-            RIrLiteralValue::I8(val) => write!(f, "{val}i8"),
-            RIrLiteralValue::I16(val) => write!(f, "{val}i16"),
-            RIrLiteralValue::I32(val) => write!(f, "{val}i32"),
-            RIrLiteralValue::I64(val) => write!(f, "{val}i64"),
-            RIrLiteralValue::U8(val) => write!(f, "{val}u8"),
-            RIrLiteralValue::U16(val) => write!(f, "{val}u16"),
-            RIrLiteralValue::U32(val) => write!(f, "{val}u32"),
-            RIrLiteralValue::U64(val) => write!(f, "{val}u64"),
-            RIrLiteralValue::F32(val) => {
+            IrLiteralValue::I8(val) => write!(f, "{val}i8"),
+            IrLiteralValue::I16(val) => write!(f, "{val}i16"),
+            IrLiteralValue::I32(val) => write!(f, "{val}i32"),
+            IrLiteralValue::I64(val) => write!(f, "{val}i64"),
+            IrLiteralValue::U8(val) => write!(f, "{val}u8"),
+            IrLiteralValue::U16(val) => write!(f, "{val}u16"),
+            IrLiteralValue::U32(val) => write!(f, "{val}u32"),
+            IrLiteralValue::U64(val) => write!(f, "{val}u64"),
+            IrLiteralValue::F32(val) => {
                 if val.fract() == 0.0 && val.is_finite() {
                     write!(f, "{val:.1}f32")
                 } else {
                     write!(f, "{val}f32")
                 }
             }
-            RIrLiteralValue::F64(val) => {
+            IrLiteralValue::F64(val) => {
                 if val.fract() == 0.0 && val.is_finite() {
                     write!(f, "{val:.1}f64")
                 } else {
                     write!(f, "{val}f64")
                 }
             }
-            RIrLiteralValue::Bool(val) => write!(f, "{val}"),
-            RIrLiteralValue::Char(val) => write!(f, "'{escaped}'", escaped = val.escape_default()),
+            IrLiteralValue::Bool(val) => write!(f, "{val}"),
+            IrLiteralValue::Char(val) => write!(f, "'{escaped}'", escaped = val.escape_default()),
         }
     }
 }

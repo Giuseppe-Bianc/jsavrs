@@ -1,8 +1,8 @@
-// src/rvir/access_control.rs
-use super::types::{RResourceId, RScopeId};
+// src/nir/access_control.rs
+use super::types::{ResourceId, ScopeId};
 
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Hash)]
-pub enum ROperation {
+pub enum Operation {
     Read,
     Write,
     Execute,
@@ -11,7 +11,7 @@ pub enum ROperation {
 }
 
 #[derive(Debug, Clone, Copy, Default, PartialEq, Eq)]
-pub struct RAccessRules {
+pub struct AccessRules {
     read: bool,
     write: bool,
     execute: bool,
@@ -19,35 +19,35 @@ pub struct RAccessRules {
     deallocate: bool,
 }
 
-impl RAccessRules {
+impl AccessRules {
     // Add a public constructor
     pub const fn new(read: bool, write: bool, execute: bool, allocate: bool, deallocate: bool) -> Self {
-        RAccessRules { read, write, execute, allocate, deallocate }
+        AccessRules { read, write, execute, allocate, deallocate }
     }
 
-    pub const fn allows(&self, operation: ROperation) -> bool {
+    pub const fn allows(&self, operation: Operation) -> bool {
         match operation {
-            ROperation::Read => self.read,
-            ROperation::Write => self.write,
-            ROperation::Execute => self.execute,
-            ROperation::Allocate => self.allocate,
-            ROperation::Deallocate => self.deallocate,
+            Operation::Read => self.read,
+            Operation::Write => self.write,
+            Operation::Execute => self.execute,
+            Operation::Allocate => self.allocate,
+            Operation::Deallocate => self.deallocate,
         }
     }
 }
 
 #[allow(dead_code)]
 #[derive(Debug)]
-pub struct RAccessController {
-    scopes: std::collections::HashMap<RScopeId, super::scope::RScope>,
-    current_scope: RScopeId,
+pub struct AccessController {
+    scopes: std::collections::HashMap<ScopeId, super::scope::Scope>,
+    current_scope: ScopeId,
 }
 
-impl RAccessController {
-    pub fn new(scope_manager: &super::scope_manager::RScopeManager) -> Self {
-        RAccessController { scopes: scope_manager.get_scopes().clone(), current_scope: scope_manager.current_scope() }
+impl AccessController {
+    pub fn new(scope_manager: &super::scope_manager::ScopeManager) -> Self {
+        AccessController { scopes: scope_manager.get_scopes().clone(), current_scope: scope_manager.current_scope() }
     }
-    pub fn check_access(&self, _resource: RResourceId, _operation: ROperation) -> bool {
+    pub fn check_access(&self, _resource: ResourceId, _operation: Operation) -> bool {
         // TODO: implement real access evaluation.
         // For safety, deny by default (e.g., require explicit allow in the current or ancestor scope).
         false

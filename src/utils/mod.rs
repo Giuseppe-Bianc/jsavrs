@@ -1,3 +1,5 @@
+use std::collections::HashMap;
+use std::fmt::Display;
 use crate::location::source_location::SourceLocation;
 use crate::location::source_span::SourceSpan;
 use crate::parser::ast::{BinaryOp, Expr, LiteralValue, Parameter, Stmt, Type, UnaryOp};
@@ -7,6 +9,9 @@ use crate::tokens::token::Token;
 use crate::tokens::token_kind::TokenKind;
 use regex::Regex;
 use std::sync::Arc;
+use lazy_static::lazy_static;
+use crate::nir::Module;
+use std::fmt::Write;
 
 // Helper to create a dummy SourceSpan
 pub fn dummy_span() -> SourceSpan {
@@ -226,4 +231,47 @@ pub fn func_from_symbol(sym: Symbol) -> Option<FunctionSymbol> {
         Symbol::Function(f) => Some(f),
         _ => None,
     }
+}
+
+
+lazy_static! {
+    static ref UUID_REGEX: Regex =
+        Regex::new(r"[0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{12}").unwrap();
+}
+
+fn sanitize_uuids(input: &str) -> String {
+    let mut counter = 0;
+    let mut mapping = HashMap::new();
+
+    UUID_REGEX
+        .replace_all(input, |captures: &regex::Captures| {
+            let uuid = captures.get(0).unwrap().as_str();
+            let id = *mapping.entry(uuid.to_string()).or_insert_with(|| {
+                let id = counter;
+                counter += 1;
+                id
+            });
+            format!("SCOPE_{}", id)
+        })
+        .to_string()
+}
+
+pub fn vec_to_string<T: Display>(vec: Vec<T>) -> String {
+    sanitize_uuids(vec.into_iter().map(|x| x.to_string()).collect::<Vec<_>>().join(" ").as_str())
+}
+
+pub fn module_redaceted(module: Module) -> String {
+    let mut redacted: String = String::new();
+    writeln!(redacted, "module {} {{", module.name).unwrap();
+    writeln!(redacted, "  data_layout = \"{}\";", module.data_layout).unwrap();
+    writeln!(redacted, "  target_triple = \"{}\";", module.target_triple).unwrap();
+
+    if module.functions.is_empty() {
+        writeln!(redacted, "  // No functions").unwrap();
+    } else {
+        writeln!(redacted, "{}", vec_to_string(module.functions)).unwrap();
+    }
+
+    write!(redacted, "}}").unwrap();
+    redacted
 }

@@ -1,20 +1,20 @@
-// src/rvir/value/constant.rs
-use super::RValue;
+// src/nir/value/constant.rs
+use super::Value;
 use std::fmt;
 use std::sync::Arc;
 
 #[derive(Debug, Clone, PartialEq)]
-pub enum RIrConstantValue {
+pub enum IrConstantValue {
     String { string: Arc<str> },
-    Array { elements: Vec<RValue> },
-    Struct { name: Arc<str>, elements: Vec<RValue> },
+    Array { elements: Vec<Value> },
+    Struct { name: Arc<str>, elements: Vec<Value> },
 }
 
-impl fmt::Display for RIrConstantValue {
+impl fmt::Display for IrConstantValue {
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
         match self {
-            RIrConstantValue::String { string } => write!(f, "\"{}\"", string.escape_default()),
-            RIrConstantValue::Array { elements } => {
+            IrConstantValue::String { string } => write!(f, "\"{}\"", string.escape_default()),
+            IrConstantValue::Array { elements } => {
                 write!(f, "[")?;
                 for (i, elem) in elements.iter().enumerate() {
                     if i > 0 {
@@ -24,7 +24,7 @@ impl fmt::Display for RIrConstantValue {
                 }
                 write!(f, "]")
             }
-            RIrConstantValue::Struct { name, elements } => {
+            IrConstantValue::Struct { name, elements } => {
                 write!(f, "{name}<")?;
                 for (i, field) in elements.iter().enumerate() {
                     if i > 0 {

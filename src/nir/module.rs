@@ -1,4 +1,4 @@
-use super::{Function, RScopeId};
+use super::{Function, ScopeId};
 use std::fmt;
 use std::sync::Arc;
 
@@ -64,17 +64,18 @@ impl fmt::Display for TargetTriple {
 
 /// Rappresenta un modulo IR (Intermediate Representation).
 #[derive(Debug, Clone)]
+#[allow(dead_code)]
 pub struct Module {
     pub name: Arc<str>,
     pub functions: Vec<Function>,
     pub data_layout: DataLayout,
     pub target_triple: TargetTriple,
-    root_scope: Option<RScopeId>, // Root scope ID for the module settable only at creation
+    root_scope: Option<ScopeId>, // Root scope ID for the module settable only at creation
 }
 
 impl Module {
     /// Crea un nuovo modulo con nome specificato e impostazioni predefinite.
-    pub fn new(name: impl Into<Arc<str>>, root_scope: Option<RScopeId>) -> Self {
+    pub fn new(name: impl Into<Arc<str>>, root_scope: Option<ScopeId>) -> Self {
         Self {
             name: name.into(),
             functions: Vec::new(),
@@ -135,11 +136,11 @@ impl fmt::Display for Module {
         writeln!(f, "module {} {{", self.name)?;
         writeln!(f, "  data_layout = \"{}\";", self.data_layout)?;
         writeln!(f, "  target_triple = \"{}\";", self.target_triple)?;
-        if let Some(rs) = self.root_scope {
+        /*if let Some(rs) = self.root_scope {
             writeln!(f, "  root_scope = \"{}\";", rs)?;
         } else {
             writeln!(f, "  // root_scope: none")?;
-        }
+        }*/
 
         if self.functions.is_empty() {
             writeln!(f, "  // No functions")?;

@@ -4,10 +4,9 @@ use console::style;
 use jsavrs::cli::Args;
 use jsavrs::error::error_reporter::ErrorReporter;
 use jsavrs::lexer::Lexer;
-//use jsavrs::nir::generator::NIrGenerator;
+use jsavrs::nir::generator::NIrGenerator;
 use jsavrs::parser::ast_printer::pretty_print_stmt;
 use jsavrs::parser::jsav_parser::JsavParser;
-use jsavrs::rvir::generator::RIrGenerator;
 use jsavrs::semantic::type_checker::TypeChecker;
 use jsavrs::time::timer::{AutoTimer, Timer};
 use jsavrs::{error::compile_error::CompileError, lexer::lexer_tokenize_with_errors};
@@ -118,7 +117,7 @@ fn main() -> Result<(), CompileError> {
         process::exit(1);
     }
 
-    /*let mut generator = NIrGenerator::new();
+    let mut generator = NIrGenerator::new();
     let nir_timer = Timer::new("NIR Generation");
     let (module, ir_errors) = generator.generate(statements.clone(), file_path.to_str().unwrap());
     println!("{nir_timer}");
@@ -132,19 +131,6 @@ fn main() -> Result<(), CompileError> {
     println!("NIR generation done");
 
     // Print the module
-    if args.verbose {
-        println!("{module:?}");
-        println!("{module}");
-    }*/
-    let mut generator = RIrGenerator::new();
-    let rir_timer = Timer::new("RIR Generation");
-    let (module, rir_errors) = generator.generate(statements.clone(), file_path.to_str().unwrap());
-    println!("{rir_timer}");
-    if !rir_errors.is_empty() {
-        eprintln!("{}", error_reporter.report_errors(rir_errors));
-        process::exit(1);
-    }
-    println!("RIR generation done");
     if args.verbose {
         println!("{module}");
     }

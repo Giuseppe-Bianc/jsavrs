@@ -1,11 +1,11 @@
 use super::cfg::ControlFlowGraph;
-use super::scope_manager::RScopeManager;
-use super::types::{RIrType, RScopeId};
-//use super::value::RValue;
+use super::scope_manager::ScopeManager;
+use super::types::{IrType, ScopeId};
+//use super::value::Value;
 use crate::location::source_span::SourceSpan;
-use crate::rvir::{RBasicBlock, RInstruction, RTerminator};
+use crate::nir::{BasicBlock, Instruction, Terminator};
 use std::collections::HashMap;
-// src/rvir/function.rs
+// src/nir/function.rs
 use std::fmt;
 use std::sync::Arc;
 
@@ -20,7 +20,7 @@ pub struct FunctionAttributes {
 #[derive(Debug, Clone, PartialEq)]
 pub struct IrParameter {
     pub name: Arc<str>,
-    pub ty: RIrType,
+    pub ty: IrType,
     pub attributes: ParamAttributes,
 }
 
@@ -35,15 +35,15 @@ pub struct ParamAttributes {
 pub struct Function {
     pub name: String,
     pub parameters: Vec<IrParameter>,
-    pub return_type: RIrType,
-    pub(crate) cfg: ControlFlowGraph,
-    pub local_vars: HashMap<String, RIrType>,
+    pub return_type: IrType,
+    pub cfg: ControlFlowGraph,
+    pub local_vars: HashMap<String, IrType>,
     pub attributes: FunctionAttributes,
-    pub(crate) scope_manager: RScopeManager,
+    pub(crate) scope_manager: ScopeManager,
 }
 
 impl Function {
-    pub fn new(name: &str, params: Vec<IrParameter>, return_type: RIrType) -> Self {
+    pub fn new(name: &str, params: Vec<IrParameter>, return_type: IrType) -> Self {
         Self {
             name: name.to_string(),
             parameters: params,
@@ -51,12 +51,12 @@ impl Function {
             cfg: ControlFlowGraph::new(format!("entry_{name}")),
             local_vars: HashMap::new(),
             attributes: FunctionAttributes::default(),
-            scope_manager: RScopeManager::new(),
+            scope_manager: ScopeManager::new(),
         }
     }
 
     pub fn add_block(&mut self, label: &str, span: SourceSpan) -> bool {
-        let block = RBasicBlock::new(label, span).with_scope(self.scope_manager.current_scope());
+        let block = BasicBlock::new(label, span).with_scope(self.scope_manager.current_scope());
 
         let block_idx = self.cfg.add_block(block);
 
@@ -71,11 +71,11 @@ impl Function {
         true
     }
 
-    pub fn add_instruction(&mut self, block_label: &str, instruction: RInstruction) -> bool {
+    pub fn add_instruction(&mut self, block_label: &str, instruction: Instruction) -> bool {
         self.cfg.add_instruction_to_block(block_label, instruction)
     }
 
-    pub fn set_terminator(&mut self, block_label: &str, terminator: RTerminator) -> bool {
+    pub fn set_terminator(&mut self, block_label: &str, terminator: Terminator) -> bool {
         self.cfg.set_block_terminator(block_label, terminator)
     }
 
@@ -83,7 +83,7 @@ impl Function {
         self.cfg.connect_blocks(from, to)
     }
 
-    pub fn enter_scope(&mut self) -> RScopeId {
+    pub fn enter_scope(&mut self) -> ScopeId {
         self.scope_manager.enter_scope()
     }
 

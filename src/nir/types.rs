@@ -1,11 +1,11 @@
-// src/rvir/types.rs
+// src/nir/types.rs
 use crate::location::source_span::SourceSpan;
 use std::fmt;
 use std::sync::Arc;
 use uuid::Uuid;
 
 #[derive(Debug, Clone, PartialEq, Eq, Hash)]
-pub enum RIrType {
+pub enum IrType {
     I8,
     I16,
     I32,
@@ -20,77 +20,77 @@ pub enum RIrType {
     Char,
     String,
     Void,
-    Pointer(Box<RIrType>),
-    Array(Box<RIrType>, usize),
+    Pointer(Box<IrType>),
+    Array(Box<IrType>, usize),
     Custom(Arc<str>, SourceSpan),                         // Added source span
-    Struct(Arc<str>, Vec<(String, RIrType)>, SourceSpan), // New struct type
+    Struct(Arc<str>, Vec<(String, IrType)>, SourceSpan), // New struct type
 }
 
 #[derive(Debug, Clone, PartialEq, Eq, Hash, Copy)]
-pub struct RScopeId(Uuid);
+pub struct ScopeId(Uuid);
 
-impl RScopeId {
+impl ScopeId {
     pub fn new() -> Self {
-        RScopeId(Uuid::new_v4())
+        ScopeId(Uuid::new_v4())
     }
 }
 
-impl Default for RScopeId {
+impl Default for ScopeId {
     fn default() -> Self {
-        RScopeId::new()
+        ScopeId::new()
     }
 }
 
 #[derive(Debug, Clone, PartialEq, Eq, Hash, Copy)]
-pub struct RResourceId(Uuid);
+pub struct ResourceId(Uuid);
 
-impl RResourceId {
+impl ResourceId {
     pub fn new() -> Self {
-        RResourceId(Uuid::new_v4())
+        ResourceId(Uuid::new_v4())
     }
 }
 
-impl Default for RResourceId {
+impl Default for ResourceId {
     fn default() -> Self {
-        RResourceId::new()
+        ResourceId::new()
     }
 }
 
-// Display implementation for RScopeId
-impl fmt::Display for RScopeId {
+// Display implementation for ScopeId
+impl fmt::Display for ScopeId {
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
         write!(f, "{}", self.0)
     }
 }
 
-// Display implementation for RResourceId
-impl fmt::Display for RResourceId {
+// Display implementation for ResourceId
+impl fmt::Display for ResourceId {
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
         write!(f, "{}", self.0)
     }
 }
 
-impl fmt::Display for RIrType {
+impl fmt::Display for IrType {
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
         match self {
-            RIrType::I8 => write!(f, "i8"),
-            RIrType::I16 => write!(f, "i16"),
-            RIrType::I32 => write!(f, "i32"),
-            RIrType::I64 => write!(f, "i64"),
-            RIrType::U8 => write!(f, "u8"),
-            RIrType::U16 => write!(f, "u16"),
-            RIrType::U32 => write!(f, "u32"),
-            RIrType::U64 => write!(f, "u64"),
-            RIrType::F32 => write!(f, "f32"),
-            RIrType::F64 => write!(f, "f64"),
-            RIrType::Bool => write!(f, "bool"),
-            RIrType::Char => write!(f, "char"),
-            RIrType::String => write!(f, "string"),
-            RIrType::Void => write!(f, "void"),
-            RIrType::Pointer(inner) => write!(f, "*{inner}"),
-            RIrType::Array(element_type, size) => write!(f, "[{element_type}; {size}]"),
-            RIrType::Custom(name, _) => write!(f, "{name}"),
-            RIrType::Struct(name, fields, _) => {
+            IrType::I8 => write!(f, "i8"),
+            IrType::I16 => write!(f, "i16"),
+            IrType::I32 => write!(f, "i32"),
+            IrType::I64 => write!(f, "i64"),
+            IrType::U8 => write!(f, "u8"),
+            IrType::U16 => write!(f, "u16"),
+            IrType::U32 => write!(f, "u32"),
+            IrType::U64 => write!(f, "u64"),
+            IrType::F32 => write!(f, "f32"),
+            IrType::F64 => write!(f, "f64"),
+            IrType::Bool => write!(f, "bool"),
+            IrType::Char => write!(f, "char"),
+            IrType::String => write!(f, "string"),
+            IrType::Void => write!(f, "void"),
+            IrType::Pointer(inner) => write!(f, "*{inner}"),
+            IrType::Array(element_type, size) => write!(f, "[{element_type}; {size}]"),
+            IrType::Custom(name, _) => write!(f, "{name}"),
+            IrType::Struct(name, fields, _) => {
                 let fields_str =
                     fields.iter().map(|(field_name, ty)| format!("{field_name}: {ty}")).collect::<Vec<_>>().join(", ");
                 write!(f, "struct {name} {{ {fields_str} }}")

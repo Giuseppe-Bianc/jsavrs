@@ -1,51 +1,51 @@
-use super::types::RScopeId;
-// src/rvir/basic_block.rs
+use super::types::ScopeId;
+// src/nir/basic_block.rs
 use super::{instruction::*, terminator::*};
 use crate::location::source_span::SourceSpan;
 use std::fmt;
 use std::sync::Arc;
 
 #[derive(Debug, Clone, PartialEq)]
-pub struct RBasicBlock {
+pub struct BasicBlock {
     pub label: Arc<str>,
     pub source_span: SourceSpan,
-    pub instructions: Vec<RInstruction>,
-    pub(crate) terminator: RTerminator,
-    pub(crate) scope: Option<RScopeId>,
+    pub instructions: Vec<Instruction>,
+    pub(crate) terminator: Terminator,
+    pub(crate) scope: Option<ScopeId>,
 }
 
-impl RBasicBlock {
+impl BasicBlock {
     pub fn new(label: &str, span: SourceSpan) -> Self {
         Self {
             label: label.into(),
             source_span: span.clone(),
             instructions: Vec::new(),
-            terminator: RTerminator::new(RTerminatorKind::Unreachable, span),
+            terminator: Terminator::new(TerminatorKind::Unreachable, span),
             scope: None,
         }
     }
 
-    pub fn with_scope(mut self, scope: RScopeId) -> Self {
+    pub fn with_scope(mut self, scope: ScopeId) -> Self {
         self.scope = Some(scope);
         self
     }
 
-    pub fn terminator(&self) -> &RTerminator {
+    pub fn terminator(&self) -> &Terminator {
         &self.terminator
     }
-    pub fn terminator_mut(&mut self) -> &mut RTerminator {
+    pub fn terminator_mut(&mut self) -> &mut Terminator {
         &mut self.terminator
     }
-    pub fn set_terminator(&mut self, t: RTerminator) {
+    pub fn set_terminator(&mut self, t: Terminator) {
         self.terminator = t;
     }
 
-    pub fn scope(&self) -> Option<RScopeId> {
+    pub fn scope(&self) -> Option<ScopeId> {
         self.scope
-    } // if RScopeId: Copy
+    } // if ScopeId: Copy
     // alternatively (safe regardless of Copy):
-    // pub fn scope(&self) -> Option<&RScopeId> { self.scope.as_ref() }
-    pub fn set_scope(&mut self, s: RScopeId) {
+    // pub fn scope(&self) -> Option<&ScopeId> { self.scope.as_ref() }
+    pub fn set_scope(&mut self, s: ScopeId) {
         self.scope = Some(s);
     }
     pub fn clear_scope(&mut self) {
@@ -53,7 +53,7 @@ impl RBasicBlock {
     }
 }
 
-impl fmt::Display for RBasicBlock {
+impl fmt::Display for BasicBlock {
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
         if let Some(scope) = &self.scope {
             writeln!(f, "// Scope: {scope}")?;

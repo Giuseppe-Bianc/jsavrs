@@ -1,9 +1,9 @@
-// src/rvir/cfg.rs
-use super::basic_block::RBasicBlock;
-use super::instruction::RInstruction;
-use super::terminator::RTerminator;
-//use super::types::RIrType;
-//use super::value::RValue;
+// src/nir/cfg.rs
+use super::basic_block::BasicBlock;
+use super::instruction::Instruction;
+use super::terminator::Terminator;
+//use super::types::IrType;
+//use super::value::Value;
 //use crate::location::source_span::SourceSpan;
 use petgraph::graph::{DiGraph, NodeIndex};
 use petgraph::visit::Dfs;
@@ -12,8 +12,8 @@ use std::sync::Arc;
 
 #[derive(Debug, Clone)]
 pub struct ControlFlowGraph {
-    graph: DiGraph<RBasicBlock, ()>,
-    entry_label: String,
+    graph: DiGraph<BasicBlock, ()>,
+    pub entry_label: String,
 }
 impl ControlFlowGraph {
     pub fn new(entry_label: String) -> Self {
@@ -24,7 +24,7 @@ impl ControlFlowGraph {
         &self.entry_label
     }
 
-    pub fn add_block(&mut self, block: RBasicBlock) -> NodeIndex {
+    pub fn add_block(&mut self, block: BasicBlock) -> NodeIndex {
         self.graph.add_node(block)
     }
 
@@ -36,11 +36,11 @@ impl ControlFlowGraph {
         self.graph.node_indices().find(|&idx| self.graph[idx].label.as_ref() == label)
     }
 
-    pub fn get_block(&self, label: &str) -> Option<&RBasicBlock> {
+    pub fn get_block(&self, label: &str) -> Option<&BasicBlock> {
         self.find_block_by_label(label).map(|idx| &self.graph[idx])
     }
 
-    pub fn get_block_mut(&mut self, label: &str) -> Option<&mut RBasicBlock> {
+    pub fn get_block_mut(&mut self, label: &str) -> Option<&mut BasicBlock> {
         if let Some(idx) = self.find_block_by_label(label) {
             self.graph.node_weight_mut(idx)
         } else {
@@ -48,7 +48,7 @@ impl ControlFlowGraph {
         }
     }
 
-    pub fn get_entry_block(&self) -> Option<&RBasicBlock> {
+    pub fn get_entry_block(&self) -> Option<&BasicBlock> {
         self.get_block(&self.entry_label)
     }
 
@@ -56,7 +56,7 @@ impl ControlFlowGraph {
         self.find_block_by_label(&self.entry_label)
     }
 
-    pub fn add_instruction_to_block(&mut self, block_label: &str, instruction: RInstruction) -> bool {
+    pub fn add_instruction_to_block(&mut self, block_label: &str, instruction: Instruction) -> bool {
         if let Some(block) = self.get_block_mut(block_label) {
             block.instructions.push(instruction);
             true
@@ -65,7 +65,7 @@ impl ControlFlowGraph {
         }
     }
 
-    pub fn set_block_terminator(&mut self, block_label: &str, terminator: RTerminator) -> bool {
+    pub fn set_block_terminator(&mut self, block_label: &str, terminator: Terminator) -> bool {
         if let Some(block) = self.get_block_mut(block_label) {
             block.terminator = terminator;
             true
@@ -85,11 +85,11 @@ impl ControlFlowGraph {
         }
     }
 
-    pub fn blocks(&self) -> impl Iterator<Item = &RBasicBlock> {
+    pub fn blocks(&self) -> impl Iterator<Item = &BasicBlock> {
         self.graph.node_weights()
     }
 
-    pub fn blocks_mut(&mut self) -> impl Iterator<Item = &mut RBasicBlock> {
+    pub fn blocks_mut(&mut self) -> impl Iterator<Item = &mut BasicBlock> {
         self.graph.node_weights_mut()
     }
 
