@@ -1,75 +1,75 @@
-// src/nir/value/mod.rs
+// src/rvir/value/mod.rs
 pub mod constant;
 pub mod debug_info;
 pub mod kind;
 pub mod literal;
 
-pub use self::{constant::IrConstantValue, debug_info::ValueDebugInfo, kind::ValueKind, literal::IrLiteralValue};
+pub use self::{constant::RIrConstantValue, debug_info::RValueDebugInfo, kind::RValueKind, literal::RIrLiteralValue};
 
-use super::types::{IrType, ScopeId};
+use super::types::{RIrType, RScopeId};
 use crate::location::source_span::SourceSpan;
 use std::fmt;
 use std::sync::Arc;
 use uuid::Uuid;
 
-#[derive(Debug, Clone, PartialEq, Eq, Hash)]
-pub struct ValueId(Uuid);
+#[derive(Debug, Copy, Clone, PartialEq, Eq, Hash)]
+pub struct RValueId(Uuid);
 
-impl ValueId {
+impl RValueId {
     pub fn new() -> Self {
-        ValueId(Uuid::new_v4())
+        RValueId(Uuid::new_v4())
     }
 }
 
-impl Default for ValueId {
+impl Default for RValueId {
     fn default() -> Self {
         Self::new()
     }
 }
 
-impl fmt::Display for ValueId {
+impl fmt::Display for RValueId {
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
         write!(f, "{}", self.0)
     }
 }
 
 #[derive(Debug, Clone, PartialEq)]
-pub struct Value {
-    pub id: ValueId,
-    pub kind: ValueKind,
-    pub ty: IrType,
-    pub debug_info: Option<ValueDebugInfo>,
-    pub scope: Option<ScopeId>,
+pub struct RValue {
+    pub id: RValueId,
+    pub kind: RValueKind,
+    pub ty: RIrType,
+    pub debug_info: Option<RValueDebugInfo>,
+    pub scope: Option<RScopeId>,
 }
 
-impl Value {
-    pub fn new_literal(imm: IrLiteralValue) -> Self {
-        let ty: IrType = (&imm).into();
-        Value { id: ValueId::new(), kind: ValueKind::Literal(imm), ty, debug_info: None, scope: None }
+impl RValue {
+    pub fn new_literal(imm: RIrLiteralValue) -> Self {
+        let ty: RIrType = (&imm).into();
+        RValue { id: RValueId::new(), kind: RValueKind::Literal(imm), ty, debug_info: None, scope: None }
     }
 
-    pub fn new_constant(imm: IrConstantValue, ty: IrType) -> Self {
-        Value { id: ValueId::new(), kind: ValueKind::Constant(imm), ty, debug_info: None, scope: None }
+    pub fn new_constant(imm: RIrConstantValue, ty: RIrType) -> Self {
+        RValue { id: RValueId::new(), kind: RValueKind::Constant(imm), ty, debug_info: None, scope: None }
     }
 
-    pub fn new_local(name: String, ty: IrType) -> Self {
-        Value { id: ValueId::new(), kind: ValueKind::Local(name), ty, debug_info: None, scope: None }
+    pub fn new_local(name: Arc<str>, ty: RIrType) -> Self {
+        RValue { id: RValueId::new(), kind: RValueKind::Local(name), ty, debug_info: None, scope: None }
     }
 
-    pub fn new_global(name: String, ty: IrType) -> Self {
-        Value { id: ValueId::new(), kind: ValueKind::Global(name), ty, debug_info: None, scope: None }
+    pub fn new_global(name: Arc<str>, ty: RIrType) -> Self {
+        RValue { id: RValueId::new(), kind: RValueKind::Global(name), ty, debug_info: None, scope: None }
     }
 
-    pub fn new_temporary(id: u64, ty: IrType) -> Self {
-        Value { id: ValueId::new(), kind: ValueKind::Temporary(id), ty, debug_info: None, scope: None }
+    pub fn new_temporary(tmp_id: u64, ty: RIrType) -> Self {
+        RValue { id: RValueId::new(), kind: RValueKind::Temporary(tmp_id), ty, debug_info: None, scope: None }
     }
 
     pub fn with_debug_info(mut self, name: Option<Arc<str>>, span: SourceSpan) -> Self {
-        self.debug_info = Some(ValueDebugInfo { name, source_span: span });
+        self.debug_info = Some(RValueDebugInfo { name, source_span: span });
         self
     }
 
-    pub fn with_scope(mut self, scope: ScopeId) -> Self {
+    pub fn with_scope(mut self, scope: RScopeId) -> Self {
         self.scope = Some(scope);
         self
     }
@@ -81,20 +81,17 @@ impl Value {
     }*/
 }
 
-impl fmt::Display for Value {
+impl fmt::Display for RValue {
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
         match &self.kind {
-            ValueKind::Literal(imm) => write!(f, "{imm}")?,
-            ValueKind::Constant(imm) => write!(f, "{imm}")?,
-            ValueKind::Local(name) => write!(f, "%{name}")?,
-            ValueKind::Global(name) => write!(f, "@{name}")?,
-            ValueKind::Temporary(id) => write!(f, "t{id}")?,
+            RValueKind::Literal(imm) => write!(f, "{imm}")?,
+            RValueKind::Constant(imm) => write!(f, "{imm}")?,
+            RValueKind::Local(name) => write!(f, "%{name}")?,
+            RValueKind::Global(name) => write!(f, "@{name}")?,
+            RValueKind::Temporary(id) => write!(f, "t{id}")?,
         };
-        #[allow(clippy::collapsible_if)]
-        if let Some(di) = &self.debug_info {
-            if let Some(name) = &di.name {
-                write!(f, " ({name})")?;
-            }
+        if let Some(name) = self.debug_info.as_ref().and_then(|di| di.name.as_ref()) {
+            write!(f, " ({name})")?;
         }
         Ok(())
     }

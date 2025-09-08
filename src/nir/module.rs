@@ -1,8 +1,9 @@
-use crate::nir::Function;
+use super::{Function, RScopeId};
 use std::fmt;
+use std::sync::Arc;
 
 /// Descrive il layout dei dati per diversi target.
-#[derive(Debug, Clone, PartialEq)]
+#[derive(Debug, Clone, Copy, PartialEq, Eq, Hash)]
 pub enum DataLayout {
     LinuxX86_64,
     LinuxAArch64,
@@ -31,7 +32,7 @@ impl fmt::Display for DataLayout {
 }
 
 /// Identifica la tripletta di destinazione (arch-os-environment).
-#[derive(Debug, Clone, PartialEq)]
+#[derive(Debug, Clone, Copy, PartialEq, Eq, Hash)]
 pub enum TargetTriple {
     X86_64UnknownLinuxGnu,
     X86_64PcWindowsGnu,
@@ -61,23 +62,25 @@ impl fmt::Display for TargetTriple {
     }
 }
 
-/// Rappresenta un modulo NIR (Intermediate Representation).
+/// Rappresenta un modulo IR (Intermediate Representation).
 #[derive(Debug, Clone)]
 pub struct Module {
-    pub name: String,
+    pub name: Arc<str>,
     pub functions: Vec<Function>,
     pub data_layout: DataLayout,
     pub target_triple: TargetTriple,
+    root_scope: Option<RScopeId>, // Root scope ID for the module settable only at creation
 }
 
 impl Module {
     /// Crea un nuovo modulo con nome specificato e impostazioni predefinite.
-    pub fn new(name: String) -> Self {
+    pub fn new(name: impl Into<Arc<str>>, root_scope: Option<RScopeId>) -> Self {
         Self {
-            name,
+            name: name.into(),
             functions: Vec::new(),
             data_layout: DataLayout::LinuxX86_64,
             target_triple: TargetTriple::X86_64UnknownLinuxGnu,
+            root_scope,
         }
     }
 
@@ -132,14 +135,19 @@ impl fmt::Display for Module {
         writeln!(f, "module {} {{", self.name)?;
         writeln!(f, "  data_layout = \"{}\";", self.data_layout)?;
         writeln!(f, "  target_triple = \"{}\";", self.target_triple)?;
+        if let Some(rs) = self.root_scope {
+            writeln!(f, "  root_scope = \"{}\";", rs)?;
+        } else {
+            writeln!(f, "  // root_scope: none")?;
+        }
 
         if self.functions.is_empty() {
             writeln!(f, "  // No functions")?;
         } else {
             for function in &self.functions {
-                write!(f, "  {}", function)?;
-                if !function.to_string().ends_with('\n') {
-                    writeln!(f)?;
+                let s = function.to_string();
+                for line in s.trim_end_matches('\n').lines() {
+                    writeln!(f, "  {line}")?;
                 }
             }
         }

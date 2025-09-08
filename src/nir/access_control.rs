@@ -1,8 +1,8 @@
-// src/nir/access_control.rs
-use super::types::{ResourceId, ScopeId};
+// src/rvir/access_control.rs
+use super::types::{RResourceId, RScopeId};
 
-#[derive(Debug, Clone, PartialEq, Eq, Hash)]
-pub enum Operation {
+#[derive(Debug, Clone, Copy, PartialEq, Eq, Hash)]
+pub enum ROperation {
     Read,
     Write,
     Execute,
@@ -10,7 +10,8 @@ pub enum Operation {
     Deallocate,
 }
 
-pub struct AccessRules {
+#[derive(Debug, Clone, Copy, Default, PartialEq, Eq)]
+pub struct RAccessRules {
     read: bool,
     write: bool,
     execute: bool,
@@ -18,37 +19,37 @@ pub struct AccessRules {
     deallocate: bool,
 }
 
-impl AccessRules {
+impl RAccessRules {
     // Add a public constructor
-    pub fn new(read: bool, write: bool, execute: bool, allocate: bool, deallocate: bool) -> Self {
-        AccessRules { read, write, execute, allocate, deallocate }
+    pub const fn new(read: bool, write: bool, execute: bool, allocate: bool, deallocate: bool) -> Self {
+        RAccessRules { read, write, execute, allocate, deallocate }
     }
 
-    pub fn allows(&self, operation: Operation) -> bool {
+    pub const fn allows(&self, operation: ROperation) -> bool {
         match operation {
-            Operation::Read => self.read,
-            Operation::Write => self.write,
-            Operation::Execute => self.execute,
-            Operation::Allocate => self.allocate,
-            Operation::Deallocate => self.deallocate,
+            ROperation::Read => self.read,
+            ROperation::Write => self.write,
+            ROperation::Execute => self.execute,
+            ROperation::Allocate => self.allocate,
+            ROperation::Deallocate => self.deallocate,
         }
     }
 }
 
 #[allow(dead_code)]
-pub struct AccessController {
-    scopes: std::collections::HashMap<ScopeId, super::scope::Scope>,
-    current_scope: ScopeId,
+#[derive(Debug)]
+pub struct RAccessController {
+    scopes: std::collections::HashMap<RScopeId, super::scope::RScope>,
+    current_scope: RScopeId,
 }
 
-impl AccessController {
-    pub fn new(scope_manager: &super::scope_manager::ScopeManager) -> Self {
-        AccessController { scopes: scope_manager.get_scopes(), current_scope: scope_manager.current_scope() }
+impl RAccessController {
+    pub fn new(scope_manager: &super::scope_manager::RScopeManager) -> Self {
+        RAccessController { scopes: scope_manager.get_scopes().clone(), current_scope: scope_manager.current_scope() }
     }
-
-    pub fn check_access(&self, _resource: ResourceId, _operation: Operation) -> bool {
-        // Implementazione completa dipende dalla logica specifica
-        // Esempio: verifica se il current scope o un suo parent possiede la risorsa
-        true // Placeholder
+    pub fn check_access(&self, _resource: RResourceId, _operation: ROperation) -> bool {
+        // TODO: implement real access evaluation.
+        // For safety, deny by default (e.g., require explicit allow in the current or ancestor scope).
+        false
     }
 }

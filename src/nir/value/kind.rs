@@ -1,11 +1,12 @@
-// src/nir/value/kind.rs
-use super::{constant::IrConstantValue, literal::IrLiteralValue};
+// src/rvir/value/kind.rs
+use super::{constant::RIrConstantValue, literal::RIrLiteralValue};
+use std::sync::Arc;
 
 #[derive(Debug, Clone, PartialEq)]
-pub enum ValueKind {
-    Literal(IrLiteralValue),
-    Constant(IrConstantValue),
-    Local(String),
-    Global(String),
+pub enum RValueKind {
+    Literal(RIrLiteralValue),
+    Constant(RIrConstantValue),
+    Local(Arc<str>),
+    Global(Arc<str>),
     Temporary(u64),
 }

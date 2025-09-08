@@ -1,54 +1,50 @@
-// src/nir/generator.rs
+// src/rvir/generator.rs
 use super::*;
 use crate::error::compile_error::CompileError;
 use crate::location::source_span::SourceSpan;
-use crate::nir::function::{IrParameter, ParamAttributes};
-use crate::nir::instruction::{Instruction, InstructionKind, IrBinaryOp, IrUnaryOp};
 use crate::parser::ast::*;
 use crate::tokens::number::Number;
 use std::collections::HashMap;
 use std::sync::Arc;
 
-pub struct NIrGenerator {
-    _current_function: Option<String>,
-    current_block: Option<BasicBlock>,
+pub struct RIrGenerator {
+    current_block: Option<RBasicBlock>,
     current_block_label: Option<String>,
-    scope_manager: ScopeManager,
+    scope_manager: RScopeManager,
     temp_counter: u64,
     block_counter: usize,
     errors: Vec<CompileError>,
     break_stack: Vec<String>,
     continue_stack: Vec<String>,
     type_context: TypeContext,
-    _next_value_id: u64,
-    access_controller: AccessController,
+    _access_controller: RAccessController,
+    root_scope: Option<RScopeId>,
 }
 
+#[allow(dead_code)]
 #[derive(Debug, Default)]
 struct TypeContext {
-    structs: HashMap<String, (Vec<IrType>, SourceSpan)>,
-    _aliases: HashMap<String, IrType>,
+    structs: HashMap<String, (Vec<(String, RIrType)>, SourceSpan)>,
+    aliases: HashMap<String, RIrType>,
 }
 
 #[allow(clippy::collapsible_if, clippy::collapsible_else_if)]
-impl NIrGenerator {
+impl RIrGenerator {
     pub fn new() -> Self {
-        let scope_manager = ScopeManager::new();
-        let access_controller = AccessController::new(&scope_manager);
-
+        let scope_manager = RScopeManager::new();
+        let access_controller = RAccessController::new(&scope_manager);
         Self {
-            _current_function: None,
             current_block: None,
             current_block_label: None,
-            scope_manager,
+            scope_manager: scope_manager.clone(),
             temp_counter: 0,
             block_counter: 0,
             errors: Vec::new(),
             break_stack: Vec::new(),
             continue_stack: Vec::new(),
+            _access_controller: access_controller,
             type_context: TypeContext::default(),
-            _next_value_id: 1,
-            access_controller,
+            root_scope: scope_manager.root_scope(),
         }
     }
 
@@ -58,7 +54,7 @@ impl NIrGenerator {
 
     pub fn generate(&mut self, stmts: Vec<Stmt>, module_name: &str) -> (Module, Vec<CompileError>) {
         //let mut functions = Vec::new();
-        let mut module = Module::new(module_name.into());
+        let mut module = Module::new(module_name, self.root_scope);
 
         for stmt in stmts {
             match stmt {
@@ -89,7 +85,7 @@ impl NIrGenerator {
         if self.block_needs_terminator() {
             self.add_terminator(
                 func,
-                Terminator::new(TerminatorKind::Branch { label: target_label.to_string() }, span),
+                RTerminator::new(RTerminatorKind::Branch { label: target_label.into() }, span),
             );
         }
     }
@@ -100,7 +96,7 @@ impl NIrGenerator {
             .map(|param| {
                 let ty = self.map_type(&param.type_annotation);
                 IrParameter {
-                    name: param.name.clone().to_string(),
+                    name: param.name.clone(),
                     ty: ty.clone(),
                     attributes: ParamAttributes { source_span: Some(param.span.clone()), ..Default::default() },
                 }
@@ -114,95 +110,132 @@ impl NIrGenerator {
         func
     }
 
-    fn map_type(&self, ty: &Type) -> IrType {
+    fn map_type(&self, ty: &Type) -> RIrType {
         match ty {
-            Type::I8 => IrType::I8,
-            Type::I16 => IrType::I16,
-            Type::I32 => IrType::I32,
-            Type::I64 => IrType::I64,
-            Type::U8 => IrType::U8,
-            Type::U16 => IrType::U16,
-            Type::U32 => IrType::U32,
-            Type::U64 => IrType::U64,
-            Type::F32 => IrType::F32,
-            Type::F64 => IrType::F64,
-            Type::Char => IrType::Char,
-            Type::String => IrType::String,
-            Type::Bool => IrType::Bool,
+            Type::I8 => RIrType::I8,
+            Type::I16 => RIrType::I16,
+            Type::I32 => RIrType::I32,
+            Type::I64 => RIrType::I64,
+            Type::U8 => RIrType::U8,
+            Type::U16 => RIrType::U16,
+            Type::U32 => RIrType::U32,
+            Type::U64 => RIrType::U64,
+            Type::F32 => RIrType::F32,
+            Type::F64 => RIrType::F64,
+            Type::Char => RIrType::Char,
+            Type::String => RIrType::String,
+            Type::Bool => RIrType::Bool,
             Type::Custom(name) => {
                 if let Some((fields, span)) = self.type_context.structs.get(name.as_ref()) {
-                    IrType::Struct(name.to_string(), fields.clone(), span.clone())
+                    RIrType::Struct(name.clone(), fields.clone(), span.clone())
                 } else {
-                    IrType::Custom(name.to_string(), SourceSpan::default())
+                    RIrType::Custom(name.clone(), SourceSpan::default())
                 }
             }
             Type::Array(element_type, size_expr) => {
                 if let Expr::Literal { value: LiteralValue::Number(Number::Integer(size)), .. } = **size_expr {
-                    IrType::Array(Box::new(self.map_type(element_type)), size as usize)
+                    RIrType::Array(Box::new(self.map_type(element_type)), size as usize)
                 } else {
-                    IrType::Pointer(Box::new(self.map_type(element_type)))
+                    RIrType::Pointer(Box::new(self.map_type(element_type)))
                 }
             }
-            Type::Vector(element_type) => IrType::Pointer(Box::new(self.map_type(element_type))),
-            Type::Void => IrType::Void,
-            Type::NullPtr => IrType::Pointer(Box::new(IrType::I8)),
+            Type::Vector(element_type) => RIrType::Pointer(Box::new(self.map_type(element_type))),
+            Type::Void => RIrType::Void,
+            Type::NullPtr => RIrType::Pointer(Box::new(RIrType::I8)),
         }
     }
 
     fn finalize_current_block(&mut self, func: &mut Function) {
-        if let Some(block) = self.current_block.take() {
-            let label = block.label.clone();
-            func.add_block(block);
-            self.current_block_label = Some(label);
+        if let Some(mut current_block) = self.current_block.take() {
+            let label = current_block.label.clone();
+
+            // Get the block in the CFG and update its instructions and terminator
+            if let Some(cfg_block) = func.cfg.get_block_mut(&label) {
+                // Transfer instructions and terminator to the CFG block
+                cfg_block.instructions = std::mem::take(&mut current_block.instructions);
+                cfg_block.terminator = current_block.terminator.clone();
+                cfg_block.scope = current_block.scope;
+            }
+
+            self.current_block_label = Some(label.to_string());
         }
     }
 
+    // Add this new method to handle block connections at the end
+    fn finalize_block_connections(&mut self, func: &mut Function) {
+        // First, collect all the connections we need to make
+        let mut connections = Vec::new();
+        for block in func.cfg.blocks() {
+            let label = block.label.clone();
+            for target in block.terminator.get_targets() {
+                connections.push((label.clone(), target));
+            }
+        }
+
+        // Now apply all the connections without holding the immutable borrow
+        for (from_label, to_label) in connections {
+            func.connect_blocks(&from_label, &to_label);
+        }
+    }
     fn generate_function_body(&mut self, func: &mut Function, body: Vec<Stmt>, span: SourceSpan) {
         self.break_stack.clear();
         self.continue_stack.clear();
+
+        // Save the current generator scope manager
+        let saved_scope_manager = std::mem::take(&mut self.scope_manager);
+
         // Establish function scope before creating the entry block
         func.enter_scope();
-        self.scope_manager = func.scope_manager.clone();
-        self.access_controller = AccessController::new(&self.scope_manager);
-        let entry_label = format!("entry_{}", func.name);
-        self.start_block(func, &entry_label, span);
 
-        func.enter_scope();
-        self.scope_manager = func.scope_manager.clone();
+        // Create the entry block using start_block
+        let entry_label = format!("entry_{}", func.name);
+        self.start_block(func, &entry_label, span.clone());
 
         // Add function parameters to symbol table
         for param in &func.parameters {
-            //let temp = self.new_temp();
-            let value = Value::new_local(param.name.clone(), param.ty.clone()).with_debug_info(
-                Some(param.name.clone().into()),
+            let value = RValue::new_local(param.name.clone(), param.ty.clone()).with_debug_info(
+                Some(param.name.clone()),
                 param.attributes.source_span.clone().unwrap_or_default(),
             );
-
-            self.scope_manager.add_symbol(param.name.clone().into(), value.clone());
+            self.scope_manager.add_symbol(param.name.clone(), value.clone());
         }
 
+        // Process all statements
         for stmt in body {
             self.generate_stmt(func, stmt);
         }
 
+        // Ensure the last block has a terminator if needed
         if let Some(block) = &self.current_block {
-            if matches!(block.terminator.kind, TerminatorKind::Unreachable) {
+            if matches!(block.terminator.kind, RTerminatorKind::Unreachable) {
                 let return_value = match func.return_type {
-                    IrType::Void => Value::new_literal(IrLiteralValue::I32(0)),
-                    _ => Value::new_literal(IrLiteralValue::I32(0)),
+                    RIrType::Void => RValue::new_literal(RIrLiteralValue::I32(0)),
+                    _ => RValue::new_literal(RIrLiteralValue::I32(0)),
                 };
                 self.add_terminator(
                     func,
-                    Terminator::new(
-                        TerminatorKind::Return { value: return_value, ty: func.return_type.clone() },
+                    RTerminator::new(
+                        RTerminatorKind::Return { value: return_value, ty: func.return_type.clone() },
                         SourceSpan::default(),
                     ),
                 );
             }
         }
 
+        // Finalize the last block
         self.finalize_current_block(func);
+
+        // Now connect all blocks
+        self.finalize_block_connections(func);
+
+        // Update the function's scope manager with the scopes we created during generation
+        func.scope_manager = self.scope_manager.clone();
+
+        // Restore the generator's scope manager and append the function's scope manager
+        self.scope_manager = saved_scope_manager;
+
         func.exit_scope();
+        self.scope_manager.append_manager(&func.scope_manager);
     }
 
     fn generate_stmt(&mut self, func: &mut Function, stmt: Stmt) {
@@ -245,23 +278,23 @@ impl NIrGenerator {
     }
 
     fn generate_var_declaration(&mut self, func: &mut Function, variables: Vec<Arc<str>>, type_annotation: Type, initializers: Vec<Expr>, is_mutable: bool, span: SourceSpan) {
-        let ty: IrType = self.map_type(&type_annotation);
+        let ty: RIrType = self.map_type(&type_annotation);
 
         for (i, var) in variables.iter().enumerate() {
             if is_mutable {
                 let temp_id = self.new_temp();
-                let ptr_ty = IrType::Pointer(Box::new(ty.clone()));
-                let ptr_value = Value::new_temporary(temp_id, ptr_ty).with_debug_info(Some(var.clone()), span.clone());
+                let ptr_ty = RIrType::Pointer(Box::new(ty.clone()));
+                let ptr_value = RValue::new_temporary(temp_id, ptr_ty).with_debug_info(Some(var.clone()), span.clone());
 
-                let alloca_inst = Instruction::new(InstructionKind::Alloca { ty: ty.clone() }, span.clone())
+                let alloca_inst = RInstruction::new(RInstructionKind::Alloca { ty: ty.clone() }, span.clone())
                     .with_result(ptr_value.clone());
 
                 self.add_instruction(alloca_inst);
 
                 if let Some(init) = initializers.get(i) {
                     let value_val = self.generate_expr(func, init.clone());
-                    let store_inst = Instruction::new(
-                        InstructionKind::Store { value: value_val, dest: ptr_value.clone() },
+                    let store_inst = RInstruction::new(
+                        RInstructionKind::Store { value: value_val, dest: ptr_value.clone() },
                         span.clone(),
                     );
                     self.add_instruction(store_inst);
@@ -281,11 +314,11 @@ impl NIrGenerator {
 
     fn generate_return(&mut self, func: &mut Function, value: Option<Expr>, span: SourceSpan) {
         let return_value =
-            value.map_or_else(|| Value::new_literal(IrLiteralValue::I32(0)), |expr| self.generate_expr(func, expr));
+            value.map_or_else(|| RValue::new_literal(RIrLiteralValue::I32(0)), |expr| self.generate_expr(func, expr));
 
         self.add_terminator(
             func,
-            Terminator::new(TerminatorKind::Return { value: return_value, ty: func.return_type.clone() }, span),
+            RTerminator::new(RTerminatorKind::Return { value: return_value, ty: func.return_type.clone() }, span),
         );
     }
 
@@ -298,11 +331,11 @@ impl NIrGenerator {
 
         self.add_terminator(
             func,
-            Terminator::new(
-                TerminatorKind::ConditionalBranch {
+            RTerminator::new(
+                RTerminatorKind::ConditionalBranch {
                     condition: cond_value,
-                    true_label: then_label.clone(),
-                    false_label: else_label.clone(),
+                    true_label: then_label.clone().into(),
+                    false_label: else_label.clone().into(),
                 },
                 span.clone(),
             ),
@@ -337,18 +370,18 @@ impl NIrGenerator {
 
         self.add_terminator(
             func,
-            Terminator::new(TerminatorKind::Branch { label: loop_start_label.clone() }, span.clone()),
+            RTerminator::new(RTerminatorKind::Branch { label: loop_start_label.clone().into() }, span.clone()),
         );
 
         self.start_block(func, &loop_start_label, span.clone());
         let cond_value = self.generate_expr(func, condition);
         self.add_terminator(
             func,
-            Terminator::new(
-                TerminatorKind::ConditionalBranch {
+            RTerminator::new(
+                RTerminatorKind::ConditionalBranch {
                     condition: cond_value,
-                    true_label: loop_body_label.clone(),
-                    false_label: loop_end_label.clone(),
+                    true_label: loop_body_label.clone().into(),
+                    false_label: loop_end_label.clone().into(),
                 },
                 span.clone(),
             ),
@@ -383,7 +416,8 @@ impl NIrGenerator {
 
         self.add_terminator(
             func,
-            Terminator::new(TerminatorKind::Branch { label: loop_st_label.clone() }, span.clone()),
+
+            RTerminator::new(RTerminatorKind::Branch { label: loop_st_label.clone().into() }, span.clone()),
         );
 
         self.start_block(func, &loop_st_label, span.clone());
@@ -391,16 +425,16 @@ impl NIrGenerator {
         let cond_value = if let Some(cond) = condition {
             self.generate_expr(func, cond)
         } else {
-            Value::new_literal(IrLiteralValue::Bool(true))
+            RValue::new_literal(RIrLiteralValue::Bool(true))
         };
 
         self.add_terminator(
             func,
-            Terminator::new(
-                TerminatorKind::ConditionalBranch {
+            RTerminator::new(
+                RTerminatorKind::ConditionalBranch {
                     condition: cond_value,
-                    true_label: loop_bd_label.clone(),
-                    false_label: loop_end_label.clone(),
+                    true_label: loop_bd_label.clone().into(),
+                    false_label: loop_end_label.clone().into(),
                 },
                 span.clone(),
             ),
@@ -431,7 +465,7 @@ impl NIrGenerator {
 
     fn handle_break(&mut self, func: &mut Function, span: SourceSpan) {
         if let Some(label) = self.break_stack.last() {
-            self.add_terminator(func, Terminator::new(TerminatorKind::Branch { label: label.clone() }, span));
+            self.add_terminator(func, RTerminator::new(RTerminatorKind::Branch { label: label.clone().into() }, span));
         } else {
             self.new_error("Break outside loop".to_string(), span);
         }
@@ -439,13 +473,13 @@ impl NIrGenerator {
 
     fn handle_continue(&mut self, func: &mut Function, span: SourceSpan) {
         if let Some(label) = self.continue_stack.last() {
-            self.add_terminator(func, Terminator::new(TerminatorKind::Branch { label: label.clone() }, span));
+            self.add_terminator(func, RTerminator::new(RTerminatorKind::Branch { label: label.clone().into() }, span));
         } else {
             self.new_error("Continue outside loop".to_string(), span);
         }
     }
 
-    fn generate_expr(&mut self, func: &mut Function, expr: Expr) -> Value {
+    fn generate_expr(&mut self, func: &mut Function, expr: Expr) -> RValue {
         match expr {
             Expr::Literal { value, span } => self.generate_literal(value, span),
             Expr::Binary { left, op, right, span } => self.generate_binary(func, *left, op, *right, span),
@@ -457,7 +491,7 @@ impl NIrGenerator {
             Expr::ArrayAccess { array, index, span } => self.generate_array_access(func, *array, *index, span),
             other => {
                 self.new_error("Unsupported expression type".to_string(), other.span().clone());
-                Value::new_literal(IrLiteralValue::I32(0))
+                RValue::new_literal(RIrLiteralValue::I32(0))
             }
         }
     }
@@ -465,38 +499,38 @@ impl NIrGenerator {
     /// Genera l'accesso ad array: calcola l'indirizzo dell'elemento con GEP
     /// e restituisce un puntatore all'elemento. Non esegue il Load per mantenere
     /// la compatibilità con l'uso attuale dei puntatori nelle espressioni.
-    fn generate_array_access(&mut self, func: &mut Function, array: Expr, index: Expr, span: SourceSpan) -> Value {
+    fn generate_array_access(&mut self, func: &mut Function, array: Expr, index: Expr, span: SourceSpan) -> RValue {
         let base_val = self.generate_expr(func, array);
         let index_val = self.generate_expr(func, index);
 
         // Deduzione del tipo elemento: gestiamo sia puntatore ad array che array diretto
         let element_ty = match &base_val.ty {
-            IrType::Pointer(inner) => match inner.as_ref() {
-                IrType::Array(elem_ty, _) => *elem_ty.clone(),
+            RIrType::Pointer(inner) => match inner.as_ref() {
+                RIrType::Array(elem_ty, _) => *elem_ty.clone(),
                 other => other.clone(), // fallback: puntatore a elemento già puntato
             },
-            IrType::Array(elem_ty, _) => *elem_ty.clone(),
+            RIrType::Array(elem_ty, _) => *elem_ty.clone(),
             other => {
                 // Caso inatteso: segnaliamo ma proseguiamo con un fallback sicuro (i32)
                 self.new_error(format!("Array access on non-array type: {other}"), span.clone());
-                IrType::I32
+                RIrType::I32
             }
         };
 
         let tmp = self.new_temp();
-        let gep = Instruction::new(
-            InstructionKind::GetElementPtr { base: base_val, index: index_val, element_ty: element_ty.clone() },
+        let gep = RInstruction::new(
+            RInstructionKind::GetElementPtr { base: base_val, index: index_val, element_ty: element_ty.clone() },
             span.clone(),
         )
-        .with_result(Value::new_temporary(tmp, IrType::Pointer(Box::new(element_ty))));
+            .with_result(RValue::new_temporary(tmp, RIrType::Pointer(Box::new(element_ty))));
 
         self.add_instruction(gep.clone());
         gep.result.unwrap()
     }
 
-    fn generate_array_literal(&mut self, func: &mut Function, elements: Vec<Expr>, span: SourceSpan) -> Value {
+    fn generate_array_literal(&mut self, func: &mut Function, elements: Vec<Expr>, span: SourceSpan) -> RValue {
         if elements.is_empty() {
-            return Value::new_literal(IrLiteralValue::I64(0)); // Null pointer
+            return RValue::new_literal(RIrLiteralValue::I64(0)); // Null pointer
         }
 
         let mut element_vals = Vec::with_capacity(elements.len());
@@ -507,115 +541,115 @@ impl NIrGenerator {
         let element_ty = element_vals[0].ty.clone();
         let array_size = element_vals.len();
         let array_temp = self.new_temp();
-        let array_ty = IrType::Array(Box::new(element_ty.clone()), array_size);
+        let array_ty = RIrType::Array(Box::new(element_ty.clone()), array_size);
 
-        let alloca_inst = Instruction::new(InstructionKind::Alloca { ty: array_ty.clone() }, span.clone())
-            .with_result(Value::new_temporary(array_temp, array_ty.clone()));
+        let alloca_inst = RInstruction::new(RInstructionKind::Alloca { ty: array_ty.clone() }, span.clone())
+            .with_result(RValue::new_temporary(array_temp, array_ty.clone()));
 
         self.add_instruction(alloca_inst.clone());
         let array_ptr = alloca_inst.result.unwrap();
 
         for (index, element_val) in element_vals.into_iter().enumerate() {
             let index_temp = self.new_temp();
-            let index_val = Value::new_literal(IrLiteralValue::I32(index as i32));
+            let index_val = RValue::new_literal(RIrLiteralValue::I32(index as i32));
 
-            let gep_inst = Instruction::new(
-                InstructionKind::GetElementPtr {
+            let gep_inst = RInstruction::new(
+                RInstructionKind::GetElementPtr {
                     base: array_ptr.clone(),
                     index: index_val,
                     element_ty: element_ty.clone(),
                 },
                 span.clone(),
             )
-            .with_result(Value::new_temporary(index_temp, IrType::Pointer(Box::new(element_ty.clone()))));
+                .with_result(RValue::new_temporary(index_temp, RIrType::Pointer(Box::new(element_ty.clone()))));
             self.add_instruction(gep_inst.clone());
 
             let element_ptr = gep_inst.result.unwrap();
 
             let store_inst =
-                Instruction::new(InstructionKind::Store { value: element_val, dest: element_ptr }, span.clone());
+                RInstruction::new(RInstructionKind::Store { value: element_val, dest: element_ptr }, span.clone());
             self.add_instruction(store_inst);
         }
 
         array_ptr
     }
 
-    fn generate_literal(&mut self, value: LiteralValue, span: SourceSpan) -> Value {
+    fn generate_literal(&mut self, value: LiteralValue, span: SourceSpan) -> RValue {
         match value {
             LiteralValue::Number(num) => match num {
-                Number::I8(i) => Value::new_literal(IrLiteralValue::I8(i)).with_debug_info(None, span),
-                Number::I16(i) => Value::new_literal(IrLiteralValue::I16(i)).with_debug_info(None, span),
-                Number::I32(i) => Value::new_literal(IrLiteralValue::I32(i)).with_debug_info(None, span),
-                Number::Integer(i) => Value::new_literal(IrLiteralValue::I64(i)).with_debug_info(None, span),
-                Number::U8(u) => Value::new_literal(IrLiteralValue::U8(u)).with_debug_info(None, span),
-                Number::U16(u) => Value::new_literal(IrLiteralValue::U16(u)).with_debug_info(None, span),
-                Number::U32(u) => Value::new_literal(IrLiteralValue::U32(u)).with_debug_info(None, span),
-                Number::UnsignedInteger(u) => Value::new_literal(IrLiteralValue::U64(u)).with_debug_info(None, span),
-                Number::Float32(f) => Value::new_literal(IrLiteralValue::F32(f)).with_debug_info(None, span),
-                Number::Float64(f) => Value::new_literal(IrLiteralValue::F64(f)).with_debug_info(None, span),
+                Number::I8(i) => RValue::new_literal(RIrLiteralValue::I8(i)).with_debug_info(None, span),
+                Number::I16(i) => RValue::new_literal(RIrLiteralValue::I16(i)).with_debug_info(None, span),
+                Number::I32(i) => RValue::new_literal(RIrLiteralValue::I32(i)).with_debug_info(None, span),
+                Number::Integer(i) => RValue::new_literal(RIrLiteralValue::I64(i)).with_debug_info(None, span),
+                Number::U8(u) => RValue::new_literal(RIrLiteralValue::U8(u)).with_debug_info(None, span),
+                Number::U16(u) => RValue::new_literal(RIrLiteralValue::U16(u)).with_debug_info(None, span),
+                Number::U32(u) => RValue::new_literal(RIrLiteralValue::U32(u)).with_debug_info(None, span),
+                Number::UnsignedInteger(u) => RValue::new_literal(RIrLiteralValue::U64(u)).with_debug_info(None, span),
+                Number::Float32(f) => RValue::new_literal(RIrLiteralValue::F32(f)).with_debug_info(None, span),
+                Number::Float64(f) => RValue::new_literal(RIrLiteralValue::F64(f)).with_debug_info(None, span),
                 Number::Scientific32(f, i) => {
                     let value = f.powi(i);
-                    Value::new_literal(IrLiteralValue::F32(value)).with_debug_info(None, span)
+                    RValue::new_literal(RIrLiteralValue::F32(value)).with_debug_info(None, span)
                 }
                 Number::Scientific64(f, i) => {
                     let value = f.powi(i);
-                    Value::new_literal(IrLiteralValue::F64(value)).with_debug_info(None, span)
+                    RValue::new_literal(RIrLiteralValue::F64(value)).with_debug_info(None, span)
                 }
             },
-            LiteralValue::Bool(b) => Value::new_literal(IrLiteralValue::Bool(b)).with_debug_info(None, span),
+            LiteralValue::Bool(b) => RValue::new_literal(RIrLiteralValue::Bool(b)).with_debug_info(None, span),
             LiteralValue::StringLit(s) => {
-                Value::new_constant(IrConstantValue::String { string: s }, IrType::String).with_debug_info(None, span)
+                RValue::new_constant(RIrConstantValue::String { string: s }, RIrType::String).with_debug_info(None, span)
             }
             LiteralValue::CharLit(c) => {
-                Value::new_literal(IrLiteralValue::Char(c.chars().next().unwrap_or('\0'))).with_debug_info(None, span)
+                RValue::new_literal(RIrLiteralValue::Char(c.chars().next().unwrap_or('\0'))).with_debug_info(None, span)
             }
-            LiteralValue::Nullptr => Value::new_literal(IrLiteralValue::I64(0)).with_debug_info(None, span),
+            LiteralValue::Nullptr => RValue::new_literal(RIrLiteralValue::I64(0)).with_debug_info(None, span),
         }
     }
 
-    fn generate_binary(&mut self, func: &mut Function, left: Expr, op: BinaryOp, right: Expr, span: SourceSpan) -> Value {
-        let ir_op: IrBinaryOp = op.into();
+    fn generate_binary(&mut self, func: &mut Function, left: Expr, op: BinaryOp, right: Expr, span: SourceSpan) -> RValue {
+        let ir_op: RIrBinaryOp = op.into();
         let left_val = self.generate_expr(func, left);
         let right_val = self.generate_expr(func, right);
         let ty = left_val.ty.clone();
         let dest_id = self.new_temp();
 
-        let bin_inst = Instruction::new(
-            InstructionKind::Binary { op: ir_op, left: left_val, right: right_val, ty: ty.clone() },
+        let bin_inst = RInstruction::new(
+            RInstructionKind::Binary { op: ir_op, left: left_val, right: right_val, ty: ty.clone() },
             span.clone(),
         )
-        .with_result(Value::new_temporary(dest_id, ty.clone()));
+            .with_result(RValue::new_temporary(dest_id, ty.clone()));
 
         self.add_instruction(bin_inst.clone());
         bin_inst.result.unwrap()
     }
 
-    fn generate_unary(&mut self, func: &mut Function, op: UnaryOp, expr: Expr, span: SourceSpan) -> Value {
-        let ir_op: IrUnaryOp = op.into();
+    fn generate_unary(&mut self, func: &mut Function, op: UnaryOp, expr: Expr, span: SourceSpan) -> RValue {
+        let ir_op: RIrUnaryOp = op.into();
         let operand = self.generate_expr(func, expr);
         let ty = operand.ty.clone();
         let dest_id = self.new_temp();
 
-        let unary_inst = Instruction::new(InstructionKind::Unary { op: ir_op, operand, ty: ty.clone() }, span.clone())
-            .with_result(Value::new_temporary(dest_id, ty.clone()));
+        let unary_inst = RInstruction::new(RInstructionKind::Unary { op: ir_op, operand, ty: ty.clone() }, span.clone())
+            .with_result(RValue::new_temporary(dest_id, ty.clone()));
 
         self.add_instruction(unary_inst.clone());
         unary_inst.result.unwrap()
     }
 
-    fn generate_variable(&mut self, name: Arc<str>, span: SourceSpan) -> Value {
+    fn generate_variable(&mut self, name: Arc<str>, span: SourceSpan) -> RValue {
         self.scope_manager.lookup(&name).cloned().unwrap_or_else(|| {
             self.new_error(format!("Undefined variable '{name}'"), span.clone());
-            Value::new_literal(IrLiteralValue::I32(0)).with_debug_info(None, span)
+            RValue::new_literal(RIrLiteralValue::I32(0)).with_debug_info(None, span)
         })
     }
 
-    fn generate_assign(&mut self, func: &mut Function, target: Expr, value: Expr, span: SourceSpan) -> Value {
+    fn generate_assign(&mut self, func: &mut Function, target: Expr, value: Expr, span: SourceSpan) -> RValue {
         let target_val = self.generate_expr(func, target);
         let value_val = self.generate_expr(func, value);
 
         let store_inst =
-            Instruction::new(InstructionKind::Store { value: value_val.clone(), dest: target_val }, span.clone());
+            RInstruction::new(RInstructionKind::Store { value: value_val.clone(), dest: target_val }, span.clone());
         self.add_instruction(store_inst);
 
         value_val
@@ -633,52 +667,35 @@ impl NIrGenerator {
     }
 
     fn start_block(&mut self, func: &mut Function, label: &str, span: SourceSpan) {
+        // Finalize the current block first
         self.finalize_current_block(func);
 
-        let mut new_block = BasicBlock::new(label, span).with_scope(self.scope_manager.current_scope());
+        // Create a new block
+        let new_block = RBasicBlock::new(label, span.clone()).with_scope(self.scope_manager.current_scope());
 
-        if let Some(preds) = func.cfg.predecessors.get(label) {
-            // Ordiniamo i predecessori per suffisso numerico (se presente), poi per label
-            let mut preds_vec: Vec<_> = preds.iter().cloned().collect();
-            preds_vec.sort_by(|a, b| {
-                fn suffix_num(s: &str) -> Option<usize> {
-                    s.rsplit_once('_').and_then(|(_, tail)| tail.parse::<usize>().ok())
-                }
-                match (suffix_num(a), suffix_num(b)) {
-                    (Some(na), Some(nb)) => na.cmp(&nb).then_with(|| a.cmp(b)),
-                    (Some(_), None) => std::cmp::Ordering::Less,
-                    (None, Some(_)) => std::cmp::Ordering::Greater,
-                    (None, None) => a.cmp(b),
-                }
-            });
-            for pred in preds_vec {
-                new_block.add_predecessor(pred);
-            }
-        }
+        // Add the block to the CFG
+        func.add_block(label, span);
 
+        // Set the new block as current
         self.current_block = Some(new_block);
         self.current_block_label = Some(label.to_string());
     }
 
-    fn add_instruction(&mut self, inst: Instruction) {
+    fn add_instruction(&mut self, inst: RInstruction) {
         if let Some(block) = &mut self.current_block {
             block.instructions.push(inst);
         }
     }
 
-    fn add_terminator(&mut self, func: &mut Function, term: Terminator) {
+    // Replace the current add_terminator method with this version:
+    fn add_terminator(&mut self, _func: &mut Function, term: RTerminator) {
         if let Some(block) = &mut self.current_block {
             block.terminator = term.clone();
-
-            if let Some(current_label) = &self.current_block_label {
-                for target in term.get_targets() {
-                    func.add_edge(current_label, &target);
-                }
-            }
+            // Don't connect blocks here - they'll be connected when the block is finalized
         }
     }
 }
 
-impl Default for NIrGenerator {
+impl Default for RIrGenerator {
     fn default() -> Self { Self::new() }
 }
