@@ -934,7 +934,7 @@ fn test_full_for_loop() {
 }
 
 #[test]
-fn if_whit_else_brach() {
+fn test_if_with_else_branch()  {
     let input = "if (true) { continue } else { break }";
     let mut lexer = Lexer::new("test.vn", input);
     let (tokens, _lerrors) = lexer_tokenize_with_errors(&mut lexer);
@@ -1604,7 +1604,7 @@ fn test_var_no_initializer() {
 }
 
 #[test]
-fn test_unclose_array_literal() {
+fn test_unclosed_array_literal() {
     let input = "var eee: i32[2] = {1, 2, 3";
     let mut lexer = Lexer::new("test.vn", input);
     let (tokens, _lex_errors) = lexer_tokenize_with_errors(&mut lexer);
@@ -1617,7 +1617,7 @@ fn test_unclose_array_literal() {
 }
 
 #[test]
-fn test_var_invaild_type() {
+fn test_var_invalid_type() {
     let input = "var eee: 5";
     let mut lexer = Lexer::new("test.vn", input);
     let (tokens, _lex_errors) = lexer_tokenize_with_errors(&mut lexer);

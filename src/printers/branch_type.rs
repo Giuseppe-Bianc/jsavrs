@@ -53,8 +53,9 @@ pub fn print_children<T, F>(children: &[T], indent: &str, output: &mut String, s
 where
     F: FnMut(&T, &str, BranchType, &mut String, &StyleManager),
 {
+    let last_idx = children.len().saturating_sub(1);
     for (i, child) in children.iter().enumerate() {
-        let branch_type = if i == children.len() - 1 { BranchType::Last } else { BranchType::Middle };
+        let branch_type = if i == last_idx { BranchType::Last } else { BranchType::Middle };
         print_fn(child, indent, branch_type, output, styles);
     }
 }
