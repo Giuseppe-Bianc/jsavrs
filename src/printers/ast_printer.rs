@@ -1,23 +1,12 @@
 use crate::parser::ast::{Expr, Stmt};
 use console::Style;
-use crate::printers::branch_type::{BranchType, StyleManager};
+use crate::printers::branch_type::{BranchType, StyleManager, print_children};
 
 pub fn pretty_print(expr: &Expr) -> String {
     let mut output = String::new();
     let styles = StyleManager::new();
     print_expr(expr, "", BranchType::Last, &mut output, &styles);
     output
-}
-
-/// Helper function to print lists of children with correct indentation
-fn print_children<T, F>(children: &[T], indent: &str, output: &mut String, styles: &StyleManager, mut print_fn: F)
-where
-    F: FnMut(&T, &str, BranchType, &mut String, &StyleManager),
-{
-    for (i, child) in children.iter().enumerate() {
-        let branch_type = if i == children.len() - 1 { BranchType::Last } else { BranchType::Middle };
-        print_fn(child, indent, branch_type, output, styles);
-    }
 }
 
 fn print_expr(expr: &Expr, indent: &str, branch_type: BranchType, output: &mut String, styles: &StyleManager) {

@@ -47,3 +47,14 @@ impl StyleManager {
         }
     }
 }
+
+/// Helper function to print lists of children with correct indentation
+pub fn print_children<T, F>(children: &[T], indent: &str, output: &mut String, styles: &StyleManager, mut print_fn: F)
+where
+    F: FnMut(&T, &str, BranchType, &mut String, &StyleManager),
+{
+    for (i, child) in children.iter().enumerate() {
+        let branch_type = if i == children.len() - 1 { BranchType::Last } else { BranchType::Middle };
+        print_fn(child, indent, branch_type, output, styles);
+    }
+}
