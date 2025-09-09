@@ -25,8 +25,8 @@ fn print_expr(expr: &HIRExpr, indent: &str, branch_type: BranchType, output: &mu
     match expr {
         HIRExpr::Binary { left, op, right, node_metadata, .. } => {
             append_line_with_metadata(output, indent, branch_type, styles.clone().operator, &format!("BinaryOp {op:?}"), node_metadata, styles);
-            print_branch_hir("Left:", left, indent, BranchConfig::new(branch_type, BranchType::Middle, BranchType::Last), output, styles, );
-            print_branch_hir("Right:", right, indent, BranchConfig::new(branch_type, BranchType::Last, BranchType::Last), output, styles, );
+            print_branch_hir("Left:", left, indent, BranchConfig::new(branch_type, BranchType::Middle, BranchType::Last), output, styles);
+            print_branch_hir("Right:", right, indent, BranchConfig::new(branch_type, BranchType::Last, BranchType::Last), output, styles);
         }
         HIRExpr::Unary { op, expr, node_metadata, .. } => {
             append_line_with_metadata(output, indent, branch_type, styles.clone().operator, &format!("UnaryOp {op:?}"), node_metadata, styles);
