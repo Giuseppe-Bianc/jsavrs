@@ -1,6 +1,5 @@
 use crate::parser::ast::{Expr, Stmt};
-use console::Style;
-use crate::printers::branch_type::{BranchType, StyleManager, print_children};
+use crate::printers::branch_type::{append_line, get_indent, print_children, BranchConfig, BranchType, StyleManager};
 
 pub fn pretty_print(expr: &Expr) -> String {
     let mut output = String::new();
@@ -9,35 +8,37 @@ pub fn pretty_print(expr: &Expr) -> String {
     output
 }
 
+// Unified function to print labeled branches
+fn print_branch(
+    label: &str, expr: &Expr, parent_indent: &str, branch_config: BranchConfig, output: &mut String,
+    styles: &StyleManager,
+) {
+    let indent = get_indent(parent_indent, &branch_config.parent_type);
+    append_line(output, &indent, branch_config.current_type, styles.structure.clone(), label);
+    print_expr(expr, &get_indent(&indent, &branch_config.current_type), branch_config.child_type, output, styles);
+}
+
+// Refactored print_expr using print_branch
 fn print_expr(expr: &Expr, indent: &str, branch_type: BranchType, output: &mut String, styles: &StyleManager) {
     match expr {
         Expr::Binary { left, op, right, .. } => {
-            append_line(output, indent, branch_type, styles.clone().operator, &format!("BinaryOp {op:?}"));
-            // Left child
-            let left_indent = get_indent(indent, &branch_type);
-            append_line(output, &left_indent, BranchType::Middle, styles.structure.clone(), "Left:");
-            print_expr(left, &get_indent(&left_indent, &BranchType::Middle), BranchType::Last, output, styles);
-            let right_indent = get_indent(indent, &branch_type);
-            append_line(output, &right_indent, BranchType::Last, styles.structure.clone(), "Right:");
-            print_expr(right, &get_indent(&right_indent, &BranchType::Last), BranchType::Last, output, styles);
+            append_line(output, indent, branch_type, styles.operator.clone(), &format!("BinaryOp {op:?}"));
+            print_branch("Left:", left, indent, BranchConfig::new(branch_type, BranchType::Middle, BranchType::Last), output, styles, );
+            print_branch("Right:", right, indent, BranchConfig::new(branch_type, BranchType::Last, BranchType::Last), output, styles, );
         }
         Expr::Unary { op, expr, .. } => {
-            append_line(output, indent, branch_type, styles.clone().operator, &format!("UnaryOp {op:?}"));
-            let new_indent = get_indent(indent, &branch_type);
-            append_line(output, &new_indent, BranchType::Last, styles.structure.clone(), "Expr:");
-            print_expr(expr, &get_indent(&new_indent, &BranchType::Last), BranchType::Last, output, styles);
+            append_line(output, indent, branch_type, styles.operator.clone(), &format!("UnaryOp {op:?}"));
+            print_branch("Expr:", expr, indent, BranchConfig::new(branch_type, BranchType::Last, BranchType::Last), output, styles);
         }
         Expr::Grouping { expr, .. } => {
             append_line(output, indent, branch_type, styles.clone().punctuation, "Grouping");
-            let new_indent = get_indent(indent, &branch_type);
-            append_line(output, &new_indent, BranchType::Last, styles.structure.clone(), "Expr:");
-            print_expr(expr, &get_indent(&new_indent, &BranchType::Last), BranchType::Last, output, styles);
+            print_branch("Expr:", expr, indent, BranchConfig::new(branch_type, BranchType::Last, BranchType::Last), output, styles);
         }
         Expr::Literal { value, .. } => {
-            append_line(output, indent, branch_type, styles.clone().literal, &format!("Literal {value}"));
+            append_line(output, indent, branch_type, styles.literal.clone(), &format!("Literal {value}"));
         }
         Expr::Variable { name, .. } => {
-            append_line(output, indent, branch_type, styles.clone().variable, &format!("Variable '{name}'"));
+            append_line(output, indent, branch_type, styles.variable.clone(), &format!("Variable '{name}'"));
         }
         Expr::Assign { target, value, .. } => {
             append_line(output, indent, branch_type, styles.clone().variable, "Assignment");
@@ -49,7 +50,7 @@ fn print_expr(expr: &Expr, indent: &str, branch_type: BranchType, output: &mut S
             print_expr(value, &get_indent(&new_indent, &BranchType::Last), BranchType::Last, output, styles);
         }
         Expr::Call { callee, arguments, .. } => {
-            append_line(output, indent, branch_type, styles.clone().punctuation, "Function Call");
+            append_line(output, indent, branch_type, styles.punctuation.clone(), "Function Call");
             let new_indent = get_indent(indent, &branch_type);
             // Callee
             append_line(output, &new_indent, BranchType::Middle, styles.structure.clone(), "Callee:");
@@ -58,7 +59,7 @@ fn print_expr(expr: &Expr, indent: &str, branch_type: BranchType, output: &mut S
             let args_indent = get_indent(&new_indent, &BranchType::Last);
             print_children(
                 arguments,
-                &get_indent(&args_indent, &BranchType::Last),
+                &args_indent,
                 output,
                 styles,
                 |arg, child_indent, branch_type, output, styles| {
@@ -68,32 +69,17 @@ fn print_expr(expr: &Expr, indent: &str, branch_type: BranchType, output: &mut S
             );
         }
         Expr::ArrayAccess { array, index, .. } => {
-            append_line(output, indent, branch_type, styles.clone().punctuation, "Array Access");
-            let new_indent = get_indent(indent, &branch_type);
-            // Array
-            append_line(output, &new_indent, BranchType::Middle, styles.structure.clone(), "Array:");
-            print_expr(array, &get_indent(&new_indent, &BranchType::Middle), BranchType::Last, output, styles);
-            append_line(output, &new_indent, BranchType::Last, styles.structure.clone(), "Index:");
-            print_expr(index, &get_indent(&new_indent, &BranchType::Last), BranchType::Last, output, styles);
+            append_line(output, indent, branch_type, styles.punctuation.clone(), "Array Access");
+            print_branch("Array:", array, indent, BranchConfig::new(branch_type, BranchType::Middle, BranchType::Last), output, styles);
+            print_branch("Index:", index, indent, BranchConfig::new(branch_type, BranchType::Last, BranchType::Last), output, styles);
         }
         Expr::ArrayLiteral { elements, .. } => {
-            append_line(output, indent, branch_type, styles.clone().punctuation, "Array Literal");
+            append_line(output, indent, branch_type, styles.punctuation.clone(), "Array Literal");
             let new_indent = get_indent(indent, &branch_type);
             append_line(output, &new_indent, BranchType::Last, styles.structure.clone(), "Elements:");
-            let elems_indent = get_indent(&new_indent, &BranchType::Last);
-            print_children(elements, &elems_indent, output, styles, print_expr);
+            print_children(elements, &get_indent(&new_indent, &BranchType::Last), output, styles, print_expr);
         }
     }
-}
-
-fn get_indent(indent: &str, branch_type: &BranchType) -> String {
-    format!("{}{}", indent, branch_type.indent_continuation())
-}
-
-fn append_line(output: &mut String, indent: &str, branch_type: BranchType, style: Style, text: &str) {
-    let branch = branch_type.symbol();
-    let styled_text = style.apply_to(text);
-    output.push_str(&format!("{indent}{branch}{styled_text}\n"));
 }
 
 // Add the following functions after the print_expr function
@@ -118,6 +104,7 @@ fn print_stmt(stmt: &Stmt, indent: &str, branch_type: BranchType, output: &mut S
         Stmt::VarDeclaration { variables, type_annotation, is_mutable, initializers, span: _ } => {
             append_line(output, indent, branch_type, styles.clone().keyword, "VarDeclaration");
             let new_indent = get_indent(indent, &branch_type);
+
             // Variables
             let vars_label = if *is_mutable { "Variables:" } else { "Constants:" };
             append_line(output, &new_indent, BranchType::Middle, styles.variable.clone(), vars_label);
@@ -126,6 +113,7 @@ fn print_stmt(stmt: &Stmt, indent: &str, branch_type: BranchType, output: &mut S
                 let var_branch_type = if i == variables.len() - 1 { BranchType::Last } else { BranchType::Middle };
                 append_line(output, &vars_indent, var_branch_type, styles.variable.clone(), var);
             }
+
             // Type
             append_line(output, &new_indent, BranchType::Middle, styles.structure.clone(), "Type:");
             let type_indent = get_indent(&new_indent, &BranchType::Middle);
@@ -133,7 +121,7 @@ fn print_stmt(stmt: &Stmt, indent: &str, branch_type: BranchType, output: &mut S
                 output,
                 &type_indent,
                 BranchType::Last,
-                styles.clone().type_style,
+                styles.type_style.clone(),
                 &format!("{type_annotation}"),
             );
             append_line(output, &new_indent, BranchType::Last, styles.structure.clone(), "Initializers:");
@@ -143,15 +131,18 @@ fn print_stmt(stmt: &Stmt, indent: &str, branch_type: BranchType, output: &mut S
         Stmt::Function { name, parameters, return_type, body, span: _ } => {
             append_line(output, indent, branch_type, styles.clone().keyword, "Function");
             let new_indent = get_indent(indent, &branch_type);
+
             // Name
             append_line(output, &new_indent, BranchType::Middle, styles.structure.clone(), "Name:");
             append_line(
                 &mut *output,
                 &get_indent(&new_indent, &BranchType::Middle),
                 BranchType::Last,
-                styles.clone().variable,
+                styles.variable.clone(),
                 name,
             );
+
+            // Parameters
             append_line(output, &new_indent, BranchType::Middle, styles.structure.clone(), "Parameters:");
             let params_indent = get_indent(&new_indent, &BranchType::Middle);
             for (i, param) in parameters.iter().enumerate() {
@@ -171,15 +162,18 @@ fn print_stmt(stmt: &Stmt, indent: &str, branch_type: BranchType, output: &mut S
                     &format!("Type: {}", param.type_annotation),
                 );
             }
+
             // Return Type
             append_line(output, &new_indent, BranchType::Middle, styles.structure.clone(), "Return Type:");
             append_line(
                 output,
                 &get_indent(&new_indent, &BranchType::Middle),
                 BranchType::Last,
-                styles.clone().type_style,
+                styles.type_style.clone(),
                 &format!("{return_type}"),
             );
+
+            // Body
             append_line(output, &new_indent, BranchType::Last, styles.structure.clone(), "Body:");
             print_children(body, &get_indent(&new_indent, &BranchType::Last), output, styles, print_stmt);
         }
@@ -196,6 +190,7 @@ fn print_stmt(stmt: &Stmt, indent: &str, branch_type: BranchType, output: &mut S
                 append_line(output, &new_indent, then_branch_type, styles.structure.clone(), "Then:");
                 print_children(then_branch, &get_indent(&new_indent, &then_branch_type), output, styles, print_stmt);
             }
+
             // Else Branch
             if let Some(else_branch) = else_branch {
                 append_line(output, &new_indent, BranchType::Last, styles.structure.clone(), "Else:");
@@ -203,19 +198,19 @@ fn print_stmt(stmt: &Stmt, indent: &str, branch_type: BranchType, output: &mut S
             }
         }
         Stmt::MainFunction { body, span: _ } => {
-            append_line(output, indent, branch_type, styles.clone().keyword, "MainFunction");
+            append_line(output, indent, branch_type, styles.keyword.clone(), "MainFunction");
             print_children(body, &get_indent(indent, &branch_type), output, styles, print_stmt);
         }
         Stmt::Block { statements, span: _ } => {
             if statements.is_empty() {
-                append_line(output, indent, branch_type, styles.clone().keyword, "Block: (empty)");
+                append_line(output, indent, branch_type, styles.keyword.clone(), "Block: (empty)");
             } else {
-                append_line(output, indent, branch_type, styles.clone().keyword, "Block");
+                append_line(output, indent, branch_type, styles.keyword.clone(), "Block");
                 print_children(statements, &get_indent(indent, &branch_type), output, styles, print_stmt);
             }
         }
         Stmt::Return { value, span: _ } => {
-            append_line(output, indent, branch_type, styles.clone().keyword, "Return");
+            append_line(output, indent, branch_type, styles.keyword.clone(), "Return");
             if let Some(expr) = value {
                 let new_indent = get_indent(indent, &branch_type);
                 append_line(output, &new_indent, BranchType::Last, styles.structure.clone(), "Value:");
@@ -232,7 +227,7 @@ fn print_stmt(stmt: &Stmt, indent: &str, branch_type: BranchType, output: &mut S
             print_children(body, &get_indent(&new_indent, &BranchType::Last), output, styles, print_stmt);
         }
         Stmt::For { initializer, condition, increment, body, span: _ } => {
-            append_line(output, indent, branch_type, styles.clone().keyword, "For");
+            append_line(output, indent, branch_type, styles.keyword.clone(), "For");
             let new_indent = get_indent(indent, &branch_type);
             // Initializer
             if let Some(init) = initializer {
@@ -256,7 +251,7 @@ fn print_stmt(stmt: &Stmt, indent: &str, branch_type: BranchType, output: &mut S
             append_line(output, &new_indent, BranchType::Last, styles.structure.clone(), "Body:");
             print_children(body, &get_indent(&new_indent, &BranchType::Last), output, styles, print_stmt);
         }
-        Stmt::Break { .. } => append_line(output, indent, branch_type, styles.clone().keyword, "Break"),
-        Stmt::Continue { .. } => append_line(output, indent, branch_type, styles.clone().keyword, "Continue"),
+        Stmt::Break { .. } => append_line(output, indent, branch_type, styles.keyword.clone(), "Break"),
+        Stmt::Continue { .. } => append_line(output, indent, branch_type, styles.keyword.clone(), "Continue"),
     }
 }

@@ -141,14 +141,14 @@ fn test_function_call() {
     ├── Callee:
     │   └── Variable 'foo'
     └── Arguments:
-            ├── Arg:
-            │   └── Literal 1
-            └── Arg:
-                └── BinaryOp Add
-                    ├── Left:
-                    │   └── Literal 2
-                    └── Right:
-                        └── Literal 3";
+        ├── Arg:
+        │   └── Literal 1
+        └── Arg:
+            └── BinaryOp Add
+                ├── Left:
+                │   └── Literal 2
+                └── Right:
+                    └── Literal 3";
     assert_eq!(stripped.trim(), expected);
 }
 
