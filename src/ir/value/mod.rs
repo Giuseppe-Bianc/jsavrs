@@ -89,7 +89,7 @@ impl fmt::Display for Value {
             ValueKind::Local(name) => write!(f, "%{name}")?,
             ValueKind::Global(name) => write!(f, "@{name}")?,
             ValueKind::Temporary(id) => write!(f, "t{id}")?,
-        };
+        }
         if let Some(name) = self.debug_info.as_ref().and_then(|di| di.name.as_ref()) {
             write!(f, " ({name})")?;
         }
