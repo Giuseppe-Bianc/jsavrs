@@ -159,15 +159,19 @@ impl TypeChecker {
         self.visit_function("main", &[], &Type::Void, body, span);
     }
 
-    fn visit_if(&mut self, condition: &Expr, then_branch: &[Stmt], else_branch: Option<&[Stmt]>, _span: &SourceSpan) {
+    fn check_condition(&mut self, condition: &Expr, construct: &str) {
         if let Some(cond_type) = self.visit_expr(condition) {
             if cond_type != Type::Bool {
                 self.type_error(
-                    format!("Condition in 'if' statement must be boolean, found {cond_type}"),
+                    format!("Condition in {construct} must be boolean, found {cond_type}"),
                     condition.span(),
                 );
             }
         }
+    }
+
+    fn visit_if(&mut self, condition: &Expr, then_branch: &[Stmt], else_branch: Option<&[Stmt]>, _span: &SourceSpan) {
+        self.check_condition(condition, "'if' statement");
         self.symbol_table.push_scope(ScopeKind::Block, Some(condition.span().clone()));
         self.visit_statements(then_branch);
         self.symbol_table.pop_scope();
@@ -179,14 +183,7 @@ impl TypeChecker {
     }
 
     fn visit_while(&mut self, condition: &Expr, body: &[Stmt], _span: &SourceSpan) {
-        if let Some(cond_type) = self.visit_expr(condition) {
-            if cond_type != Type::Bool {
-                self.type_error(
-                    format!("Condition in 'while' loop must be boolean, found {cond_type}"),
-                    condition.span(),
-                );
-            }
-        }
+        self.check_condition(condition, "'while' loop");
         let was_in_loop = self.in_loop;
         self.in_loop = true;
         self.symbol_table.push_scope(ScopeKind::Block, Some(condition.span().clone()));
@@ -204,11 +201,7 @@ impl TypeChecker {
             self.visit_stmt(init);
         }
         if let Some(cond) = condition {
-            if let Some(cond_type) = self.visit_expr(cond) {
-                if cond_type != Type::Bool {
-                    self.type_error(format!("For loop condition must be bool, found {cond_type}"), cond.span());
-                }
-            }
+            self.check_condition(cond, "For loop");
         }
         if let Some(inc) = increment {
             self.visit_expr(inc);
@@ -674,19 +667,7 @@ impl TypeChecker {
     }
 
     fn is_numeric(&self, ty: &Type) -> bool {
-        matches!(
-            ty,
-            Type::I8
-                | Type::I16
-                | Type::I32
-                | Type::I64
-                | Type::U8
-                | Type::U16
-                | Type::U32
-                | Type::U64
-                | Type::F32
-                | Type::F64
-        )
+        self.is_integer_type(ty) || matches!(ty, Type::F32 | Type::F64)
     }
 
     #[allow(clippy::only_used_in_recursion)]

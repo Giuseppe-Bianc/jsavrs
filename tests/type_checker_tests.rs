@@ -538,7 +538,7 @@ fn test_for_loop_invalid_condition() {
     let ast = "for (var i: i32 = 0i32; 42i32; i = i + 1i32) { }";
     let errors = typecheck(ast);
     assert_eq!(errors.len(), 1);
-    assert_eq!(errors[0].message(), Some("For loop condition must be bool, found i32"));
+    assert_eq!(errors[0].message(), Some("Condition in For loop must be boolean, found i32"));
 }
 
 #[test]
