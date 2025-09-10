@@ -3,3 +3,4 @@
 /.idea
 output.asm
 /ignored/
+.gemini/.env
