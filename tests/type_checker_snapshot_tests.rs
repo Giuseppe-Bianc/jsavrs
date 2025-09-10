@@ -8,22 +8,20 @@ use jsavrs::tokens::number::Number;
 use jsavrs::utils::dummy_span;
 
 // Test helper
-fn typecheck(ast: &str) -> Vec<CompileError> {
+fn typecheck_with(ast: &str, mut checker: TypeChecker) -> Vec<CompileError> {
     let mut lexer = Lexer::new("test.vn", ast);
     let (tokens, _lex_errors) = lexer_tokenize_with_errors(&mut lexer);
     let parser = JsavParser::new(tokens);
     let (expr, _errors) = parser.parse();
-    let mut checker = TypeChecker::new();
     checker.check(&expr)
 }
 
+fn typecheck(ast: &str) -> Vec<CompileError> {
+    typecheck_with(ast, TypeChecker::new())
+}
+
 fn typecheckd(ast: &str) -> Vec<CompileError> {
-    let mut lexer = Lexer::new("test.vn", ast);
-    let (tokens, _lex_errors) = lexer_tokenize_with_errors(&mut lexer);
-    let parser = JsavParser::new(tokens);
-    let (expr, _errors) = parser.parse();
-    let mut checker = TypeChecker::default();
-    checker.check(&expr)
+    typecheck_with(ast, TypeChecker::default())
 }
 
 #[test]
