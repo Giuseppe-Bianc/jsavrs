@@ -1,4 +1,4 @@
-/*// tets/ast_test.rs
+// tets/ast_test.rs
 use jsavrs::lexer::{Lexer, lexer_tokenize_with_errors};
 use jsavrs::location::{source_location::SourceLocation, source_span::SourceSpan};
 use jsavrs::mlir::hir::ast_to_hir::AstToHirTransformer;
@@ -165,7 +165,7 @@ macro_rules! stmt_span_test {
 
 #[test]
 fn test_simple_binary_expr() {
-    let expr = binary_expr(num_lit(1), BinaryOp::Add, num_lit(2));
+    let expr = binary_expr(num_lit_i64(1), BinaryOp::Add, num_lit_i64(2));
     let mut transformer = AstToHirTransformer::new();
     let hirexpr = transformer.transform_expr(expr.clone()).unwrap();
     let output = pretty_print_hir(&hirexpr);
@@ -173,17 +173,17 @@ fn test_simple_binary_expr() {
     let stripped_uuids = sanitize_mdata_uuids(&stripped);
 
     let expected = "\
-└── BinaryOp Add
+└── BinaryOp Add [ID:UUID_0::-::P:-]
     ├── Left:
-    │   └── Literal 1
+    │   └── Literal 1 [ID:UUID_1::-::P:UUID_0]
     └── Right:
-        └── Literal 2";
+        └── Literal 2 [ID:UUID_2::-::P:UUID_0]";
     assert_eq!(stripped_uuids.trim(), expected);
 }
 #[test]
 fn test_nested_binary_expr() {
-    let inner = binary_expr(num_lit(1), BinaryOp::Add, num_lit(2));
-    let expr = binary_expr(inner, BinaryOp::Multiply, num_lit(3));
+    let inner = binary_expr(num_lit_i64(1), BinaryOp::Add, num_lit_i64(2));
+    let expr = binary_expr(inner, BinaryOp::Multiply, num_lit_i64(3));
 
     let mut transformer = AstToHirTransformer::new();
     let hirexpr = transformer.transform_expr(expr.clone()).unwrap();
@@ -205,7 +205,7 @@ fn test_nested_binary_expr() {
 }
 #[test]
 fn test_unary_negate() {
-    let expr = unary_expr(UnaryOp::Negate, num_lit(5));
+    let expr = unary_expr(UnaryOp::Negate, num_lit_i64(5));
     let mut transformer = AstToHirTransformer::new();
     let hirexpr = transformer.transform_expr(expr.clone()).unwrap();
     let output = pretty_print_hir(&hirexpr);
@@ -213,15 +213,15 @@ fn test_unary_negate() {
     let stripped_uuids = sanitize_mdata_uuids(&stripped);
 
     let expected = "\
-└── UnaryOp Negate
+└── UnaryOp Negate [ID:UUID_0::-::P:-]
     └── Expr:
-        └── Literal 5";
+        └── Literal 5 [ID:UUID_1::-::P:UUID_0]";
     assert_eq!(stripped_uuids.trim(), expected);
 }
 
 #[test]
 fn test_grouping_expr() {
-    let inner = binary_expr(num_lit(1), BinaryOp::Add, num_lit(2));
+    let inner = binary_expr(num_lit_i64(1), BinaryOp::Add, num_lit_i64(2));
     let expr = grouping_expr(inner);
 
     let mut transformer = AstToHirTransformer::new();
@@ -231,22 +231,22 @@ fn test_grouping_expr() {
     let stripped_uuids = sanitize_mdata_uuids(&stripped);
 
     let expected = "\
-└── Grouping
+└── Grouping [ID:UUID_0::-::P:-]
     └── Expr:
-        └── BinaryOp Add
+        └── BinaryOp Add [ID:UUID_1::-::P:UUID_0]
             ├── Left:
-            │   └── Literal 1
+            │   └── Literal 1 [ID:UUID_2::-::P:UUID_1]
             └── Right:
-                └── Literal 2";
+                └── Literal 2 [ID:UUID_3::-::P:UUID_1]";
     assert_eq!(stripped_uuids.trim(), expected);
 }
 
 #[test]
 fn test_literal_values() {
     let test_cases = vec![
-        (string_lit("test"), "└── Literal \"test\""),
-        (bool_lit(true), "└── Literal true"),
-        (nullptr_lit(), "└── Literal nullptr"),
+        (string_lit("test"), "└── Literal \"test\" [ID:UUID_0::-::P:-]"),
+        (bool_lit(true), "└── Literal true [ID:UUID_0::-::P:-]"),
+        (nullptr_lit(), "└── Literal nullptr [ID:UUID_0::-::P:-]"),
     ];
 
     for (expr, expected) in test_cases {
@@ -261,7 +261,7 @@ fn test_literal_values() {
 
 #[test]
 fn test_variable_assignment() {
-    let expr = assign_expr(variable_expr("x"), num_lit(3));
+    let expr = assign_expr(variable_expr("x"), num_lit_i64(3));
 
     let mut transformer = AstToHirTransformer::new();
     let hirexpr = transformer.transform_expr(expr.clone()).unwrap();
@@ -270,47 +270,44 @@ fn test_variable_assignment() {
     let stripped_uuids = sanitize_mdata_uuids(&stripped);
 
     let expected = "\
-└── Assignment
+└── Assignment [ID:UUID_0::-::P:-]
     ├── Target:
-    │   └── Variable 'x'
+    │   └── Variable 'x' [ID:UUID_1::-::P:UUID_0]
     └── Value:
-        └── Literal 3";
+        └── Literal 3 [ID:UUID_2::-::P:UUID_0]";
     assert_eq!(stripped_uuids.trim(), expected);
 }
 
 #[test]
 fn test_function_call() {
     let callee = variable_expr("foo");
-
-    let args = vec![num_lit(1), binary_expr(num_lit(2), BinaryOp::Add, num_lit(3))];
+    let args = vec![num_lit_i64(1), binary_expr(num_lit_i64(2), BinaryOp::Add, num_lit_i64(3))];
     let expr = call_expr(callee, args);
-
     let mut transformer = AstToHirTransformer::new();
     let hirexpr = transformer.transform_expr(expr.clone()).unwrap();
     let output = pretty_print_hir(&hirexpr);
     let stripped = strip_ansi_codes(&output);
     let stripped_uuids = sanitize_mdata_uuids(&stripped);
-
     let expected = "\
-└── Function Call
+└── Function Call [ID:UUID_0::-::P:-]
     ├── Callee:
-    │   └── Variable 'foo'
+    │   └── Variable 'foo' [ID:UUID_1::-::P:UUID_0]
     └── Arguments:
-        ├── Arg:
-        │   └── Literal 1
-        └── Arg:
-            └── BinaryOp Add
-                ├── Left:
-                │   └── Literal 2
-                └── Right:
-                    └── Literal 3";
+            ├── Arg:
+            │   └── Literal 1 [ID:UUID_2::-::P:UUID_0]
+            └── Arg:
+                └── BinaryOp Add [ID:UUID_3::-::P:UUID_0]
+                    ├── Left:
+                    │   └── Literal 2 [ID:UUID_4::-::P:UUID_3]
+                    └── Right:
+                        └── Literal 3 [ID:UUID_5::-::P:UUID_3]";
     assert_eq!(stripped_uuids.trim(), expected);
 }
 
 #[test]
 fn test_array_access() {
     let array = variable_expr("arr");
-    let index = binary_expr(variable_expr("i"), BinaryOp::Add, num_lit(1));
+    let index = binary_expr(variable_expr("i"), BinaryOp::Add, num_lit_i64(1));
     let expr = array_access_expr(array, index);
 
     let mut transformer = AstToHirTransformer::new();
@@ -335,9 +332,9 @@ fn test_array_access() {
 #[test]
 fn test_deeply_nested_binary() {
     let expr = binary_expr(
-        binary_expr(binary_expr(num_lit(1), BinaryOp::Add, num_lit(2)), BinaryOp::Add, num_lit(3)),
+        binary_expr(binary_expr(num_lit_i64(1), BinaryOp::Add, num_lit_i64(2)), BinaryOp::Add, num_lit_i64(3)),
         BinaryOp::Add,
-        num_lit(4),
+        num_lit_i64(4),
     );
     let mut transformer = AstToHirTransformer::new();
     let hirexpr = transformer.transform_expr(expr.clone()).unwrap();
@@ -371,11 +368,11 @@ fn test_multiple_unary_ops() {
     let stripped_uuids = sanitize_mdata_uuids(&stripped);
 
     let expected = "\
-└── UnaryOp Not
+└── UnaryOp Not [ID:UUID_0::-::P:-]
     └── Expr:
-        └── UnaryOp Not
+        └── UnaryOp Not [ID:UUID_1::-::P:UUID_0]
             └── Expr:
-                └── Literal true";
+                └── Literal true [ID:UUID_2::-::P:UUID_1]";
     assert_eq!(stripped_uuids.trim(), expected);
 }
 
@@ -406,18 +403,18 @@ fn test_edge_case_special_chars() {
 }
 
 expr_span_test!(test_expr_binary_span, |s| Expr::Binary {
-    left: Box::new(num_lit(1)),
+    left: Box::new(num_lit_i64(1)),
     op: BinaryOp::Add,
-    right: Box::new(num_lit(2)),
+    right: Box::new(num_lit_i64(2)),
     span: s,
 });
 
 expr_span_test!(test_expr_array_literal_span, |s| Expr::ArrayLiteral {
-    elements: vec![num_lit(1), num_lit(2),],
+    elements: vec![num_lit_i64(1), num_lit_i64(2),],
     span: s,
 });
 
-expr_span_test!(test_expr_unary_span, |s| Expr::Unary { op: UnaryOp::Negate, expr: Box::new(num_lit(5)), span: s });
+expr_span_test!(test_expr_unary_span, |s| Expr::Unary { op: UnaryOp::Negate, expr: Box::new(num_lit_i64(5)), span: s });
 
 expr_span_test!(test_expr_grouping_span, |s| Expr::Grouping { expr: Box::new(bool_lit(true)), span: s });
 
@@ -426,7 +423,7 @@ expr_span_test!(test_expr_literal_span, |s| Expr::Literal { value: LiteralValue:
 expr_span_test!(test_expr_variable_span, |s| Expr::Variable { name: "x".into(), span: s });
 expr_span_test!(test_expr_assign_span, |s| Expr::Assign {
     target: Box::new(variable_expr("x")),
-    value: Box::new(num_lit(3)),
+    value: Box::new(num_lit_i64(3)),
     span: s,
 });
 
@@ -446,7 +443,7 @@ stmt_span_test!(test_stmt_main_function_span, |s| Stmt::MainFunction { body: vec
 
 #[test]
 fn test_stmt_expression_span() {
-    let expr = num_lit(42);
+    let expr = num_lit_i64(42);
     let stmt = Stmt::Expression { expr };
     assert_eq!(stmt.span(), &dummy_span());
 }
@@ -509,7 +506,7 @@ fn test_zero_length_span() {
 
 #[test]
 fn test_nested_expr_spans() {
-    let inner_expr = binary_expr(num_lit(1), BinaryOp::Add, num_lit(2));
+    let inner_expr = binary_expr(num_lit_i64(1), BinaryOp::Add, num_lit_i64(2));
 
     let outer_expr = grouping_expr(inner_expr);
 
@@ -518,7 +515,7 @@ fn test_nested_expr_spans() {
 
 #[test]
 fn test_stmt_expression() {
-    let stmt = Stmt::Expression { expr: num_lit(42) };
+    let stmt = Stmt::Expression { expr: num_lit_i64(42) };
     let mut transformer = AstToHirTransformer::new();
     let hirstmt = transformer.transform_stmt(stmt.clone()).unwrap();
     let output = pretty_print_stmt_hir(&hirstmt);
@@ -526,15 +523,15 @@ fn test_stmt_expression() {
     let stripped_uuids = sanitize_mdata_uuids(&stripped);
 
     let expected = "\
-└── Expression
+└── Expression [ID:UUID_0::-::P:-]
     └── Expr:
-        └── Literal 42";
+        └── Literal 42 [ID:UUID_1::-::P:UUID_0]";
     assert_eq!(stripped_uuids.trim(), expected);
 }
 
 #[test]
 fn test_var_declaration_multiple_vars() {
-    let stmt = var_declaration(vec!["x".into(), "y".into()], Type::I32, true, vec![num_lit(1), num_lit(2)]);
+    let stmt = var_declaration(vec!["x".into(), "y".into()], Type::I32, true, vec![num_lit_i64(1), num_lit_i64(2)]);
 
     let mut transformer = AstToHirTransformer::new();
     let hirstmt = transformer.transform_stmt(stmt.clone()).unwrap();
@@ -543,15 +540,15 @@ fn test_var_declaration_multiple_vars() {
     let stripped_uuids = sanitize_mdata_uuids(&stripped);
 
     let expected = "\
-└── VarDeclaration
+└── VarDeclaration [ID:UUID_0::-::P:-]
     ├── Variables:
     │   ├── x
     │   └── y
     ├── Type:
     │   └── i32
     └── Initializers:
-        ├── Literal 1
-        └── Literal 2";
+        ├── Literal 1 [ID:UUID_1::-::P:UUID_0]
+        └── Literal 2 [ID:UUID_2::-::P:UUID_0]";
     assert_eq!(stripped_uuids.trim(), expected);
 }
 
@@ -569,15 +566,13 @@ fn test_function_with_parameters() {
             span: dummy_span(),
         }],
     );
-
     let mut transformer = AstToHirTransformer::new();
     let hirstmt = transformer.transform_stmt(stmt.clone()).unwrap();
     let output = pretty_print_stmt_hir(&hirstmt);
     let stripped = strip_ansi_codes(&output);
     let stripped_uuids = sanitize_mdata_uuids(&stripped);
-
     let expected = "\
-└── Function
+└── Function [ID:UUID_0::-::P:-]
     ├── Name:
     │   └── sum
     ├── Parameters:
@@ -588,21 +583,21 @@ fn test_function_with_parameters() {
     ├── Return Type:
     │   └── i32
     └── Body:
-        └── Return
+        └── Return [ID:UUID_1::-::P:UUID_0]
             └── Value:
-                └── BinaryOp Add
+                └── BinaryOp Add [ID:UUID_2::-::P:UUID_1]
                     ├── Left:
-                    │   └── Variable 'a'
+                    │   └── Variable 'a' [ID:UUID_3::-::P:UUID_2]
                     └── Right:
-                        └── Variable 'b'";
+                        └── Variable 'b' [ID:UUID_4::-::P:UUID_2]";
     assert_eq!(stripped_uuids.trim(), expected);
 }
 
 #[test]
 fn test_if_stmt_with_else() {
     let condition = bool_lit(true);
-    let then_branch = vec![Stmt::Expression { expr: num_lit(1) }];
-    let else_branch = vec![Stmt::Expression { expr: num_lit(2) }];
+    let then_branch = vec![Stmt::Expression { expr: num_lit_i64(1) }];
+    let else_branch = vec![Stmt::Expression { expr: num_lit_i64(2) }];
 
     let stmt = Stmt::If { condition, then_branch, else_branch: Some(else_branch), span: dummy_span() };
 
@@ -613,17 +608,17 @@ fn test_if_stmt_with_else() {
     let stripped_uuids = sanitize_mdata_uuids(&stripped);
 
     let expected = "\
-└── If
+└── If [ID:UUID_0::-::P:-]
     ├── Condition:
-    │   └── Literal true
+    │   └── Literal true [ID:UUID_1::-::P:UUID_0]
     ├── Then:
-    │   └── Expression
+    │   └── Expression [ID:UUID_2::-::P:UUID_0]
     │       └── Expr:
-    │           └── Literal 1
+    │           └── Literal 1 [ID:UUID_3::-::P:UUID_2]
     └── Else:
-        └── Expression
+        └── Expression [ID:UUID_4::-::P:UUID_0]
             └── Expr:
-                └── Literal 2";
+                └── Literal 2 [ID:UUID_5::-::P:UUID_4]";
     assert_eq!(stripped_uuids.trim(), expected);
 }
 
@@ -643,7 +638,10 @@ fn test_empty_block_stmt() {
 #[test]
 fn test_nested_block_stmt() {
     let stmt = Stmt::Block {
-        statements: vec![Stmt::Block { statements: vec![Stmt::Expression { expr: num_lit(42) }], span: dummy_span() }],
+        statements: vec![Stmt::Block {
+            statements: vec![Stmt::Expression { expr: num_lit_i64(42) }],
+            span: dummy_span(),
+        }],
         span: dummy_span(),
     };
 
@@ -654,16 +652,16 @@ fn test_nested_block_stmt() {
     let stripped_uuids = sanitize_mdata_uuids(&stripped);
 
     let expected = "\
-└── Block
-    └── Block
-        └── Expression
+└── Block [ID:UUID_0::-::P:-]
+    └── Block [ID:UUID_1::-::P:UUID_0]
+        └── Expression [ID:UUID_2::-::P:UUID_1]
             └── Expr:
-                └── Literal 42";
+                └── Literal 42 [ID:UUID_3::-::P:UUID_2]";
     assert_eq!(stripped_uuids.trim(), expected);
 }
 #[test]
 fn test_return_stmt_with_value() {
-    let stmt = Stmt::Return { value: Some(num_lit(42)), span: dummy_span() };
+    let stmt = Stmt::Return { value: Some(num_lit_i64(42)), span: dummy_span() };
 
     let mut transformer = AstToHirTransformer::new();
     let hirstmt = transformer.transform_stmt(stmt.clone()).unwrap();
@@ -672,9 +670,9 @@ fn test_return_stmt_with_value() {
     let stripped_uuids = sanitize_mdata_uuids(&stripped);
 
     let expected = "\
-└── Return
+└── Return [ID:UUID_0::-::P:-]
     └── Value:
-        └── Literal 42";
+        └── Literal 42 [ID:UUID_1::-::P:UUID_0]";
     assert_eq!(stripped_uuids.trim(), expected);
 }
 #[test]
@@ -752,9 +750,9 @@ fn test_while() {
     let stripped_uuids = sanitize_mdata_uuids(&stripped);
 
     let expected = "\
-└── While
+└── While [ID:UUID_0::-::P:-]
     ├── Condition:
-    │   └── Literal true
+    │   └── Literal true [ID:UUID_1::-::P:UUID_0]
     └── Body:";
     assert_eq!(stripped_uuids.trim(), expected);
 }
@@ -763,7 +761,7 @@ fn test_while() {
 fn test_while_not_empty_body() {
     let stmt = Stmt::While {
         condition: bool_lit(true),
-        body: vec![Stmt::Expression { expr: num_lit(42) }],
+        body: vec![Stmt::Expression { expr: num_lit_i64(42) }],
         span: dummy_span(),
     };
 
@@ -774,20 +772,20 @@ fn test_while_not_empty_body() {
     let stripped_uuids = sanitize_mdata_uuids(&stripped);
 
     let expected = "\
-└── While
+└── While [ID:UUID_0::-::P:-]
     ├── Condition:
-    │   └── Literal true
+    │   └── Literal true [ID:UUID_1::-::P:UUID_0]
     └── Body:
-        └── Expression
+        └── Expression [ID:UUID_2::-::P:UUID_0]
             └── Expr:
-                └── Literal 42";
+                └── Literal 42 [ID:UUID_3::-::P:UUID_2]";
     assert_eq!(stripped_uuids.trim(), expected);
 }
 
 #[test]
 fn test_for() {
     let stmt = Stmt::For {
-        initializer: Some(Box::from(var_declaration(vec!["x".into()], Type::I32, true, vec![num_lit(1)]))),
+        initializer: Some(Box::from(var_declaration(vec!["x".into()], Type::I32, true, vec![num_lit_i64(1)]))),
         condition: None,
         increment: None,
         body: vec![],
@@ -817,9 +815,12 @@ fn test_for() {
 #[test]
 fn test_for_complete() {
     let stmt = Stmt::For {
-        initializer: Some(Box::from(var_declaration(vec!["x".into()], Type::I32, true, vec![num_lit(1)]))),
-        condition: Some(binary_expr(variable_expr("x"), BinaryOp::Less, num_lit(2))),
-        increment: Some(assign_expr(variable_expr("x"), binary_expr(variable_expr("x"), BinaryOp::Add, num_lit(1)))),
+        initializer: Some(Box::from(var_declaration(vec!["x".into()], Type::I32, true, vec![num_lit_i64(1)]))),
+        condition: Some(binary_expr(variable_expr("x"), BinaryOp::Less, num_lit_i64(2))),
+        increment: Some(assign_expr(
+            variable_expr("x"),
+            binary_expr(variable_expr("x"), BinaryOp::Add, num_lit_i64(1)),
+        )),
         body: vec![],
         span: dummy_span(),
     };
@@ -861,10 +862,10 @@ fn test_for_complete() {
 #[test]
 fn test_for_not_empty_body() {
     let stmt = Stmt::For {
-        initializer: Some(Box::from(var_declaration(vec!["x".into()], Type::I32, true, vec![num_lit(1)]))),
+        initializer: Some(Box::from(var_declaration(vec!["x".into()], Type::I32, true, vec![num_lit_i64(1)]))),
         condition: None,
         increment: None,
-        body: vec![Stmt::Expression { expr: num_lit(42) }],
+        body: vec![Stmt::Expression { expr: num_lit_i64(42) }],
         span: dummy_span(),
     };
     let mut transformer = AstToHirTransformer::new();
@@ -891,10 +892,13 @@ fn test_for_not_empty_body() {
 #[test]
 fn test_for_complete_not_empty_body() {
     let stmt = Stmt::For {
-        initializer: Some(Box::from(var_declaration(vec!["x".into()], Type::I32, true, vec![num_lit(1)]))),
-        condition: Some(binary_expr(variable_expr("x"), BinaryOp::Less, num_lit(2))),
-        increment: Some(assign_expr(variable_expr("x"), binary_expr(variable_expr("x"), BinaryOp::Add, num_lit(1)))),
-        body: vec![Stmt::Expression { expr: num_lit(42) }],
+        initializer: Some(Box::from(var_declaration(vec!["x".into()], Type::I32, true, vec![num_lit_i64(1)]))),
+        condition: Some(binary_expr(variable_expr("x"), BinaryOp::Less, num_lit_i64(2))),
+        increment: Some(assign_expr(
+            variable_expr("x"),
+            binary_expr(variable_expr("x"), BinaryOp::Add, num_lit_i64(1)),
+        )),
+        body: vec![Stmt::Expression { expr: num_lit_i64(42) }],
         span: dummy_span(),
     };
     let mut transformer = AstToHirTransformer::new();
@@ -1017,7 +1021,7 @@ test_type_output!(test_custom_output, Type::Custom("inin".into()), "inin");
 fn test_corner_case_deeply_nested_if() {
     let inner_if = Stmt::If {
         condition: bool_lit(false),
-        then_branch: vec![Stmt::Expression { expr: num_lit(3) }],
+        then_branch: vec![Stmt::Expression { expr: num_lit_i64(3) }],
         else_branch: None,
         span: dummy_span(),
     };
@@ -1144,8 +1148,7 @@ fn test_main() {
     let stripped = strip_ansi_codes(&output);
     let stripped_uuids = sanitize_mdata_uuids(&stripped);
     let expected = "\
-└── MainFunction
-    └── Block: (empty)";
+└── MainFunction [ID:UUID_0::-::P:-]
+    └── Block: (empty) [ID:UUID_1::-::P:UUID_0]";
     assert_eq!(stripped_uuids.trim(), expected);
 }
-*/
