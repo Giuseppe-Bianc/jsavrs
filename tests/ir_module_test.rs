@@ -1,6 +1,6 @@
 use jsavrs::location::source_span::SourceSpan;
 use jsavrs::ir::{DataLayout, Function, IrParameter, IrType, Module, ParamAttributes, ScopeId, TargetTriple};
-use jsavrs::utils::module_redaceted;
+use jsavrs::utils::module_redacted;
 // tests/nir_module_test.rs
 
 // Helper function per creare un parametro IR di test
@@ -60,7 +60,7 @@ entry_test_func:
 
 
 }"#;
-    assert_eq!(module_redaceted(module), expected);
+    assert_eq!(module_redacted(module), expected);
 }
 
 #[test]
@@ -366,5 +366,5 @@ entry_format_func:
 
 
 }"#;
-    assert_eq!(module_redaceted(module), expected);
+    assert_eq!(module_redacted(module), expected);
 }

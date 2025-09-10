@@ -74,7 +74,7 @@ macro_rules! unary_op_test {
 }
 
 // Test per letterali usando la macro
-literal_test!(test_literal_number, TokenKind::Numeric(Number::Integer(42)), num_lit(42));
+literal_test!(test_literal_number, TokenKind::Numeric(Number::Integer(42)), num_lit_i64(42));
 literal_test!(test_literal_bool, TokenKind::KeywordBool(true), bool_lit(true));
 literal_test!(test_literal_nullptr, TokenKind::KeywordNullptr, nullptr_lit());
 literal_test!(test_literal_string, TokenKind::StringLiteral("assssss".into()), string_lit("assssss"));
@@ -106,7 +106,7 @@ unary_op_test!(
     TokenKind::Minus,
     UnaryOp::Negate,
     TokenKind::Numeric(Number::Integer(5)),
-    num_lit(5)
+    num_lit_i64(5)
 );
 unary_op_test!(test_unary_not, TokenKind::Not, UnaryOp::Not, TokenKind::KeywordBool(true), bool_lit(true));
 
@@ -129,7 +129,7 @@ macro_rules! test_binary_precedence {
             assert_eq!(
                 expr[0],
                 Stmt::Expression {
-                    expr: binary_expr(num_lit(3), $binary_op, binary_expr(num_lit(5), BinaryOp::Multiply, num_lit(2)))
+                    expr: binary_expr(num_lit_i64(3), $binary_op, binary_expr(num_lit_i64(5), BinaryOp::Multiply, num_lit_i64(2)))
                 }
             );
         }
@@ -159,9 +159,9 @@ fn test_grouping() {
         expr[0],
         Stmt::Expression {
             expr: binary_expr(
-                grouping_expr(binary_expr(num_lit(3), BinaryOp::Add, num_lit(5))),
+                grouping_expr(binary_expr(num_lit_i64(3), BinaryOp::Add, num_lit_i64(5))),
                 BinaryOp::Multiply,
-                num_lit(2)
+                num_lit_i64(2)
             )
         }
     );
@@ -215,7 +215,7 @@ assignment_test!(
     test_assignment_valid,
     [TokenKind::IdentifierAscii("x".into()), TokenKind::Equal, TokenKind::Numeric(Number::Integer(5)), TokenKind::Eof,],
     false,
-    [Stmt::Expression { expr: assign_expr(variable_expr("x"), num_lit(5)) },],
+    [Stmt::Expression { expr: assign_expr(variable_expr("x"), num_lit_i64(5)) },],
     "" // (unused because `expect_err = false`)
 );
 assignment_test!(
@@ -230,7 +230,7 @@ assignment_test!(
         TokenKind::Eof,
     ],
     false,
-    [Stmt::Expression { expr: assign_expr(array_access_expr(variable_expr("x"), num_lit(0)), num_lit(5)) },],
+    [Stmt::Expression { expr: assign_expr(array_access_expr(variable_expr("x"), num_lit_i64(0)), num_lit_i64(5)) },],
     "" // (unused because `expect_err = false`)
 );
 
@@ -245,7 +245,7 @@ assignment_test!(
         TokenKind::Eof,
     ],
     false,
-    [Stmt::Expression { expr: assign_expr(variable_expr("x"), assign_expr(variable_expr("y"), num_lit(5))) },],
+    [Stmt::Expression { expr: assign_expr(variable_expr("x"), assign_expr(variable_expr("y"), num_lit_i64(5))) },],
     ""
 );
 
@@ -253,7 +253,7 @@ assignment_test!(
     test_assignment_invalid_target,
     [TokenKind::Numeric(Number::Integer(5)), TokenKind::Equal, TokenKind::Numeric(Number::Integer(10)), TokenKind::Eof,],
     true,
-    [Stmt::Expression { expr: num_lit(5) }, Stmt::Expression { expr: num_lit(10) },],
+    [Stmt::Expression { expr: num_lit_i64(5) }, Stmt::Expression { expr: num_lit_i64(10) },],
     "Invalid left-hand side in assignment"
 );
 
@@ -279,7 +279,7 @@ fn test_function_call() {
         Stmt::Expression {
             expr: call_expr(
                 variable_expr("foo"),
-                vec![num_lit(1), binary_expr(num_lit(2), BinaryOp::Add, num_lit(3)),]
+                vec![num_lit_i64(1), binary_expr(num_lit_i64(2), BinaryOp::Add, num_lit_i64(3)),]
             )
         }
     );
@@ -303,7 +303,7 @@ fn test_array_access() {
     assert_eq!(
         expr[0],
         Stmt::Expression {
-            expr: array_access_expr(variable_expr("arr"), binary_expr(num_lit(0), BinaryOp::Add, num_lit(1)))
+            expr: array_access_expr(variable_expr("arr"), binary_expr(num_lit_i64(0), BinaryOp::Add, num_lit_i64(1)))
         }
     );
 }
@@ -371,7 +371,7 @@ fn test_deep_nesting() {
     let (expr, errors) = parser.parse();
     assert!(errors.is_empty());
     assert_eq!(expr.len(), 1);
-    assert_eq!(expr, vec![Stmt::Expression { expr: grouping_expr(grouping_expr(grouping_expr(num_lit(5)))) }]);
+    assert_eq!(expr, vec![Stmt::Expression { expr: grouping_expr(grouping_expr(grouping_expr(num_lit_i64(5)))) }]);
 }
 
 #[test]
@@ -407,7 +407,7 @@ fn test_unary_precedence() {
     assert_eq!(expr.len(), 1);
     assert_eq!(
         expr[0],
-        Stmt::Expression { expr: binary_expr(unary_expr(UnaryOp::Negate, num_lit(5)), BinaryOp::Multiply, num_lit(3)) }
+        Stmt::Expression { expr: binary_expr(unary_expr(UnaryOp::Negate, num_lit_i64(5)), BinaryOp::Multiply, num_lit_i64(3)) }
     );
 }
 
@@ -528,7 +528,7 @@ fn test_assignment_unicode_variable() {
     let (expr, errors) = parser.parse();
     assert!(errors.is_empty());
     assert_eq!(expr.len(), 1);
-    assert_eq!(expr[0], Stmt::Expression { expr: assign_expr(variable_expr("変数"), num_lit(5)) });
+    assert_eq!(expr[0], Stmt::Expression { expr: assign_expr(variable_expr("変数"), num_lit_i64(5)) });
 }
 
 // Test per accessi ad array concatenati
@@ -550,7 +550,7 @@ fn test_chained_array_access() {
     assert_eq!(expr.len(), 1);
     assert_eq!(
         expr[0],
-        Stmt::Expression { expr: array_access_expr(array_access_expr(variable_expr("arr"), num_lit(1)), num_lit(2)) }
+        Stmt::Expression { expr: array_access_expr(array_access_expr(variable_expr("arr"), num_lit_i64(1)), num_lit_i64(2)) }
     );
 }
 
@@ -615,7 +615,7 @@ fn test_mixed_literals_function_call() {
     assert_eq!(
         expr[0],
         Stmt::Expression {
-            expr: call_expr(variable_expr("test"), vec![num_lit(1), string_lit("due"), bool_lit(true)])
+            expr: call_expr(variable_expr("test"), vec![num_lit_i64(1), string_lit("due"), bool_lit(true)])
         }
     );
 }
@@ -653,9 +653,9 @@ fn test_bitwise_operator_precedence() {
         expr[0],
         Stmt::Expression {
             expr: binary_expr(
-                num_lit(1),
+                num_lit_i64(1),
                 BinaryOp::BitwiseOr,
-                binary_expr(num_lit(2), BinaryOp::BitwiseAnd, num_lit(3))
+                binary_expr(num_lit_i64(2), BinaryOp::BitwiseAnd, num_lit_i64(3))
             )
         }
     );
@@ -924,8 +924,8 @@ fn test_full_for_loop() {
     assert_eq!(
         statements[0],
         Stmt::For {
-            initializer: Some(Box::from(var_declaration(vec!["i".into()], Type::I32, true, vec![num_lit(0)]))),
-            condition: Some(binary_expr(variable_expr("i"), BinaryOp::Less, num_lit(10))),
+            initializer: Some(Box::from(var_declaration(vec!["i".into()], Type::I32, true, vec![num_lit_i64(0)]))),
+            condition: Some(binary_expr(variable_expr("i"), BinaryOp::Less, num_lit_i64(10))),
             increment: None,
             body: vec![],
             span: dummy_span(),

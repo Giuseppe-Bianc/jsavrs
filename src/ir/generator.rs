@@ -7,6 +7,11 @@ use crate::tokens::number::Number;
 use std::collections::HashMap;
 use std::sync::Arc;
 
+enum LoopControl {
+    Break,
+    Continue,
+}
+
 pub struct NIrGenerator {
     current_block: Option<BasicBlock>,
     current_block_label: Option<String>,
@@ -263,10 +268,10 @@ impl NIrGenerator {
                 self.scope_manager.exit_scope();
             }
             Stmt::Break { span } => {
-                self.handle_break(func, span);
+                self.handle_loop_control(func, span, LoopControl::Break);
             }
             Stmt::Continue { span } => {
-                self.handle_continue(func, span);
+                self.handle_loop_control(func, span, LoopControl::Continue);
             }
             other => self.new_error(format!("Unsupported statement: {:?}", other), other.span().clone()),
         }
@@ -466,19 +471,16 @@ impl NIrGenerator {
         self.start_block(func, &loop_end_label, span);
     }
 
-    fn handle_break(&mut self, func: &mut Function, span: SourceSpan) {
-        if let Some(label) = self.break_stack.last() {
-            self.add_terminator(func, Terminator::new(TerminatorKind::Branch { label: label.clone().into() }, span));
-        } else {
-            self.new_error("Break outside loop".to_string(), span);
-        }
-    }
+    fn handle_loop_control(&mut self, func: &mut Function, span: SourceSpan, control: LoopControl) {
+        let (stack, message) = match control {
+            LoopControl::Break => (&self.break_stack, "Break outside loop"),
+            LoopControl::Continue => (&self.continue_stack, "Continue outside loop"),
+        };
 
-    fn handle_continue(&mut self, func: &mut Function, span: SourceSpan) {
-        if let Some(label) = self.continue_stack.last() {
+        if let Some(label) = stack.last() {
             self.add_terminator(func, Terminator::new(TerminatorKind::Branch { label: label.clone().into() }, span));
         } else {
-            self.new_error("Continue outside loop".to_string(), span);
+            self.new_error(message.to_string(), span);
         }
     }
 

@@ -411,7 +411,7 @@ fn test_generate_array_type() {
         Type::Void,
         vec![var_declaration(
             vec!["arr".into()],
-            Type::Array(Box::new(Type::I32), Box::new(num_lit(10))),
+            Type::Array(Box::new(Type::I32), Box::new(num_lit_i64(10))),
             true,
             vec![],
         )],
@@ -812,7 +812,7 @@ fn test_generate_array_literal_with_elements() {
     let ast = vec![function_declaration(
         "test".into(),
         vec![],
-        Type::Array(Box::new(Type::I32), Box::new(num_lit(3))),
+        Type::Array(Box::new(Type::I32), Box::new(num_lit_i64(3))),
         vec![Stmt::Return {
             value: Some(Expr::ArrayLiteral {
                 elements: vec![num_lit_i32(10), num_lit_i32(20), num_lit_i32(30)],
@@ -1177,7 +1177,7 @@ fn test_generate_array_access_assignment() {
         Type::Void,
         vec![
             // Dichiarazione di un array di 3 interi
-            var_declaration(vec!["arr".into()], Type::Array(Box::new(Type::I32), Box::new(num_lit(3))), true, vec![]),
+            var_declaration(vec!["arr".into()], Type::Array(Box::new(Type::I32), Box::new(num_lit_i64(3))), true, vec![]),
             // Assegnazione a un elemento dell'array: arr[1] = 42
             Stmt::Expression {
                 expr: Expr::Assign {

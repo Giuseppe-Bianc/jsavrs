@@ -8,7 +8,7 @@ use jsavrs::utils::*;
 
 #[test]
 fn test_simple_binary_expr() {
-    let expr = binary_expr(num_lit(1), BinaryOp::Add, num_lit(2));
+    let expr = binary_expr(num_lit_i64(1), BinaryOp::Add, num_lit_i64(2));
 
     let output = pretty_print(&expr);
     let stripped = strip_ansi_codes(&output);
@@ -16,8 +16,8 @@ fn test_simple_binary_expr() {
 }
 #[test]
 fn test_nested_binary_expr() {
-    let inner = binary_expr(num_lit(1), BinaryOp::Add, num_lit(2));
-    let expr = binary_expr(inner, BinaryOp::Multiply, num_lit(3));
+    let inner = binary_expr(num_lit_i64(1), BinaryOp::Add, num_lit_i64(2));
+    let expr = binary_expr(inner, BinaryOp::Multiply, num_lit_i64(3));
 
     let output = pretty_print(&expr);
     let stripped = strip_ansi_codes(&output);
@@ -25,7 +25,7 @@ fn test_nested_binary_expr() {
 }
 #[test]
 fn test_unary_negate() {
-    let expr = unary_expr(UnaryOp::Negate, num_lit(5));
+    let expr = unary_expr(UnaryOp::Negate, num_lit_i64(5));
     let output = pretty_print(&expr);
     let stripped = strip_ansi_codes(&output);
     assert_snapshot!(stripped.trim());
@@ -33,7 +33,7 @@ fn test_unary_negate() {
 
 #[test]
 fn test_grouping_expr() {
-    let inner = binary_expr(num_lit(1), BinaryOp::Add, num_lit(2));
+    let inner = binary_expr(num_lit_i64(1), BinaryOp::Add, num_lit_i64(2));
     let expr = grouping_expr(inner);
 
     let output = pretty_print(&expr);
@@ -58,7 +58,7 @@ fn test_literal_values() {
 
 #[test]
 fn test_variable_assignment() {
-    let expr = assign_expr(variable_expr("x"), num_lit(3));
+    let expr = assign_expr(variable_expr("x"), num_lit_i64(3));
 
     let output = pretty_print(&expr);
     let stripped = strip_ansi_codes(&output);
@@ -69,7 +69,7 @@ fn test_variable_assignment() {
 fn test_function_call() {
     let callee = variable_expr("foo");
 
-    let args = vec![num_lit(1), binary_expr(num_lit(2), BinaryOp::Add, num_lit(3))];
+    let args = vec![num_lit_i64(1), binary_expr(num_lit_i64(2), BinaryOp::Add, num_lit_i64(3))];
     let expr = call_expr(callee, args);
 
     let output = pretty_print(&expr);
@@ -80,7 +80,7 @@ fn test_function_call() {
 #[test]
 fn test_array_access() {
     let array = variable_expr("arr");
-    let index = binary_expr(variable_expr("i"), BinaryOp::Add, num_lit(1));
+    let index = binary_expr(variable_expr("i"), BinaryOp::Add, num_lit_i64(1));
     let expr = array_access_expr(array, index);
 
     let output = pretty_print(&expr);
@@ -91,9 +91,9 @@ fn test_array_access() {
 #[test]
 fn test_deeply_nested_binary() {
     let expr = binary_expr(
-        binary_expr(binary_expr(num_lit(1), BinaryOp::Add, num_lit(2)), BinaryOp::Add, num_lit(3)),
+        binary_expr(binary_expr(num_lit_i64(1), BinaryOp::Add, num_lit_i64(2)), BinaryOp::Add, num_lit_i64(3)),
         BinaryOp::Add,
-        num_lit(4),
+        num_lit_i64(4),
     );
 
     let output = pretty_print(&expr);
@@ -112,7 +112,7 @@ fn test_multiple_unary_ops() {
 
 #[test]
 fn test_stmt_expression() {
-    let stmt = Stmt::Expression { expr: num_lit(42) };
+    let stmt = Stmt::Expression { expr: num_lit_i64(42) };
     let output = pretty_print_stmt(&stmt);
     let stripped = strip_ansi_codes(&output);
     assert_snapshot!(stripped.trim());
@@ -120,7 +120,7 @@ fn test_stmt_expression() {
 
 #[test]
 fn test_var_declaration_multiple_vars() {
-    let stmt = var_declaration(vec!["x".into(), "y".into()], Type::I32, true, vec![num_lit(1), num_lit(2)]);
+    let stmt = var_declaration(vec!["x".into(), "y".into()], Type::I32, true, vec![num_lit_i64(1), num_lit_i64(2)]);
 
     let output = pretty_print_stmt(&stmt);
     let stripped = strip_ansi_codes(&output);
@@ -150,8 +150,8 @@ fn test_function_with_parameters() {
 #[test]
 fn test_if_stmt_with_else() {
     let condition = bool_lit(true);
-    let then_branch = vec![Stmt::Expression { expr: num_lit(1) }];
-    let else_branch = vec![Stmt::Expression { expr: num_lit(2) }];
+    let then_branch = vec![Stmt::Expression { expr: num_lit_i64(1) }];
+    let else_branch = vec![Stmt::Expression { expr: num_lit_i64(2) }];
 
     let stmt = Stmt::If { condition, then_branch, else_branch: Some(else_branch), span: dummy_span() };
 
@@ -173,7 +173,7 @@ fn test_empty_block_stmt() {
 #[test]
 fn test_nested_block_stmt() {
     let stmt = Stmt::Block {
-        statements: vec![Stmt::Block { statements: vec![Stmt::Expression { expr: num_lit(42) }], span: dummy_span() }],
+        statements: vec![Stmt::Block { statements: vec![Stmt::Expression { expr: num_lit_i64(42) }], span: dummy_span() }],
         span: dummy_span(),
     };
 
@@ -183,7 +183,7 @@ fn test_nested_block_stmt() {
 }
 #[test]
 fn test_return_stmt_with_value() {
-    let stmt = Stmt::Return { value: Some(num_lit(42)), span: dummy_span() };
+    let stmt = Stmt::Return { value: Some(num_lit_i64(42)), span: dummy_span() };
 
     let output = pretty_print_stmt(&stmt);
     let stripped = strip_ansi_codes(&output);
@@ -235,7 +235,7 @@ fn test_while() {
 fn test_while_not_empty_body() {
     let stmt = Stmt::While {
         condition: bool_lit(true),
-        body: vec![Stmt::Expression { expr: num_lit(42) }],
+        body: vec![Stmt::Expression { expr: num_lit_i64(42) }],
         span: dummy_span(),
     };
 
@@ -247,7 +247,7 @@ fn test_while_not_empty_body() {
 #[test]
 fn test_for() {
     let stmt = Stmt::For {
-        initializer: Some(Box::from(var_declaration(vec!["x".into()], Type::I32, true, vec![num_lit(1)]))),
+        initializer: Some(Box::from(var_declaration(vec!["x".into()], Type::I32, true, vec![num_lit_i64(1)]))),
         condition: None,
         increment: None,
         body: vec![],
@@ -262,9 +262,9 @@ fn test_for() {
 #[test]
 fn test_for_complete() {
     let stmt = Stmt::For {
-        initializer: Some(Box::from(var_declaration(vec!["x".into()], Type::I32, true, vec![num_lit(1)]))),
-        condition: Some(binary_expr(variable_expr("x"), BinaryOp::Less, num_lit(2))),
-        increment: Some(assign_expr(variable_expr("x"), binary_expr(variable_expr("x"), BinaryOp::Add, num_lit(1)))),
+        initializer: Some(Box::from(var_declaration(vec!["x".into()], Type::I32, true, vec![num_lit_i64(1)]))),
+        condition: Some(binary_expr(variable_expr("x"), BinaryOp::Less, num_lit_i64(2))),
+        increment: Some(assign_expr(variable_expr("x"), binary_expr(variable_expr("x"), BinaryOp::Add, num_lit_i64(1)))),
         body: vec![],
         span: dummy_span(),
     };
@@ -278,10 +278,10 @@ fn test_for_complete() {
 #[test]
 fn test_for_not_empty_body() {
     let stmt = Stmt::For {
-        initializer: Some(Box::from(var_declaration(vec!["x".into()], Type::I32, true, vec![num_lit(1)]))),
+        initializer: Some(Box::from(var_declaration(vec!["x".into()], Type::I32, true, vec![num_lit_i64(1)]))),
         condition: None,
         increment: None,
-        body: vec![Stmt::Expression { expr: num_lit(42) }],
+        body: vec![Stmt::Expression { expr: num_lit_i64(42) }],
         span: dummy_span(),
     };
 
@@ -293,10 +293,10 @@ fn test_for_not_empty_body() {
 #[test]
 fn test_for_complete_not_empty_body() {
     let stmt = Stmt::For {
-        initializer: Some(Box::from(var_declaration(vec!["x".into()], Type::I32, true, vec![num_lit(1)]))),
-        condition: Some(binary_expr(variable_expr("x"), BinaryOp::Less, num_lit(2))),
-        increment: Some(assign_expr(variable_expr("x"), binary_expr(variable_expr("x"), BinaryOp::Add, num_lit(1)))),
-        body: vec![Stmt::Expression { expr: num_lit(42) }],
+        initializer: Some(Box::from(var_declaration(vec!["x".into()], Type::I32, true, vec![num_lit_i64(1)]))),
+        condition: Some(binary_expr(variable_expr("x"), BinaryOp::Less, num_lit_i64(2))),
+        increment: Some(assign_expr(variable_expr("x"), binary_expr(variable_expr("x"), BinaryOp::Add, num_lit_i64(1)))),
+        body: vec![Stmt::Expression { expr: num_lit_i64(42) }],
         span: dummy_span(),
     };
 
@@ -357,7 +357,7 @@ test_type_output!(test_custom_output, Type::Custom("inin".into()));
 fn test_corner_case_deeply_nested_if() {
     let inner_if = Stmt::If {
         condition: bool_lit(false),
-        then_branch: vec![Stmt::Expression { expr: num_lit(3) }],
+        then_branch: vec![Stmt::Expression { expr: num_lit_i64(3) }],
         else_branch: None,
         span: dummy_span(),
     };

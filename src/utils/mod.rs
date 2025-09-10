@@ -24,53 +24,51 @@ pub fn strip_ansi_codes(s: &str) -> String {
     re.replace_all(s, "").to_string()
 }
 
+#[macro_export]
 // Helper functions per costruire AST
-pub fn num_lit(n: i64) -> Expr {
-    Expr::Literal { value: LiteralValue::Number(Number::Integer(n)), span: dummy_span() }
+macro_rules! create_num_lit {
+    ($variant:ident, $value:expr) => {
+        Expr::Literal {
+            value: LiteralValue::Number(Number::$variant($value)),
+            span: dummy_span(),
+        }
+    };
 }
 
-/// Creates a numeric literal expression from an `i8` value.
 pub fn num_lit_i8(n: i8) -> Expr {
-    Expr::Literal { value: LiteralValue::Number(Number::I8(n)), span: dummy_span() }
+    create_num_lit!(I8, n)
 }
 
-/// Creates a numeric literal expression from an `i16` value.
 pub fn num_lit_i16(n: i16) -> Expr {
-    Expr::Literal { value: LiteralValue::Number(Number::I16(n)), span: dummy_span() }
+    create_num_lit!(I16, n)
 }
 
-/// Creates a numeric literal expression from an `i32` value.
 pub fn num_lit_i32(n: i32) -> Expr {
-    Expr::Literal { value: LiteralValue::Number(Number::I32(n)), span: dummy_span() }
+    create_num_lit!(I32, n)
 }
 
-/// Creates a numeric literal expression from an `i64` value (alias for `num_lit`).
 pub fn num_lit_i64(n: i64) -> Expr {
-    Expr::Literal { value: LiteralValue::Number(Number::Integer(n)), span: dummy_span() }
+    create_num_lit!(Integer, n)
 }
 
-/// Creates a numeric literal expression from a `u8` value.
 pub fn num_lit_u8(n: u8) -> Expr {
-    Expr::Literal { value: LiteralValue::Number(Number::U8(n)), span: dummy_span() }
+    create_num_lit!(U8, n)
 }
 
-/// Creates a numeric literal expression from a `u16` value.
 pub fn num_lit_u16(n: u16) -> Expr {
-    Expr::Literal { value: LiteralValue::Number(Number::U16(n)), span: dummy_span() }
+    create_num_lit!(U16, n)
 }
 
-/// Creates a numeric literal expression from a `u32` value.
 pub fn num_lit_u32(n: u32) -> Expr {
-    Expr::Literal { value: LiteralValue::Number(Number::U32(n)), span: dummy_span() }
+    create_num_lit!(U32, n)
 }
 
-/// Creates a numeric literal expression from a `u64` value.
 pub fn num_lit_unsigned(n: u64) -> Expr {
-    Expr::Literal { value: LiteralValue::Number(Number::UnsignedInteger(n)), span: dummy_span() }
+    create_num_lit!(UnsignedInteger, n)
 }
 
 pub fn float_lit(n: f64) -> Expr {
-    Expr::Literal { value: LiteralValue::Number(Number::Float64(n)), span: dummy_span() }
+    create_num_lit!(Float64, n)
 }
 
 pub fn bool_lit(b: bool) -> Expr {
@@ -234,11 +232,19 @@ pub fn func_from_symbol(sym: Symbol) -> Option<FunctionSymbol> {
 }
 
 lazy_static! {
-    static ref UUID_REGEX: Regex =
+    static ref UUID_REGEX: Regex = 
         Regex::new(r"[0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{12}").unwrap();
 }
 
-fn sanitize_uuids(input: &str) -> String {
+pub fn sanitize_uuids(input: &str) -> String {
+    sanitize_uuids_with_prefix(input, "SCOPE_")
+}
+
+pub fn sanitize_mdata_uuids(input: &str) -> String {
+    sanitize_uuids_with_prefix(input, "UUID_")
+}
+
+fn sanitize_uuids_with_prefix(input: &str, prefix: &str) -> String {
     let mut counter = 0;
     let mut mapping = HashMap::new();
 
@@ -250,7 +256,7 @@ fn sanitize_uuids(input: &str) -> String {
                 counter += 1;
                 id
             });
-            format!("SCOPE_{}", id)
+            format!("{}{}", prefix, id)
         })
         .to_string()
 }
@@ -259,7 +265,7 @@ pub fn vec_to_string<T: Display>(vec: Vec<T>) -> String {
     sanitize_uuids(vec.into_iter().map(|x| x.to_string()).collect::<Vec<_>>().join(" ").as_str())
 }
 
-pub fn module_redaceted(module: Module) -> String {
+pub fn module_redacted(module: Module) -> String {
     let mut redacted: String = String::new();
     writeln!(redacted, "module {} {{", module.name).unwrap();
     writeln!(redacted, "  data_layout = \"{}\";", module.data_layout).unwrap();

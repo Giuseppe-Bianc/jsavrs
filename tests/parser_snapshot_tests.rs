@@ -120,9 +120,9 @@ fn test_grouping() {
         expr[0],
         Stmt::Expression {
             expr: binary_expr(
-                grouping_expr(binary_expr(num_lit(3), BinaryOp::Add, num_lit(5))),
+                grouping_expr(binary_expr(num_lit_i64(3), BinaryOp::Add, num_lit_i64(5))),
                 BinaryOp::Multiply,
-                num_lit(2)
+                num_lit_i64(2)
             )
         }
     );
@@ -201,7 +201,7 @@ fn test_function_call() {
         Stmt::Expression {
             expr: call_expr(
                 variable_expr("foo"),
-                vec![num_lit(1), binary_expr(num_lit(2), BinaryOp::Add, num_lit(3)),]
+                vec![num_lit_i64(1), binary_expr(num_lit_i64(2), BinaryOp::Add, num_lit_i64(3)),]
             )
         }
     );
@@ -225,7 +225,7 @@ fn test_array_access() {
     assert_eq!(
         expr[0],
         Stmt::Expression {
-            expr: array_access_expr(variable_expr("arr"), binary_expr(num_lit(0), BinaryOp::Add, num_lit(1)))
+            expr: array_access_expr(variable_expr("arr"), binary_expr(num_lit_i64(0), BinaryOp::Add, num_lit_i64(1)))
         }
     );
 }

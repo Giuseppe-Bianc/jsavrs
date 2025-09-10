@@ -16,7 +16,7 @@ fn test_generate_void_function() {
 
     let mut generator = NIrGenerator::new();
     let (functions, _ir_errors) = generator.generate(ast, "test_file.vn");
-    assert_snapshot!(module_redaceted(functions));
+    assert_snapshot!(module_redacted(functions));
     //assert_return_literal!(entry_block, IrType::Void, IrLiteralValue::I32(0));
 }
 
@@ -29,7 +29,7 @@ fn test_generate_main_function() {
     let (functions, _ir_errors) = generator.generate(ast, "test_file.vn");
     assert_eq!(functions.functions.len(), 1);
 
-    assert_snapshot!(module_redaceted(functions));
+    assert_snapshot!(module_redacted(functions));
 }
 
 #[test]
@@ -46,7 +46,7 @@ fn test_generate_binary_expression() {
 
     let mut generator = NIrGenerator::new();
     let (functions, _ir_errors) = generator.generate(ast, "test_file.vn");
-    assert_snapshot!(module_redaceted(functions));
+    assert_snapshot!(module_redacted(functions));
 }
 
 #[test]
@@ -64,7 +64,7 @@ fn test_generate_variable_assignment() {
     let mut generator = NIrGenerator::new();
     let (functions, _ir_errors) = generator.generate(ast, "test_file.vn");
 
-    assert_snapshot!(module_redaceted(functions));
+    assert_snapshot!(module_redacted(functions));
 }
 
 #[test]
@@ -83,7 +83,7 @@ fn test_generate_if_statement() {
 
     let mut generator = NIrGenerator::new();
     let (functions, _ir_errors) = generator.generate(ast, "test_file.vn");
-    assert_snapshot!(module_redaceted(functions));
+    assert_snapshot!(module_redacted(functions));
 }
 
 #[test]
@@ -104,7 +104,7 @@ fn test_generate_nested_expressions() {
 
     let mut generator = NIrGenerator::new();
     let (functions, _ir_errors) = generator.generate(ast, "test_file.vn");
-    assert_snapshot!(module_redaceted(functions));
+    assert_snapshot!(module_redacted(functions));
 }
 
 #[test]
@@ -118,7 +118,7 @@ fn test_generate_custom_type() {
 
     let mut generator = NIrGenerator::new();
     let (functions, _ir_errors) = generator.generate(ast, "test_file.vn");
-    assert_snapshot!(module_redaceted(functions));
+    assert_snapshot!(module_redacted(functions));
 }
 
 #[test]
@@ -129,7 +129,7 @@ fn test_generate_array_type() {
         Type::Void,
         vec![var_declaration(
             vec!["arr".into()],
-            Type::Array(Box::new(Type::I32), Box::new(num_lit(10))),
+            Type::Array(Box::new(Type::I32), Box::new(num_lit_i64(10))),
             true,
             vec![],
         )],
@@ -137,7 +137,7 @@ fn test_generate_array_type() {
 
     let mut generator = NIrGenerator::new();
     let (functions, _ir_errors) = generator.generate(ast, "test_file.vn");
-    assert_snapshot!(module_redaceted(functions));
+    assert_snapshot!(module_redacted(functions));
 }
 
 #[test]
@@ -152,7 +152,7 @@ fn test_generate_missing_return() {
 
     let mut generator = NIrGenerator::new();
     let (functions, _ir_errors) = generator.generate(ast, "test_file.vn");
-    assert_snapshot!(module_redaceted(functions));
+    assert_snapshot!(module_redacted(functions));
 }
 
 #[test]
@@ -174,7 +174,7 @@ fn test_generate_multiple_functions() {
 
     let mut generator = NIrGenerator::new();
     let (functions, _ir_errors) = generator.generate(ast, "test_file.vn");
-    assert_snapshot!(module_redaceted(functions));
+    assert_snapshot!(module_redacted(functions));
 }
 
 #[test]
@@ -189,7 +189,7 @@ fn test_generate_string_literal() {
 
     let mut generator = NIrGenerator::new();
     let (functions, _ir_errors) = generator.generate(ast, "test_file.vn");
-    assert_snapshot!(module_redaceted(functions));
+    assert_snapshot!(module_redacted(functions));
 }
 
 #[test]
@@ -204,7 +204,7 @@ fn test_generate_nullptr() {
 
     let mut generator = NIrGenerator::new();
     let (functions, _ir_errors) = generator.generate(ast, "test_file.vn");
-    assert_snapshot!(module_redaceted(functions));
+    assert_snapshot!(module_redacted(functions));
 }
 
 #[test]
@@ -233,7 +233,7 @@ fn test_generate_simple_block() {
 
     let mut generator = NIrGenerator::new();
     let (functions, _ir_errors) = generator.generate(ast, "test_file.vn");
-    assert_snapshot!(module_redaceted(functions));
+    assert_snapshot!(module_redacted(functions));
 }
 
 #[test]
@@ -261,7 +261,7 @@ fn test_generate_simple_while_loop() {
 
     let mut generator = NIrGenerator::new();
     let (functions, _ir_errors) = generator.generate(ast, "test_file.vn");
-    assert_snapshot!(module_redaceted(functions));
+    assert_snapshot!(module_redacted(functions));
 }
 
 #[test]
@@ -291,7 +291,7 @@ fn test_generate_for_loop_basic() {
 
     let mut generator = NIrGenerator::new();
     let (functions, _ir_errors) = generator.generate(ast, "test_file.vn");
-    assert_snapshot!(module_redaceted(functions));
+    assert_snapshot!(module_redacted(functions));
 }
 
 #[test]
@@ -317,7 +317,7 @@ fn test_generate_for_loop_with_break() {
 
     let mut generator = NIrGenerator::new();
     let (functions, _ir_errors) = generator.generate(ast, "test_file.vn");
-    assert_snapshot!(module_redaceted(functions));
+    assert_snapshot!(module_redacted(functions));
 }
 
 #[test]
@@ -343,7 +343,7 @@ fn test_generate_for_loop_with_continue() {
 
     let mut generator = NIrGenerator::new();
     let (functions, _ir_errors) = generator.generate(ast, "test_file.vn");
-    assert_snapshot!(module_redaceted(functions));
+    assert_snapshot!(module_redacted(functions));
 }
 
 #[test]
@@ -360,7 +360,7 @@ fn test_generate_grouping_expression() {
 
     let mut generator = NIrGenerator::new();
     let (functions, _ir_errors) = generator.generate(ast, "test_file.vn");
-    assert_snapshot!(module_redaceted(functions));
+    assert_snapshot!(module_redacted(functions));
 }
 
 #[test]
@@ -368,7 +368,7 @@ fn test_generate_array_literal_with_elements() {
     let ast = vec![function_declaration(
         "test".into(),
         vec![],
-        Type::Array(Box::new(Type::I32), Box::new(num_lit(3))),
+        Type::Array(Box::new(Type::I32), Box::new(num_lit_i64(3))),
         vec![Stmt::Return {
             value: Some(Expr::ArrayLiteral {
                 elements: vec![num_lit_i32(10), num_lit_i32(20), num_lit_i32(30)],
@@ -380,7 +380,7 @@ fn test_generate_array_literal_with_elements() {
 
     let mut generator = NIrGenerator::new();
     let (functions, _ir_errors) = generator.generate(ast, "test_file.vn");
-    assert_snapshot!(module_redaceted(functions));
+    assert_snapshot!(module_redacted(functions));
 }
 
 #[test]
@@ -394,7 +394,7 @@ fn test_default_implementation() {
 
     let mut generator = NIrGenerator::default();
     let (functions, _ir_errors) = generator.generate(ast, "test_file.vn");
-    assert_snapshot!(module_redaceted(functions));
+    assert_snapshot!(module_redacted(functions));
 }
 
 #[test]
@@ -433,7 +433,7 @@ fn test_generate_binary_all_operations() {
 
         let mut generator = NIrGenerator::default();
         let (functions, _ir_errors) = generator.generate(ast, "test_file.vn");
-        assert_snapshot!(module_redaceted(functions));
+        assert_snapshot!(module_redacted(functions));
     }
 }
 
@@ -451,7 +451,7 @@ fn test_generate_unary_expression() {
 
         let mut generator = NIrGenerator::default();
         let (functions, _ir_errors) = generator.generate(ast, "test_file.vn");
-        assert_snapshot!(module_redaceted(functions));
+        assert_snapshot!(module_redacted(functions));
     }
 }
 
@@ -491,7 +491,7 @@ fn test_generate_integer_literals() {
 
         let mut generator = NIrGenerator::default();
         let (functions, _ir_errors) = generator.generate(ast, "test_file.vn");
-        assert_snapshot!(module_redaceted(functions));
+        assert_snapshot!(module_redacted(functions));
     }
 }
 
@@ -524,7 +524,7 @@ fn test_generate_float_literals() {
 
         let mut generator = NIrGenerator::default();
         let (functions, _ir_errors) = generator.generate(ast, "test_file.vn");
-        assert_snapshot!(module_redaceted(functions));
+        assert_snapshot!(module_redacted(functions));
     }
 }
 
@@ -542,7 +542,7 @@ fn test_generate_boolean_literals() {
 
         let mut generator = NIrGenerator::default();
         let (functions, _ir_errors) = generator.generate(ast, "test_file.vn");
-        assert_snapshot!(module_redaceted(functions));
+        assert_snapshot!(module_redacted(functions));
     }
 }
 
@@ -557,7 +557,7 @@ fn test_generate_char_literal() {
 
     let mut generator = NIrGenerator::default();
     let (functions, _ir_errors) = generator.generate(ast, "test_file.vn");
-    assert_snapshot!(module_redaceted(functions));
+    assert_snapshot!(module_redacted(functions));
 }
 
 #[test]
@@ -571,5 +571,5 @@ fn test_generate_nullptr_literal() {
 
     let mut generator = NIrGenerator::default();
     let (functions, _ir_errors) = generator.generate(ast, "test_file.vn");
-    assert_snapshot!(module_redaceted(functions));
+    assert_snapshot!(module_redacted(functions));
 }

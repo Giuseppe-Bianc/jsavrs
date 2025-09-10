@@ -33,7 +33,12 @@ We can define a set of agent roles, each with a specific responsibility in the c
 *   **Input:** A piece of Rust code and a set of refactoring goals (e.g., "reduce complexity" or "improve performance").
 *   **Output:** A refactored version of the code that meets the specified goals.
 *   **Tooling:** The Refactor Agent would use its understanding of Rust best practices and the `jsavrs` architecture to make intelligent refactoring decisions.
-
+*   **Refactoring Output Requirement:** When performing refactoring operations, the Refactor Agent **must** display all modified code in a unified diff format (`diff -u` style) that clearly shows:
+    *   File paths and line numbers for all changes
+    *   Removed lines (prefixed with `-`)
+    *   Added lines (prefixed with `+`)
+    *   Context lines (unchanged code surrounding modifications)
+    This comprehensive diff output ensures complete transparency of all changes made during refactoring, allowing reviewers to understand the full scope of modifications.
 ## Agent Interaction
 
 The agents would interact in a sequential workflow:
