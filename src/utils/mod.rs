@@ -71,20 +71,27 @@ pub fn float_lit(n: f64) -> Expr {
     create_num_lit!(Float64, n)
 }
 
+fn create_literal_expr(value: LiteralValue) -> Expr {
+    Expr::Literal {
+        value,
+        span: dummy_span(),
+    }
+}
+
 pub fn bool_lit(b: bool) -> Expr {
-    Expr::Literal { value: LiteralValue::Bool(b), span: dummy_span() }
+    create_literal_expr(LiteralValue::Bool(b))
 }
 
 pub fn nullptr_lit() -> Expr {
-    Expr::Literal { value: LiteralValue::Nullptr, span: dummy_span() }
+    create_literal_expr(LiteralValue::Nullptr)
 }
 
 pub fn string_lit(s: &str) -> Expr {
-    Expr::Literal { value: LiteralValue::StringLit(s.into()), span: dummy_span() }
+    create_literal_expr(LiteralValue::StringLit(s.into()))
 }
 
 pub fn char_lit(c: &str) -> Expr {
-    Expr::Literal { value: LiteralValue::CharLit(c.into()), span: dummy_span() }
+    create_literal_expr(LiteralValue::CharLit(c.into()))
 }
 
 pub fn binary_expr(left: Expr, op: BinaryOp, right: Expr) -> Expr {
@@ -216,19 +223,23 @@ pub fn create_func_symbol(name: &str) -> Symbol {
     Symbol::Function(create_function_symbol(name))
 }
 
+#[macro_export]
+macro_rules! from_symbol {
+    ($sym:expr, $variant:ident) => {
+        match $sym {
+            Symbol::$variant(v) => Some(v),
+            _ => None,
+        }
+    };
+}
+
 // Helper to extract inner symbol values for comparison
 pub fn var_from_symbol(sym: Symbol) -> Option<VariableSymbol> {
-    match sym {
-        Symbol::Variable(v) => Some(v),
-        _ => None,
-    }
+    from_symbol!(sym, Variable)
 }
 
 pub fn func_from_symbol(sym: Symbol) -> Option<FunctionSymbol> {
-    match sym {
-        Symbol::Function(f) => Some(f),
-        _ => None,
-    }
+    from_symbol!(sym, Function)
 }
 
 lazy_static! {
