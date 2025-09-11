@@ -39,7 +39,7 @@ jsavrs/
 
 ## Technology Stack
 
-- **Primary Language**: Rust 2024 edition
+- **Primary Language**: Rust 2024 edition (requires Rust 1.85+)
 - **Lexer**: Logos crate for efficient tokenization
 - **CLI**: Clap for command-line argument parsing
 - **Testing**: Built-in Rust testing framework with insta for snapshot testing
