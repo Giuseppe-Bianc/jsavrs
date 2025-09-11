@@ -25,7 +25,7 @@ The framework encompasses four distinct agent roles, each designed to address sp
 - Risk assessment and mitigation strategies
 - Timeline estimations and resource allocation recommendations
 
-**Technical Infrastructure:** The Planner Agent leverages extensive knowledge of the `jsavrs` codebase architecture, as documented in the project's technical specifications (`GEMINI.md` and `QWEN.md`), to ensure that generated plans align with existing architectural patterns and maintain system coherence.
+**Technical Infrastructure:** The Planner Agent leverages extensive knowledge of the `jsavrs` codebase architecture, as documented in the project's technical specifications (`QWEN.md`), to ensure that generated plans align with existing architectural patterns and maintain system coherence.
 
 ### 2. Coder Agent: Automated Code Implementation and Integration
 
