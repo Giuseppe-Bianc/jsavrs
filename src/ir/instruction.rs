@@ -33,12 +33,12 @@ pub enum VectorOp {
 impl fmt::Display for VectorOp {
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
         match self {
-            VectorOp::Add => write!(f, "vadd"),
-            VectorOp::Sub => write!(f, "vsub"),
-            VectorOp::Mul => write!(f, "vmul"),
-            VectorOp::Div => write!(f, "vdiv"),
-            VectorOp::DotProduct => write!(f, "vdot"),
-            VectorOp::Shuffle => write!(f, "vshuffle"),
+            VectorOp::Add => f.write_str("vadd"),
+            VectorOp::Sub => f.write_str("vsub"),
+            VectorOp::Mul => f.write_str("vmul"),
+            VectorOp::Div => f.write_str("vdiv"),
+            VectorOp::DotProduct => f.write_str("vdot"),
+            VectorOp::Shuffle => f.write_str("vshuffle"),
         }
     }
 }
@@ -185,24 +185,24 @@ impl fmt::Display for Instruction {
 impl fmt::Display for IrBinaryOp {
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
         match self {
-            IrBinaryOp::Add => write!(f, "add"),
-            IrBinaryOp::Subtract => write!(f, "sub"),
-            IrBinaryOp::Multiply => write!(f, "mul"),
-            IrBinaryOp::Divide => write!(f, "div"),
-            IrBinaryOp::Modulo => write!(f, "mod"),
-            IrBinaryOp::Equal => write!(f, "eq"),
-            IrBinaryOp::NotEqual => write!(f, "ne"),
-            IrBinaryOp::Less => write!(f, "lt"),
-            IrBinaryOp::LessEqual => write!(f, "le"),
-            IrBinaryOp::Greater => write!(f, "gt"),
-            IrBinaryOp::GreaterEqual => write!(f, "ge"),
-            IrBinaryOp::And => write!(f, "and"),
-            IrBinaryOp::Or => write!(f, "or"),
-            IrBinaryOp::BitwiseAnd => write!(f, "bitand"),
-            IrBinaryOp::BitwiseOr => write!(f, "bitor"),
-            IrBinaryOp::BitwiseXor => write!(f, "bitxor"),
-            IrBinaryOp::ShiftLeft => write!(f, "shl"),
-            IrBinaryOp::ShiftRight => write!(f, "shr"),
+            IrBinaryOp::Add => f.write_str("add"),
+            IrBinaryOp::Subtract => f.write_str("sub"),
+            IrBinaryOp::Multiply => f.write_str("mul"),
+            IrBinaryOp::Divide => f.write_str("div"),
+            IrBinaryOp::Modulo => f.write_str("mod"),
+            IrBinaryOp::Equal => f.write_str("eq"),
+            IrBinaryOp::NotEqual => f.write_str("ne"),
+            IrBinaryOp::Less => f.write_str("lt"),
+            IrBinaryOp::LessEqual => f.write_str("le"),
+            IrBinaryOp::Greater => f.write_str("gt"),
+            IrBinaryOp::GreaterEqual => f.write_str("ge"),
+            IrBinaryOp::And => f.write_str("and"),
+            IrBinaryOp::Or => f.write_str("or"),
+            IrBinaryOp::BitwiseAnd => f.write_str("bitand"),
+            IrBinaryOp::BitwiseOr => f.write_str("bitor"),
+            IrBinaryOp::BitwiseXor => f.write_str("bitxor"),
+            IrBinaryOp::ShiftLeft => f.write_str("shl"),
+            IrBinaryOp::ShiftRight => f.write_str("shr"),
         }
     }
 }
@@ -210,8 +210,8 @@ impl fmt::Display for IrBinaryOp {
 impl fmt::Display for IrUnaryOp {
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
         match self {
-            IrUnaryOp::Negate => write!(f, "neg"),
-            IrUnaryOp::Not => write!(f, "not"),
+            IrUnaryOp::Negate => f.write_str("neg"),
+            IrUnaryOp::Not => f.write_str("not"),
         }
     }
 }
