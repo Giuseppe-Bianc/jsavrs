@@ -33,10 +33,12 @@ impl ControlFlowGraph {
         self.graph.node_indices().find(|&idx| self.graph[idx].label.as_ref() == label)
     }
 
+    /// Returns a reference to the block with the given label, if it exists.
     pub fn get_block(&self, label: &str) -> Option<&BasicBlock> {
         self.find_block_by_label(label).map(|idx| &self.graph[idx])
     }
 
+    /// Returns a mutable reference to the block with the given label, if it exists.
     pub fn get_block_mut(&mut self, label: &str) -> Option<&mut BasicBlock> {
         self.find_block_by_label(label).and_then(|idx| self.graph.node_weight_mut(idx))
     }
@@ -49,6 +51,8 @@ impl ControlFlowGraph {
         self.find_block_by_label(&self.entry_label)
     }
 
+    /// Adds an instruction to the block with the given label.
+    /// Returns true if the block was found and the instruction was added, false otherwise.
     pub fn add_instruction_to_block(&mut self, block_label: &str, instruction: Instruction) -> bool {
         if let Some(block) = self.get_block_mut(block_label) {
             block.instructions.push(instruction);
@@ -58,6 +62,8 @@ impl ControlFlowGraph {
         }
     }
 
+    /// Sets the terminator for the block with the given label.
+    /// Returns true if the block was found and the terminator was set, false otherwise.
     pub fn set_block_terminator(&mut self, block_label: &str, terminator: Terminator) -> bool {
         if let Some(block) = self.get_block_mut(block_label) {
             block.terminator = terminator;

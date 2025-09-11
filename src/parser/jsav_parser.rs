@@ -59,16 +59,20 @@ impl JsavParser {
 
         Some(Stmt::MainFunction { body: vec![body], span: function_span })
     }
+    /// Parses a break statement.
     #[inline]
     fn parse_break(&mut self) -> Option<Stmt> {
         let span = self.advance_and_get_span()?;
         Some(Stmt::Break { span })
     }
+    
+    /// Parses a continue statement.
     #[inline]
     fn parse_continue(&mut self) -> Option<Stmt> {
         let span = self.advance_and_get_span()?;
         Some(Stmt::Continue { span })
     }
+    
 
     fn advance_and_get_span(&mut self) -> Option<SourceSpan> {
         let token = self.advance()?; // Use reference
@@ -101,6 +105,7 @@ impl JsavParser {
         })
     }
 
+    /// Checks if the current token indicates the end of a statement.
     #[inline]
     fn is_end_of_statement(&self) -> bool {
         matches!(
@@ -109,6 +114,7 @@ impl JsavParser {
         )
     }
 
+    /// Calculates the span for a return statement.
     #[inline]
     fn calculate_return_span(&self, start: &Token, value: &Option<Expr>) -> SourceSpan {
         value.as_ref().and_then(|v| start.span.merged(v.span())).unwrap_or_else(|| start.span.clone())
@@ -643,11 +649,13 @@ impl JsavParser {
         self.tokens.get(self.current)
     }
 
+    /// Checks if the current token matches the given kind.
     #[inline]
     fn check(&self, kind: &TokenKind) -> bool {
         self.peek().map(|t| &t.kind == kind).unwrap_or(false)
     }
 
+    /// Checks if we've reached the end of the token stream.
     #[inline]
     fn is_at_end(&self) -> bool {
         self.peek().map(|t| t.kind == TokenKind::Eof).unwrap_or(true)

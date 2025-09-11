@@ -35,6 +35,7 @@ macro_rules! create_num_lit {
     };
 }
 
+// Generic function to create number literals with macro
 pub fn num_lit_i8(n: i8) -> Expr {
     create_num_lit!(I8, n)
 }
@@ -94,18 +95,22 @@ pub fn char_lit(c: &str) -> Expr {
     create_literal_expr(LiteralValue::CharLit(c.into()))
 }
 
+// Generic helper function to create binary expressions
 pub fn binary_expr(left: Expr, op: BinaryOp, right: Expr) -> Expr {
     Expr::Binary { left: Box::new(left), op, right: Box::new(right), span: dummy_span() }
 }
 
+// Generic helper function to create unary expressions
 pub fn unary_expr(op: UnaryOp, expr: Expr) -> Expr {
     Expr::Unary { op, expr: Box::new(expr), span: dummy_span() }
 }
 
+// Generic helper function to create grouping expressions
 pub fn grouping_expr(expr: Expr) -> Expr {
     Expr::Grouping { expr: Box::new(expr), span: dummy_span() }
 }
 
+// Generic helper function to create assignment expressions
 pub fn assign_expr(target: Expr, value: Expr) -> Expr {
     Expr::Assign { target: Box::new(target), value: Box::new(value), span: dummy_span() }
 }
@@ -114,26 +119,34 @@ pub fn variable_expr(name: &str) -> Expr {
     Expr::Variable { name: name.into(), span: dummy_span() }
 }
 
+// Generic helper function to create call expressions
 pub fn call_expr(callee: Expr, arguments: Vec<Expr>) -> Expr {
     Expr::Call { callee: Box::new(callee), arguments, span: dummy_span() }
 }
+
+// Generic helper function to create variable declarations
 pub fn var_declaration(
     variables: Vec<Arc<str>>, type_annotation: Type, is_mutable: bool, initializers: Vec<Expr>,
 ) -> Stmt {
     Stmt::VarDeclaration { variables, type_annotation, initializers, span: dummy_span(), is_mutable }
 }
+
+// Generic helper function to create function declarations
 pub fn function_declaration(name: Arc<str>, parameters: Vec<Parameter>, return_type: Type, body: Vec<Stmt>) -> Stmt {
     Stmt::Function { name, parameters, return_type, body, span: dummy_span() }
 }
 
+// Generic helper function to create array access expressions
 pub fn array_access_expr(array: Expr, index: Expr) -> Expr {
     Expr::ArrayAccess { array: Box::new(array), index: Box::new(index), span: dummy_span() }
 }
 
+// Generic helper function to create tokens from token kinds
 pub fn create_tokens(kinds: Vec<TokenKind>) -> Vec<Token> {
     kinds.into_iter().map(|k| Token { kind: k, span: dummy_span() }).collect()
 }
 
+// Generic helper function to create numeric tokens
 pub fn num_token(n: f64) -> Token {
     Token { kind: TokenKind::Numeric(Number::Float64(n)), span: dummy_span() }
 }
@@ -206,6 +219,7 @@ pub fn int_type() -> Type {
     Type::I32
 }
 
+// Generic helper function to create variable symbols
 pub fn create_var_symbol(name: &str, mutable: bool) -> Symbol {
     Symbol::Variable(VariableSymbol {
         name: name.into(),
@@ -216,9 +230,12 @@ pub fn create_var_symbol(name: &str, mutable: bool) -> Symbol {
     })
 }
 
+// Generic helper function to create function symbols
 pub fn create_function_symbol(name: &str) -> FunctionSymbol {
     FunctionSymbol { name: name.to_string(), parameters: Vec::new(), return_type: Type::Void, defined_at: dummy_span() }
 }
+
+// Generic helper function to create function symbols wrapped in Symbol enum
 pub fn create_func_symbol(name: &str) -> Symbol {
     Symbol::Function(create_function_symbol(name))
 }

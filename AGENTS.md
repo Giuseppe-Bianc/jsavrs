@@ -25,7 +25,7 @@ The framework encompasses four distinct agent roles, each designed to address sp
 - Risk assessment and mitigation strategies
 - Timeline estimations and resource allocation recommendations
 
-**Technical Infrastructure:** The Planner Agent leverages extensive knowledge of the `jsavrs` codebase architecture, as documented in the project's technical specifications (`GEMINI.md`), to ensure that generated plans align with existing architectural patterns and maintain system coherence.
+**Technical Infrastructure:** The Planner Agent leverages extensive knowledge of the `jsavrs` codebase architecture, as documented in the project's technical specifications (`GEMINI.md` and `QWEN.md`), to ensure that generated plans align with existing architectural patterns and maintain system coherence.
 
 ### 2. Coder Agent: Automated Code Implementation and Integration
 
@@ -67,7 +67,7 @@ The framework encompasses four distinct agent roles, each designed to address sp
 - **Insta Snapshot Testing:** For regression testing and output validation
 - **Similarity-rs Code Analysis:** For duplicate code detection and structural analysis
   - Installation verification: `cargo install similarity-rs` followed by `similarity-rs --help`
-  - **Critical Exclusion Policy:** The agent must systematically exclude `tests` and `benches` directories from duplicate code analysis to prevent false positive detections in non-production code artifacts
+  - **Critical Exclusion Policy:** The agent must systematically exclude `tests` and `benches` directories and the `ignored` directory if present from duplicate code analysis to prevent false positive detections in non-production code artifacts. To implement this exclusion policy, the agent shall utilize the `--skip-test` parameter for test directories.
 
 ### 4. Refactor Agent: Code Quality Enhancement and Architectural Improvement
 

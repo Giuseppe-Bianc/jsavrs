@@ -43,23 +43,28 @@ pub struct Value {
 }
 
 impl Value {
+    /// Creates a new literal value.
     pub fn new_literal(imm: IrLiteralValue) -> Self {
         let ty: IrType = (&imm).into();
         Value { id: ValueId::new(), kind: ValueKind::Literal(imm), ty, debug_info: None, scope: None }
     }
 
+    /// Creates a new constant value.
     pub fn new_constant(imm: IrConstantValue, ty: IrType) -> Self {
         Value { id: ValueId::new(), kind: ValueKind::Constant(imm), ty, debug_info: None, scope: None }
     }
 
+    /// Creates a new local value.
     pub fn new_local(name: Arc<str>, ty: IrType) -> Self {
         Value { id: ValueId::new(), kind: ValueKind::Local(name), ty, debug_info: None, scope: None }
     }
 
+    /// Creates a new global value.
     pub fn new_global(name: Arc<str>, ty: IrType) -> Self {
         Value { id: ValueId::new(), kind: ValueKind::Global(name), ty, debug_info: None, scope: None }
     }
 
+    /// Creates a new temporary value.
     pub fn new_temporary(tmp_id: u64, ty: IrType) -> Self {
         Value { id: ValueId::new(), kind: ValueKind::Temporary(tmp_id), ty, debug_info: None, scope: None }
     }

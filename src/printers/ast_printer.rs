@@ -1,6 +1,7 @@
 use crate::parser::ast::{Expr, Stmt};
 use crate::printers::branch_type::{append_line, get_indent, print_children, BranchConfig, BranchType, StyleManager};
 
+/// Pretty-print an expression AST into a styled, tree-like string.
 pub fn pretty_print(expr: &Expr) -> String {
     let mut output = String::new();
     let styles = StyleManager::new();
@@ -8,7 +9,7 @@ pub fn pretty_print(expr: &Expr) -> String {
     output
 }
 
-// Unified function to print labeled branches
+/// Unified function to print labeled branches
 fn print_branch(
     label: &str, expr: &Expr, parent_indent: &str, branch_config: BranchConfig, output: &mut String,
     styles: &StyleManager,
@@ -18,13 +19,13 @@ fn print_branch(
     print_expr(expr, &get_indent(&indent, &branch_config.current_type), branch_config.child_type, output, styles);
 }
 
-// Refactored print_expr using print_branch
+/// Prints an expression with the given indentation and branch type.
 fn print_expr(expr: &Expr, indent: &str, branch_type: BranchType, output: &mut String, styles: &StyleManager) {
     match expr {
         Expr::Binary { left, op, right, .. } => {
             append_line(output, indent, branch_type, styles.operator.clone(), &format!("BinaryOp {op:?}"));
-            print_branch("Left:", left, indent, BranchConfig::new(branch_type, BranchType::Middle, BranchType::Last), output, styles, );
-            print_branch("Right:", right, indent, BranchConfig::new(branch_type, BranchType::Last, BranchType::Last), output, styles, );
+            print_branch("Left:", left, indent, BranchConfig::new(branch_type, BranchType::Middle, BranchType::Last), output, styles);
+            print_branch("Right:", right, indent, BranchConfig::new(branch_type, BranchType::Last, BranchType::Last), output, styles);
         }
         Expr::Unary { op, expr, .. } => {
             append_line(output, indent, branch_type, styles.operator.clone(), &format!("UnaryOp {op:?}"));
@@ -81,8 +82,6 @@ fn print_expr(expr: &Expr, indent: &str, branch_type: BranchType, output: &mut S
         }
     }
 }
-
-// Add the following functions after the print_expr function
 
 /// Pretty-print a single statement AST into a styled, tree-like string.
 /// Mirrors `pretty_print` for expressions.

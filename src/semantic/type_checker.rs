@@ -448,7 +448,7 @@ impl TypeChecker {
         })
     }
 
-    // Updated is_same_type to handle array types properly
+    /// Checks if two types are the same, handling array types properly.
     pub fn is_same_type(&self, t1: &Type, t2: &Type) -> bool {
         match (t1, t2) {
             (Type::Array(elem1, size1), Type::Array(elem2, size2)) => {
@@ -468,11 +468,12 @@ impl TypeChecker {
         }
     }
 
+    /// Converts a signed integer to u64 if possible.
     fn signed_to_size<T: Into<i64> + Copy>(&self, n: T) -> Option<u64> {
         n.into().try_into().ok()
     }
 
-    // Updated get_size to handle all integer types and return u64
+    /// Gets the size from an expression, handling all integer types and returning u64.
     pub fn get_size(&self, expr: &Expr) -> Option<u64> {
         if let Expr::Literal { value, .. } = expr {
             match value {
@@ -480,7 +481,7 @@ impl TypeChecker {
                 LiteralValue::Number(Number::I16(n)) => self.signed_to_size(*n),
                 LiteralValue::Number(Number::I32(n)) => self.signed_to_size(*n),
                 LiteralValue::Number(Number::Integer(n)) => self.signed_to_size(*n),
-                // Tipi unsigned (già efficienti)
+                // Unsigned types (already efficient)
                 LiteralValue::Number(Number::U8(n)) => Some(*n as u64),
                 LiteralValue::Number(Number::U16(n)) => Some(*n as u64),
                 LiteralValue::Number(Number::U32(n)) => Some(*n as u64),
@@ -658,14 +659,17 @@ impl TypeChecker {
         }
     }
 
+    /// Checks if a type is an integer type.
     fn is_integer_type(&self, ty: &Type) -> bool {
         matches!(ty, Type::I8 | Type::I16 | Type::I32 | Type::I64 | Type::U8 | Type::U16 | Type::U32 | Type::U64)
     }
 
+    /// Checks if two types are compatible (either can be assigned to the other).
     fn are_compatible(&self, t1: &Type, t2: &Type) -> bool {
         self.is_assignable(t1, t2) || self.is_assignable(t2, t1)
     }
 
+    /// Checks if a type is numeric (integer or floating point).
     fn is_numeric(&self, ty: &Type) -> bool {
         self.is_integer_type(ty) || matches!(ty, Type::F32 | Type::F64)
     }

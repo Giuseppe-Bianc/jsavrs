@@ -90,30 +90,32 @@ pub enum HIRStmt {
 }
 
 impl HIRExpr {
+    /// Returns the source span for this expression.
     pub fn span(&self) -> &SourceSpan {
         match self {
-            HIRExpr::Binary { span, .. } => span,
-            HIRExpr::Unary { span, .. } => span,
-            HIRExpr::Grouping { span, .. } => span,
-            HIRExpr::Literal { span, .. } => span,
-            HIRExpr::Variable { span, .. } => span,
-            HIRExpr::Assign { span, .. } => span,
-            HIRExpr::Call { span, .. } => span,
-            HIRExpr::ArrayAccess { span, .. } => span,
+            HIRExpr::Binary { span, .. } |
+            HIRExpr::Unary { span, .. } |
+            HIRExpr::Grouping { span, .. } |
+            HIRExpr::Literal { span, .. } |
+            HIRExpr::Variable { span, .. } |
+            HIRExpr::Assign { span, .. } |
+            HIRExpr::Call { span, .. } |
+            HIRExpr::ArrayAccess { span, .. } |
             HIRExpr::ArrayLiteral { span, .. } => span,
         }
     }
 
+    /// Returns the node ID for this expression.
     pub fn node_id(&self) -> NodeId {
         match self {
-            HIRExpr::Binary { node_metadata, .. } => node_metadata.node_id(),
-            HIRExpr::Unary { node_metadata, .. } => node_metadata.node_id(),
-            HIRExpr::Grouping { node_metadata, .. } => node_metadata.node_id(),
-            HIRExpr::Literal { node_metadata, .. } => node_metadata.node_id(),
-            HIRExpr::Variable { node_metadata, .. } => node_metadata.node_id(),
-            HIRExpr::Assign { node_metadata, .. } => node_metadata.node_id(),
-            HIRExpr::Call { node_metadata, .. } => node_metadata.node_id(),
-            HIRExpr::ArrayAccess { node_metadata, .. } => node_metadata.node_id(),
+            HIRExpr::Binary { node_metadata, .. } |
+            HIRExpr::Unary { node_metadata, .. } |
+            HIRExpr::Grouping { node_metadata, .. } |
+            HIRExpr::Literal { node_metadata, .. } |
+            HIRExpr::Variable { node_metadata, .. } |
+            HIRExpr::Assign { node_metadata, .. } |
+            HIRExpr::Call { node_metadata, .. } |
+            HIRExpr::ArrayAccess { node_metadata, .. } |
             HIRExpr::ArrayLiteral { node_metadata, .. } => node_metadata.node_id(),
         }
     }
@@ -122,57 +124,73 @@ impl HIRExpr {
         HIRExpr::Literal { value: LiteralValue::Nullptr, span, node_metadata }
     }
 
-    // Helper methods for literals
+    /// Helper methods for creating literal expressions.
+    
+    /// Generic helper function to create literal expressions.
+    fn new_literal<T>(value: T, span: SourceSpan, node_metadata: NodeMetadata) -> Option<HIRExpr>
+    where
+        T: Into<LiteralValue>,
+    {
+        Some(HIRExpr::Literal { value: value.into(), span, node_metadata })
+    }
+    
+    /// Creates a new number literal expression.
     pub fn new_number_literal(value: Number, span: SourceSpan, node_metadata: NodeMetadata) -> Option<HIRExpr> {
-        Some(HIRExpr::Literal { value: LiteralValue::Number(value), span, node_metadata })
+        Self::new_literal(LiteralValue::Number(value), span, node_metadata)
     }
 
+    /// Creates a new boolean literal expression.
     pub fn new_bool_literal(value: bool, span: SourceSpan, node_metadata: NodeMetadata) -> Option<HIRExpr> {
-        Some(HIRExpr::Literal { value: LiteralValue::Bool(value), span, node_metadata })
+        Self::new_literal(LiteralValue::Bool(value), span, node_metadata)
     }
 
+    /// Creates a new nullptr literal expression.
     pub fn new_nullptr_literal(span: SourceSpan, node_metadata: NodeMetadata) -> Option<HIRExpr> {
         Some(HIRExpr::null_expr(span, node_metadata))
     }
 
+    /// Creates a new string literal expression.
     pub fn new_string_literal(value: Arc<str>, span: SourceSpan, node_metadata: NodeMetadata) -> Option<HIRExpr> {
-        Some(HIRExpr::Literal { value: LiteralValue::StringLit(value), span, node_metadata })
+        Self::new_literal(LiteralValue::StringLit(value), span, node_metadata)
     }
 
+    /// Creates a new character literal expression.
     pub fn new_char_literal(value: Arc<str>, span: SourceSpan, node_metadata: NodeMetadata) -> Option<HIRExpr> {
-        Some(HIRExpr::Literal { value: LiteralValue::CharLit(value), span, node_metadata })
+        Self::new_literal(LiteralValue::CharLit(value), span, node_metadata)
     }
 }
 
 impl HIRStmt {
+    /// Returns the source span for this statement.
     pub fn span(&self) -> &SourceSpan {
         match self {
             HIRStmt::Expression { expr, .. } => expr.span(),
-            HIRStmt::VarDeclaration { span, .. } => span,
-            HIRStmt::While { span, .. } => span,
-            HIRStmt::For { span, .. } => span,
-            HIRStmt::Function { span, .. } => span,
-            HIRStmt::If { span, .. } => span,
-            HIRStmt::Block { span, .. } => span,
-            HIRStmt::Return { span, .. } => span,
-            HIRStmt::Break { span, .. } => span,
-            HIRStmt::Continue { span, .. } => span,
+            HIRStmt::VarDeclaration { span, .. } |
+            HIRStmt::While { span, .. } |
+            HIRStmt::For { span, .. } |
+            HIRStmt::Function { span, .. } |
+            HIRStmt::If { span, .. } |
+            HIRStmt::Block { span, .. } |
+            HIRStmt::Return { span, .. } |
+            HIRStmt::Break { span, .. } |
+            HIRStmt::Continue { span, .. } |
             HIRStmt::MainFunction { span, .. } => span,
         }
     }
 
+    /// Returns the node ID for this statement.
     pub fn node_id(&self) -> NodeId {
         match self {
-            HIRStmt::Expression { node_metadata, .. } => node_metadata.node_id(),
-            HIRStmt::VarDeclaration { node_metadata, .. } => node_metadata.node_id(),
-            HIRStmt::While { node_metadata, .. } => node_metadata.node_id(),
-            HIRStmt::For { node_metadata, .. } => node_metadata.node_id(),
-            HIRStmt::Function { node_metadata, .. } => node_metadata.node_id(),
-            HIRStmt::If { node_metadata, .. } => node_metadata.node_id(),
-            HIRStmt::Block { node_metadata, .. } => node_metadata.node_id(),
-            HIRStmt::Return { node_metadata, .. } => node_metadata.node_id(),
-            HIRStmt::Break { node_metadata, .. } => node_metadata.node_id(),
-            HIRStmt::Continue { node_metadata, .. } => node_metadata.node_id(),
+            HIRStmt::Expression { node_metadata, .. } |
+            HIRStmt::VarDeclaration { node_metadata, .. } |
+            HIRStmt::While { node_metadata, .. } |
+            HIRStmt::For { node_metadata, .. } |
+            HIRStmt::Function { node_metadata, .. } |
+            HIRStmt::If { node_metadata, .. } |
+            HIRStmt::Block { node_metadata, .. } |
+            HIRStmt::Return { node_metadata, .. } |
+            HIRStmt::Break { node_metadata, .. } |
+            HIRStmt::Continue { node_metadata, .. } |
             HIRStmt::MainFunction { node_metadata, .. } => node_metadata.node_id(),
         }
     }
