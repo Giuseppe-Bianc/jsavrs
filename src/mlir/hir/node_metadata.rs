@@ -2,7 +2,7 @@
 use std::fmt;
 use uuid::Uuid;
 
-#[derive(Debug, Clone, PartialEq, Eq, Hash, Copy)]
+#[derive(Debug, Clone, Copy, PartialEq, Eq, Hash, Default)]
 pub struct NodeId(Uuid);
 
 impl NodeId {
@@ -10,13 +10,6 @@ impl NodeId {
         NodeId(Uuid::new_v4())
     }
 }
-
-impl Default for NodeId {
-    fn default() -> Self {
-        NodeId::new()
-    }
-}
-
 // Display implementation for NodeId
 impl fmt::Display for NodeId {
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
