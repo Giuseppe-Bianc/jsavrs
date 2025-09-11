@@ -22,7 +22,7 @@ pub struct LineTracker {
     file_path: Arc<str>,
 
     /// Original source code content
-    source: String,
+    source: Arc<str>,
 }
 
 impl LineTracker {
@@ -47,7 +47,7 @@ impl LineTracker {
             )
             .collect();
 
-        Self { line_starts, file_path: Arc::from(file_path), source }
+        Self { line_starts, file_path: Arc::from(file_path),source: source.into() }
     }
     /// Converts a byte offset to its corresponding line/column position.
     ///
