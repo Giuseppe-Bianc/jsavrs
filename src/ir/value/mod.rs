@@ -104,12 +104,11 @@ impl fmt::Display for Value {
         }
         
         // Only access debug_info if it's likely to be present
-        if let Some(debug_info) = &self.debug_info {
-            if let Some(name) = &debug_info.name {
+        if let Some(debug_info) = &self.debug_info &&let Some(name) = &debug_info.name {
                 f.write_str(" (")?;
                 name.fmt(f)?;
                 f.write_str(")")?;
-            }
+            
         }
         Ok(())
     }

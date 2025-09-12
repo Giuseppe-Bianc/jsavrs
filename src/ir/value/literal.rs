@@ -49,14 +49,14 @@ impl fmt::Display for IrLiteralValue {
             IrLiteralValue::U32(val) => f.write_fmt(format_args!("{val}u32")),
             IrLiteralValue::U64(val) => f.write_fmt(format_args!("{val}u64")),
             IrLiteralValue::F32(val) => {
-                if val.fract() == 0.0 && val.is_finite() {
+                if val.is_finite() && val.fract() == 0.0 {
                     f.write_fmt(format_args!("{val:.1}f32"))
                 } else {
                     f.write_fmt(format_args!("{val}f32"))
                 }
             }
             IrLiteralValue::F64(val) => {
-                if val.fract() == 0.0 && val.is_finite() {
+                if val.is_finite() && val.fract() == 0.0 {
                     f.write_fmt(format_args!("{val:.1}f64"))
                 } else {
                     f.write_fmt(format_args!("{val}f64"))
@@ -71,4 +71,3 @@ impl fmt::Display for IrLiteralValue {
         }
     }
 }
-
