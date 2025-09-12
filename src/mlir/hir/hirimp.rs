@@ -124,7 +124,7 @@ impl HIRExpr {
         HIRExpr::Literal { value: LiteralValue::Nullptr, span, node_metadata }
     }
 
-    /// Helper methods for creating literal expressions.
+    // Helper methods for creating literal expressions.
 
     /// Generic helper function to create literal expressions.
     fn new_literal(value: impl Into<LiteralValue>, span: SourceSpan, node_metadata: NodeMetadata) -> Option<HIRExpr> {
