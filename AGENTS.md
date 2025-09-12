@@ -147,24 +147,6 @@ The `jsavrs` project utilizes a centralized Git repository hosted on GitHub (`ht
 Agents implement a disciplined Git branching model to ensure code integrity and collaborative development:
 1. **Feature Branch Creation**: Agents automatically create dedicated branches for each implementation task using descriptive names that correlate with the agent type and task objective (e.g., `feature/planner/lexer-optimization`)
 2. **Atomic Commits**: Each logical change is committed separately with precise commit messages following the conventional commit format:
-   ```
-   <type>(<scope>): <description>
-   
-   [optional body]
-   
-   [optional footer]
-   ```
-3. **Pre-commit Validation**: Before committing, agents execute comprehensive validation procedures:
-   - Code formatting enforcement via `cargo fmt`
-   - Static analysis through `cargo clippy`
-   - Compilation verification with `cargo check`
-   - Test execution for affected components via `cargo test`
-4. **Commit Message Standards**: Agents generate commit messages that include:
-   - Action type classification (feat, fix, refactor, chore, test, docs)
-   - Component scope identification (lexer, parser, ir, codegen)
-   - Concise yet descriptive summary of changes
-   - References to related issues or tasks when applicable
-
 **Detailed Commit Message Specifications**: In collaborative software development, it is crucial to create detailed commit messages. These messages should provide comprehensive descriptions of any changes made to files, including modifications, additions, and deletions. By following this practice, developers can enhance communication among team members, resulting in a more efficient workflow and a clearer understanding of project progress.
 
 Whenever relevant, commit messages should reference specific functions, classes, or methods. It is important to explain the rationale behind each change and to cite related issues, bug fixes, performance optimizations, and instances of refactoring. Proper English grammar should be used, and commit messages must adhere to the Conventional Commits format, which categorizes commits as follows: 'feat:' for new features, 'fix:' for bug fixes, and 'chore:' for routine tasks. All messages should be concise yet informative.
@@ -198,23 +180,22 @@ Agents maintain comprehensive change documentation through Git's native capabili
 - **File-level tracking**: Precise monitoring of all modifications, additions, and deletions with full path information
 - **Line-by-line granularity**: Detailed diff analysis enabling exact identification of code modifications
 - **Authorship attribution**: Automatic association of changes with specific agent identities and execution contexts
-- **Timestamp precision**: Accurate recording of change timing with nanosecond resolution
+- **Timestamps**: Commits record author/committer dates with second resolution; file mtimes in the index can be stored with nanosecond precision (FS-dependent).
 - **Metadata preservation**: Complete retention of file permissions, symbolic links, and other filesystem attributes
 
 **Conflict Resolution and Merge Strategies:**
 When integrating changes into shared branches, agents employ sophisticated conflict resolution protocols:
 1. **Automatic Merge Attempts**: Preference for fast-forward and recursive merge strategies when no conflicts exist
 2. **Conflict Detection**: Proactive identification of overlapping modifications in shared files
-3. **Resolution Strategies**: 
-   - For code modifications: Preservation of both changes with clear separation markers
-   - For configuration files: Priority-based selection with backup creation
-   - For documentation: Concatenation with source attribution
+3. **Resolution Strategies**:
+   - Prefer semantic merges that compile and pass tests; do not commit conflict markers.
+   - For configuration files: resolve to a single coherent config; document rationale in PR.
+   - For documentation: integrate content; avoid duplication; attribute sources in commit/PR body.
 4. **Validation Procedures**: Post-merge verification including:
    - Compilation success confirmation
    - Test suite execution with zero failure tolerance
    - Performance benchmark comparison against baseline
    - Integration smoke testing for critical pathways
-
 **Tagging and Release Management:**
 Agents participate in formal release processes through structured version control tagging:
 - **Semantic Versioning Compliance**: Adherence to MAJOR.MINOR.PATCH numbering scheme reflecting breaking changes, feature additions, and bug fixes respectively
@@ -234,26 +215,27 @@ Agents implement efficiency optimizations for version control operations:
 - **Incremental Operations**: Differential scanning for changes rather than full repository analysis
 - **Shallow Cloning Support**: Reduced bandwidth and storage requirements for CI/CD environments
 - **Sparse Checkout Configuration**: Selective file retrieval for focused development tasks
+**Tagging and Release Management (annotated/signed):**
+Agents participate in formal release processes through structured version control tagging:
+- **Semantic Versioning Compliance**: Adherence to MAJOR.MINOR.PATCH numbering scheme reflecting breaking changes, feature additions, and bug fixes respectively
+- **Pre-release Validation**: Comprehensive testing suite execution before tag creation
+- **Release Notes Generation**: Automated compilation of commit summaries and change descriptions
+- **Tag Format**: Use annotated tags (`git tag -a vX.Y.Z`) and consider signing (`-s`) with a trusted key.
+- **Artifact Association**: Linkage of Git tags with compiled binary releases and documentation snapshots
+**Backup and Recovery Mechanisms:**
+The VCS integration provides robust data protection through multiple redundancy layers:
+- **Remote Repository Mirroring**: Continuous synchronization with GitHub origin repository
+- **Local Repository Integrity**: Object hash validation (SHA‑1 by default; SHA‑256 supported in newer repo formats) for corruption detection
+- **Reflog Preservation**: Complete history of branch and reference modifications for recovery operations
+- **Stash Management**: Temporary change preservation during context switching operations
+
+**Performance Optimization for Large Repositories:**
+Agents implement efficiency optimizations for version control operations:
+- **Incremental Operations**: Differential scanning for changes rather than full repository analysis
+- **Shallow/Partial Clone**: Use shallow clones (`--depth`) and partial/filtered clones (`--filter=blob:none`) in CI to cut bandwidth/storage
+- **Sparse Checkout Configuration**: Selective file retrieval for focused development tasks
 - **Delta Compression**: Efficient storage of similar file versions through Git's native compression algorithms
-
-### Build System Integration
-Agents leverage the Cargo build system for comprehensive build lifecycle management:
-- Automated dependency resolution and management
-- Compilation verification and error reporting
-- Performance benchmarking and optimization validation
-- Cross-platform compatibility verification
-
-### Testing Framework Integration
-The system employs multiple testing frameworks to ensure comprehensive quality assurance:
-- **Cargo Test:** Standard unit and integration testing capabilities
-- **Insta Framework:** Snapshot-based regression testing for output validation
-- **Custom Benchmarking:** Performance validation and regression detection
-
-### Code Quality Analysis Integration
-Advanced code analysis capabilities ensure structural quality maintenance:
-- **Similarity-rs Integration:** Automated duplicate code detection with configurable thresholds
-- **Static Analysis:** Comprehensive code quality metrics and violation detection
-- **Architectural Validation:** Adherence to established design patterns and conventions
+- **Repository Maintenance**: Periodic `git gc` (non-aggressive) and `git repack -Ad` in maintenance windows; avoid aggressive GC in CI.
 
 ### Continuous Integration and Deployment Pipeline Integration
 The agent-based system integrates seamlessly with existing CI/CD infrastructure to enable:
