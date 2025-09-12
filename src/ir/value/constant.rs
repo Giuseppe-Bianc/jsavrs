@@ -13,26 +13,31 @@ pub enum IrConstantValue {
 impl fmt::Display for IrConstantValue {
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
         match self {
-            IrConstantValue::String { string } => write!(f, "\"{}\"", string.escape_default()),
+            IrConstantValue::String { string } => {
+                f.write_str("\"")?;
+                string.escape_default().fmt(f)?;
+                f.write_str("\"")
+            },
             IrConstantValue::Array { elements } => {
-                write!(f, "[")?;
+                f.write_str("[")?;
                 for (i, elem) in elements.iter().enumerate() {
                     if i > 0 {
-                        write!(f, ", ")?;
+                        f.write_str(", ")?;
                     }
-                    write!(f, "{elem}")?;
+                    elem.fmt(f)?;
                 }
-                write!(f, "]")
+                f.write_str("]")
             }
             IrConstantValue::Struct { name, elements } => {
-                write!(f, "{name}<")?;
+                name.fmt(f)?;
+                f.write_str("<")?;
                 for (i, field) in elements.iter().enumerate() {
                     if i > 0 {
-                        write!(f, ", ")?;
+                        f.write_str(", ")?;
                     }
-                    write!(f, "{field}")?;
+                    field.fmt(f)?;
                 }
-                write!(f, ">")
+                f.write_str(">")
             }
         }
     }

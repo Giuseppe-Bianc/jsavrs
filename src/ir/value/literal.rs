@@ -40,30 +40,35 @@ impl From<&IrLiteralValue> for IrType {
 impl fmt::Display for IrLiteralValue {
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
         match self {
-            IrLiteralValue::I8(val) => write!(f, "{val}i8"),
-            IrLiteralValue::I16(val) => write!(f, "{val}i16"),
-            IrLiteralValue::I32(val) => write!(f, "{val}i32"),
-            IrLiteralValue::I64(val) => write!(f, "{val}i64"),
-            IrLiteralValue::U8(val) => write!(f, "{val}u8"),
-            IrLiteralValue::U16(val) => write!(f, "{val}u16"),
-            IrLiteralValue::U32(val) => write!(f, "{val}u32"),
-            IrLiteralValue::U64(val) => write!(f, "{val}u64"),
+            IrLiteralValue::I8(val) => f.write_fmt(format_args!("{val}i8")),
+            IrLiteralValue::I16(val) => f.write_fmt(format_args!("{val}i16")),
+            IrLiteralValue::I32(val) => f.write_fmt(format_args!("{val}i32")),
+            IrLiteralValue::I64(val) => f.write_fmt(format_args!("{val}i64")),
+            IrLiteralValue::U8(val) => f.write_fmt(format_args!("{val}u8")),
+            IrLiteralValue::U16(val) => f.write_fmt(format_args!("{val}u16")),
+            IrLiteralValue::U32(val) => f.write_fmt(format_args!("{val}u32")),
+            IrLiteralValue::U64(val) => f.write_fmt(format_args!("{val}u64")),
             IrLiteralValue::F32(val) => {
                 if val.fract() == 0.0 && val.is_finite() {
-                    write!(f, "{val:.1}f32")
+                    f.write_fmt(format_args!("{val:.1}f32"))
                 } else {
-                    write!(f, "{val}f32")
+                    f.write_fmt(format_args!("{val}f32"))
                 }
             }
             IrLiteralValue::F64(val) => {
                 if val.fract() == 0.0 && val.is_finite() {
-                    write!(f, "{val:.1}f64")
+                    f.write_fmt(format_args!("{val:.1}f64"))
                 } else {
-                    write!(f, "{val}f64")
+                    f.write_fmt(format_args!("{val}f64"))
                 }
             }
-            IrLiteralValue::Bool(val) => write!(f, "{val}"),
-            IrLiteralValue::Char(val) => write!(f, "'{escaped}'", escaped = val.escape_default()),
+            IrLiteralValue::Bool(val) => f.write_str(if *val { "true" } else { "false" }),
+            IrLiteralValue::Char(val) => {
+                f.write_str("'")?;
+                val.escape_default().fmt(f)?;
+                f.write_str("'")
+            }
         }
     }
 }
+

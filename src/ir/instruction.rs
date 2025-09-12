@@ -31,6 +31,7 @@ pub enum VectorOp {
 }
 
 impl fmt::Display for VectorOp {
+    #[inline]
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
         match self {
             VectorOp::Add => f.write_str("vadd"),
@@ -150,39 +151,109 @@ impl Instruction {
 
 impl fmt::Display for Instruction {
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
-        let result_str = if let Some(result) = &self.result { format!("{result} = ") } else { String::new() };
+        // Write result prefix if present
+        if let Some(result) = &self.result {
+            result.fmt(f)?;
+            f.write_str(" = ")?;
+        }
 
         match &self.kind {
-            InstructionKind::Alloca { ty } => write!(f, "{result_str}alloca {ty}"),
-            InstructionKind::Store { value, dest } => write!(f, "store {value} to {dest}"),
-            InstructionKind::Load { src, ty } => write!(f, "{result_str}load {ty} from {src}"),
-            InstructionKind::Binary { op, left, right, ty } => write!(f, "{result_str}{op} {left} {right}, {ty}"),
-            InstructionKind::Unary { op, operand, ty } => write!(f, "{result_str}{op} {operand} {ty}"),
+            InstructionKind::Alloca { ty } => {
+                f.write_str("alloca ")?;
+                ty.fmt(f)
+            }
+            InstructionKind::Store { value, dest } => {
+                f.write_str("store ")?;
+                value.fmt(f)?;
+                f.write_str(" to ")?;
+                dest.fmt(f)
+            }
+            InstructionKind::Load { src, ty } => {
+                f.write_str("load ")?;
+                ty.fmt(f)?;
+                f.write_str(" from ")?;
+                src.fmt(f)
+            }
+            InstructionKind::Binary { op, left, right, ty } => {
+                op.fmt(f)?;
+                f.write_str(" ")?;
+                left.fmt(f)?;
+                f.write_str(" ")?;
+                right.fmt(f)?;
+                f.write_str(", ")?;
+                ty.fmt(f)
+            }
+            InstructionKind::Unary { op, operand, ty } => {
+                op.fmt(f)?;
+                f.write_str(" ")?;
+                operand.fmt(f)?;
+                f.write_str(" ")?;
+                ty.fmt(f)
+            }
             InstructionKind::Call { func, args, ty } => {
-                let args_str = args.iter().map(|arg| arg.to_string()).collect::<Vec<_>>().join(", ");
-                write!(f, "{result_str} call {func}({args_str}) : {ty}")
+                f.write_str(" call ")?;
+                func.fmt(f)?;
+                f.write_str("(")?;
+                for (i, arg) in args.iter().enumerate() {
+                    if i > 0 {
+                        f.write_str(", ")?;
+                    }
+                    arg.fmt(f)?;
+                }
+                f.write_str(") : ")?;
+                ty.fmt(f)
             }
             InstructionKind::GetElementPtr { base, index, element_ty } => {
-                write!(f, "{result_str} getelementptr {base}, {index} : {element_ty}")
+                f.write_str(" getelementptr ")?;
+                base.fmt(f)?;
+                f.write_str(", ")?;
+                index.fmt(f)?;
+                f.write_str(" : ")?;
+                element_ty.fmt(f)
             }
             InstructionKind::Cast { kind: _, value, from_ty, to_ty } => {
-                write!(f, "{result_str} cast {value} from {from_ty} to {to_ty}")
+                f.write_str(" cast ")?;
+                value.fmt(f)?;
+                f.write_str(" from ")?;
+                from_ty.fmt(f)?;
+                f.write_str(" to ")?;
+                to_ty.fmt(f)
             }
-
             InstructionKind::Phi { ty, incoming } => {
-                let incoming_str =
-                    incoming.iter().map(|(val, block)| format!("[ {val}, {block} ]")).collect::<Vec<_>>().join(", ");
-                write!(f, "{result_str} phi {ty} [ {incoming_str} ]")
+                f.write_str(" phi ")?;
+                ty.fmt(f)?;
+                f.write_str(" [ ")?;
+                for (i, (val, block)) in incoming.iter().enumerate() {
+                    if i > 0 {
+                        f.write_str(", ")?;
+                    }
+                    f.write_str("[ ")?;
+                    val.fmt(f)?;
+                    f.write_str(", ")?;
+                    block.fmt(f)?;
+                    f.write_str(" ]")?;
+                }
+                f.write_str(" ]")
             }
             InstructionKind::Vector { op, operands, ty } => {
-                let operands_str = operands.iter().map(|op| op.to_string()).collect::<Vec<_>>().join(", ");
-                write!(f, "{result_str} vector.{op} {operands_str} : {ty}")
+                f.write_str(" vector.")?;
+                op.fmt(f)?;
+                f.write_str(" ")?;
+                for (i, operand) in operands.iter().enumerate() {
+                    if i > 0 {
+                        f.write_str(", ")?;
+                    }
+                    operand.fmt(f)?;
+                }
+                f.write_str(" : ")?;
+                ty.fmt(f)
             }
         }
     }
 }
 
 impl fmt::Display for IrBinaryOp {
+    #[inline]
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
         match self {
             IrBinaryOp::Add => f.write_str("add"),
@@ -208,6 +279,7 @@ impl fmt::Display for IrBinaryOp {
 }
 
 impl fmt::Display for IrUnaryOp {
+    #[inline]
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
         match self {
             IrUnaryOp::Negate => f.write_str("neg"),

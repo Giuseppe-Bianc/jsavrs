@@ -16,6 +16,7 @@ use uuid::Uuid;
 pub struct ValueId(Uuid);
 
 impl ValueId {
+    #[inline]
     pub fn new() -> Self {
         ValueId(Uuid::new_v4())
     }
@@ -89,14 +90,26 @@ impl Value {
 impl fmt::Display for Value {
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
         match &self.kind {
-            ValueKind::Literal(imm) => write!(f, "{imm}")?,
-            ValueKind::Constant(imm) => write!(f, "{imm}")?,
-            ValueKind::Local(name) => write!(f, "%{name}")?,
-            ValueKind::Global(name) => write!(f, "@{name}")?,
-            ValueKind::Temporary(id) => write!(f, "t{id}")?,
+            ValueKind::Literal(imm) => imm.fmt(f)?,
+            ValueKind::Constant(imm) => imm.fmt(f)?,
+            ValueKind::Local(name) => {
+                f.write_str("%")?;
+                name.fmt(f)?;
+            }
+            ValueKind::Global(name) => {
+                f.write_str("@")?;
+                name.fmt(f)?;
+            }
+            ValueKind::Temporary(id) => f.write_fmt(format_args!("t{id}"))?,
         }
-        if let Some(name) = self.debug_info.as_ref().and_then(|di| di.name.as_ref()) {
-            write!(f, " ({name})")?;
+        
+        // Only access debug_info if it's likely to be present
+        if let Some(debug_info) = &self.debug_info {
+            if let Some(name) = &debug_info.name {
+                f.write_str(" (")?;
+                name.fmt(f)?;
+                f.write_str(")")?;
+            }
         }
         Ok(())
     }

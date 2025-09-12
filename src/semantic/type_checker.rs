@@ -609,6 +609,7 @@ impl TypeChecker {
     }
 
     // Funzione per la promozione automatica dei tipi numerici
+    #[inline]
     pub fn promote_numeric_types(&self, t1: &Type, t2: &Type) -> Type {
         // Trova il tipo con rango più alto nella gerarchia
         for ty in &HIERARCHY {
@@ -621,6 +622,7 @@ impl TypeChecker {
         t1.clone()
     }
 
+    #[inline]
     pub fn is_assignable(&self, source: &Type, target: &Type) -> bool {
         match (source, target) {
             // Numeric promotions
@@ -675,6 +677,7 @@ impl TypeChecker {
     }
 
     #[allow(clippy::only_used_in_recursion)]
+    #[inline]
     fn function_has_return(&self, body: &[Stmt]) -> bool {
         for stmt in body {
             match stmt {
@@ -684,23 +687,17 @@ impl TypeChecker {
                     let else_has_return = else_branch.as_ref().map(|b| self.function_has_return(b)).unwrap_or(false);
                     if then_has_return && else_has_return {
                         return true;
-                    } else {
-                        continue;
                     }
                 }
                 Stmt::Block { statements, .. } => {
                     if self.function_has_return(statements) {
                         return true;
-                    } else {
-                        continue;
                     }
                 }
                 Stmt::While { body: loop_body, .. } | Stmt::For { body: loop_body, .. } => {
                     if self.function_has_return(loop_body) {
                         // Considera solo loop con corpo che ritorna
                         return true;
-                    } else {
-                        continue;
                     }
                 }
                 _ => {}

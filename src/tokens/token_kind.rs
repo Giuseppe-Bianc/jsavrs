@@ -19,7 +19,9 @@ use std::sync::Arc;
 pub fn parse_number(lex: &mut logos::Lexer<TokenKind>) -> Option<Number> {
     let slice = lex.slice();
     let (numeric_part, suffix) = split_numeric_and_suffix(slice);
-    handle_suffix(numeric_part, suffix)
+    // Convert String to &str for the suffix
+    let suffix_str = suffix.as_deref();
+    handle_suffix(numeric_part, suffix_str)
 }
 
 /// Splits a numeric literal string into its numeric part and optional suffix.
@@ -78,24 +80,24 @@ where
 ///
 /// # Returns
 /// Parsed [`Number`] variant matching suffix, or `None` for invalid formats
-pub fn handle_suffix(numeric_part: &str, suffix: Option<String>) -> Option<Number> {
-    match suffix.as_deref() {
+pub fn handle_suffix(numeric_part: &str, suffix: Option<&str>) -> Option<Number> {
+    match suffix {
         // Unsigned‐integer suffixes
-        Some("u") => parse_integer::<u64>(numeric_part, Number::UnsignedInteger),
-        Some("u8") => parse_integer::<u8>(numeric_part, Number::U8),
-        Some("u16") => parse_integer::<u16>(numeric_part, Number::U16),
-        Some("u32") => parse_integer::<u32>(numeric_part, Number::U32),
+        Some("u") | Some("U") => parse_integer::<u64>(numeric_part, Number::UnsignedInteger),
+        Some("u8") | Some("U8") => parse_integer::<u8>(numeric_part, Number::U8),
+        Some("u16") | Some("U16") => parse_integer::<u16>(numeric_part, Number::U16),
+        Some("u32") | Some("U32") => parse_integer::<u32>(numeric_part, Number::U32),
 
         // Signed‐integer suffixes
-        Some("i8") => parse_integer::<i8>(numeric_part, Number::I8),
-        Some("i16") => parse_integer::<i16>(numeric_part, Number::I16),
-        Some("i32") => parse_integer::<i32>(numeric_part, Number::I32),
+        Some("i8") | Some("I8") => parse_integer::<i8>(numeric_part, Number::I8),
+        Some("i16") | Some("I16") => parse_integer::<i16>(numeric_part, Number::I16),
+        Some("i32") | Some("I32") => parse_integer::<i32>(numeric_part, Number::I32),
 
         // Float32 suffix
-        Some("f") => handle_float_suffix(numeric_part),
+        Some("f") | Some("F") => handle_float_suffix(numeric_part),
 
         // Double (f64) o nessun suffisso
-        Some("d") | None => handle_default_suffix(numeric_part),
+        Some("d") | Some("D") | None => handle_default_suffix(numeric_part),
 
         _ => None,
     }
@@ -183,6 +185,7 @@ pub fn parse_scientific(s: &str, is_f32: bool) -> Option<Number> {
 ///
 /// # Returns
 /// Parsed [`Number`] with optional unsigned suffix
+#[inline]
 pub fn parse_base_number(radix: u32, lex: &mut logos::Lexer<TokenKind>) -> Option<Number> {
     let slice = lex.slice();
     let (_, num_part) = slice.split_at(2); // Remove prefix ("#b", "#o", or "#x")

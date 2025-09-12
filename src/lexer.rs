@@ -27,6 +27,7 @@ impl<'a> Lexer<'a> {
         self.line_tracker.clone()
     }
 
+    #[inline]
     pub fn next_token(&mut self) -> Option<Result<Token, CompileError>> {
         if self.eof_emitted {
             return None;
@@ -90,6 +91,7 @@ pub fn lexer_tokenize_with_errors(lexer: &mut Lexer) -> (Vec<Token>, Vec<Compile
     post_process_tokens(tokens, errors)
 }
 
+#[inline]
 pub fn post_process_tokens(tokens: Vec<Token>, errors: Vec<CompileError>) -> (Vec<Token>, Vec<CompileError>) {
     let (error_replacements, tokens_to_remove) = collect_error_updates(&errors, &tokens);
     let errors = apply_error_replacements(errors, error_replacements);
@@ -99,6 +101,7 @@ pub fn post_process_tokens(tokens: Vec<Token>, errors: Vec<CompileError>) -> (Ve
 
 type Updates = (HashMap<usize, CompileError>, HashSet<usize>);
 
+#[inline]
 fn collect_error_updates(errors: &[CompileError], tokens: &[Token]) -> Updates {
     let mut replacements = HashMap::new();
     let mut to_remove = HashSet::new();

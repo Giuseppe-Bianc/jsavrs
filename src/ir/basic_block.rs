@@ -25,29 +25,36 @@ impl BasicBlock {
         }
     }
 
+    #[inline]
     pub fn with_scope(mut self, scope: ScopeId) -> Self {
         self.scope = Some(scope);
         self
     }
 
+    #[inline]
     pub fn terminator(&self) -> &Terminator {
         &self.terminator
     }
+    #[inline]
     pub fn terminator_mut(&mut self) -> &mut Terminator {
         &mut self.terminator
     }
+    #[inline]
     pub fn set_terminator(&mut self, t: Terminator) {
         self.terminator = t;
     }
 
+    #[inline]
     pub fn scope(&self) -> Option<ScopeId> {
         self.scope
     } // if ScopeId: Copy
     // alternatively (safe regardless of Copy):
     // pub fn scope(&self) -> Option<&ScopeId> { self.scope.as_ref() }
+    #[inline]
     pub fn set_scope(&mut self, s: ScopeId) {
         self.scope = Some(s);
     }
+    #[inline]
     pub fn clear_scope(&mut self) {
         self.scope = None;
     }
