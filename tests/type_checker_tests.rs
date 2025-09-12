@@ -1156,6 +1156,12 @@ fn test_promote_numeric_types_behaviour() {
     assert_eq!(tc.promote_numeric_types(&Type::U32, &Type::I64), Type::I64);
     assert_eq!(tc.promote_numeric_types(&Type::I8, &Type::U64), Type::U64);
 
+    // Same-rank different-sign promotions (unsigned typically ranks higher)
+    assert_eq!(tc.promote_numeric_types(&Type::I64, &Type::U64), Type::U64);
+    assert_eq!(tc.promote_numeric_types(&Type::I32, &Type::U32), Type::U32);
+    assert_eq!(tc.promote_numeric_types(&Type::I16, &Type::U16), Type::U16);
+    assert_eq!(tc.promote_numeric_types(&Type::I8, &Type::U8), Type::U8);
+
     // Non-numeric types fallback to first type
     assert_eq!(tc.promote_numeric_types(&Type::Bool, &Type::String), Type::Bool);
     assert_eq!(tc.promote_numeric_types(&Type::String, &Type::Bool), Type::String);
@@ -1164,6 +1170,100 @@ fn test_promote_numeric_types_behaviour() {
     // Mixed numeric and non-numeric
     assert_eq!(tc.promote_numeric_types(&Type::I32, &Type::String), Type::I32);
     assert_eq!(tc.promote_numeric_types(&Type::Bool, &Type::F64), Type::F64);
+}
+
+#[test]
+fn test_mixed_signed_unsigned_promotions() {
+    // Test mixed signed/unsigned promotions in expressions
+    let ast = "10i32 + 20u64";
+    let errors = typecheck(ast);
+    assert!(errors.is_empty(), "Unexpected errors: {:?}", errors);
+
+    let ast = "5i16 * 3u32";
+    let errors = typecheck(ast);
+    assert!(errors.is_empty(), "Unexpected errors: {:?}", errors);
+
+    let ast = "100u8 - 50i16";
+    let errors = typecheck(ast);
+    assert!(errors.is_empty(), "Unexpected errors: {:?}", errors);
+}
+
+#[test]
+fn test_same_rank_different_sign_promotions() {
+    // Test same-rank different-sign promotions
+    let ast = "10i64 + 20u64";
+    let errors = typecheck(ast);
+    assert!(errors.is_empty(), "Unexpected errors: {:?}", errors);
+
+    let ast = "5i32 * 3u32";
+    let errors = typecheck(ast);
+    assert!(errors.is_empty(), "Unexpected errors: {:?}", errors);
+
+    let ast = "100u16 - 50i16";
+    let errors = typecheck(ast);
+    assert!(errors.is_empty(), "Unexpected errors: {:?}", errors);
+}
+
+#[test]
+fn test_forbidden_float_to_integer_promotions() {
+    // Test that float to integer promotions are not allowed
+    let ast = "var x: i32 = 3.14";
+    let errors = typecheck(ast);
+    assert_eq!(errors.len(), 1);
+    assert_eq!(errors[0].message(), Some("Cannot assign f64 to i32 for variable 'x'"));
+
+    let ast = "var y: u64 = 2.71f32";
+    let errors = typecheck(ast);
+    assert_eq!(errors.len(), 1);
+    assert_eq!(errors[0].message(), Some("Cannot assign f32 to u64 for variable 'y'"));
+
+    // Test in expressions
+    let ast = "var z: i32 = 0i32\n    z = 3.14";
+    let errors = typecheck(ast);
+    assert_eq!(errors.len(), 1);
+    assert_eq!(errors[0].message(), Some("Cannot assign f64 to i32"));
+}
+
+#[test]
+fn test_chained_assignments() {
+    // Test valid chained assignment
+    let ast = "var x: i32 = 0i32\n    var y: i32 = 0i32\n    x = y = 42i32";
+    let errors = typecheck(ast);
+    assert!(errors.is_empty(), "Unexpected errors: {:?}", errors);
+
+    // Test chained assignment with type promotion
+    let ast = "var x: f64 = 0.0f64\n    var y: i32 = 0i32\n    x = y = 42i32";
+    let errors = typecheck(ast);
+    assert!(errors.is_empty(), "Unexpected errors: {:?}", errors);
+
+    // Test chained assignment with type mismatch
+    let ast = "var x: i32 = 0i32\n    var y: f64 = 0.0f64\n    x = y = 42i32";
+    let errors = typecheck(ast);
+    assert_eq!(errors.len(), 1);
+    assert_eq!(errors[0].message(), Some("Cannot assign f64 to i32"));
+}
+
+#[test]
+fn test_complex_for_loop_initialization_statements() {
+    // Test for loop with multiple variable declarations
+    let ast = "for (var i: i32 = 0i32, j: i32 = 10i32; i < j; i = i + 1i32, j = j - 1i32) { }";
+    let errors = typecheck(ast);
+    assert!(errors.is_empty(), "Unexpected errors: {:?}", errors);
+
+    // Test for loop with assignment in initialization
+    let ast = "var x: i32 = 0i32\n    for (x = 5i32; x < 10i32; x = x + 1i32) { }";
+    let errors = typecheck(ast);
+    assert!(errors.is_empty(), "Unexpected errors: {:?}", errors);
+
+    // Test for loop with function call in initialization
+    let ast = "fun getInitialValue(): i32 { return 5i32 }\n    for (var i: i32 = getInitialValue(); i < 10i32; i = i + 1i32) { }";
+    let errors = typecheck(ast);
+    assert!(errors.is_empty(), "Unexpected errors: {:?}", errors);
+
+    // Test for loop with complex expression in initialization
+    let ast = "var a: i32 = 2i32\n    var b: i32 = 3i32\n    for (var i: i32 = (a + b) * 2i32; i < 10i32; i = i + 1i32) { }";
+    let errors = typecheck(ast);
+    assert!(errors.is_empty(), "Unexpected errors: {:?}", errors);
 }
 
 #[test]
