@@ -134,108 +134,24 @@ All agent-generated code artifacts undergo systematic version control management
 - Collaborative development capability preservation
 - Rollback and recovery mechanisms for failed implementations
 
-#### Detailed VCS Implementation Specifications
+### Build System Integration
+Agents leverage the Cargo build system for comprehensive build lifecycle management:
+- Automated dependency resolution and management
+- Compilation verification and error reporting
+- Performance benchmarking and optimization validation
+- Cross-platform compatibility verification
 
-**Repository Structure and Configuration:**
-The `jsavrs` project utilizes a centralized Git repository hosted on GitHub (`https://github.com/Giuseppe-Bianc/jsavrs.git`) with the following structural characteristics:
-- Primary development branch: `main` (protected branch with CI/CD integration)
-- Feature development: Isolated topic branches following the naming convention `feature/agent-name/task-description`
-- Release management: Semantic versioning tags (`vX.Y.Z`) aligned with `Cargo.toml` version specifications
-- Binary asset management: Git LFS integration for snapshot test files in `tests/snapshots/**`
+### Testing Framework Integration
+The system employs multiple testing frameworks to ensure comprehensive quality assurance:
+- **Cargo Test:** Standard unit and integration testing capabilities
+- **Insta Framework:** Snapshot-based regression testing for output validation
+- **Custom Benchmarking:** Performance validation and regression detection
 
-**Branch Strategy and Workflow:**
-Agents implement a disciplined Git branching model to ensure code integrity and collaborative development:
-1. **Feature Branch Creation**: Agents automatically create dedicated branches for each implementation task using descriptive names that correlate with the agent type and task objective (e.g., `feature/planner/lexer-optimization`)
-2. **Atomic Commits**: Each logical change is committed separately with precise commit messages following the conventional commit format:
-**Detailed Commit Message Specifications**: In collaborative software development, it is crucial to create detailed commit messages. These messages should provide comprehensive descriptions of any changes made to files, including modifications, additions, and deletions. By following this practice, developers can enhance communication among team members, resulting in a more efficient workflow and a clearer understanding of project progress.
-
-Whenever relevant, commit messages should reference specific functions, classes, or methods. It is important to explain the rationale behind each change and to cite related issues, bug fixes, performance optimizations, and instances of refactoring. Proper English grammar should be used, and commit messages must adhere to the Conventional Commits format, which categorizes commits as follows: 'feat:' for new features, 'fix:' for bug fixes, and 'chore:' for routine tasks. All messages should be concise yet informative.
-
-This practice creates a clear and understandable version control history, which enhances team transparency by allowing members to easily trace changes and grasp the reasoning behind them. Ultimately, this transparency supports an efficient and thorough code review process, which is essential for maintaining code quality and facilitating knowledge sharing among team members.
-
-The commit message structure follows the conventional format:
-```
-<type>(<scope>): <description>
-
-[optional body]
-
-[optional footer]
-```
-
-Where:
-- **Type**: Indicates the nature of the change (feat, fix, chore, refactor, test, docs, style, perf, ci, build)
-- **Scope**: Identifies the specific component or module affected (lexer, parser, ir, codegen, etc.)
-- **Description**: A concise but informative summary of the change
-- **Body** (optional): Detailed explanation of the change, including the rationale and context
-- **Footer** (optional): References to related issues, breaking changes, or other relevant information
-
-Examples of well-structured commit messages:
-- `feat(parser): add support for async/await syntax`
-- `fix(lexer): resolve incorrect tokenization of floating-point numbers`
-- `refactor(ir): optimize memory allocation in code generation phase`
-- `chore(ci): update GitHub Actions workflow for Rust 1.70`
-
-**Change Tracking and Audit Trail Management:**
-Agents maintain comprehensive change documentation through Git's native capabilities:
-- **File-level tracking**: Precise monitoring of all modifications, additions, and deletions with full path information
-- **Line-by-line granularity**: Detailed diff analysis enabling exact identification of code modifications
-- **Authorship attribution**: Automatic association of changes with specific agent identities and execution contexts
-- **Timestamps**: Commits record author/committer dates with second resolution; file mtimes in the index can be stored with nanosecond precision (FS-dependent).
-- **Metadata preservation**: Complete retention of file permissions, symbolic links, and other filesystem attributes
-
-**Conflict Resolution and Merge Strategies:**
-When integrating changes into shared branches, agents employ sophisticated conflict resolution protocols:
-1. **Automatic Merge Attempts**: Preference for fast-forward and recursive merge strategies when no conflicts exist
-2. **Conflict Detection**: Proactive identification of overlapping modifications in shared files
-3. **Resolution Strategies**:
-   - Prefer semantic merges that compile and pass tests; do not commit conflict markers.
-   - For configuration files: resolve to a single coherent config; document rationale in PR.
-   - For documentation: integrate content; avoid duplication; attribute sources in commit/PR body.
-4. **Validation Procedures**: Post-merge verification including:
-   - Compilation success confirmation
-   - Test suite execution with zero failure tolerance
-   - Performance benchmark comparison against baseline
-   - Integration smoke testing for critical pathways
-**Tagging and Release Management:**
-Agents participate in formal release processes through structured version control tagging:
-- **Semantic Versioning Compliance**: Adherence to MAJOR.MINOR.PATCH numbering scheme reflecting breaking changes, feature additions, and bug fixes respectively
-- **Pre-release Validation**: Comprehensive testing suite execution before tag creation
-- **Release Notes Generation**: Automated compilation of commit summaries and change descriptions
-- **Artifact Association**: Linkage of Git tags with compiled binary releases and documentation snapshots
-
-**Backup and Recovery Mechanisms:**
-The VCS integration provides robust data protection through multiple redundancy layers:
-- **Remote Repository Mirroring**: Continuous synchronization with GitHub origin repository
-- **Local Repository Integrity**: SHA-1 hash validation for all objects ensuring corruption detection
-- **Reflog Preservation**: Complete history of branch and reference modifications for recovery operations
-- **Stash Management**: Temporary change preservation during context switching operations
-
-**Performance Optimization for Large Repositories:**
-Agents implement efficiency optimizations for version control operations:
-- **Incremental Operations**: Differential scanning for changes rather than full repository analysis
-- **Shallow Cloning Support**: Reduced bandwidth and storage requirements for CI/CD environments
-- **Sparse Checkout Configuration**: Selective file retrieval for focused development tasks
-**Tagging and Release Management (annotated/signed):**
-Agents participate in formal release processes through structured version control tagging:
-- **Semantic Versioning Compliance**: Adherence to MAJOR.MINOR.PATCH numbering scheme reflecting breaking changes, feature additions, and bug fixes respectively
-- **Pre-release Validation**: Comprehensive testing suite execution before tag creation
-- **Release Notes Generation**: Automated compilation of commit summaries and change descriptions
-- **Tag Format**: Use annotated tags (`git tag -a vX.Y.Z`) and consider signing (`-s`) with a trusted key.
-- **Artifact Association**: Linkage of Git tags with compiled binary releases and documentation snapshots
-**Backup and Recovery Mechanisms:**
-The VCS integration provides robust data protection through multiple redundancy layers:
-- **Remote Repository Mirroring**: Continuous synchronization with GitHub origin repository
-- **Local Repository Integrity**: Object hash validation (SHA‑1 by default; SHA‑256 supported in newer repo formats) for corruption detection
-- **Reflog Preservation**: Complete history of branch and reference modifications for recovery operations
-- **Stash Management**: Temporary change preservation during context switching operations
-
-**Performance Optimization for Large Repositories:**
-Agents implement efficiency optimizations for version control operations:
-- **Incremental Operations**: Differential scanning for changes rather than full repository analysis
-- **Shallow/Partial Clone**: Use shallow clones (`--depth`) and partial/filtered clones (`--filter=blob:none`) in CI to cut bandwidth/storage
-- **Sparse Checkout Configuration**: Selective file retrieval for focused development tasks
-- **Delta Compression**: Efficient storage of similar file versions through Git's native compression algorithms
-- **Repository Maintenance**: Periodic `git gc` (non-aggressive) and `git repack -Ad` in maintenance windows; avoid aggressive GC in CI.
+### Code Quality Analysis Integration
+Advanced code analysis capabilities ensure structural quality maintenance:
+- **Similarity-rs Integration:** Automated duplicate code detection with configurable thresholds
+- **Static Analysis:** Comprehensive code quality metrics and violation detection
+- **Architectural Validation:** Adherence to established design patterns and conventions
 
 ### Continuous Integration and Deployment Pipeline Integration
 The agent-based system integrates seamlessly with existing CI/CD infrastructure to enable:
