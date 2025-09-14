@@ -23,7 +23,6 @@ jsavrs/
 │   ├── error/          # Error handling
 │   ├── ir/             # Intermediate representation
 │   ├── location/       # Source location tracking
-│   ├── mlir/           # Multi-level intermediate representation
 │   ├── parser/         # Parser and AST
 │   ├── printers/       # AST/HIR printers
 │   ├── semantic/       # Semantic analysis (type checking)
