@@ -573,3 +573,100 @@ fn test_generate_nullptr_literal() {
     let (functions, _ir_errors) = generator.generate(ast, "test_file.vn");
     assert_snapshot!(module_redacted(functions));
 }
+
+#[test]
+fn test_generate_simple_function_call() {
+    let ast = vec![
+        function_declaration(
+            "add".into(),
+            vec![
+                Parameter { name: "a".into(), type_annotation: Type::I32, span: dummy_span() },
+                Parameter { name: "b".into(), type_annotation: Type::I32, span: dummy_span() },
+            ],
+            Type::I32,
+            vec![Stmt::Return {
+                value: Some(binary_expr(variable_expr("a"), BinaryOp::Add, variable_expr("b"))),
+                span: dummy_span(),
+            }],
+        ),
+        function_declaration(
+            "main".into(),
+            vec![],
+            Type::I32,
+            vec![Stmt::Return {
+                value: Some(call_expr(variable_expr("add"), vec![num_lit_i32(5), num_lit_i32(3)])),
+                span: dummy_span(),
+            }],
+        ),
+    ];
+
+    let mut generator = NIrGenerator::new();
+    let (functions, _ir_errors) = generator.generate(ast, "test_file.vn");
+    assert_snapshot!(module_redacted(functions));
+}
+
+#[test]
+fn test_generate_recursive_function_call() {
+    let ast = vec![function_declaration(
+        "factorial".into(),
+        vec![Parameter { name: "n".into(), type_annotation: Type::I64, span: dummy_span() }],
+        Type::I64,
+        vec![Stmt::If {
+            condition: binary_expr(variable_expr("n"), BinaryOp::LessEqual, num_lit_i64(1)),
+            then_branch: vec![Stmt::Return { value: Some(num_lit_i64(1)), span: dummy_span() }],
+            else_branch: Some(vec![Stmt::Return {
+                value: Some(binary_expr(
+                    variable_expr("n"),
+                    BinaryOp::Multiply,
+                    call_expr(variable_expr("factorial"), vec![binary_expr(variable_expr("n"), BinaryOp::Subtract, num_lit_i64(1))]),
+                )),
+                span: dummy_span(),
+            }]),
+            span: dummy_span(),
+        }],
+    )];
+
+    let mut generator = NIrGenerator::new();
+    let (functions, _ir_errors) = generator.generate(ast, "test_file.vn");
+    assert_snapshot!(module_redacted(functions));
+}
+
+#[test]
+fn test_generate_multiple_function_calls() {
+    let ast = vec![
+        function_declaration(
+            "add".into(),
+            vec![
+                Parameter { name: "a".into(), type_annotation: Type::I32, span: dummy_span() },
+                Parameter { name: "b".into(), type_annotation: Type::I32, span: dummy_span() },
+            ],
+            Type::I32,
+            vec![Stmt::Return {
+                value: Some(binary_expr(variable_expr("a"), BinaryOp::Add, variable_expr("b"))),
+                span: dummy_span(),
+            }],
+        ),
+        function_declaration(
+            "main".into(),
+            vec![],
+            Type::I32,
+            vec![
+                var_declaration(vec!["x".into()], Type::I32, true, vec![]),
+                Stmt::Expression {
+                    expr: assign_expr(
+                        variable_expr("x"),
+                        call_expr(variable_expr("add"), vec![num_lit_i32(5), num_lit_i32(3)]),
+                    ),
+                },
+                Stmt::Return {
+                    value: Some(call_expr(variable_expr("add"), vec![variable_expr("x"), num_lit_i32(2)])),
+                    span: dummy_span(),
+                },
+            ],
+        ),
+    ];
+
+    let mut generator = NIrGenerator::new();
+    let (functions, _ir_errors) = generator.generate(ast, "test_file.vn");
+    assert_snapshot!(module_redacted(functions));
+}

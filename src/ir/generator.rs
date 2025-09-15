@@ -494,6 +494,7 @@ impl NIrGenerator {
             Expr::Grouping { expr, span: _ } => self.generate_expr(func, *expr),
             Expr::ArrayLiteral { elements, span } => self.generate_array_literal(func, elements, span),
             Expr::ArrayAccess { array, index, span } => self.generate_array_access(func, *array, *index, span),
+            Expr::Call { callee, arguments, span } => self.generate_call(func, *callee, arguments, span),
             other => {
                 self.new_error("Unsupported expression type".to_string(), other.span().clone());
                 Value::new_literal(IrLiteralValue::I32(0))
@@ -748,6 +749,50 @@ impl NIrGenerator {
 
         self.add_instruction(gep.clone());
         gep.result.unwrap()
+    }
+
+    /// Generate a function call instruction
+    fn generate_call(&mut self, func: &mut Function, callee: Expr, arguments: Vec<Expr>, span: SourceSpan) -> Value {
+        // Get the function name from the callee expression
+        let func_name = match &callee {
+            Expr::Variable { name, .. } => name.clone(),
+            _ => {
+                self.new_error("Unsupported callee expression type".to_string(), callee.span().clone());
+                return Value::new_literal(IrLiteralValue::I32(0));
+            }
+        };
+
+        // Generate values for all arguments
+        let mut arg_values = Vec::with_capacity(arguments.len());
+        for arg in arguments {
+            arg_values.push(self.generate_expr(func, arg));
+        }
+
+        // For now, we'll assume a default return type. In a more complete implementation,
+        // we would look up the function signature in the symbol table.
+        // TODO: Look up actual function signature from symbol table
+        let return_type = IrType::I64; // Default assumption
+
+        // Create a value representing the function
+        let func_value = Value::new_global(func_name, IrType::Pointer(Box::new(return_type.clone())));
+
+        // Create a temporary value for the result
+        let dest_id = self.new_temp();
+        let result_value = Value::new_temporary(dest_id, return_type.clone());
+
+        // Create the call instruction
+        let call_inst = Instruction::new(
+            InstructionKind::Call {
+                func: func_value,
+                args: arg_values,
+                ty: return_type,
+            },
+            span.clone(),
+        )
+        .with_result(result_value);
+
+        self.add_instruction(call_inst.clone());
+        call_inst.result.unwrap()
     }
 }
 

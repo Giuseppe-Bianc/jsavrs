@@ -1237,3 +1237,114 @@ fn test_generate_array_access_assignment() {
         ValueKind::Temporary(1)                      // destinazione: risultato del GEP
     );
 }
+
+#[test]
+fn test_generate_simple_function_call() {
+    let ast = vec![
+        function_declaration(
+            "add".into(),
+            vec![
+                Parameter { name: "a".into(), type_annotation: Type::I32, span: dummy_span() },
+                Parameter { name: "b".into(), type_annotation: Type::I32, span: dummy_span() },
+            ],
+            Type::I32,
+            vec![Stmt::Return {
+                value: Some(binary_expr(variable_expr("a"), BinaryOp::Add, variable_expr("b"))),
+                span: dummy_span(),
+            }],
+        ),
+        function_declaration(
+            "main".into(),
+            vec![],
+            Type::I32,
+            vec![Stmt::Return {
+                value: Some(call_expr(variable_expr("add"), vec![num_lit_i32(5), num_lit_i32(3)])),
+                span: dummy_span(),
+            }],
+        ),
+    ];
+
+    let mut generator = NIrGenerator::new();
+    let (functions, ir_errors) = generator.generate(ast, "test_file.vn");
+    assert_eq!(ir_errors.len(), 0);
+    assert_eq!(functions.functions.len(), 2);
+
+    // Check the main function
+    let main_func = functions.functions.iter().find(|f| f.name == "main").unwrap();
+    assert_eq!(main_func.cfg.blocks().count(), 1);
+    let entry_block = main_func.cfg.get_block("entry_main").unwrap();
+    assert_eq!(entry_block.instructions.len(), 1);
+
+    // Check the call instruction
+    match &entry_block.instructions[0].kind {
+        InstructionKind::Call { func, args, ty } => {
+            // Check function reference
+            match &func.kind {
+                ValueKind::Global(name) => assert_eq!(name.as_ref(), "add"),
+                _ => panic!("Expected global function reference"),
+            }
+            // Check arguments
+            assert_eq!(args.len(), 2);
+            assert_eq!(args[0].kind, ValueKind::Literal(IrLiteralValue::I32(5)));
+            assert_eq!(args[1].kind, ValueKind::Literal(IrLiteralValue::I32(3)));
+            // Check return type
+            assert_eq!(*ty, IrType::I64); // Default return type in our implementation
+        }
+        _ => panic!("Expected Call instruction"),
+    }
+}
+
+#[test]
+fn test_generate_recursive_function_call() {
+    let ast = vec![function_declaration(
+        "factorial".into(),
+        vec![Parameter { name: "n".into(), type_annotation: Type::I64, span: dummy_span() }],
+        Type::I64,
+        vec![Stmt::If {
+            condition: binary_expr(variable_expr("n"), BinaryOp::LessEqual, num_lit_i64(1)),
+            then_branch: vec![Stmt::Return { value: Some(num_lit_i64(1)), span: dummy_span() }],
+            else_branch: Some(vec![Stmt::Return {
+                value: Some(binary_expr(
+                    variable_expr("n"),
+                    BinaryOp::Multiply,
+                    call_expr(variable_expr("factorial"), vec![binary_expr(variable_expr("n"), BinaryOp::Subtract, num_lit_i64(1))]),
+                )),
+                span: dummy_span(),
+            }]),
+            span: dummy_span(),
+        }],
+    )];
+
+    let mut generator = NIrGenerator::new();
+    let (functions, ir_errors) = generator.generate(ast, "test_file.vn");
+    assert_eq!(ir_errors.len(), 0);
+    assert_eq!(functions.functions.len(), 1);
+
+    let func = &functions.functions[0];
+    assert_eq!(func.name, "factorial");
+    
+    // Check that we have the right number of blocks (entry, then, else, merge)
+    assert_eq!(func.cfg.blocks().count(), 4);
+    
+    // Check the else block which contains the recursive call
+    let else_block = func.cfg.get_block("else_2").unwrap();
+    // Should have the subtraction, the call, and the multiplication
+    assert_eq!(else_block.instructions.len(), 3);
+    
+    // Check the call instruction
+    match &else_block.instructions[1].kind {
+        InstructionKind::Call { func, args, ty } => {
+            // Check function reference
+            match &func.kind {
+                ValueKind::Global(name) => assert_eq!(name.as_ref(), "factorial"),
+                _ => panic!("Expected global function reference"),
+            }
+            // Check argument (should be n - 1)
+            assert_eq!(args.len(), 1);
+            assert_eq!(args[0].kind, ValueKind::Temporary(0)); // Result of n - 1
+            // Check return type
+            assert_eq!(*ty, IrType::I64);
+        }
+        _ => panic!("Expected Call instruction"),
+    }
+}
