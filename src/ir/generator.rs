@@ -61,6 +61,28 @@ impl NIrGenerator {
         //let mut functions = Vec::new();
         let mut module = Module::new(module_name, self.root_scope);
 
+        // First pass: create all functions and add them to the symbol table
+        for stmt in &stmts {
+            match stmt {
+                Stmt::Function { name, parameters, return_type, body: _, span } => {
+                    let ir_return_type = self.map_type(return_type);
+                    let func_ptr_type = IrType::Pointer(Box::new(ir_return_type));
+                    let func_value = Value::new_global(name.clone(), func_ptr_type)
+                        .with_debug_info(Some(name.clone()), span.clone());
+                    self.scope_manager.add_symbol(name.as_ref(), func_value);
+                }
+                Stmt::MainFunction { body: _, span } => {
+                    let ir_return_type = IrType::Void;
+                    let func_ptr_type = IrType::Pointer(Box::new(ir_return_type));
+                    let func_value = Value::new_global("main".into(), func_ptr_type)
+                        .with_debug_info(Some("main".into()), span.clone());
+                    self.scope_manager.add_symbol("main", func_value);
+                }
+                _ => {}
+            }
+        }
+
+        // Second pass: generate function bodies
         for stmt in stmts {
             match stmt {
                 Stmt::Function { name, parameters, return_type, body, span } => {
@@ -184,7 +206,7 @@ impl NIrGenerator {
         self.continue_stack.clear();
 
         // Save the current generator scope manager
-        let saved_scope_manager = std::mem::take(&mut self.scope_manager);
+        let saved_scope_manager = self.scope_manager.clone();
 
         // Establish function scope before creating the entry block
         func.enter_scope();
@@ -768,13 +790,36 @@ impl NIrGenerator {
             arg_values.push(self.generate_expr(func, arg));
         }
 
-        // For now, we'll assume a default return type. In a more complete implementation,
-        // we would look up the function signature in the symbol table.
-        // TODO: Look up actual function signature from symbol table
-        let return_type = IrType::I64; // Default assumption
-
-        // Create a value representing the function
-        let func_value = Value::new_global(func_name, IrType::Pointer(Box::new(return_type.clone())));
+        // Look up the function signature in the symbol table
+        let (return_type, func_value) = if let Some(func_decl) = self.scope_manager.lookup(&func_name) {
+            match &func_decl.ty {
+                IrType::Pointer(inner) => {
+                    // For function pointers, the return type is the pointed-to type
+                    let return_type = inner.as_ref().clone();
+                    (return_type, func_decl.clone())
+                }
+                _ => {
+                    // If we can't determine the return type, fall back to default
+                    self.new_error(
+                        format!("Function '{}' does not have a valid function pointer type", func_name),
+                        span.clone(),
+                    );
+                    let return_type = IrType::I64; // Default assumption
+                    let func_value = Value::new_global(func_name, IrType::Pointer(Box::new(return_type.clone())));
+                    (return_type, func_value)
+                }
+            }
+        } else {
+            // If function is not in symbol table, we might be calling a function
+            // that is defined later or externally. Use a default return type.
+            self.new_error(
+                format!("Function '{}' not found in symbol table, using default return type", func_name),
+                span.clone(),
+            );
+            let return_type = IrType::I64; // Default assumption
+            let func_value = Value::new_global(func_name, IrType::Pointer(Box::new(return_type.clone())));
+            (return_type, func_value)
+        };
 
         // Create a temporary value for the result
         let dest_id = self.new_temp();
