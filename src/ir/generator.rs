@@ -508,15 +508,15 @@ impl NIrGenerator {
         let base_val = self.generate_expr(func, array);
         let index_val = self.generate_expr(func, index);
 
-        // Deduzione del tipo elemento: gestiamo sia puntatore ad array che array diretto
+        // Determine element type: handle both pointer to array and direct array
         let element_ty = match &base_val.ty {
             IrType::Pointer(inner) => match inner.as_ref() {
                 IrType::Array(elem_ty, _) => *elem_ty.clone(),
-                other => other.clone(), // fallback: puntatore a elemento già puntato
+                other => other.clone(), // fallback: pointer to already pointed element
             },
             IrType::Array(elem_ty, _) => *elem_ty.clone(),
             other => {
-                // Caso inatteso: segnaliamo ma proseguiamo con un fallback sicuro (i32)
+                // Unexpected case: report but continue with safe fallback (i32)
                 self.new_error(format!("Array access on non-array type: {other}"), span.clone());
                 IrType::I32
             }
@@ -527,10 +527,19 @@ impl NIrGenerator {
             InstructionKind::GetElementPtr { base: base_val, index: index_val, element_ty: element_ty.clone() },
             span.clone(),
         )
-        .with_result(Value::new_temporary(tmp, IrType::Pointer(Box::new(element_ty))));
+        .with_result(Value::new_temporary(tmp, IrType::Pointer(Box::new(element_ty.clone()))));
 
         self.add_instruction(gep.clone());
-        gep.result.unwrap()
+        let ptr_value = gep.result.unwrap();
+
+        // Load the value from the pointer for use in expressions
+        let load_tmp = self.new_temp();
+        let load_inst =
+            Instruction::new(InstructionKind::Load { src: ptr_value, ty: element_ty.clone() }, span.clone())
+                .with_result(Value::new_temporary(load_tmp, element_ty));
+
+        self.add_instruction(load_inst.clone());
+        load_inst.result.unwrap()
     }
 
     fn generate_array_literal(&mut self, func: &mut Function, elements: Vec<Expr>, span: SourceSpan) -> Value {
@@ -652,7 +661,13 @@ impl NIrGenerator {
     }
 
     fn generate_assign(&mut self, func: &mut Function, target: Expr, value: Expr, span: SourceSpan) -> Value {
-        let target_val = self.generate_expr(func, target);
+        let target_val = match target {
+            Expr::ArrayAccess { array, index, span: access_span } => {
+                self.generate_array_access_target(func, *array, *index, access_span)
+            }
+            _ => self.generate_expr(func, target),
+        };
+
         let value_val = self.generate_expr(func, value);
 
         let store_inst =
@@ -700,6 +715,39 @@ impl NIrGenerator {
             block.terminator = term.clone();
             // Don't connect blocks here - they'll be connected when the block is finalized
         }
+    }
+
+    /// Generate array access for assignment target: calculate the address of the element with GEP
+    /// and return the pointer (without loading the value).
+    fn generate_array_access_target(
+        &mut self, func: &mut Function, array: Expr, index: Expr, span: SourceSpan,
+    ) -> Value {
+        let base_val = self.generate_expr(func, array);
+        let index_val = self.generate_expr(func, index);
+
+        // Determine element type: handle both pointer to array and direct array
+        let element_ty = match &base_val.ty {
+            IrType::Pointer(inner) => match inner.as_ref() {
+                IrType::Array(elem_ty, _) => *elem_ty.clone(),
+                other => other.clone(), // fallback: pointer to already pointed element
+            },
+            IrType::Array(elem_ty, _) => *elem_ty.clone(),
+            other => {
+                // Unexpected case: report but continue with safe fallback (i32)
+                self.new_error(format!("Array access on non-array type: {other}"), span.clone());
+                IrType::I32
+            }
+        };
+
+        let tmp = self.new_temp();
+        let gep = Instruction::new(
+            InstructionKind::GetElementPtr { base: base_val, index: index_val, element_ty: element_ty.clone() },
+            span.clone(),
+        )
+        .with_result(Value::new_temporary(tmp, IrType::Pointer(Box::new(element_ty))));
+
+        self.add_instruction(gep.clone());
+        gep.result.unwrap()
     }
 }
 
