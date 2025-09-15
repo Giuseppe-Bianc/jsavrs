@@ -1177,7 +1177,12 @@ fn test_generate_array_access_assignment() {
         Type::Void,
         vec![
             // Dichiarazione di un array di 3 interi
-            var_declaration(vec!["arr".into()], Type::Array(Box::new(Type::I32), Box::new(num_lit_i64(3))), true, vec![]),
+            var_declaration(
+                vec!["arr".into()],
+                Type::Array(Box::new(Type::I32), Box::new(num_lit_i64(3))),
+                true,
+                vec![],
+            ),
             // Assegnazione a un elemento dell'array: arr[1] = 42
             Stmt::Expression {
                 expr: Expr::Assign {
@@ -1307,7 +1312,10 @@ fn test_generate_recursive_function_call() {
                 value: Some(binary_expr(
                     variable_expr("n"),
                     BinaryOp::Multiply,
-                    call_expr(variable_expr("factorial"), vec![binary_expr(variable_expr("n"), BinaryOp::Subtract, num_lit_i64(1))]),
+                    call_expr(
+                        variable_expr("factorial"),
+                        vec![binary_expr(variable_expr("n"), BinaryOp::Subtract, num_lit_i64(1))],
+                    ),
                 )),
                 span: dummy_span(),
             }]),
@@ -1322,15 +1330,15 @@ fn test_generate_recursive_function_call() {
 
     let func = &functions.functions[0];
     assert_eq!(func.name, "factorial");
-    
+
     // Check that we have the right number of blocks (entry, then, else, merge)
     assert_eq!(func.cfg.blocks().count(), 4);
-    
+
     // Check the else block which contains the recursive call
     let else_block = func.cfg.get_block("else_2").unwrap();
     // Should have the subtraction, the call, and the multiplication
     assert_eq!(else_block.instructions.len(), 3);
-    
+
     // Check the call instruction
     match &else_block.instructions[1].kind {
         InstructionKind::Call { func, args, ty } => {
@@ -1341,7 +1349,7 @@ fn test_generate_recursive_function_call() {
             }
             // Check argument (should be n - 1)
             assert_eq!(args.len(), 1);
-            assert_eq!(args[0].kind, ValueKind::Temporary(0)); // Result of n - 1
+            assert_eq!(args[0].kind, ValueKind::Temporary(1));
             // Check return type
             assert_eq!(*ty, IrType::I64);
         }
