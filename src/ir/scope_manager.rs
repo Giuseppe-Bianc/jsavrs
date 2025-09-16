@@ -97,10 +97,10 @@ impl ScopeManager {
 
     pub fn append_manager(&mut self, other: &ScopeManager) {
         let root_id = self.root_scope;
-        
+
         // Create a mapping from old scope IDs to new scope IDs to avoid collisions
         let mut id_mapping: HashMap<ScopeId, ScopeId> = HashMap::new();
-        
+
         // First, create new IDs for all scopes in the other manager (except its root)
         for (scope_id, _) in other.scopes.iter() {
             if *scope_id != other.root_scope {
@@ -117,7 +117,7 @@ impl ScopeManager {
 
             // Get the new ID for this scope
             let new_scope_id = *id_mapping.get(old_scope_id).unwrap();
-            
+
             let mut new_scope = scope.clone();
 
             // Update parent references using the mapping
@@ -165,13 +165,12 @@ impl ScopeManager {
             if *old_scope_id == other.root_scope {
                 continue;
             }
-            
+
             // Check if this scope was a direct child of the other manager's root
-            if let Some(parent_id) = scope.parent {
-                if parent_id == other.root_scope {
-                    let new_scope_id = *id_mapping.get(old_scope_id).unwrap();
-                    self.scopes.get_mut(&root_id).unwrap().children.push(new_scope_id);
-                }
+            if let Some(parent_id) = scope.parent
+                && parent_id == other.root_scope {
+                let new_scope_id = *id_mapping.get(old_scope_id).unwrap();
+                self.scopes.get_mut(&root_id).unwrap().children.push(new_scope_id);
             }
         }
 
@@ -190,4 +189,3 @@ impl Default for ScopeManager {
         Self::new()
     }
 }
-
