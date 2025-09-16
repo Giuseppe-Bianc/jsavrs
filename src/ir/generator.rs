@@ -24,6 +24,8 @@ pub struct NIrGenerator {
     type_context: TypeContext,
     _access_controller: AccessController,
     root_scope: Option<ScopeId>,
+    /// Whether to apply SSA transformation to generated IR
+    apply_ssa: bool,
 }
 
 #[allow(dead_code)]
@@ -50,7 +52,15 @@ impl NIrGenerator {
             _access_controller: access_controller,
             type_context: TypeContext::default(),
             root_scope: scope_manager.root_scope(),
+            apply_ssa: true, // Enable SSA by default
         }
+    }
+
+    /// Creates a new generator with SSA transformation disabled
+    pub fn new_without_ssa() -> Self {
+        let mut generator = Self::new();
+        generator.apply_ssa = false;
+        generator
     }
 
     fn block_needs_terminator(&self) -> bool {
@@ -101,7 +111,26 @@ impl NIrGenerator {
             }
         }
 
+        // Apply SSA transformation to all functions in the module if enabled
+        if self.apply_ssa {
+            self.apply_ssa_transformation(&mut module);
+        }
+
         (module, std::mem::take(&mut self.errors))
+    }
+
+    /// Applies SSA transformation to all functions in the module.
+    fn apply_ssa_transformation(&mut self, module: &mut Module) {
+        // Import the SSA transformer
+        use super::ssa::SsaTransformer;
+
+        // Transform each function in the module
+        for func in &mut module.functions {
+            let mut transformer = SsaTransformer::new();
+            if let Err(e) = transformer.transform_function(func) {
+                self.new_error(format!("SSA transformation failed: {}", e), SourceSpan::default());
+            }
+        }
     }
 
     fn new_error(&mut self, message: String, span: SourceSpan) {
@@ -505,7 +534,7 @@ impl NIrGenerator {
             self.new_error(message.to_string(), span);
         }
     }
-    
+
     #[allow(unreachable_patterns)] // To handle any unexpected Expr variants 
     fn generate_expr(&mut self, func: &mut Function, expr: Expr) -> Value {
         match expr {
@@ -828,11 +857,7 @@ impl NIrGenerator {
 
         // Create the call instruction
         let call_inst = Instruction::new(
-            InstructionKind::Call {
-                func: func_value,
-                args: arg_values,
-                ty: return_type,
-            },
+            InstructionKind::Call { func: func_value, args: arg_values, ty: return_type },
             span.clone(),
         )
         .with_result(result_value);

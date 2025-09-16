@@ -17,6 +17,14 @@ impl ControlFlowGraph {
         ControlFlowGraph { graph: DiGraph::new(), entry_label }
     }
 
+    pub fn graph(&self) -> &DiGraph<BasicBlock, ()> {
+        &self.graph
+    }
+    
+    pub fn graph_mut(&mut self) -> &mut DiGraph<BasicBlock, ()> {
+        &mut self.graph
+    }
+
     pub fn entry_label(&self) -> &str {
         &self.entry_label
     }
@@ -131,3 +139,4 @@ impl ControlFlowGraph {
         Ok(())
     }
 }
+

@@ -259,7 +259,7 @@ fn test_generate_simple_while_loop() {
         ],
     )];
 
-    let mut generator = NIrGenerator::new();
+    let mut generator = NIrGenerator::new_without_ssa();
     let (functions, _ir_errors) = generator.generate(ast, "test_file.vn");
     assert_snapshot!(module_redacted(functions));
 }
@@ -289,7 +289,7 @@ fn test_generate_for_loop_basic() {
         }],
     )];
 
-    let mut generator = NIrGenerator::new();
+    let mut generator = NIrGenerator::new_without_ssa();
     let (functions, _ir_errors) = generator.generate(ast, "test_file.vn");
     assert_snapshot!(module_redacted(functions));
 }
