@@ -93,11 +93,11 @@ impl CompileError {
     /// ```
     pub fn message(&self) -> Option<&str> {
         match self {
-            CompileError::LexerError { message, .. } |
-            CompileError::SyntaxError { message, .. } |
-            CompileError::TypeError { message, .. } |
-            CompileError::IrGeneratorError { message, .. } |
-            CompileError::AsmGeneratorError { message } => Some(message),
+            CompileError::LexerError { message, .. }
+            | CompileError::SyntaxError { message, .. }
+            | CompileError::TypeError { message, .. }
+            | CompileError::IrGeneratorError { message, .. }
+            | CompileError::AsmGeneratorError { message } => Some(message),
             _ => None,
         }
     }
@@ -124,10 +124,10 @@ impl CompileError {
     /// ```
     pub fn span(&self) -> Option<&SourceSpan> {
         match self {
-            CompileError::LexerError { span, .. } |
-            CompileError::SyntaxError { span, .. } |
-            CompileError::TypeError { span, .. } |
-            CompileError::IrGeneratorError { span, .. } => Some(span),
+            CompileError::LexerError { span, .. }
+            | CompileError::SyntaxError { span, .. }
+            | CompileError::TypeError { span, .. }
+            | CompileError::IrGeneratorError { span, .. } => Some(span),
             _ => None,
         }
     }
@@ -151,10 +151,10 @@ impl CompileError {
     /// ```
     pub fn help(&self) -> Option<&str> {
         match self {
-            CompileError::LexerError { help, .. } |
-            CompileError::SyntaxError { help, .. } |
-            CompileError::TypeError { help, .. } |
-            CompileError::IrGeneratorError { help, .. } => help.as_deref(),
+            CompileError::LexerError { help, .. }
+            | CompileError::SyntaxError { help, .. }
+            | CompileError::TypeError { help, .. }
+            | CompileError::IrGeneratorError { help, .. } => help.as_deref(),
             _ => None,
         }
     }
@@ -180,11 +180,11 @@ impl CompileError {
     /// ```
     pub fn set_message(&mut self, new_message: String) {
         match self {
-            CompileError::LexerError { message, .. } |
-            CompileError::SyntaxError { message, .. } |
-            CompileError::TypeError { message, .. } |
-            CompileError::IrGeneratorError { message, .. } |
-            CompileError::AsmGeneratorError { message } => *message = new_message,
+            CompileError::LexerError { message, .. }
+            | CompileError::SyntaxError { message, .. }
+            | CompileError::TypeError { message, .. }
+            | CompileError::IrGeneratorError { message, .. }
+            | CompileError::AsmGeneratorError { message } => *message = new_message,
             _ => {}
         }
     }
@@ -213,10 +213,10 @@ impl CompileError {
     /// ```
     pub fn set_span(&mut self, new_span: SourceSpan) {
         match self {
-            CompileError::LexerError { span, .. } |
-            CompileError::SyntaxError { span, .. } |
-            CompileError::TypeError { span, .. } |
-            CompileError::IrGeneratorError { span, .. } => *span = new_span,
+            CompileError::LexerError { span, .. }
+            | CompileError::SyntaxError { span, .. }
+            | CompileError::TypeError { span, .. }
+            | CompileError::IrGeneratorError { span, .. } => *span = new_span,
             _ => {}
         }
     }
@@ -242,10 +242,10 @@ impl CompileError {
     /// ```
     pub fn set_help(&mut self, new_help: Option<String>) {
         match self {
-            CompileError::LexerError { help, .. } |
-            CompileError::SyntaxError { help, .. } |
-            CompileError::TypeError { help, .. } |
-            CompileError::IrGeneratorError { help, .. } => *help = new_help,
+            CompileError::LexerError { help, .. }
+            | CompileError::SyntaxError { help, .. }
+            | CompileError::TypeError { help, .. }
+            | CompileError::IrGeneratorError { help, .. } => *help = new_help,
             _ => {}
         }
     }

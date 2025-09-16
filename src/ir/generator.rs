@@ -1,4 +1,5 @@
 // src/ir/generator.rs
+use super::ssa::SsaTransformer;
 use super::*;
 use crate::error::compile_error::CompileError;
 use crate::location::source_span::SourceSpan;
@@ -6,8 +7,6 @@ use crate::parser::ast::*;
 use crate::tokens::number::Number;
 use std::collections::HashMap;
 use std::sync::Arc;
-use super::ssa::SsaTransformer;
-
 
 enum LoopControl {
     Break,

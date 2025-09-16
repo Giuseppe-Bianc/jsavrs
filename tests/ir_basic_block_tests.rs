@@ -1,6 +1,4 @@
-use jsavrs::ir::{
-    BasicBlock, Instruction, InstructionKind, IrBinaryOp, IrLiteralValue, IrType, TerminatorKind, Value,
-};
+use jsavrs::ir::{BasicBlock, Instruction, InstructionKind, IrBinaryOp, IrLiteralValue, IrType, TerminatorKind, Value};
 use jsavrs::utils::dummy_span;
 
 #[test]

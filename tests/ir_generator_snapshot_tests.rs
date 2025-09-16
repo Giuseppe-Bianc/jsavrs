@@ -618,7 +618,10 @@ fn test_generate_recursive_function_call() {
                 value: Some(binary_expr(
                     variable_expr("n"),
                     BinaryOp::Multiply,
-                    call_expr(variable_expr("factorial"), vec![binary_expr(variable_expr("n"), BinaryOp::Subtract, num_lit_i64(1))]),
+                    call_expr(
+                        variable_expr("factorial"),
+                        vec![binary_expr(variable_expr("n"), BinaryOp::Subtract, num_lit_i64(1))],
+                    ),
                 )),
                 span: dummy_span(),
             }]),

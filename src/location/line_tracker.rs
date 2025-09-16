@@ -47,7 +47,7 @@ impl LineTracker {
             )
             .collect();
 
-        Self { line_starts, file_path: Arc::from(file_path),source: source.into() }
+        Self { line_starts, file_path: Arc::from(file_path), source: source.into() }
     }
     /// Converts a byte offset to its corresponding line/column position.
     ///

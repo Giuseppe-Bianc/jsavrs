@@ -65,14 +65,13 @@ impl JsavParser {
         let span = self.advance_and_get_span()?;
         Some(Stmt::Break { span })
     }
-    
+
     /// Parses a continue statement.
     #[inline]
     fn parse_continue(&mut self) -> Option<Stmt> {
         let span = self.advance_and_get_span()?;
         Some(Stmt::Continue { span })
     }
-    
 
     fn advance_and_get_span(&mut self) -> Option<SourceSpan> {
         let token = self.advance()?; // Use reference

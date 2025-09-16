@@ -1,6 +1,6 @@
 // tests/nir_type_tests.rs
-use jsavrs::location::source_span::SourceSpan;
 use jsavrs::ir::{IrType, ResourceId, ScopeId};
+use jsavrs::location::source_span::SourceSpan;
 use std::fmt::{Debug, Display};
 use uuid::Uuid;
 

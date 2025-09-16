@@ -1,5 +1,5 @@
-use jsavrs::location::source_span::SourceSpan;
 use jsavrs::ir::{DataLayout, Function, IrParameter, IrType, Module, ParamAttributes, ScopeId, TargetTriple};
+use jsavrs::location::source_span::SourceSpan;
 use jsavrs::utils::module_redacted;
 // tests/nir_module_test.rs
 

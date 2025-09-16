@@ -69,11 +69,7 @@ fn parse_integer<T>(numeric_part: &str, map_fn: fn(T) -> Number) -> Option<Numbe
 where
     T: std::str::FromStr,
 {
-    if is_valid_integer_literal(numeric_part) {
-        numeric_part.parse::<T>().ok().map(map_fn)
-    } else {
-        None
-    }
+    if is_valid_integer_literal(numeric_part) { numeric_part.parse::<T>().ok().map(map_fn) } else { None }
 }
 
 /// Routes numeric literal parsing based on suffix type.
@@ -130,8 +126,7 @@ pub fn is_valid_integer_literal(numeric_part: &str) -> bool {
 /// # Returns
 /// [`Number::Float32`] or [`Number::Scientific32`] if valid
 pub fn handle_float_suffix(numeric_part: &str) -> Option<Number> {
-    parse_scientific(numeric_part, true)
-        .or_else(|| numeric_part.parse::<f32>().ok().map(Number::Float32))
+    parse_scientific(numeric_part, true).or_else(|| numeric_part.parse::<f32>().ok().map(Number::Float32))
 }
 
 /// Parses numeric strings with default suffix (no suffix or 'd').
@@ -200,13 +195,9 @@ pub fn parse_base_number(radix: u32, lex: &mut logos::Lexer<TokenKind>) -> Optio
     };
 
     if suffix_u {
-        u64::from_str_radix(num_str, radix)
-            .ok()
-            .map(Number::UnsignedInteger)
+        u64::from_str_radix(num_str, radix).ok().map(Number::UnsignedInteger)
     } else {
-        i64::from_str_radix(num_str, radix)
-            .ok()
-            .map(Number::Integer)
+        i64::from_str_radix(num_str, radix).ok().map(Number::Integer)
     }
 }
 
@@ -420,10 +411,7 @@ pub enum TokenKind {
     TypeBool,
 
     // Whitespace and comments (skipped by lexer)
-    #[regex(
-        r"[ \t\r\n\f\u{00A0}\u{1680}\u{2000}-\u{200A}\u{202F}\u{205F}\u{3000}]+",
-        logos::skip
-    )]
+    #[regex(r"[ \t\r\n\f\u{00A0}\u{1680}\u{2000}-\u{200A}\u{202F}\u{205F}\u{3000}]+", logos::skip)]
     #[regex(r";")]
     Semicolon,
     Whitespace,

@@ -158,7 +158,7 @@ fn multiple_combinations_of_flags() {
 
     // Test short input with long verbose
     cmd.arg("-i").arg(&path).arg("--verbose").assert().success();
-    
+
     // Cleanup
     std::fs::remove_file(&path).unwrap();
 }
@@ -182,7 +182,7 @@ fn test_parse_mixed_options() {
     let args = Args::try_parse_from(["jsavrs", "-i", "test.vn", "--verbose"]).unwrap();
     assert_eq!(args.input, PathBuf::from("test.vn"));
     assert!(args.verbose);
-    
+
     let args2 = Args::try_parse_from(["jsavrs", "--input", "test.vn", "-v"]).unwrap();
     assert_eq!(args2.input, PathBuf::from("test.vn"));
     assert!(args2.verbose);
@@ -216,11 +216,11 @@ fn test_case_insensitive_extension() {
     // Test that .VN (uppercase) works
     let args = Args::try_parse_from(["jsavrs", "-i", "test.VN"]).unwrap();
     assert_eq!(args.input, PathBuf::from("test.VN"));
-    
+
     // Test that .Vn (mixed case) works
     let args2 = Args::try_parse_from(["jsavrs", "-i", "test.Vn"]).unwrap();
     assert_eq!(args2.input, PathBuf::from("test.Vn"));
-    
+
     // Test that .vN (mixed case) works
     let args3 = Args::try_parse_from(["jsavrs", "-i", "test.vN"]).unwrap();
     assert_eq!(args3.input, PathBuf::from("test.vN"));
@@ -231,14 +231,14 @@ fn test_file_extension_validation() {
     // Valid .vn extension
     let result = Args::try_parse_from(["jsavrs", "-i", "valid_file.vn"]);
     assert!(result.is_ok());
-    
+
     // Invalid extensions should fail
     let result_txt = Args::try_parse_from(["jsavrs", "-i", "invalid_file.txt"]);
     assert!(result_txt.is_err());
-    
+
     let result_no_ext = Args::try_parse_from(["jsavrs", "-i", "no_extension"]);
     assert!(result_no_ext.is_err());
-    
+
     let result_wrong_case_ext = Args::try_parse_from(["jsavrs", "-i", "wrong.VNT"]); // Wrong extension
     assert!(result_wrong_case_ext.is_err());
 }

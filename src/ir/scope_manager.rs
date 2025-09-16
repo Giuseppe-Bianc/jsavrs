@@ -168,7 +168,8 @@ impl ScopeManager {
 
             // Check if this scope was a direct child of the other manager's root
             if let Some(parent_id) = scope.parent
-                && parent_id == other.root_scope {
+                && parent_id == other.root_scope
+            {
                 let new_scope_id = *id_mapping.get(old_scope_id).unwrap();
                 self.scopes.get_mut(&root_id).unwrap().children.push(new_scope_id);
             }
@@ -177,7 +178,8 @@ impl ScopeManager {
         // Update current_scope to the mapped version of the other manager's current scope
         // Map the other manager's current scope to the new ID
         if other.current_scope != other.root_scope
-             && let Some(new_current_scope_id) = id_mapping.get(&other.current_scope) {
+            && let Some(new_current_scope_id) = id_mapping.get(&other.current_scope)
+        {
             self.current_scope = *new_current_scope_id;
         }
     }

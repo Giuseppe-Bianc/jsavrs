@@ -2,8 +2,8 @@
 use insta::{assert_debug_snapshot, assert_snapshot};
 use jsavrs::lexer::{Lexer, lexer_tokenize_with_errors};
 use jsavrs::parser::ast::*;
-use jsavrs::printers::ast_printer::{pretty_print, pretty_print_stmt};
 use jsavrs::parser::jsav_parser::JsavParser;
+use jsavrs::printers::ast_printer::{pretty_print, pretty_print_stmt};
 use jsavrs::utils::*;
 
 #[test]
@@ -173,7 +173,10 @@ fn test_empty_block_stmt() {
 #[test]
 fn test_nested_block_stmt() {
     let stmt = Stmt::Block {
-        statements: vec![Stmt::Block { statements: vec![Stmt::Expression { expr: num_lit_i64(42) }], span: dummy_span() }],
+        statements: vec![Stmt::Block {
+            statements: vec![Stmt::Expression { expr: num_lit_i64(42) }],
+            span: dummy_span(),
+        }],
         span: dummy_span(),
     };
 
@@ -264,7 +267,10 @@ fn test_for_complete() {
     let stmt = Stmt::For {
         initializer: Some(Box::from(var_declaration(vec!["x".into()], Type::I32, true, vec![num_lit_i64(1)]))),
         condition: Some(binary_expr(variable_expr("x"), BinaryOp::Less, num_lit_i64(2))),
-        increment: Some(assign_expr(variable_expr("x"), binary_expr(variable_expr("x"), BinaryOp::Add, num_lit_i64(1)))),
+        increment: Some(assign_expr(
+            variable_expr("x"),
+            binary_expr(variable_expr("x"), BinaryOp::Add, num_lit_i64(1)),
+        )),
         body: vec![],
         span: dummy_span(),
     };
@@ -295,7 +301,10 @@ fn test_for_complete_not_empty_body() {
     let stmt = Stmt::For {
         initializer: Some(Box::from(var_declaration(vec!["x".into()], Type::I32, true, vec![num_lit_i64(1)]))),
         condition: Some(binary_expr(variable_expr("x"), BinaryOp::Less, num_lit_i64(2))),
-        increment: Some(assign_expr(variable_expr("x"), binary_expr(variable_expr("x"), BinaryOp::Add, num_lit_i64(1)))),
+        increment: Some(assign_expr(
+            variable_expr("x"),
+            binary_expr(variable_expr("x"), BinaryOp::Add, num_lit_i64(1)),
+        )),
         body: vec![Stmt::Expression { expr: num_lit_i64(42) }],
         span: dummy_span(),
     };

@@ -1,6 +1,6 @@
+use crate::ir::Module;
 use crate::location::source_location::SourceLocation;
 use crate::location::source_span::SourceSpan;
-use crate::ir::Module;
 use crate::parser::ast::{BinaryOp, Expr, LiteralValue, Parameter, Stmt, Type, UnaryOp};
 use crate::semantic::symbol_table::{FunctionSymbol, Symbol, VariableSymbol};
 use crate::tokens::number::Number;
@@ -28,10 +28,7 @@ pub fn strip_ansi_codes(s: &str) -> String {
 // Helper functions per costruire AST
 macro_rules! create_num_lit {
     ($variant:ident, $value:expr) => {
-        Expr::Literal {
-            value: LiteralValue::Number(Number::$variant($value)),
-            span: dummy_span(),
-        }
+        Expr::Literal { value: LiteralValue::Number(Number::$variant($value)), span: dummy_span() }
     };
 }
 
@@ -73,10 +70,7 @@ pub fn float_lit(n: f64) -> Expr {
 }
 
 fn create_literal_expr(value: LiteralValue) -> Expr {
-    Expr::Literal {
-        value,
-        span: dummy_span(),
-    }
+    Expr::Literal { value, span: dummy_span() }
 }
 
 pub fn bool_lit(b: bool) -> Expr {
@@ -260,7 +254,7 @@ pub fn func_from_symbol(sym: Symbol) -> Option<FunctionSymbol> {
 }
 
 lazy_static! {
-    static ref UUID_REGEX: Regex = 
+    static ref UUID_REGEX: Regex =
         Regex::new(r"[0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{12}").unwrap();
 }
 

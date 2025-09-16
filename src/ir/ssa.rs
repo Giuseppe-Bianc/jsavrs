@@ -285,7 +285,8 @@ impl SsaTransformer {
 
             // Get the current value from the stack
             if let Some(stack) = self.value_stack.get(&var_name)
-                && let Some(current_value) = stack.last() {
+                && let Some(current_value) = stack.last()
+            {
                 *value = current_value.clone();
             }
         }

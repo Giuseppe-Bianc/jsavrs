@@ -129,7 +129,11 @@ macro_rules! test_binary_precedence {
             assert_eq!(
                 expr[0],
                 Stmt::Expression {
-                    expr: binary_expr(num_lit_i64(3), $binary_op, binary_expr(num_lit_i64(5), BinaryOp::Multiply, num_lit_i64(2)))
+                    expr: binary_expr(
+                        num_lit_i64(3),
+                        $binary_op,
+                        binary_expr(num_lit_i64(5), BinaryOp::Multiply, num_lit_i64(2))
+                    )
                 }
             );
         }
@@ -407,7 +411,9 @@ fn test_unary_precedence() {
     assert_eq!(expr.len(), 1);
     assert_eq!(
         expr[0],
-        Stmt::Expression { expr: binary_expr(unary_expr(UnaryOp::Negate, num_lit_i64(5)), BinaryOp::Multiply, num_lit_i64(3)) }
+        Stmt::Expression {
+            expr: binary_expr(unary_expr(UnaryOp::Negate, num_lit_i64(5)), BinaryOp::Multiply, num_lit_i64(3))
+        }
     );
 }
 
@@ -550,7 +556,9 @@ fn test_chained_array_access() {
     assert_eq!(expr.len(), 1);
     assert_eq!(
         expr[0],
-        Stmt::Expression { expr: array_access_expr(array_access_expr(variable_expr("arr"), num_lit_i64(1)), num_lit_i64(2)) }
+        Stmt::Expression {
+            expr: array_access_expr(array_access_expr(variable_expr("arr"), num_lit_i64(1)), num_lit_i64(2))
+        }
     );
 }
 
@@ -934,7 +942,7 @@ fn test_full_for_loop() {
 }
 
 #[test]
-fn test_if_with_else_branch()  {
+fn test_if_with_else_branch() {
     let input = "if (true) { continue } else { break }";
     let mut lexer = Lexer::new("test.vn", input);
     let (tokens, _lerrors) = lexer_tokenize_with_errors(&mut lexer);

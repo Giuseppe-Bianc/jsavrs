@@ -1,9 +1,9 @@
 // rust
 use criterion::{BenchmarkId, Criterion, Throughput, criterion_group, criterion_main};
+use jsavrs::ir::generator::NIrGenerator;
 use jsavrs::lexer::{Lexer, lexer_tokenize_with_errors};
 use jsavrs::parser::jsav_parser::JsavParser;
 use jsavrs::semantic::type_checker::TypeChecker;
-use jsavrs::ir::generator::NIrGenerator;
 use std::hint::black_box;
 use std::time::Duration;
 
@@ -23,8 +23,16 @@ pub fn benchmark_lexer(c: &mut Criterion) {
         ("simple_long", "var x: i64 = 42\n".repeat(1000)),
         ("expression", "var y: i64 = (10 + 20) * (5 - 3) / 2".to_string()),
         ("expression_long", "var y: i64 = (10 + 20) * (5 - 3) / 2\n".repeat(1000)),
-        ("complex_function", "fun fibonacci(n: i32): i32 { if n <= 1 { return n; } return fibonacci(n - 1) + fibonacci(n - 2); }".to_string()),
-        ("complex_function_long", "fun fibonacci(n: i32): i32 { if n <= 1 { return n; } return fibonacci(n - 1) + fibonacci(n - 2); }\n".repeat(100)),
+        (
+            "complex_function",
+            "fun fibonacci(n: i32): i32 { if n <= 1 { return n; } return fibonacci(n - 1) + fibonacci(n - 2); }"
+                .to_string(),
+        ),
+        (
+            "complex_function_long",
+            "fun fibonacci(n: i32): i32 { if n <= 1 { return n; } return fibonacci(n - 1) + fibonacci(n - 2); }\n"
+                .repeat(100),
+        ),
     ];
 
     for (name, input) in &lex_cases {
@@ -125,7 +133,11 @@ pub fn benchmark_semantic_analysis(c: &mut Criterion) {
 
     let semantic_cases = [
         ("simple_types", "var x: i64 = 42\nvar y: f64 = 3.14\nvar z: bool = true".to_string()),
-        ("function_types", "fun add(a: i32, b: i32): i32 { return a + b; }\nfun mul(a: f64, b: f64): f64 { return a * b; }".to_string()),
+        (
+            "function_types",
+            "fun add(a: i32, b: i32): i32 { return a + b; }\nfun mul(a: f64, b: f64): f64 { return a * b; }"
+                .to_string(),
+        ),
         ("complex_types", "fun complex(a: i32[], b: {x: i32, y: i32}): i32 { return a[0] + b.x + b.y; }".to_string()),
         ("type_errors", "var x: i64 = 3.14\nvar y: bool = 42\nvar z: string = 10".to_string()),
     ];
@@ -160,8 +172,14 @@ pub fn benchmark_ir_generation(c: &mut Criterion) {
 
     let ir_cases = [
         ("simple_expr", "var x: i64 = 42\nvar y: i64 = x + 10".to_string()),
-        ("functions", "fun add(a: i32, b: i32): i32 { return a + b; }\nfun main() { var result: i32 = add(5, 10); }".to_string()),
-        ("control_flow", "fun loop_test(n: i32): i32 { var sum: i32 = 0; for i in 0..n { sum = sum + i; } return sum; }".to_string()),
+        (
+            "functions",
+            "fun add(a: i32, b: i32): i32 { return a + b; }\nfun main() { var result: i32 = add(5, 10); }".to_string(),
+        ),
+        (
+            "control_flow",
+            "fun loop_test(n: i32): i32 { var sum: i32 = 0; for i in 0..n { sum = sum + i; } return sum; }".to_string(),
+        ),
     ];
 
     for (name, input) in &ir_cases {
@@ -195,7 +213,11 @@ pub fn benchmark_end_to_end(c: &mut Criterion) {
     let pipeline_cases = [
         ("simple", "var x: i64 = 42".to_string()),
         ("function", "fun add(a: i32, b: i32): i32 { return a + b; }".to_string()),
-        ("complex", "fun fibonacci(n: i32): i32 { if n <= 1 { return n; } return fibonacci(n - 1) + fibonacci(n - 2); }".to_string()),
+        (
+            "complex",
+            "fun fibonacci(n: i32): i32 { if n <= 1 { return n; } return fibonacci(n - 1) + fibonacci(n - 2); }"
+                .to_string(),
+        ),
         ("long", "fun add(a: i32, b: i32): i32 { return a + b; }\n".repeat(100)),
     ];
 
@@ -219,9 +241,9 @@ pub fn benchmark_end_to_end(c: &mut Criterion) {
 }
 
 criterion_group!(
-    benches, 
-    benchmark_lexer, 
-    benchmark_parser, 
+    benches,
+    benchmark_lexer,
+    benchmark_parser,
     benchmark_parser_nodes,
     benchmark_semantic_analysis,
     benchmark_ir_generation,

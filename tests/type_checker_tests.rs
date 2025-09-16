@@ -1261,7 +1261,8 @@ fn test_complex_for_loop_initialization_statements() {
     assert!(errors.is_empty(), "Unexpected errors: {:?}", errors);
 
     // Test for loop with complex expression in initialization
-    let ast = "var a: i32 = 2i32\n    var b: i32 = 3i32\n    for (var i: i32 = (a + b) * 2i32; i < 10i32; i = i + 1i32) { }";
+    let ast =
+        "var a: i32 = 2i32\n    var b: i32 = 3i32\n    for (var i: i32 = (a + b) * 2i32; i < 10i32; i = i + 1i32) { }";
     let errors = typecheck(ast);
     assert!(errors.is_empty(), "Unexpected errors: {:?}", errors);
 }

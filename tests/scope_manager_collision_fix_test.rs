@@ -24,10 +24,10 @@ fn test_ir_generator_multiple_functions_no_collision() {
     // This should not panic anymore
     let mut generator = NIrGenerator::new();
     let (module, ir_errors) = generator.generate(ast, "test_file.vn");
-    
+
     // Verify no errors
     assert_eq!(ir_errors.len(), 0);
-    
+
     // Verify both functions were generated
     assert_eq!(module.functions.len(), 2);
     assert_eq!(module.functions[0].name, "func1");

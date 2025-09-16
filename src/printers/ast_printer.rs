@@ -1,5 +1,5 @@
 use crate::parser::ast::{Expr, Stmt};
-use crate::printers::branch_type::{append_line, get_indent, print_children, BranchConfig, BranchType, StyleManager};
+use crate::printers::branch_type::{BranchConfig, BranchType, StyleManager, append_line, get_indent, print_children};
 
 /// Pretty-print an expression AST into a styled, tree-like string.
 pub fn pretty_print(expr: &Expr) -> String {
@@ -24,16 +24,44 @@ fn print_expr(expr: &Expr, indent: &str, branch_type: BranchType, output: &mut S
     match expr {
         Expr::Binary { left, op, right, .. } => {
             append_line(output, indent, branch_type, styles.operator.clone(), &format!("BinaryOp {op:?}"));
-            print_branch("Left:", left, indent, BranchConfig::new(branch_type, BranchType::Middle, BranchType::Last), output, styles);
-            print_branch("Right:", right, indent, BranchConfig::new(branch_type, BranchType::Last, BranchType::Last), output, styles);
+            print_branch(
+                "Left:",
+                left,
+                indent,
+                BranchConfig::new(branch_type, BranchType::Middle, BranchType::Last),
+                output,
+                styles,
+            );
+            print_branch(
+                "Right:",
+                right,
+                indent,
+                BranchConfig::new(branch_type, BranchType::Last, BranchType::Last),
+                output,
+                styles,
+            );
         }
         Expr::Unary { op, expr, .. } => {
             append_line(output, indent, branch_type, styles.operator.clone(), &format!("UnaryOp {op:?}"));
-            print_branch("Expr:", expr, indent, BranchConfig::new(branch_type, BranchType::Last, BranchType::Last), output, styles);
+            print_branch(
+                "Expr:",
+                expr,
+                indent,
+                BranchConfig::new(branch_type, BranchType::Last, BranchType::Last),
+                output,
+                styles,
+            );
         }
         Expr::Grouping { expr, .. } => {
             append_line(output, indent, branch_type, styles.clone().punctuation, "Grouping");
-            print_branch("Expr:", expr, indent, BranchConfig::new(branch_type, BranchType::Last, BranchType::Last), output, styles);
+            print_branch(
+                "Expr:",
+                expr,
+                indent,
+                BranchConfig::new(branch_type, BranchType::Last, BranchType::Last),
+                output,
+                styles,
+            );
         }
         Expr::Literal { value, .. } => {
             append_line(output, indent, branch_type, styles.literal.clone(), &format!("Literal {value}"));
@@ -71,8 +99,22 @@ fn print_expr(expr: &Expr, indent: &str, branch_type: BranchType, output: &mut S
         }
         Expr::ArrayAccess { array, index, .. } => {
             append_line(output, indent, branch_type, styles.punctuation.clone(), "Array Access");
-            print_branch("Array:", array, indent, BranchConfig::new(branch_type, BranchType::Middle, BranchType::Last), output, styles);
-            print_branch("Index:", index, indent, BranchConfig::new(branch_type, BranchType::Last, BranchType::Last), output, styles);
+            print_branch(
+                "Array:",
+                array,
+                indent,
+                BranchConfig::new(branch_type, BranchType::Middle, BranchType::Last),
+                output,
+                styles,
+            );
+            print_branch(
+                "Index:",
+                index,
+                indent,
+                BranchConfig::new(branch_type, BranchType::Last, BranchType::Last),
+                output,
+                styles,
+            );
         }
         Expr::ArrayLiteral { elements, .. } => {
             append_line(output, indent, branch_type, styles.punctuation.clone(), "Array Literal");

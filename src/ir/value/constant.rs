@@ -17,7 +17,7 @@ impl fmt::Display for IrConstantValue {
                 f.write_str("\"")?;
                 string.escape_default().fmt(f)?;
                 f.write_str("\"")
-            },
+            }
             IrConstantValue::Array { elements } => {
                 f.write_str("[")?;
                 for (i, elem) in elements.iter().enumerate() {

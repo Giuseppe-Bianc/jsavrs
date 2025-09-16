@@ -102,13 +102,14 @@ impl fmt::Display for Value {
             }
             ValueKind::Temporary(id) => f.write_fmt(format_args!("t{id}"))?,
         }
-        
+
         // Only access debug_info if it's likely to be present
-        if let Some(debug_info) = &self.debug_info &&let Some(name) = &debug_info.name {
-                f.write_str(" (")?;
-                name.fmt(f)?;
-                f.write_str(")")?;
-            
+        if let Some(debug_info) = &self.debug_info
+            && let Some(name) = &debug_info.name
+        {
+            f.write_str(" (")?;
+            name.fmt(f)?;
+            f.write_str(")")?;
         }
         Ok(())
     }

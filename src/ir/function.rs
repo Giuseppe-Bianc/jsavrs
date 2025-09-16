@@ -2,8 +2,8 @@
 use super::cfg::ControlFlowGraph;
 use super::scope_manager::ScopeManager;
 use super::types::{IrType, ScopeId};
-use crate::location::source_span::SourceSpan;
 use crate::ir::{BasicBlock, Instruction, Terminator};
+use crate::location::source_span::SourceSpan;
 use std::collections::HashMap;
 use std::fmt;
 use std::sync::Arc;

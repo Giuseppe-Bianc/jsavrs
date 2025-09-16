@@ -20,7 +20,7 @@ impl ControlFlowGraph {
     pub fn graph(&self) -> &DiGraph<BasicBlock, ()> {
         &self.graph
     }
-    
+
     pub fn graph_mut(&mut self) -> &mut DiGraph<BasicBlock, ()> {
         &mut self.graph
     }
@@ -139,4 +139,3 @@ impl ControlFlowGraph {
         Ok(())
     }
 }
-
