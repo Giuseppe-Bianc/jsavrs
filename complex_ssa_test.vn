@@ -1,0 +1,16 @@
+// More complex program to test SSA properties with loops
+main {
+    var x: i32 = 0i32
+    var i: i32 = 0i32
+    
+    while (i < 10i32) {
+        x = x + i
+        i = i + 1i32
+    }
+    
+    if (x > 100i32) {
+        x = 200i32
+    } else {
+        x = 300i32
+    }
+}
