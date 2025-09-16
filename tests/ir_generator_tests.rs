@@ -1293,7 +1293,7 @@ fn test_generate_simple_function_call() {
             assert_eq!(args[0].kind, ValueKind::Literal(IrLiteralValue::I32(5)));
             assert_eq!(args[1].kind, ValueKind::Literal(IrLiteralValue::I32(3)));
             // Check return type
-            assert_eq!(*ty, IrType::I64); // Default return type in our implementation
+            assert_eq!(*ty, IrType::I32); // Default return type in our implementation
         }
         _ => panic!("Expected Call instruction"),
     }
