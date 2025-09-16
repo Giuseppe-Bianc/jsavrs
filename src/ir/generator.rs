@@ -64,7 +64,7 @@ impl NIrGenerator {
         // First pass: create all functions and add them to the symbol table
         for stmt in &stmts {
             match stmt {
-                Stmt::Function { name, parameters, return_type, body: _, span } => {
+                Stmt::Function { name, parameters: _, return_type, body: _, span } => {
                     let ir_return_type = self.map_type(return_type);
                     let func_ptr_type = IrType::Pointer(Box::new(ir_return_type));
                     let func_value = Value::new_global(name.clone(), func_ptr_type)
@@ -505,7 +505,8 @@ impl NIrGenerator {
             self.new_error(message.to_string(), span);
         }
     }
-
+    
+    #[allow(unreachable_patterns)] // To handle any unexpected Expr variants 
     fn generate_expr(&mut self, func: &mut Function, expr: Expr) -> Value {
         match expr {
             Expr::Literal { value, span } => self.generate_literal(value, span),
