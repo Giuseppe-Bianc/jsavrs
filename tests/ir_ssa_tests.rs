@@ -167,3 +167,125 @@ fn test_ssa_with_if_else() {
     // The transformation should succeed
     assert!(result.is_ok());
 }
+
+#[test]
+fn test_simple_if_else_transformation() {
+    // Create a simple function with an if-else structure
+    let mut func = Function::new("test", vec![], IrType::Void);
+    
+    // Create blocks
+    let entry_block = BasicBlock::new("entry", SourceSpan::default());
+    let then_block = BasicBlock::new("then", SourceSpan::default());
+    let else_block = BasicBlock::new("else", SourceSpan::default());
+    let merge_block = BasicBlock::new("merge", SourceSpan::default());
+    
+    // Add blocks to function
+    func.add_block("entry", SourceSpan::default());
+    func.add_block("then", SourceSpan::default());
+    func.add_block("else", SourceSpan::default());
+    func.add_block("merge", SourceSpan::default());
+    
+    // Set entry block
+    func.cfg.entry_label = "entry".to_string();
+    
+    // Create a variable x
+    let x_var = Value::new_temporary(0, IrType::I32)
+        .with_debug_info(Some("x".into()), SourceSpan::default());
+    
+    // Add an alloca instruction for x in entry block
+    let alloca_inst = Instruction::new(
+        InstructionKind::Alloca { ty: IrType::I32 },
+        SourceSpan::default()
+    ).with_result(x_var.clone());
+    
+    func.add_instruction("entry", alloca_inst);
+    
+    // Add store instructions in then and else blocks
+    let const_10 = Value::new_literal(IrLiteralValue::I32(10));
+    let store_then = Instruction::new(
+        InstructionKind::Store { value: const_10, dest: x_var.clone() },
+        SourceSpan::default()
+    );
+    func.add_instruction("then", store_then);
+    
+    let const_20 = Value::new_literal(IrLiteralValue::I32(20));
+    let store_else = Instruction::new(
+        InstructionKind::Store { value: const_20, dest: x_var.clone() },
+        SourceSpan::default()
+    );
+    func.add_instruction("else", store_else);
+    
+    // Transform to SSA
+    let mut transformer = SsaTransformer::new();
+    let result = transformer.transform_function(&mut func);
+    
+    // The transformation should succeed
+    if let Err(e) = &result {
+        eprintln!("SSA transformation error in test_simple_if_else_transformation: {}", e);
+    }
+    assert!(result.is_ok());
+}
+
+#[test]
+fn test_loop_transformation() {
+    // Create a simple function with a loop structure
+    let mut func = Function::new("test_loop", vec![], IrType::Void);
+    
+    // Create blocks
+    let entry_block = BasicBlock::new("entry", SourceSpan::default());
+    let loop_header = BasicBlock::new("loop_header", SourceSpan::default());
+    let loop_body = BasicBlock::new("loop_body", SourceSpan::default());
+    let loop_exit = BasicBlock::new("loop_exit", SourceSpan::default());
+    
+    // Add blocks to function
+    func.add_block("entry", SourceSpan::default());
+    func.add_block("loop_header", SourceSpan::default());
+    func.add_block("loop_body", SourceSpan::default());
+    func.add_block("loop_exit", SourceSpan::default());
+    
+    // Set entry block
+    func.cfg.entry_label = "entry".to_string();
+    
+    // Create a variable i
+    let i_var = Value::new_temporary(0, IrType::I32)
+        .with_debug_info(Some("i".into()), SourceSpan::default());
+    
+    // Add an alloca instruction for i in entry block
+    let alloca_inst = Instruction::new(
+        InstructionKind::Alloca { ty: IrType::I32 },
+        SourceSpan::default()
+    ).with_result(i_var.clone());
+    
+    func.add_instruction("entry", alloca_inst);
+    
+    // Add store instruction to initialize i in loop header
+    let const_0 = Value::new_literal(IrLiteralValue::I32(0));
+    let store_init = Instruction::new(
+        InstructionKind::Store { value: const_0, dest: i_var.clone() },
+        SourceSpan::default()
+    );
+    func.add_instruction("loop_header", store_init);
+    
+    // Add store instruction to increment i in loop body
+    let const_1 = Value::new_literal(IrLiteralValue::I32(1));
+    let load_i = Instruction::new(
+        InstructionKind::Load { src: i_var.clone(), ty: IrType::I32 },
+        SourceSpan::default()
+    );
+    // For simplicity, we'll just add a store that overwrites i in the loop body
+    let store_inc = Instruction::new(
+        InstructionKind::Store { value: const_1, dest: i_var.clone() },
+        SourceSpan::default()
+    );
+    func.add_instruction("loop_body", store_inc);
+    
+    // Transform to SSA
+    let mut transformer = SsaTransformer::new();
+    let result = transformer.transform_function(&mut func);
+    
+    // The transformation should succeed
+    if let Err(e) = &result {
+        eprintln!("SSA transformation error in test_loop_transformation: {}", e);
+    }
+    assert!(result.is_ok());
+}
