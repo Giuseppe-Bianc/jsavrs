@@ -97,41 +97,91 @@ impl ScopeManager {
 
     pub fn append_manager(&mut self, other: &ScopeManager) {
         let root_id = self.root_scope;
-        debug_assert!(
-            other.scopes.keys().filter(|id| **id != other.root_scope).all(|id| !self.scopes.contains_key(id)),
-            "ScopeId collision: append_manager would overwrite existing scopes"
-        );
+        
+        // Create a mapping from old scope IDs to new scope IDs to avoid collisions
+        let mut id_mapping: HashMap<ScopeId, ScopeId> = HashMap::new();
+        
+        // First, create new IDs for all scopes in the other manager (except its root)
+        for (scope_id, _) in other.scopes.iter() {
+            if *scope_id != other.root_scope {
+                id_mapping.insert(*scope_id, ScopeId::new());
+            }
+        }
 
-        for (scope_id, scope) in other.scopes.iter() {
-            // Salta lo scope se è la root del manager da accodare
-            if *scope_id == other.root_scope {
+        // Now process each scope from the other manager
+        for (old_scope_id, scope) in other.scopes.iter() {
+            // Skip the root scope of the other manager
+            if *old_scope_id == other.root_scope {
                 continue;
             }
 
+            // Get the new ID for this scope
+            let new_scope_id = *id_mapping.get(old_scope_id).unwrap();
+            
             let mut new_scope = scope.clone();
 
-            // Se lo scope era figlio della root dell'altro manager, ora diventa figlio della root del nostro
-            if let Some(parent_id) = new_scope.parent {
-                if parent_id == other.root_scope {
+            // Update parent references using the mapping
+            if let Some(old_parent_id) = new_scope.parent {
+                if old_parent_id == other.root_scope {
+                    // If parent was the other manager's root, make it our root
                     new_scope.parent = Some(root_id);
                     new_scope.depth = self.scopes[&root_id].depth + 1;
-                    self.scopes.get_mut(&root_id).unwrap().children.push(*scope_id);
                 } else {
-                    // Mantieni lo stesso parent per gli altri scope
-                    new_scope.depth = self.scopes.get(&parent_id).map_or(new_scope.depth, |p| p.depth + 1);
+                    // If parent was another scope in the other manager, map it to the new ID
+                    if let Some(new_parent_id) = id_mapping.get(&old_parent_id) {
+                        new_scope.parent = Some(*new_parent_id);
+                        // Update depth based on new parent
+                        if let Some(parent_scope) = self.scopes.get(new_parent_id) {
+                            new_scope.depth = parent_scope.depth + 1;
+                        } else {
+                            new_scope.depth = self.scopes[&root_id].depth + 1;
+                        }
+                    } else {
+                        // Fallback: connect to our root
+                        new_scope.parent = Some(root_id);
+                        new_scope.depth = self.scopes[&root_id].depth + 1;
+                    }
                 }
             } else {
-                // Scope senza parent: lo colleghiamo alla root
+                // Scope without parent: connect it to our root
                 new_scope.parent = Some(root_id);
                 new_scope.depth = self.scopes[&root_id].depth + 1;
-                self.scopes.get_mut(&root_id).unwrap().children.push(*scope_id);
             }
 
-            self.scopes.insert(*scope_id, new_scope);
+            // Update children references using the mapping
+            let mut new_children = Vec::new();
+            for child_id in &new_scope.children {
+                if let Some(new_child_id) = id_mapping.get(child_id) {
+                    new_children.push(*new_child_id);
+                }
+            }
+            new_scope.children = new_children;
+
+            self.scopes.insert(new_scope_id, new_scope);
         }
 
-        // Aggiorniamo current_scope al last scope del manager accodato se esiste
-        self.current_scope = other.current_scope;
+        // Update our root's children to include the top-level scopes from the other manager
+        for (old_scope_id, scope) in other.scopes.iter() {
+            if *old_scope_id == other.root_scope {
+                continue;
+            }
+            
+            // Check if this scope was a direct child of the other manager's root
+            if let Some(parent_id) = scope.parent {
+                if parent_id == other.root_scope {
+                    let new_scope_id = *id_mapping.get(old_scope_id).unwrap();
+                    self.scopes.get_mut(&root_id).unwrap().children.push(new_scope_id);
+                }
+            }
+        }
+
+        // Update current_scope to the mapped version of the other manager's current scope
+        // Map the other manager's current scope to the new ID
+        if other.current_scope != other.root_scope {
+            if let Some(new_current_scope_id) = id_mapping.get(&other.current_scope) {
+                self.current_scope = *new_current_scope_id;
+            }
+        }
     }
 }
 
@@ -140,3 +190,4 @@ impl Default for ScopeManager {
         Self::new()
     }
 }
+
