@@ -71,7 +71,7 @@ pub enum InstructionKind {
     Vector { op: VectorOp, operands: Vec<Value>, ty: IrType },
 }
 
-#[derive(Debug, Clone, PartialEq)]
+#[derive(Debug, Clone, Copy, PartialEq)]
 pub enum IrBinaryOp {
     Add,
     Subtract,
@@ -118,7 +118,7 @@ impl From<BinaryOp> for IrBinaryOp {
     }
 }
 
-#[derive(Debug, Clone, PartialEq)]
+#[derive(Debug, Clone, Copy, PartialEq)]
 pub enum IrUnaryOp {
     Negate,
     Not,

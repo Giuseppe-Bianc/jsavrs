@@ -6,6 +6,8 @@ use crate::parser::ast::*;
 use crate::tokens::number::Number;
 use std::collections::HashMap;
 use std::sync::Arc;
+use super::ssa::SsaTransformer;
+
 
 enum LoopControl {
     Break,
@@ -121,12 +123,10 @@ impl NIrGenerator {
 
     /// Applies SSA transformation to all functions in the module.
     fn apply_ssa_transformation(&mut self, module: &mut Module) {
-        // Import the SSA transformer
-        use super::ssa::SsaTransformer;
-
+        // Use a single transformer for all functions to ensure unique temporary IDs
+        let mut transformer = SsaTransformer::new(Some(self.temp_counter));
         // Transform each function in the module
         for func in &mut module.functions {
-            let mut transformer = SsaTransformer::new();
             if let Err(e) = transformer.transform_function(func) {
                 self.new_error(format!("SSA transformation failed: {}", e), SourceSpan::default());
             }
