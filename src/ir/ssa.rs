@@ -159,30 +159,30 @@ impl SsaTransformer {
                         }
                         // Check for alloca instructions that define variables
                         InstructionKind::Alloca { ty } => {
-                            if let Some(result) = &instruction.result {
-                                if let ValueKind::Temporary(temp_id) = &result.kind {
-                                    // Get the variable name from debug info if available
-                                    let var_name = if let Some(debug_info) = &result.debug_info {
-                                        if let Some(name) = &debug_info.name {
-                                            name.to_string()
-                                        } else {
-                                            format!("t{}", temp_id)
-                                        }
+                            if let Some(result) = &instruction.result
+                                && let ValueKind::Temporary(temp_id) = &result.kind
+                            {
+                                // Get the variable name from debug info if available
+                                let var_name = if let Some(debug_info) = &result.debug_info {
+                                    if let Some(name) = &debug_info.name {
+                                        name.to_string()
                                     } else {
                                         format!("t{}", temp_id)
-                                    };
+                                    }
+                                } else {
+                                    format!("t{}", temp_id)
+                                };
 
-                                    // Store the variable type
-                                    self.variable_types.insert(var_name.clone(), ty.clone());
+                                // Store the variable type
+                                self.variable_types.insert(var_name.clone(), ty.clone());
 
-                                    // Record this definition
-                                    self.var_defs
-                                        .entry(var_name.clone())
-                                        .or_insert_with(HashMap::new)
-                                        .entry(node_idx)
-                                        .or_insert_with(Vec::new)
-                                        .push(var_name.clone());
-                                }
+                                // Record this definition
+                                self.var_defs
+                                    .entry(var_name.clone())
+                                    .or_insert_with(HashMap::new)
+                                    .entry(node_idx)
+                                    .or_insert_with(Vec::new)
+                                    .push(var_name.clone());
                             }
                         }
                         _ => {}
@@ -284,10 +284,9 @@ impl SsaTransformer {
             };
 
             // Get the current value from the stack
-            if let Some(stack) = self.value_stack.get(&var_name) {
-                if let Some(current_value) = stack.last() {
-                    *value = current_value.clone();
-                }
+            if let Some(stack) = self.value_stack.get(&var_name)
+                && let Some(current_value) = stack.last() {
+                *value = current_value.clone();
             }
         }
     }
