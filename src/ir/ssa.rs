@@ -525,10 +525,10 @@ impl SsaTransformer {
                     // In SSA form, each temporary ID should be unique
                     if temp_ids.contains(temp_id) {
                         // This is an error - duplicate temporary ID
-                        if let Some(debug_info) = &result.debug_info {
-                            if let Some(var_name) = &debug_info.name {
-                                return Err(format!("Variable '{}' has duplicate temporary ID {}", var_name, temp_id));
-                            }
+                        if let Some(debug_info) = &result.debug_info
+                            && let Some(var_name) = &debug_info.name
+                        {
+                            return Err(format!("Variable '{}' has duplicate temporary ID {}", var_name, temp_id));
                         }
                         return Err(format!("Duplicate temporary ID {}", temp_id));
                     }
