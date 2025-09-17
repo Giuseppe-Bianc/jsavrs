@@ -496,14 +496,12 @@ impl SsaTransformer {
                                 // Check if this phi-function is for the current variable by looking at the result's debug info
                                 if let Some(result) = &instruction.result
                                     && let Some(debug_info) = &result.debug_info
+                                    && let Some(phi_var_name) = &debug_info.name
+                                    && phi_var_name.as_ref() == var_name
                                 {
-                                    if let Some(phi_var_name) = &debug_info.name {
-                                        if phi_var_name.as_ref() == var_name {
-                                            // This is the phi-function for the current variable
-                                            incoming.push((current_value.clone(), pred_label.clone()));
-                                            break; // Found the phi-function, no need to continue
-                                        }
-                                    }
+                                    // This is the phi-function for the current variable
+                                    incoming.push((current_value.clone(), pred_label.clone()));
+                                    break; // Found the phi-function, no need to continue
                                 }
                             }
                         }
