@@ -334,17 +334,17 @@ impl SsaTransformer {
 
         // For each instruction in the block, if it defines a variable, pop it from the stack
         for instruction in &block.instructions {
-            if let Some(result) = &instruction.result {
-                if let ValueKind::Temporary(_) = &result.kind {
-                    // Get the variable name from debug info if available
-                    if let Some(debug_info) = &result.debug_info {
-                        if let Some(var_name) = &debug_info.name {
-                            // Pop the value from the stack - convert var_name to String
-                            let var_name_string = var_name.to_string();
-                            if let Some(stack) = self.value_stack.get_mut(&var_name_string) {
-                                stack.pop();
-                            }
-                        }
+            if let Some(result) = &instruction.result
+                && let ValueKind::Temporary(_) = &result.kind
+            {
+                // Get the variable name from debug info if available
+                if let Some(debug_info) = &result.debug_info
+                    && let Some(var_name) = &debug_info.name
+                {
+                    // Pop the value from the stack - convert var_name to String
+                    let var_name_string = var_name.to_string();
+                    if let Some(stack) = self.value_stack.get_mut(&var_name_string) {
+                        stack.pop();
                     }
                 }
             }
