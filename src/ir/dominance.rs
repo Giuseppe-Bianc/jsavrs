@@ -57,15 +57,23 @@ impl DominanceInfo {
             self.idom.insert(node, None);
         }
 
+        // Pre-compute predecessors for all nodes to avoid repeated computation
+        let mut predecessors: HashMap<NodeIndex, Vec<NodeIndex>> = HashMap::new();
+        for &node in &post_order {
+            let preds: Vec<NodeIndex> = cfg.graph().neighbors_directed(node, petgraph::Direction::Incoming).collect();
+            predecessors.insert(node, preds);
+        }
+        // Also add predecessors for entry node
+        let entry_preds: Vec<NodeIndex> = cfg.graph().neighbors_directed(entry_idx, petgraph::Direction::Incoming).collect();
+        predecessors.insert(entry_idx, entry_preds);
+
         // Iteratively compute immediate dominators
         let mut changed = true;
         while changed {
             changed = false;
 
             for &node in &post_order {
-                // Get all predecessors of this node
-                let preds: Vec<NodeIndex> =
-                    cfg.graph().neighbors_directed(node, petgraph::Direction::Incoming).collect();
+                let preds = &predecessors[&node];
 
                 if preds.is_empty() {
                     // This shouldn't happen for nodes other than entry in a well-formed CFG
@@ -74,7 +82,7 @@ impl DominanceInfo {
 
                 // Find the first processed predecessor
                 let mut new_idom: Option<NodeIndex> = None;
-                for &pred in &preds {
+                for &pred in preds {
                     if self.idom.get(&pred).and_then(|&x| x).is_some() {
                         new_idom = Some(pred);
                         break;
@@ -88,11 +96,11 @@ impl DominanceInfo {
                 let mut new_idom = new_idom.unwrap();
 
                 // Intersect the dominators of all processed predecessors
-                for &pred in &preds {
-                    if pred != new_idom
-                        && let Some(Some(pred_idom)) = self.idom.get(&pred)
-                    {
-                        new_idom = self.intersect(*pred_idom, new_idom, &self.idom);
+                for &pred in preds {
+                    if pred != new_idom {
+                        if let Some(Some(_pred_idom)) = self.idom.get(&pred) {
+                            new_idom = self.intersect(new_idom, pred, &self.idom);
+                        }
                     }
                 }
 
@@ -162,25 +170,30 @@ impl DominanceInfo {
 
     /// Intersects two dominator paths to find their common ancestor.
     fn intersect(
-        &self, mut node1: NodeIndex, mut node2: NodeIndex, idom: &HashMap<NodeIndex, Option<NodeIndex>>,
+        &self, node1: NodeIndex, node2: NodeIndex, idom: &HashMap<NodeIndex, Option<NodeIndex>>,
     ) -> NodeIndex {
-        while node1 != node2 {
-            while node1.index() > node2.index() {
-                if let Some(Some(n1_idom)) = idom.get(&node1) {
-                    node1 = *n1_idom;
+        let mut n1 = node1;
+        let mut n2 = node2;
+        
+        // Move up the dominator tree until we find a common ancestor
+        while n1 != n2 {
+            // Move the node with higher index up the tree
+            while n1.index() > n2.index() {
+                if let Some(Some(n1_idom)) = idom.get(&n1) {
+                    n1 = *n1_idom;
                 } else {
                     break;
                 }
             }
-            while node2.index() > node1.index() {
-                if let Some(Some(n2_idom)) = idom.get(&node2) {
-                    node2 = *n2_idom;
+            while n2.index() > n1.index() {
+                if let Some(Some(n2_idom)) = idom.get(&n2) {
+                    n2 = *n2_idom;
                 } else {
                     break;
                 }
             }
         }
-        node1
+        n1
     }
 
     /// Checks if node1 dominates node2.

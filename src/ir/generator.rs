@@ -7,7 +7,9 @@ use crate::parser::ast::*;
 use crate::tokens::number::Number;
 use std::collections::HashMap;
 use std::sync::Arc;
+use std::sync::atomic::{AtomicU64, Ordering};
 
+static GLOBAL_TEMP_COUNTER: AtomicU64 = AtomicU64::new(1);
 enum LoopControl {
     Break,
     Continue,
@@ -17,7 +19,6 @@ pub struct NIrGenerator {
     current_block: Option<BasicBlock>,
     current_block_label: Option<String>,
     scope_manager: ScopeManager,
-    temp_counter: u64,
     block_counter: usize,
     errors: Vec<CompileError>,
     break_stack: Vec<String>,
@@ -45,7 +46,6 @@ impl NIrGenerator {
             current_block: None,
             current_block_label: None,
             scope_manager: scope_manager.clone(),
-            temp_counter: 0,
             block_counter: 0,
             errors: Vec::new(),
             break_stack: Vec::new(),
@@ -123,7 +123,7 @@ impl NIrGenerator {
     /// Applies SSA transformation to all functions in the module.
     fn apply_ssa_transformation(&mut self, module: &mut Module) {
         // Use a single transformer for all functions to ensure unique temporary IDs
-        let mut transformer = SsaTransformer::new(Some(self.temp_counter));
+        let mut transformer = SsaTransformer::new(Some(GLOBAL_TEMP_COUNTER.load(Ordering::Relaxed)));
         // Transform each function in the module
         for func in &mut module.functions {
             if let Err(e) = transformer.transform_function(func) {
@@ -729,10 +729,8 @@ impl NIrGenerator {
         value_val
     }
 
-    fn new_temp(&mut self) -> u64 {
-        let id = self.temp_counter;
-        self.temp_counter += 1;
-        id
+    fn new_temp(&self) -> u64 {
+        GLOBAL_TEMP_COUNTER.fetch_add(1, Ordering::Relaxed)
     }
 
     fn new_block_label(&mut self, prefix: &str) -> String {
