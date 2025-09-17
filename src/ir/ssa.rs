@@ -519,23 +519,20 @@ impl SsaTransformer {
         // Collect all temporary IDs in the function
         for block in func.cfg.blocks() {
             for instruction in &block.instructions {
-                if let Some(result) = &instruction.result {
-                    if let ValueKind::Temporary(temp_id) = &result.kind {
-                        // In SSA form, each temporary ID should be unique
-                        if temp_ids.contains(temp_id) {
-                            // This is an error - duplicate temporary ID
-                            if let Some(debug_info) = &result.debug_info {
-                                if let Some(var_name) = &debug_info.name {
-                                    return Err(format!(
-                                        "Variable '{}' has duplicate temporary ID {}",
-                                        var_name, temp_id
-                                    ));
-                                }
+                if let Some(result) = &instruction.result
+                    && let ValueKind::Temporary(temp_id) = &result.kind
+                {
+                    // In SSA form, each temporary ID should be unique
+                    if temp_ids.contains(temp_id) {
+                        // This is an error - duplicate temporary ID
+                        if let Some(debug_info) = &result.debug_info {
+                            if let Some(var_name) = &debug_info.name {
+                                return Err(format!("Variable '{}' has duplicate temporary ID {}", var_name, temp_id));
                             }
-                            return Err(format!("Duplicate temporary ID {}", temp_id));
                         }
-                        temp_ids.insert(*temp_id);
+                        return Err(format!("Duplicate temporary ID {}", temp_id));
                     }
+                    temp_ids.insert(*temp_id);
                 }
             }
         }
