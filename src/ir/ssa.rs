@@ -470,38 +470,38 @@ impl SsaTransformer {
         // For each variable that needs phi-functions, add its current value to phi-functions in successor blocks
         for var_name in &self.phi_variables {
             // Get the current value of this variable from the stack
-            if let Some(stack) = self.value_stack.get(var_name) {
-                if let Some(current_value) = stack.last() {
-                    // Add this value to phi-functions for this variable in all successor blocks
-                    for &succ_idx in &successors {
-                        // Get the successor block label
-                        let succ_label = {
-                            let graph = func.cfg.graph();
-                            if let Some(block) = graph.node_weight(succ_idx) {
-                                block.label.to_string()
-                            } else {
-                                continue;
-                            }
-                        };
+            if let Some(stack) = self.value_stack.get(var_name)
+                && let Some(current_value) = stack.last()
+            {
+                // Add this value to phi-functions for this variable in all successor blocks
+                for &succ_idx in &successors {
+                    // Get the successor block label
+                    let succ_label = {
+                        let graph = func.cfg.graph();
+                        if let Some(block) = graph.node_weight(succ_idx) {
+                            block.label.to_string()
+                        } else {
+                            continue;
+                        }
+                    };
 
-                        // Process phi-functions in the successor block
-                        if let Some(succ_block) = func.cfg.get_block_mut(&succ_label) {
-                            // Get the predecessor label for this edge
-                            let pred_label = block_label.clone();
+                    // Process phi-functions in the successor block
+                    if let Some(succ_block) = func.cfg.get_block_mut(&succ_label) {
+                        // Get the predecessor label for this edge
+                        let pred_label = block_label.clone();
 
-                            // Find the phi-function for this variable and add the incoming value
-                            for instruction in succ_block.instructions.iter_mut() {
-                                if let InstructionKind::Phi { ref mut incoming, .. } = instruction.kind {
-                                    // Check if this phi-function is for the current variable by looking at the result's debug info
-                                    if let Some(result) = &instruction.result {
-                                        if let Some(debug_info) = &result.debug_info {
-                                            if let Some(phi_var_name) = &debug_info.name {
-                                                if phi_var_name.as_ref() == var_name {
-                                                    // This is the phi-function for the current variable
-                                                    incoming.push((current_value.clone(), pred_label.clone()));
-                                                    break; // Found the phi-function, no need to continue
-                                                }
-                                            }
+                        // Find the phi-function for this variable and add the incoming value
+                        for instruction in succ_block.instructions.iter_mut() {
+                            if let InstructionKind::Phi { ref mut incoming, .. } = instruction.kind {
+                                // Check if this phi-function is for the current variable by looking at the result's debug info
+                                if let Some(result) = &instruction.result
+                                    && let Some(debug_info) = &result.debug_info
+                                {
+                                    if let Some(phi_var_name) = &debug_info.name {
+                                        if phi_var_name.as_ref() == var_name {
+                                            // This is the phi-function for the current variable
+                                            incoming.push((current_value.clone(), pred_label.clone()));
+                                            break; // Found the phi-function, no need to continue
                                         }
                                     }
                                 }
