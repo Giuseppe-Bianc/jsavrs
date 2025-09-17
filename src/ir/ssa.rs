@@ -151,9 +151,9 @@ impl SsaTransformer {
                                 // Record this definition
                                 self.var_defs
                                     .entry(var_name.clone())
-                                    .or_insert_with(HashMap::new)
+                                    .or_default()
                                     .entry(node_idx)
-                                    .or_insert_with(Vec::new)
+                                    .or_default()
                                     .push(var_name.clone());
                             }
                         }
@@ -179,9 +179,9 @@ impl SsaTransformer {
                                 // Record this definition
                                 self.var_defs
                                     .entry(var_name.clone())
-                                    .or_insert_with(HashMap::new)
+                                    .or_default()
                                     .entry(node_idx)
-                                    .or_insert_with(Vec::new)
+                                    .or_default()
                                     .push(var_name.clone());
                             }
                         }
@@ -399,7 +399,7 @@ impl SsaTransformer {
             block.instructions[i].result = Some(new_value.clone());
 
             // Push the new value onto the stack
-            self.value_stack.entry(var_name.clone()).or_insert_with(Vec::new).push(new_value);
+            self.value_stack.entry(var_name.clone()).or_default().push(new_value);
         }
 
         // Process instructions in this block
@@ -430,7 +430,7 @@ impl SsaTransformer {
                         *dest = new_value.clone();
 
                         // Push the new value onto the stack
-                        self.value_stack.entry(var_name).or_insert_with(Vec::new).push(new_value);
+                        self.value_stack.entry(var_name).or_default().push(new_value);
                     }
                 }
                 InstructionKind::Load { src, .. } => {
