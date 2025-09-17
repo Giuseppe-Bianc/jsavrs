@@ -376,12 +376,11 @@ impl SsaTransformer {
         for (i, instruction) in block.instructions.iter().enumerate() {
             if let InstructionKind::Phi { ty, .. } = &instruction.kind {
                 // Store the index, type, and variable name for updating later
-                if let Some(result) = &instruction.result {
-                    if let Some(debug_info) = &result.debug_info {
-                        if let Some(var_name) = &debug_info.name {
-                            phi_updates.push((i, ty.clone(), var_name.to_string()));
-                        }
-                    }
+                if let Some(result) = &instruction.result
+                    && let Some(debug_info) = &result.debug_info
+                    && let Some(var_name) = &debug_info.name
+                {
+                    phi_updates.push((i, ty.clone(), var_name.to_string()));
                 }
             }
         }
