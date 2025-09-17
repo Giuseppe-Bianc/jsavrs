@@ -155,7 +155,7 @@ impl DominanceInfo {
             if let Some(idom) = idom_opt
                 && node != idom
             {
-                self.dom_tree_children.entry(idom).or_insert_with(Vec::new).push(node);
+                self.dom_tree_children.entry(idom).or_default().push(node);
             }
         }
     }
