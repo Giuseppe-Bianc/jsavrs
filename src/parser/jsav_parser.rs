@@ -11,11 +11,41 @@ pub struct JsavParser {
     tokens: Vec<Token>,
     current: usize,
     errors: Vec<CompileError>,
+    recursion_depth: usize,
+}
+
+impl JsavParser {
+    const MAX_RECURSION_DEPTH: usize = 1000;
+    
+    fn check_recursion_limit(&mut self) -> bool {
+        if self.recursion_depth > Self::MAX_RECURSION_DEPTH {
+            if let Some(token) = self.peek() {
+                self.errors.push(CompileError::SyntaxError {
+                    message: "Maximum recursion depth exceeded".to_string(),
+                    span: token.span.clone(),
+                    help: Some("Simplify the expression or break it into smaller parts".to_string()),
+                });
+            }
+            true
+        } else {
+            false
+        }
+    }
+    
+    fn enter_recursion(&mut self) {
+        self.recursion_depth += 1;
+    }
+    
+    fn exit_recursion(&mut self) {
+        if self.recursion_depth > 0 {
+            self.recursion_depth -= 1;
+        }
+    }
 }
 
 impl JsavParser {
     pub fn new(tokens: Vec<Token>) -> Self {
-        Self { tokens, current: 0, errors: Vec::with_capacity(8) }
+        Self { tokens, current: 0, errors: Vec::with_capacity(8), recursion_depth: 0 }
     }
 
     pub fn parse(mut self) -> (Vec<Stmt>, Vec<CompileError>) {
@@ -108,8 +138,8 @@ impl JsavParser {
     #[inline]
     fn is_end_of_statement(&self) -> bool {
         matches!(
-            self.peek().map(|t| t.kind.clone()),
-            Some(TokenKind::CloseBrace) | Some(TokenKind::Eof) | Some(TokenKind::Semicolon)
+            self.peek().map(|t| &t.kind),
+            Some(&TokenKind::CloseBrace) | Some(&TokenKind::Eof) | Some(&TokenKind::Semicolon)
         )
     }
 
@@ -408,6 +438,20 @@ impl JsavParser {
     }
 
     fn parse_expr(&mut self, min_bp: u8) -> Option<Expr> {
+        // Check recursion limit to prevent stack overflow
+        if self.check_recursion_limit() {
+            return None;
+        }
+        
+        self.enter_recursion();
+        
+        let result = self.parse_expr_inner(min_bp);
+        
+        self.exit_recursion();
+        result
+    }
+    
+    fn parse_expr_inner(&mut self, min_bp: u8) -> Option<Expr> {
         let mut left = self.nud()?;
 
         while let Some(token) = self.peek() {
@@ -589,7 +633,9 @@ impl JsavParser {
 
     #[inline]
     fn merged_span(&self, start_token: &Token) -> SourceSpan {
-        self.previous().and_then(|end| start_token.span.merged(&end.span)).unwrap_or(start_token.span.clone())
+         self.previous()
+             .and_then(|end| start_token.span.merged(&end.span))
+            .unwrap_or_else(|| start_token.span.clone()) // Only clone when necessary
     }
 
     fn syntax_error(&mut self, message: impl Into<String>, token: &Token, help: Option<&str>) {

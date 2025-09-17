@@ -12,6 +12,7 @@ use std::collections::HashMap;
 use std::fmt::Display;
 use std::fmt::Write;
 use std::sync::Arc;
+use std::sync::Mutex;
 
 // Helper to create a dummy SourceSpan
 pub fn dummy_span() -> SourceSpan {
@@ -301,4 +302,37 @@ pub fn module_redacted(module: Module) -> String {
 
     write!(redacted, "}}").unwrap();
     redacted
+}
+
+/// Simple object pool for frequently allocated objects
+pub struct ObjectPool<T> {
+    pool: Mutex<Vec<T>>,
+}
+
+impl<T> ObjectPool<T> {
+    pub fn new() -> Self {
+        Self {
+            pool: Mutex::new(Vec::new()),
+        }
+    }
+    
+    pub fn acquire(&self) -> Option<T> {
+        self.pool.lock().unwrap().pop()
+    }
+    
+    pub fn release(&self, obj: T) {
+        self.pool.lock().unwrap().push(obj);
+    }
+    
+    pub fn with_capacity(capacity: usize) -> Self {
+        Self {
+            pool: Mutex::new(Vec::with_capacity(capacity)),
+        }
+    }
+}
+
+impl<T> Default for ObjectPool<T> {
+    fn default() -> Self {
+        Self::new()
+    }
 }

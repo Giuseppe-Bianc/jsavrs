@@ -23,8 +23,8 @@ impl<'a> Lexer<'a> {
     }
 
     // OTTIMIZZAZIONE 1: Restituisce riferimento invece di clone
-    pub fn get_line_tracker(&self) -> LineTracker {
-        self.line_tracker.clone()
+    pub fn get_line_tracker(&self) -> &LineTracker {
+       &self.line_tracker
     }
 
     #[inline]

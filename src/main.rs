@@ -66,7 +66,7 @@ fn main() -> Result<(), CompileError> {
     let _total_timer = AutoTimer::new("Total Execution"); // Timer totale
     let mut lexer = Lexer::new(file_path_str, &input);
     let line_tracker = lexer.get_line_tracker();
-    let error_reporter: ErrorReporter = ErrorReporter::new(line_tracker);
+    let error_reporter: ErrorReporter = ErrorReporter::new(line_tracker.clone());
     let lexer_timer = Timer::new("Lexer Tokenization");
     let (tokens, lexer_errors) = lexer_tokenize_with_errors(&mut lexer);
     println!("{lexer_timer}");

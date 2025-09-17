@@ -4,7 +4,8 @@ use crate::location::source_span::SourceSpan;
 use crate::parser::ast::*;
 use crate::semantic::symbol_table::*;
 use crate::tokens::number::Number;
-use std::sync::Arc;
+use std::sync::{Arc, OnceLock};
+use std::collections::HashMap;
 
 pub struct TypeChecker {
     symbol_table: SymbolTable,
@@ -16,6 +17,9 @@ pub struct TypeChecker {
 // Gerarchia per la promozione dei tipi numerici
 const HIERARCHY: [Type; 10] =
     [Type::F64, Type::F32, Type::U64, Type::I64, Type::U32, Type::I32, Type::U16, Type::I16, Type::U8, Type::I8];
+
+// Global cache for type promotion results
+static TYPE_PROMOTION_CACHE: OnceLock<std::sync::Mutex<HashMap<(Type, Type), Type>>> = OnceLock::new();
 
 #[allow(clippy::collapsible_if)]
 impl TypeChecker {
@@ -36,6 +40,19 @@ impl TypeChecker {
     pub fn check(&mut self, statements: &[Stmt]) -> Vec<CompileError> {
         self.visit_statements(statements);
         std::mem::take(&mut self.errors)
+    }
+    
+    /// Check statements and process errors in a streaming fashion
+    pub fn check_streaming<F>(&mut self, statements: &[Stmt], mut error_handler: F) 
+    where
+        F: FnMut(CompileError),
+    {
+        self.visit_statements(statements);
+        
+        // Process errors as they're generated
+        for error in self.errors.drain(..) {
+            error_handler(error);
+        }
     }
 
     // Helper method per dichiarare simboli
@@ -611,6 +628,36 @@ impl TypeChecker {
     // Funzione per la promozione automatica dei tipi numerici
     #[inline]
     pub fn promote_numeric_types(&self, t1: &Type, t2: &Type) -> Type {
+        // Initialize cache if needed
+        let cache = TYPE_PROMOTION_CACHE.get_or_init(|| {
+            std::sync::Mutex::new(HashMap::new())
+        });
+        
+        // Create key for cache lookup
+        let key = (t1.clone(), t2.clone());
+        
+        // Check cache first
+        {
+            let cache_guard = cache.lock().unwrap();
+            if let Some(cached_result) = cache_guard.get(&key) {
+                return cached_result.clone();
+            }
+        }
+        
+        // Compute result using existing logic
+        let result = self.compute_promotion(t1, t2);
+        
+        // Store result in cache
+        {
+            let mut cache_guard = cache.lock().unwrap();
+            cache_guard.insert(key, result.clone());
+        }
+        
+        result
+    }
+    
+    // Extract the original promotion logic into a separate function
+    fn compute_promotion(&self, t1: &Type, t2: &Type) -> Type {
         // Trova il tipo con rango più alto nella gerarchia
         for ty in &HIERARCHY {
             if t1 == ty || t2 == ty {
