@@ -304,30 +304,40 @@ pub fn module_redacted(module: Module) -> String {
     redacted
 }
 
-/// Simple object pool for frequently allocated objects
+/// Thread-safe object pool for reusing frequently allocated objects.
+///
+/// This pool reduces allocation overhead by storing and reusing objects of type `T`.
+/// All operations are thread-safe but may contend on a single mutex.
 pub struct ObjectPool<T> {
     pool: Mutex<Vec<T>>,
 }
 
 impl<T> ObjectPool<T> {
     pub fn new() -> Self {
-        Self {
-            pool: Mutex::new(Vec::new()),
-        }
+        Self { pool: Mutex::new(Vec::new()) }
     }
-    
+
     pub fn acquire(&self) -> Option<T> {
-        self.pool.lock().unwrap().pop()
-    }
-    
-    pub fn release(&self, obj: T) {
-        self.pool.lock().unwrap().push(obj);
-    }
-    
-    pub fn with_capacity(capacity: usize) -> Self {
-        Self {
-            pool: Mutex::new(Vec::with_capacity(capacity)),
+        match self.pool.lock() {
+            Ok(mut guard) => guard.pop(),
+            Err(poisoned) => {
+                // Clear the poisoned state and continue
+                poisoned.into_inner().pop()
+            }
         }
+    }
+    pub fn release(&self, obj: T) {
+        match self.pool.lock() {
+            Ok(mut guard) => guard.push(obj),
+            Err(poisoned) => {
+                // Clear poisoned state and continue
+                poisoned.into_inner().push(obj);
+            }
+        }
+    }
+
+    pub fn with_capacity(capacity: usize) -> Self {
+        Self { pool: Mutex::new(Vec::with_capacity(capacity)) }
     }
 }
 

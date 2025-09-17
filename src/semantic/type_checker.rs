@@ -4,8 +4,8 @@ use crate::location::source_span::SourceSpan;
 use crate::parser::ast::*;
 use crate::semantic::symbol_table::*;
 use crate::tokens::number::Number;
-use std::sync::{Arc, OnceLock};
 use std::collections::HashMap;
+use std::sync::{Arc, OnceLock};
 
 pub struct TypeChecker {
     symbol_table: SymbolTable,
@@ -41,14 +41,14 @@ impl TypeChecker {
         self.visit_statements(statements);
         std::mem::take(&mut self.errors)
     }
-    
+
     /// Check statements and process errors in a streaming fashion
-    pub fn check_streaming<F>(&mut self, statements: &[Stmt], mut error_handler: F) 
+    pub fn check_streaming<F>(&mut self, statements: &[Stmt], mut error_handler: F)
     where
         F: FnMut(CompileError),
     {
         self.visit_statements(statements);
-        
+
         // Process errors as they're generated
         for error in self.errors.drain(..) {
             error_handler(error);
@@ -636,26 +636,11 @@ impl TypeChecker {
         // Create key for cache lookup
         let key = (t1.clone(), t2.clone());
         
-        // Check cache first
-        {
-            let cache_guard = cache.lock().unwrap();
-            if let Some(cached_result) = cache_guard.get(&key) {
-                return cached_result.clone();
-            }
-        }
-        
-        // Compute result using existing logic
-        let result = self.compute_promotion(t1, t2);
-        
-        // Store result in cache
-        {
-            let mut cache_guard = cache.lock().unwrap();
-            cache_guard.insert(key, result.clone());
-        }
-        
-        result
+        let mut cache_guard = cache.lock().unwrap();
+        cache_guard.entry(key)
+            .or_insert_with(|| self.compute_promotion(t1, t2))
+            .clone()
     }
-    
     // Extract the original promotion logic into a separate function
     fn compute_promotion(&self, t1: &Type, t2: &Type) -> Type {
         // Trova il tipo con rango più alto nella gerarchia

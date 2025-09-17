@@ -16,7 +16,7 @@ pub struct JsavParser {
 
 impl JsavParser {
     const MAX_RECURSION_DEPTH: usize = 1000;
-    
+
     fn check_recursion_limit(&mut self) -> bool {
         if self.recursion_depth > Self::MAX_RECURSION_DEPTH {
             if let Some(token) = self.peek() {
@@ -31,11 +31,11 @@ impl JsavParser {
             false
         }
     }
-    
+
     fn enter_recursion(&mut self) {
         self.recursion_depth += 1;
     }
-    
+
     fn exit_recursion(&mut self) {
         if self.recursion_depth > 0 {
             self.recursion_depth -= 1;
@@ -442,15 +442,15 @@ impl JsavParser {
         if self.check_recursion_limit() {
             return None;
         }
-        
+
         self.enter_recursion();
-        
+
         let result = self.parse_expr_inner(min_bp);
-        
+
         self.exit_recursion();
         result
     }
-    
+
     fn parse_expr_inner(&mut self, min_bp: u8) -> Option<Expr> {
         let mut left = self.nud()?;
 
@@ -633,9 +633,7 @@ impl JsavParser {
 
     #[inline]
     fn merged_span(&self, start_token: &Token) -> SourceSpan {
-         self.previous()
-             .and_then(|end| start_token.span.merged(&end.span))
-            .unwrap_or_else(|| start_token.span.clone()) // Only clone when necessary
+        self.previous().and_then(|end| start_token.span.merged(&end.span)).unwrap_or_else(|| start_token.span.clone()) // Only clone when necessary
     }
 
     fn syntax_error(&mut self, message: impl Into<String>, token: &Token, help: Option<&str>) {
