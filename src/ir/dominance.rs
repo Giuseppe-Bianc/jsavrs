@@ -64,7 +64,8 @@ impl DominanceInfo {
             predecessors.insert(node, preds);
         }
         // Also add predecessors for entry node
-        let entry_preds: Vec<NodeIndex> = cfg.graph().neighbors_directed(entry_idx, petgraph::Direction::Incoming).collect();
+        let entry_preds: Vec<NodeIndex> =
+            cfg.graph().neighbors_directed(entry_idx, petgraph::Direction::Incoming).collect();
         predecessors.insert(entry_idx, entry_preds);
 
         // Iteratively compute immediate dominators
@@ -169,12 +170,10 @@ impl DominanceInfo {
     }
 
     /// Intersects two dominator paths to find their common ancestor.
-    fn intersect(
-        &self, node1: NodeIndex, node2: NodeIndex, idom: &HashMap<NodeIndex, Option<NodeIndex>>,
-    ) -> NodeIndex {
+    fn intersect(&self, node1: NodeIndex, node2: NodeIndex, idom: &HashMap<NodeIndex, Option<NodeIndex>>) -> NodeIndex {
         let mut n1 = node1;
         let mut n2 = node2;
-        
+
         // Move up the dominator tree until we find a common ancestor
         while n1 != n2 {
             // Move the node with higher index up the tree

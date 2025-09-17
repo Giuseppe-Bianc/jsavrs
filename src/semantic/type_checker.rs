@@ -638,9 +638,9 @@ impl TypeChecker {
                 // Higher rank means higher precedence in promotion
                 let ranks = [1, 2, 3, 4, 1, 2, 3, 4, 5, 6]; // I8, I16, I32, I64, U8, U16, U32, U64, F32, F64
                 let type_ids = [0, 1, 2, 3, 4, 5, 6, 7, 8, 9]; // Corresponding numeric IDs
-                
+
                 let mut table = [0u8; 100]; // 10x10 table for all combinations
-                
+
                 // Populate the promotion table
                 for (i, &rank1) in ranks.iter().enumerate() {
                     let id1 = type_ids[i];
@@ -650,31 +650,27 @@ impl TypeChecker {
                         table[id1 as usize * 10 + id2 as usize] = result_id;
                     }
                 }
-                
+
                 table
             });
-            
+
             // Lookup the promotion result using array indexing (O(1) operation)
             let index = (id1 as usize) * 10 + (id2 as usize);
             if index < 100 {
                 return Self::id_to_type(table[index]);
             }
         }
-        
+
         // For non-numeric types or edge cases, use the existing cache
-        let cache = TYPE_PROMOTION_CACHE.get_or_init(|| {
-            std::sync::Mutex::new(HashMap::new())
-        });
-        
+        let cache = TYPE_PROMOTION_CACHE.get_or_init(|| std::sync::Mutex::new(HashMap::new()));
+
         // Create key for cache lookup
         let key = (t1.clone(), t2.clone());
-        
+
         let mut cache_guard = cache.lock().unwrap();
-        cache_guard.entry(key)
-            .or_insert_with(|| self.compute_promotion(t1, t2))
-            .clone()
+        cache_guard.entry(key).or_insert_with(|| self.compute_promotion(t1, t2)).clone()
     }
-    
+
     // Convert Type to numeric ID for fast lookup
     #[inline]
     fn type_to_id(ty: &Type) -> Option<u8> {
@@ -692,7 +688,7 @@ impl TypeChecker {
             _ => None,
         }
     }
-    
+
     // Convert numeric ID back to Type
     #[inline]
     fn id_to_type(id: u8) -> Type {
