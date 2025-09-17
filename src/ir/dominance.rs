@@ -131,7 +131,7 @@ impl DominanceInfo {
                     // While runner does not dominate b
                     while !self.dominates(runner, b) && runner != entry_idx {
                         // Add b to runner's dominance frontier
-                        self.dominance_frontiers.entry(runner).or_insert_with(HashSet::new).insert(b);
+                        self.dominance_frontiers.entry(runner).or_default().insert(b);
 
                         // Move up the dominator tree
                         if let Some(Some(idom)) = self.idom.get(&runner) {
