@@ -21,6 +21,9 @@ const HIERARCHY: [Type; 10] =
 // Global cache for type promotion results
 static TYPE_PROMOTION_CACHE: OnceLock<std::sync::Mutex<HashMap<(Type, Type), Type>>> = OnceLock::new();
 
+// Precomputed type promotion lookup table for better performance
+static TYPE_PROMOTION_TABLE: std::sync::OnceLock<[u8; 100]> = std::sync::OnceLock::new();
+
 #[allow(clippy::collapsible_if)]
 impl TypeChecker {
     pub fn new() -> Self {
@@ -628,7 +631,37 @@ impl TypeChecker {
     // Funzione per la promozione automatica dei tipi numerici
     #[inline]
     pub fn promote_numeric_types(&self, t1: &Type, t2: &Type) -> Type {
-        // Initialize cache if needed
+        // For numeric types, use the optimized lookup table
+        if let (Some(id1), Some(id2)) = (Self::type_to_id(t1), Self::type_to_id(t2)) {
+            let table = TYPE_PROMOTION_TABLE.get_or_init(|| {
+                // Create a rank-based promotion table using array indexing for maximum performance
+                // Higher rank means higher precedence in promotion
+                let ranks = [1, 2, 3, 4, 1, 2, 3, 4, 5, 6]; // I8, I16, I32, I64, U8, U16, U32, U64, F32, F64
+                let type_ids = [0, 1, 2, 3, 4, 5, 6, 7, 8, 9]; // Corresponding numeric IDs
+                
+                let mut table = [0u8; 100]; // 10x10 table for all combinations
+                
+                // Populate the promotion table
+                for (i, &rank1) in ranks.iter().enumerate() {
+                    let id1 = type_ids[i];
+                    for (j, &rank2) in ranks.iter().enumerate() {
+                        let id2 = type_ids[j];
+                        let result_id = if rank1 > rank2 { id1 } else { id2 };
+                        table[id1 as usize * 10 + id2 as usize] = result_id;
+                    }
+                }
+                
+                table
+            });
+            
+            // Lookup the promotion result using array indexing (O(1) operation)
+            let index = (id1 as usize) * 10 + (id2 as usize);
+            if index < 100 {
+                return Self::id_to_type(table[index]);
+            }
+        }
+        
+        // For non-numeric types or edge cases, use the existing cache
         let cache = TYPE_PROMOTION_CACHE.get_or_init(|| {
             std::sync::Mutex::new(HashMap::new())
         });
@@ -640,6 +673,42 @@ impl TypeChecker {
         cache_guard.entry(key)
             .or_insert_with(|| self.compute_promotion(t1, t2))
             .clone()
+    }
+    
+    // Convert Type to numeric ID for fast lookup
+    #[inline]
+    fn type_to_id(ty: &Type) -> Option<u8> {
+        match ty {
+            Type::I8 => Some(0),
+            Type::I16 => Some(1),
+            Type::I32 => Some(2),
+            Type::I64 => Some(3),
+            Type::U8 => Some(4),
+            Type::U16 => Some(5),
+            Type::U32 => Some(6),
+            Type::U64 => Some(7),
+            Type::F32 => Some(8),
+            Type::F64 => Some(9),
+            _ => None,
+        }
+    }
+    
+    // Convert numeric ID back to Type
+    #[inline]
+    fn id_to_type(id: u8) -> Type {
+        match id {
+            0 => Type::I8,
+            1 => Type::I16,
+            2 => Type::I32,
+            3 => Type::I64,
+            4 => Type::U8,
+            5 => Type::U16,
+            6 => Type::U32,
+            7 => Type::U64,
+            8 => Type::F32,
+            9 => Type::F64,
+            _ => Type::I32, // fallback
+        }
     }
     // Extract the original promotion logic into a separate function
     fn compute_promotion(&self, t1: &Type, t2: &Type) -> Type {

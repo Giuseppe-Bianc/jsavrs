@@ -95,7 +95,7 @@ pub fn benchmark_parser_nodes(c: &mut Criterion) {
         .confidence_level(0.99)
         .warm_up_time(Duration::from_secs(3))
         .measurement_time(Duration::from_secs(10))
-        .nresamples(200_000);
+        .nresamples(500_000);
 
     let node_cases = [
         ("binary_expr", "var x: i64 = 10 + 20 * 30 - 40 / 50".to_string()),
@@ -125,11 +125,11 @@ pub fn benchmark_semantic_analysis(c: &mut Criterion) {
     let mut semantic_group = c.benchmark_group("jsavrs-semantic");
     semantic_group
         .significance_level(0.005)
-        .sample_size(500)
+        .sample_size(1000)
         .confidence_level(0.99)
         .warm_up_time(Duration::from_secs(3))
         .measurement_time(Duration::from_secs(10))
-        .nresamples(100_000);
+        .nresamples(500_000);
 
     let semantic_cases = [
         ("simple_types", "var x: i64 = 42\nvar y: f64 = 3.14\nvar z: bool = true".to_string()),
@@ -164,11 +164,11 @@ pub fn benchmark_ir_generation(c: &mut Criterion) {
     let mut ir_group = c.benchmark_group("jsavrs-ir-generation");
     ir_group
         .significance_level(0.005)
-        .sample_size(500)
+        .sample_size(1000)
         .confidence_level(0.99)
         .warm_up_time(Duration::from_secs(3))
         .measurement_time(Duration::from_secs(10))
-        .nresamples(100_000);
+        .nresamples(500_000);
 
     let ir_cases = [
         ("simple_expr", "var x: i64 = 42\nvar y: i64 = x + 10".to_string()),
@@ -204,11 +204,11 @@ pub fn benchmark_end_to_end(c: &mut Criterion) {
     let mut pipeline_group = c.benchmark_group("jsavrs-end-to-end");
     pipeline_group
         .significance_level(0.005)
-        .sample_size(200)
+        .sample_size(1000)
         .confidence_level(0.99)
         .warm_up_time(Duration::from_secs(5))
         .measurement_time(Duration::from_secs(15))
-        .nresamples(50_000);
+        .nresamples(500_000);
 
     let pipeline_cases = [
         ("simple", "var x: i64 = 42".to_string()),
