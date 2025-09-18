@@ -110,26 +110,26 @@ impl ControlFlowGraph {
     }
 
     pub fn verify(&self) -> Result<(), String> {
-        // Verifica che esista un blocco di ingresso
+        // Verify that an entry block exists
         if self.get_entry_block().is_none() {
-            return Err(format!("CFG non ha un blocco di ingresso con etichetta '{}'", self.entry_label));
+            return Err(format!("CFG has no entry block with label '{}'", self.entry_label));
         }
 
-        // Verifica che tutti i blocchi abbiano un terminatore
+        // Verify that all blocks have a terminator
         for block in self.blocks() {
             if !block.terminator.is_terminator() {
-                return Err(format!("Blocco '{}' non ha un terminatore valido", block.label));
+                return Err(format!("Block '{}' has no valid terminator", block.label));
             }
         }
 
-        // Verifica che tutti i target dei terminator esistano
+        // Verify that all terminator targets exist
         let label_set: HashSet<Arc<str>> = self.blocks().map(|b| b.label.clone()).collect();
 
         for block in self.blocks() {
             for target_label in block.terminator.get_targets() {
                 if !label_set.contains(target_label.as_str()) {
                     return Err(format!(
-                        "Blocco '{}' riferisce a un blocco inesistente '{}'",
+                        "Block '{}' refers to non-existent block '{}'",
                         block.label, target_label
                     ));
                 }

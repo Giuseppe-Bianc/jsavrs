@@ -41,7 +41,7 @@ impl ScopeManager {
         }
     }
 
-    // Nuovo metodo pubblico per ottenere una copia della mappa degli scope
+    // Public method to get a copy of the scope map
     pub fn get_scopes(&self) -> &HashMap<ScopeId, Scope> {
         &self.scopes
     }

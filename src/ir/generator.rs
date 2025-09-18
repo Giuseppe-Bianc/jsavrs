@@ -213,7 +213,7 @@ impl NIrGenerator {
         }
     }
 
-    // Add this new method to handle block connections at the end
+    // Handle block connections at the end
     fn finalize_block_connections(&mut self, func: &mut Function) {
         // First, collect all the connections we need to make
         let mut connections = Vec::new();
@@ -553,9 +553,7 @@ impl NIrGenerator {
         }
     }
 
-    /// Genera l'accesso ad array: calcola l'indirizzo dell'elemento con GEP
-    /// e restituisce un puntatore all'elemento. Non esegue il Load per mantenere
-    /// la compatibilità con l'uso attuale dei puntatori nelle espressioni.
+    /// Generates array access: calculates the element address with GEP and returns a pointer to the element.
     fn generate_array_access(&mut self, func: &mut Function, array: Expr, index: Expr, span: SourceSpan) -> Value {
         let base_val = self.generate_expr(func, array);
         let index_val = self.generate_expr(func, index);
@@ -761,7 +759,7 @@ impl NIrGenerator {
         }
     }
 
-    // Replace the current add_terminator method with this version:
+    // Add a terminator to the current block
     fn add_terminator(&mut self, _func: &mut Function, term: Terminator) {
         if let Some(block) = &mut self.current_block {
             block.terminator = term.clone();

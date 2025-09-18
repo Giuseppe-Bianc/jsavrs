@@ -59,9 +59,9 @@ impl Function {
 
         let block_idx = self.cfg.add_block(block);
 
-        // Collega il blocco di ingresso al primo blocco aggiunto (se non è già stato fatto)
+        // Connect the entry block to the first added block (if not already done)
         if label != self.cfg.entry_label() && self.cfg.blocks().count() == 1 {
-            // Se è il primo blocco aggiunto (dopo quello implicito), lo collega all'entry
+            // If this is the first block added (after the implicit one), connect it to entry
             if let Some(entry_idx) = self.cfg.get_entry_block_index() {
                 self.cfg.add_edge(entry_idx, block_idx);
             }
@@ -101,11 +101,11 @@ impl fmt::Display for Function {
             self.parameters.iter().map(|param| format!("{}: {}", param.name, param.ty)).collect::<Vec<_>>().join(", ");
 
         writeln!(f, "function {} ({}) -> {}:", self.name, params_str, self.return_type)?;
-        let bloscks_len = self.cfg.blocks().count();
-        if bloscks_len == 0 {
+        let blocks_len = self.cfg.blocks().count();
+        if blocks_len == 0 {
             writeln!(f, "<empty>")?;
             return Ok(());
-        } else if bloscks_len == 1 {
+        } else if blocks_len == 1 {
             writeln!(f, "block:")?;
         } else {
             writeln!(f, "blocks:")?;

@@ -3,7 +3,7 @@ use super::{Function, ScopeId};
 use std::fmt;
 use std::sync::Arc;
 
-/// Descrive il layout dei dati per diversi target.
+/// Describes the data layout for different targets.
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Hash)]
 pub enum DataLayout {
     LinuxX86_64,
@@ -32,7 +32,7 @@ impl fmt::Display for DataLayout {
     }
 }
 
-/// Identifica la tripletta di destinazione (arch-os-environment).
+/// Identifies the target triple (arch-os-environment).
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Hash)]
 pub enum TargetTriple {
     X86_64UnknownLinuxGnu,
@@ -63,7 +63,7 @@ impl fmt::Display for TargetTriple {
     }
 }
 
-/// Rappresenta un modulo IR (Intermediate Representation).
+/// Represents an IR (Intermediate Representation) module.
 #[derive(Debug, Clone)]
 #[allow(dead_code)]
 pub struct Module {
@@ -75,7 +75,7 @@ pub struct Module {
 }
 
 impl Module {
-    /// Crea un nuovo modulo con nome specificato e impostazioni predefinite.
+    /// Creates a new module with the specified name and default settings.
     pub fn new(name: impl Into<Arc<str>>, root_scope: Option<ScopeId>) -> Self {
         Self {
             name: name.into(),
@@ -86,47 +86,47 @@ impl Module {
         }
     }
 
-    /// Aggiunge una funzione al modulo.
+    /// Adds a function to the module.
     pub fn add_function(&mut self, function: Function) {
         self.functions.push(function);
     }
 
-    /// Imposta il layout dei dati.
+    /// Sets the data layout.
     pub fn set_data_layout(&mut self, layout: DataLayout) {
         self.data_layout = layout;
     }
 
-    /// Imposta la tripletta di destinazione.
+    /// Sets the target triple.
     pub fn set_target_triple(&mut self, triple: TargetTriple) {
         self.target_triple = triple;
     }
 
-    /// Cerca una funzione per nome (riferimento immutabile).
+    /// Finds a function by name (immutable reference).
     pub fn get_function(&self, name: &str) -> Option<&Function> {
         self.functions.iter().find(|f| f.name == name)
     }
 
-    /// Cerca una funzione per nome (riferimento mutabile).
+    /// Finds a function by name (mutable reference).
     pub fn get_function_mut(&mut self, name: &str) -> Option<&mut Function> {
         self.functions.iter_mut().find(|f| f.name == name)
     }
 
-    /// Restituisce tutte le funzioni del modulo.
+    /// Returns all functions in the module.
     pub fn functions(&self) -> &[Function] {
         &self.functions
     }
 
-    /// Restituisce il layout dei dati.
+    /// Returns the data layout.
     pub fn data_layout(&self) -> &DataLayout {
         &self.data_layout
     }
 
-    /// Restituisce la tripletta di destinazione.
+    /// Returns the target triple.
     pub fn target_triple(&self) -> &TargetTriple {
         &self.target_triple
     }
 
-    /// Restituisce il nome del modulo.
+    /// Returns the module name.
     pub fn name(&self) -> &str {
         &self.name
     }

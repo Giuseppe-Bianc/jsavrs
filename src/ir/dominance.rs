@@ -1,8 +1,5 @@
 // src/ir/dominance.rs
 //! Dominance analysis for control flow graphs.
-//!
-//! This module provides algorithms for computing dominator trees and dominance frontiers,
-//! which are essential for SSA transformation.
 
 use super::cfg::ControlFlowGraph;
 use petgraph::graph::NodeIndex;
@@ -26,10 +23,7 @@ impl DominanceInfo {
         Self { idom: HashMap::new(), dominance_frontiers: HashMap::new(), dom_tree_children: HashMap::new() }
     }
 
-    /// Computes the dominator tree using the Cooper-Harvey-Kennedy algorithm.
-    ///
-    /// This implementation follows the iterative algorithm from:
-    /// "A Simple, Fast Dominance Algorithm" by Keith D. Cooper, Timothy J. Harvey, and Ken Kennedy.
+    /// Computes the dominator tree using the  "A Simple, Fast Dominance Algorithm" by Keith D. Cooper, Timothy J. Harvey, and Ken Kennedy.
     pub fn compute_dominators(&mut self, cfg: &ControlFlowGraph) -> Result<(), String> {
         let entry_idx = cfg.get_entry_block_index().ok_or_else(|| "CFG has no entry block".to_string())?;
 

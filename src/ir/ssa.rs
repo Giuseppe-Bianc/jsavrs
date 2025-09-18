@@ -1,20 +1,5 @@
 // src/ir/ssa.rs
 //! Static Single Assignment (SSA) transformation for IR.
-//!
-//! This module implements algorithms for converting IR to SSA form, including:
-//! - Phi-function insertion using dominance frontiers
-//! - Variable renaming to ensure single assignment
-//! - Conversion from memory-based variables to SSA registers
-//! - Verification of SSA properties
-//!
-//! ## SSA Transformation Process
-//!
-//! The transformation follows these steps:
-//! 1. Compute dominance information for the control flow graph
-//! 2. Identify variables that need phi-functions (those defined in multiple blocks)
-//! 3. Insert phi-functions at appropriate dominance frontiers
-//! 4. Rename variables using a recursive dominator tree traversal
-//! 5. Verify the resulting SSA form meets all requirements
 
 use super::cfg::ControlFlowGraph;
 use super::dominance::DominanceInfo;
@@ -114,11 +99,9 @@ impl SsaTransformer {
         self.value_stack.clear();
         self.variable_types.clear();
         // Don't reset temp_counter here - it should be unique across the entire module
-        // self.temp_counter = 0;
     }
 
     /// Identifies variables that need phi-functions by analyzing definitions.
-    /// Only variables that are defined in multiple blocks need phi-functions.
     fn identify_phi_variables(&mut self, cfg: &ControlFlowGraph) {
         self.phi_variables.clear();
         self.var_defs.clear();

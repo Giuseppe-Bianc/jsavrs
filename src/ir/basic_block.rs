@@ -47,9 +47,8 @@ impl BasicBlock {
     #[inline]
     pub fn scope(&self) -> Option<ScopeId> {
         self.scope
-    } // if ScopeId: Copy
-    // alternatively (safe regardless of Copy):
-    // pub fn scope(&self) -> Option<&ScopeId> { self.scope.as_ref() }
+    }
+    
     #[inline]
     pub fn set_scope(&mut self, s: ScopeId) {
         self.scope = Some(s);
