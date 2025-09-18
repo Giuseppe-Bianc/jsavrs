@@ -1,6 +1,7 @@
 // src/ir/access_control.rs
 use super::types::{ResourceId, ScopeId};
 
+#[repr(u8)]
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Hash)]
 pub enum Operation {
     Read,

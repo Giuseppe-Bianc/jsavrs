@@ -29,6 +29,7 @@ pub struct FunctionSymbol {
     pub defined_at: SourceSpan,
 }
 
+#[repr(u8)]
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
 pub enum ScopeKind {
     Global,

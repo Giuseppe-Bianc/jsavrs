@@ -7,6 +7,7 @@ use crate::parser::ast::*;
 use crate::tokens::number::Number;
 use std::collections::HashMap;
 use std::sync::Arc;
+#[repr(u8)]
 enum LoopControl {
     Break,
     Continue,

@@ -20,6 +20,7 @@ pub enum CastKind {
     Bitcast,
 }
 
+#[repr(u8)]
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Hash)]
 pub enum VectorOp {
     Add,
@@ -118,6 +119,7 @@ impl From<BinaryOp> for IrBinaryOp {
     }
 }
 
+#[repr(u8)]
 #[derive(Debug, Clone, Copy, PartialEq)]
 pub enum IrUnaryOp {
     Negate,

@@ -1,5 +1,6 @@
 use console::Style;
 
+#[repr(u8)]
 #[derive(Debug, Clone, Copy, PartialEq)]
 pub enum BranchType {
     Last,

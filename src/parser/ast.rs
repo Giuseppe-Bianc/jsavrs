@@ -44,6 +44,7 @@ pub enum BinaryOp {
     ShiftRight,
 }
 
+#[repr(u8)]
 #[derive(Debug, Clone, Hash, Eq, PartialEq)]
 pub enum UnaryOp {
     Negate,
