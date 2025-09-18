@@ -41,7 +41,7 @@ impl ScopeManager {
         }
     }
 
-    // Public method to get a copy of the scope map
+    // Public method to get a reference to the scope map
     pub fn get_scopes(&self) -> &HashMap<ScopeId, Scope> {
         &self.scopes
     }
