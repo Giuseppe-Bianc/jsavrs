@@ -1,6 +1,6 @@
 /target
 /.vscode
 /.idea
-output.asm
+*.asm
 /ignored/
 .gemini/.env
