@@ -83,4 +83,96 @@ impl Operand {
     pub fn mem(addr: &str) -> Self {
         Operand::Memory(addr.to_string())
     }
+    
+    /// Check if this operand is a register
+    pub fn is_register(&self) -> bool {
+        matches!(self, Operand::Register(_))
+    }
+    
+    /// Check if this operand is an immediate
+    pub fn is_immediate(&self) -> bool {
+        matches!(self, Operand::Immediate(_))
+    }
+    
+    /// Check if this operand is a memory reference
+    pub fn is_memory(&self) -> bool {
+        matches!(self, Operand::Memory(_) | Operand::MemoryRef { .. })
+    }
+    
+    /// Check if this operand is a label
+    pub fn is_label(&self) -> bool {
+        matches!(self, Operand::Label(_))
+    }
+    
+    /// Get the register if this operand is a register
+    pub fn as_register(&self) -> Option<&Register> {
+        match self {
+            Operand::Register(reg) => Some(reg),
+            _ => None,
+        }
+    }
+    
+    /// Get the immediate value if this operand is an immediate
+    pub fn as_immediate(&self) -> Option<i64> {
+        match self {
+            Operand::Immediate(val) => Some(*val),
+            _ => None,
+        }
+    }
+    
+    /// Get the label if this operand is a label
+    pub fn as_label(&self) -> Option<&str> {
+        match self {
+            Operand::Label(label) => Some(label),
+            _ => None,
+        }
+    }
+    
+    /// Get the memory address if this operand is a memory operand
+    pub fn as_memory(&self) -> Option<&str> {
+        match self {
+            Operand::Memory(addr) => Some(addr),
+            _ => None,
+        }
+    }
+    
+    /// Get memory reference components if this operand is a memory reference
+    pub fn as_memory_ref(&self) -> Option<(&Option<Register>, &Option<Register>, &u8, &i32)> {
+        match self {
+            Operand::MemoryRef { base, index, scale, displacement } => {
+                Some((base, index, scale, displacement))
+            }
+            _ => None,
+        }
+    }
+    
+    /// Create a memory reference with only a base register
+    pub fn mem_base(base: Register) -> Self {
+        Operand::mem_ref(Some(base), None, 1, 0)
+    }
+    
+    /// Create a memory reference with base register and displacement
+    pub fn mem_base_disp(base: Register, displacement: i32) -> Self {
+        Operand::mem_ref(Some(base), None, 1, displacement)
+    }
+    
+    /// Create a memory reference with base and index registers
+    pub fn mem_base_index(base: Register, index: Register) -> Self {
+        Operand::mem_ref(Some(base), Some(index), 1, 0)
+    }
+    
+    /// Create a memory reference with base, index, and scale
+    pub fn mem_base_index_scale(base: Register, index: Register, scale: u8) -> Self {
+        Operand::mem_ref(Some(base), Some(index), scale, 0)
+    }
+    
+    /// Create a memory reference with base, index, scale, and displacement
+    pub fn mem_base_index_scale_disp(base: Register, index: Register, scale: u8, displacement: i32) -> Self {
+        Operand::mem_ref(Some(base), Some(index), scale, displacement)
+    }
+    
+    /// Create a RIP-relative memory reference
+    pub fn rip_relative(displacement: i32) -> Self {
+        Operand::mem_ref(None, None, 1, displacement)
+    }
 }

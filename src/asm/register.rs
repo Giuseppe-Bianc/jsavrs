@@ -65,6 +65,75 @@ impl Register {
         }
     }
     
+    /// Get the 32-bit equivalent of a register
+    pub fn to_32bit(&self) -> Register {
+        match self.to_64bit() {
+            Register::RAX => Register::EAX,
+            Register::RBX => Register::EBX,
+            Register::RCX => Register::ECX,
+            Register::RDX => Register::EDX,
+            Register::RSI => Register::ESI,
+            Register::RDI => Register::EDI,
+            Register::RBP => Register::EBP,
+            Register::RSP => Register::ESP,
+            Register::R8 => Register::R8D,
+            Register::R9 => Register::R9D,
+            Register::R10 => Register::R10D,
+            Register::R11 => Register::R11D,
+            Register::R12 => Register::R12D,
+            Register::R13 => Register::R13D,
+            Register::R14 => Register::R14D,
+            Register::R15 => Register::R15D,
+            _ => *self, // Already a 32-bit or smaller register
+        }
+    }
+    
+    /// Get the 16-bit equivalent of a register
+    pub fn to_16bit(&self) -> Register {
+        match self.to_64bit() {
+            Register::RAX => Register::AX,
+            Register::RBX => Register::BX,
+            Register::RCX => Register::CX,
+            Register::RDX => Register::DX,
+            Register::RSI => Register::SI,
+            Register::RDI => Register::DI,
+            Register::RBP => Register::BP,
+            Register::RSP => Register::SP,
+            Register::R8 => Register::R8W,
+            Register::R9 => Register::R9W,
+            Register::R10 => Register::R10W,
+            Register::R11 => Register::R11W,
+            Register::R12 => Register::R12W,
+            Register::R13 => Register::R13W,
+            Register::R14 => Register::R14W,
+            Register::R15 => Register::R15W,
+            _ => *self, // Already a 16-bit or smaller register
+        }
+    }
+    
+    /// Get the 8-bit equivalent of a register
+    pub fn to_8bit(&self) -> Register {
+        match self.to_64bit() {
+            Register::RAX => Register::AL,
+            Register::RBX => Register::BL,
+            Register::RCX => Register::CL,
+            Register::RDX => Register::DL,
+            Register::RSI => Register::SIL,
+            Register::RDI => Register::DIL,
+            Register::RBP => Register::BPL,
+            Register::RSP => Register::SPL,
+            Register::R8 => Register::R8B,
+            Register::R9 => Register::R9B,
+            Register::R10 => Register::R10B,
+            Register::R11 => Register::R11B,
+            Register::R12 => Register::R12B,
+            Register::R13 => Register::R13B,
+            Register::R14 => Register::R14B,
+            Register::R15 => Register::R15B,
+            _ => *self, // Already an 8-bit register
+        }
+    }
+    
     /// Get the size of the register in bits
     pub fn size(&self) -> u8 {
         match self {
@@ -87,6 +156,108 @@ impl Register {
             Register::SIL | Register::DIL | Register::BPL | Register::SPL |
             Register::R8B | Register::R9B | Register::R10B | Register::R11B |
             Register::R12B | Register::R13B | Register::R14B | Register::R15B => 8,
+        }
+    }
+
+    /// Check if this is a Windows x64 ABI parameter register (for integer/pointer arguments)
+    /// Windows x64 ABI uses RCX, RDX, R8, R9 for the first four integer/pointer arguments
+    pub fn is_windows_param_register(&self) -> bool {
+        matches!(self.to_64bit(), 
+            Register::RCX | Register::RDX | Register::R8 | Register::R9)
+    }
+
+    /// Check if this is a Windows x64 ABI caller-saved register
+    /// Caller-saved registers in Windows x64 ABI: RAX, RCX, RDX, R8-R11
+    pub fn is_windows_caller_saved(&self) -> bool {
+        matches!(self.to_64bit(),
+            Register::RAX | Register::RCX | Register::RDX | 
+            Register::R8 | Register::R9 | Register::R10 | Register::R11)
+    }
+
+    /// Check if this is a Windows x64 ABI callee-saved register
+    /// Callee-saved registers in Windows x64 ABI: RBX, RBP, RDI, RSI, R12-R15
+    pub fn is_windows_callee_saved(&self) -> bool {
+        matches!(self.to_64bit(),
+            Register::RBX | Register::RBP | Register::RDI | Register::RSI |
+            Register::R12 | Register::R13 | Register::R14 | Register::R15)
+    }
+
+    /// Get the nth parameter register for Windows x64 ABI
+    /// Returns None if n > 3 (only 4 parameter registers in Windows x64 ABI)
+    pub fn windows_param_register(n: usize) -> Option<Register> {
+        match n {
+            0 => Some(Register::RCX),
+            1 => Some(Register::RDX),
+            2 => Some(Register::R8),
+            3 => Some(Register::R9),
+            _ => None,
+        }
+    }
+
+    /// Check if this is a System V ABI parameter register (for integer/pointer arguments)
+    /// System V ABI uses RDI, RSI, RDX, RCX, R8, R9 for the first six integer/pointer arguments
+    pub fn is_systemv_param_register(&self) -> bool {
+        matches!(self.to_64bit(),
+            Register::RDI | Register::RSI | Register::RDX | Register::RCX | Register::R8 | Register::R9)
+    }
+
+    /// Check if this is a System V ABI caller-saved register
+    /// Caller-saved registers in System V ABI: RAX, RCX, RDX, RSI, RDI, R8-R11
+    pub fn is_systemv_caller_saved(&self) -> bool {
+        matches!(self.to_64bit(),
+            Register::RAX | Register::RCX | Register::RDX | Register::RSI | Register::RDI |
+            Register::R8 | Register::R9 | Register::R10 | Register::R11)
+    }
+
+    /// Check if this is a System V ABI callee-saved register
+    /// Callee-saved registers in System V ABI: RBX, RBP, R12-R15
+    pub fn is_systemv_callee_saved(&self) -> bool {
+        matches!(self.to_64bit(),
+            Register::RBX | Register::RBP | Register::R12 | Register::R13 | Register::R14 | Register::R15)
+    }
+
+    /// Get the nth parameter register for System V ABI
+    /// Returns None if n > 5 (only 6 parameter registers in System V ABI)
+    pub fn systemv_param_register(n: usize) -> Option<Register> {
+        match n {
+            0 => Some(Register::RDI),
+            1 => Some(Register::RSI),
+            2 => Some(Register::RDX),
+            3 => Some(Register::RCX),
+            4 => Some(Register::R8),
+            5 => Some(Register::R9),
+            _ => None,
+        }
+    }
+    
+    /// Get all general purpose registers of this size
+    pub fn general_purpose_registers(size: u8) -> Vec<Register> {
+        match size {
+            64 => vec![
+                Register::RAX, Register::RBX, Register::RCX, Register::RDX,
+                Register::RSI, Register::RDI, Register::RBP, Register::RSP,
+                Register::R8, Register::R9, Register::R10, Register::R11,
+                Register::R12, Register::R13, Register::R14, Register::R15
+            ],
+            32 => vec![
+                Register::EAX, Register::EBX, Register::ECX, Register::EDX,
+                Register::ESI, Register::EDI, Register::EBP, Register::ESP,
+                Register::R8D, Register::R9D, Register::R10D, Register::R11D,
+                Register::R12D, Register::R13D, Register::R14D, Register::R15D
+            ],
+            16 => vec![
+                Register::AX, Register::BX, Register::CX, Register::DX,
+                Register::SI, Register::DI, Register::BP, Register::SP,
+                Register::R8W, Register::R9W, Register::R10W, Register::R11W,
+                Register::R12W, Register::R13W, Register::R14W, Register::R15W
+            ],
+            8 => vec![
+                Register::AL, Register::BL, Register::CL, Register::DL,
+                Register::SIL, Register::DIL, Register::BPL, Register::SPL,
+                Register::R8B, Register::R9B, Register::R10B, Register::R11B,
+                Register::R12B, Register::R13B, Register::R14B, Register::R15B
+            ],
+            _ => vec![] // Invalid size
         }
     }
 }

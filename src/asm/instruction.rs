@@ -96,6 +96,17 @@ pub enum Instruction {
     Setno(Operand),           // Set byte if not overflow
     Setz(Operand),            // Set byte if zero
     Setnz(Operand),           // Set byte if not zero
+    
+    // Additional instructions for completeness
+    Bt(Operand, Operand),     // Bit test
+    Bts(Operand, Operand),    // Bit test and set
+    Btr(Operand, Operand),    // Bit test and reset
+    Btc(Operand, Operand),    // Bit test and complement
+    Bsf(Operand, Operand),    // Bit scan forward
+    Bsr(Operand, Operand),    // Bit scan reverse
+    Bswap(Operand),           // Byte swap
+    Xchg(Operand, Operand),   // Exchange
+    Lock,                     // Lock prefix for atomic operations
 }
 
 impl fmt::Display for Instruction {
@@ -187,6 +198,17 @@ impl fmt::Display for Instruction {
             Instruction::Setno(op) => write!(f, "    setno {}", op),
             Instruction::Setz(op) => write!(f, "    setz {}", op),
             Instruction::Setnz(op) => write!(f, "    setnz {}", op),
+            
+            // Additional instructions
+            Instruction::Bt(op1, op2) => write!(f, "    bt {}, {}", op1, op2),
+            Instruction::Bts(op1, op2) => write!(f, "    bts {}, {}", op1, op2),
+            Instruction::Btr(op1, op2) => write!(f, "    btr {}, {}", op1, op2),
+            Instruction::Btc(op1, op2) => write!(f, "    btc {}, {}", op1, op2),
+            Instruction::Bsf(op1, op2) => write!(f, "    bsf {}, {}", op1, op2),
+            Instruction::Bsr(op1, op2) => write!(f, "    bsr {}, {}", op1, op2),
+            Instruction::Bswap(op) => write!(f, "    bswap {}", op),
+            Instruction::Xchg(op1, op2) => write!(f, "    xchg {}, {}", op1, op2),
+            Instruction::Lock => write!(f, "    lock"),
         }
     }
 }
