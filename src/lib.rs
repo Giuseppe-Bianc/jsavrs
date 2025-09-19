@@ -1,4 +1,5 @@
 // src/lib.rs
+pub mod asm;
 pub mod cli;
 pub mod error;
 pub mod ir;
@@ -10,4 +11,3 @@ pub mod semantic;
 pub mod time;
 pub mod tokens;
 pub mod utils;
-//pub mod asm;

@@ -18,6 +18,10 @@ path = "src/lib.rs"
 name = "jsavrs"
 path = "src/main.rs"
 
+[[example]]
+name = "asm_generator"
+path = "examples/asm_generator.rs"
+
 [dependencies]
 clap = { version = "4.5.47", features = ["cargo", "derive"] }
 console = "0.16.1"

@@ -16,7 +16,8 @@ use std::{
     path::Path,
     //process,
 };
-//use jsavrs::asm::generator::{AsmGenerator, TargetOS};
+use jsavrs::asm::ir_to_asm::IrToAsmGenerator;
+use jsavrs::asm::generator::TargetOS;
 
 // Helper function per gestire e stampare errori I/O
 fn handle_io_error<T: std::fmt::Display>(error_type: &str, e: T) {
@@ -132,8 +133,22 @@ fn main() -> Result<(), CompileError> {
         println!("{module}");
     }
 
-    /*let mut asm_gen = AsmGenerator::new(if cfg!(windows) { TargetOS::Windows } else { TargetOS::Linux });
-    let (nasm_code, asm_error) = asm_gen.generate(functions);
-    std::fs::write("output.asm", nasm_code)?;*/
+    // Generate assembly code from IR
+    let asm_timer = Timer::new("ASM Generation");
+    let target_os = if cfg!(windows) { TargetOS::Windows } else { TargetOS::Linux };
+    let mut ir_to_asm = IrToAsmGenerator::new(target_os);
+    let asm_code = ir_to_asm.generate_from_module(&module);
+    println!("{asm_timer}");
+    
+    // Save assembly code to file
+    let asm_output_path = file_path.with_extension("asm");
+    if let Err(e) = fs::write(&asm_output_path, asm_code) {
+        handle_io_error("ASM Output", e);
+        process::exit(1);
+    }
+    
+    println!("ASM generation done");
+    println!("Assembly code saved to: {}", asm_output_path.display());
+    
     Ok(())
 }
