@@ -2,7 +2,7 @@
 use std::fmt;
 
 /// x86-64 registers
-#[derive(Debug, Clone, PartialEq, Eq, Hash)]
+#[derive(Debug, Clone, Copy, PartialEq, Eq, Hash, Ord, PartialOrd)]
 pub enum Register {
     // 64-bit registers
     RAX, RBX, RCX, RDX, RSI, RDI, RBP, RSP,
