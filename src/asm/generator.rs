@@ -6,7 +6,7 @@ use super::operand::{Operand};
 use super::instruction::Instruction;
 
 /// Assembly sections
-#[derive(Debug, Clone)]
+#[derive(Debug, Clone, Hash, PartialEq, Eq)]
 pub enum Section {
     Text,
     Data,
@@ -280,6 +280,8 @@ pub struct NasmGenerator {
     label_counter: u32,
     #[allow(dead_code)]
     target_os: TargetOS,
+    /// Track which sections have been added to prevent duplicates
+    sections_added: std::collections::HashSet<Section>,
 }
 
 impl NasmGenerator {
@@ -289,6 +291,7 @@ impl NasmGenerator {
             elements: Vec::new(),
             label_counter: 0,
             target_os,
+            sections_added: std::collections::HashSet::new(),
         }
     }
 
@@ -319,6 +322,15 @@ impl NasmGenerator {
 
     /// Add a section
     pub fn add_section(&mut self, section: Section) {
+        // Check if this section type has already been added
+        if self.sections_added.contains(&section) {
+            return;
+        }
+        
+        // Add the section to our tracking set
+        self.sections_added.insert(section.clone());
+        
+        // Add the section element
         self.elements.push(AssemblyElement::Section(section));
     }
 
@@ -620,6 +632,7 @@ impl NasmGenerator {
     pub fn clear(&mut self) {
         self.elements.clear();
         self.label_counter = 0;
+        self.sections_added.clear();
     }
     
     /// Get the number of elements
