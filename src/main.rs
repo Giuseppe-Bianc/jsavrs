@@ -16,7 +16,6 @@ use std::{
     path::Path,
     //process,
 };
-use jsavrs::asm::ir_to_asm::IrToAsmGenerator;
 use jsavrs::asm::generator::TargetOS;
 
 // Helper function per gestire e stampare errori I/O
@@ -134,7 +133,7 @@ fn main() -> Result<(), CompileError> {
     }
 
     // Generate assembly code from IR
-    let asm_timer = Timer::new("ASM Generation");
+    /*let asm_timer = Timer::new("ASM Generation");
     let target_os = if cfg!(windows) { TargetOS::Windows } else { TargetOS::Linux };
     let mut ir_to_asm = IrToAsmGenerator::new(target_os);
     let asm_code = ir_to_asm.generate_from_module(&module);
@@ -148,7 +147,7 @@ fn main() -> Result<(), CompileError> {
     }
     
     println!("ASM generation done");
-    println!("Assembly code saved to: {}", asm_output_path.display());
+    println!("Assembly code saved to: {}", asm_output_path.display());*/
     
     Ok(())
 }
