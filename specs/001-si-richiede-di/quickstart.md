@@ -166,7 +166,7 @@ mod snapshot_tests {
 
 2. **Documentation**: Include detailed comments that clarify complex assembly sequences and document the rationale behind design decisions, ensuring the code is understandable and maintainable by others.
 
-3. **Testing**:Develop and execute thorough tests for all generated assembly code, including unit and integration tests, to verify correctness and prevent potential errors.
+3. **Testing**: Develop and execute thorough tests for all generated assembly code, including unit and integration tests, to verify correctness and prevent potential errors.
 
 4. **Validation**: Utilize built-in validation tools to verify instruction syntax and operand compatibility, ensuring correctness and portability across platforms.
 
