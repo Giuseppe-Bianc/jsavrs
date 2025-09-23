@@ -47,7 +47,7 @@
 ## Constitution Check
 *GATE: Must pass before Phase 0 research. Re-check after Phase 1 design.*
 
-[Gates determined based on constitution file]
+All implementations must follow the Core Principles of Safety First, Performance Excellence, Cross-Platform Compatibility, Modular Extensibility, Test-Driven Reliability, and Snapshot Validation. Additionally, all community interactions must follow the Core Principles of Collaboration First, Respectful Communication, Shared Learning, Quality Through Community, and Transparency and Openness.
 
 ## Project Structure
 
@@ -145,7 +145,8 @@ ios/ or android/
    - Quickstart test = story validation steps
 
 5. **Update agent file incrementally** (O(1) operation):
-   - Run `.specify/scripts/powershell/update-agent-context.ps1 -AgentType qwen` for your AI assistant
+   - Run `.specify/scripts/powershell/update-agent-context.ps1 -AgentType qwen`
+     **IMPORTANT**: Execute it exactly as specified above. Do not add or remove any arguments.
    - If exists: Add only NEW tech from current plan
    - Preserve manual additions between markers
    - Update recent changes (keep last 3)
@@ -208,4 +209,4 @@ ios/ or android/
 - [ ] Complexity deviations documented
 
 ---
-*Based on Constitution v1.0.0 - See `/memory/constitution.md`*
+*Based on Constitution v1.3.0 - See `/memory/constitution.md`*

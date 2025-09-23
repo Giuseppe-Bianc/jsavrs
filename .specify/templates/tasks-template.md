@@ -116,6 +116,11 @@ Task: "Integration test auth in tests/integration/test_auth.py"
    - Setup → Tests → Models → Services → Endpoints → Polish
    - Dependencies block parallel execution
 
+5. **Community Integration**:
+   - Each feature should include documentation contributions
+   - Code reviews must follow respectful communication principles
+   - Tests should exemplify shared learning opportunities
+
 ## Validation Checklist
 *GATE: Checked by main() before returning*
 
