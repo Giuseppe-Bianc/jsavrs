@@ -100,6 +100,11 @@ When creating this spec from a user prompt:
 - [ ] Scope is clearly bounded
 - [ ] Dependencies and assumptions identified
 
+### Community Guidelines
+- [ ] Specifications promote collaboration and respect among contributors
+- [ ] Requirements consider shared learning opportunities
+- [ ] Community impact is considered in feature design
+
 ---
 
 ## Execution Status
