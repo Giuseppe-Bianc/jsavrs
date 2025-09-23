@@ -17,7 +17,7 @@ Auto-generated from all feature plans. Last updated: [DATE]
 [LANGUAGE-SPECIFIC, ONLY FOR LANGUAGES IN USE]
 
 ## Community Guidelines
-All development must follow the Core Principles of Collaboration First, Respectful Communication, Shared Learning, Quality Through Community, and Transparency and Openness as defined in the project constitution.
+All development must follow the Core Principles of Collaboration First, Respectful Communication, Shared Learning, Quality Through Community, and Transparency and Openness.
 
 ## Recent Changes
 [LAST 3 FEATURES AND WHAT THEY ADDED]
