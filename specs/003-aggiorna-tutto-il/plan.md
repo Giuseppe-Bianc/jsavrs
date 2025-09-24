@@ -73,7 +73,11 @@ specs/[###-feature]/
 ```
 # Option 1: Single project (DEFAULT)
 src/
-├── models/
+├── asm/              # Assembly-specific modules
+│   ├── generator.rs
+│   ├── instruction.rs
+│   ├── operand.rs
+│   └── register.rs
 ├── services/
 ├── cli/
 └── lib/
