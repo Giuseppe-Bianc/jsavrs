@@ -133,7 +133,7 @@ As a developer using the jsavrs compiler system, I want the assembly code to sup
 - **Assembly Code**: Low-level code in the src/asm/ directory that will be modified to include SIMD optimizations while maintaining compatibility. The directory contains Rust modules (generator.rs, instruction.rs, operand.rs, register.rs) that likely generate or handle assembly code for the jsavrs compiler
 - **XMM Registers**: 128-bit registers used by SSE/SSE2 instructions to process multiple data values simultaneously
 - **Fallback Mechanisms**: Alternative scalar instruction paths that execute when SSE/SSE2 capabilities are not available on the target processor
-- **CPUID Instruction**: Processor instruction used to detect SSE/SSE2 support, targeting Pentium III+ processors
+- **CPUID Instruction**: Processor instruction used to detect SSE/SSE2 support, targeting Pentium IV+ processors
 
 ---
 

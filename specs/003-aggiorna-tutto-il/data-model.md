@@ -2,7 +2,7 @@
 
 ## Entity: SSE/SSE2 Instructions
 - **Attributes**:
-  - operation_type: Enum ["ADDPS", "MULPS", "ADDPD", "MULPD", "SUBPS", "SUBPD", "DIVPS", "DIVPD", "MAXPS", "MAXPD", "MINPS", "MINPD"]
+  - operation_type: Enum ["ADDPS", "MULPS", "ADDPD", "MULPD", "SUBPS", "SUBPD", "DIVPS", "DIVPD", "MAXPS", "MAXPD", "MINPS", "MINPD", "MOVPS", "MOVPD", "CMPPS", "CMPPD", "CVTPS2PD", "CVTPD2PS"]
   - operand_types: Array of Enum ["float32", "float64", "int32", "int64"]
   - register_usage: Enum ["XMM", "MMX"]
   - performance_characteristics: Object {throughput: float, latency: float, port_utilization: Array}
@@ -26,7 +26,7 @@
 - **Attributes**:
   - input_types: Array of Enum ["float32", "float64", "int32", "int64"]
   - output_types: Array of Enum ["float32", "float64", "int32", "int64"]
-  - vector_width: Integer (4 for float32, 2 for float64)
+  - vector_width: Integer (4 for float32, 2 for float64, 4 for int32, 2 for int64, 8 for int16, 16 for int8)
   - performance_metrics: Object {simd_speedup: float, throughput: float}
   - precision_mode: Enum ["strict", "relaxed", "configurable"]
 - **Relationships**:
@@ -48,7 +48,7 @@
 - **Attributes**:
   - scalar_equivalent_operation: Enum ["fadd", "fmul", "fsub", "fdiv", "other"]
   - performance_degradation: Float (e.g., 0.5 for 50% slower)
-  - compatibility_level: Enum ["SSE1", "SSE2", "baseline"]
+  - compatibility_level: Enum ["SSE", "SSE2", "baseline"]
   - fallback_strategy: Enum ["automatic", "compile-time", "runtime-configurable"]
 - **Relationships**:
   - Fallbacks to SIMD Operations when SSE/SSE2 unavailable
