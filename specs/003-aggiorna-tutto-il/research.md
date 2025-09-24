@@ -1,7 +1,7 @@
 # Research: Assembly SSE and SSE2 Support
 
 ## Decision: SIMD Implementation Strategy
-**Rationale**: The JSAVRS compiler necessitates substantial performance enhancements for vectorizable operations, with the objective of achieving a 20–50% increase in execution speed. Conventional scalar implementations are inadequate to meet this target, thereby requiring the adoption of SIMD (Single Instruction, Multiple Data) instructions available through the SSE and SSE2 instruction set extensions in x86 architectures. By leveraging these extensions, the compiler can execute multiple data elements concurrently, significantly accelerating data-parallel computations such as matrix operations, numerical simulations, and array-based processing tasks..
+**Rationale**: The JSAVRS compiler necessitates substantial performance enhancements for vectorizable operations, with the objective of achieving a 20–50% increase in execution speed. Conventional scalar implementations are inadequate to meet this target, thereby requiring the adoption of SIMD (Single Instruction, Multiple Data) instructions available through the SSE and SSE2 instruction set extensions in x86 architectures. By leveraging these extensions, the compiler can execute multiple data elements concurrently, significantly accelerating data-parallel computations such as matrix operations, numerical simulations, and array-based processing tasks.
 
 ## Alternatives Considered
 1. **Pure Scalar Implementation**: 
