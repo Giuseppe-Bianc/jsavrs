@@ -87,15 +87,17 @@
 - [ ] T035 Add SIMD feature flags to CLI in src/cli.rs
 
 ## Phase 3.5: Polish
-- [ ] T036 [P] Unit tests for SIMD instruction generation in tests"/test_simd_instructions.rs
-- [ ] T037 [P] Unit tests for CPU detection logic in tests"/test_cpu_detection.rs
+- [ ] T036 [P] Unit tests for SIMD instruction generation in tests/test_simd_instructions.rs
+- [ ] T037 [P] Unit tests for CPU detection logic in tests/test_cpu_detection.rs
 - [ ] T038 [P] Performance benchmarks for SIMD vs scalar operations in benches/simd_benches.rs
-- [ ] T039 Performance tests (target: 20-50% improvement) in tests/simd.rs
+- [ ] T039 Performance tests (target: 20-50% improvement) in tests/test_simd_performance.rs
 - [ ] T040 [P] Update docs/api.md with SIMD implementation details
 - [ ] T041 [P] Update README.md with SIMD usage instructions
 - [ ] T042 Update manual-testing.md with SIMD validation steps
-- [ ] T043 Run SIMD-specific validation using quickstart scenarios in tests/simd_validation.rs
-- [ ] T044 Create real-world workload performance tests for validation in tests/real_world_workloads.rs
+- [ ] T043 Run SIMD-specific validation using quickstart scenarios in tests/test_simd_validation.rs
+- [ ] T044 Create real-world workload performance tests for validation in tests/test_real_world_workloads.rs
+- [ ] T045 [P] Document non-vectorizable sections with reasons and alternatives in docs/non_vectorizable.md
+- [ ] T046 [P] Ensure all SSE/SSE2 changes have clear comments in source files
 
 ## Dependencies
 - Setup (T001-T003) before tests (T004-T012)
@@ -105,7 +107,7 @@
 - T018 blocks T028
 - T028-T031 blocks T032
 - T032 blocks T033
-- Implementation before polish (T036-T044)
+- Implementation before polish (T036-T046)
 
 ## Parallel Example
 ```
@@ -132,10 +134,10 @@ Task: "Create fallback mechanisms in src/asm/simd/fallback.rs"
 
 ```
 # Launch T036-T041 together:
-Task: "Unit tests for SIMD instruction generation in tests"/test_simd_instructions.rs"
-Task: "Unit tests for CPU detection logic in tests"/test_cpu_detection.rs"
+Task: "Unit tests for SIMD instruction generation in tests/test_simd_instructions.rs"
+Task: "Unit tests for CPU detection logic in tests/test_cpu_detection.rs"
 Task: "Performance benchmarks for SIMD vs scalar operations in benches/simd_benches.rs"
-Task: "Performance tests (target: 20-50% improvement) in tests/simd.rs"
+Task: "Performance tests (target: 20-50% improvement) in tests/test_simd_performance.rs"
 Task: "Update docs/api.md with SIMD implementation details"
 Task: "Update README.md with SIMD usage instructions"
 ```
