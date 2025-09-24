@@ -1,13 +1,12 @@
 <!-- Sync Impact Report:
-Version change: 1.2.0 → 1.3.0
-List of modified principles: Added new Snapshot Validation principle for Insta library usage
+Version change: 1.4.0 → 1.4.1
+List of modified principles: Updated Documentation Rigor principle to include AI usage for creating detailed research.md and data_model.md
 Added sections: None
 Removed sections: None
 Templates requiring updates: 
 - .specify/templates/plan-template.md ✅ updated
 - .specify/templates/spec-template.md ✅ updated (no changes needed)
-- .specify/templates/tasks-template.md ✅ updated (no changes needed)
-- .specify/templates/agent-file-template.md ✅ updated (no changes needed)
+- .specify/templates/tasks-template.md ✅ updated
 Follow-up TODOs: None
 -->
 
@@ -114,13 +113,22 @@ We've effectively applied this principle by conducting all development on GitHub
 
 This principle impacts our behavior by requiring us to document our decisions and communicate our reasoning clearly. We avoid making significant changes without community discussion, and we maintain detailed commit messages and pull request descriptions. This approach ensures that anyone can understand our development history and contribute meaningfully to ongoing work.
 
+### Documentation Rigor
+**We commit to creating comprehensive, detailed, precise, and meticulous documentation including research.md and data_model.md files that thoroughly explain all aspects of the system using AI assistance when appropriate. All documentation must be in-depth, leaving no important detail unexplored, and structured to serve both current understanding and future reference.**
+
+Documentation rigor is essential to the jsavrs project because complex systems like compilers require thorough documentation to ensure maintainability, extensibility, and proper understanding by current and future contributors. Well-documented code and architecture enable faster onboarding, more effective debugging, and better decision-making for future enhancements. When creating documentation like research.md and data_model.md, we leverage AI tools to ensure the documentation is as detailed, precise, meticulous, and in-depth as possible, while maintaining human oversight for accuracy and relevance.
+
+We've effectively applied this principle through our existing documentation in QWEN.md and AGENTS.md, which provide detailed explanations of our architecture, design decisions, and implementation approaches. Our research.md documents contain in-depth analysis of technical approaches and trade-offs, while data_model.md files detail the structure and relationships of our data models with precision and thoroughness. We utilize AI tools to enhance the quality and depth of these documents, ensuring they are comprehensive and accessible.
+
+This principle impacts our behavior by requiring all contributions to include comprehensive documentation alongside code changes. When implementing new features or making architectural changes, we must create or update the relevant research.md and data_model.md files with detailed explanations, using AI tools to help ensure the documentation is detailed, precise, meticulous, and in-depth. All documentation must be written with meticulous attention to detail, ensuring accuracy and completeness that serves as a reliable reference for anyone working with the system.
+
 ## Development Principles
-All development efforts must align with our core principles of safety, performance, compatibility, extensibility, and reliability. These principles guide all technical decisions and implementation approaches.
+All development efforts must align with our core principles of safety, performance, compatibility, extensibility, reliability, and documentation rigor. These principles guide all technical decisions and implementation approaches.
 
 ## Code Quality Standards
-All contributions must adhere to Rust community standards and idioms, be formatted with `cargo fmt`, pass `cargo clippy` checks with no warnings, and include comprehensive documentation for public APIs with rustdoc comments.
+All contributions must adhere to Rust community standards and idioms, be formatted with `cargo fmt`, pass `cargo clippy` checks with no warnings, and include comprehensive documentation for public APIs with rustdoc comments. Documentation must follow the rigor outlined in our Documentation Rigor principle, with detailed research.md and data_model.md files as appropriate.
 
 ## Governance
-All submissions undergo a thorough review process to ensure they align with the project's technical standards. Contributors must follow established coding standards, architectural patterns, and best practices. Comprehensive testing is required for all new functionality with appropriate unit and integration tests. Code must be formatted with `cargo fmt` and pass `cargo clippy` checks before submission. Pull requests must provide clear, comprehensive documentation of changes.
+All submissions undergo a thorough review process to ensure they align with the project's technical standards. Contributors must follow established coding standards, architectural patterns, and best practices. Comprehensive testing is required for all new functionality with appropriate unit and integration tests. Code must be formatted with `cargo fmt` and pass `cargo clippy` checks before submission. Pull requests must provide clear, comprehensive documentation of changes, including updates to research.md and data_model.md as required by our Documentation Rigor principle.
 
-**Version**: 1.3.0 | **Ratified**: 2025-05-14 | **Last Amended**: 2025-09-23
+**Version**: 1.4.1 | **Ratified**: 2025-05-14 | **Last Amended**: 2025-09-24

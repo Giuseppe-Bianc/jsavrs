@@ -1,8 +1,8 @@
 
-# Implementation Plan: [FEATURE]
+# Implementation Plan: Assembly SSE and SSE2 Support
 
-**Branch**: `[###-feature-name]` | **Date**: [DATE] | **Spec**: [link]
-**Input**: Feature specification from `/specs/[###-feature-name]/spec.md`
+**Branch**: `003-aggiorna-tutto-il` | **Date**: 2025-09-24 | **Spec**: [/specs/003-aggiorna-tutto-il/spec.md](/specs/003-aggiorna-tutto-il/spec.md)
+**Input**: Feature specification from `/specs/003-aggiorna-tutto-il/spec.md`
 
 ## Execution Flow (/plan command scope)
 ```
@@ -31,18 +31,18 @@
 - Phase 3-4: Implementation execution (manual or via tools)
 
 ## Summary
-[Extract from feature spec: primary requirement + technical approach from research]
+This feature adds SSE and SSE2 instruction support to the jsavrs compiler system's assembly generation capabilities. The implementation will replace scalar arithmetic operations (ADD, MUL, SUB) on floats/doubles with SIMD equivalents (ADDPS, MULPS, ADDPD, MULPD) where applicable, optimize loops operating on arrays/vectors using XMM registers, and include fallback scalar instructions when SSE/SSE2 is not available. The system must maintain backward compatibility with existing interfaces and provide graceful degradation on older processors. Implementation will be at the intermediate representation phase with compile-time flags and runtime detection.
 
 ## Technical Context
-**Language/Version**: [e.g., Python 3.11, Swift 5.9, Rust 1.75 or NEEDS CLARIFICATION]  
-**Primary Dependencies**: [e.g., FastAPI, UIKit, LLVM or NEEDS CLARIFICATION]  
-**Storage**: [if applicable, e.g., PostgreSQL, CoreData, files or N/A]  
-**Testing**: [e.g., pytest, XCTest, cargo test or NEEDS CLARIFICATION]  
-**Target Platform**: [e.g., Linux server, iOS 15+, WASM or NEEDS CLARIFICATION]
-**Project Type**: [single/web/mobile - determines source structure]  
-**Performance Goals**: [domain-specific, e.g., 1000 req/s, 10k lines/sec, 60 fps or NEEDS CLARIFICATION]  
-**Constraints**: [domain-specific, e.g., <200ms p95, <100MB memory, offline-capable or NEEDS CLARIFICATION]  
-**Scale/Scope**: [domain-specific, e.g., 10k users, 1M LOC, 50 screens or NEEDS CLARIFICATION]
+**Language/Version**: Rust 1.75+  
+**Primary Dependencies**: Logos (lexer), Clap (CLI), Thiserror (error handling), Insta (snapshot testing), Criterion.rs (benchmarking)  
+**Storage**: Files in src/asm/ directory including generator.rs, instruction.rs, operand.rs, register.rs  
+**Testing**: Cargo test, Insta snapshot testing, custom SIMD validation harness, benchmarking infrastructure  
+**Target Platform**: Windows, Linux, macOS supporting SSE/SSE2 instructions (Pentium III+ CPU)  
+**Project Type**: Single project (compiler system)  
+**Performance Goals**: 20-50% execution speedup for vectorizable operations with measurable benchmarks  
+**Constraints**: Maintain backward compatibility with existing assembly interfaces, cross-platform compilation, graceful degradation on older CPUs  
+**Scale/Scope**: Vectorizable operations with typically 8-16 elements per loop for optimal performance
 
 ## Constitution Check
 *GATE: Must pass before Phase 0 research. Re-check after Phase 1 design.*
@@ -64,42 +64,36 @@ specs/[###-feature]/
 
 ### Source Code (repository root)
 ```
-# Option 1: Single project (DEFAULT)
+# Option 1: Single project (DEFAULT) - jsavrs compiler
 src/
-├── models/
-├── services/
-├── cli/
-└── lib/
+├── cli.rs              # Command-line interface
+├── lexer.rs            # Lexer implementation using Logos
+├── lib.rs              # Library exports
+├── main.rs             # Main entry point
+├── error/              # Error handling with thiserror
+├── ir/                 # Intermediate representation (NIR, HIR)
+├── location/           # Source location tracking
+├── parser/             # Parser and AST
+├── printers/           # AST/HIR printers
+├── semantic/           # Semantic analysis (type checking)
+├── time/               # Timing utilities
+├── tokens/             # Token definitions
+├── utils/              # Utility functions
+├── asm/                # Assembly code generation modules
+│   ├── generator.rs    # Assembly generator
+│   ├── instruction.rs  # Assembly instructions
+│   ├── operand.rs      # Assembly operands
+│   └── register.rs     # Assembly registers
+└── [Additional modules as needed]
 
 tests/
-├── contract/
-├── integration/
-└── unit/
+├── snapshots/          # Snapshot tests with insta
+└── [Other test files]
 
-# Option 2: Web application (when "frontend" + "backend" detected)
-backend/
-├── src/
-│   ├── models/
-│   ├── services/
-│   └── api/
-└── tests/
-
-frontend/
-├── src/
-│   ├── components/
-│   ├── pages/
-│   └── services/
-└── tests/
-
-# Option 3: Mobile + API (when "iOS/Android" detected)
-api/
-└── [same as backend above]
-
-ios/ or android/
-└── [platform-specific structure]
+benches/                # Benchmarking with Criterion.rs
 ```
 
-**Structure Decision**: [DEFAULT to Option 1 unless Technical Context indicates web/mobile app]
+**Structure Decision**: Option 1 (Single project compiler system) - The jsavrs project is a Rust-based compiler system with assembly generation capability
 
 ## Phase 0: Outline & Research
 1. **Extract unknowns from Technical Context** above:
@@ -113,36 +107,44 @@ ios/ or android/
      Task: "Research {unknown} for {feature context}"
    For each technology choice:
      Task: "Find best practices for {tech} in {domain}"
+   For SSE/SSE2 implementation:
+     Task: "Investigate efficient SIMD implementation strategies in Rust, emphasizing performance optimization, maintainability, and code safety"
+     Task: "Analyze the use of the CPUID instruction to detect processor capabilities, ensuring correct selection of SIMD features for different architectures."
+     Task: "Research aligned vs unaligned memory access patterns for SIMD"
+     Task: "Investigate trait-based dispatch mechanisms in Rust for selecting between SIMD and scalar operations, considering both runtime efficiency and code modularity."
    ```
 
 3. **Consolidate findings** in `research.md` using format:
    - Decision: [what was chosen]
    - Rationale: [why chosen]
    - Alternatives considered: [what else evaluated]
+   - Performance impact: [expected performance improvement]
 
-**Output**: research.md with all NEEDS CLARIFICATION resolved
+**Output**: research.md with all NEEDS CLARIFICATION resolved In great detail, precisely, meticulously, and in depth.
 
 ## Phase 1: Design & Contracts
 *Prerequisites: research.md complete*
 
 1. **Extract entities from feature spec** → `data-model.md`:
-   - Entity name, fields, relationships
-   - Validation rules from requirements
-   - State transitions if applicable
+   - Identify the name, attributes, and relationships of each entity to ensure a comprehensive understanding of the data model In great detail, precisely, meticulously, and in depth.
+   - Define validation rules as specified in the requirements document, including constraints, formats, and mandatory fields
+   - Document relevant state transitions for each entity, where applicable, to capture the entity lifecycle and behavior.
 
 2. **Generate API contracts** from functional requirements:
-   - For each user action → endpoint
-   - Use standard REST/GraphQL patterns
-   - Output OpenAPI/GraphQL schema to `/contracts/`
+   - For SIMD instruction generation → assembly generation function
+   - For CPU detection → CPUID checking function
+   - For SIMD/scalar selection → trait-based dispatch interface
+   - Use appropriate Rust patterns for low-level operations
+   - Output function signatures and interface specifications to `/contracts/`
 
 3. **Generate contract tests** from contracts:
-   - One test file per endpoint
-   - Assert request/response schemas
+   - One test file per SIMD operation type
+   - Assert SIMD vs scalar result equivalency
    - Tests must fail (no implementation yet)
 
 4. **Extract test scenarios** from user stories:
-   - Each story → integration test scenario
-   - Quickstart test = story validation steps
+   - Each story → SIMD operation validation scenario
+   - Quickstart test = SIMD performance validation steps
 
 5. **Update agent file incrementally** (O(1) operation):
    - Run `.specify/scripts/powershell/update-agent-context.ps1 -AgentType qwen`
@@ -171,7 +173,7 @@ ios/ or android/
 - Dependency order: Models before services before UI
 - Mark [P] for parallel execution (independent files)
 
-**Estimated Output**: 25-30 numbered, ordered tasks in tasks.md
+**Estimated Output**: 40-50 numbered, ordered tasks in tasks.md
 
 **IMPORTANT**: This phase is executed by the /tasks command, NOT by /plan
 
@@ -187,26 +189,26 @@ ios/ or android/
 
 | Violation | Why Needed | Simpler Alternative Rejected Because |
 |-----------|------------|-------------------------------------|
-| [e.g., 4th project] | [current need] | [why 3 projects insufficient] |
-| [e.g., Repository pattern] | [specific problem] | [why direct DB access insufficient] |
+| SIMD Implementation | Performance optimization requirements (20-50% speedup) | Scalar-only implementation would not meet performance goals |
+| Assembly Complexity | Low-level SSE/SSE2 instructions required for optimization | Higher-level abstractions would not provide necessary performance |
 
 
 ## Progress Tracking
 *This checklist is updated during execution flow*
 
 **Phase Status**:
-- [ ] Phase 0: Research complete (/plan command)
-- [ ] Phase 1: Design complete (/plan command)
-- [ ] Phase 2: Task planning complete (/plan command - describe approach only)
+- [x] Phase 0: Research complete (/plan command)
+- [x] Phase 1: Design complete (/plan command)
+- [x] Phase 2: Task planning complete (/plan command - describe approach only)
 - [ ] Phase 3: Tasks generated (/tasks command)
 - [ ] Phase 4: Implementation complete
 - [ ] Phase 5: Validation passed
 
 **Gate Status**:
-- [ ] Initial Constitution Check: PASS
-- [ ] Post-Design Constitution Check: PASS
-- [ ] All NEEDS CLARIFICATION resolved
-- [ ] Complexity deviations documented
+- [x] Initial Constitution Check: PASS
+- [x] Post-Design Constitution Check: PASS
+- [x] All NEEDS CLARIFICATION resolved
+- [x] Complexity deviations documented
 
 ---
 *Based on Constitution v1.4.1 - See `/memory/constitution.md`*
