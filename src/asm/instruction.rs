@@ -1,6 +1,7 @@
 //! Assembly instructions
 use std::fmt;
 use super::operand::Operand;
+use super::register::Register;
 
 /// Assembly instructions
 #[derive(Debug, Clone)]
@@ -209,6 +210,144 @@ impl fmt::Display for Instruction {
             Instruction::Bswap(op) => write!(f, "    bswap {}", op),
             Instruction::Xchg(op1, op2) => write!(f, "    xchg {}, {}", op1, op2),
             Instruction::Lock => write!(f, "    lock"),
+        }
+    }
+}
+
+/// Floating-point instructions following IEEE 754 standards
+#[derive(Debug, Clone)]
+pub enum FloatingPointInstruction {
+    // Single-precision arithmetic
+    AddSS { dst: Register, src1: Operand, src2: Operand },
+    SubSS { dst: Register, src1: Operand, src2: Operand },
+    MulSS { dst: Register, src1: Operand, src2: Operand },
+    DivSS { dst: Register, src1: Operand, src2: Operand },
+    SqrtSS { dst: Register, src: Operand },
+    RcpSS { dst: Register, src: Operand },      // Reciprocal
+    RsqrtSS { dst: Register, src: Operand },    // Reciprocal square root
+    
+    // Double-precision arithmetic
+    AddSD { dst: Register, src1: Operand, src2: Operand },
+    SubSD { dst: Register, src1: Operand, src2: Operand },
+    MulSD { dst: Register, src1: Operand, src2: Operand },
+    DivSD { dst: Register, src1: Operand, src2: Operand },
+    SqrtSD { dst: Register, src: Operand },
+    RcpSD { dst: Register, src: Operand },      // Reciprocal
+    RsqrtSD { dst: Register, src: Operand },    // Reciprocal square root
+    
+    // Vector operations (SSE)
+    AddPS { dst: Register, src1: Operand, src2: Operand },  // Add packed single
+    SubPS { dst: Register, src1: Operand, src2: Operand },
+    MulPS { dst: Register, src1: Operand, src2: Operand },
+    DivPS { dst: Register, src1: Operand, src2: Operand },
+    SqrtPS { dst: Register, src: Operand },
+    
+    AddPD { dst: Register, src1: Operand, src2: Operand },  // Add packed double
+    SubPD { dst: Register, src1: Operand, src2: Operand },
+    MulPD { dst: Register, src1: Operand, src2: Operand },
+    DivPD { dst: Register, src1: Operand, src2: Operand },
+    SqrtPD { dst: Register, src: Operand },
+    
+    // Comparison operations (single precision)
+    ComiSS { src1: Operand, src2: Operand },    // Compare scalar ordered single
+    UComiSS { src1: Operand, src2: Operand },   // Compare scalar unordered single
+    CmpSS { dst: Register, src1: Operand, src2: Operand, predicate: u8 }, // Compare packed single
+    
+    // Comparison operations (double precision)
+    ComiSD { src1: Operand, src2: Operand },    // Compare scalar ordered double
+    UComiSD { src1: Operand, src2: Operand },   // Compare scalar unordered double
+    CmpSD { dst: Register, src1: Operand, src2: Operand, predicate: u8 }, // Compare packed double
+    
+    // Conversion operations
+    CvttSS2SI { dst: Register, src: Operand },  // Convert with truncation scalar single to signed integer
+    CvtSS2SI { dst: Register, src: Operand },   // Convert scalar single to signed integer
+    CvttSD2SI { dst: Register, src: Operand },  // Convert with truncation scalar double to signed integer
+    CvtSD2SI { dst: Register, src: Operand },   // Convert scalar double to signed integer
+    CvttSD2SIQ { dst: Register, src: Operand }, // Convert scalar double to signed 64-bit integer
+    CvtSS2SD { dst: Register, src: Operand },   // Convert scalar single to scalar double
+    CvtSD2SS { dst: Register, src: Operand },   // Convert scalar double to scalar single
+    CvtSI2SS { dst: Register, src: Operand },   // Convert signed integer to scalar single
+    CvtSI2SD { dst: Register, src: Operand },   // Convert signed integer to scalar double
+    CvtSIQ2SS { dst: Register, src: Operand },  // Convert signed 64-bit integer to scalar single
+    CvtSIQ2SD { dst: Register, src: Operand },  // Convert signed 64-bit integer to scalar double
+    
+    // Move operations
+    MovSS { dst: Register, src: Operand },      // Move scalar single
+    MovSD { dst: Register, src: Operand },      // Move scalar double
+    MovAPS { dst: Register, src: Operand },     // Move aligned packed single
+    MovUPS { dst: Register, src: Operand },     // Move unaligned packed single
+    MovAPD { dst: Register, src: Operand },     // Move aligned packed double
+    MovUPD { dst: Register, src: Operand },     // Move unaligned packed double
+    
+    // Min/Max operations
+    MinSS { dst: Register, src1: Operand, src2: Operand },  // Minimum scalar single
+    MaxSS { dst: Register, src1: Operand, src2: Operand },  // Maximum scalar single
+    MinSD { dst: Register, src1: Operand, src2: Operand },  // Minimum scalar double
+    MaxSD { dst: Register, src1: Operand, src2: Operand },  // Maximum scalar double
+}
+
+impl fmt::Display for FloatingPointInstruction {
+    fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
+        match self {
+            FloatingPointInstruction::AddSS { dst, src1, src2 } => write!(f, "    addss {}, {}, {}", dst, src1, src2),
+            FloatingPointInstruction::SubSS { dst, src1, src2 } => write!(f, "    subss {}, {}, {}", dst, src1, src2),
+            FloatingPointInstruction::MulSS { dst, src1, src2 } => write!(f, "    mulss {}, {}, {}", dst, src1, src2),
+            FloatingPointInstruction::DivSS { dst, src1, src2 } => write!(f, "    divss {}, {}, {}", dst, src1, src2),
+            FloatingPointInstruction::SqrtSS { dst, src } => write!(f, "    sqrtss {}, {}", dst, src),
+            FloatingPointInstruction::RcpSS { dst, src } => write!(f, "    rcpss {}, {}", dst, src),
+            FloatingPointInstruction::RsqrtSS { dst, src } => write!(f, "    rsqrtss {}, {}", dst, src),
+            
+            FloatingPointInstruction::AddSD { dst, src1, src2 } => write!(f, "    addsd {}, {}, {}", dst, src1, src2),
+            FloatingPointInstruction::SubSD { dst, src1, src2 } => write!(f, "    subsd {}, {}, {}", dst, src1, src2),
+            FloatingPointInstruction::MulSD { dst, src1, src2 } => write!(f, "    mulsd {}, {}, {}", dst, src1, src2),
+            FloatingPointInstruction::DivSD { dst, src1, src2 } => write!(f, "    divsd {}, {}, {}", dst, src1, src2),
+            FloatingPointInstruction::SqrtSD { dst, src } => write!(f, "    sqrtsd {}, {}", dst, src),
+            FloatingPointInstruction::RcpSD { dst, src } => write!(f, "    rcpsd {}, {}", dst, src),
+            FloatingPointInstruction::RsqrtSD { dst, src } => write!(f, "    rsqrtsd {}, {}", dst, src),
+            
+            FloatingPointInstruction::AddPS { dst, src1, src2 } => write!(f, "    addps {}, {}, {}", dst, src1, src2),
+            FloatingPointInstruction::SubPS { dst, src1, src2 } => write!(f, "    subps {}, {}, {}", dst, src1, src2),
+            FloatingPointInstruction::MulPS { dst, src1, src2 } => write!(f, "    mulps {}, {}, {}", dst, src1, src2),
+            FloatingPointInstruction::DivPS { dst, src1, src2 } => write!(f, "    divps {}, {}, {}", dst, src1, src2),
+            FloatingPointInstruction::SqrtPS { dst, src } => write!(f, "    sqrtps {}, {}", dst, src),
+            
+            FloatingPointInstruction::AddPD { dst, src1, src2 } => write!(f, "    addpd {}, {}, {}", dst, src1, src2),
+            FloatingPointInstruction::SubPD { dst, src1, src2 } => write!(f, "    subpd {}, {}, {}", dst, src1, src2),
+            FloatingPointInstruction::MulPD { dst, src1, src2 } => write!(f, "    mulpd {}, {}, {}", dst, src1, src2),
+            FloatingPointInstruction::DivPD { dst, src1, src2 } => write!(f, "    divpd {}, {}, {}", dst, src1, src2),
+            FloatingPointInstruction::SqrtPD { dst, src } => write!(f, "    sqrtpd {}, {}", dst, src),
+            
+            FloatingPointInstruction::ComiSS { src1, src2 } => write!(f, "    comiss {}, {}", src1, src2),
+            FloatingPointInstruction::UComiSS { src1, src2 } => write!(f, "    ucomiss {}, {}", src1, src2),
+            FloatingPointInstruction::CmpSS { dst, src1, src2, predicate } => write!(f, "    cmpss {}, {}, {}, {}", dst, src1, src2, predicate),
+            
+            FloatingPointInstruction::ComiSD { src1, src2 } => write!(f, "    comisd {}, {}", src1, src2),
+            FloatingPointInstruction::UComiSD { src1, src2 } => write!(f, "    ucomisd {}, {}", src1, src2),
+            FloatingPointInstruction::CmpSD { dst, src1, src2, predicate } => write!(f, "    cmpsd {}, {}, {}, {}", dst, src1, src2, predicate),
+            
+            FloatingPointInstruction::CvttSS2SI { dst, src } => write!(f, "    cvttss2si {}, {}", dst, src),
+            FloatingPointInstruction::CvtSS2SI { dst, src } => write!(f, "    cvtss2si {}, {}", dst, src),
+            FloatingPointInstruction::CvttSD2SI { dst, src } => write!(f, "    cvttsd2si {}, {}", dst, src),
+            FloatingPointInstruction::CvtSD2SI { dst, src } => write!(f, "    cvtsd2si {}, {}", dst, src),
+            FloatingPointInstruction::CvttSD2SIQ { dst, src } => write!(f, "    cvttsd2siq {}, {}", dst, src),
+            FloatingPointInstruction::CvtSS2SD { dst, src } => write!(f, "    cvtss2sd {}, {}", dst, src),
+            FloatingPointInstruction::CvtSD2SS { dst, src } => write!(f, "    cvtsd2ss {}, {}", dst, src),
+            FloatingPointInstruction::CvtSI2SS { dst, src } => write!(f, "    cvtsi2ss {}, {}", dst, src),
+            FloatingPointInstruction::CvtSI2SD { dst, src } => write!(f, "    cvtsi2sd {}, {}", dst, src),
+            FloatingPointInstruction::CvtSIQ2SS { dst, src } => write!(f, "    cvtsi2ssq {}, {}", dst, src),
+            FloatingPointInstruction::CvtSIQ2SD { dst, src } => write!(f, "    cvtsi2sdq {}, {}", dst, src),
+            
+            FloatingPointInstruction::MovSS { dst, src } => write!(f, "    movss {}, {}", dst, src),
+            FloatingPointInstruction::MovSD { dst, src } => write!(f, "    movsd {}, {}", dst, src),
+            FloatingPointInstruction::MovAPS { dst, src } => write!(f, "    movaps {}, {}", dst, src),
+            FloatingPointInstruction::MovUPS { dst, src } => write!(f, "    movups {}, {}", dst, src),
+            FloatingPointInstruction::MovAPD { dst, src } => write!(f, "    movapd {}, {}", dst, src),
+            FloatingPointInstruction::MovUPD { dst, src } => write!(f, "    movupd {}, {}", dst, src),
+            
+            FloatingPointInstruction::MinSS { dst, src1, src2 } => write!(f, "    minss {}, {}, {}", dst, src1, src2),
+            FloatingPointInstruction::MaxSS { dst, src1, src2 } => write!(f, "    maxss {}, {}, {}", dst, src1, src2),
+            FloatingPointInstruction::MinSD { dst, src1, src2 } => write!(f, "    minsd {}, {}, {}", dst, src1, src2),
+            FloatingPointInstruction::MaxSD { dst, src1, src2 } => write!(f, "    maxsd {}, {}, {}", dst, src1, src2),
         }
     }
 }

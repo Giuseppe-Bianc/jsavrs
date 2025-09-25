@@ -43,43 +43,43 @@
 - Paths shown below assume single project - adjust based on plan.md structure
 
 ## Phase 3.1: Setup
-- [ ] T001 Create project structure per implementation plan for jsavrs floating-point support
-- [ ] T002 Initialize Rust project with IEEE 754 compliance dependencies
-- [ ] T003 [P] Configure linting and formatting tools for floating-point implementation
+- [x] T001 Create project structure per implementation plan for jsavrs floating-point support
+- [x] T002 Initialize Rust project with IEEE 754 compliance dependencies
+- [x] T003 [P] Configure linting and formatting tools for floating-point implementation
 
 ## Phase 3.2: Tests First (TDD) ⚠️ MUST COMPLETE BEFORE 3.3
 **CRITICAL: These tests MUST be written and MUST FAIL before ANY implementation**
-- [ ] T004 [P] Contract test for FloatingPointRegister enum in tests/floating_point_register_contract_test.rs
-- [ ] T005 [P] Contract test for FloatingPointInstruction enum in tests/floating_point_instruction_contract_test.rs
-- [ ] T006 [P] Contract test for FloatingPointOperand enum in tests/floating_point_operand_contract_test.rs
-- [ ] T007 [P] Contract test for IEEE754ExceptionType enum in tests/ieee754_exception_type_contract_test.rs
-- [ ] T008 [P] Contract test for RoundingMode enum in tests/rounding_mode_contract_test.rs
-- [ ] T009 [P] Contract test for MXCSRRegister in tests/mxcsr_register_contract_test.rs
-- [ ] T010 [P] Contract test for ABIConvention enum in tests/abi_convention_contract_test.rs
-- [ ] T011 [P] Integration test for floating-point instruction generation in tests/floating_point_generation_integration_test.rs
-- [ ] T012 [P] Integration test for floating-point register validation in tests/floating_point_registers_integration_test.rs
-- [ ] T013 [P] Integration test for IEEE 754 exception handling in tests/exception_handling_integration_test.rs
-- [ ] T014 [P] Integration test for ABI compliance in tests/abi_compliance_integration_test.rs
+- [x] T004 [P] Contract test for FloatingPointRegister enum in tests/floating_point_register_contract_test.rs
+- [x] T005 [P] Contract test for FloatingPointInstruction enum in tests/floating_point_instruction_contract_test.rs
+- [x] T006 [P] Contract test for FloatingPointOperand enum in tests/floating_point_operand_contract_test.rs
+- [x] T007 [P] Contract test for IEEE754ExceptionType enum in tests/ieee754_exception_type_contract_test.rs
+- [x] T008 [P] Contract test for RoundingMode enum in tests/rounding_mode_contract_test.rs
+- [x] T009 [P] Contract test for MXCSRRegister in tests/mxcsr_register_contract_test.rs
+- [x] T010 [P] Contract test for ABIConvention enum in tests/abi_convention_contract_test.rs
+- [x] T011 [P] Integration test for floating-point instruction generation in tests/floating_point_generation_integration_test.rs
+- [x] T012 [P] Integration test for floating-point register validation in tests/floating_point_registers_integration_test.rs
+- [x] T013 [P] Integration test for IEEE 754 exception handling in tests/exception_handling_integration_test.rs
+- [x] T014 [P] Integration test for ABI compliance in tests/abi_compliance_integration_test.rs
 
 ## Phase 3.3: Core Implementation (ONLY after tests are failing)
-- [ ] T015 [P] FloatingPointRegister enum in src/asm/register.rs
-- [ ] T016 [P] FloatingPointInstruction enum in src/asm/instruction.rs
-- [ ] T017 [P] FloatingPointOperand enum in src/asm/operand.rs
-- [ ] T018 [P] IEEE754ExceptionType enum in src/asm/exception.rs
-- [ ] T019 [P] RoundingMode enum in src/asm/rounding.rs
-- [ ] T020 [P] MXCSRRegister implementation in src/asm/mxcsr.rs
-- [ ] T021 [P] ABIConvention enum in src/asm/abi.rs
-- [ ] T022 [P] Floating-point validation functions in src/asm/validation.rs
-- [ ] T023 Update Display implementation for FloatingPointRegister in src/asm/register.rs
-- [ ] T024 Update Display implementation for FloatingPointInstruction in src/asm/instruction.rs
-- [ ] T025 Update Display implementation for FloatingPointOperand in src/asm/operand.rs
-- [ ] T026 Update operand handling for floating-point values in src/asm/operand.rs
-- [ ] T027 Implement floating-point code generation in src/asm/generator.rs
-- [ ] T028 Implement MXCSR register management in src/asm/mxcsr.rs
-- [ ] T029 Implement ABI compliance for floating-point parameters in src/asm/abi.rs
-- [ ] T030 Implement exception handling for floating-point operations in src/asm/exception.rs
-- [ ] T031 Implement rounding mode control in src/asm/rounding.rs
-- [ ] T032 Implement support for subnormal numbers with FTZ/DAZ modes in src/asm/subnormal.rs
+- [x] T015 [P] FloatingPointRegister enum in src/asm/register.rs
+- [x] T016 [P] FloatingPointInstruction enum in src/asm/instruction.rs
+- [x] T017 [P] FloatingPointOperand enum in src/asm/operand.rs
+- [x] T018 [P] IEEE754ExceptionType enum in src/asm/exception.rs
+- [x] T019 [P] RoundingMode enum in src/asm/rounding.rs
+- [x] T020 [P] MXCSRRegister implementation in src/asm/mxcsr.rs
+- [x] T021 [P] ABIConvention enum in src/asm/abi.rs
+- [x] T022 [P] Floating-point validation functions in src/asm/validation.rs
+- [x] T023 Update Display implementation for FloatingPointRegister in src/asm/register.rs
+- [x] T024 Update Display implementation for FloatingPointInstruction in src/asm/instruction.rs
+- [x] T025 Update Display implementation for FloatingPointOperand in src/asm/operand.rs
+- [x] T026 Update operand handling for floating-point values in src/asm/operand.rs
+- [x] T027 Implement floating-point code generation in src/asm/generator.rs
+- [x] T028 Implement MXCSR register management in src/asm/mxcsr.rs
+- [x] T029 Implement ABI compliance for floating-point parameters in src/asm/abi.rs
+- [x] T030 Implement exception handling for floating-point operations in src/asm/exception.rs
+- [x] T031 Implement rounding mode control in src/asm/rounding.rs
+- [x] T032 Implement support for subnormal numbers with FTZ/DAZ modes in src/asm/subnormal.rs
 - [ ] T033 Implement proper handling of signed zero in operations and comparisons in src/asm/signed_zero.rs
 
 ## Phase 3.4: Integration
