@@ -127,7 +127,7 @@ As a developer using the jsavrs compiler, I want to write code that performs flo
 - Q: Which IEEE 754 rounding modes should the compiler support? → A: All four standard modes: to-nearest, toward-positive-infinity, toward-negative-infinity, toward-zero
 - Q: Which x86-64 calling convention should be used for floating-point parameters and return values? → A: Allow configuration depending on target platform
 - Q: What floating-point precision levels should the compiler prioritize support for? → A: Both single and double precision with equal priority
-- Q: What are the performance expectations for floating-point operations compared to integer operations? → A: Performance is not a primary concern for this feature
+- Q: What are the performance expectations for floating-point operations compared to integer operations? → A: Floating-point operations must perform on par with integer operations while maintaining full IEEE 754 compliance. Performance excellence is a primary concern for this feature, consistent with the project's constitutional principles.
 - Q: How should the system handle floating-point exceptions (overflow, underflow, invalid operation, division by zero, inexact)? → A: Provide both behaviors configurable at compile-time
 
 ## Execution Status

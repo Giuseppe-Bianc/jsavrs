@@ -211,7 +211,7 @@ tests/
 - ABI compliance implementation for floating-point parameters [P]
 - Comprehensive test suite development for IEEE 754 compliance [P]
 
-**Estimated Output**: 25-30 numbered, ordered tasks in tasks.md
+**Estimated Output**: 30-40 numbered, ordered tasks in tasks.md
 
 **IMPORTANT**: This phase is executed by the /tasks command, NOT by /plan
 
@@ -227,8 +227,8 @@ tests/
 
 | Violation | Why Needed | Simpler Alternative Rejected Because |
 |-----------|------------|-------------------------------------|
-| [e.g., 4th project] | [current need] | [why 3 projects insufficient] |
-| [e.g., Repository pattern] | [specific problem] | [why direct DB access insufficient] |
+|  |  |  |
+|  |  |  |
 
 
 ## Progress Tracking
