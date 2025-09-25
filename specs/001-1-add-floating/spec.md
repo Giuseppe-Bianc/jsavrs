@@ -81,6 +81,15 @@ As a developer using the jsavrs compiler, I want to write code that performs flo
 - **FR-010**: System MUST handle IEEE 754 special values like NaN, infinity, and signed zero correctly
 - **FR-011**: System MUST provide access to floating-point control registers for rounding modes and exception handling
 - **FR-012**: System MUST ensure generated floating-point code follows x86-64 calling conventions for floating-point parameters and return values, configurable depending on target platform (Windows x64 ABI for Windows, System V ABI for Unix/Linux)
+- **FR-13**: System MUST support the full set of basic IEEE 754 arithmetic operations, including add, subtract, multiply, divide, and square root for both single and double precision formats.
+- **FR-014**: System MUST support IEEE 754 conversion operations between floating-point and integer types (both signed and unsigned) for 32-bit and 64-bit integers, with defined behavior for out-of-range values (e.g., saturation or undefined)
+- **FR-015**: System MUST correctly handle and generate code for IEEE 754 subnormal (denormal) numbers, ensuring computations with them are performed according to the standard, and MUST provide a compile-time option to enable Flush-To-Zero (FTZ) and Denormals-Are-Zero (DAZ) modes via the MXCSR register for performance-critical code 
+- **FR-016**: System MUST implement all IEEE 754 comparison predicates, correctly handling the "unordered" result that occurs when at least one operand is NaN. Comparisons MUST not raise an exception when a NaN is an operand
+- **FR-017**: System MUST provide a mechanism for the compiled program to read and write the floating-point status and control registers (specifically the MXCSR register for SSE/AVX instructions). This includes the ability to clear, set, and test the five standard exception flags: Invalid Operation, Division by Zero, Overflow, Underflow, and Inexact
+- **FR-018**: System MUST ensure that the floating-point control state (e.g., rounding mode, exception masks in MXCSR) is managed according to the target platform's ABI. Specifically, the control bits of the MXCSR register are callee-saved and must be preserved across function calls, while the status bits are caller-saved
+- **FR-019**: System MUST support fused multiply-add (FMA) operations if the target CPU architecture supports them, as they are a recommended operation in the IEEE 754 standard and provide higher precision for common computational patterns
+- **FR-020**: System MUST correctly handle signed zero (+0 and -0) in all operations and comparisons, ensuring that +0 == -0 evaluates to true, but that operations like 1 / +0 and 1 / -0 yield +Infinity and -Infinity respectively, as per the IEEE 754 standard
+
 
 ### Key Entities *(include if feature involves data)*
 - **Floating-Point Register**: An x86-64 register used to store floating-point values, supporting IEEE 754 standard formats including single-precision (32-bit) and double-precision (64-bit) values
