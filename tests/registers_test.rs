@@ -461,3 +461,219 @@ fn test_all_register_sizes() {
     assert_eq!(Register::R14B.size(), 8);
     assert_eq!(Register::R15B.size(), 8);
 }
+
+#[test]
+fn test_to_32bit_edge_cases() {
+    // Test the `_ => *self` case in to_32bit function
+    // This tests registers that are already 32-bit or smaller and should return themselves
+    
+    // 32-bit registers should return themselves
+    assert_eq!(Register::EAX.to_32bit(), Register::EAX);
+    assert_eq!(Register::EBX.to_32bit(), Register::EBX);
+    assert_eq!(Register::ECX.to_32bit(), Register::ECX);
+    assert_eq!(Register::EDX.to_32bit(), Register::EDX);
+    assert_eq!(Register::ESI.to_32bit(), Register::ESI);
+    assert_eq!(Register::EDI.to_32bit(), Register::EDI);
+    assert_eq!(Register::EBP.to_32bit(), Register::EBP);
+    assert_eq!(Register::ESP.to_32bit(), Register::ESP);
+    assert_eq!(Register::R8D.to_32bit(), Register::R8D);
+    assert_eq!(Register::R9D.to_32bit(), Register::R9D);
+    assert_eq!(Register::R10D.to_32bit(), Register::R10D);
+    assert_eq!(Register::R11D.to_32bit(), Register::R11D);
+    assert_eq!(Register::R12D.to_32bit(), Register::R12D);
+    assert_eq!(Register::R13D.to_32bit(), Register::R13D);
+    assert_eq!(Register::R14D.to_32bit(), Register::R14D);
+    assert_eq!(Register::R15D.to_32bit(), Register::R15D);
+    
+    // 16-bit registers should be converted to their 32-bit equivalents
+    assert_eq!(Register::AX.to_32bit(), Register::EAX);
+    assert_eq!(Register::BX.to_32bit(), Register::EBX);
+    assert_eq!(Register::CX.to_32bit(), Register::ECX);
+    assert_eq!(Register::DX.to_32bit(), Register::EDX);
+    assert_eq!(Register::SI.to_32bit(), Register::ESI);
+    assert_eq!(Register::DI.to_32bit(), Register::EDI);
+    assert_eq!(Register::BP.to_32bit(), Register::EBP);
+    assert_eq!(Register::SP.to_32bit(), Register::ESP);
+    assert_eq!(Register::R8W.to_32bit(), Register::R8D);
+    assert_eq!(Register::R9W.to_32bit(), Register::R9D);
+    assert_eq!(Register::R10W.to_32bit(), Register::R10D);
+    assert_eq!(Register::R11W.to_32bit(), Register::R11D);
+    assert_eq!(Register::R12W.to_32bit(), Register::R12D);
+    assert_eq!(Register::R13W.to_32bit(), Register::R13D);
+    assert_eq!(Register::R14W.to_32bit(), Register::R14D);
+    assert_eq!(Register::R15W.to_32bit(), Register::R15D);
+    
+    // 8-bit registers should be converted to their 32-bit equivalents
+    assert_eq!(Register::AL.to_32bit(), Register::EAX);
+    assert_eq!(Register::BL.to_32bit(), Register::EBX);
+    assert_eq!(Register::CL.to_32bit(), Register::ECX);
+    assert_eq!(Register::DL.to_32bit(), Register::EDX);
+    assert_eq!(Register::SIL.to_32bit(), Register::ESI);
+    assert_eq!(Register::DIL.to_32bit(), Register::EDI);
+    assert_eq!(Register::BPL.to_32bit(), Register::EBP);
+    assert_eq!(Register::SPL.to_32bit(), Register::ESP);
+    assert_eq!(Register::R8B.to_32bit(), Register::R8D);
+    assert_eq!(Register::R9B.to_32bit(), Register::R9D);
+    assert_eq!(Register::R10B.to_32bit(), Register::R10D);
+    assert_eq!(Register::R11B.to_32bit(), Register::R11D);
+    assert_eq!(Register::R12B.to_32bit(), Register::R12D);
+    assert_eq!(Register::R13B.to_32bit(), Register::R13D);
+    assert_eq!(Register::R14B.to_32bit(), Register::R14D);
+    assert_eq!(Register::R15B.to_32bit(), Register::R15D);
+}
+
+#[test]
+fn test_to_16bit_function_comprehensive() {
+    // Test the to_16bit function (lines 75-87)
+    // This tests all cases in the match statement including the `_ => *self` case
+    
+    // 64-bit to 16-bit conversion
+    assert_eq!(Register::RAX.to_16bit(), Register::AX);
+    assert_eq!(Register::RBX.to_16bit(), Register::BX);
+    assert_eq!(Register::RCX.to_16bit(), Register::CX);
+    assert_eq!(Register::RDX.to_16bit(), Register::DX);
+    assert_eq!(Register::RSI.to_16bit(), Register::SI);
+    assert_eq!(Register::RDI.to_16bit(), Register::DI);
+    assert_eq!(Register::RBP.to_16bit(), Register::BP);
+    assert_eq!(Register::RSP.to_16bit(), Register::SP);
+    assert_eq!(Register::R8.to_16bit(), Register::R8W);
+    assert_eq!(Register::R9.to_16bit(), Register::R9W);
+    assert_eq!(Register::R10.to_16bit(), Register::R10W);
+    assert_eq!(Register::R11.to_16bit(), Register::R11W);
+    assert_eq!(Register::R12.to_16bit(), Register::R12W);
+    assert_eq!(Register::R13.to_16bit(), Register::R13W);
+    assert_eq!(Register::R14.to_16bit(), Register::R14W);
+    assert_eq!(Register::R15.to_16bit(), Register::R15W);
+    
+    // 32-bit to 16-bit conversion
+    assert_eq!(Register::EAX.to_16bit(), Register::AX);
+    assert_eq!(Register::EBX.to_16bit(), Register::BX);
+    assert_eq!(Register::ECX.to_16bit(), Register::CX);
+    assert_eq!(Register::EDX.to_16bit(), Register::DX);
+    assert_eq!(Register::ESI.to_16bit(), Register::SI);
+    assert_eq!(Register::EDI.to_16bit(), Register::DI);
+    assert_eq!(Register::EBP.to_16bit(), Register::BP);
+    assert_eq!(Register::ESP.to_16bit(), Register::SP);
+    assert_eq!(Register::R8D.to_16bit(), Register::R8W);
+    assert_eq!(Register::R9D.to_16bit(), Register::R9W);
+    assert_eq!(Register::R10D.to_16bit(), Register::R10W);
+    assert_eq!(Register::R11D.to_16bit(), Register::R11W);
+    assert_eq!(Register::R12D.to_16bit(), Register::R12W);
+    assert_eq!(Register::R13D.to_16bit(), Register::R13W);
+    assert_eq!(Register::R14D.to_16bit(), Register::R14W);
+    assert_eq!(Register::R15D.to_16bit(), Register::R15W);
+    
+    // 16-bit registers should return themselves (the `_ => *self` case)
+    assert_eq!(Register::AX.to_16bit(), Register::AX);
+    assert_eq!(Register::BX.to_16bit(), Register::BX);
+    assert_eq!(Register::CX.to_16bit(), Register::CX);
+    assert_eq!(Register::DX.to_16bit(), Register::DX);
+    assert_eq!(Register::SI.to_16bit(), Register::SI);
+    assert_eq!(Register::DI.to_16bit(), Register::DI);
+    assert_eq!(Register::BP.to_16bit(), Register::BP);
+    assert_eq!(Register::SP.to_16bit(), Register::SP);
+    assert_eq!(Register::R8W.to_16bit(), Register::R8W);
+    assert_eq!(Register::R9W.to_16bit(), Register::R9W);
+    assert_eq!(Register::R10W.to_16bit(), Register::R10W);
+    assert_eq!(Register::R11W.to_16bit(), Register::R11W);
+    assert_eq!(Register::R12W.to_16bit(), Register::R12W);
+    assert_eq!(Register::R13W.to_16bit(), Register::R13W);
+    assert_eq!(Register::R14W.to_16bit(), Register::R14W);
+    assert_eq!(Register::R15W.to_16bit(), Register::R15W);
+    
+    // 8-bit to 16-bit conversion
+    assert_eq!(Register::AL.to_16bit(), Register::AX);
+    assert_eq!(Register::BL.to_16bit(), Register::BX);
+    assert_eq!(Register::CL.to_16bit(), Register::CX);
+    assert_eq!(Register::DL.to_16bit(), Register::DX);
+    assert_eq!(Register::SIL.to_16bit(), Register::SI);
+    assert_eq!(Register::DIL.to_16bit(), Register::DI);
+    assert_eq!(Register::BPL.to_16bit(), Register::BP);
+    assert_eq!(Register::SPL.to_16bit(), Register::SP);
+    assert_eq!(Register::R8B.to_16bit(), Register::R8W);
+    assert_eq!(Register::R9B.to_16bit(), Register::R9W);
+    assert_eq!(Register::R10B.to_16bit(), Register::R10W);
+    assert_eq!(Register::R11B.to_16bit(), Register::R11W);
+    assert_eq!(Register::R12B.to_16bit(), Register::R12W);
+    assert_eq!(Register::R13B.to_16bit(), Register::R13W);
+    assert_eq!(Register::R14B.to_16bit(), Register::R14W);
+    assert_eq!(Register::R15B.to_16bit(), Register::R15W);
+}
+
+#[test]
+fn test_to_8bit_function_comprehensive() {
+    // Test the to_8bit function (lines 96-110)
+    // This tests all cases in the match statement including the `_ => *self` case
+    
+    // 64-bit to 8-bit conversion
+    assert_eq!(Register::RAX.to_8bit(), Register::AL);
+    assert_eq!(Register::RBX.to_8bit(), Register::BL);
+    assert_eq!(Register::RCX.to_8bit(), Register::CL);
+    assert_eq!(Register::RDX.to_8bit(), Register::DL);
+    assert_eq!(Register::RSI.to_8bit(), Register::SIL);
+    assert_eq!(Register::RDI.to_8bit(), Register::DIL);
+    assert_eq!(Register::RBP.to_8bit(), Register::BPL);
+    assert_eq!(Register::RSP.to_8bit(), Register::SPL);
+    assert_eq!(Register::R8.to_8bit(), Register::R8B);
+    assert_eq!(Register::R9.to_8bit(), Register::R9B);
+    assert_eq!(Register::R10.to_8bit(), Register::R10B);
+    assert_eq!(Register::R11.to_8bit(), Register::R11B);
+    assert_eq!(Register::R12.to_8bit(), Register::R12B);
+    assert_eq!(Register::R13.to_8bit(), Register::R13B);
+    assert_eq!(Register::R14.to_8bit(), Register::R14B);
+    assert_eq!(Register::R15.to_8bit(), Register::R15B);
+    
+    // 32-bit to 8-bit conversion
+    assert_eq!(Register::EAX.to_8bit(), Register::AL);
+    assert_eq!(Register::EBX.to_8bit(), Register::BL);
+    assert_eq!(Register::ECX.to_8bit(), Register::CL);
+    assert_eq!(Register::EDX.to_8bit(), Register::DL);
+    assert_eq!(Register::ESI.to_8bit(), Register::SIL);
+    assert_eq!(Register::EDI.to_8bit(), Register::DIL);
+    assert_eq!(Register::EBP.to_8bit(), Register::BPL);
+    assert_eq!(Register::ESP.to_8bit(), Register::SPL);
+    assert_eq!(Register::R8D.to_8bit(), Register::R8B);
+    assert_eq!(Register::R9D.to_8bit(), Register::R9B);
+    assert_eq!(Register::R10D.to_8bit(), Register::R10B);
+    assert_eq!(Register::R11D.to_8bit(), Register::R11B);
+    assert_eq!(Register::R12D.to_8bit(), Register::R12B);
+    assert_eq!(Register::R13D.to_8bit(), Register::R13B);
+    assert_eq!(Register::R14D.to_8bit(), Register::R14B);
+    assert_eq!(Register::R15D.to_8bit(), Register::R15B);
+    
+    // 16-bit to 8-bit conversion
+    assert_eq!(Register::AX.to_8bit(), Register::AL);
+    assert_eq!(Register::BX.to_8bit(), Register::BL);
+    assert_eq!(Register::CX.to_8bit(), Register::CL);
+    assert_eq!(Register::DX.to_8bit(), Register::DL);
+    assert_eq!(Register::SI.to_8bit(), Register::SIL);
+    assert_eq!(Register::DI.to_8bit(), Register::DIL);
+    assert_eq!(Register::BP.to_8bit(), Register::BPL);
+    assert_eq!(Register::SP.to_8bit(), Register::SPL);
+    assert_eq!(Register::R8W.to_8bit(), Register::R8B);
+    assert_eq!(Register::R9W.to_8bit(), Register::R9B);
+    assert_eq!(Register::R10W.to_8bit(), Register::R10B);
+    assert_eq!(Register::R11W.to_8bit(), Register::R11B);
+    assert_eq!(Register::R12W.to_8bit(), Register::R12B);
+    assert_eq!(Register::R13W.to_8bit(), Register::R13B);
+    assert_eq!(Register::R14W.to_8bit(), Register::R14B);
+    assert_eq!(Register::R15W.to_8bit(), Register::R15B);
+    
+    // 8-bit registers should return themselves (the `_ => *self` case)
+    assert_eq!(Register::AL.to_8bit(), Register::AL);
+    assert_eq!(Register::BL.to_8bit(), Register::BL);
+    assert_eq!(Register::CL.to_8bit(), Register::CL);
+    assert_eq!(Register::DL.to_8bit(), Register::DL);
+    assert_eq!(Register::SIL.to_8bit(), Register::SIL);
+    assert_eq!(Register::DIL.to_8bit(), Register::DIL);
+    assert_eq!(Register::BPL.to_8bit(), Register::BPL);
+    assert_eq!(Register::SPL.to_8bit(), Register::SPL);
+    assert_eq!(Register::R8B.to_8bit(), Register::R8B);
+    assert_eq!(Register::R9B.to_8bit(), Register::R9B);
+    assert_eq!(Register::R10B.to_8bit(), Register::R10B);
+    assert_eq!(Register::R11B.to_8bit(), Register::R11B);
+    assert_eq!(Register::R12B.to_8bit(), Register::R12B);
+    assert_eq!(Register::R13B.to_8bit(), Register::R13B);
+    assert_eq!(Register::R14B.to_8bit(), Register::R14B);
+    assert_eq!(Register::R15B.to_8bit(), Register::R15B);
+}
