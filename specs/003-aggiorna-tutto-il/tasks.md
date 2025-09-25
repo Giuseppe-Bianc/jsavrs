@@ -43,9 +43,9 @@
 - Paths shown below assume single project - adjust based on plan.md structure
 
 ## Phase 3.1: Setup
-- [ ] T001 [P] Configure SIMD-specific Rust features and dependencies in Cargo.toml
-- [ ] T002 [P] Create SIMD module structure in src/asm/simd/ with initial files
-- [ ] T003 [P] Update rustfmt.toml to include new SIMD formatting rules
+- [X] T001 [P] Configure SIMD-specific Rust features and dependencies in Cargo.toml
+- [X] T002 [P] Create SIMD module structure in src/asm/simd/ with initial files
+- [X] T003 [P] Update rustfmt.toml to include new SIMD formatting rules
 
 ## Phase 3.2: Tests First (TDD) ⚠️ MUST COMPLETE BEFORE 3.3
 **CRITICAL: These tests MUST be written and MUST FAIL before ANY implementation**
