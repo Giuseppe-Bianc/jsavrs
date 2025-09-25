@@ -205,7 +205,7 @@ fn test_generated_assembly_formatting_and_correctness() {
 #[test]
 fn test_assembly_element_type_checking_methods() {
     // Test assembly element manipulation methods
-    let mut generator = NasmGenerator::new(TargetOS::Linux);
+    let _generator = NasmGenerator::new(TargetOS::Linux);
     
     // Create various assembly elements
     let section_elem = AssemblyElement::Section(Section::Text);
