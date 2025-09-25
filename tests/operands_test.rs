@@ -154,3 +154,100 @@ fn test_operand_as_register() {
     let mem_ref_op = Operand::mem_ref(Some(Register::RAX), Some(Register::RBX), 2, 8);
     assert_eq!(mem_ref_op.as_register(), None);
 }
+
+#[test]
+fn test_operand_as_immediate() {
+    // Test as_immediate function for immediate operands
+    let imm_op = Operand::imm(42);
+    assert_eq!(imm_op.as_immediate(), Some(42));
+    
+    let neg_imm_op = Operand::imm(-100);
+    assert_eq!(neg_imm_op.as_immediate(), Some(-100));
+    
+    // Test as_immediate function for non-immediate operands (should return None)
+    let reg_op = Operand::reg(Register::RAX);
+    assert_eq!(reg_op.as_immediate(), None);
+    
+    let label_op = Operand::label("test_label");
+    assert_eq!(label_op.as_immediate(), None);
+    
+    let mem_op = Operand::mem("rax+8");
+    assert_eq!(mem_op.as_immediate(), None);
+    
+    let mem_ref_op = Operand::mem_ref(Some(Register::RAX), Some(Register::RBX), 2, 8);
+    assert_eq!(mem_ref_op.as_immediate(), None);
+}
+
+#[test]
+fn test_operand_as_label() {
+    // Test as_label function for label operands
+    let label_op = Operand::label("test_label");
+    assert_eq!(label_op.as_label(), Some("test_label"));
+    
+    let start_label_op = Operand::label("start");
+    assert_eq!(start_label_op.as_label(), Some("start"));
+    
+    // Test as_label function for non-label operands (should return None)
+    let reg_op = Operand::reg(Register::RAX);
+    assert_eq!(reg_op.as_label(), None);
+    
+    let imm_op = Operand::imm(42);
+    assert_eq!(imm_op.as_label(), None);
+    
+    let mem_op = Operand::mem("rax+8");
+    assert_eq!(mem_op.as_label(), None);
+    
+    let mem_ref_op = Operand::mem_ref(Some(Register::RAX), Some(Register::RBX), 2, 8);
+    assert_eq!(mem_ref_op.as_label(), None);
+}
+
+#[test]
+fn test_operand_as_memory() {
+    // Test as_memory function for memory operands
+    let mem_op = Operand::mem("rax+8");
+    assert_eq!(mem_op.as_memory(), Some("rax+8"));
+    
+    let mem_addr_op = Operand::mem("rsp-4");
+    assert_eq!(mem_addr_op.as_memory(), Some("rsp-4"));
+    
+    // Test as_memory function for non-memory operands (should return None)
+    let reg_op = Operand::reg(Register::RAX);
+    assert_eq!(reg_op.as_memory(), None);
+    
+    let imm_op = Operand::imm(42);
+    assert_eq!(imm_op.as_memory(), None);
+    
+    let label_op = Operand::label("test_label");
+    assert_eq!(label_op.as_memory(), None);
+    
+    // Note: MemoryRef operands are different from Memory operands
+    let mem_ref_op = Operand::mem_ref(Some(Register::RAX), Some(Register::RBX), 2, 8);
+    assert_eq!(mem_ref_op.as_memory(), None);
+}
+
+#[test]
+fn test_operand_as_memory_ref() {
+    // Test as_memory_ref function for memory reference operands
+    let mem_ref_op = Operand::mem_ref(Some(Register::RAX), Some(Register::RBX), 2, 8);
+    if let Some((base, index, scale, disp)) = mem_ref_op.as_memory_ref() {
+        assert_eq!(base, &Some(Register::RAX));
+        assert_eq!(index, &Some(Register::RBX));
+        assert_eq!(scale, &2);
+        assert_eq!(disp, &8);
+    } else {
+        panic!("Expected Some for memory reference operand");
+    }
+    
+    // Test as_memory_ref function for non-memory reference operands (should return None)
+    let reg_op = Operand::reg(Register::RAX);
+    assert_eq!(reg_op.as_memory_ref(), None);
+    
+    let imm_op = Operand::imm(42);
+    assert_eq!(imm_op.as_memory_ref(), None);
+    
+    let label_op = Operand::label("test_label");
+    assert_eq!(label_op.as_memory_ref(), None);
+    
+    let mem_op = Operand::mem("rax+8");
+    assert_eq!(mem_op.as_memory_ref(), None);
+}

@@ -16,7 +16,7 @@ use std::{
     path::Path,
     //process,
 };
-use jsavrs::asm::generator::TargetOS;
+//use jsavrs::asm::generator::TargetOS;
 
 // Helper function per gestire e stampare errori I/O
 fn handle_io_error<T: std::fmt::Display>(error_type: &str, e: T) {
