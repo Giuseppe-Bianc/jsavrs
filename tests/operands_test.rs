@@ -131,3 +131,26 @@ fn test_operand_constructor_functions() {
     let expected = Operand::mem_ref(Some(Register::RSP), None, 1, 0);
     assert_eq!(mem_ref_op, expected);
 }
+
+#[test]
+fn test_operand_as_register() {
+    // Test as_register function for register operands
+    let reg_op = Operand::reg(Register::RAX);
+    assert_eq!(reg_op.as_register(), Some(&Register::RAX));
+    
+    let rbx_op = Operand::reg(Register::RBX);
+    assert_eq!(rbx_op.as_register(), Some(&Register::RBX));
+    
+    // Test as_register function for non-register operands (should return None)
+    let imm_op = Operand::imm(42);
+    assert_eq!(imm_op.as_register(), None);
+    
+    let label_op = Operand::label("test_label");
+    assert_eq!(label_op.as_register(), None);
+    
+    let mem_op = Operand::mem("rax+8");
+    assert_eq!(mem_op.as_register(), None);
+    
+    let mem_ref_op = Operand::mem_ref(Some(Register::RAX), Some(Register::RBX), 2, 8);
+    assert_eq!(mem_ref_op.as_register(), None);
+}
