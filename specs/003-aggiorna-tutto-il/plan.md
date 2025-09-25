@@ -53,7 +53,7 @@ All implementations must follow the Core Principles of Safety First, Performance
 
 ### Documentation (this feature)
 ```
-specs/[###-feature]/
+specs/003-aggiorna-tutto-il/
 ├── plan.md              # This file (/plan command output)
 ├── research.md          # Phase 0 output (/plan command)
 ├── data-model.md        # Phase 1 output (/plan command)
