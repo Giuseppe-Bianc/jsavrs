@@ -117,7 +117,7 @@ Task: "Integration test auth in tests/integration/test_auth.py"
    - Dependencies block parallel execution
 
 5. **Community Integration**:
-   - Each feature should include documentation contributions
+   - Each feature must include detailed documentation following Documentation Rigor principle (research.md, data-model.md), utilizing AI tools when appropriate for enhanced detail
    - Code reviews must follow respectful communication principles
    - Tests should exemplify shared learning opportunities
 
