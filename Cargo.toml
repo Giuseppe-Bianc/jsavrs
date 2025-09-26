@@ -27,7 +27,7 @@ clap = { version = "4.5.48", features = ["cargo", "derive"] }
 console = "0.16.1"
 logos = "0.15.1"
 thiserror = "2.0.16"
-regex = "1.11.2"
+regex = "1.11.3"
 lazy_static = "1.5.0"
 uuid = { version = "1.18.1", features = ["v4"] }
 petgraph = "0.8.2"
