@@ -14,6 +14,7 @@
 - [ ] T006 [P] Add failing unit tests in `tests/asm_register_tests.rs` for linear-scan allocation, spilling, and ABI preservation across System V and Microsoft x64 conventions.
 - [ ] T007 [P] Add failing unit tests in `tests/asm_error_tests.rs` for stub generation (`; TODO` markers), JSON diagnostics, and error severity thresholds.
 - [ ] T008 [P] Add failing unit tests in `tests/asm_debug_tests.rs` ensuring debug level configuration, DWARF section emission, and ±2 line mapping guarantees.
+- [ ] T008b [P] Add failing unit tests in `tests/asm_pic_tests.rs` for position-independent code generation, including GOT/PLT section validation, RIP-relative addressing conversion, dynamic symbol resolution, and shared library compatibility verification.
 - [ ] T009 [P] Add failing integration test in `tests/asm_tests.rs` that assembles a sample IR module, invokes NASM via helper, and asserts semantic preservation.
 - [ ] T010 [P] Add failing snapshot test harness in `tests/asm_snapshot_tests.rs` plus fixture references under `tests/asm_fixtures/` for verifying generated assembly text.
 
@@ -30,7 +31,14 @@
 - [ ] T020 Implement structured `ErrorHandler` with stub code generation, JSON diagnostics, and continuation thresholds in `src/asm/error.rs`.
 - [ ] T021 Implement `DebugInfoGenerator` with multi-level output and DWARF section writers in `src/asm/debug/mod.rs`.
 - [ ] T022 Implement optimization pipeline (peephole passes, redundancy removal, constant folding) in `src/asm/optimization/mod.rs`.
-- [ ] T023 Implement PIC/GOT/PLT helpers and RIP-relative addressing utilities in `src/asm/x86_64/pic.rs` and integrate with mapper/output.
+- [ ] T023 Implement comprehensive Position-Independent Code (PIC) support for shared library compatibility:
+  - [ ] T023a Create `src/asm/x86_64/pic.rs` with GOT (Global Offset Table) management, including GOT entry allocation, GOT section generation, and GOT-relative addressing utilities
+  - [ ] T023b Implement PLT (Procedure Linkage Table) handling for external function calls, including PLT entry generation, lazy binding stub creation, and PLT section management
+  - [ ] T023c Develop RIP-relative addressing utilities for position-independent data access, including automatic conversion of absolute memory references to RIP-relative form
+  - [ ] T023d Create dynamic symbol resolution system for external symbols, including external symbol tracking, relocation entry generation, and symbol import/export management  
+  - [ ] T023e Integrate PIC support with instruction mapper (T015) to automatically detect and convert position-dependent instructions to PIC-compatible equivalents
+  - [ ] T023f Integrate PIC support with assembly output generator (T019) to emit proper GOT/PLT sections, relocation tables, and dynamic symbol information
+  - [ ] T023g Add PIC mode configuration to generator options with validation for shared library vs executable modes and cross-platform compatibility checks
 - [ ] T024 Extend `AssemblyGenerator` concurrency path with Rayon-based parallel module processing and thread-safe symbol table usage in `src/asm/generator.rs`.
 
 ## Phase 3.4: Integration
@@ -42,15 +50,15 @@
 ## Phase 3.5: Polish
 - [ ] T029 [P] Add Criterion benchmarks for assembly generation in `benches/asm_generator_bench.rs` covering small, medium, and large IR modules.
 - [ ] T030 [P] Update documentation (`README.md`, new `docs/assembly-generator.md`) with usage instructions, debug levels, and ABI notes.
-- [ ] T031 [P] Populate `tests/asm_fixtures/` with representative IR/assembly pairs used by snapshot and integration tests.
+- [ ] T031 [P] Populate `tests/asm_fixtures/` with representative IR/assembly pairs used by snapshot and integration tests, including PIC-specific test cases with GOT/PLT sections and external symbol references.
 - [ ] T032 Finalize quality gates: run `cargo fmt`, `cargo clippy --all-targets --all-features`, execute the new test/benchmark suites, and refresh `specs/001-progettare-e-implementare/quickstart.md` notes with any deviations.
 
 ## Dependencies
 - T001 → T002 → T003 establish tooling before tests.
-- Tests (T004–T010) must land before any implementation tasks T011+. Keep snapshot fixtures (T010) ready before ModuleGenerator work (T014).
+- Tests (T004–T010, including T008b) must land before any implementation tasks T011+. Keep snapshot fixtures (T010) ready before ModuleGenerator work (T014).
 - T012 depends on T011 & T013; T014 depends on T012 & T015; T015 depends on T002 & T005; T016 depends on T006.
 - ABI work (T017) must follow register allocator (T016); symbol/output/error/debug/optimization tasks (T018–T022) depend on preceding pipeline pieces.
-- PIC support (T023) requires instruction mapper (T015) and output builder (T019).
+- PIC support (T023a-g) requires instruction mapper (T015) and output builder (T019); T023e depends on T015, T023f depends on T019; PIC test task T008b should be implemented alongside T023a for TDD compliance.
 - Concurrency (T024) depends on stable generator core (T012) and symbol manager (T018).
 - Integration tasks (T025–T028) depend on completion of core implementation tasks.
 - Polish tasks (T029–T032) run after all integration tasks finish.
@@ -63,6 +71,7 @@
 /task run T006
 /task run T007
 /task run T008
+/task run T008b
 /task run T009
 /task run T010
 
