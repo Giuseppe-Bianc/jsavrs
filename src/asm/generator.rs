@@ -1,6 +1,6 @@
 //! NASM x86-64 assembly code generator
-use super::instruction::Instruction;
-use super::operand::Operand;
+use super::instruction::{Instruction, FloatingPointInstruction};
+use super::operand::{Operand, FloatingPointOperand};
 use super::register::Register;
 use std::collections::HashSet;
 use std::fmt;
@@ -63,6 +63,7 @@ pub enum AssemblyElement {
     Section(Section),
     Label(String),
     Instruction(Instruction),
+    FloatingPointInstruction(FloatingPointInstruction),
     Directive(String),
     Comment(String),
     EmptyLine,
@@ -85,6 +86,11 @@ impl AssemblyElement {
     /// Check if this element is an instruction
     pub fn is_instruction(&self) -> bool {
         matches!(self, AssemblyElement::Instruction(_))
+    }
+
+    /// Check if this element is a floating-point instruction
+    pub fn is_floating_point_instruction(&self) -> bool {
+        matches!(self, AssemblyElement::FloatingPointInstruction(_))
     }
 
     /// Check if this element is a directive
@@ -141,6 +147,14 @@ impl AssemblyElement {
         }
     }
 
+    /// Get the floating-point instruction if this element is a floating-point instruction
+    pub fn as_floating_point_instruction(&self) -> Option<&FloatingPointInstruction> {
+        match self {
+            AssemblyElement::FloatingPointInstruction(instruction) => Some(instruction),
+            _ => None,
+        }
+    }
+
     /// Get the directive content if this element is a directive
     pub fn as_directive(&self) -> Option<&str> {
         match self {
@@ -188,6 +202,7 @@ impl fmt::Display for AssemblyElement {
             AssemblyElement::Section(sec) => write!(f, "{}", sec),
             AssemblyElement::Label(name) => write!(f, "{}:", name),
             AssemblyElement::Instruction(inst) => write!(f, "{}", inst),
+            AssemblyElement::FloatingPointInstruction(inst) => write!(f, "{}", inst),
             AssemblyElement::Directive(dir) => write!(f, "{}", dir),
             AssemblyElement::Comment(text) => write!(f, "; {}", text),
             AssemblyElement::EmptyLine => write!(f, ""),
@@ -340,10 +355,22 @@ impl NasmGenerator {
         self.elements.push(AssemblyElement::Instruction(instruction));
     }
 
+    /// Add a floating-point instruction
+    pub fn add_floating_point_instruction(&mut self, instruction: FloatingPointInstruction) {
+        self.elements.push(AssemblyElement::FloatingPointInstruction(instruction));
+    }
+
     /// Add multiple instructions
     pub fn add_instructions(&mut self, instructions: Vec<Instruction>) {
         for instruction in instructions {
             self.elements.push(AssemblyElement::Instruction(instruction));
+        }
+    }
+
+    /// Add multiple floating-point instructions
+    pub fn add_floating_point_instructions(&mut self, instructions: Vec<FloatingPointInstruction>) {
+        for instruction in instructions {
+            self.elements.push(AssemblyElement::FloatingPointInstruction(instruction));
         }
     }
 
@@ -565,6 +592,95 @@ impl NasmGenerator {
         self.add_empty_line();
     }
 
+    /// Create a floating-point addition function that adds two floating-point values
+    pub fn create_floating_point_add_function(&mut self) {
+        self.add_comment("Function to add two floating-point values");
+        match self.target_os {
+            TargetOS::Windows => {
+                self.add_comment("Input: xmm0, xmm1 = floating-point values (Windows x64 ABI)");
+                self.add_comment("Output: xmm0 = sum");
+            }
+            TargetOS::Linux | TargetOS::MacOS => {
+                self.add_comment("Input: xmm0, xmm1 = floating-point values (System V ABI)");
+                self.add_comment("Output: xmm0 = sum");
+            }
+        }
+        self.add_label("fp_add");
+
+        // Function prologue
+        self.add_function_prologue();
+
+        // Perform floating-point addition (single precision)
+        self.add_floating_point_instruction(FloatingPointInstruction::AddSS {
+            dst: Register::XMM0,
+            src1: Operand::reg(Register::XMM0),
+            src2: Operand::reg(Register::XMM1)
+        });
+
+        // Function epilogue
+        self.add_function_epilogue();
+        self.add_empty_line();
+    }
+
+    /// Create a floating-point multiplication function
+    pub fn create_floating_point_mul_function(&mut self) {
+        self.add_comment("Function to multiply two floating-point values");
+        match self.target_os {
+            TargetOS::Windows => {
+                self.add_comment("Input: xmm0, xmm1 = floating-point values (Windows x64 ABI)");
+                self.add_comment("Output: xmm0 = product");
+            }
+            TargetOS::Linux | TargetOS::MacOS => {
+                self.add_comment("Input: xmm0, xmm1 = floating-point values (System V ABI)");
+                self.add_comment("Output: xmm0 = product");
+            }
+        }
+        self.add_label("fp_mul");
+
+        // Function prologue
+        self.add_function_prologue();
+
+        // Perform floating-point multiplication (single precision)
+        self.add_floating_point_instruction(FloatingPointInstruction::MulSS {
+            dst: Register::XMM0,
+            src1: Operand::reg(Register::XMM0),
+            src2: Operand::reg(Register::XMM1)
+        });
+
+        // Function epilogue
+        self.add_function_epilogue();
+        self.add_empty_line();
+    }
+
+    /// Create a floating-point square root function
+    pub fn create_floating_point_sqrt_function(&mut self) {
+        self.add_comment("Function to compute square root of a floating-point value");
+        match self.target_os {
+            TargetOS::Windows => {
+                self.add_comment("Input: xmm0 = floating-point value (Windows x64 ABI)");
+                self.add_comment("Output: xmm0 = sqrt(value)");
+            }
+            TargetOS::Linux | TargetOS::MacOS => {
+                self.add_comment("Input: xmm0 = floating-point value (System V ABI)");
+                self.add_comment("Output: xmm0 = sqrt(value)");
+            }
+        }
+        self.add_label("fp_sqrt");
+
+        // Function prologue
+        self.add_function_prologue();
+
+        // Perform floating-point square root (single precision)
+        self.add_floating_point_instruction(FloatingPointInstruction::SqrtSS {
+            dst: Register::XMM0,
+            src: Operand::reg(Register::XMM0)
+        });
+
+        // Function epilogue
+        self.add_function_epilogue();
+        self.add_empty_line();
+    }
+
     /// Generate the complete assembly code
     pub fn generate(&self) -> String {
         self.elements.iter().map(|element| element.to_string()).collect::<Vec<_>>().join("\n")
@@ -591,6 +707,9 @@ impl NasmGenerator {
     /// Check if there are no elements
     pub fn is_empty(&self) -> bool {
         self.elements.is_empty()
+    }
+}
+
     }
 }
 
