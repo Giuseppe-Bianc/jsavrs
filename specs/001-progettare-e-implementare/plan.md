@@ -90,10 +90,26 @@ src/
 ├── main.rs              # Application entry point
 ├── error/               # Error handling modules
 ├── ir/                  # Intermediate representation modules
-│   ├── generator.rs     # IR generation
-│   ├── instruction.rs   # IR instructions
-│   ├── value/           # IR value representations
-│   └── ... (other IR modules)
+│   ├── access_control.rs
+│   ├── basic_block.rs
+│   ├── cfg.rs
+│   ├── dominance.rs
+│   ├── function.rs
+│   ├── generator.rs
+│   ├── instruction.rs
+│   ├── mod.rs
+│   ├── module.rs
+│   ├── scope.rs
+│   ├── scope_manager.rs
+│   ├── ssa.rs
+│   ├── terminator.rs
+│   ├── types.rs
+│   └── value/                # IR value representations
+│       ├── constant.rs
+│       ├── debug_info.rs
+│       ├── kind.rs
+│       ├── literal.rs
+│       └── mod.rs
 ├── location/            # Source location tracking
 ├── parser/              # Parser modules
 ├── semantic/            # Semantic analysis
@@ -248,7 +264,7 @@ tests/
 - [x] Phase 0: Research complete (/plan command) - ✅ research.md generated with comprehensive x86-64 assembly generation analysis
 - [x] Phase 1: Design complete (/plan command) - ✅ data-model.md, contracts/interfaces.md, quickstart.md created; AGENTS.md updated
 - [x] Phase 2: Task planning complete (/plan command - describe approach only) - ✅ Assembly-specific task generation strategy documented
-- [ ] Phase 3: Tasks generated (/tasks command)
+- [x] Phase 3: Tasks generated (/tasks command)
 - [ ] Phase 4: Implementation complete  
 - [ ] Phase 5: Validation passed
 

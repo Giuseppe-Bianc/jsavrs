@@ -8,6 +8,8 @@
 
 This document provides comprehensive research findings for implementing an assembly code generator that translates jsavrs intermediate representation (IR) into x86-64 NASM-compatible assembly code using the iced-x86 library.
 
+The research encompasses comprehensive analysis of instruction mapping methodologies, register allocation algorithms, error recovery mechanisms, debug information generation techniques, cross-platform calling convention support, and optimization pipeline architectures. Each technical decision is substantiated through rigorous comparative evaluation of alternative approaches, performance implications, maintainability considerations, and integration requirements within the broader jsavrs compiler ecosystem.
+
 ## x86-64 Assembly Generation Architecture
 
 ### Decision: Modular Trait-Based Instruction Mapping
