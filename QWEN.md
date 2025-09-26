@@ -54,6 +54,9 @@ jsavrs/
   - uuid (universally unique identifier generation)
   - petgraph (graph data structures for IR representation)
   - insta (snapshot testing for output validation)
+  - iced-x86 (x86-64 instruction encoding and assembly generation)
+  - serde (IR serialization/deserialization)
+  - criterion (performance benchmarking and optimization validation)
 
 ## Language Features (.vn files)
 
