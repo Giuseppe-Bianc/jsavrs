@@ -237,7 +237,7 @@ tests/
 7. Debug information generation (configurable levels)
 8. Optimization passes and performance validation
 
-**Estimated Output**: 35-40 numbered, ordered tasks covering complete assembly generator implementation
+**Estimated Output**: 32 main numbered tasks plus 9 subtasks (41 total tasks) covering complete assembly generator implementation
 
 **IMPORTANT**: This phase is executed by the /tasks command, NOT by /plan
 

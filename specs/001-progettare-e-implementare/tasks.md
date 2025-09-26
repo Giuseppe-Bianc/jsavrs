@@ -39,6 +39,7 @@
   - [ ] T023e Integrate PIC support with instruction mapper (T015) to automatically detect and convert position-dependent instructions to PIC-compatible equivalents
   - [ ] T023f Integrate PIC support with assembly output generator (T019) to emit proper GOT/PLT sections, relocation tables, and dynamic symbol information
   - [ ] T023g Add PIC mode configuration to generator options with validation for shared library vs executable modes and cross-platform compatibility checks
+  - [ ] T023h Integrate DWARF debug section generation with PIC support, ensuring debug sections (.debug_info, .debug_line, .debug_str) use relocatable addresses, maintain debugger compatibility in shared libraries, and coordinate with GOT/PLT symbol resolution for debugging external functions
 - [ ] T024 Extend `AssemblyGenerator` concurrency path with Rayon-based parallel module processing and thread-safe symbol table usage in `src/asm/generator.rs`.
 
 ## Phase 3.4: Integration
@@ -58,7 +59,7 @@
 - Tests (T004–T010, including T008b) must land before any implementation tasks T011+. Keep snapshot fixtures (T010) ready before ModuleGenerator work (T014).
 - T012 depends on T011 & T013; T014 depends on T012 & T015; T015 depends on T002 & T005; T016 depends on T006.
 - ABI work (T017) must follow register allocator (T016); symbol/output/error/debug/optimization tasks (T018–T022) depend on preceding pipeline pieces.
-- PIC support (T023a-g) requires instruction mapper (T015) and output builder (T019); T023e depends on T015, T023f depends on T019; PIC test task T008b should be implemented alongside T023a for TDD compliance.
+- PIC support (T023a-h) requires instruction mapper (T015) and output builder (T019); T023e depends on T015, T023f depends on T019; T023h depends on T021 (DebugInfoGenerator) and T023f (PIC output integration); PIC test task T008b should be implemented alongside T023a for TDD compliance.
 - Concurrency (T024) depends on stable generator core (T012) and symbol manager (T018).
 - Integration tasks (T025–T028) depend on completion of core implementation tasks.
 - Polish tasks (T029–T032) run after all integration tasks finish.
