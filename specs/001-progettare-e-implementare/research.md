@@ -233,7 +233,7 @@ lea rax, [rel local_symbol]
 
 **Configuration Management**:
 - Command-line options for debug levels and optimization settings
-- Platform-specific defaults with override capabilities
+- Platform-adaptive configuration defaults: System V ABI parameters for Unix/Linux/macOS environments, Microsoft x64 calling convention settings for Windows platforms, with hierarchical override mechanisms through environment variables, explicit CLI flags, and cross-compilation target specification
 - Integration with existing jsavrs configuration system
 
 ## Future Extensibility Considerations
