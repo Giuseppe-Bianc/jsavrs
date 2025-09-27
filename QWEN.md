@@ -54,8 +54,6 @@ jsavrs/
   - uuid (universally unique identifier generation)
   - petgraph (graph data structures for IR representation)
   - insta (snapshot testing for output validation)
-  - iced-x86 (x86-64 instruction encoding and assembly generation)
-  - serde (IR serialization/deserialization)
   - criterion (performance benchmarking and optimization validation)
 
 ## Language Features (.vn files)
@@ -125,7 +123,7 @@ main {
 1. **Lexical Analysis**: Tokenizes source code using Logos
 2. **Parsing**: Builds AST from tokens using a recursive descent parser
 3. **Semantic Analysis**: Type checking and symbol resolution
-4. **IR Generation**: Creates multiple intermediate representations (NIR, HIR)
+4. **IR Generation**: Creates multiple intermediate representations
 5. **Code Generation**: (Planned) Assembly or other target code generation
 
 ## Development Workflow
@@ -233,8 +231,8 @@ We welcome contributions from the community to improve jsavrs. To ensure a smoot
    - Update snapshot tests if output changes are expected
 
 5. **Run Quality Checks**
-   - Format code with `cargo fmt`
-   - Run clippy lints with `cargo clippy --all-features -- -D warnings`
+   - Format code with `cargo fmt` mandatory
+   - Run clippy lints with `cargo clippy --all-features -- -D warnings` mandatory
    - Execute full test suite with `cargo test`
 
 6. **Submit a Pull Request**
@@ -245,10 +243,10 @@ We welcome contributions from the community to improve jsavrs. To ensure a smoot
 ### Code Style Standards
 
 - Follow Rust community standards and idioms
-- Use `cargo fmt` for consistent formatting
-- Address all clippy warnings and suggestions
+- Use `cargo fmt` to enforce consistent formatting.
+- Resolve all Clippy warnings; if a lint is intentionally suppressed, document the justification.
 - Write clear, descriptive commit messages
-- Document public APIs with rustdoc comments
+- Document public APIs using rustdoc comments, providing examples and testable snippets where appropriate.
 
 ### Testing Guidelines
 

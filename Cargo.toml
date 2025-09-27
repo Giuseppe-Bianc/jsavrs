@@ -18,10 +18,6 @@ path = "src/lib.rs"
 name = "jsavrs"
 path = "src/main.rs"
 
-[[example]]
-name = "asm_generator"
-path = "examples/asm_generator.rs"
-
 [dependencies]
 clap = { version = "4.5.48", features = ["cargo", "derive"] }
 console = "0.16.1"
@@ -39,7 +35,6 @@ insta = { version = "1.43.2", features = ["yaml", "redactions", "filters"] }
 predicates = "3.1.3"
 criterion = "0.7.0"
 #tempfile = "3.8.0"
-
 
 
 [[bench]]
