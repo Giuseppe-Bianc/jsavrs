@@ -34,7 +34,7 @@ The framework encompasses four distinct agent roles, each designed to address sp
 
 **Input Specifications:** The agent receives precisely defined implementation requirements from the Planner Agent, including:
 
-- Complete function signatures with parameter specifications
+- For every function in the codebase, provide a complete function signature that explicitly lists each parameter's name, data type, and default value where appropriate. Additionally, include a succinct description for each parameter (purpose, units, and any constraints such as valid ranges or allowed values). Ensure that signatures and descriptions conform to the project's typing conventions and documentation style guide.
 - Detailed algorithmic logic descriptions
 - Data structure definitions and relationships
 - Integration requirements with existing codebase components
