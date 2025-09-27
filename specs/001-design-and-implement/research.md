@@ -24,13 +24,12 @@
 - Using external IR formats: Would break the established architecture pattern
 
 ## Decision: Register allocation strategy
-**Rationale**: Based on the feature specification, a simple round-robin allocation with stack overflow is specified as the initial approach. This is pragmatic for the initial implementation while allowing for more sophisticated algorithms in the future.
+**Rationale**: Based on the feature specification, a simple round-robin allocation with stack spilling is specified as the initial approach. This is pragmatic for the initial implementation while allowing for more sophisticated algorithms in the future. To remain ABI-compliant on Windows x64, System V, and macOS, the allocator will restrict itself to caller-saved registers or insert prologue/epilogue save-restore sequences for any callee-saved registers it uses.
 
 **Alternatives considered**:
 - Linear scan allocation: More sophisticated but more complex to implement initially
 - Graph coloring allocation: Very sophisticated but overkill for initial implementation
 - Pre-colored allocation: Would limit optimization opportunities
-
 ## Decision: Platform ABI handling
 **Rationale**: Implementing all three major platform ABIs (Windows x64, System V for Linux, and macOS) from the start ensures cross-platform compatibility as required by the feature specification.
 
