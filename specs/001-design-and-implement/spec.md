@@ -92,7 +92,7 @@ A compiler developer using the jsavrs compiler wants to compile their source cod
 ### Functional Requirements
 - **FR-001**: System MUST translate intermediate representation (IR) to syntactically valid NASM x86-64 assembly code
 - **FR-002**: System MUST preserve program semantics across supported IR constructs including basic arithmetic (add, subtract, multiply), memory operations (load, store), and simple control flow (conditional and unconditional jumps)
-- **FR-003**: System MUST implement platform-appropriate calling conventions for Windows, Linux, and macOS
+- **FR-003**: System MUST implement platform-appropriate calling conventions for Windows x64 ABI, System V ABI (Linux/macOS)
 - **FR-004**: System MUST generate correct function prologues and epilogues for all function definitions
 - **FR-005**: System MUST handle caller and callee register preservation according to ABI specifications
 - **FR-006**: System MUST maintain proper stack alignment as required by target platform ABI
@@ -105,10 +105,10 @@ A compiler developer using the jsavrs compiler wants to compile their source cod
 - **FR-013**: System MUST fail immediately with detailed error messages and halt compilation when encountering unsupported or invalid IR constructs
 - **FR-014**: System MUST optimize generated assembly for correctness while maintaining readability for debugging
 - **FR-015**: System MUST support validation tests that demonstrate semantic equivalence between IR and assembly output
-- **FR-016**: System MUST handle complex data structures assuming they are pre-aligned according to platform ABI
+- **FR-016**: System MUST handle complex data structures assuming they are pre-aligned according to platform ABI with 4-byte alignment for basic types, 8-byte alignment for 64-bit types and pointers, and 16-byte alignment for SIMD types
 - **FR-017**: System MUST map floating-point operations directly to x86-64 SSE/AVX instructions for performance
 - **FR-018**: System MUST use a simple round-robin allocation strategy with overflow to stack when IR contains more live variables than available registers
-- **FR-019**: System MUST implement an extensible interface to support additional calling conventions beyond Windows x64, System V (Linux), and macOS
+- **FR-019**: System MUST support runtime registration and utilization of additional calling conventions beyond the core Windows x64 ABI and System V ABI (Linux/macOS) implementations
 
 ### Performance Requirements
 - **PR-001**: Assembly generation MUST complete within 5 seconds for modules containing up to 10,000 IR instructions
@@ -129,7 +129,7 @@ A compiler developer using the jsavrs compiler wants to compile their source cod
 - **NFR-006**: System MUST support large IR input with memory usage not exceeding 2x the size of input IR file
 - **NFR-007**: System MUST provide clear and concise error messages for all failure scenarios
 - **NFR-008**: System MUST enable easy integration into compiler pipelines or standalone usage
-- **NFR-009**: System MUST implement an extensible interface architecture to accommodate additional calling conventions
+- **NFR-009**: System MUST implement a trait-based extensible architecture with plugin-style registration mechanism that enables third-party calling convention implementations without modifying core generator code
 - **NFR-010**: System MUST optimize floating-point operations using platform-native SSE/AVX instructions
 
 ### Key Entities *(include if feature involves data)*
@@ -143,7 +143,7 @@ A compiler developer using the jsavrs compiler wants to compile their source cod
 - **Code Section**: Organized assembly output including text, data, and BSS sections
 - **Relocation Entry**: Information required by linker to resolve addresses and symbols
 - **Register Allocator**: Component that implements round-robin allocation with stack overflow for managing register usage when variables exceed available registers
-- **Extensible Calling Convention Interface**: Framework allowing support for additional calling conventions beyond Windows x64, System V (Linux), and macOS
+- **Extensible Calling Convention Interface**: Framework allowing support for additional calling conventions beyond Windows x64 ABI and System V ABI (Linux/macOS)
 - **SSE/AVX Instruction Mapper**: Component for mapping floating-point operations directly to x86-64 SIMD instructions
 
 ---
