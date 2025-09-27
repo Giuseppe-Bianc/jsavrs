@@ -254,6 +254,6 @@ We welcome contributions from the community to improve jsavrs. To ensure a smoot
 - Use insta snapshot testing for output validation
 - Include edge cases and error conditions in tests
 - Maintain high test coverage for critical components
-- Use property-based testing where appropriate
+- Use property-based testing where appropriate and applicable
 
 All code should be formatted with `cargo fmt` and pass `cargo clippy` checks before submission.
