@@ -54,6 +54,20 @@ When creating this spec from a user prompt:
 
 ---
 
+## Clarifications
+
+### Session 2025-09-27
+- Q: What is the expected maximum compilation time for assembly generation? → A: Under 5 seconds for modules up to 10,000 IR instructions
+- Q: What should be the scope of supported IR operations for the initial implementation? → A: Basic arithmetic, memory operations, simple control flow, and minimal viable set including load/store, add/sub/mul, conditional/unconditional jumps
+- Q: What method should be used to verify that generated assembly maintains the same behavior as the original IR? → A: Automated testing with predefined input/output test cases
+- Q: When the assembly generator encounters unsupported IR, what should happen? → A: Fail immediately with detailed error message and halt compilation
+- Q: What are the maximum acceptable memory limits during assembly generation? → A: Proportional: Memory usage ≤ 2x the size of input IR file
+- Q: How should complex data structures in IR be handled regarding memory layout and alignment? → A: Generate assembly that assumes structures are pre-aligned according to platform ABI
+- Q: What level of semantic equivalence checking is expected between IR and generated assembly? → A: Compare execution results using a set of predefined test cases
+- Q: How should floating-point operations be handled in the IR? → A: Map directly to x86-64 SSE/AVX instructions for performance
+- Q: What strategy should be used when IR contains more live variables than available registers? → A: Use a simple round-robin allocation with overflow to stack
+- Q: What approach for handling platform-specific calling convention variations beyond the primary platforms? → A: Design an extensible interface to support additional calling conventions
+
 ## User Scenarios & Testing *(mandatory)*
 
 ### Primary User Story
@@ -77,23 +91,27 @@ A compiler developer using the jsavrs compiler wants to compile their source cod
 
 ### Functional Requirements
 - **FR-001**: System MUST translate intermediate representation (IR) to syntactically valid NASM x86-64 assembly code
-- **FR-002**: System MUST preserve program semantics across all supported IR constructs during translation
+- **FR-002**: System MUST preserve program semantics across supported IR constructs including basic arithmetic (add, subtract, multiply), memory operations (load, store), and simple control flow (conditional and unconditional jumps)
 - **FR-003**: System MUST implement platform-appropriate calling conventions for Windows, Linux, and macOS
 - **FR-004**: System MUST generate correct function prologues and epilogues for all function definitions
 - **FR-005**: System MUST handle caller and callee register preservation according to ABI specifications
 - **FR-006**: System MUST maintain proper stack alignment as required by target platform ABI
 - **FR-007**: System MUST generate assembly code that complies with standard linker requirements for symbol naming and visibility
 - **FR-008**: System MUST produce assembly with correct section layout and relocation information
-- **FR-009**: System MUST provide diagnostic capabilities to verify semantic equivalence between IR and generated assembly
+- **FR-009**: System MUST provide diagnostic capabilities to verify semantic equivalence between IR and generated assembly through automated testing with predefined input/output test cases
 - **FR-010**: System MUST support cross-platform compilation without requiring OS-specific modifications to core logic
 - **FR-011**: System MUST generate assembly code that can be successfully assembled by NASM on target platforms
 - **FR-012**: System MUST handle various data types and memory operations with appropriate x86-64 instruction selection
-- **FR-013**: System MUST implement proper error reporting for unsupported or invalid IR constructs
+- **FR-013**: System MUST fail immediately with detailed error messages and halt compilation when encountering unsupported or invalid IR constructs
 - **FR-014**: System MUST optimize generated assembly for correctness while maintaining readability for debugging
 - **FR-015**: System MUST support validation tests that demonstrate semantic equivalence between IR and assembly output
+- **FR-016**: System MUST handle complex data structures assuming they are pre-aligned according to platform ABI
+- **FR-017**: System MUST map floating-point operations directly to x86-64 SSE/AVX instructions for performance
+- **FR-018**: System MUST use a simple round-robin allocation strategy with overflow to stack when IR contains more live variables than available registers
+- **FR-019**: System MUST implement an extensible interface to support additional calling conventions beyond Windows x64, System V (Linux), and macOS
 
 ### Performance Requirements
-- **PR-001**: Assembly generation MUST complete within reasonable time bounds for typical program sizes
+- **PR-001**: Assembly generation MUST complete within 5 seconds for modules containing up to 10,000 IR instructions
 - **PR-002**: Generated assembly code MUST maintain performance characteristics equivalent to manual assembly implementation
 - **PR-003**: Memory usage during assembly generation MUST scale linearly with IR complexity
 
@@ -108,9 +126,11 @@ A compiler developer using the jsavrs compiler wants to compile their source cod
 - **NFR-003**: System MUST implement modular design separating IR parsing, instruction selection, code emission, and testing
 - **NFR-004**: System MUST be easily extensible to support additional IR constructs or target optimizations
 - **NFR-005**: System MUST generate efficient code minimizing unnecessary instructions while maintaining correctness
-- **NFR-006**: System MUST support large IR input without significant memory or runtime overhead
+- **NFR-006**: System MUST support large IR input with memory usage not exceeding 2x the size of input IR file
 - **NFR-007**: System MUST provide clear and concise error messages for all failure scenarios
 - **NFR-008**: System MUST enable easy integration into compiler pipelines or standalone usage
+- **NFR-009**: System MUST implement an extensible interface architecture to accommodate additional calling conventions
+- **NFR-010**: System MUST optimize floating-point operations using platform-native SSE/AVX instructions
 
 ### Key Entities *(include if feature involves data)*
 - **IR Module**: Container for intermediate representation code including functions, global data, and metadata
@@ -122,6 +142,9 @@ A compiler developer using the jsavrs compiler wants to compile their source cod
 - **Platform ABI**: Application Binary Interface specification for target operating system and architecture
 - **Code Section**: Organized assembly output including text, data, and BSS sections
 - **Relocation Entry**: Information required by linker to resolve addresses and symbols
+- **Register Allocator**: Component that implements round-robin allocation with stack overflow for managing register usage when variables exceed available registers
+- **Extensible Calling Convention Interface**: Framework allowing support for additional calling conventions beyond Windows x64, System V (Linux), and macOS
+- **SSE/AVX Instruction Mapper**: Component for mapping floating-point operations directly to x86-64 SIMD instructions
 
 ---
 
