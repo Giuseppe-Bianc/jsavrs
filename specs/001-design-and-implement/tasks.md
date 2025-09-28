@@ -18,12 +18,12 @@
    → Tests: Contract tests, integration tests, semantic validation
    → Core: Enums, structs, traits, implementations
    → Integration: CLI integration, error handling
-   → Polish: Unit tests, performance, documentation
+   → Polish: Unit tests, performance, memory validation, documentation
 4. Task rules applied: ✅
    → Different files marked [P] for parallel execution
    → Same file sequential (no [P])
    → Tests before implementation (TDD)
-5. Tasks numbered sequentially T001-T040
+5. Tasks numbered sequentially T001-T041
 6. Dependencies validated ✅
 7. Parallel execution examples included ✅
 8. Task completeness verified ✅
@@ -111,8 +111,9 @@
 
 ## Phase 3.7: Polish and Validation
 - [ ] T038 [P] Unit tests for register allocation algorithms in tests/unit/test_register_allocation.rs
-- [ ] T039 Performance benchmarking with criterion.rs in benches/assembly_generation_bench.rs
-- [ ] T040 [P] Documentation updates and code examples in src/asm/mod.rs
+- [ ] T039 Performance benchmarking with criterion.rs and memory usage validation (≤2x IR size constraint) in benches/assembly_generation_bench.rs
+- [ ] T040 [P] Memory profiling integration and constraint validation in tests/integration/test_memory_constraints.rs
+- [ ] T041 [P] Documentation updates and code examples in src/asm/mod.rs
 
 ## Dependencies
 **Critical ordering constraints:**
@@ -123,7 +124,7 @@
 - Core types (T017-T025) before trait implementations (T026-T030)
 - Traits (T026-T030) before generator implementation (T031-T034)
 - Core implementation (T031-T034) before integration (T035-T037)
-- Everything before polish (T038-T040)
+- Everything before polish (T038-T041)
 
 ### Specific Dependencies
 - T017-T019 (register types) before T029-T030 (register allocation)
@@ -177,7 +178,7 @@ Task: "CodeGenError comprehensive error enum in src/asm/error.rs"
 
 ### From User Stories (Quickstart scenarios)
 ✅ T009-T013: Each scenario → integration test [P]
-✅ T038-T040: Validation tasks → polish phase
+✅ T038-T041: Validation tasks → polish phase
 
 ### TDD Ordering
 ✅ All tests (T004-T016) before implementation (T017+)
@@ -194,7 +195,7 @@ Task: "CodeGenError comprehensive error enum in src/asm/error.rs"
 
 ## Constitutional Compliance Checklist
 ✅ **Safety First**: Type-safe enums, iced-x86 integration, Rust ownership model
-✅ **Performance Excellence**: Benchmarking tasks, performance constraints validation
+✅ **Performance Excellence**: Benchmarking tasks, performance and memory constraints validation (T039, T040)
 ✅ **Cross-Platform Compatibility**: Multi-platform ABI testing and implementation
 ✅ **Modular Extensibility**: Trait-based architecture, separate modules
 ✅ **Test-Driven Reliability**: Comprehensive test-first approach

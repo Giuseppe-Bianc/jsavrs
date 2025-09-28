@@ -135,25 +135,36 @@ ios/ or android/
 ## Phase 1: Design & Contracts
 *Prerequisites: research.md complete*
 
-1. **Extract entities from feature spec** → `data-model.md`:
-   - Entity name, fields, relationships in a detailed, precise, meticulous, and in-depth way
-   - Validation rules from requirements
-   - State transitions if applicable
-   - use enums if possible to reduce errors from strings
+1. **Extract core entities from feature spec** → `data-model.md`:
+   - Register management entities (Register64, RegisterClass, RegisterAllocator) with detailed field definitions and relationships
+   - Instruction representation entities (InstructionTemplate, Operand, AddressingMode) with comprehensive type safety
+   - ABI abstraction entities (CallingConvention, ABIConstraints, ParameterMapping) with cross-platform considerations
+   - Code generation entities (AssemblyGenerator, IRTranslator, OutputFormatter) with pipeline architecture
+   - Validation rules and type constraints for each entity in a detailed, precise, meticulous, and in-depth way
+   - State transitions for register allocation phases and code generation workflow
+   - Use enums extensively for type safety (RegisterClass, InstructionType, ABIType, ErrorType)
 
-2. **Generate API contracts** from functional requirements:
-   - For each user action → endpoint
-   - Use standard REST/GraphQL patterns
-   - Output OpenAPI/GraphQL schema to `/contracts/`
+2. **Generate IR translation contracts** from assembly generation requirements:
+   - IR instruction → assembly instruction mapping interfaces (trait definitions)
+   - Register allocation strategy contracts (allocation algorithms, spill handling)
+   - ABI implementation contracts (Windows x64, System V calling conventions)
+   - Code generation pipeline contracts (visitor patterns, builder interfaces, error propagation)
+   - Instruction encoding contracts (iced-x86 integration, operand validation)
+   - Output to `/contracts/` as Rust trait definitions and module interface specifications
 
-3. **Generate contract tests** from contracts:
-   - One test file per endpoint
-   - Assert request/response schemas
-   - Tests must fail (no implementation yet)
+3. **Generate contract validation tests** from design contracts:
+   - One test file per major contract (register allocation correctness, instruction encoding validity, ABI compliance)
+   - Assert type safety constraints and interface contracts (semantic equivalence validation)
+   - Cross-platform behavior consistency tests (Windows/Linux/macOS assembly output)
+   - Performance contract tests (memory usage ≤2x IR size, generation time ≤5s for 10K instructions)
+   - Tests must fail initially (no implementation yet) to ensure TDD compliance
 
-4. **Extract test scenarios** from user stories:
-   - Each story → integration test scenario
-   - Quickstart test = story validation steps
+4. **Extract validation scenarios** from assembly generation requirements:
+   - Each IR construct → assembly generation test scenario with expected output
+   - Cross-platform ABI compliance scenarios (parameter passing, stack alignment)
+   - Performance benchmark scenarios for code generation pipeline (throughput, memory efficiency)
+   - Semantic equivalence validation scenarios (IR execution vs assembly execution comparison)
+   - Quickstart validation = end-to-end IR→assembly→execution pipeline test with real examples
 
 5. **Update agent file incrementally** (O(1) operation):
    - Run `.specify/scripts/powershell/update-agent-context.ps1 -AgentType qwen`
@@ -164,7 +175,7 @@ ios/ or android/
    - Keep under 150 lines for token efficiency
    - Output to repository root
 
-**Output**: data-model.md, /contracts/*, failing tests, quickstart.md, agent-specific file
+**Output**: data-model.md, /contracts/* (Rust trait definitions), failing contract validation tests, quickstart.md, agent-specific file
 
 ## Phase 2: Task Planning Approach
 *This section describes what the /tasks command will do - DO NOT execute during /plan*

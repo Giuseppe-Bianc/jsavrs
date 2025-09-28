@@ -207,14 +207,21 @@ pub struct AssemblyGenerator {
 **Implementation**:
 ```rust
 // Integration with existing criterion.rs benchmarks
-#[bench]
-fn bench_code_generation(b: &mut Bencher) {
+use criterion::{black_box, criterion_group, criterion_main, Criterion};
+
+fn bench_code_generation(c: &mut Criterion) {
     let ir = load_test_ir();
-    b.iter(|| {
-        let generator = AssemblyGenerator::new();
-        generator.generate(&ir)
-    })
+    
+    c.bench_function("assembly_generation", |b| {
+        b.iter(|| {
+            let generator = AssemblyGenerator::new();
+            black_box(generator.generate(black_box(&ir)))
+        })
+    });
 }
+
+criterion_group!(benches, bench_code_generation);
+criterion_main!(benches);
 ```
 
 ## Cross-Platform Considerations
@@ -235,9 +242,10 @@ fn bench_code_generation(b: &mut Bencher) {
 
 ### 2. Symbol Naming Conventions
 
-**Windows**: Leading underscore for C symbols
+**Windows x64**: No leading underscore for C symbols (same as Unix/Linux)
 **Unix/Linux**: No leading underscore
-**Solution**: Configurable symbol mangling based on target platform
+**Note**: Leading underscores are only used in 32-bit IA-32 Windows ABI, not x86-64
+**Solution**: Minimal symbol mangling - both major x86-64 platforms use the same C symbol convention
 
 ### 3. Section Directives
 
