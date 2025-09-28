@@ -1,5 +1,5 @@
 // src/lib.rs
-//pub mod asm;
+pub mod asm;
 pub mod cli;
 pub mod error;
 pub mod ir;

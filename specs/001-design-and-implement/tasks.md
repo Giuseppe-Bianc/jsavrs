@@ -39,81 +39,81 @@
 - Integration with existing: `src/ir/` modules
 
 ## Phase 3.1: Setup
-- [ ] T001 Add iced-x86 dependency to Cargo.toml and create src/asm module structure
-- [ ] T002 Create assembly generator module hierarchy in src/asm/{mod.rs, generator.rs, register.rs, instruction.rs, operand.rs}
-- [ ] T003 [P] Configure additional linting rules for assembly generation code quality
+- [x] T001 Add iced-x86 dependency to Cargo.toml and create src/asm module structure
+- [x] T002 Create assembly generator module hierarchy in src/asm/{mod.rs, generator.rs, register.rs, instruction.rs, operand.rs}
+- [x] T003 [P] Configure additional linting rules for assembly generation code quality
 
 ## Phase 3.2: Tests First (TDD) ⚠️ MUST COMPLETE BEFORE 3.3
 **CRITICAL: These tests MUST be written and MUST FAIL before ANY implementation**
 
 ### Contract Tests [P] - Different test files, independent
-- [ ] T004 [P] Contract test AssemblyCodeGenerator trait in tests/contract/test_assembly_generator_trait.rs
-- [ ] T005 [P] Contract test TargetPlatform configuration in tests/contract/test_target_platform.rs
-- [ ] T006 [P] Contract test CodeGenOptions validation in tests/contract/test_codegen_options.rs
-- [ ] T007 [P] Contract test CallingConvention interface in tests/contract/test_calling_convention.rs
-- [ ] T008 [P] Contract test RegisterInfo interface in tests/contract/test_register_info.rs
+- [X] T004 [P] Contract test AssemblyCodeGenerator trait in tests/test_assembly_generator_trait.rs
+- [X] T005 [P] Contract test TargetPlatform configuration in tests/test_target_platform.rs
+- [X] T006 [P] Contract test CodeGenOptions validation in tests/test_codegen_options.rs
+- [X] T007 [P] Contract test CallingConvention interface in tests/test_calling_convention.rs
+- [X] T008 [P] Contract test RegisterInfo interface in tests/test_register_info.rs
 
 ### Integration Tests [P] - Based on quickstart scenarios
-- [ ] T009 [P] Integration test simple function translation (add_numbers example) in tests/integration/test_simple_function.rs
-- [ ] T010 [P] Integration test memory operations and local variables in tests/integration/test_memory_operations.rs
-- [ ] T011 [P] Integration test cross-platform ABI differences in tests/integration/test_cross_platform_abi.rs
-- [ ] T012 [P] Integration test semantic equivalence validation in tests/integration/test_semantic_equivalence.rs
-- [ ] T013 [P] Integration test performance benchmarking in tests/integration/test_performance_benchmark.rs
+- [X] T009 [P] Integration test simple function translation (add_numbers example) in tests/test_simple_function.rs
+- [X] T010 [P] Integration test memory operations and local variables in tests/test_memory_operations.rs
+- [X] T011 [P] Integration test cross-platform ABI differences in tests/test_cross_platform_abi.rs
+- [X] T012 [P] Integration test semantic equivalence validation in tests/test_semantic_equivalence.rs
+- [X] T013 [P] Integration test performance benchmarking in tests/test_performance_benchmark.rs
 
 ### Snapshot Tests [P] - For regression detection
-- [ ] T014 [P] Snapshot test Linux assembly output in tests/snapshots/test_linux_assembly_snapshots.rs
-- [ ] T015 [P] Snapshot test Windows assembly output in tests/snapshots/test_windows_assembly_snapshots.rs
-- [ ] T016 [P] Snapshot test macOS assembly output in tests/snapshots/test_macos_assembly_snapshots.rs
+- [X] T014 [P] Snapshot test Linux assembly output in tests/test_linux_assembly_snapshots.rs
+- [X] T015 [P] Snapshot test Windows assembly output in tests/test_windows_assembly_snapshots.rs
+- [X] T016 [P] Snapshot test macOS assembly output in tests/test_macos_assembly_snapshots.rs
 
 ## Phase 3.3: Core Type Definitions (ONLY after tests are failing) [P]
 **All enum and struct definitions can run in parallel - different files**
 
 ### Register and Instruction Types [P]
-- [ ] T017 [P] GPRegister enum with Display trait in src/asm/register.rs
-- [ ] T018 [P] XMMRegister enum with conversion methods in src/asm/register.rs
-- [ ] T019 [P] Register unified enum in src/asm/register.rs
-- [ ] T020 [P] X86Instruction enum with all instruction variants in src/asm/instruction.rs
-- [ ] T021 [P] Operand enum and MemoryOperand struct in src/asm/operand.rs
-- [ ] T022 [P] ImmediateValue enum with type safety in src/asm/operand.rs
+- [X] T017 [P] GPRegister enum with Display trait in src/asm/register.rs
+- [X] T018 [P] XMMRegister enum with conversion methods in src/asm/register.rs
+- [X] T019 [P] Register unified enum in src/asm/register.rs
+- [X] T020 [P] X86Instruction enum with all instruction variants in src/asm/instruction.rs
+- [X] T021 [P] Operand enum and MemoryOperand struct in src/asm/operand.rs
+- [X] T022 [P] ImmediateValue enum with type safety in src/asm/operand.rs
 
 ### Platform and Configuration Types [P]
-- [ ] T023 [P] TargetPlatform struct and related enums in src/asm/platform.rs
-- [ ] T024 [P] CodeGenOptions struct and InstructionSetFlags in src/asm/options.rs
-- [ ] T025 [P] CodeGenError comprehensive error enum in src/asm/error.rs
+- [X] T023 [P] TargetPlatform struct and related enums in src/asm/platform.rs
+- [X] T024 [P] CodeGenOptions struct and InstructionSetFlags in src/asm/options.rs
+- [X] T025 [P] CodeGenError comprehensive error enum in src/asm/error.rs
 
 ## Phase 3.4: Core Trait Implementations (Sequential - same files)
 **These modify same files as previous tasks, so must be sequential**
 
 ### Calling Convention System
-- [ ] T026 CallingConvention trait definition in src/asm/abi/mod.rs
-- [ ] T027 WindowsX64ABI implementation in src/asm/abi/windows_x64.rs
-- [ ] T028 SystemVABI implementation in src/asm/abi/system_v.rs
+- [X] T026 CallingConvention trait definition in src/asm/abi/mod.rs
+- [X] T027 WindowsX64ABI implementation in src/asm/abi/windows_x64.rs
+- [X] T028 SystemVABI implementation in src/asm/abi/system_v.rs
 
 ### Register Management
-- [ ] T029 RegisterAllocator struct and allocation logic in src/asm/register.rs
-- [ ] T030 RegisterInfo trait implementation in src/asm/register.rs
+- [X] T029 RegisterAllocator struct and allocation logic in src/asm/register.rs
+- [X] T030 RegisterInfo trait implementation in src/asm/register.rs
 
 ## Phase 3.5: Core Generator Implementation (Sequential - interdependent)
 **Main assembly generation pipeline - dependencies between components**
 
 ### Assembly Generator Core
-- [ ] T031 AssemblyGenerator struct and basic methods in src/asm/generator.rs
-- [ ] T032 IRTranslator struct and IR processing logic in src/asm/generator.rs
-- [ ] T033 Instruction encoding integration with iced-x86 in src/asm/instruction.rs
-- [ ] T034 Function generation (prologue/epilogue/body) in src/asm/generator.rs
+- [X] T031 AssemblyGenerator struct and basic methods in src/asm/generator.rs
+- [X] T032 IRTranslator struct and IR processing logic in src/asm/generator.rs
+- [X] T033 Instruction encoding integration with iced-x86 in src/asm/instruction.rs
+- [X] T034 Function generation (prologue/epilogue/body) in src/asm/generator.rs
 
 ## Phase 3.6: Integration Layer
 **Connect with existing jsavrs infrastructure**
 
-- [ ] T035 CLI integration for --emit-asm flag in src/cli.rs
-- [ ] T036 Error handling integration with existing error system in src/error/mod.rs
-- [ ] T037 IR module integration with @src/ir modules in src/asm/generator.rs
+- [X] T035 CLI integration for --emit-asm flag in src/cli.rs
+- [X] T036 Error handling integration with existing error system in src/error/mod.rs
+- [X] T037 IR module integration with @src/ir modules in src/asm/generator.rs
 
 ## Phase 3.7: Polish and Validation
-- [ ] T038 [P] Unit tests for register allocation algorithms in tests/unit/test_register_allocation.rs
-- [ ] T039 Performance benchmarking with criterion.rs and memory usage validation (≤2x IR size constraint) in benches/assembly_generation_bench.rs
-- [ ] T040 [P] Memory profiling integration and constraint validation in tests/integration/test_memory_constraints.rs
-- [ ] T041 [P] Documentation updates and code examples in src/asm/mod.rs
+- [X] T038 [P] Unit tests for register allocation algorithms in tests/test_register_allocation.rs
+- [X] T039 Performance benchmarking with criterion.rs and memory usage validation (≤2x IR size constraint) in benches/assembly_generation_bench.rs
+- [X] T040 [P] Memory profiling integration and constraint validation in tests/test_memory_constraints.rs
+- [X] T041 [P] Documentation updates and code examples in src/asm/mod.rs
 
 ## Dependencies
 **Critical ordering constraints:**
