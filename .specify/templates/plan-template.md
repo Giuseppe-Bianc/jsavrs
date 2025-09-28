@@ -129,6 +129,7 @@ ios/ or android/
    - Entity name, fields, relationships
    - Validation rules from requirements
    - State transitions if applicable
+   - use enums if possible to reduce errors from strings
 
 2. **Generate API contracts** from functional requirements:
    - For each user action → endpoint
