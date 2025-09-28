@@ -58,4 +58,16 @@ pub struct Args {
     /// Show verbose output
     #[arg(short, long)]
     pub verbose: bool,
+    
+    /// Emit assembly code instead of executing
+    #[arg(long)]
+    pub emit_asm: bool,
+    
+    /// Target platform for assembly generation (e.g., x86_64-linux-gnu, x86_64-windows-msvc)
+    #[arg(long, default_value = "x86_64-linux-gnu")]
+    pub target: String,
+    
+    /// Output file for assembly code (if not specified, uses input filename with .asm extension)
+    #[arg(long)]
+    pub output: Option<PathBuf>,
 }
