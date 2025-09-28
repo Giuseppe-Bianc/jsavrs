@@ -110,9 +110,9 @@ ios/ or android/
 2. **Generate and dispatch research agents**:
    ```
    For each unknown in Technical Context:
-     Task: "Research {unknown} for {feature context} detailed, precise, meticulous, and in-depth"
+     Task: "Research {unknown} for {feature context} in a detailed, precise, meticulous, and in-depth way"
    For each technology choice:
-     Task: "Find best practices for {tech} in {domain} detailed, precise, meticulous, and in-depth"
+     Task: "Find best practices for {tech} in {domain} in a detailed, precise, meticulous, and in-depth way"
    ```
 
 3. **Consolidate findings** in `research.md` using format:
