@@ -46,7 +46,7 @@ fn test_simple_ssa_transformation() {
     block.set_terminator(return_term);
 
     // Add the block to the function's CFG
-    let node_idx = func.cfg.add_block(block);
+    let _node_idx = func.cfg.add_block(block);
     func.cfg.entry_label = "entry".to_string();
 
     // Transform to SSA form
@@ -147,10 +147,10 @@ fn test_simple_if_else_transformation() {
     let mut func = Function::new("test", vec![], IrType::Void);
 
     // Create blocks
-    let entry_block = BasicBlock::new("entry", SourceSpan::default());
-    let then_block = BasicBlock::new("then", SourceSpan::default());
-    let else_block = BasicBlock::new("else", SourceSpan::default());
-    let merge_block = BasicBlock::new("merge", SourceSpan::default());
+    let _entry_block = BasicBlock::new("entry", SourceSpan::default());
+    let _then_block = BasicBlock::new("then", SourceSpan::default());
+    let _else_block = BasicBlock::new("else", SourceSpan::default());
+    let _merge_block = BasicBlock::new("merge", SourceSpan::default());
 
     // Add blocks to function
     func.add_block("entry", SourceSpan::default());
@@ -198,10 +198,10 @@ fn test_loop_transformation() {
     let mut func = Function::new("test_loop", vec![], IrType::Void);
 
     // Create blocks
-    let entry_block = BasicBlock::new("entry", SourceSpan::default());
-    let loop_header = BasicBlock::new("loop_header", SourceSpan::default());
-    let loop_body = BasicBlock::new("loop_body", SourceSpan::default());
-    let loop_exit = BasicBlock::new("loop_exit", SourceSpan::default());
+    let _entry_block = BasicBlock::new("entry", SourceSpan::default());
+    let _loop_header = BasicBlock::new("loop_header", SourceSpan::default());
+    let _loop_body = BasicBlock::new("loop_body", SourceSpan::default());
+    let _loop_exit = BasicBlock::new("loop_exit", SourceSpan::default());
 
     // Add blocks to function
     func.add_block("entry", SourceSpan::default());
@@ -229,7 +229,7 @@ fn test_loop_transformation() {
 
     // Add store instruction to increment i in loop body
     let const_1 = Value::new_literal(IrLiteralValue::I32(1));
-    let load_i = Instruction::new(InstructionKind::Load { src: i_var.clone(), ty: IrType::I32 }, SourceSpan::default());
+    let _load_i = Instruction::new(InstructionKind::Load { src: i_var.clone(), ty: IrType::I32 }, SourceSpan::default());
     // For simplicity, we'll just add a store that overwrites i in the loop body
     let store_inc =
         Instruction::new(InstructionKind::Store { value: const_1, dest: i_var.clone() }, SourceSpan::default());

@@ -214,10 +214,9 @@ fn bench_code_generation(c: &mut Criterion) {
     
     c.bench_function("assembly_generation", |b| {
         b.iter(|| {
-            let generator = AssemblyGenerator::new();
+            let mut generator = AssemblyGenerator::new();
             black_box(generator.generate(black_box(&ir)))
-        })
-    });
+        })    });
 }
 
 criterion_group!(benches, bench_code_generation);
@@ -242,10 +241,11 @@ criterion_main!(benches);
 
 ### 2. Symbol Naming Conventions
 
-**Windows x64**: No leading underscore for C symbols (same as Unix/Linux)
-**Unix/Linux**: No leading underscore
-**Note**: Leading underscores are only used in 32-bit IA-32 Windows ABI, not x86-64
-**Solution**: Minimal symbol mangling - both major x86-64 platforms use the same C symbol convention
+**Windows x64 (COFF)**: No leading underscore for C symbols
+**Linux x86-64 (ELF)**: No leading underscore for C symbols  
+**macOS x86-64 (Mach-O)**: Leading underscore required for external C symbols
+**Note**: macOS retains underscore prefix even in 64-bit binaries due to Mach-O format requirements
+**Solution**: Platform-specific symbol mangling based on object file format (COFF/ELF vs Mach-O)
 
 ### 3. Section Directives
 

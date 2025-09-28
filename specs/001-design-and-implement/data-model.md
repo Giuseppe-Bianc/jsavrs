@@ -80,9 +80,9 @@ pub enum TargetArch {
 
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
 pub enum SymbolConvention {
-    /// No prefix (standard for x86-64 on all platforms)
+    /// No prefix (Windows COFF, Linux ELF formats)
     None,
-    /// Underscore prefix (legacy 32-bit IA-32 only, not used in x86-64)
+    /// Underscore prefix (macOS Mach-O format, legacy 32-bit IA-32)
     Underscore,
 }
 ```
@@ -91,7 +91,7 @@ pub enum SymbolConvention {
 - OS must be one of supported values (Windows, Linux, macOS)
 - Architecture must be X86_64 for this implementation
 - ABI must be compatible with OS (Windows→WindowsX64ABI, Unix→SystemVABI)
-- Symbol convention should be None for all x86-64 platforms (Underscore only for legacy 32-bit compatibility)
+- Symbol convention must match target platform: None for Windows/Linux, Underscore for macOS (due to Mach-O format requirements)
 
 ### 3. Register Management System
 
