@@ -146,6 +146,6 @@ fn test_compute_dominance_frontiers() {
     assert!(result.is_ok());
 
     // Merge block should be in the dominance frontier of condition, then, and else blocks
-    let merge_frontier = dominance.dominance_frontier(condition_idx);
+    let _merge_frontier = dominance.dominance_frontier(condition_idx);
     // Note: The exact frontier computation depends on the implementation details
 }

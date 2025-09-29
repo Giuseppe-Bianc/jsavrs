@@ -10,6 +10,8 @@ pub mod scope;
 pub mod scope_manager;
 pub mod ssa;
 pub mod terminator;
+pub mod type_promotion;
+pub mod type_promotion_engine;
 pub mod types;
 pub mod value;
 
@@ -24,5 +26,10 @@ pub use scope::Scope;
 pub use scope_manager::ScopeManager;
 pub use ssa::SsaTransformer;
 pub use terminator::{Terminator, TerminatorKind};
+pub use type_promotion::{
+    OverflowBehavior, PrecisionLossEstimate, PromotionMatrix, PromotionResult, PromotionRule, PromotionWarning,
+    TypeGroup, TypePromotion,
+};
+pub use type_promotion_engine::TypePromotionEngine;
 pub use types::{IrType, ResourceId, ScopeId};
 pub use value::{IrConstantValue, IrLiteralValue, Value, ValueDebugInfo, ValueKind};

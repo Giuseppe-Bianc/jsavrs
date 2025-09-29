@@ -610,7 +610,7 @@ fn test_generate_simple_while_loop() {
     assert_binary_instruction!(
         loop_start.instructions[0].clone(),
         IrBinaryOp::Less,
-        IrType::Pointer(Box::new(IrType::I32)),
+        IrType::I32,
         ValueKind::Temporary(0),
         ValueKind::Literal(IrLiteralValue::I32(5))
     );
@@ -626,7 +626,7 @@ fn test_generate_simple_while_loop() {
     assert_binary_instruction!(
         loop_body.instructions[0].clone(),
         IrBinaryOp::Add,
-        IrType::Pointer(Box::new(IrType::I32)),
+        IrType::I32,
         ValueKind::Temporary(0),
         ValueKind::Literal(IrLiteralValue::I32(1))
     );

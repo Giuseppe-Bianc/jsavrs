@@ -48,7 +48,7 @@ impl BasicBlock {
     pub fn scope(&self) -> Option<ScopeId> {
         self.scope
     }
-    
+
     #[inline]
     pub fn set_scope(&mut self, s: ScopeId) {
         self.scope = Some(s);

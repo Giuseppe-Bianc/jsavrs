@@ -128,10 +128,7 @@ impl ControlFlowGraph {
         for block in self.blocks() {
             for target_label in block.terminator.get_targets() {
                 if !label_set.contains(target_label.as_str()) {
-                    return Err(format!(
-                        "Block '{}' refers to non-existent block '{}'",
-                        block.label, target_label
-                    ));
+                    return Err(format!("Block '{}' refers to non-existent block '{}'", block.label, target_label));
                 }
             }
         }
