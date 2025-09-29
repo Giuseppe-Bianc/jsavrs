@@ -1,0 +1,7 @@
+main {
+    var x: i32 = 42i32
+    var y: i32 = 10i32
+    var z: i32 = x + y
+
+    var zz: f64 = z + 2.3d
+}

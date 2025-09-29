@@ -115,7 +115,9 @@ fn main() -> Result<(), CompileError> {
         process::exit(1);
     }
 
-    let mut generator = NIrGenerator::new();
+    // Extract type information from the type checker to guide IR generation
+    let type_info = type_checkr.take_type_info();
+    let mut generator = NIrGenerator::new_with_type_info(type_info);
     let nir_timer = Timer::new("NIR Generation");
     let (module, ir_errors) = generator.generate(statements.clone(), file_path.to_str().unwrap());
     println!("{nir_timer}");
