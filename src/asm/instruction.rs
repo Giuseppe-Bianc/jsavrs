@@ -19,6 +19,8 @@ pub enum X86Instruction {
     Imul { dest: Operand, src: Operand },
     /// Compare instruction: CMP operand1, operand2
     Cmp { op1: Operand, op2: Operand },
+    /// Load Effective Address: LEA destination, [source]
+    Lea { dest: Operand, src: Operand },
     /// Jump instruction: JMP target
     Jmp { target: Operand },
     /// Conditional jump: JE/JNE/JL/JG/etc
@@ -49,6 +51,7 @@ impl fmt::Display for X86Instruction {
             X86Instruction::Sub { dest, src } => write!(f, "sub {}, {}", dest, src),
             X86Instruction::Imul { dest, src } => write!(f, "imul {}, {}", dest, src),
             X86Instruction::Cmp { op1, op2 } => write!(f, "cmp {}, {}", op1, op2),
+            X86Instruction::Lea { dest, src } => write!(f, "lea {}, {}", dest, src),
             X86Instruction::Jmp { target } => write!(f, "jmp {}", target),
             X86Instruction::ConditionalJump { mnemonic, target } => write!(f, "{} {}", mnemonic, target),
             X86Instruction::Call { target } => write!(f, "call {}", target),

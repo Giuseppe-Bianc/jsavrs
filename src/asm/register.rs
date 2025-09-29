@@ -73,8 +73,10 @@ pub struct AllocationStats {
 
 /// Strategy for allocating registers during assembly generation.
 pub struct RegisterAllocator {
-    /// List of currently available registers
-    pub available_registers: Vec<Register>,
+    /// List of currently available GP registers
+    pub available_gp_registers: Vec<GPRegister>,
+    /// List of currently available XMM registers
+    pub available_xmm_registers: Vec<XMMRegister>,
     /// Mapping between IR values and physical registers
     pub allocated_map: HashMap<String, Register>,
     /// Next stack location for spilling registers
@@ -86,29 +88,22 @@ pub struct RegisterAllocator {
 impl RegisterAllocator {
     /// Creates a new RegisterAllocator with default available registers
     pub fn new() -> Self {
-        let mut available_registers = Vec::new();
-        
         // Add general-purpose registers (caller-saved and callee-saved)
-        available_registers.push(Register::GP(GPRegister::RAX));
-        available_registers.push(Register::GP(GPRegister::RCX));
-        available_registers.push(Register::GP(GPRegister::RDX));
-        available_registers.push(Register::GP(GPRegister::RSI));
-        available_registers.push(Register::GP(GPRegister::RDI));
-        available_registers.push(Register::GP(GPRegister::R8));
-        available_registers.push(Register::GP(GPRegister::R9));
-        available_registers.push(Register::GP(GPRegister::R10));
-        available_registers.push(Register::GP(GPRegister::R11));
+        let available_gp_registers = vec![
+            GPRegister::RAX, GPRegister::RCX, GPRegister::RDX,
+            GPRegister::RSI, GPRegister::RDI, GPRegister::R8,
+            GPRegister::R9, GPRegister::R10, GPRegister::R11,
+        ];
         
         // Add XMM registers (caller-saved)
-        available_registers.push(Register::XMM(XMMRegister::XMM0));
-        available_registers.push(Register::XMM(XMMRegister::XMM1));
-        available_registers.push(Register::XMM(XMMRegister::XMM2));
-        available_registers.push(Register::XMM(XMMRegister::XMM3));
-        available_registers.push(Register::XMM(XMMRegister::XMM4));
-        available_registers.push(Register::XMM(XMMRegister::XMM5));
+        let available_xmm_registers = vec![
+            XMMRegister::XMM0, XMMRegister::XMM1, XMMRegister::XMM2,
+            XMMRegister::XMM3, XMMRegister::XMM4, XMMRegister::XMM5,
+        ];
         
         RegisterAllocator {
-            available_registers,
+            available_gp_registers,
+            available_xmm_registers,
             allocated_map: HashMap::new(),
             spill_location: 0,
             stats: AllocationStats {
@@ -120,10 +115,27 @@ impl RegisterAllocator {
         }
     }
 
-    /// Assigns a physical register to an IR value
+    /// Assigns a physical register to an IR value (deprecated - use type-specific methods)
     pub fn allocate_register(&mut self, ir_value: &str) -> Option<Register> {
-        if let Some(reg) = self.available_registers.pop() {
-            self.allocated_map.insert(ir_value.to_string(), reg);
+        // For backward compatibility, allocate a GP register by default
+        self.allocate_gp_register(ir_value).map(Register::GP)
+    }
+
+    /// Assigns a general-purpose register to an IR value
+    pub fn allocate_gp_register(&mut self, ir_value: &str) -> Option<GPRegister> {
+        if let Some(reg) = self.available_gp_registers.pop() {
+            self.allocated_map.insert(ir_value.to_string(), Register::GP(reg));
+            self.stats.registers_used += 1;
+            Some(reg)
+        } else {
+            None
+        }
+    }
+
+    /// Assigns an XMM register to an IR value
+    pub fn allocate_xmm_register(&mut self, ir_value: &str) -> Option<XMMRegister> {
+        if let Some(reg) = self.available_xmm_registers.pop() {
+            self.allocated_map.insert(ir_value.to_string(), Register::XMM(reg));
             self.stats.registers_used += 1;
             Some(reg)
         } else {
@@ -134,7 +146,10 @@ impl RegisterAllocator {
     /// Moves a value from register to stack when needed
     pub fn spill_to_stack(&mut self, ir_value: &str) -> usize {
         if let Some(reg) = self.allocated_map.remove(ir_value) {
-            self.available_registers.push(reg);
+            match reg {
+                Register::GP(gp_reg) => self.available_gp_registers.push(gp_reg),
+                Register::XMM(xmm_reg) => self.available_xmm_registers.push(xmm_reg),
+            }
             self.stats.registers_spilled += 1;
         }
         let location = self.spill_location;
@@ -145,7 +160,10 @@ impl RegisterAllocator {
     /// Marks a register as available - doesn't remove from mapping (as we need to track which register holds what value)
     /// To remove a mapping between a value and register, use the spill_to_stack method
     pub fn free_register(&mut self, reg: Register) {
-        self.available_registers.push(reg);
+        match reg {
+            Register::GP(gp_reg) => self.available_gp_registers.push(gp_reg),
+            Register::XMM(xmm_reg) => self.available_xmm_registers.push(xmm_reg),
+        }
     }
     
     /// Get allocation statistics
@@ -157,28 +175,12 @@ impl RegisterAllocator {
 impl RegisterInfo for RegisterAllocator {
     /// Get available general-purpose registers for allocation
     fn available_gp_registers(&self) -> Vec<GPRegister> {
-        self.available_registers
-            .iter()
-            .filter_map(|reg| {
-                match reg {
-                    Register::GP(gp_reg) => Some(*gp_reg),
-                    Register::XMM(_) => None,
-                }
-            })
-            .collect()
+        self.available_gp_registers.clone()
     }
     
     /// Get available XMM registers for allocation
     fn available_xmm_registers(&self) -> Vec<XMMRegister> {
-        self.available_registers
-            .iter()
-            .filter_map(|reg| {
-                match reg {
-                    Register::GP(_) => None,
-                    Register::XMM(xmm_reg) => Some(*xmm_reg),
-                }
-            })
-            .collect()
+        self.available_xmm_registers.clone()
     }
     
     /// Check if register is caller-saved (volatile)
