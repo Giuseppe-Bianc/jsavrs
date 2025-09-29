@@ -677,14 +677,32 @@ impl NIrGenerator {
         let ir_op: IrBinaryOp = op.into();
         let left_val = self.generate_expr(func, left);
         let right_val = self.generate_expr(func, right);
-        let ty = left_val.ty.clone();
+
+        // Initialize type promotion engine
+        let promotion_engine = TypePromotionEngine::new();
+
+        // Analyze the binary operation for type promotion
+        let promotion_result =
+            promotion_engine.analyze_binary_promotion(&left_val.ty, &right_val.ty, ir_op, span.clone());
+
+        // Insert promotion casts if needed
+        let (promoted_left_val, promoted_right_val) =
+            promotion_engine.insert_promotion_casts(self, func, left_val, right_val, &promotion_result, span.clone());
+
+        // Use the result type from promotion analysis
+        let result_ty = promotion_result.result_type;
         let dest_id = self.new_temp();
 
         let bin_inst = Instruction::new(
-            InstructionKind::Binary { op: ir_op, left: left_val, right: right_val, ty: ty.clone() },
+            InstructionKind::Binary {
+                op: ir_op,
+                left: promoted_left_val,
+                right: promoted_right_val,
+                ty: result_ty.clone(),
+            },
             span.clone(),
         )
-        .with_result(Value::new_temporary(dest_id, ty.clone()));
+        .with_result(Value::new_temporary(dest_id, result_ty.clone()));
 
         self.add_instruction(bin_inst.clone());
         bin_inst.result.unwrap()
@@ -727,7 +745,7 @@ impl NIrGenerator {
         value_val
     }
 
-    fn new_temp(&mut self) -> u64 {
+    pub fn new_temp(&mut self) -> u64 {
         let id = self.temp_counter;
         self.temp_counter += 1;
         id
@@ -753,7 +771,7 @@ impl NIrGenerator {
         self.current_block_label = Some(label.to_string());
     }
 
-    fn add_instruction(&mut self, inst: Instruction) {
+    pub fn add_instruction(&mut self, inst: Instruction) {
         if let Some(block) = &mut self.current_block {
             block.instructions.push(inst);
         }

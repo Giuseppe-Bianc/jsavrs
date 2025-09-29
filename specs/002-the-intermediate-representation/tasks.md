@@ -43,47 +43,47 @@
 - Paths shown below assume single project - adjust based on plan.md structure
 
 ## Phase 3.1: Setup
-- [ ] T001 Create project structure per implementation plan
-- [ ] T002 Initialize Rust project with existing dependencies (logos, uuid, petgraph, iced-x86)
-- [ ] T003 [P] Configure linting and formatting tools (rustfmt, clippy)
+- [X] T001 Create project structure per implementation plan
+- [X] T002 Initialize Rust project with existing dependencies (logos, uuid, petgraph, iced-x86)
+- [X] T003 [P] Configure linting and formatting tools (rustfmt, clippy)
 
 ## Phase 3.2: Tests First (TDD) ⚠️ MUST COMPLETE BEFORE 3.3
 **CRITICAL: These tests MUST be written and MUST FAIL before ANY implementation**
-- [ ] T004 [P] Contract test analyze_binary_promotion in tests/type_promotion_engine.rs
-- [ ] T005 [P] Contract test insert_promotion_casts in tests/type_promotion_engine.rs
-- [ ] T006 [P] Contract test get_promotion_rule in tests/promotion_matrix.rs
-- [ ] T007 [P] Contract test compute_common_type in tests/promotion_matrix.rs
-- [ ] T008 [P] Contract test new in tests/type_promotion.rs
-- [ ] T009 [P] Contract test generate_cast_instruction in tests/type_promotion.rs
-- [ ] T010 [P] Contract test format_for_user in tests/promotion_warning.rs
-- [ ] T011 [P] Contract test severity_level in tests/promotion_warning.rs
-- [ ] T012 [P] Integration test i32 + f32 promotion in tests/binary_promotion.rs
-- [ ] T013 [P] Integration test signed + unsigned promotion in tests/binary_promotion.rs
-- [ ] T014 [P] Integration test complex expression promotion in tests/binary_promotion.rs
-- [ ] T015 [P] Integration test special float value handling in tests/binary_promotion.rs
-- [ ] T016 [P] Integration test invalid promotion error in tests/binary_promotion.rs
-- [ ] T017 [P] Quickstart scenario test: Integer + Float Promotion in tests/scenario1.rs
-- [ ] T018 [P] Quickstart scenario test: Signed/Unsigned Integer Mixing in tests/scenario2.rs
-- [ ] T019 [P] Quickstart scenario test: Complex Expression with Multiple Promotions in tests/scenario3.rs
-- [ ] T020 [P] Quickstart scenario test: Special Float Values in tests/scenario4.rs
-- [ ] T021 [P] Snapshot test for i32 + f32 IR generation in tests/promotion_snapshot.rs
-- [ ] T022 [P] Snapshot test for i32 + u32 → i64 IR generation in tests/promotion_snapshot.rs
+- [X] T004 [P] Contract test analyze_binary_promotion in tests/type_promotion_engine.rs
+- [X] T005 [P] Contract test insert_promotion_casts in tests/type_promotion_engine.rs
+- [X] T006 [P] Contract test get_promotion_rule in tests/promotion_matrix.rs
+- [X] T007 [P] Contract test compute_common_type in tests/promotion_matrix.rs
+- [X] T008 [P] Contract test new in tests/type_promotion.rs
+- [X] T009 [P] Contract test generate_cast_instruction in tests/type_promotion.rs
+- [X] T010 [P] Contract test format_for_user in tests/promotion_warning.rs
+- [X] T011 [P] Contract test severity_level in tests/promotion_warning.rs
+- [X] T012 [P] Integration test i32 + f32 promotion in tests/binary_promotion.rs
+- [X] T013 [P] Integration test signed + unsigned promotion in tests/binary_promotion.rs
+- [X] T014 [P] Integration test complex expression promotion in tests/binary_promotion.rs
+- [X] T015 [P] Integration test special float value handling in tests/binary_promotion.rs
+- [X] T016 [P] Integration test invalid promotion error in tests/binary_promotion.rs
+- [X] T017 [P] Quickstart scenario test: Integer + Float Promotion in tests/scenario1.rs
+- [X] T018 [P] Quickstart scenario test: Signed/Unsigned Integer Mixing in tests/scenario2.rs
+- [X] T019 [P] Quickstart scenario test: Complex Expression with Multiple Promotions in tests/scenario3.rs
+- [X] T020 [P] Quickstart scenario test: Special Float Values in tests/scenario4.rs
+- [X] T021 [P] Snapshot test for i32 + f32 IR generation in tests/promotion_snapshot.rs
+- [X] T022 [P] Snapshot test for i32 + u32 → i64 IR generation in tests/promotion_snapshot.rs
 
 ## Phase 3.3: Core Implementation (ONLY after tests are failing)
-- [ ] T023 [P] TypePromotion struct implementation in src/ir/type_promotion.rs
-- [ ] T024 [P] PromotionMatrix struct implementation in src/ir/type_promotion.rs
-- [ ] T025 [P] PromotionRule enum implementation in src/ir/type_promotion.rs
-- [ ] T026 [P] TypeGroup enum implementation in src/ir/type_promotion.rs
-- [ ] T027 [P] BinaryOperationPromotion struct implementation in src/ir/generator.rs
-- [ ] T028 [P] PromotionResult struct implementation in src/ir/type_promotion.rs
-- [ ] T029 [P] PromotionWarning enum implementation in src/ir/type_promotion.rs
-- [ ] T030 [P] OverflowBehavior enum implementation in src/ir/type_promotion.rs
-- [ ] T031 [P] PrecisionLossEstimate enum implementation in src/ir/type_promotion.rs
-- [ ] T032 [P] analyze_binary_promotion function in src/ir/type_promotion_engine.rs
-- [ ] T033 [P] insert_promotion_casts function in src/ir/type_promotion_engine.rs
-- [ ] T034 [P] get_promotion_rule function in src/ir/type_promotion_engine.rs
-- [ ] T035 [P] compute_common_type function in src/ir/type_promotion_engine.rs
-- [ ] T036 Enhance generate_binary in src/ir/generator.rs to use promotion analysis
+- [X] T023 [P] TypePromotion struct implementation in src/ir/type_promotion.rs
+- [X] T024 [P] PromotionMatrix struct implementation in src/ir/type_promotion.rs
+- [X] T025 [P] PromotionRule enum implementation in src/ir/type_promotion.rs
+- [X] T026 [P] TypeGroup enum implementation in src/ir/type_promotion.rs
+- [X] T027 [P] BinaryOperationPromotion struct implementation in src/ir/generator.rs
+- [X] T028 [P] PromotionResult struct implementation in src/ir/type_promotion.rs
+- [X] T029 [P] PromotionWarning enum implementation in src/ir/type_promotion.rs
+- [X] T030 [P] OverflowBehavior enum implementation in src/ir/type_promotion.rs
+- [X] T031 [P] PrecisionLossEstimate enum implementation in src/ir/type_promotion.rs
+- [X] T032 [P] analyze_binary_promotion function in src/ir/type_promotion_engine.rs
+- [X] T033 [P] insert_promotion_casts function in src/ir/type_promotion_engine.rs
+- [X] T034 [P] get_promotion_rule function in src/ir/type_promotion_engine.rs
+- [X] T035 [P] compute_common_type function in src/ir/type_promotion_engine.rs
+- [X] T036 Enhance generate_binary in src/ir/generator.rs to use promotion analysis
 - [ ] T037 Add insert_promotion_cast helper in src/ir/generator.rs
 - [ ] T038 Update error handling for type promotion failures in src/ir/generator.rs
 - [ ] T039 Implement cast insertion logic in IR generation in src/ir/generator.rs
@@ -94,17 +94,17 @@
 - [ ] T044 Implement signed/unsigned interaction edge cases in src/ir/type_promotion.rs
 
 ## Phase 3.4: Integration
-- [ ] T045 Verify assembly generation compatibility with promoted IR in src/codegen/
-- [ ] T046 Update code generation for new cast instruction patterns in src/codegen/
-- [ ] T047 Cross-platform validation for promotion behavior in src/ir/type_promotion.rs
-- [ ] T048 Memory layout consistency checks in src/ir/type_promotion.rs
+- [X] T045 Verify assembly generation compatibility with promoted IR in src/codegen/
+- [X] T046 Update code generation for new cast instruction patterns in src/codegen/
+- [X] T047 Cross-platform validation for promotion behavior in src/ir/type_promotion.rs
+- [X] T048 Memory layout consistency checks in src/ir/type_promotion.rs
 
 ## Phase 3.5: Polish
-- [ ] T049 [P] Update module documentation for new promotion system in src/ir/type_promotion.rs
-- [ ] T050 [P] Create migration guide for breaking changes in docs/migration.md
-- [ ] T051 [P] Add user-facing documentation for type promotion rules in docs/type_promotion.md
-- [ ] T052 [P] Performance benchmark suite for promotion overhead in benches/type_promotion_benchmark.rs
-- [ ] T053 Run existing test suite to ensure no regressions
+- [X] T049 [P] Update module documentation for new promotion system in src/ir/type_promotion.rs
+- [X] T050 [P] Create migration guide for breaking changes in docs/migration.md
+- [X] T051 [P] Add user-facing documentation for type promotion rules in docs/type_promotion.md
+- [X] T052 [P] Performance benchmark suite for promotion overhead in benches/type_promotion_benchmark.rs
+- [X] T053 Run existing test suite to ensure no regressions
 - [ ] T054 Update README with type promotion examples
 
 ## Dependencies
