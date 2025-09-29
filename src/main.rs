@@ -132,23 +132,6 @@ fn main() -> Result<(), CompileError> {
     if args.verbose {
         println!("{module}");
     }
-
-    // Generate assembly code from IR
-    /*let asm_timer = Timer::new("ASM Generation");
-    let target_os = if cfg!(windows) { TargetOS::Windows } else { TargetOS::Linux };
-    let mut ir_to_asm = IrToAsmGenerator::new(target_os);
-    let asm_code = ir_to_asm.generate_from_module(&module);
-    println!("{asm_timer}");
-    
-    // Save assembly code to file
-    let asm_output_path = file_path.with_extension("asm");
-    if let Err(e) = fs::write(&asm_output_path, asm_code) {
-        handle_io_error("ASM Output", e);
-        process::exit(1);
-    }
-    
-    println!("ASM generation done");
-    println!("Assembly code saved to: {}", asm_output_path.display());*/
     
     Ok(())
 }
