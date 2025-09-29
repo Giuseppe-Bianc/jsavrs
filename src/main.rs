@@ -115,7 +115,9 @@ fn main() -> Result<(), CompileError> {
         process::exit(1);
     }
 
-    let mut generator = NIrGenerator::new();
+    // Extract type information from the type checker to guide IR generation
+    let type_info = type_checkr.take_type_info();
+    let mut generator = NIrGenerator::new_with_type_info(type_info);
     let nir_timer = Timer::new("NIR Generation");
     let (module, ir_errors) = generator.generate(statements.clone(), file_path.to_str().unwrap());
     println!("{nir_timer}");
@@ -132,22 +134,53 @@ fn main() -> Result<(), CompileError> {
         println!("{module}");
     }
 
-    // Generate assembly code from IR
-    /*let asm_timer = Timer::new("ASM Generation");
-    let target_os = if cfg!(windows) { TargetOS::Windows } else { TargetOS::Linux };
-    let mut ir_to_asm = IrToAsmGenerator::new(target_os);
-    let asm_code = ir_to_asm.generate_from_module(&module);
-    println!("{asm_timer}");
-    
-    // Save assembly code to file
-    let asm_output_path = file_path.with_extension("asm");
-    if let Err(e) = fs::write(&asm_output_path, asm_code) {
-        handle_io_error("ASM Output", e);
-        process::exit(1);
+    // Check if we should emit assembly
+    if args.emit_asm {
+        let asm_timer = Timer::new("ASM Generation");
+        
+        // Determine target platform based on the CLI argument
+        let target_platform = match args.target.as_str() {
+            "x86_64-windows-msvc" => jsavrs::asm::platform::TargetPlatform::windows_x64(),
+            "x86_64-apple-darwin" => jsavrs::asm::platform::TargetPlatform::macos_x64(),
+            _ => jsavrs::asm::platform::TargetPlatform::linux_x64(), // Default to Linux
+        };
+        
+        // Create the assembly generator
+        let mut asm_generator = match jsavrs::asm::generator::AssemblyGenerator::new(target_platform) {
+            Ok(generator) => generator,
+            Err(e) => {
+                eprintln!("Failed to create assembly generator: {:?}", e);
+                process::exit(1);
+            }
+        };
+        
+        // Generate assembly code from the IR module
+        let asm_code = match asm_generator.generate_assembly(module) {
+            Ok(code) => code,
+            Err(e) => {
+                eprintln!("Assembly generation failed: {:?}", e);
+                process::exit(1);
+            }
+        };
+        
+        println!("{asm_timer}");
+        
+        // Determine where to save the assembly code
+        let asm_output_path = if let Some(output_path) = args.output {
+            output_path
+        } else {
+            file_path.with_extension("asm")
+        };
+        
+        // Write assembly code to file
+        if let Err(e) = fs::write(&asm_output_path, asm_code) {
+            handle_io_error("ASM Output", e);
+            process::exit(1);
+        }
+        
+        println!("ASM generation done");
+        println!("Assembly code saved to: {}", asm_output_path.display());
     }
-    
-    println!("ASM generation done");
-    println!("Assembly code saved to: {}", asm_output_path.display());*/
     
     Ok(())
 }
