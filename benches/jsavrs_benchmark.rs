@@ -1,11 +1,7 @@
 // rust
 use criterion::{BenchmarkId, Criterion, Throughput, criterion_group, criterion_main};
 use jsavrs::ir::generator::NIrGenerator;
-use jsavrs::ir::instruction::IrBinaryOp;
-use jsavrs::ir::type_promotion_engine::TypePromotionEngine;
-use jsavrs::ir::types::IrType;
 use jsavrs::lexer::{Lexer, lexer_tokenize_with_errors};
-use jsavrs::location::source_span::SourceSpan;
 use jsavrs::parser::jsav_parser::JsavParser;
 use jsavrs::semantic::type_checker::TypeChecker;
 use std::hint::black_box;
@@ -244,81 +240,6 @@ pub fn benchmark_end_to_end(c: &mut Criterion) {
     pipeline_group.finish();
 }
 
-pub fn benchmark_type_promotion_simple(c: &mut Criterion) {
-    let engine = TypePromotionEngine::new();
-    let span = SourceSpan::default();
-
-    c.benchmark_group("type-promotion")
-        .bench_function("type_promotion_i32_f32", |b| {
-            b.iter(|| {
-                let result = engine.analyze_binary_promotion(
-                    black_box(&IrType::I32),
-                    black_box(&IrType::F32),
-                    black_box(IrBinaryOp::Add),
-                    black_box(span.clone()),
-                );
-                black_box(result);
-            });
-        })
-        .bench_function("type_promotion_i32_i64", |b| {
-            b.iter(|| {
-                let result = engine.analyze_binary_promotion(
-                    black_box(&IrType::I32),
-                    black_box(&IrType::I64),
-                    black_box(IrBinaryOp::Multiply),
-                    black_box(span.clone()),
-                );
-                black_box(result);
-            });
-        })
-        .bench_function("type_promotion_f64_f32", |b| {
-            b.iter(|| {
-                let result = engine.analyze_binary_promotion(
-                    black_box(&IrType::F64),
-                    black_box(&IrType::F32),
-                    black_box(IrBinaryOp::Divide),
-                    black_box(span.clone()),
-                );
-                black_box(result);
-            });
-        });
-}
-
-pub fn benchmark_type_promotion_complex(c: &mut Criterion) {
-    let engine = TypePromotionEngine::new();
-    let span = SourceSpan::default();
-
-    c.benchmark_group("type-promotion-complex").bench_function("type_promotion_signed_unsigned", |b| {
-        b.iter(|| {
-            let result = engine.analyze_binary_promotion(
-                black_box(&IrType::I32),
-                black_box(&IrType::U32),
-                black_box(IrBinaryOp::Add),
-                black_box(span.clone()),
-            );
-            black_box(result);
-        });
-    });
-}
-
-pub fn benchmark_promotion_matrix_lookup(c: &mut Criterion) {
-    let matrix = TypePromotionEngine::new().promotion_matrix;
-
-    c.benchmark_group("promotion-matrix-lookup")
-        .bench_function("promotion_matrix_get_rule", |b| {
-            b.iter(|| {
-                let rule = matrix.get_promotion_rule(black_box(&IrType::I32), black_box(&IrType::F32));
-                black_box(rule);
-            });
-        })
-        .bench_function("promotion_matrix_compute_common_type", |b| {
-            b.iter(|| {
-                let common_type = matrix.compute_common_type(black_box(&IrType::I32), black_box(&IrType::F32));
-                black_box(common_type);
-            });
-        });
-}
-
 criterion_group!(
     benches,
     benchmark_lexer,
@@ -326,9 +247,6 @@ criterion_group!(
     benchmark_parser_nodes,
     benchmark_semantic_analysis,
     benchmark_ir_generation,
-    benchmark_end_to_end,
-    benchmark_type_promotion_simple,
-    benchmark_type_promotion_complex,
-    benchmark_promotion_matrix_lookup
+    benchmark_end_to_end
 );
 criterion_main!(benches);

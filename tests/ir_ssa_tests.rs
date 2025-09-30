@@ -229,8 +229,7 @@ fn test_loop_transformation() {
 
     // Add store instruction to increment i in loop body
     let const_1 = Value::new_literal(IrLiteralValue::I32(1));
-    let _load_i =
-        Instruction::new(InstructionKind::Load { src: i_var.clone(), ty: IrType::I32 }, SourceSpan::default());
+    let load_i = Instruction::new(InstructionKind::Load { src: i_var.clone(), ty: IrType::I32 }, SourceSpan::default());
     // For simplicity, we'll just add a store that overwrites i in the loop body
     let store_inc =
         Instruction::new(InstructionKind::Store { value: const_1, dest: i_var.clone() }, SourceSpan::default());

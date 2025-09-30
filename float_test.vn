@@ -1,0 +1,5 @@
+main {
+    var a: f64 = 3.14
+    var b: f64 = 2.71
+    var c: f64 = a + b
+}

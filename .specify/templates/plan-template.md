@@ -103,20 +103,20 @@ ios/ or android/
 
 ## Phase 0: Outline & Research
 1. **Extract unknowns from Technical Context** above:
-   - For each NEEDS CLARIFICATION → research task
-   - For each dependency → best practices task
-   - For each integration → patterns task
+   - For each NEEDS CLARIFICATION → research task in a detailed, precise, meticulous, and in-depth way
+   - For each dependency → best practices task in a detailed, precise, meticulous, and in-depth way
+   - For each integration → patterns task in a detailed, precise, meticulous, and in-depth way
 
 2. **Generate and dispatch research agents**:
    ```
    For each unknown in Technical Context:
-     Task: "Research {unknown} for {feature context}"
+     Task: "Research {unknown} for {feature context} in a detailed, precise, meticulous, and in-depth way"
    For each technology choice:
-     Task: "Find best practices for {tech} in {domain}"
+     Task: "Find best practices for {tech} in {domain} in a detailed, precise, meticulous, and in-depth way"
    ```
 
 3. **Consolidate findings** in `research.md` using format:
-   - Decision: [what was chosen]
+   - Decision: [what was chosen] in a detailed, precise, meticulous, and in-depth way
    - Rationale: [why chosen]
    - Alternatives considered: [what else evaluated]
 
@@ -126,9 +126,10 @@ ios/ or android/
 *Prerequisites: research.md complete*
 
 1. **Extract entities from feature spec** → `data-model.md`:
-   - Entity name, fields, relationships
+   - Entity name, fields, relationships in a detailed, precise, meticulous, and in-depth way
    - Validation rules from requirements
    - State transitions if applicable
+   - use enums if possible to reduce errors from strings
 
 2. **Generate API contracts** from functional requirements:
    - For each user action → endpoint
