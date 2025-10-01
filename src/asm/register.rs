@@ -328,30 +328,38 @@ impl X86Register {
 }
 
 // Implementazione del trait Display per tutti i tipi di registri
-impl std::fmt::Display for GPRegister64 {
-    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
-        write!(f, "{}", format!("{:?}", self).to_lowercase())
+// Macro per implementare automaticamente il trait Display per i tipi di registri
+macro_rules! impl_display_for_register {
+    ($($t:ty),*) => {
+        $(
+            impl std::fmt::Display for $t {
+                fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+                    write!(f, "{}", format!("{:?}", self).to_lowercase())
+                }
+            }
+        )*
     }
 }
 
-impl std::fmt::Display for GPRegister32 {
-    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
-        write!(f, "{}", format!("{:?}", self).to_lowercase())
-    }
-}
+// Implementazione del trait Display per tutti i tipi di registri che seguono lo stesso pattern
+impl_display_for_register!(
+    GPRegister64,
+    GPRegister32,
+    GPRegister16,
+    GPRegister8,
+    MMXRegister,
+    XMMRegister,
+    YMMRegister,
+    ZMMRegister,
+    MaskRegister,
+    SegmentRegister,
+    ControlRegister,
+    DebugRegister,
+    FlagsRegister,
+    InstructionPointer
+);
 
-impl std::fmt::Display for GPRegister16 {
-    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
-        write!(f, "{}", format!("{:?}", self).to_lowercase())
-    }
-}
-
-impl std::fmt::Display for GPRegister8 {
-    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
-        write!(f, "{}", format!("{:?}", self).to_lowercase())
-    }
-}
-
+// Implementazione specifica per FPURegister
 impl std::fmt::Display for FPURegister {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
         let idx = match self {
@@ -361,66 +369,6 @@ impl std::fmt::Display for FPURegister {
             FPURegister::ST6 => 6, FPURegister::ST7 => 7,
         };
         write!(f, "st{}", idx)
-    }
-}
-
-impl std::fmt::Display for MMXRegister {
-    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
-        write!(f, "{}", format!("{:?}", self).to_lowercase())
-    }
-}
-
-impl std::fmt::Display for XMMRegister {
-    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
-        write!(f, "{}", format!("{:?}", self).to_lowercase())
-    }
-}
-
-impl std::fmt::Display for YMMRegister {
-    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
-        write!(f, "{}", format!("{:?}", self).to_lowercase())
-    }
-}
-
-impl std::fmt::Display for ZMMRegister {
-    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
-        write!(f, "{}", format!("{:?}", self).to_lowercase())
-    }
-}
-
-impl std::fmt::Display for MaskRegister {
-    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
-        write!(f, "{}", format!("{:?}", self).to_lowercase())
-    }
-}
-
-impl std::fmt::Display for SegmentRegister {
-    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
-        write!(f, "{}", format!("{:?}", self).to_lowercase())
-    }
-}
-
-impl std::fmt::Display for ControlRegister {
-    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
-        write!(f, "{}", format!("{:?}", self).to_lowercase())
-    }
-}
-
-impl std::fmt::Display for DebugRegister {
-    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
-        write!(f, "{}", format!("{:?}", self).to_lowercase())
-    }
-}
-
-impl std::fmt::Display for FlagsRegister {
-    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
-        write!(f, "{}", format!("{:?}", self).to_lowercase())
-    }
-}
-
-impl std::fmt::Display for InstructionPointer {
-    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
-        write!(f, "{}", format!("{:?}", self).to_lowercase())
     }
 }
 
