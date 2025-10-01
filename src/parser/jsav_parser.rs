@@ -192,11 +192,17 @@ impl JsavParser {
         })
     }
 
-    fn parse_if(&mut self) -> Option<Stmt> {
-        let start_token = self.advance()?.clone(); // 'if'
-        self.expect(&TokenKind::OpenParen, "after 'if'");
+    /// Parses a condition for constructs like if, while, for
+    fn parse_condition(&mut self, keword: &str) -> Option<Expr> {
+        self.expect(&TokenKind::OpenParen, format!("after '{keword}'").as_str());
         let condition = self.parse_expr(0)?;
         self.expect(&TokenKind::CloseParen, "after the condition");
+        Some(condition)
+    }
+    
+    fn parse_if(&mut self) -> Option<Stmt> {
+        let start_token = self.advance()?.clone(); // 'if'
+        let condition = self.parse_condition("if")?;
         let then_branch = self.parse_block_stmt()?;
 
         let else_branch = if self.match_token(&TokenKind::KeywordElse) { Some(vec![self.parse_stmt()?]) } else { None };
@@ -206,9 +212,7 @@ impl JsavParser {
 
     fn parse_while(&mut self) -> Option<Stmt> {
         let start_token = self.advance()?.clone(); // 'while'
-        self.expect(&TokenKind::OpenParen, "after 'while'");
-        let condition = self.parse_expr(0)?;
-        self.expect(&TokenKind::CloseParen, "after the condition");
+        let condition = self.parse_condition("while")?;
         let body = self.parse_block_stmt()?;
         let end_span = body.span();
         let function_span = start_token.span.merged(end_span).unwrap_or_else(|| start_token.span.clone());

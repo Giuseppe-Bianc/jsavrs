@@ -1,3 +1,6 @@
+#![allow(dead_code)]
+
+
 /// Piattaforma target
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
 pub enum Platform {
