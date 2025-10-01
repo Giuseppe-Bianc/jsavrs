@@ -44,30 +44,41 @@ pub struct Value {
 }
 
 impl Value {
+    // Helper function to create a new Value with common fields
+    fn new_value(kind: ValueKind, ty: IrType) -> Self {
+        Value { 
+            id: ValueId::new(), 
+            kind, 
+            ty, 
+            debug_info: None, 
+            scope: None 
+        }
+    }
+
     /// Creates a new literal value.
     pub fn new_literal(imm: IrLiteralValue) -> Self {
         let ty: IrType = (&imm).into();
-        Value { id: ValueId::new(), kind: ValueKind::Literal(imm), ty, debug_info: None, scope: None }
+        Self::new_value(ValueKind::Literal(imm), ty)
     }
 
     /// Creates a new constant value.
     pub fn new_constant(imm: IrConstantValue, ty: IrType) -> Self {
-        Value { id: ValueId::new(), kind: ValueKind::Constant(imm), ty, debug_info: None, scope: None }
+        Self::new_value(ValueKind::Constant(imm), ty)
     }
 
     /// Creates a new local value.
     pub fn new_local(name: Arc<str>, ty: IrType) -> Self {
-        Value { id: ValueId::new(), kind: ValueKind::Local(name), ty, debug_info: None, scope: None }
+        Self::new_value(ValueKind::Local(name), ty)
     }
 
     /// Creates a new global value.
     pub fn new_global(name: Arc<str>, ty: IrType) -> Self {
-        Value { id: ValueId::new(), kind: ValueKind::Global(name), ty, debug_info: None, scope: None }
+        Self::new_value(ValueKind::Global(name), ty)
     }
 
     /// Creates a new temporary value.
     pub fn new_temporary(tmp_id: u64, ty: IrType) -> Self {
-        Value { id: ValueId::new(), kind: ValueKind::Temporary(tmp_id), ty, debug_info: None, scope: None }
+        Self::new_value(ValueKind::Temporary(tmp_id), ty)
     }
 
     pub fn with_debug_info(mut self, name: Option<Arc<str>>, span: SourceSpan) -> Self {
