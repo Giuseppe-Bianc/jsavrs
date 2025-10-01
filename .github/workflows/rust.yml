@@ -38,7 +38,16 @@ jobs:
       - name: Checkout repository
         uses: actions/checkout@v5
 
-      - name: Cache cargo dependencies
+      - name: Install Rust Toolchain
+        uses: actions-rs/toolchain@v1
+        with:
+          profile: minimal
+          toolchain: ${{ matrix.rust }}
+          targets: ${{ matrix.target }}
+          components: rustfmt, clippy
+          override: true
+
+      - name: Cache dependencies
         uses: actions/cache@v4
         with:
           path: |
@@ -50,18 +59,14 @@ jobs:
             ${{ runner.os }}-cargo-${{ matrix.rust }}-
             ${{ runner.os }}-cargo-
 
-      - name: Install Rust toolchain
-        uses: dtolnay/rust-toolchain@master
-        with:
-          toolchain: ${{ matrix.rust }}
-          components: rustfmt, clippy
-          targets: ${{ matrix.target }}
-
       - name: Cargo Check
-        run: cargo check --all-features --verbose
+        uses: actions-rs/cargo@v1
+        with:
+          command: check
+          args: --all-features --verbose
 
       - name: Run Tests
-        run: cargo test --all-features --verbose
+        uses: actions-rs/cargo@v1
         env:
           INSTA_UPDATE: force  # Force update snapshots (use with caution!)
         with:
@@ -73,16 +78,21 @@ jobs:
       #           run: cargo fmt --all -- --check
 
       - name: Clippy Lints
-        run: cargo clippy --all-features --verbose -- -D warnings
+        uses: actions-rs/cargo@v1
+        with:
+          command: clippy
+          args: --all-features --verbose -- -D warnings
 
-      # Optional Release Build + Artifact Upload
-      # - name: Build Release
-      #   if: matrix.rust == 'stable'
-      #   run: cargo build --release --verbose
-      #
-      # - name: Upload Release Artifacts
-      #   if: matrix.rust == 'stable' && github.event_name == 'push' && matrix.os == 'ubuntu-latest'
-      #   uses: actions/upload-artifact@v4
-      #   with:
-      #     name: release-binaries
-      #     path: target/release
+#     - name: Build Release
+#       if: matrix.rust == 'stable'
+#       uses: actions-rs/cargo@v1
+#       with:
+#         command: build
+#         args: --release --verbose
+
+#    - name: Upload Artifacts
+#      if: matrix.rust == 'stable' && github.event_name == 'push' && matrix.os == 'ubuntu-latest'
+#      uses: actions/upload-artifact@v3
+#      with:
+#        name: release-binaries
+#        path: target/release
