@@ -1,6 +1,6 @@
 //src/parser/ast.rs
 use crate::error::compile_error::CompileError;
-use crate::location::source_span::SourceSpan;
+use crate::location::source_span::{HasSpan, SourceSpan};
 use crate::tokens::number::Number;
 use crate::tokens::token::Token;
 use crate::tokens::token_kind::TokenKind;
@@ -130,20 +130,6 @@ pub enum Stmt {
 }
 
 impl Expr {
-    pub fn span(&self) -> &SourceSpan {
-        match self {
-            Expr::Binary { span, .. } => span,
-            Expr::Unary { span, .. } => span,
-            Expr::Grouping { span, .. } => span,
-            Expr::Literal { span, .. } => span,
-            Expr::Variable { span, .. } => span,
-            Expr::Assign { span, .. } => span,
-            Expr::Call { span, .. } => span,
-            Expr::ArrayAccess { span, .. } => span,
-            Expr::ArrayLiteral { span, .. } => span,
-        }
-    }
-
     pub fn null_expr(span: SourceSpan) -> Expr {
         Expr::Literal { value: LiteralValue::Nullptr, span }
     }
@@ -170,8 +156,24 @@ impl Expr {
     }
 }
 
-impl Stmt {
-    pub fn span(&self) -> &SourceSpan {
+impl HasSpan for Expr {
+    fn span(&self) -> &SourceSpan {
+        match self {
+            Expr::Binary { span, .. } => span,
+            Expr::Unary { span, .. } => span,
+            Expr::Grouping { span, .. } => span,
+            Expr::Literal { span, .. } => span,
+            Expr::ArrayLiteral { span, .. } => span,
+            Expr::Variable { span, .. } => span,
+            Expr::Assign { span, .. } => span,
+            Expr::Call { span, .. } => span,
+            Expr::ArrayAccess { span, .. } => span,
+        }
+    }
+}
+
+impl HasSpan for Stmt {
+    fn span(&self) -> &SourceSpan {
         match self {
             Stmt::Expression { expr } => expr.span(),
             Stmt::VarDeclaration { span, .. } => span,

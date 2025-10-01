@@ -1,6 +1,6 @@
 // src/parser/jsav_parser.rs
 use crate::error::compile_error::CompileError;
-use crate::location::source_span::SourceSpan;
+use crate::location::source_span::{SourceSpan, HasSpan};
 use crate::parser::ast::*;
 use crate::parser::precedence::*;
 use crate::tokens::token::Token;

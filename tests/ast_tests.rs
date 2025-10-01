@@ -1,5 +1,6 @@
 // tets/ast_test.rs
 use jsavrs::lexer::{Lexer, lexer_tokenize_with_errors};
+use jsavrs::location::source_span::HasSpan;
 use jsavrs::parser::ast::*;
 use jsavrs::parser::jsav_parser::JsavParser;
 use jsavrs::printers::ast_printer::{pretty_print, pretty_print_stmt};

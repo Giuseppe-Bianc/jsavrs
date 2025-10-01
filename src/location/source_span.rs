@@ -174,3 +174,8 @@ pub fn truncate_path(path: &Path, depth: usize) -> String {
 
     truncated.display().to_string()
 }
+
+
+pub trait HasSpan {
+    fn span(&self) -> &SourceSpan;
+}
