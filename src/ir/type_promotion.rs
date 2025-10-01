@@ -56,7 +56,7 @@ use crate::location::source_span::SourceSpan;
 use std::collections::HashMap;
 
 /// Central entity managing type promotion logic and rules
-#[derive(Debug, Clone, PartialEq)]
+#[derive(Debug, Clone, PartialEq, Default)]
 pub struct TypePromotion {
     /// The source type being promoted from
     pub from_type: IrType,

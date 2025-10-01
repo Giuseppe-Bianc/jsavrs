@@ -6,9 +6,9 @@ use crate::{
 };
 use std::fmt;
 
-#[derive(Debug, Clone, Copy, PartialEq, Eq, Hash)]
+#[derive(Debug, Clone, Copy, PartialEq, Eq, Hash, Default)]
 pub enum CastKind {
-    IntToPtr,
+    #[default] IntToPtr,
     PtrToInt,
     FloatToInt,
     IntToFloat,
