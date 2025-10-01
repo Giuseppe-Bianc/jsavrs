@@ -35,6 +35,7 @@ use super::{
 use crate::ir::generator::NIrGenerator;
 use crate::location::source_span::SourceSpan;
 
+#[derive(Debug, Clone, Default)]
 pub struct TypePromotionEngine {
     pub promotion_matrix: PromotionMatrix,
 }
@@ -58,66 +59,64 @@ impl TypePromotionEngine {
         let mut right_cast = None;
 
         // Check if left operand needs casting
-        if left_type != &result_type {
-            if let Some(rule) = self.promotion_matrix.get_promotion_rule(left_type, &result_type) {
-                if let PromotionRule::Direct { cast_kind, may_lose_precision, may_overflow } = rule {
-                    left_cast = Some(TypePromotion {
-                        from_type: left_type.clone(),
-                        to_type: result_type.clone(),
-                        cast_kind: *cast_kind,
-                        may_lose_precision: *may_lose_precision,
-                        may_overflow: *may_overflow,
-                        source_span: span.clone(),
-                    });
+        if left_type != &result_type
+            && let Some(rule) = self.promotion_matrix.get_promotion_rule(left_type, &result_type)
+            && let PromotionRule::Direct { cast_kind, may_lose_precision, may_overflow } = rule
+        {
+            left_cast = Some(TypePromotion {
+                from_type: left_type.clone(),
+                to_type: result_type.clone(),
+                cast_kind: *cast_kind,
+                may_lose_precision: *may_lose_precision,
+                may_overflow: *may_overflow,
+                source_span: span.clone(),
+            });
 
-                    // Add warnings if applicable
-                    if *may_lose_precision {
-                        warnings.push(PromotionWarning::PrecisionLoss {
-                            from_type: left_type.clone(),
-                            to_type: result_type.clone(),
-                            estimated_loss: PrecisionLossEstimate::None, // Determine more precisely as needed
-                        });
-                    }
-                    if *may_overflow {
-                        warnings.push(PromotionWarning::PotentialOverflow {
-                            from_type: left_type.clone(),
-                            to_type: result_type.clone(),
-                            operation,
-                        });
-                    }
-                }
+            // Add warnings if applicable
+            if *may_lose_precision {
+                warnings.push(PromotionWarning::PrecisionLoss {
+                    from_type: left_type.clone(),
+                    to_type: result_type.clone(),
+                    estimated_loss: PrecisionLossEstimate::None, // Determine more precisely as needed
+                });
+            }
+            if *may_overflow {
+                warnings.push(PromotionWarning::PotentialOverflow {
+                    from_type: left_type.clone(),
+                    to_type: result_type.clone(),
+                    operation,
+                });
             }
         }
 
         // Check if right operand needs casting
-        if right_type != &result_type {
-            if let Some(rule) = self.promotion_matrix.get_promotion_rule(right_type, &result_type) {
-                if let PromotionRule::Direct { cast_kind, may_lose_precision, may_overflow } = rule {
-                    right_cast = Some(TypePromotion {
-                        from_type: right_type.clone(),
-                        to_type: result_type.clone(),
-                        cast_kind: *cast_kind,
-                        may_lose_precision: *may_lose_precision,
-                        may_overflow: *may_overflow,
-                        source_span: span.clone(),
-                    });
+        if right_type != &result_type
+            && let Some(rule) = self.promotion_matrix.get_promotion_rule(right_type, &result_type)
+            && let PromotionRule::Direct { cast_kind, may_lose_precision, may_overflow } = rule
+        {
+            right_cast = Some(TypePromotion {
+                from_type: right_type.clone(),
+                to_type: result_type.clone(),
+                cast_kind: *cast_kind,
+                may_lose_precision: *may_lose_precision,
+                may_overflow: *may_overflow,
+                source_span: span.clone(),
+            });
 
-                    // Add warnings if applicable
-                    if *may_lose_precision {
-                        warnings.push(PromotionWarning::PrecisionLoss {
-                            from_type: right_type.clone(),
-                            to_type: result_type.clone(),
-                            estimated_loss: PrecisionLossEstimate::None, // Determine more precisely as needed
-                        });
-                    }
-                    if *may_overflow {
-                        warnings.push(PromotionWarning::PotentialOverflow {
-                            from_type: right_type.clone(),
-                            to_type: result_type.clone(),
-                            operation,
-                        });
-                    }
-                }
+            // Add warnings if applicable
+            if *may_lose_precision {
+                warnings.push(PromotionWarning::PrecisionLoss {
+                    from_type: right_type.clone(),
+                    to_type: result_type.clone(),
+                    estimated_loss: PrecisionLossEstimate::None, // Determine more precisely as needed
+                });
+            }
+            if *may_overflow {
+                warnings.push(PromotionWarning::PotentialOverflow {
+                    from_type: right_type.clone(),
+                    to_type: result_type.clone(),
+                    operation,
+                });
             }
         }
 

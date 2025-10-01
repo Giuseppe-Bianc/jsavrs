@@ -84,6 +84,12 @@ pub struct PromotionMatrix {
     overflow_behavior: OverflowBehavior,
 }
 
+impl Default for PromotionMatrix {
+    fn default() -> Self {
+        Self::new()
+    }
+}
+
 /// Defines specific promotion behavior between two types
 #[derive(Debug, Clone, PartialEq)]
 pub enum PromotionRule {
