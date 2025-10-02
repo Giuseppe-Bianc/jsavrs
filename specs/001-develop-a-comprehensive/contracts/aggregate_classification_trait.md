@@ -21,7 +21,7 @@ pub trait AggregateClassification {
     /// # Platform Behavior
     /// - **Windows**: size ≤ 8 → ByValue, otherwise ByReference
     /// - **System V**: size ≤ 16 and simple → Decomposed, otherwise ByReference
-    fn classify_aggregate(size: usize, fields: &[FieldType]) -> AggregateClass;
+    fn classify_aggregate(&self, size: usize, fields: &[FieldType]) -> AggregateClass;
 }
 
 #[derive(Debug, Clone, PartialEq, Eq)]

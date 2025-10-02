@@ -17,7 +17,7 @@ pub trait RegisterAllocation {
     /// # Platform Behavior
     /// - Windows: [RAX, R10, R11, RCX, RDX, R8, R9]
     /// - System V: [RAX, RCX, RDX, RSI, RDI, R8, R9, R10, R11]
-    fn volatile_gp_registers() -> &'static [GPRegister64];
+    fn volatile_gp_registers(&self) -> &'static [GPRegister64];
     
     /// Returns priority-ordered list of non-volatile GP registers
     ///
@@ -27,7 +27,7 @@ pub trait RegisterAllocation {
     /// # Platform Behavior
     /// - Windows: [RBX, RDI, RSI, R12, R13, R14, R15]
     /// - System V: [RBX, R12, R13, R14, R15]
-    fn non_volatile_gp_registers() -> &'static [GPRegister64];
+    fn non_volatile_gp_registers(&self) -> &'static [GPRegister64];
     
     /// Returns priority-ordered list of volatile XMM registers
     ///
@@ -37,7 +37,7 @@ pub trait RegisterAllocation {
     /// # Platform Behavior
     /// - Windows: [XMM0-XMM5]
     /// - System V: [XMM0-XMM15]
-    fn volatile_xmm_registers() -> &'static [XMMRegister];
+    fn volatile_xmm_registers(&self) -> &'static [XMMRegister];
     
     /// Checks if register is volatile for this calling convention
     ///
@@ -46,7 +46,7 @@ pub trait RegisterAllocation {
     ///
     /// # Returns
     /// `true` if caller-saved, `false` if callee-saved or special
-    fn is_volatile(reg: X86Register) -> bool;
+    fn is_volatile(&self, reg: X86Register) -> bool;
     
     /// Checks if register is callee-saved for this calling convention
     ///
@@ -55,7 +55,7 @@ pub trait RegisterAllocation {
     ///
     /// # Returns
     /// `true` if callee must preserve, `false` otherwise
-    fn is_callee_saved(reg: X86Register) -> bool;
+    fn is_callee_saved(&self, reg: X86Register) -> bool;
 }
 ```
 

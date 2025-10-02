@@ -229,7 +229,7 @@ As a compiler engineer developing the jsavrs compiler, I need a standardized int
 - [x] Success criteria are measurable (verification against authoritative documentation)
 - [x] Scope is clearly bounded (x86-64 architecture, three major platforms)
 - [x] Dependencies identified (authoritative ABI documentation sources)
-- [ ] Some clarifications remain regarding mixed-mode support and versioning strategy
+- [x] Some clarifications remain regarding mixed-mode support and versioning strategy
 
 ### Community Guidelines
 - [x] Specifications promote collaboration among compiler engineers
