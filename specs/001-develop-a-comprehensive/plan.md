@@ -274,8 +274,8 @@ QWEN.md updated with new ABI trait system context (note: update-agent-context.ps
 
 | Violation | Why Needed | Simpler Alternative Rejected Because |
 |-----------|------------|-------------------------------------|
-| [e.g., 4th project] | [current need] | [why 3 projects insufficient] |
-| [e.g., Repository pattern] | [specific problem] | [why direct DB access insufficient] |
+|  |  |  |
+|  |  |  |
 
 
 ## Progress Tracking
