@@ -278,6 +278,28 @@ impl X86Register {
             }
         }
     }
+
+    pub fn nasm_name(&self) -> String {
+        match self {
+            X86Register::GP64(r) => format!("{:?}", r).to_lowercase(),
+            X86Register::GP32(r) => format!("{:?}", r).to_lowercase(),
+            X86Register::GP16(r) => format!("{:?}", r).to_lowercase(),
+            X86Register::GP8(r) => format!("{:?}", r).to_lowercase(),
+            X86Register::Fpu(r) => {
+                format!("{r}")
+            }
+            X86Register::Mmx(r) => format!("{:?}", r).to_lowercase(),
+            X86Register::Xmm(r) => format!("{:?}", r).to_lowercase(),
+            X86Register::Ymm(r) => format!("{:?}", r).to_lowercase(),
+            X86Register::Zmm(r) => format!("{:?}", r).to_lowercase(),
+            X86Register::Mask(r) => format!("{:?}", r).to_lowercase(),
+            X86Register::Segment(r) => format!("{:?}", r).to_lowercase(),
+            X86Register::Control(r) => format!("{:?}", r).to_lowercase(),
+            X86Register::Debug(r) => format!("{:?}", r).to_lowercase(),
+            X86Register::Flags(r) => format!("{:?}", r).to_lowercase(),
+            X86Register::InstructionPointer(r) => format!("{:?}", r).to_lowercase(),
+        }
+    }
 }
 
 // Implementazione del trait Display per tutti i tipi di registri
