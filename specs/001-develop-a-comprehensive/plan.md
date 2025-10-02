@@ -126,7 +126,7 @@ ios/ or android/
 
 ### Research Tasks Completed
 
-1. **ABI Specification Sources**: Analyzed System V AMD64 ABI, Microsoft x64 calling convention, Intel/AMD manuals
+1. **ABI Specification Sources**: Analyzed SystemV ABI, Microsoft x64 calling convention, Intel/AMD manuals
 2. **Reference Compiler Behavior**: Documented GCC, Clang, MSVC parameter passing, structure classification, red zone usage
 3. **Architectural Decisions**: Selected trait-based design over enum dispatch for type safety and performance
 4. **Performance Optimization**: Designed constant-time lookup tables, inlining strategies, cache-friendly layouts
@@ -195,59 +195,67 @@ Created comprehensive usage guide with:
 
 QWEN.md updated with new ABI trait system context (note: update-agent-context.ps1 completed)
 
-## Phase 2: Task Planning Approach
-*This section describes what the /tasks command will do - DO NOT execute during /plan*
+## Phase 2: Task Generation ✅ COMPLETE
 
-**Task Generation Strategy**:
-1. Load `.specify/templates/tasks-template.md` as base template
-2. Generate tasks from Phase 1 design documents:
-   - **From contracts/**: Trait implementation tasks + contract test tasks
-   - **From data-model.md**: Entity implementation tasks (if needed beyond existing code)
-   - **From quickstart.md**: Integration test tasks, example validation tasks
+**Task Generation Execution**:
+1. ✅ Loaded `.specify/templates/tasks-template.md` as base template
+2. ✅ Generated tasks from Phase 1 design documents:
+   - **From contracts/**: 4 contract test tasks (T004-T007) + 4 trait implementation tasks (T009-T012)
+   - **From data-model.md**: Existing entity integration task (T013 for src/asm/register.rs)
+   - **From quickstart.md**: Integration test tasks (T008, T016), cross-compiler validation (T014)
 
-**Specific Task Categories**:
+**Generated Task Categories**:
 
-**Category 1: Trait Implementations** [Priority: High]
-- Implement `CallingConvention` trait for WindowsX64 (1 task)
-- Implement `CallingConvention` trait for SystemV (1 task)
-- Implement `StackManagement` trait for both platforms (1 task)
-- Implement `RegisterAllocation` trait for both platforms (1 task)
-- Implement `AggregateClassification` trait for both platforms (1 task)
+**Category 1: Setup & Configuration** [T001-T003]
+- Add dependencies to Cargo.toml (tracing, criterion, insta)
+- Configure Criterion benchmarking infrastructure
+- Verify rustfmt and clippy configuration
 
-**Category 2: Contract Tests** [Priority: High, TDD]
-- Write contract tests for CallingConvention (failing initially) (1 task)
-- Write contract tests for StackManagement (failing initially) (1 task)
-- Write contract tests for RegisterAllocation (failing initially) (1 task)
-- Write contract tests for AggregateClassification (failing initially) (1 task)
+**Category 2: Contract Tests (TDD)** [T004-T007] [Priority: High, All Parallel]
+- T004: CallingConvention contract tests (tests/abi_calling_convention_tests.rs)
+- T005: StackManagement contract tests (tests/abi_stack_management_tests.rs)
+- T006: RegisterAllocation contract tests (tests/abi_register_allocation_tests.rs)
+- T007: AggregateClassification contract tests (tests/abi_aggregate_classification_tests.rs)
 
-**Category 3: Integration Tests** [Priority: Medium]
-- Cross-compiler validation tests (GCC/Clang/MSVC comparison) (1 task)
-- Snapshot tests for assembly output (1 task)
-- Quickstart examples validation (1 task)
+**Category 3: Integration Tests (TDD)** [T008] [Priority: High, Parallel with Contract Tests]
+- T008: Quickstart scenario integration tests (tests/abi_integration_tests.rs)
 
-**Category 4: Performance Benchmarks** [Priority: Medium]
-- Implement Criterion benchmarks for ABI queries (1 task)
-- Validate < 0.1% compilation time overhead (1 task)
+**Category 4: Trait Implementations** [T009-T013] [Priority: High, After Tests Fail]
+- T009: CallingConvention trait (src/asm/calling_convention.rs)
+- T010: StackManagement trait (src/asm/stack_management.rs)
+- T011: RegisterAllocation trait (src/asm/register_allocation.rs)
+- T012: AggregateClassification trait (src/asm/aggregate_classification.rs)
+- T013: Update existing register.rs (src/asm/register.rs)
 
-**Category 5: Logging/Observability** [Priority: Low]
-- Integrate tracing instrumentation for ABI decisions (1 task)
-- Add structured logging configuration (1 task)
+**Category 5: Validation** [T014-T016] [Priority: Medium]
+- T014: Cross-compiler validation (tests/abi_cross_compiler_validation.rs)
+- T015: Snapshot tests with insta (tests/abi_snapshot_tests.rs)
+- T016: Quickstart examples validation (tests/abi_quickstart_validation.rs)
 
-**Category 6: Documentation** [Priority: Low]
-- Generate rustdoc comments for all public APIs (1 task)
-- Update existing register.rs with trait implementations (1 task)
+**Category 6: Performance & Observability** [T017-T018] [Priority: Medium]
+- T017: Criterion benchmarks (benches/abi_benchmarks.rs)
+- T018: Tracing instrumentation (src/asm/*.rs)
 
-**Ordering Strategy**:
-1. **Phase A (TDD Setup)**: Contract tests first (tasks 6-9) - Mark [P] for parallel
-2. **Phase B (Implementation)**: Trait implementations (tasks 1-5) following TDD - Mark [P] for parallel
-3. **Phase C (Validation)**: Integration tests, benchmarks (tasks 10-13)
-4. **Phase D (Polish)**: Logging, documentation (tasks 14-17)
+**Category 7: Documentation & Polish** [T019-T020] [Priority: Low, Parallel]
+- T019: Rustdoc documentation (all public APIs)
+- T020: Duplication analysis with similarity-rs
 
-**Dependency Rules**:
-- Contract tests have NO dependencies (can write immediately)
-- Trait implementations depend on contract tests (TDD workflow)
-- Integration tests depend on trait implementations
-- Benchmarks depend on trait implementations
+**Task Ordering Applied**:
+1. **Phase 3.1 (Setup)**: T001-T003 (sequential setup tasks)
+2. **Phase 3.2 (TDD Tests)**: T004-T008 (5 parallel test tasks - MUST FAIL initially)
+3. **Phase 3.3 (Implementation)**: T009-T013 (4 parallel + 1 sequential - AFTER tests fail)
+4. **Phase 3.4 (Validation)**: T014-T016 (T014 first, then T015-T016 parallel)
+5. **Phase 3.5 (Polish)**: T017-T020 (T017-T018 sequential, T019-T020 parallel)
+
+**Dependency Rules Applied**:
+- Contract tests (T004-T008) have NO dependencies → Can execute immediately in parallel
+- Trait implementations (T009-T012) require tests to fail first → Parallel after T004-T008
+- T013 modifies shared file → Sequential after T009-T012
+- Validation tests (T014-T016) require implementations → After T009-T013
+- Benchmarks/observability (T017-T018) require implementations → After T009-T013
+- Documentation/analysis (T019-T020) can run anytime → Parallel at end
+
+**Output**: `tasks.md` (20 tasks, 5 phases, clear dependencies, parallel execution guidance)
 - All tasks in same phase can run in parallel [P]
 
 **Estimated Output**: 17 numbered tasks in tasks.md with clear dependencies and parallel execution markers
@@ -276,12 +284,18 @@ QWEN.md updated with new ABI trait system context (note: update-agent-context.ps
 **Phase Status**:
 - [x] Phase 0: Research complete (/plan command)
 - [x] Phase 1: Design complete (/plan command)
-- [x] Phase 2: Task planning complete (/plan command - describe approach only)
-- [ ] Phase 3: Tasks generated (/tasks command) - READY FOR EXECUTION
-- [ ] Phase 4: Implementation complete
-- [ ] Phase 5: Validation passed
+- [x] Phase 2: Task generation complete (/tasks command) - tasks.md created with 20 tasks
+- [ ] Phase 3: Implementation pending - Execute tasks T001-T020
+- [ ] Phase 4: Testing pending - Validate all test suites pass
+- [ ] Phase 5: Documentation pending - Generate final documentation
 
 **Gate Status**:
+- [x] Initial Constitution Check: PASS (7/7 principles verified)
+- [x] Post-Design Constitution Check: PASS (no new violations)
+- [x] Clarification Gate: PASS (all NEEDS CLARIFICATION resolved)
+- [x] Task Generation Gate: PASS (tasks.md created, 20 tasks, all validation criteria met)
+- [ ] Implementation Gate: Pending (all tests pass + benchmarks meet < 0.1% target)
+- [ ] Final Review Gate: Pending (documentation complete + cross-compiler validation)
 - [x] Initial Constitution Check: PASS
 - [x] Post-Design Constitution Check: PASS
 - [x] All NEEDS CLARIFICATION resolved

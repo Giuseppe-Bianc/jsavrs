@@ -91,7 +91,7 @@ As a compiler engineer developing the jsavrs compiler, I need a standardized int
 
 ### Edge Cases
 
-- **Variadic Functions**: The system SHALL handle ABI specifications for functions with variable argument lists following platform-specific conventions exactly as defined in reference ABI documentation. This includes System V's AL register convention for tracking floating-point argument count in XMM registers and Windows x64's uniform register/stack handling.
+- **Variadic Functions**: The system SHALL handle ABI specifications for functions with variable argument lists following platform-specific conventions exactly as defined in reference ABI documentation. This includes SystemV's AL register convention for tracking floating-point argument count in XMM registers and Windows x64's uniform register/stack handling.
 
 - **Large Structure Returns**: Structure return mechanisms SHALL follow reference compiler conventions (GCC, Clang, MSVC). Structures exceeding platform-specific size thresholds require hidden pointer parameters with caller-allocated memory management.
 
@@ -99,11 +99,11 @@ As a compiler engineer developing the jsavrs compiler, I need a standardized int
 
 - **Nested Structure Alignment**: Nested structures (structures containing other structures or arrays) SHALL follow reference compiler layout conventions (GCC, Clang, MSVC) for the target platform. This includes alignment rules, internal padding, and total structure size calculations affecting both stack layout and parameter passing mechanisms.
 
-- **Red Zone Usage**: The system SHALL provide a query interface to determine red zone availability and size for each platform. System V ABI provides a 128-byte red zone below RSP available for leaf functions without stack adjustment, while Windows x64 prohibits red zone usage entirely. The interface must enable compiler optimizations to leverage red zone when available.
+- **Red Zone Usage**: The system SHALL provide a query interface to determine red zone availability and size for each platform. SystemV ABI provides a 128-byte red zone below RSP available for leaf functions without stack adjustment, while Windows x64 prohibits red zone usage entirely. The interface must enable compiler optimizations to leverage red zone when available.
 
 - **Mixed-Mode Calling**: Mixed-mode calling conventions (64-bit/32-bit interoperability) are explicitly OUT OF SCOPE for this feature. The system focuses exclusively on pure 64-bit ABI specifications.
 
-- **ABI Version Evolution**: The system SHALL focus on current stable ABI specifications (Windows x64, System V AMD64) without explicit version tracking. The design MUST be extensible to accommodate future platform-specific extensions through modular architecture rather than versioning mechanisms.
+- **ABI Version Evolution**: The system SHALL focus on current stable ABI specifications (Windows x64, SystemV) without explicit version tracking. The design MUST be extensible to accommodate future platform-specific extensions through modular architecture rather than versioning mechanisms.
 
 ## Requirements *(mandatory)*
 
@@ -111,7 +111,7 @@ As a compiler engineer developing the jsavrs compiler, I need a standardized int
 
 - **FR-001**: The system MUST provide accurate calling convention specifications for Windows x64 ABI, including precise register allocation rules for the first four parameters (RCX, RDX, R8, R9) and stack parameter placement for subsequent arguments.
 
-- **FR-002**: The system MUST provide accurate calling convention specifications for System V AMD64 ABI (used by Linux and macOS), including register allocation rules for up to six integer/pointer parameters (RDI, RSI, RDX, RCX, R8, R9) and eight floating-point parameters (XMM0-XMM7).
+- **FR-002**: The system MUST provide accurate calling convention specifications for SystemV ABI (used by Linux and macOS), including register allocation rules for up to six integer/pointer parameters (RDI, RSI, RDX, RCX, R8, R9) and eight floating-point parameters (XMM0-XMM7).
 
 - **FR-003**: The system MUST specify correct volatile (caller-saved) and non-volatile (callee-saved) register classifications for each supported platform, enabling proper register preservation code generation.
 
@@ -129,13 +129,13 @@ As a compiler engineer developing the jsavrs compiler, I need a standardized int
 
 - **FR-010**: The system MUST define stack frame layout conventions, including parameter area placement, local variable allocation, and alignment padding requirements.
 
-- **FR-011**: The system MUST specify red zone availability and usage rules, distinguishing System V's 128-byte red zone from Windows' prohibition of red zone access. The specification SHALL provide a query interface to determine red zone availability and size for compiler optimization decisions.
+- **FR-011**: The system MUST specify red zone availability and usage rules, distinguishing SystemV's 128-byte red zone from Windows' prohibition of red zone access. The specification SHALL provide a query interface to determine red zone availability and size for compiler optimization decisions.
 
 - **FR-012**: The system MUST provide register allocation priority guidance for efficient code generation, indicating preferred register usage orders for parameters and temporary values.
 
 - **FR-013**: The system MUST specify alignment requirements for different data types (8-byte for pointers and 64-bit integers, 16-byte for SIMD types, etc.) affecting both stack layout and structure padding.
 
-- **FR-014**: The system MUST define calling convention behavior for variadic functions, including register and stack parameter handling differences from fixed-parameter functions on each platform. Variadic function handling SHALL precisely match reference ABI specifications (System V AMD64 ABI, Microsoft x64 calling convention) including floating-point register usage and AL register conventions where applicable.
+- **FR-014**: The system MUST define calling convention behavior for variadic functions, including register and stack parameter handling differences from fixed-parameter functions on each platform. Variadic function handling SHALL precisely match reference ABI specifications (SystemV ABI, Microsoft x64 calling convention) including floating-point register usage and AL register conventions where applicable.
 
 - **FR-015**: The system MUST provide specifications verifiable against authoritative ABI documentation sources (Intel Software Developer Manuals, AMD64 ABI specification documents, Microsoft x64 calling convention documentation).
 
@@ -273,7 +273,7 @@ The specification must account for critical differences between platform ABIs:
 
 - **Windows x64**: Requires 32-byte shadow space allocation for first four parameters even when passed in registers; does not support red zone; uses different register preservation rules.
 
-- **System V AMD64**: Supports 128-byte red zone for leaf functions; uses different parameter register allocation order; requires 16-byte stack alignment before function calls.
+- **SystemV**: Supports 128-byte red zone for leaf functions; uses different parameter register allocation order; requires 16-byte stack alignment before function calls.
 
 - **macOS x86-64**: Generally follows System V AMD64 conventions but may have specific extensions or variations requiring explicit documentation.
 
