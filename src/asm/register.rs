@@ -146,13 +146,7 @@ impl X86Register {
             X86Register::GP16(r) => format!("{:?}", r).to_lowercase(),
             X86Register::GP8(r) => format!("{:?}", r).to_lowercase(),
             X86Register::Fpu(r) => {
-                let idx = match r {
-                    FPURegister::St0 => 0, FPURegister::St1 => 1,
-                    FPURegister::St2 => 2, FPURegister::St3 => 3,
-                    FPURegister::St4 => 4, FPURegister::St5 => 5,
-                    FPURegister::St6 => 6, FPURegister::St7 => 7,
-                };
-                format!("st{}", idx)
+                format!("{r}")
             }
             X86Register::Mmx(r) => format!("{:?}", r).to_lowercase(),
             X86Register::Xmm(r) => format!("{:?}", r).to_lowercase(),
