@@ -138,50 +138,6 @@ pub enum X86Register {
 }
 
 impl X86Register {
-    /// Ottiene la denominazione NASM del registro
-    pub fn nasm_name(&self) -> String {
-        match self {
-            X86Register::GP64(r) => format!("{:?}", r).to_lowercase(),
-            X86Register::GP32(r) => format!("{:?}", r).to_lowercase(),
-            X86Register::GP16(r) => format!("{:?}", r).to_lowercase(),
-            X86Register::GP8(r) => format!("{:?}", r).to_lowercase(),
-            X86Register::Fpu(r) => {
-                format!("{r}")
-            }
-            X86Register::Mmx(r) => format!("{:?}", r).to_lowercase(),
-            X86Register::Xmm(r) => format!("{:?}", r).to_lowercase(),
-            X86Register::Ymm(r) => format!("{:?}", r).to_lowercase(),
-            X86Register::Zmm(r) => format!("{:?}", r).to_lowercase(),
-            X86Register::Mask(r) => format!("{:?}", r).to_lowercase(),
-            X86Register::Segment(r) => format!("{:?}", r).to_lowercase(),
-            X86Register::Control(r) => format!("{:?}", r).to_lowercase(),
-            X86Register::Debug(r) => format!("{:?}", r).to_lowercase(),
-            X86Register::Flags(r) => format!("{:?}", r).to_lowercase(),
-            X86Register::InstructionPointer(r) => format!("{:?}", r).to_lowercase(),
-        }
-    }
-
-    /// Ottiene una descrizione del registro
-    pub fn description(&self) -> &'static str {
-        match self {
-            X86Register::GP64(_) => "Registro general-purpose a 64-bit",
-            X86Register::GP32(_) => "Registro general-purpose a 32-bit",
-            X86Register::GP16(_) => "Registro general-purpose a 16-bit",
-            X86Register::GP8(_) => "Registro general-purpose a 8-bit",
-            X86Register::Fpu(_) => "Registro x87 FPU",
-            X86Register::Mmx(_) => "Registro MMX",
-            X86Register::Xmm(_) => "Registro XMM (SSE)",
-            X86Register::Ymm(_) => "Registro YMM (AVX)",
-            X86Register::Zmm(_) => "Registro ZMM (AVX-512)",
-            X86Register::Mask(_) => "Registro maschera (AVX-512)",
-            X86Register::Segment(_) => "Registro di segmento",
-            X86Register::Control(_) => "Registro di controllo",
-            X86Register::Debug(_) => "Registro di debug",
-            X86Register::Flags(_) => "Registro dei flag",
-            X86Register::InstructionPointer(_) => "Instruction pointer",
-        }
-    }
-
     /// Verifica se il registro è volatile secondo la calling convention
     pub fn is_volatile(&self, platform: Platform) -> bool {
         match self {
