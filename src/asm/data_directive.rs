@@ -1,6 +1,7 @@
 /// Rappresenta una direttiva di dati nell'assembly
 use  super::{Instruction, Section};
 #[derive(Debug, Clone)]
+#[allow(dead_code)]
 pub enum DataDirective {
     /// Byte (8-bit)
     Db(Vec<u8>),
@@ -26,6 +27,7 @@ pub enum DataDirective {
 
 /// Rappresenta un elemento in una sezione assembly
 #[derive(Debug, Clone)]
+#[allow(dead_code)]
 pub enum AssemblyElement {
     /// Etichetta
     Label(String),
@@ -41,11 +43,13 @@ pub enum AssemblyElement {
 
 /// Sezione assembly con i suoi elementi
 #[derive(Debug, Clone)]
+#[allow(dead_code)]
 pub struct AssemblySection {
     pub section: Section,
     pub elements: Vec<AssemblyElement>,
 }
 
+#[allow(dead_code)]
 impl AssemblySection {
     pub fn new(section: Section) -> Self {
         Self {

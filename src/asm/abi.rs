@@ -290,6 +290,7 @@ impl Abi {
 
 /// Information about variadic function support.
 #[derive(Debug, Clone, Copy)]
+#[allow(dead_code)]
 pub struct VariadicInfo {
     /// Whether variadic functions are supported.
     pub supported: bool,

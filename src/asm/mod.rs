@@ -9,4 +9,5 @@ pub use register::*;
 pub use abi::*;
 pub use instruction::*;
 pub use section::*;
+#[allow(unused_imports)]
 pub use data_directive::*;

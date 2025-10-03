@@ -1,5 +1,6 @@
 /// Assembly sections
 #[derive(Debug, Clone, Hash, PartialEq, Eq)]
+#[allow(dead_code)]
 pub enum Section {
     Text,
     Data,
@@ -7,6 +8,7 @@ pub enum Section {
     Rodata,
 }
 
+#[allow(dead_code)]
 impl Section {
     /// Get the name of the section as a string
     pub fn name(&self) -> &'static str {
