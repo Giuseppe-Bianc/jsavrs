@@ -1,4 +1,4 @@
-use jsavrs::ir::{BasicBlock, Instruction, InstructionKind, IrBinaryOp, IrLiteralValue, IrType, TerminatorKind, Value};
+use jsavrs::ir::{BasicBlock, Instruction, InstructionKind, IrBinaryOp, IrLiteralValue, IrType, ScopeId, TerminatorKind, Value};
 use jsavrs::utils::dummy_span;
 
 #[test]
@@ -15,6 +15,39 @@ fn test_block_terminator_mut() {
     assert_eq!(block.label, "entry".into());
     assert!(block.instructions.is_empty());
     assert_eq!(block.terminator_mut().kind, TerminatorKind::Unreachable);
+}
+
+#[test]
+fn test_block_scope() {
+    let block = BasicBlock::new("entry", Default::default());
+    assert_eq!(block.label, "entry".into());
+    assert!(block.instructions.is_empty());
+    assert_eq!(block.terminator().kind, TerminatorKind::Unreachable);
+    assert_eq!(block.scope(), None);
+}
+
+#[test]
+fn test_block_set_scope() {
+    let mut block = BasicBlock::new("entry", Default::default());
+    assert_eq!(block.label, "entry".into());
+    assert!(block.instructions.is_empty());
+    assert_eq!(block.terminator().kind, TerminatorKind::Unreachable);
+    assert_eq!(block.scope(), None);
+    block.set_scope(ScopeId::new());
+    assert_eq!(block.scope().is_some(), true);
+}
+
+#[test]
+fn test_block_clear_scope() {
+    let mut block = BasicBlock::new("entry", Default::default());
+    assert_eq!(block.label, "entry".into());
+    assert!(block.instructions.is_empty());
+    assert_eq!(block.terminator().kind, TerminatorKind::Unreachable);
+    assert_eq!(block.scope(), None);
+    block.set_scope(ScopeId::new());
+    assert_eq!(block.scope().is_some(), true);
+    block.clear_scope();
+    assert_eq!(block.scope(), None);
 }
 
 #[test]
