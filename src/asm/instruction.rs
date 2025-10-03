@@ -402,7 +402,7 @@ pub enum Instruction {
     // === Istruzioni di String ===
     Movsb,
     Movsw,
-    Movsd_string,
+    MovsdString,
     Movsq,
     Stosb,
     Stosw,
@@ -573,7 +573,7 @@ impl Instruction {
             Self::Setbe { .. } => "setbe",
             Self::Movsb => "movsb",
             Self::Movsw => "movsw",
-            Self::Movsd_string => "movsd",
+            Self::MovsdString => "movsd",
             Self::Movsq => "movsq",
             Self::Stosb => "stosb",
             Self::Stosw => "stosw",
@@ -1036,7 +1036,7 @@ impl fmt::Display for Instruction {
             Self::Sysret |
             Self::Movsb |
             Self::Movsw |
-            Self::Movsd_string |
+            Self::MovsdString |
             Self::Movsq |
             Self::Stosb |
             Self::Stosw |
