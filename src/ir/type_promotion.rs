@@ -322,7 +322,8 @@ impl PromotionMatrix {
             (IrType::F64, _) | (_, IrType::F64) => Some(IrType::F64),
             (IrType::F32, _) | (_, IrType::F32) => Some(IrType::F32),
 
-            // Signed/unsigned of same width promote to next size up
+            // Signed/unsigned of same width promote to next size up (or larger signed for I64/U64)
+            (IrType::I64, IrType::U64) | (IrType::U64, IrType::I64) => Some(IrType::I64),  // ADD THIS
             (IrType::I32, IrType::U32) | (IrType::U32, IrType::I32) => Some(IrType::I64),
             (IrType::I16, IrType::U16) | (IrType::U16, IrType::I16) => Some(IrType::I32),
             (IrType::I8, IrType::U8) | (IrType::U8, IrType::I8) => Some(IrType::I16),
@@ -350,6 +351,7 @@ impl PromotionMatrix {
             (IrType::F32, _) | (_, IrType::F32) => IrType::F32,
 
             // For same width signed/unsigned, promote to next size (as per spec)
+            (IrType::I64, IrType::U64) | (IrType::U64, IrType::I64) => IrType::I64,  // ADD THIS
             (IrType::I32, IrType::U32) | (IrType::U32, IrType::I32) => IrType::I64,
             (IrType::I16, IrType::U16) | (IrType::U16, IrType::I16) => IrType::I32,
             (IrType::I8, IrType::U8) | (IrType::U8, IrType::I8) => IrType::I16,
