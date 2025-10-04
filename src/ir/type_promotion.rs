@@ -268,6 +268,29 @@ impl PromotionMatrix {
                 may_overflow: false,
             },
         );
+
+        // Add identity promotions for all basic types
+        let all_types = vec![
+            IrType::I8,
+            IrType::I16,
+            IrType::I32,
+            IrType::I64,
+            IrType::U8,
+            IrType::U16,
+            IrType::U32,
+            IrType::U64,
+            IrType::F32,
+            IrType::F64,
+            IrType::Bool,
+            IrType::Char,
+        ];
+
+        for ty in all_types {
+            self.promotion_rules.insert(
+                (ty.clone(), ty.clone()),
+                PromotionRule::Direct { cast_kind: CastKind::Bitcast, may_lose_precision: false, may_overflow: false },
+            );
+        }
     }
 
     fn add_promotion_rule(&mut self, from: IrType, to: IrType, rule: PromotionRule) {
@@ -323,7 +346,7 @@ impl PromotionMatrix {
             (IrType::F32, _) | (_, IrType::F32) => Some(IrType::F32),
 
             // Signed/unsigned of same width promote to next size up (or larger signed for I64/U64)
-            (IrType::I64, IrType::U64) | (IrType::U64, IrType::I64) => Some(IrType::I64),  // ADD THIS
+            (IrType::I64, IrType::U64) | (IrType::U64, IrType::I64) => Some(IrType::I64), // ADD THIS
             (IrType::I32, IrType::U32) | (IrType::U32, IrType::I32) => Some(IrType::I64),
             (IrType::I16, IrType::U16) | (IrType::U16, IrType::I16) => Some(IrType::I32),
             (IrType::I8, IrType::U8) | (IrType::U8, IrType::I8) => Some(IrType::I16),
@@ -351,7 +374,7 @@ impl PromotionMatrix {
             (IrType::F32, _) | (_, IrType::F32) => IrType::F32,
 
             // For same width signed/unsigned, promote to next size (as per spec)
-            (IrType::I64, IrType::U64) | (IrType::U64, IrType::I64) => IrType::I64,  // ADD THIS
+            (IrType::I64, IrType::U64) | (IrType::U64, IrType::I64) => IrType::I64, // ADD THIS
             (IrType::I32, IrType::U32) | (IrType::U32, IrType::I32) => IrType::I64,
             (IrType::I16, IrType::U16) | (IrType::U16, IrType::I16) => IrType::I32,
             (IrType::I8, IrType::U8) | (IrType::U8, IrType::I8) => IrType::I16,
