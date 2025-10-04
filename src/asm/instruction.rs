@@ -69,10 +69,7 @@ impl Immediate {
 
     /// Verifica se l'immediato è con segno
     pub fn is_signed(&self) -> bool {
-        matches!(
-            self,
-            Self::Imm8(_) | Self::Imm16(_) | Self::Imm32(_) | Self::Imm64(_)
-        )
+        matches!(self, Self::Imm8(_) | Self::Imm16(_) | Self::Imm32(_) | Self::Imm64(_))
     }
 
     /// Verifica se l'immediato può essere rappresentato in una dimensione più piccola
@@ -189,13 +186,7 @@ pub struct MemoryOperand {
 
 impl MemoryOperand {
     pub fn new(base: Option<GPRegister64>) -> Self {
-        Self {
-            base,
-            index: None,
-            scale: 1,
-            displacement: 0,
-            size: 8,
-        }
+        Self { base, index: None, scale: 1, displacement: 0, size: 8 }
     }
 
     pub fn with_displacement(mut self, disp: i32) -> Self {
@@ -230,14 +221,14 @@ pub enum Instruction {
     Neg { dest: Operand },
     Adc { dest: Operand, src: Operand },
     Sbb { dest: Operand, src: Operand },
-    
+
     // === Istruzioni Logiche ===
     And { dest: Operand, src: Operand },
     Or { dest: Operand, src: Operand },
     Xor { dest: Operand, src: Operand },
     Not { dest: Operand },
     Test { op1: Operand, op2: Operand },
-    
+
     // === Istruzioni di Shift e Rotate ===
     Shl { dest: Operand, count: Operand },
     Shr { dest: Operand, count: Operand },
@@ -247,7 +238,7 @@ pub enum Instruction {
     Ror { dest: Operand, count: Operand },
     Rcl { dest: Operand, count: Operand },
     Rcr { dest: Operand, count: Operand },
-    
+
     // === Istruzioni di Movimento ===
     Mov { dest: Operand, src: Operand },
     Movsx { dest: Operand, src: Operand },
@@ -257,36 +248,36 @@ pub enum Instruction {
     Push { src: Operand },
     Pop { dest: Operand },
     Xchg { op1: Operand, op2: Operand },
-    
+
     // === Istruzioni di Confronto ===
     Cmp { op1: Operand, op2: Operand },
-    
+
     // === Istruzioni di Salto ===
     Jmp { target: Operand },
-    Je { target: Operand },      // Jump if Equal (ZF=1)
-    Jne { target: Operand },     // Jump if Not Equal (ZF=0)
-    Jz { target: Operand },      // Jump if Zero (ZF=1)
-    Jnz { target: Operand },     // Jump if Not Zero (ZF=0)
-    Jg { target: Operand },      // Jump if Greater (signed)
-    Jge { target: Operand },     // Jump if Greater or Equal (signed)
-    Jl { target: Operand },      // Jump if Less (signed)
-    Jle { target: Operand },     // Jump if Less or Equal (signed)
-    Ja { target: Operand },      // Jump if Above (unsigned)
-    Jae { target: Operand },     // Jump if Above or Equal (unsigned)
-    Jb { target: Operand },      // Jump if Below (unsigned)
-    Jbe { target: Operand },     // Jump if Below or Equal (unsigned)
-    Js { target: Operand },      // Jump if Sign (SF=1)
-    Jns { target: Operand },     // Jump if Not Sign (SF=0)
-    Jo { target: Operand },      // Jump if Overflow (OF=1)
-    Jno { target: Operand },     // Jump if Not Overflow (OF=0)
-    Jp { target: Operand },      // Jump if Parity (PF=1)
-    Jnp { target: Operand },     // Jump if Not Parity (PF=0)
-    
+    Je { target: Operand },  // Jump if Equal (ZF=1)
+    Jne { target: Operand }, // Jump if Not Equal (ZF=0)
+    Jz { target: Operand },  // Jump if Zero (ZF=1)
+    Jnz { target: Operand }, // Jump if Not Zero (ZF=0)
+    Jg { target: Operand },  // Jump if Greater (signed)
+    Jge { target: Operand }, // Jump if Greater or Equal (signed)
+    Jl { target: Operand },  // Jump if Less (signed)
+    Jle { target: Operand }, // Jump if Less or Equal (signed)
+    Ja { target: Operand },  // Jump if Above (unsigned)
+    Jae { target: Operand }, // Jump if Above or Equal (unsigned)
+    Jb { target: Operand },  // Jump if Below (unsigned)
+    Jbe { target: Operand }, // Jump if Below or Equal (unsigned)
+    Js { target: Operand },  // Jump if Sign (SF=1)
+    Jns { target: Operand }, // Jump if Not Sign (SF=0)
+    Jo { target: Operand },  // Jump if Overflow (OF=1)
+    Jno { target: Operand }, // Jump if Not Overflow (OF=0)
+    Jp { target: Operand },  // Jump if Parity (PF=1)
+    Jnp { target: Operand }, // Jump if Not Parity (PF=0)
+
     // === Istruzioni di Call e Return ===
     Call { target: Operand },
     Ret,
     RetImm { imm: u16 },
-    
+
     // === Istruzioni SSE/AVX - Movimento ===
     Movaps { dest: Operand, src: Operand },
     Movapd { dest: Operand, src: Operand },
@@ -296,7 +287,7 @@ pub enum Instruction {
     Movsd { dest: Operand, src: Operand },
     Movdqa { dest: Operand, src: Operand },
     Movdqu { dest: Operand, src: Operand },
-    
+
     // === Istruzioni SSE/AVX - Aritmetiche ===
     Addps { dest: Operand, src: Operand },
     Addpd { dest: Operand, src: Operand },
@@ -314,7 +305,7 @@ pub enum Instruction {
     Divpd { dest: Operand, src: Operand },
     Divss { dest: Operand, src: Operand },
     Divsd { dest: Operand, src: Operand },
-    
+
     // === Istruzioni SSE/AVX - Logiche ===
     Andps { dest: Operand, src: Operand },
     Andpd { dest: Operand, src: Operand },
@@ -324,7 +315,7 @@ pub enum Instruction {
     Orpd { dest: Operand, src: Operand },
     Xorps { dest: Operand, src: Operand },
     Xorpd { dest: Operand, src: Operand },
-    
+
     // === Istruzioni SSE/AVX - Conversione ===
     Cvtss2sd { dest: Operand, src: Operand },
     Cvtsd2ss { dest: Operand, src: Operand },
@@ -332,7 +323,7 @@ pub enum Instruction {
     Cvttsd2si { dest: Operand, src: Operand },
     Cvtsi2ss { dest: Operand, src: Operand },
     Cvtsi2sd { dest: Operand, src: Operand },
-    
+
     // === Istruzioni AVX ===
     Vaddps { dest: Operand, src1: Operand, src2: Operand },
     Vaddpd { dest: Operand, src1: Operand, src2: Operand },
@@ -344,7 +335,7 @@ pub enum Instruction {
     Vmulpd { dest: Operand, src1: Operand, src2: Operand },
     Vdivps { dest: Operand, src1: Operand, src2: Operand },
     Vdivpd { dest: Operand, src1: Operand, src2: Operand },
-    
+
     // === Istruzioni FPU x87 ===
     Fld { src: Operand },
     Fst { dest: Operand },
@@ -357,7 +348,7 @@ pub enum Instruction {
     Fmulp { src: Option<Operand> },
     Fdiv { src: Option<Operand> },
     Fdivp { src: Option<Operand> },
-    
+
     // === Istruzioni di Bit Manipulation ===
     Bsf { dest: Operand, src: Operand },
     Bsr { dest: Operand, src: Operand },
@@ -368,7 +359,7 @@ pub enum Instruction {
     Popcnt { dest: Operand, src: Operand },
     Lzcnt { dest: Operand, src: Operand },
     Tzcnt { dest: Operand, src: Operand },
-    
+
     // === Istruzioni CMOVcc (Conditional Move) ===
     Cmove { dest: Operand, src: Operand },
     Cmovne { dest: Operand, src: Operand },
@@ -380,7 +371,7 @@ pub enum Instruction {
     Cmovae { dest: Operand, src: Operand },
     Cmovb { dest: Operand, src: Operand },
     Cmovbe { dest: Operand, src: Operand },
-    
+
     // === Istruzioni SETcc (Set Byte on Condition) ===
     Sete { dest: Operand },
     Setne { dest: Operand },
@@ -392,13 +383,13 @@ pub enum Instruction {
     Setae { dest: Operand },
     Setb { dest: Operand },
     Setbe { dest: Operand },
-    
+
     // === Istruzioni di Controllo ===
     Nop,
     Hlt,
     Cpuid,
     Pause,
-    
+
     // === Istruzioni di String ===
     Movsb,
     Movsw,
@@ -408,10 +399,10 @@ pub enum Instruction {
     Stosw,
     Stosd,
     Stosq,
-    
+
     // === Istruzioni Speciali ===
-    Cqo,  // Convert Quadword to Octword
-    Cdq,  // Convert Doubleword to Quadword
+    Cqo, // Convert Quadword to Octword
+    Cdq, // Convert Doubleword to Quadword
     Syscall,
     Sysret,
 }
@@ -578,10 +569,10 @@ impl Instruction {
             Self::Stosb => "stosb",
             Self::Stosw => "stosw",
             Self::Stosd => "stosd",
-            Self::Stosq => "stosq"
+            Self::Stosq => "stosq",
         }
     }
-    
+
     /// Verifica se l'istruzione è un salto
     pub fn is_jump(&self) -> bool {
         matches!(
@@ -607,12 +598,12 @@ impl Instruction {
                 | Self::Jnp { .. }
         )
     }
-    
+
     /// Verifica se l'istruzione è una chiamata
     pub fn is_call(&self) -> bool {
         matches!(self, Self::Call { .. })
     }
-    
+
     /// Verifica se l'istruzione è un return
     pub fn is_return(&self) -> bool {
         matches!(self, Self::Ret | Self::RetImm { .. })
@@ -760,8 +751,6 @@ impl From<X86Register> for Operand {
     }
 }
 
-
-
 use std::fmt;
 
 impl fmt::Display for MemoryOperand {
@@ -834,141 +823,137 @@ impl fmt::Display for Instruction {
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
         match self {
             // Istruzioni binarie (dest, src)
-            Self::Add { dest, src } |
-            Self::Sub { dest, src } |
-            Self::Adc { dest, src } |
-            Self::Sbb { dest, src } |
-            Self::And { dest, src } |
-            Self::Or { dest, src } |
-            Self::Xor { dest, src } |
-            Self::Mov { dest, src } |
-            Self::Movsx { dest, src } |
-            Self::Movsxd { dest, src } |
-            Self::Movzx { dest, src } |
-            Self::Lea { dest, src } |
-            Self::Movaps { dest, src } |
-            Self::Movapd { dest, src } |
-            Self::Movups { dest, src } |
-            Self::Movupd { dest, src } |
-            Self::Movss { dest, src } |
-            Self::Movsd { dest, src } |
-            Self::Movdqa { dest, src } |
-            Self::Movdqu { dest, src } |
-            Self::Addps { dest, src } |
-            Self::Addpd { dest, src } |
-            Self::Addss { dest, src } |
-            Self::Addsd { dest, src } |
-            Self::Subps { dest, src } |
-            Self::Subpd { dest, src } |
-            Self::Subss { dest, src } |
-            Self::Subsd { dest, src } |
-            Self::Mulps { dest, src } |
-            Self::Mulpd { dest, src } |
-            Self::Mulss { dest, src } |
-            Self::Mulsd { dest, src } |
-            Self::Divps { dest, src } |
-            Self::Divpd { dest, src } |
-            Self::Divss { dest, src } |
-            Self::Divsd { dest, src } |
-            Self::Andps { dest, src } |
-            Self::Andpd { dest, src } |
-            Self::Andnps { dest, src } |
-            Self::Andnpd { dest, src } |
-            Self::Orps { dest, src } |
-            Self::Orpd { dest, src } |
-            Self::Xorps { dest, src } |
-            Self::Xorpd { dest, src } |
-            Self::Cvtss2sd { dest, src } |
-            Self::Cvtsd2ss { dest, src } |
-            Self::Cvttss2si { dest, src } |
-            Self::Cvttsd2si { dest, src } |
-            Self::Cvtsi2ss { dest, src } |
-            Self::Cvtsi2sd { dest, src } |
-            Self::Bsf { dest, src } |
-            Self::Bsr { dest, src } |
-            Self::Bt { dest, src } |
-            Self::Btc { dest, src } |
-            Self::Btr { dest, src } |
-            Self::Bts { dest, src } |
-            Self::Popcnt { dest, src } |
-            Self::Lzcnt { dest, src } |
-            Self::Tzcnt { dest, src } |
-            Self::Cmove { dest, src } |
-            Self::Cmovne { dest, src } |
-            Self::Cmovg { dest, src } |
-            Self::Cmovge { dest, src } |
-            Self::Cmovl { dest, src } |
-            Self::Cmovle { dest, src } |
-            Self::Cmova { dest, src } |
-            Self::Cmovae { dest, src } |
-            Self::Cmovb { dest, src } |
-            Self::Cmovbe { dest, src } => {
+            Self::Add { dest, src }
+            | Self::Sub { dest, src }
+            | Self::Adc { dest, src }
+            | Self::Sbb { dest, src }
+            | Self::And { dest, src }
+            | Self::Or { dest, src }
+            | Self::Xor { dest, src }
+            | Self::Mov { dest, src }
+            | Self::Movsx { dest, src }
+            | Self::Movsxd { dest, src }
+            | Self::Movzx { dest, src }
+            | Self::Lea { dest, src }
+            | Self::Movaps { dest, src }
+            | Self::Movapd { dest, src }
+            | Self::Movups { dest, src }
+            | Self::Movupd { dest, src }
+            | Self::Movss { dest, src }
+            | Self::Movsd { dest, src }
+            | Self::Movdqa { dest, src }
+            | Self::Movdqu { dest, src }
+            | Self::Addps { dest, src }
+            | Self::Addpd { dest, src }
+            | Self::Addss { dest, src }
+            | Self::Addsd { dest, src }
+            | Self::Subps { dest, src }
+            | Self::Subpd { dest, src }
+            | Self::Subss { dest, src }
+            | Self::Subsd { dest, src }
+            | Self::Mulps { dest, src }
+            | Self::Mulpd { dest, src }
+            | Self::Mulss { dest, src }
+            | Self::Mulsd { dest, src }
+            | Self::Divps { dest, src }
+            | Self::Divpd { dest, src }
+            | Self::Divss { dest, src }
+            | Self::Divsd { dest, src }
+            | Self::Andps { dest, src }
+            | Self::Andpd { dest, src }
+            | Self::Andnps { dest, src }
+            | Self::Andnpd { dest, src }
+            | Self::Orps { dest, src }
+            | Self::Orpd { dest, src }
+            | Self::Xorps { dest, src }
+            | Self::Xorpd { dest, src }
+            | Self::Cvtss2sd { dest, src }
+            | Self::Cvtsd2ss { dest, src }
+            | Self::Cvttss2si { dest, src }
+            | Self::Cvttsd2si { dest, src }
+            | Self::Cvtsi2ss { dest, src }
+            | Self::Cvtsi2sd { dest, src }
+            | Self::Bsf { dest, src }
+            | Self::Bsr { dest, src }
+            | Self::Bt { dest, src }
+            | Self::Btc { dest, src }
+            | Self::Btr { dest, src }
+            | Self::Bts { dest, src }
+            | Self::Popcnt { dest, src }
+            | Self::Lzcnt { dest, src }
+            | Self::Tzcnt { dest, src }
+            | Self::Cmove { dest, src }
+            | Self::Cmovne { dest, src }
+            | Self::Cmovg { dest, src }
+            | Self::Cmovge { dest, src }
+            | Self::Cmovl { dest, src }
+            | Self::Cmovle { dest, src }
+            | Self::Cmova { dest, src }
+            | Self::Cmovae { dest, src }
+            | Self::Cmovb { dest, src }
+            | Self::Cmovbe { dest, src } => {
                 write!(f, "{} {}, {}", self.mnemonic(), dest, src)
             }
 
             // Istruzioni shift/rotate
-            Self::Shl { dest, count } |
-            Self::Shr { dest, count } |
-            Self::Sar { dest, count } |
-            Self::Sal { dest, count } |
-            Self::Rol { dest, count } |
-            Self::Ror { dest, count } |
-            Self::Rcl { dest, count } |
-            Self::Rcr { dest, count } => {
+            Self::Shl { dest, count }
+            | Self::Shr { dest, count }
+            | Self::Sar { dest, count }
+            | Self::Sal { dest, count }
+            | Self::Rol { dest, count }
+            | Self::Ror { dest, count }
+            | Self::Rcl { dest, count }
+            | Self::Rcr { dest, count } => {
                 write!(f, "{} {}, {}", self.mnemonic(), dest, count)
             }
 
             // Istruzioni con due operandi (op1, op2)
-            Self::Test { op1, op2 } |
-            Self::Cmp { op1, op2 } |
-            Self::Xchg { op1, op2 } => {
+            Self::Test { op1, op2 } | Self::Cmp { op1, op2 } | Self::Xchg { op1, op2 } => {
                 write!(f, "{} {}, {}", self.mnemonic(), op1, op2)
             }
 
             // Istruzioni unarie
-            Self::Mul { src } |
-            Self::Div { src } |
-            Self::Idiv { src } |
-            Self::Inc { dest: src } |
-            Self::Dec { dest: src } |
-            Self::Neg { dest: src } |
-            Self::Not { dest: src } |
-            Self::Push { src } |
-            Self::Pop { dest: src } => {
+            Self::Mul { src }
+            | Self::Div { src }
+            | Self::Idiv { src }
+            | Self::Inc { dest: src }
+            | Self::Dec { dest: src }
+            | Self::Neg { dest: src }
+            | Self::Not { dest: src }
+            | Self::Push { src }
+            | Self::Pop { dest: src } => {
                 write!(f, "{} {}", self.mnemonic(), src)
             }
 
             // IMUL con varianti multiple
-            Self::Imul { dest, src1, src2 } => {
-                match (dest, src2) {
-                    (None, None) => write!(f, "imul {}", src1),
-                    (Some(d), None) => write!(f, "imul {}, {}", d, src1),
-                    (Some(d), Some(s2)) => write!(f, "imul {}, {}, {}", d, src1, s2),
-                    (None, Some(_)) => unreachable!(),
-                }
-            }
+            Self::Imul { dest, src1, src2 } => match (dest, src2) {
+                (None, None) => write!(f, "imul {}", src1),
+                (Some(d), None) => write!(f, "imul {}, {}", d, src1),
+                (Some(d), Some(s2)) => write!(f, "imul {}, {}, {}", d, src1, s2),
+                (None, Some(_)) => unreachable!(),
+            },
 
             // Jump e call
-            Self::Jmp { target } |
-            Self::Je { target } |
-            Self::Jne { target } |
-            Self::Jz { target } |
-            Self::Jnz { target } |
-            Self::Jg { target } |
-            Self::Jge { target } |
-            Self::Jl { target } |
-            Self::Jle { target } |
-            Self::Ja { target } |
-            Self::Jae { target } |
-            Self::Jb { target } |
-            Self::Jbe { target } |
-            Self::Js { target } |
-            Self::Jns { target } |
-            Self::Jo { target } |
-            Self::Jno { target } |
-            Self::Jp { target } |
-            Self::Jnp { target } |
-            Self::Call { target } => {
+            Self::Jmp { target }
+            | Self::Je { target }
+            | Self::Jne { target }
+            | Self::Jz { target }
+            | Self::Jnz { target }
+            | Self::Jg { target }
+            | Self::Jge { target }
+            | Self::Jl { target }
+            | Self::Jle { target }
+            | Self::Ja { target }
+            | Self::Jae { target }
+            | Self::Jb { target }
+            | Self::Jbe { target }
+            | Self::Js { target }
+            | Self::Jns { target }
+            | Self::Jo { target }
+            | Self::Jno { target }
+            | Self::Jp { target }
+            | Self::Jnp { target }
+            | Self::Call { target } => {
                 write!(f, "{} {}", self.mnemonic(), target)
             }
 
@@ -977,74 +962,69 @@ impl fmt::Display for Instruction {
             Self::RetImm { imm } => write!(f, "ret {}", imm),
 
             // AVX a tre operandi
-            Self::Vaddps { dest, src1, src2 } |
-            Self::Vaddpd { dest, src1, src2 } |
-            Self::Vaddss { dest, src1, src2 } |
-            Self::Vaddsd { dest, src1, src2 } |
-            Self::Vsubps { dest, src1, src2 } |
-            Self::Vsubpd { dest, src1, src2 } |
-            Self::Vmulps { dest, src1, src2 } |
-            Self::Vmulpd { dest, src1, src2 } |
-            Self::Vdivps { dest, src1, src2 } |
-            Self::Vdivpd { dest, src1, src2 } => {
+            Self::Vaddps { dest, src1, src2 }
+            | Self::Vaddpd { dest, src1, src2 }
+            | Self::Vaddss { dest, src1, src2 }
+            | Self::Vaddsd { dest, src1, src2 }
+            | Self::Vsubps { dest, src1, src2 }
+            | Self::Vsubpd { dest, src1, src2 }
+            | Self::Vmulps { dest, src1, src2 }
+            | Self::Vmulpd { dest, src1, src2 }
+            | Self::Vdivps { dest, src1, src2 }
+            | Self::Vdivpd { dest, src1, src2 } => {
                 write!(f, "{} {}, {}, {}", self.mnemonic(), dest, src1, src2)
             }
 
             // FPU
-            Self::Fld { src } |
-            Self::Fst { dest: src } |
-            Self::Fstp { dest: src } => {
+            Self::Fld { src } | Self::Fst { dest: src } | Self::Fstp { dest: src } => {
                 write!(f, "{} {}", self.mnemonic(), src)
             }
 
-            Self::Fadd { src } |
-            Self::Faddp { src } |
-            Self::Fsub { src } |
-            Self::Fsubp { src } |
-            Self::Fmul { src } |
-            Self::Fmulp { src } |
-            Self::Fdiv { src } |
-            Self::Fdivp { src } => {
-                match src {
-                    Some(s) => write!(f, "{} {}", self.mnemonic(), s),
-                    None => write!(f, "{}", self.mnemonic()),
-                }
-            }
+            Self::Fadd { src }
+            | Self::Faddp { src }
+            | Self::Fsub { src }
+            | Self::Fsubp { src }
+            | Self::Fmul { src }
+            | Self::Fmulp { src }
+            | Self::Fdiv { src }
+            | Self::Fdivp { src } => match src {
+                Some(s) => write!(f, "{} {}", self.mnemonic(), s),
+                None => write!(f, "{}", self.mnemonic()),
+            },
 
             // SETcc
-            Self::Sete { dest } |
-            Self::Setne { dest } |
-            Self::Setg { dest } |
-            Self::Setge { dest } |
-            Self::Setl { dest } |
-            Self::Setle { dest } |
-            Self::Seta { dest } |
-            Self::Setae { dest } |
-            Self::Setb { dest } |
-            Self::Setbe { dest } => {
+            Self::Sete { dest }
+            | Self::Setne { dest }
+            | Self::Setg { dest }
+            | Self::Setge { dest }
+            | Self::Setl { dest }
+            | Self::Setle { dest }
+            | Self::Seta { dest }
+            | Self::Setae { dest }
+            | Self::Setb { dest }
+            | Self::Setbe { dest } => {
                 write!(f, "{} {}", self.mnemonic(), dest)
             }
 
             // Istruzioni senza operandi
-            Self::Nop |
-            Self::Hlt |
-            Self::Cpuid |
-            Self::Pause |
-            Self::Cqo |
-            Self::Cdq |
-            Self::Syscall |
-            Self::Sysret |
-            Self::Movsb |
-            Self::Movsw |
-            Self::MovsdString |
-            Self::Movsq |
-            Self::Stosb |
-            Self::Stosw |
-            Self::Stosd |
-            Self::Stosq => {
+            Self::Nop
+            | Self::Hlt
+            | Self::Cpuid
+            | Self::Pause
+            | Self::Cqo
+            | Self::Cdq
+            | Self::Syscall
+            | Self::Sysret
+            | Self::Movsb
+            | Self::Movsw
+            | Self::MovsdString
+            | Self::Movsq
+            | Self::Stosb
+            | Self::Stosw
+            | Self::Stosd
+            | Self::Stosq => {
                 write!(f, "{}", self.mnemonic())
             }
         }
     }
 }
-

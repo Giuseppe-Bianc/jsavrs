@@ -1,6 +1,6 @@
 // src/semantic/type_checker.rs
 use crate::error::compile_error::CompileError;
-use crate::location::source_span::{SourceSpan, HasSpan};
+use crate::location::source_span::{HasSpan, SourceSpan};
 use crate::parser::ast::*;
 use crate::semantic::symbol_table::*;
 use crate::tokens::number::Number;

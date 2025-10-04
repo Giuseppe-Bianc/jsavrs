@@ -1,6 +1,6 @@
 // src/parser/jsav_parser.rs
 use crate::error::compile_error::CompileError;
-use crate::location::source_span::{SourceSpan, HasSpan};
+use crate::location::source_span::{HasSpan, SourceSpan};
 use crate::parser::ast::*;
 use crate::parser::precedence::*;
 use crate::tokens::token::Token;
@@ -199,7 +199,7 @@ impl JsavParser {
         self.expect(&TokenKind::CloseParen, "after the condition");
         Some(condition)
     }
-    
+
     fn parse_if(&mut self) -> Option<Stmt> {
         let start_token = self.advance()?.clone(); // 'if'
         let condition = self.parse_condition("if")?;

@@ -92,8 +92,9 @@ impl DominanceInfo {
 
                 // Intersect the dominators of all processed predecessors
                 for &pred in preds {
-                    if pred != new_idom &&
-                    let Some(Some(_pred_idom)) = self.idom.get(&pred) {
+                    if pred != new_idom
+                        && let Some(Some(_pred_idom)) = self.idom.get(&pred)
+                    {
                         new_idom = self.intersect(new_idom, pred, &self.idom);
                     }
                 }

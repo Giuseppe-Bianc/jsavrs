@@ -6,7 +6,8 @@ use uuid::Uuid;
 
 #[derive(Debug, Clone, PartialEq, Eq, Hash, Default)]
 pub enum IrType {
-    #[default] I8,
+    #[default]
+    I8,
     I16,
     I32,
     I64,

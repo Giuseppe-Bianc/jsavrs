@@ -1,5 +1,5 @@
 /// Rappresenta una direttiva di dati nell'assembly
-use  super::{Instruction, Section};
+use super::{Instruction, Section};
 #[derive(Debug, Clone)]
 #[allow(dead_code)]
 pub enum DataDirective {
@@ -52,10 +52,7 @@ pub struct AssemblySection {
 #[allow(dead_code)]
 impl AssemblySection {
     pub fn new(section: Section) -> Self {
-        Self {
-            section,
-            elements: Vec::new(),
-        }
+        Self { section, elements: Vec::new() }
     }
 
     pub fn add_label(&mut self, label: impl Into<String>) {
@@ -78,19 +75,19 @@ impl AssemblySection {
         self.elements.push(AssemblyElement::EmptyLine);
     }
 
-	pub fn tesxt_section() -> Self {
-		Self::new(Section::Text)
-	}
+    pub fn tesxt_section() -> Self {
+        Self::new(Section::Text)
+    }
 
-	pub fn data_section() -> Self {
-		Self::new(Section::Data)
-	}
+    pub fn data_section() -> Self {
+        Self::new(Section::Data)
+    }
 
-	pub fn bss_section() -> Self {
-		Self::new(Section::Bss)
-	}
+    pub fn bss_section() -> Self {
+        Self::new(Section::Bss)
+    }
 
-	pub fn rodata_section() -> Self {
-		Self::new(Section::Rodata)
-	}
+    pub fn rodata_section() -> Self {
+        Self::new(Section::Rodata)
+    }
 }

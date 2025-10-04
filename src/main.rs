@@ -132,6 +132,6 @@ fn main() -> Result<(), CompileError> {
     if args.verbose {
         println!("{module}");
     }
-    
+
     Ok(())
 }

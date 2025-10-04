@@ -1,13 +1,13 @@
-mod register;
 mod abi;
-mod instruction;
-mod section;
 mod data_directive;
+mod instruction;
+mod register;
+mod section;
 
-pub use register::*;
 #[allow(unused_imports)]
 pub use abi::*;
-pub use instruction::*;
-pub use section::*;
 #[allow(unused_imports)]
 pub use data_directive::*;
+pub use instruction::*;
+pub use register::*;
+pub use section::*;

@@ -1,5 +1,5 @@
-use super::register::{GPRegister64, XMMRegister, X86Register};
 use super::Platform;
+use super::register::{GPRegister64, X86Register, XMMRegister};
 
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
 pub enum Abi {
@@ -21,9 +21,8 @@ impl Abi {
         16
     }
 
-
     /// Returns the size of the red zone in bytes.
-    /// The red zone is an optimization where leaf functions can use 
+    /// The red zone is an optimization where leaf functions can use
     /// stack space below RSP without adjusting the stack pointer.
     pub fn red_zone(&self) -> u32 {
         match self {
@@ -53,12 +52,7 @@ impl Abi {
                 GPRegister64::R8,
                 GPRegister64::R9,
             ],
-            Abi::Windows => &[
-                GPRegister64::Rcx,
-                GPRegister64::Rdx,
-                GPRegister64::R8,
-                GPRegister64::R9,
-            ],
+            Abi::Windows => &[GPRegister64::Rcx, GPRegister64::Rdx, GPRegister64::R8, GPRegister64::R9],
         }
     }
 
@@ -75,12 +69,7 @@ impl Abi {
                 XMMRegister::Xmm6,
                 XMMRegister::Xmm7,
             ],
-            Abi::Windows => &[
-                XMMRegister::Xmm0,
-                XMMRegister::Xmm1,
-                XMMRegister::Xmm2,
-                XMMRegister::Xmm3,
-            ],
+            Abi::Windows => &[XMMRegister::Xmm0, XMMRegister::Xmm1, XMMRegister::Xmm2, XMMRegister::Xmm3],
         }
     }
 
@@ -252,7 +241,7 @@ impl Abi {
     /// This accounts for the return address pushed by the call instruction.
     pub fn first_stack_param_offset(&self) -> u32 {
         match self {
-            Abi::SystemV => 8, // Just the return address
+            Abi::SystemV => 8,                       // Just the return address
             Abi::Windows => 8 + self.shadow_space(), // Return address + shadow space
         }
     }
@@ -266,11 +255,9 @@ impl Abi {
                 // AL register contains number of vector registers used
                 requires_vector_count_in_al: true,
             },
-            Abi::Windows => VariadicInfo {
-                supported: true,
-                requires_va_list: true,
-                requires_vector_count_in_al: false,
-            },
+            Abi::Windows => {
+                VariadicInfo { supported: true, requires_va_list: true, requires_vector_count_in_al: false }
+            }
         }
     }
 
@@ -342,7 +329,7 @@ mod tests {
         let abi = Abi::SystemV;
         assert!(abi.is_callee_saved(X86Register::GP64(GPRegister64::Rbx)));
         assert!(!abi.is_callee_saved(X86Register::GP64(GPRegister64::Rax)));
-        
+
         let win_abi = Abi::Windows;
         assert!(win_abi.is_callee_saved(X86Register::GP64(GPRegister64::Rdi)));
         assert!(win_abi.is_callee_saved(X86Register::Xmm(XMMRegister::Xmm6)));

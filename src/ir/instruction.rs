@@ -8,7 +8,8 @@ use std::fmt;
 
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Hash, Default)]
 pub enum CastKind {
-    #[default] IntToPtr,
+    #[default]
+    IntToPtr,
     PtrToInt,
     FloatToInt,
     IntToFloat,

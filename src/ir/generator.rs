@@ -2,7 +2,7 @@
 use super::ssa::SsaTransformer;
 use super::*;
 use crate::error::compile_error::CompileError;
-use crate::location::source_span::{SourceSpan, HasSpan};
+use crate::location::source_span::{HasSpan, SourceSpan};
 use crate::parser::ast::*;
 use crate::tokens::number::Number;
 use std::collections::HashMap;

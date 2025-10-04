@@ -46,13 +46,7 @@ pub struct Value {
 impl Value {
     // Helper function to create a new Value with common fields
     fn new_value(kind: ValueKind, ty: IrType) -> Self {
-        Value { 
-            id: ValueId::new(), 
-            kind, 
-            ty, 
-            debug_info: None, 
-            scope: None 
-        }
+        Value { id: ValueId::new(), kind, ty, debug_info: None, scope: None }
     }
 
     /// Creates a new literal value.
