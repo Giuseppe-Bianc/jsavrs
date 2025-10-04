@@ -292,13 +292,13 @@ impl PromotionMatrix {
 
     fn add_symmetric_promotion_rule(&mut self, from: IrType, to: IrType) {
         self.promotion_rules.insert(
-                (from, to),
-                PromotionRule::Direct {
-                    cast_kind: CastKind::Bitcast, // No cast needed for same type
-                    may_lose_precision: false,
-                    may_overflow: false,
-                },
-            );
+            (from, to),
+            PromotionRule::Direct {
+                cast_kind: CastKind::Bitcast, // No cast needed for same type
+                may_lose_precision: false,
+                may_overflow: false,
+            },
+        );
     }
 
     fn add_promotion_rule(&mut self, from: IrType, to: IrType, rule: PromotionRule) {
