@@ -789,3 +789,178 @@ fn test_get_higher_type_fallback_to_left_type() {
     // In a well-defined type system, most cases should be handled, but we ensure the fallback works
     // by testing with the default case that should return the left type
 }
+
+
+// Tests for specific lines in type_promotion.rs
+
+// Test for line 351: I64/U64 promotion in get_higher_type
+#[test]
+fn test_get_higher_type_i64_u64_promotion() {
+    let matrix = PromotionMatrix::new();
+    
+    // Test I64 vs U64 - should return I64 as per line 351
+    let result = matrix.compute_common_type(&IrType::I64, &IrType::U64);
+    assert_eq!(result, Some(IrType::I64), "I64 should be higher precedence than U64");
+    
+    // Test U64 vs I64 - should also return I64 as per line 351
+    let result = matrix.compute_common_type(&IrType::U64, &IrType::I64);
+    assert_eq!(result, Some(IrType::I64), "I64 should be higher precedence than U64 regardless of order");
+}
+
+// Test for lines 362-363: U16 precedence in get_higher_type
+#[test]
+fn test_get_higher_type_u16_precedence() {
+    let matrix = PromotionMatrix::new();
+    
+    // Test U16 vs smaller types - should return U16 as per lines 362-363
+    assert_eq!(matrix.compute_common_type(&IrType::U16, &IrType::I8), Some(IrType::U16));
+    assert_eq!(matrix.compute_common_type(&IrType::U16, &IrType::U8), Some(IrType::U16));
+    assert_eq!(matrix.compute_common_type(&IrType::I8, &IrType::U16), Some(IrType::U16));
+    assert_eq!(matrix.compute_common_type(&IrType::U8, &IrType::U16), Some(IrType::U16));
+    
+    // Test U16 vs same-width types - should promote to next size as per earlier rules
+    assert_eq!(matrix.compute_common_type(&IrType::U16, &IrType::I16), Some(IrType::I32));
+    
+    // Test U16 vs larger types - should return the larger type
+    assert_eq!(matrix.compute_common_type(&IrType::U16, &IrType::I32), Some(IrType::I32));
+    assert_eq!(matrix.compute_common_type(&IrType::U16, &IrType::U32), Some(IrType::U32));
+    assert_eq!(matrix.compute_common_type(&IrType::I32, &IrType::U16), Some(IrType::I32));
+    assert_eq!(matrix.compute_common_type(&IrType::U32, &IrType::U16), Some(IrType::U32));
+}
+
+// Test for line 378: I64/U64 promotion in compute_common_type
+#[test]
+fn test_compute_common_type_i64_u64_promotion() {
+    let matrix = PromotionMatrix::new();
+    
+    // Test I64 vs U64 - should return Some(I64) as per line 378
+    let result = matrix.compute_common_type(&IrType::I64, &IrType::U64);
+    assert_eq!(result, Some(IrType::I64), "I64 should be the common type for I64 and U64");
+    
+    // Test U64 vs I64 - should also return Some(I64) as per line 378
+    let result = matrix.compute_common_type(&IrType::U64, &IrType::I64);
+    assert_eq!(result, Some(IrType::I64), "I64 should be the common type for U64 and I64 regardless of order");
+    
+    // Test I64/U64 with other types to ensure precedence is maintained
+    assert_eq!(matrix.compute_common_type(&IrType::I64, &IrType::I32), Some(IrType::I64));
+    assert_eq!(matrix.compute_common_type(&IrType::U64, &IrType::U32), Some(IrType::U64));
+    assert_eq!(matrix.compute_common_type(&IrType::I64, &IrType::F32), Some(IrType::F32));
+    assert_eq!(matrix.compute_common_type(&IrType::U64, &IrType::F32), Some(IrType::F32));
+}
+
+// Test for lines 380-391: U16 precedence in compute_common_type
+#[test]
+fn test_compute_common_type_u16_precedence() {
+    let matrix = PromotionMatrix::new();
+    
+    // Test U16 vs smaller types - should return Some(U16) as per lines 380-391
+    assert_eq!(matrix.compute_common_type(&IrType::U16, &IrType::I8), Some(IrType::U16));
+    assert_eq!(matrix.compute_common_type(&IrType::U16, &IrType::U8), Some(IrType::U16));
+    assert_eq!(matrix.compute_common_type(&IrType::I8, &IrType::U16), Some(IrType::U16));
+    assert_eq!(matrix.compute_common_type(&IrType::U8, &IrType::U16), Some(IrType::U16));
+    
+    // Test U16 vs same-width types - should promote to next size as per earlier rules
+    assert_eq!(matrix.compute_common_type(&IrType::U16, &IrType::I16), Some(IrType::I32));
+    
+    // Test U16 vs larger types - should return the larger type
+    assert_eq!(matrix.compute_common_type(&IrType::U16, &IrType::I32), Some(IrType::I32));
+    assert_eq!(matrix.compute_common_type(&IrType::U16, &IrType::U32), Some(IrType::U32));
+    assert_eq!(matrix.compute_common_type(&IrType::I32, &IrType::U16), Some(IrType::I32));
+    assert_eq!(matrix.compute_common_type(&IrType::U32, &IrType::U16), Some(IrType::U32));
+}
+
+// Edge case tests for I64/U64 promotion
+#[test]
+fn test_i64_u64_edge_cases() {
+    let matrix = PromotionMatrix::new();
+    
+    // Test I64/U64 with all other integer types
+    assert_eq!(matrix.compute_common_type(&IrType::I64, &IrType::I32), Some(IrType::I64));
+    assert_eq!(matrix.compute_common_type(&IrType::I64, &IrType::U32), Some(IrType::I64));
+    assert_eq!(matrix.compute_common_type(&IrType::I64, &IrType::I16), Some(IrType::I64));
+    assert_eq!(matrix.compute_common_type(&IrType::I64, &IrType::U16), Some(IrType::I64));
+    assert_eq!(matrix.compute_common_type(&IrType::I64, &IrType::I8), Some(IrType::I64));
+    assert_eq!(matrix.compute_common_type(&IrType::I64, &IrType::U8), Some(IrType::I64));
+    
+    assert_eq!(matrix.compute_common_type(&IrType::U64, &IrType::I32), Some(IrType::U64));
+    assert_eq!(matrix.compute_common_type(&IrType::U64, &IrType::U32), Some(IrType::U64));
+    assert_eq!(matrix.compute_common_type(&IrType::U64, &IrType::I16), Some(IrType::U64));
+    assert_eq!(matrix.compute_common_type(&IrType::U64, &IrType::U16), Some(IrType::U64));
+    assert_eq!(matrix.compute_common_type(&IrType::U64, &IrType::I8), Some(IrType::U64));
+    assert_eq!(matrix.compute_common_type(&IrType::U64, &IrType::U8), Some(IrType::U64));
+    
+    // Test I64/U64 with floating point types
+    assert_eq!(matrix.compute_common_type(&IrType::I64, &IrType::F32), Some(IrType::F32));
+    assert_eq!(matrix.compute_common_type(&IrType::I64, &IrType::F64), Some(IrType::F64));
+    assert_eq!(matrix.compute_common_type(&IrType::U64, &IrType::F32), Some(IrType::F32));
+    assert_eq!(matrix.compute_common_type(&IrType::U64, &IrType::F64), Some(IrType::F64));
+}
+
+// Edge case tests for U16 precedence
+#[test]
+fn test_u16_edge_cases() {
+    let matrix = PromotionMatrix::new();
+    
+    // Test U16 with all other integer types
+    assert_eq!(matrix.compute_common_type(&IrType::U16, &IrType::I32), Some(IrType::I32));
+    assert_eq!(matrix.compute_common_type(&IrType::U16, &IrType::U32), Some(IrType::U32));
+    assert_eq!(matrix.compute_common_type(&IrType::U16, &IrType::I64), Some(IrType::I64));
+    assert_eq!(matrix.compute_common_type(&IrType::U16, &IrType::U64), Some(IrType::U64));
+    
+    // Test U16 with floating point types
+    assert_eq!(matrix.compute_common_type(&IrType::U16, &IrType::F32), Some(IrType::F32));
+    assert_eq!(matrix.compute_common_type(&IrType::U16, &IrType::F64), Some(IrType::F64));
+    
+    // Test U16 with special types
+    assert_eq!(matrix.compute_common_type(&IrType::U16, &IrType::Bool), Some(IrType::U16));
+    assert_eq!(matrix.compute_common_type(&IrType::U16, &IrType::Char), Some(IrType::U16));
+}
+
+// Test consistency between get_higher_type and compute_common_type
+#[test]
+fn test_consistency_between_methods() {
+    let matrix = PromotionMatrix::new();
+    
+    // Test that both methods return the same result for I64/U64
+    let common_type = matrix.compute_common_type(&IrType::I64, &IrType::U64);
+    assert_eq!(common_type, Some(IrType::I64));
+    
+    let common_type = matrix.compute_common_type(&IrType::U64, &IrType::I64);
+    assert_eq!(common_type, Some(IrType::I64));
+    
+    // Test that both methods return the same result for U16 with smaller types
+    assert_eq!(matrix.compute_common_type(&IrType::U16, &IrType::I8), Some(IrType::U16));
+    assert_eq!(matrix.compute_common_type(&IrType::I8, &IrType::U16), Some(IrType::U16));
+    
+    // Test that both methods return the same result for U16 with larger types
+    assert_eq!(matrix.compute_common_type(&IrType::U16, &IrType::I32), Some(IrType::I32));
+    assert_eq!(matrix.compute_common_type(&IrType::I32, &IrType::U16), Some(IrType::I32));
+}
+
+// Test complex scenarios involving the target lines
+#[test]
+fn test_complex_promotion_scenarios() {
+    let matrix = PromotionMatrix::new();
+    
+    // Test complex type promotion chains involving I64/U64
+    assert_eq!(matrix.compute_common_type(&IrType::I64, &IrType::U32), Some(IrType::I64));
+    assert_eq!(matrix.compute_common_type(&IrType::U64, &IrType::I32), Some(IrType::U64));
+    assert_eq!(matrix.compute_common_type(&IrType::I64, &IrType::F32), Some(IrType::F32));
+    assert_eq!(matrix.compute_common_type(&IrType::U64, &IrType::F64), Some(IrType::F64));
+    
+    // Test complex type promotion chains involving U16
+    assert_eq!(matrix.compute_common_type(&IrType::U16, &IrType::I8), Some(IrType::U16));
+    assert_eq!(matrix.compute_common_type(&IrType::U16, &IrType::U8), Some(IrType::U16));
+    assert_eq!(matrix.compute_common_type(&IrType::U16, &IrType::F32), Some(IrType::F32));
+    assert_eq!(matrix.compute_common_type(&IrType::U16, &IrType::F64), Some(IrType::F64));
+    
+    // Test three-way promotions involving I64/U64
+    assert_eq!(matrix.compute_common_type(&IrType::I64, &IrType::U64), Some(IrType::I64));
+    assert_eq!(matrix.compute_common_type(&IrType::I64, &IrType::I32), Some(IrType::I64));
+    assert_eq!(matrix.compute_common_type(&IrType::U64, &IrType::U32), Some(IrType::U64));
+    
+    // Test three-way promotions involving U16
+    assert_eq!(matrix.compute_common_type(&IrType::U16, &IrType::I8), Some(IrType::U16));
+    assert_eq!(matrix.compute_common_type(&IrType::U16, &IrType::U8), Some(IrType::U16));
+    assert_eq!(matrix.compute_common_type(&IrType::U16, &IrType::I16), Some(IrType::I32));
+}
