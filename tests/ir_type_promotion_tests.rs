@@ -9,7 +9,6 @@ fn test_promotion_matrix_new() {
     let matrix = PromotionMatrix::new();
     
     assert_eq!(matrix.get_overflow_behavior(), OverflowBehavior::Saturate);
-    //assert!(matrix.get_promotion_rule(&IrType::I32, &IrType::I32).is_some());
     assert!(matrix.get_promotion_rule(&IrType::F32, &IrType::F64).is_some());
     assert!(matrix.get_promotion_rule(&IrType::I32, &IrType::F32).is_some());
 }
@@ -249,7 +248,6 @@ fn test_compute_common_type_with_fallback() {
     let matrix = PromotionMatrix::new();
     
     assert_eq!(matrix.compute_common_type(&IrType::Bool, &IrType::Char), Some(IrType::I32));
-    //assert_eq!(matrix.compute_common_type(&IrType::String, &IrType::F32), Some(IrType::I32));
 }
 
 #[test]
