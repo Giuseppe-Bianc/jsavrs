@@ -286,18 +286,12 @@ impl PromotionMatrix {
         ];
 
         for ty in all_types {
-            self.promotion_rules.insert(
-                (ty.clone(), ty.clone()),
-                PromotionRule::Direct { cast_kind: CastKind::Bitcast, may_lose_precision: false, may_overflow: false },
-            );
+            self.add_symmetric_promotion_rule(ty.clone(), ty);
         }
     }
 
-    fn add_promotion_rule(&mut self, from: IrType, to: IrType, rule: PromotionRule) {
-        self.promotion_rules.insert((from.clone(), to.clone()), rule.clone());
-        // Add symmetric rule if needed (same types)
-        if from == to {
-            self.promotion_rules.insert(
+    fn add_symmetric_promotion_rule(&mut self, from: IrType, to: IrType) {
+        self.promotion_rules.insert(
                 (from, to),
                 PromotionRule::Direct {
                     cast_kind: CastKind::Bitcast, // No cast needed for same type
@@ -305,6 +299,13 @@ impl PromotionMatrix {
                     may_overflow: false,
                 },
             );
+    }
+
+    fn add_promotion_rule(&mut self, from: IrType, to: IrType, rule: PromotionRule) {
+        self.promotion_rules.insert((from.clone(), to.clone()), rule.clone());
+        // Add symmetric rule if needed (same types)
+        if from == to {
+            self.add_symmetric_promotion_rule(from, to);
         } else {
             // Also add the inverse if it's not already defined
             if !self.promotion_rules.contains_key(&(to.clone(), from.clone())) {
