@@ -71,6 +71,28 @@ impl fmt::Display for ResourceId {
     }
 }
 
+impl IrType {
+    pub fn is_signed_integer(&self) -> bool {
+        matches!(self, IrType::I8 | IrType::I16 | IrType::I32 | IrType::I64)
+    }
+
+    pub fn is_unsigned_integer(&self) -> bool {
+        matches!(self, IrType::U8 | IrType::U16 | IrType::U32 | IrType::U64)
+    }
+
+    pub fn get_bit_width(&self) -> u32 {
+        match self {
+            IrType::I8 | IrType::U8 => 8,
+            IrType::I16 | IrType::U16 => 16,
+            IrType::I32 | IrType::U32 => 32,
+            IrType::I64 | IrType::U64 => 64,
+            IrType::F32 => 32,
+            IrType::F64 => 64,
+            _ => 32, // default for other types
+        }
+    }
+}
+
 impl fmt::Display for IrType {
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
         match self {

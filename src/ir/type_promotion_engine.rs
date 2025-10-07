@@ -141,6 +141,7 @@ impl TypePromotionEngine {
             right_cast,
             warnings: warnings.clone(),
             is_sound: warnings.is_empty(), // Simplified - in reality, presence of warning doesn't mean promotion is unsound
+            /*is_sound: !warnings.iter().any(|w| matches!(w, PromotionWarning::PrecisionLoss { .. } | PromotionWarning::PotentialOverflow { .. } | PromotionWarning::SignednessChange { .. })),*/
         }
     }
 
@@ -217,25 +218,3 @@ impl TypePromotionEngine {
 
 // Helper methods for IrType that might not exist
 use super::{PrecisionLossEstimate, PromotionRule};
-
-impl IrType {
-    pub fn is_signed_integer(&self) -> bool {
-        matches!(self, IrType::I8 | IrType::I16 | IrType::I32 | IrType::I64)
-    }
-
-    pub fn is_unsigned_integer(&self) -> bool {
-        matches!(self, IrType::U8 | IrType::U16 | IrType::U32 | IrType::U64)
-    }
-
-    pub fn get_bit_width(&self) -> u32 {
-        match self {
-            IrType::I8 | IrType::U8 => 8,
-            IrType::I16 | IrType::U16 => 16,
-            IrType::I32 | IrType::U32 => 32,
-            IrType::I64 | IrType::U64 => 64,
-            IrType::F32 => 32,
-            IrType::F64 => 64,
-            _ => 32, // default for other types
-        }
-    }
-}

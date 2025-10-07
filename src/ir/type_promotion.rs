@@ -219,51 +219,139 @@ impl PromotionMatrix {
             PromotionRule::Direct { cast_kind: CastKind::FloatExtend, may_lose_precision: false, may_overflow: false },
         );
 
-        // Float with integers
-        self.add_promotion_rule(
-            IrType::F32,
-            IrType::I32,
-            PromotionRule::Direct { cast_kind: CastKind::FloatToInt, may_lose_precision: true, may_overflow: true },
-        );
-        self.add_promotion_rule(
-            IrType::I32,
-            IrType::F32,
-            PromotionRule::Direct {
-                cast_kind: CastKind::IntToFloat,
-                may_lose_precision: false, // i32 can be exactly represented in f32
-                may_overflow: false,
-            },
-        );
-        self.add_promotion_rule(
-            IrType::F64,
-            IrType::I64,
-            PromotionRule::Direct { cast_kind: CastKind::FloatToInt, may_lose_precision: true, may_overflow: true },
-        );
-        self.add_promotion_rule(
-            IrType::I64,
-            IrType::F64,
-            PromotionRule::Direct {
-                cast_kind: CastKind::IntToFloat,
-                may_lose_precision: false, // i64 can be exactly represented in f64 up to 2^53
-                may_overflow: false,
-            },
-        );
+        // Add all signed integer widening promotions
+        let signed_types = [(IrType::I8, 8), (IrType::I16, 16), (IrType::I32, 32), (IrType::I64, 64)];
+        for i in 0..signed_types.len() {
+            for j in (i + 1)..signed_types.len() {
+                let (from_type, _) = &signed_types[i];
+                let (to_type, _) = &signed_types[j];
+                self.add_promotion_rule(
+                    from_type.clone(),
+                    to_type.clone(),
+                    PromotionRule::Direct {
+                        cast_kind: CastKind::IntSignExtend,
+                        may_lose_precision: false,
+                        may_overflow: false,
+                    },
+                );
+            }
+        }
 
-        // Signed/unsigned integer promotions
+        // Add all unsigned integer widening promotions
+        let unsigned_types = [(IrType::U8, 8), (IrType::U16, 16), (IrType::U32, 32), (IrType::U64, 64)];
+        for i in 0..unsigned_types.len() {
+            for j in (i + 1)..unsigned_types.len() {
+                let (from_type, _) = &unsigned_types[i];
+                let (to_type, _) = &unsigned_types[j];
+                self.add_promotion_rule(
+                    from_type.clone(),
+                    to_type.clone(),
+                    PromotionRule::Direct {
+                        cast_kind: CastKind::IntZeroExtend,
+                        may_lose_precision: false,
+                        may_overflow: false,
+                    },
+                );
+            }
+        }
+
+        // Float with integers promotions - all combinations
+        for (int_type, _) in &signed_types {
+            self.add_promotion_rule(
+                IrType::F32,
+                int_type.clone(),
+                PromotionRule::Direct { cast_kind: CastKind::FloatToInt, may_lose_precision: true, may_overflow: true },
+            );
+            self.add_promotion_rule(
+                int_type.clone(),
+                IrType::F32,
+                PromotionRule::Direct {
+                    cast_kind: CastKind::IntToFloat,
+                    may_lose_precision: false,
+                    may_overflow: false,
+                },
+            );
+            self.add_promotion_rule(
+                IrType::F64,
+                int_type.clone(),
+                PromotionRule::Direct { cast_kind: CastKind::FloatToInt, may_lose_precision: true, may_overflow: true },
+            );
+            self.add_promotion_rule(
+                int_type.clone(),
+                IrType::F64,
+                PromotionRule::Direct {
+                    cast_kind: CastKind::IntToFloat,
+                    may_lose_precision: false,
+                    may_overflow: false,
+                },
+            );
+        }
+
+        for (int_type, _) in &unsigned_types {
+            self.add_promotion_rule(
+                IrType::F32,
+                int_type.clone(),
+                PromotionRule::Direct { cast_kind: CastKind::FloatToInt, may_lose_precision: true, may_overflow: true },
+            );
+            self.add_promotion_rule(
+                int_type.clone(),
+                IrType::F32,
+                PromotionRule::Direct {
+                    cast_kind: CastKind::IntToFloat,
+                    may_lose_precision: false,
+                    may_overflow: false,
+                },
+            );
+            self.add_promotion_rule(
+                IrType::F64,
+                int_type.clone(),
+                PromotionRule::Direct { cast_kind: CastKind::FloatToInt, may_lose_precision: true, may_overflow: true },
+            );
+            self.add_promotion_rule(
+                int_type.clone(),
+                IrType::F64,
+                PromotionRule::Direct {
+                    cast_kind: CastKind::IntToFloat,
+                    may_lose_precision: false,
+                    may_overflow: false,
+                },
+            );
+        }
+
+        // Add cross-signedness promotion rules for same-width types
+        // These should promote to a common type according to C++ promotion rules
         self.add_promotion_rule(
-            IrType::I32,
-            IrType::U32,
+            IrType::I8,
+            IrType::U8,
             PromotionRule::Direct {
-                cast_kind: CastKind::IntSignExtend, // Promote to I64 to avoid overflow
+                cast_kind: CastKind::Bitcast,
                 may_lose_precision: false,
                 may_overflow: false,
             },
         );
         self.add_promotion_rule(
-            IrType::U32,
-            IrType::I32,
+            IrType::I16,
+            IrType::U16,
             PromotionRule::Direct {
-                cast_kind: CastKind::IntSignExtend, // Promote to I64 to avoid overflow
+                cast_kind: CastKind::Bitcast,
+                may_lose_precision: false,
+                may_overflow: false,
+            },
+        );
+        self.add_promotion_rule(
+            IrType::I32,
+            IrType::U32,
+            PromotionRule::Direct {
+                cast_kind: CastKind::Bitcast,
+                may_lose_precision: false,
+                may_overflow: false,
+            },
+        );
+        self.add_promotion_rule(
+            IrType::I64,
+            IrType::U64,
+            PromotionRule::Direct {
+                cast_kind: CastKind::Bitcast,
                 may_lose_precision: false,
                 may_overflow: false,
             },
@@ -375,7 +463,7 @@ impl PromotionMatrix {
             (IrType::F32, _) | (_, IrType::F32) => IrType::F32,
 
             // For same width signed/unsigned, promote to next size (as per spec)
-            (IrType::I64, IrType::U64) | (IrType::U64, IrType::I64) => IrType::I64, // ADD THIS
+            (IrType::I64, IrType::U64) | (IrType::U64, IrType::I64) => IrType::I64,
             (IrType::I32, IrType::U32) | (IrType::U32, IrType::I32) => IrType::I64,
             (IrType::I16, IrType::U16) | (IrType::U16, IrType::I16) => IrType::I32,
             (IrType::I8, IrType::U8) | (IrType::U8, IrType::I8) => IrType::I16,
