@@ -163,21 +163,7 @@ pub enum PrecisionLossEstimate {
 
 impl PromotionMatrix {
     pub fn new() -> Self {
-        let mut matrix = PromotionMatrix {
-            promotion_rules: HashMap::new(),
-            type_precedence: vec![
-                TypeGroup::FloatingPoint(vec![IrType::F32, IrType::F64]),
-                TypeGroup::SignedIntegers(vec![IrType::I8, IrType::I16, IrType::I32, IrType::I64]),
-                TypeGroup::UnsignedIntegers(vec![IrType::U8, IrType::U16, IrType::U32, IrType::U64]),
-                TypeGroup::Boolean,
-                TypeGroup::Character,
-            ],
-            overflow_behavior: OverflowBehavior::Saturate,
-        };
-
-        // Initialize the promotion matrix with default rules
-        matrix.initialize_default_promotions();
-        matrix
+        Self::with_overflow_behavior(OverflowBehavior::Saturate)
     }
 
     pub fn with_overflow_behavior(overflow_behavior: OverflowBehavior) -> Self {
@@ -220,79 +206,63 @@ impl PromotionMatrix {
         );
 
         // Add all signed integer widening promotions
-        let signed_types = [(IrType::I8, 8), (IrType::I16, 16), (IrType::I32, 32), (IrType::I64, 64)];
-        for i in 0..signed_types.len() {
-            for j in (i + 1)..signed_types.len() {
-                let (from_type, _) = &signed_types[i];
-                let (to_type, _) = &signed_types[j];
-                self.add_promotion_rule(
-                    from_type.clone(),
-                    to_type.clone(),
-                    PromotionRule::Direct {
-                        cast_kind: CastKind::IntSignExtend,
-                        may_lose_precision: false,
-                        may_overflow: false,
-                    },
-                );
-            }
-        }
+        self.add_integer_widening_promotions(&[
+            (IrType::I8, 8), 
+            (IrType::I16, 16), 
+            (IrType::I32, 32), 
+            (IrType::I64, 64)
+        ], CastKind::IntSignExtend);
 
         // Add all unsigned integer widening promotions
+        self.add_integer_widening_promotions(&[
+            (IrType::U8, 8), 
+            (IrType::U16, 16), 
+            (IrType::U32, 32), 
+            (IrType::U64, 64)
+        ], CastKind::IntZeroExtend);
+
+        // Add float with integer promotions
+        let signed_types = [(IrType::I8, 8), (IrType::I16, 16), (IrType::I32, 32), (IrType::I64, 64)];
         let unsigned_types = [(IrType::U8, 8), (IrType::U16, 16), (IrType::U32, 32), (IrType::U64, 64)];
-        for i in 0..unsigned_types.len() {
-            for j in (i + 1)..unsigned_types.len() {
-                let (from_type, _) = &unsigned_types[i];
-                let (to_type, _) = &unsigned_types[j];
+        self.add_float_integer_promotions(&signed_types);
+        self.add_float_integer_promotions(&unsigned_types);
+
+        // Add cross-signedness promotion rules for same-width types
+        self.add_cross_signedness_promotions();
+
+        // Add identity promotions for all basic types
+        self.add_identity_promotions();
+    }
+    
+    /// Helper function to add widening promotions for integer types
+    fn add_integer_widening_promotions(&mut self, types: &[(IrType, u32)], cast_kind: CastKind) {
+        for i in 0..types.len() {
+            for j in (i + 1)..types.len() {
+                let (from_type, _) = &types[i];
+                let (to_type, _) = &types[j];
                 self.add_promotion_rule(
                     from_type.clone(),
                     to_type.clone(),
                     PromotionRule::Direct {
-                        cast_kind: CastKind::IntZeroExtend,
+                        cast_kind,
                         may_lose_precision: false,
                         may_overflow: false,
                     },
                 );
             }
         }
-
-        // Float with integers promotions - all combinations
-        for (int_type, _) in &signed_types {
+    }
+    
+    /// Helper function to add float to integer and integer to float promotions
+    fn add_float_integer_promotions(&mut self, int_types: &[(IrType, u32)]) {
+        for (int_type, _) in int_types {
+            // F32 to int type
             self.add_promotion_rule(
                 IrType::F32,
                 int_type.clone(),
                 PromotionRule::Direct { cast_kind: CastKind::FloatToInt, may_lose_precision: true, may_overflow: true },
             );
-            self.add_promotion_rule(
-                int_type.clone(),
-                IrType::F32,
-                PromotionRule::Direct {
-                    cast_kind: CastKind::IntToFloat,
-                    may_lose_precision: false,
-                    may_overflow: false,
-                },
-            );
-            self.add_promotion_rule(
-                IrType::F64,
-                int_type.clone(),
-                PromotionRule::Direct { cast_kind: CastKind::FloatToInt, may_lose_precision: true, may_overflow: true },
-            );
-            self.add_promotion_rule(
-                int_type.clone(),
-                IrType::F64,
-                PromotionRule::Direct {
-                    cast_kind: CastKind::IntToFloat,
-                    may_lose_precision: false,
-                    may_overflow: false,
-                },
-            );
-        }
-
-        for (int_type, _) in &unsigned_types {
-            self.add_promotion_rule(
-                IrType::F32,
-                int_type.clone(),
-                PromotionRule::Direct { cast_kind: CastKind::FloatToInt, may_lose_precision: true, may_overflow: true },
-            );
+            // Int type to F32
             self.add_promotion_rule(
                 int_type.clone(),
                 IrType::F32,
@@ -302,11 +272,13 @@ impl PromotionMatrix {
                     may_overflow: false,
                 },
             );
+            // F64 to int type
             self.add_promotion_rule(
                 IrType::F64,
                 int_type.clone(),
                 PromotionRule::Direct { cast_kind: CastKind::FloatToInt, may_lose_precision: true, may_overflow: true },
             );
+            // Int type to F64
             self.add_promotion_rule(
                 int_type.clone(),
                 IrType::F64,
@@ -317,8 +289,10 @@ impl PromotionMatrix {
                 },
             );
         }
-
-        // Add cross-signedness promotion rules for same-width types
+    }
+    
+    /// Add cross-signedness promotion rules for same-width types
+    fn add_cross_signedness_promotions(&mut self) {
         // These should promote to a common type according to C++ promotion rules
         self.add_promotion_rule(
             IrType::I8,
@@ -356,8 +330,10 @@ impl PromotionMatrix {
                 may_overflow: false,
             },
         );
-
-        // Add identity promotions for all basic types
+    }
+    
+    /// Add identity promotions for all basic types
+    fn add_identity_promotions(&mut self) {
         let all_types = vec![
             IrType::I8,
             IrType::I16,
@@ -457,6 +433,12 @@ impl PromotionMatrix {
 
     fn get_higher_type(&self, left: &IrType, right: &IrType) -> IrType {
         // Use the type lattice to determine higher precedence
+        // Delegating to a shared helper function to avoid duplication
+        Self::determine_type_precedence(left, right)
+    }
+    
+    /// Helper function to determine type precedence based on the type lattice
+    fn determine_type_precedence(left: &IrType, right: &IrType) -> IrType {
         match (left, right) {
             // Float types take highest precedence
             (IrType::F64, _) | (_, IrType::F64) => IrType::F64,
