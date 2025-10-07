@@ -3,4 +3,4 @@
 /.idea
 *.asm
 /ignored/
-.gemini/.env
+.env
