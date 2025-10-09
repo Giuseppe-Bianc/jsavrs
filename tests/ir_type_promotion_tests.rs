@@ -331,7 +331,7 @@ fn test_identity_promotions_for_all_types() {
         let rule = matrix.get_promotion_rule(ty, ty);
         assert!(rule.is_some(), "Identity promotion rule should exist for {:?}", ty);
 
-        if let Some(PromotionRule::Direct { cast_kind, may_lose_precision, may_overflow }) = rule {
+        if let Some(PromotionRule::Direct { cast_kind, may_lose_precision, may_overflow, .. }) = rule {
             assert_eq!(*cast_kind, CastKind::Bitcast, "Identity promotion for {:?} should use Bitcast", ty);
             assert_eq!(*may_lose_precision, false, "Identity promotion for {:?} should not lose precision", ty);
             assert_eq!(*may_overflow, false, "Identity promotion for {:?} should not overflow", ty);
@@ -343,11 +343,16 @@ fn test_identity_promotions_for_all_types() {
 
 #[test]
 fn test_promotion_rule_direct() {
-    let rule =
-        PromotionRule::Direct { cast_kind: CastKind::IntToFloat, may_lose_precision: false, may_overflow: false };
+    let rule = PromotionRule::Direct {
+        cast_kind: CastKind::IntToFloat,
+        may_lose_precision: false,
+        may_overflow: false,
+        requires_runtime_support: false,
+        requires_validation: false,
+    };
 
     match rule {
-        PromotionRule::Direct { cast_kind, may_lose_precision, may_overflow } => {
+        PromotionRule::Direct { cast_kind, may_lose_precision, may_overflow, .. } => {
             assert_eq!(cast_kind, CastKind::IntToFloat);
             assert_eq!(may_lose_precision, false);
             assert_eq!(may_overflow, false);
@@ -362,10 +367,11 @@ fn test_promotion_rule_indirect() {
         intermediate_type: IrType::I32,
         first_cast: CastKind::IntToFloat,
         second_cast: CastKind::FloatToInt,
+        requires_runtime_support: false,
     };
 
     match rule {
-        PromotionRule::Indirect { intermediate_type, first_cast, second_cast } => {
+        PromotionRule::Indirect { intermediate_type, first_cast, second_cast, .. } => {
             assert_eq!(intermediate_type, IrType::I32);
             assert_eq!(first_cast, CastKind::IntToFloat);
             assert_eq!(second_cast, CastKind::FloatToInt);
@@ -482,17 +488,21 @@ fn test_promotion_warning_signedness_change() {
 
 #[test]
 fn test_promotion_warning_float_special_values() {
+    use jsavrs::ir::FloatSpecialValueType;
+
     let warning = PromotionWarning::FloatSpecialValues {
-        operation: IrBinaryOp::Divide,
-        may_produce_nan: true,
-        may_produce_infinity: false,
+        value_type: FloatSpecialValueType::NaN,
+        source_type: IrType::F64,
+        target_type: IrType::I32,
+        applied_behavior: OverflowBehavior::Wrap,
+        source_span: SourceSpan::default(),
     };
 
     match warning {
-        PromotionWarning::FloatSpecialValues { operation, may_produce_nan, may_produce_infinity } => {
-            assert_eq!(operation, IrBinaryOp::Divide);
-            assert_eq!(may_produce_nan, true);
-            assert_eq!(may_produce_infinity, false);
+        PromotionWarning::FloatSpecialValues { value_type, source_type, target_type, .. } => {
+            assert_eq!(value_type, FloatSpecialValueType::NaN);
+            assert_eq!(source_type, IrType::F64);
+            assert_eq!(target_type, IrType::I32);
         }
         _ => panic!("Expected FloatSpecialValues warning"),
     }
@@ -869,7 +879,7 @@ fn test_symmetric_promotion_rules_same_type() {
     assert!(rule.is_some());
 
     match rule.unwrap() {
-        PromotionRule::Direct { cast_kind, may_lose_precision, may_overflow } => {
+        PromotionRule::Direct { cast_kind, may_lose_precision, may_overflow, .. } => {
             assert_eq!(cast_kind, &CastKind::Bitcast); // Should be Bitcast for same type
             assert_eq!(*may_lose_precision, false);
             assert_eq!(*may_overflow, false);
@@ -1267,3 +1277,366 @@ const ALL_BASIC_TYPES: &[IrType] = &[
     IrType::Bool,
     IrType::Char,
 ];
+
+// ============================================================================
+// Phase 3: User Story 1 - Basic Numeric Type Conversions Tests
+// ============================================================================
+
+// T009: Integer Widening Test Cases
+#[test]
+fn test_integer_widening_u8_to_u16() {
+    let matrix = PromotionMatrix::new();
+    let rule = matrix.get_promotion_rule(&IrType::U8, &IrType::U16).unwrap();
+    if let PromotionRule::Direct { cast_kind, may_lose_precision, may_overflow, .. } = rule {
+        assert_eq!(*cast_kind, CastKind::IntZeroExtend);
+        assert_eq!(*may_lose_precision, false);
+        assert_eq!(*may_overflow, false);
+    } else {
+        panic!("Expected Direct promotion rule");
+    }
+}
+
+#[test]
+fn test_integer_widening_u8_to_u32() {
+    let matrix = PromotionMatrix::new();
+    let rule = matrix.get_promotion_rule(&IrType::U8, &IrType::U32).unwrap();
+    if let PromotionRule::Direct { cast_kind, may_lose_precision, may_overflow, .. } = rule {
+        assert_eq!(*cast_kind, CastKind::IntZeroExtend);
+        assert!(!may_lose_precision);
+        assert!(!may_overflow);
+    } else {
+        panic!("Expected Direct promotion rule");
+    }
+}
+
+#[test]
+fn test_integer_widening_i8_to_i16() {
+    let matrix = PromotionMatrix::new();
+    let rule = matrix.get_promotion_rule(&IrType::I8, &IrType::I16).unwrap();
+    if let PromotionRule::Direct { cast_kind, may_lose_precision, may_overflow, .. } = rule {
+        assert_eq!(*cast_kind, CastKind::IntSignExtend);
+        assert!(!may_lose_precision);
+        assert!(!may_overflow);
+    } else {
+        panic!("Expected Direct promotion rule");
+    }
+}
+
+#[test]
+fn test_integer_widening_i8_to_i32() {
+    let matrix = PromotionMatrix::new();
+    let rule = matrix.get_promotion_rule(&IrType::I8, &IrType::I32).unwrap();
+    if let PromotionRule::Direct { cast_kind, .. } = rule {
+        assert_eq!(*cast_kind, CastKind::IntSignExtend);
+    } else {
+        panic!("Expected Direct promotion rule");
+    }
+}
+
+#[test]
+fn test_all_unsigned_widening_conversions() {
+    let matrix = PromotionMatrix::new();
+    let unsigned_types = [IrType::U8, IrType::U16, IrType::U32, IrType::U64];
+
+    for (i, from_type) in unsigned_types.iter().enumerate() {
+        for to_type in unsigned_types.iter().skip(i + 1) {
+            let rule = matrix.get_promotion_rule(from_type, to_type);
+            assert!(rule.is_some(), "Missing rule for {:?} → {:?}", from_type, to_type);
+            if let Some(PromotionRule::Direct { cast_kind, may_lose_precision, may_overflow, .. }) = rule {
+                assert_eq!(*cast_kind, CastKind::IntZeroExtend);
+                assert!(!may_lose_precision);
+                assert!(!may_overflow);
+            }
+        }
+    }
+}
+
+#[test]
+fn test_all_signed_widening_conversions() {
+    let matrix = PromotionMatrix::new();
+    let signed_types = [IrType::I8, IrType::I16, IrType::I32, IrType::I64];
+
+    for (i, from_type) in signed_types.iter().enumerate() {
+        for to_type in signed_types.iter().skip(i + 1) {
+            let rule = matrix.get_promotion_rule(from_type, to_type);
+            assert!(rule.is_some(), "Missing rule for {:?} → {:?}", from_type, to_type);
+            if let Some(PromotionRule::Direct { cast_kind, may_lose_precision, may_overflow, .. }) = rule {
+                assert_eq!(*cast_kind, CastKind::IntSignExtend);
+                assert!(!may_lose_precision);
+                assert!(!may_overflow);
+            }
+        }
+    }
+}
+
+// T010: Integer Narrowing Test Cases (now passing after T015)
+#[test]
+fn test_integer_narrowing_u64_to_u16() {
+    let matrix = PromotionMatrix::new();
+    let rule = matrix.get_promotion_rule(&IrType::U64, &IrType::U16);
+    assert!(rule.is_some(), "Missing rule for U64 → U16");
+    if let Some(PromotionRule::Direct { cast_kind, may_lose_precision, may_overflow, .. }) = rule {
+        assert_eq!(*cast_kind, CastKind::IntTruncate);
+        assert_eq!(*may_lose_precision, true);
+        assert_eq!(*may_overflow, true);
+    } else {
+        panic!("Expected Direct promotion rule with IntTruncate");
+    }
+}
+
+#[test]
+fn test_integer_narrowing_i64_to_i16() {
+    let matrix = PromotionMatrix::new();
+    let rule = matrix.get_promotion_rule(&IrType::I64, &IrType::I16);
+    assert!(rule.is_some(), "Missing rule for I64 → I16");
+    if let Some(PromotionRule::Direct { cast_kind, may_lose_precision, may_overflow, .. }) = rule {
+        assert_eq!(*cast_kind, CastKind::IntTruncate);
+        assert_eq!(*may_lose_precision, true);
+        assert_eq!(*may_overflow, true);
+    } else {
+        panic!("Expected Direct promotion rule with IntTruncate");
+    }
+}
+
+// T011: Integer-Float Conversion Test Cases
+#[test]
+fn test_i32_to_f32_conversion() {
+    let matrix = PromotionMatrix::new();
+    let rule = matrix.get_promotion_rule(&IrType::I32, &IrType::F32).unwrap();
+    if let PromotionRule::Direct { cast_kind, .. } = rule {
+        assert_eq!(*cast_kind, CastKind::IntToFloat);
+    } else {
+        panic!("Expected Direct promotion rule");
+    }
+}
+
+#[test]
+fn test_f64_to_i32_conversion_with_precision_loss() {
+    let matrix = PromotionMatrix::new();
+    let rule = matrix.get_promotion_rule(&IrType::F64, &IrType::I32).unwrap();
+    if let PromotionRule::Direct { cast_kind, may_lose_precision, may_overflow, .. } = rule {
+        assert_eq!(*cast_kind, CastKind::FloatToInt);
+        assert_eq!(*may_lose_precision, true);
+        assert_eq!(*may_overflow, true);
+    } else {
+        panic!("Expected Direct promotion rule");
+    }
+}
+
+#[test]
+fn test_all_int_to_float_conversions() {
+    let matrix = PromotionMatrix::new();
+    let int_types =
+        [IrType::I8, IrType::I16, IrType::I32, IrType::I64, IrType::U8, IrType::U16, IrType::U32, IrType::U64];
+    let float_types = [IrType::F32, IrType::F64];
+
+    for int_ty in &int_types {
+        for float_ty in &float_types {
+            let rule = matrix.get_promotion_rule(int_ty, float_ty);
+            assert!(rule.is_some(), "Missing rule for {:?} → {:?}", int_ty, float_ty);
+            if let Some(PromotionRule::Direct { cast_kind, .. }) = rule {
+                assert_eq!(*cast_kind, CastKind::IntToFloat);
+            }
+        }
+    }
+}
+
+#[test]
+fn test_all_float_to_int_conversions() {
+    let matrix = PromotionMatrix::new();
+    let int_types =
+        [IrType::I8, IrType::I16, IrType::I32, IrType::I64, IrType::U8, IrType::U16, IrType::U32, IrType::U64];
+    let float_types = [IrType::F32, IrType::F64];
+
+    for float_ty in &float_types {
+        for int_ty in &int_types {
+            let rule = matrix.get_promotion_rule(float_ty, int_ty);
+            assert!(rule.is_some(), "Missing rule for {:?} → {:?}", float_ty, int_ty);
+            if let Some(PromotionRule::Direct { cast_kind, may_lose_precision, may_overflow, .. }) = rule {
+                assert_eq!(*cast_kind, CastKind::FloatToInt);
+                assert!(may_lose_precision);
+                assert!(may_overflow);
+            }
+        }
+    }
+}
+
+// T012: Float-Float Conversion Test Cases
+#[test]
+fn test_f32_to_f64_extension() {
+    let matrix = PromotionMatrix::new();
+    let rule = matrix.get_promotion_rule(&IrType::F32, &IrType::F64).unwrap();
+    if let PromotionRule::Direct { cast_kind, may_lose_precision, .. } = rule {
+        assert_eq!(*cast_kind, CastKind::FloatExtend);
+        assert_eq!(*may_lose_precision, false);
+    } else {
+        panic!("Expected Direct promotion rule");
+    }
+}
+
+#[test]
+fn test_f64_to_f32_truncation() {
+    let matrix = PromotionMatrix::new();
+    let rule = matrix.get_promotion_rule(&IrType::F64, &IrType::F32).unwrap();
+    if let PromotionRule::Direct { cast_kind, may_lose_precision, .. } = rule {
+        assert_eq!(*cast_kind, CastKind::FloatTruncate);
+        assert_eq!(*may_lose_precision, true);
+    } else {
+        panic!("Expected Direct promotion rule");
+    }
+}
+
+// T017: Snapshot tests for numeric warnings
+#[test]
+fn test_integer_narrowing_warnings() {
+    use insta::assert_debug_snapshot;
+    let matrix = PromotionMatrix::new();
+
+    // Test U64 -> U32 narrowing
+    let rule_u64_u32 = matrix.get_promotion_rule(&IrType::U64, &IrType::U32).unwrap();
+    assert_debug_snapshot!("u64_to_u32_narrowing", rule_u64_u32);
+
+    // Test I64 -> I32 narrowing
+    let rule_i64_i32 = matrix.get_promotion_rule(&IrType::I64, &IrType::I32).unwrap();
+    assert_debug_snapshot!("i64_to_i32_narrowing", rule_i64_i32);
+
+    // Test U32 -> U8 narrowing (larger gap)
+    let rule_u32_u8 = matrix.get_promotion_rule(&IrType::U32, &IrType::U8).unwrap();
+    assert_debug_snapshot!("u32_to_u8_narrowing", rule_u32_u8);
+}
+
+#[test]
+fn test_float_conversion_warnings() {
+    use insta::assert_debug_snapshot;
+    let matrix = PromotionMatrix::new();
+
+    // Test F64 -> F32 precision loss
+    let rule_f64_f32 = matrix.get_promotion_rule(&IrType::F64, &IrType::F32).unwrap();
+    assert_debug_snapshot!("f64_to_f32_precision_loss", rule_f64_f32);
+
+    // Test I64 -> F32 potential precision loss
+    let rule_i64_f32 = matrix.get_promotion_rule(&IrType::I64, &IrType::F32).unwrap();
+    assert_debug_snapshot!("i64_to_f32_precision_loss", rule_i64_f32);
+
+    // Test F64 -> I32 truncation
+    let rule_f64_i32 = matrix.get_promotion_rule(&IrType::F64, &IrType::I32).unwrap();
+    assert_debug_snapshot!("f64_to_i32_truncation", rule_f64_i32);
+}
+
+// T018: Edge Case Tests for Numeric Conversions
+#[test]
+fn test_cross_signedness_same_width_i32_to_u32() {
+    let matrix = PromotionMatrix::new();
+    let rule = matrix.get_promotion_rule(&IrType::I32, &IrType::U32).unwrap();
+    if let PromotionRule::Direct { cast_kind, .. } = rule {
+        assert_eq!(*cast_kind, CastKind::Bitcast);
+    } else {
+        panic!("Expected Direct promotion rule");
+    }
+}
+
+#[test]
+fn test_cross_signedness_same_width_u32_to_i32() {
+    let matrix = PromotionMatrix::new();
+    let rule = matrix.get_promotion_rule(&IrType::U32, &IrType::I32).unwrap();
+    if let PromotionRule::Direct { cast_kind, .. } = rule {
+        assert_eq!(*cast_kind, CastKind::Bitcast);
+    } else {
+        panic!("Expected Direct promotion rule");
+    }
+}
+
+#[test]
+fn test_all_same_width_cross_signedness_conversions() {
+    let matrix = PromotionMatrix::new();
+
+    let pairs = vec![
+        (IrType::I8, IrType::U8),
+        (IrType::U8, IrType::I8),
+        (IrType::I16, IrType::U16),
+        (IrType::U16, IrType::I16),
+        (IrType::I32, IrType::U32),
+        (IrType::U32, IrType::I32),
+        (IrType::I64, IrType::U64),
+        (IrType::U64, IrType::I64),
+    ];
+
+    for (from_type, to_type) in pairs {
+        let rule = matrix.get_promotion_rule(&from_type, &to_type);
+        assert!(rule.is_some(), "Missing rule for {:?} -> {:?}", from_type, to_type);
+        if let Some(PromotionRule::Direct { cast_kind, .. }) = rule {
+            assert_eq!(*cast_kind, CastKind::Bitcast, "Expected Bitcast for {:?} -> {:?}", from_type, to_type);
+        }
+    }
+}
+
+#[test]
+fn test_large_integer_conversions_exist() {
+    let matrix = PromotionMatrix::new();
+
+    // Test that conversions from/to largest integer types exist for same signedness
+    let signed_types = vec![IrType::I8, IrType::I16, IrType::I32, IrType::I64];
+    let unsigned_types = vec![IrType::U8, IrType::U16, IrType::U32, IrType::U64];
+
+    // Test signed-to-signed conversions
+    for from_type in &signed_types {
+        for to_type in &signed_types {
+            if from_type != to_type {
+                assert!(
+                    matrix.get_promotion_rule(from_type, to_type).is_some(),
+                    "Missing rule for {:?} -> {:?}",
+                    from_type,
+                    to_type
+                );
+            }
+        }
+    }
+
+    // Test unsigned-to-unsigned conversions
+    for from_type in &unsigned_types {
+        for to_type in &unsigned_types {
+            if from_type != to_type {
+                assert!(
+                    matrix.get_promotion_rule(from_type, to_type).is_some(),
+                    "Missing rule for {:?} -> {:?}",
+                    from_type,
+                    to_type
+                );
+            }
+        }
+    }
+
+    // Test cross-signedness same-width conversions
+    let pairs = vec![
+        (IrType::I8, IrType::U8),
+        (IrType::I16, IrType::U16),
+        (IrType::I32, IrType::U32),
+        (IrType::I64, IrType::U64),
+    ];
+    for (from_type, to_type) in &pairs {
+        assert!(matrix.get_promotion_rule(from_type, to_type).is_some());
+        assert!(matrix.get_promotion_rule(to_type, from_type).is_some());
+    }
+}
+
+#[test]
+fn test_float_special_values_conversions_exist() {
+    let matrix = PromotionMatrix::new();
+
+    // Verify float to integer conversions exist (which would handle NaN/Inf)
+    let float_types = vec![IrType::F32, IrType::F64];
+    let int_types =
+        vec![IrType::I8, IrType::I16, IrType::I32, IrType::I64, IrType::U8, IrType::U16, IrType::U32, IrType::U64];
+
+    for float_type in &float_types {
+        for int_type in &int_types {
+            let rule = matrix.get_promotion_rule(float_type, int_type);
+            assert!(rule.is_some(), "Missing float->int rule for {:?} -> {:?}", float_type, int_type);
+
+            if let Some(PromotionRule::Direct { cast_kind, may_overflow, .. }) = rule {
+                assert_eq!(*cast_kind, CastKind::FloatToInt);
+                assert!(*may_overflow, "Float to int should mark may_overflow=true");
+            }
+        }
+    }
+}

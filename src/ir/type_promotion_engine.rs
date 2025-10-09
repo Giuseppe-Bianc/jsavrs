@@ -61,7 +61,7 @@ impl TypePromotionEngine {
         // Check if left operand needs casting
         if left_type != &result_type
             && let Some(rule) = self.promotion_matrix.get_promotion_rule(left_type, &result_type)
-            && let PromotionRule::Direct { cast_kind, may_lose_precision, may_overflow } = rule
+            && let PromotionRule::Direct { cast_kind, may_lose_precision, may_overflow, .. } = rule
         {
             left_cast = Some(TypePromotion {
                 from_type: left_type.clone(),
@@ -92,7 +92,7 @@ impl TypePromotionEngine {
         // Check if right operand needs casting
         if right_type != &result_type
             && let Some(rule) = self.promotion_matrix.get_promotion_rule(right_type, &result_type)
-            && let PromotionRule::Direct { cast_kind, may_lose_precision, may_overflow } = rule
+            && let PromotionRule::Direct { cast_kind, may_lose_precision, may_overflow, .. } = rule
         {
             right_cast = Some(TypePromotion {
                 from_type: right_type.clone(),
@@ -141,7 +141,7 @@ impl TypePromotionEngine {
             right_cast,
             warnings: warnings.clone(),
             is_sound: warnings.is_empty(), // Simplified - in reality, presence of warning doesn't mean promotion is unsound
-            /*is_sound: !warnings.iter().any(|w| matches!(w, PromotionWarning::PrecisionLoss { .. } | PromotionWarning::PotentialOverflow { .. } | PromotionWarning::SignednessChange { .. })),*/
+                                           /*is_sound: !warnings.iter().any(|w| matches!(w, PromotionWarning::PrecisionLoss { .. } | PromotionWarning::PotentialOverflow { .. } | PromotionWarning::SignednessChange { .. })),*/
         }
     }
 

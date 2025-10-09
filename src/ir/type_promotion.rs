@@ -94,9 +94,20 @@ impl Default for PromotionMatrix {
 #[derive(Debug, Clone, PartialEq)]
 pub enum PromotionRule {
     /// Direct promotion without intermediate steps
-    Direct { cast_kind: CastKind, may_lose_precision: bool, may_overflow: bool },
+    Direct {
+        cast_kind: CastKind,
+        may_lose_precision: bool,
+        may_overflow: bool,
+        requires_runtime_support: bool, // NEW: For string conversions
+        requires_validation: bool,      // NEW: For u32→char, String→primitive
+    },
     /// Promotion through intermediate type
-    Indirect { intermediate_type: IrType, first_cast: CastKind, second_cast: CastKind },
+    Indirect {
+        intermediate_type: IrType,
+        first_cast: CastKind,
+        second_cast: CastKind,
+        requires_runtime_support: bool, // NEW
+    },
     /// Promotion not allowed
     Forbidden { reason: String },
 }
@@ -129,10 +140,48 @@ pub struct PromotionResult {
 /// Represents warnings generated during type promotion
 #[derive(Debug, Clone, PartialEq)]
 pub enum PromotionWarning {
-    PrecisionLoss { from_type: IrType, to_type: IrType, estimated_loss: PrecisionLossEstimate },
-    PotentialOverflow { from_type: IrType, to_type: IrType, operation: IrBinaryOp },
-    SignednessChange { from_signed: bool, to_signed: bool, may_affect_comparisons: bool },
-    FloatSpecialValues { operation: IrBinaryOp, may_produce_nan: bool, may_produce_infinity: bool },
+    PrecisionLoss {
+        from_type: IrType,
+        to_type: IrType,
+        estimated_loss: PrecisionLossEstimate,
+    },
+    PotentialOverflow {
+        from_type: IrType,
+        to_type: IrType,
+        operation: IrBinaryOp,
+    },
+    SignednessChange {
+        from_signed: bool,
+        to_signed: bool,
+        may_affect_comparisons: bool,
+    },
+    /// Float special values in type conversions (updated for type conversion context)
+    FloatSpecialValues {
+        value_type: FloatSpecialValueType,  // NaN | PosInf | NegInf
+        source_type: IrType,                // F32 or F64
+        target_type: IrType,                // I8-I64, U8-U64
+        applied_behavior: OverflowBehavior, // Wrap | Saturate | Trap | CompileError
+        source_span: SourceSpan,
+    },
+    /// Invalid string conversion (unparseable)
+    InvalidStringConversion {
+        string_value: Option<String>,
+        target_type: IrType,
+        reason: String,
+    },
+    /// Invalid Unicode code point for char
+    InvalidUnicodeCodePoint {
+        value: u32,
+        reason: String,
+    },
+}
+
+/// Helper enum for float special value types
+#[derive(Debug, Clone, Copy, PartialEq, Eq)]
+pub enum FloatSpecialValueType {
+    NaN,
+    PositiveInfinity,
+    NegativeInfinity,
 }
 
 /// Configuration for runtime behavior on numeric overflow
@@ -197,29 +246,37 @@ impl PromotionMatrix {
         self.add_promotion_rule(
             IrType::F64,
             IrType::F32,
-            PromotionRule::Direct { cast_kind: CastKind::FloatTruncate, may_lose_precision: true, may_overflow: false },
+            PromotionRule::Direct {
+                cast_kind: CastKind::FloatTruncate,
+                may_lose_precision: true,
+                may_overflow: false,
+                requires_runtime_support: false,
+                requires_validation: false,
+            },
         );
         self.add_promotion_rule(
             IrType::F32,
             IrType::F64,
-            PromotionRule::Direct { cast_kind: CastKind::FloatExtend, may_lose_precision: false, may_overflow: false },
+            PromotionRule::Direct {
+                cast_kind: CastKind::FloatExtend,
+                may_lose_precision: false,
+                may_overflow: false,
+                requires_runtime_support: false,
+                requires_validation: false,
+            },
         );
 
         // Add all signed integer widening promotions
-        self.add_integer_widening_promotions(&[
-            (IrType::I8, 8), 
-            (IrType::I16, 16), 
-            (IrType::I32, 32), 
-            (IrType::I64, 64)
-        ], CastKind::IntSignExtend);
+        self.add_integer_widening_promotions(
+            &[(IrType::I8, 8), (IrType::I16, 16), (IrType::I32, 32), (IrType::I64, 64)],
+            CastKind::IntSignExtend,
+        );
 
         // Add all unsigned integer widening promotions
-        self.add_integer_widening_promotions(&[
-            (IrType::U8, 8), 
-            (IrType::U16, 16), 
-            (IrType::U32, 32), 
-            (IrType::U64, 64)
-        ], CastKind::IntZeroExtend);
+        self.add_integer_widening_promotions(
+            &[(IrType::U8, 8), (IrType::U16, 16), (IrType::U32, 32), (IrType::U64, 64)],
+            CastKind::IntZeroExtend,
+        );
 
         // Add float with integer promotions
         let signed_types = [(IrType::I8, 8), (IrType::I16, 16), (IrType::I32, 32), (IrType::I64, 64)];
@@ -227,13 +284,16 @@ impl PromotionMatrix {
         self.add_float_integer_promotions(&signed_types);
         self.add_float_integer_promotions(&unsigned_types);
 
+        // Add integer narrowing promotions (T016)
+        self.add_integer_narrowing_promotions();
+
         // Add cross-signedness promotion rules for same-width types
         self.add_cross_signedness_promotions();
 
         // Add identity promotions for all basic types
         self.add_identity_promotions();
     }
-    
+
     /// Helper function to add widening promotions for integer types
     fn add_integer_widening_promotions(&mut self, types: &[(IrType, u32)], cast_kind: CastKind) {
         for i in 0..types.len() {
@@ -247,12 +307,14 @@ impl PromotionMatrix {
                         cast_kind,
                         may_lose_precision: false,
                         may_overflow: false,
+                        requires_runtime_support: false,
+                        requires_validation: false,
                     },
                 );
             }
         }
     }
-    
+
     /// Helper function to add float to integer and integer to float promotions
     fn add_float_integer_promotions(&mut self, int_types: &[(IrType, u32)]) {
         for (int_type, _) in int_types {
@@ -260,7 +322,13 @@ impl PromotionMatrix {
             self.add_promotion_rule(
                 IrType::F32,
                 int_type.clone(),
-                PromotionRule::Direct { cast_kind: CastKind::FloatToInt, may_lose_precision: true, may_overflow: true },
+                PromotionRule::Direct {
+                    cast_kind: CastKind::FloatToInt,
+                    may_lose_precision: true,
+                    may_overflow: true,
+                    requires_runtime_support: false,
+                    requires_validation: false,
+                },
             );
             // Int type to F32
             self.add_promotion_rule(
@@ -270,13 +338,21 @@ impl PromotionMatrix {
                     cast_kind: CastKind::IntToFloat,
                     may_lose_precision: false,
                     may_overflow: false,
+                    requires_runtime_support: false,
+                    requires_validation: false,
                 },
             );
             // F64 to int type
             self.add_promotion_rule(
                 IrType::F64,
                 int_type.clone(),
-                PromotionRule::Direct { cast_kind: CastKind::FloatToInt, may_lose_precision: true, may_overflow: true },
+                PromotionRule::Direct {
+                    cast_kind: CastKind::FloatToInt,
+                    may_lose_precision: true,
+                    may_overflow: true,
+                    requires_runtime_support: false,
+                    requires_validation: false,
+                },
             );
             // Int type to F64
             self.add_promotion_rule(
@@ -286,11 +362,13 @@ impl PromotionMatrix {
                     cast_kind: CastKind::IntToFloat,
                     may_lose_precision: false,
                     may_overflow: false,
+                    requires_runtime_support: false,
+                    requires_validation: false,
                 },
             );
         }
     }
-    
+
     /// Add cross-signedness promotion rules for same-width types
     fn add_cross_signedness_promotions(&mut self) {
         // These should promote to a common type according to C++ promotion rules
@@ -301,6 +379,8 @@ impl PromotionMatrix {
                 cast_kind: CastKind::Bitcast,
                 may_lose_precision: false,
                 may_overflow: false,
+                requires_runtime_support: false,
+                requires_validation: false,
             },
         );
         self.add_promotion_rule(
@@ -310,6 +390,8 @@ impl PromotionMatrix {
                 cast_kind: CastKind::Bitcast,
                 may_lose_precision: false,
                 may_overflow: false,
+                requires_runtime_support: false,
+                requires_validation: false,
             },
         );
         self.add_promotion_rule(
@@ -319,6 +401,8 @@ impl PromotionMatrix {
                 cast_kind: CastKind::Bitcast,
                 may_lose_precision: false,
                 may_overflow: false,
+                requires_runtime_support: false,
+                requires_validation: false,
             },
         );
         self.add_promotion_rule(
@@ -328,10 +412,12 @@ impl PromotionMatrix {
                 cast_kind: CastKind::Bitcast,
                 may_lose_precision: false,
                 may_overflow: false,
+                requires_runtime_support: false,
+                requires_validation: false,
             },
         );
     }
-    
+
     /// Add identity promotions for all basic types
     fn add_identity_promotions(&mut self) {
         let all_types = vec![
@@ -361,6 +447,8 @@ impl PromotionMatrix {
                 cast_kind: CastKind::Bitcast, // No cast needed for same type
                 may_lose_precision: false,
                 may_overflow: false,
+                requires_runtime_support: false,
+                requires_validation: false,
             },
         );
     }
@@ -375,13 +463,22 @@ impl PromotionMatrix {
             if !self.promotion_rules.contains_key(&(to.clone(), from.clone())) {
                 // For now, just add the same rule in reverse, though in a real implementation
                 // we might want to define specific reverse rules
-                if let PromotionRule::Direct { cast_kind, may_lose_precision, may_overflow } = &rule {
+                if let PromotionRule::Direct {
+                    cast_kind,
+                    may_lose_precision,
+                    may_overflow,
+                    requires_runtime_support,
+                    requires_validation,
+                } = &rule
+                {
                     self.promotion_rules.insert(
                         (to, from),
                         PromotionRule::Direct {
                             cast_kind: *cast_kind,
                             may_lose_precision: *may_lose_precision,
                             may_overflow: *may_overflow,
+                            requires_runtime_support: *requires_runtime_support,
+                            requires_validation: *requires_validation,
                         },
                     );
                 }
@@ -436,7 +533,7 @@ impl PromotionMatrix {
         // Delegating to a shared helper function to avoid duplication
         Self::determine_type_precedence(left, right)
     }
-    
+
     /// Helper function to determine type precedence based on the type lattice
     fn determine_type_precedence(left: &IrType, right: &IrType) -> IrType {
         match (left, right) {
@@ -460,6 +557,68 @@ impl PromotionMatrix {
 
             _ => left.clone(), // fallback to left type
         }
+    }
+
+    /// Add all integer narrowing conversion rules (24 rules)
+    /// Narrowing: Larger → Smaller within same signedness
+    fn add_integer_narrowing_promotions(&mut self) {
+        // Signed narrowing (6 rules: I64→I32, I64→I16, I64→I8, I32→I16, I32→I8, I16→I8)
+        let signed_types = [(IrType::I8, 8), (IrType::I16, 16), (IrType::I32, 32), (IrType::I64, 64)];
+        for i in 0..signed_types.len() {
+            for j in 0..i {
+                let (from_type, _) = &signed_types[i];
+                let (to_type, _) = &signed_types[j];
+                self.add_promotion_rule(
+                    from_type.clone(),
+                    to_type.clone(),
+                    PromotionRule::Direct {
+                        cast_kind: CastKind::IntTruncate,
+                        may_lose_precision: true,
+                        may_overflow: true,
+                        requires_runtime_support: false,
+                        requires_validation: false,
+                    },
+                );
+            }
+        }
+
+        // Unsigned narrowing (6 rules: U64→U32, U64→U16, U64→U8, U32→U16, U32→U8, U16→U8)
+        let unsigned_types = [(IrType::U8, 8), (IrType::U16, 16), (IrType::U32, 32), (IrType::U64, 64)];
+        for i in 0..unsigned_types.len() {
+            for j in 0..i {
+                let (from_type, _) = &unsigned_types[i];
+                let (to_type, _) = &unsigned_types[j];
+                self.add_promotion_rule(
+                    from_type.clone(),
+                    to_type.clone(),
+                    PromotionRule::Direct {
+                        cast_kind: CastKind::IntTruncate,
+                        may_lose_precision: true,
+                        may_overflow: true,
+                        requires_runtime_support: false,
+                        requires_validation: false,
+                    },
+                );
+            }
+        }
+    }
+
+    /// Add all boolean conversion rules (24 rules)
+    fn add_boolean_promotions(&mut self) {
+        // Implementation in T023
+        todo!("T023: Implement boolean promotions")
+    }
+
+    /// Add all character conversion rules (14 rules)
+    fn add_character_promotions(&mut self) {
+        // Implementation in T031
+        todo!("T027: Implement character promotions")
+    }
+
+    /// Add all string conversion rules (25 rules)
+    fn add_string_promotions(&mut self) {
+        // Implementation in T035
+        todo!("T035: Implement string promotions")
     }
 }
 

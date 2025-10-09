@@ -27,8 +27,8 @@ pub use scope_manager::ScopeManager;
 pub use ssa::SsaTransformer;
 pub use terminator::{Terminator, TerminatorKind};
 pub use type_promotion::{
-    OverflowBehavior, PrecisionLossEstimate, PromotionMatrix, PromotionResult, PromotionRule, PromotionWarning,
-    TypeGroup, TypePromotion,
+    FloatSpecialValueType, OverflowBehavior, PrecisionLossEstimate, PromotionMatrix, PromotionResult, PromotionRule,
+    PromotionWarning, TypeGroup, TypePromotion,
 };
 pub use type_promotion_engine::TypePromotionEngine;
 pub use types::{IrType, ResourceId, ScopeId};
