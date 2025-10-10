@@ -260,8 +260,8 @@ impl PromotionMatrix {
 
     /// Add cross-signedness conversions with different widths (24 rules via Indirect)
     fn add_cross_signedness_different_width_promotions(&mut self) {
-        let signed_types = vec![IrType::I8, IrType::I16, IrType::I32, IrType::I64];
-        let unsigned_types = vec![IrType::U8, IrType::U16, IrType::U32, IrType::U64];
+        let signed_types = [IrType::I8, IrType::I16, IrType::I32, IrType::I64];
+        let unsigned_types = [IrType::U8, IrType::U16, IrType::U32, IrType::U64];
 
         // Signed → Unsigned (different widths)
         for (i, from_signed) in signed_types.iter().enumerate() {
