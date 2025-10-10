@@ -331,7 +331,7 @@ fn test_identity_promotions_for_all_types() {
         let rule = matrix.get_promotion_rule(ty, ty);
         assert!(rule.is_some(), "Identity promotion rule should exist for {:?}", ty);
 
-        if let Some(PromotionRule::Direct { cast_kind, may_lose_precision, may_overflow }) = rule {
+        if let Some(PromotionRule::Direct { cast_kind, may_lose_precision, may_overflow, .. }) = rule {
             assert_eq!(*cast_kind, CastKind::Bitcast, "Identity promotion for {:?} should use Bitcast", ty);
             assert_eq!(*may_lose_precision, false, "Identity promotion for {:?} should not lose precision", ty);
             assert_eq!(*may_overflow, false, "Identity promotion for {:?} should not overflow", ty);
@@ -343,11 +343,17 @@ fn test_identity_promotions_for_all_types() {
 
 #[test]
 fn test_promotion_rule_direct() {
-    let rule =
-        PromotionRule::Direct { cast_kind: CastKind::IntToFloat, may_lose_precision: false, may_overflow: false };
+    let rule = PromotionRule::Direct {
+        cast_kind: CastKind::IntToFloat,
+        may_lose_precision: false,
+        may_overflow: false,
+        requires_runtime_support: false,
+        requires_validation: false,
+        precision_loss_estimate: None,
+    };
 
     match rule {
-        PromotionRule::Direct { cast_kind, may_lose_precision, may_overflow } => {
+        PromotionRule::Direct { cast_kind, may_lose_precision, may_overflow, .. } => {
             assert_eq!(cast_kind, CastKind::IntToFloat);
             assert_eq!(may_lose_precision, false);
             assert_eq!(may_overflow, false);
@@ -362,10 +368,11 @@ fn test_promotion_rule_indirect() {
         intermediate_type: IrType::I32,
         first_cast: CastKind::IntToFloat,
         second_cast: CastKind::FloatToInt,
+        requires_runtime_support: false,
     };
 
     match rule {
-        PromotionRule::Indirect { intermediate_type, first_cast, second_cast } => {
+        PromotionRule::Indirect { intermediate_type, first_cast, second_cast, .. } => {
             assert_eq!(intermediate_type, IrType::I32);
             assert_eq!(first_cast, CastKind::IntToFloat);
             assert_eq!(second_cast, CastKind::FloatToInt);
@@ -482,17 +489,21 @@ fn test_promotion_warning_signedness_change() {
 
 #[test]
 fn test_promotion_warning_float_special_values() {
+    use jsavrs::ir::FloatSpecialValueType;
+
     let warning = PromotionWarning::FloatSpecialValues {
-        operation: IrBinaryOp::Divide,
-        may_produce_nan: true,
-        may_produce_infinity: false,
+        value_type: FloatSpecialValueType::NaN,
+        source_type: IrType::F64,
+        target_type: IrType::I32,
+        applied_behavior: OverflowBehavior::Wrap,
+        source_span: SourceSpan::default(),
     };
 
     match warning {
-        PromotionWarning::FloatSpecialValues { operation, may_produce_nan, may_produce_infinity } => {
-            assert_eq!(operation, IrBinaryOp::Divide);
-            assert_eq!(may_produce_nan, true);
-            assert_eq!(may_produce_infinity, false);
+        PromotionWarning::FloatSpecialValues { value_type, source_type, target_type, .. } => {
+            assert_eq!(value_type, FloatSpecialValueType::NaN);
+            assert_eq!(source_type, IrType::F64);
+            assert_eq!(target_type, IrType::I32);
         }
         _ => panic!("Expected FloatSpecialValues warning"),
     }
@@ -554,8 +565,8 @@ fn test_get_promotion_rule_exists() {
 fn test_get_promotion_rule_nonexistent() {
     let matrix = PromotionMatrix::new();
 
-    // A rule that shouldn't exist
-    assert!(matrix.get_promotion_rule(&IrType::Bool, &IrType::String).is_none());
+    // Test a rule that genuinely doesn't exist (Void conversions are forbidden)
+    assert!(matrix.get_promotion_rule(&IrType::Void, &IrType::String).is_none());
 }
 
 #[test]
@@ -647,8 +658,8 @@ fn test_type_group_variants() {
 fn test_promotion_matrix_edge_case_empty_rule_lookup() {
     let matrix = PromotionMatrix::new();
 
-    // Test that looking up a non-existent rule returns None
-    assert!(matrix.get_promotion_rule(&IrType::String, &IrType::Bool).is_none());
+    // Test that looking up a non-existent rule returns None (Void conversions forbidden)
+    assert!(matrix.get_promotion_rule(&IrType::Void, &IrType::I32).is_none());
 }
 
 #[test]
@@ -869,7 +880,7 @@ fn test_symmetric_promotion_rules_same_type() {
     assert!(rule.is_some());
 
     match rule.unwrap() {
-        PromotionRule::Direct { cast_kind, may_lose_precision, may_overflow } => {
+        PromotionRule::Direct { cast_kind, may_lose_precision, may_overflow, .. } => {
             assert_eq!(cast_kind, &CastKind::Bitcast); // Should be Bitcast for same type
             assert_eq!(*may_lose_precision, false);
             assert_eq!(*may_overflow, false);
@@ -1267,3 +1278,1812 @@ const ALL_BASIC_TYPES: &[IrType] = &[
     IrType::Bool,
     IrType::Char,
 ];
+
+// ============================================================================
+// Phase 3: User Story 1 - Basic Numeric Type Conversions Tests
+// ============================================================================
+
+// T009: Integer Widening Test Cases
+#[test]
+fn test_integer_widening_u8_to_u16() {
+    let matrix = PromotionMatrix::new();
+    let rule = matrix.get_promotion_rule(&IrType::U8, &IrType::U16).unwrap();
+    if let PromotionRule::Direct { cast_kind, may_lose_precision, may_overflow, .. } = rule {
+        assert_eq!(*cast_kind, CastKind::IntZeroExtend);
+        assert_eq!(*may_lose_precision, false);
+        assert_eq!(*may_overflow, false);
+    } else {
+        panic!("Expected Direct promotion rule");
+    }
+}
+
+#[test]
+fn test_integer_widening_u8_to_u32() {
+    let matrix = PromotionMatrix::new();
+    let rule = matrix.get_promotion_rule(&IrType::U8, &IrType::U32).unwrap();
+    if let PromotionRule::Direct { cast_kind, may_lose_precision, may_overflow, .. } = rule {
+        assert_eq!(*cast_kind, CastKind::IntZeroExtend);
+        assert!(!may_lose_precision);
+        assert!(!may_overflow);
+    } else {
+        panic!("Expected Direct promotion rule");
+    }
+}
+
+#[test]
+fn test_integer_widening_i8_to_i16() {
+    let matrix = PromotionMatrix::new();
+    let rule = matrix.get_promotion_rule(&IrType::I8, &IrType::I16).unwrap();
+    if let PromotionRule::Direct { cast_kind, may_lose_precision, may_overflow, .. } = rule {
+        assert_eq!(*cast_kind, CastKind::IntSignExtend);
+        assert!(!may_lose_precision);
+        assert!(!may_overflow);
+    } else {
+        panic!("Expected Direct promotion rule");
+    }
+}
+
+#[test]
+fn test_integer_widening_i8_to_i32() {
+    let matrix = PromotionMatrix::new();
+    let rule = matrix.get_promotion_rule(&IrType::I8, &IrType::I32).unwrap();
+    if let PromotionRule::Direct { cast_kind, .. } = rule {
+        assert_eq!(*cast_kind, CastKind::IntSignExtend);
+    } else {
+        panic!("Expected Direct promotion rule");
+    }
+}
+
+#[test]
+fn test_all_unsigned_widening_conversions() {
+    let matrix = PromotionMatrix::new();
+    let unsigned_types = [IrType::U8, IrType::U16, IrType::U32, IrType::U64];
+
+    for (i, from_type) in unsigned_types.iter().enumerate() {
+        for to_type in unsigned_types.iter().skip(i + 1) {
+            let rule = matrix.get_promotion_rule(from_type, to_type);
+            assert!(rule.is_some(), "Missing rule for {:?} → {:?}", from_type, to_type);
+            if let Some(PromotionRule::Direct { cast_kind, may_lose_precision, may_overflow, .. }) = rule {
+                assert_eq!(*cast_kind, CastKind::IntZeroExtend);
+                assert!(!may_lose_precision);
+                assert!(!may_overflow);
+            }
+        }
+    }
+}
+
+#[test]
+fn test_all_signed_widening_conversions() {
+    let matrix = PromotionMatrix::new();
+    let signed_types = [IrType::I8, IrType::I16, IrType::I32, IrType::I64];
+
+    for (i, from_type) in signed_types.iter().enumerate() {
+        for to_type in signed_types.iter().skip(i + 1) {
+            let rule = matrix.get_promotion_rule(from_type, to_type);
+            assert!(rule.is_some(), "Missing rule for {:?} → {:?}", from_type, to_type);
+            if let Some(PromotionRule::Direct { cast_kind, may_lose_precision, may_overflow, .. }) = rule {
+                assert_eq!(*cast_kind, CastKind::IntSignExtend);
+                assert!(!may_lose_precision);
+                assert!(!may_overflow);
+            }
+        }
+    }
+}
+
+// T010: Integer Narrowing Test Cases (now passing after T015)
+#[test]
+fn test_integer_narrowing_u64_to_u16() {
+    let matrix = PromotionMatrix::new();
+    let rule = matrix.get_promotion_rule(&IrType::U64, &IrType::U16);
+    assert!(rule.is_some(), "Missing rule for U64 → U16");
+    if let Some(PromotionRule::Direct { cast_kind, may_lose_precision, may_overflow, .. }) = rule {
+        assert_eq!(*cast_kind, CastKind::IntTruncate);
+        assert_eq!(*may_lose_precision, true);
+        assert_eq!(*may_overflow, true);
+    } else {
+        panic!("Expected Direct promotion rule with IntTruncate");
+    }
+}
+
+#[test]
+fn test_integer_narrowing_i64_to_i16() {
+    let matrix = PromotionMatrix::new();
+    let rule = matrix.get_promotion_rule(&IrType::I64, &IrType::I16);
+    assert!(rule.is_some(), "Missing rule for I64 → I16");
+    if let Some(PromotionRule::Direct { cast_kind, may_lose_precision, may_overflow, .. }) = rule {
+        assert_eq!(*cast_kind, CastKind::IntTruncate);
+        assert_eq!(*may_lose_precision, true);
+        assert_eq!(*may_overflow, true);
+    } else {
+        panic!("Expected Direct promotion rule with IntTruncate");
+    }
+}
+
+// T011: Integer-Float Conversion Test Cases
+#[test]
+fn test_i32_to_f32_conversion() {
+    let matrix = PromotionMatrix::new();
+    let rule = matrix.get_promotion_rule(&IrType::I32, &IrType::F32).unwrap();
+    if let PromotionRule::Direct { cast_kind, .. } = rule {
+        assert_eq!(*cast_kind, CastKind::IntToFloat);
+    } else {
+        panic!("Expected Direct promotion rule");
+    }
+}
+
+#[test]
+fn test_f64_to_i32_conversion_with_precision_loss() {
+    let matrix = PromotionMatrix::new();
+    let rule = matrix.get_promotion_rule(&IrType::F64, &IrType::I32).unwrap();
+    if let PromotionRule::Direct { cast_kind, may_lose_precision, may_overflow, .. } = rule {
+        assert_eq!(*cast_kind, CastKind::FloatToInt);
+        assert_eq!(*may_lose_precision, true);
+        assert_eq!(*may_overflow, true);
+    } else {
+        panic!("Expected Direct promotion rule");
+    }
+}
+
+#[test]
+fn test_all_int_to_float_conversions() {
+    let matrix = PromotionMatrix::new();
+    let int_types =
+        [IrType::I8, IrType::I16, IrType::I32, IrType::I64, IrType::U8, IrType::U16, IrType::U32, IrType::U64];
+    let float_types = [IrType::F32, IrType::F64];
+
+    for int_ty in &int_types {
+        for float_ty in &float_types {
+            let rule = matrix.get_promotion_rule(int_ty, float_ty);
+            assert!(rule.is_some(), "Missing rule for {:?} → {:?}", int_ty, float_ty);
+            if let Some(PromotionRule::Direct { cast_kind, .. }) = rule {
+                assert_eq!(*cast_kind, CastKind::IntToFloat);
+            }
+        }
+    }
+}
+
+#[test]
+fn test_all_float_to_int_conversions() {
+    let matrix = PromotionMatrix::new();
+    let int_types =
+        [IrType::I8, IrType::I16, IrType::I32, IrType::I64, IrType::U8, IrType::U16, IrType::U32, IrType::U64];
+    let float_types = [IrType::F32, IrType::F64];
+
+    for float_ty in &float_types {
+        for int_ty in &int_types {
+            let rule = matrix.get_promotion_rule(float_ty, int_ty);
+            assert!(rule.is_some(), "Missing rule for {:?} → {:?}", float_ty, int_ty);
+            if let Some(PromotionRule::Direct { cast_kind, may_lose_precision, may_overflow, .. }) = rule {
+                assert_eq!(*cast_kind, CastKind::FloatToInt);
+                assert!(may_lose_precision);
+                assert!(may_overflow);
+            }
+        }
+    }
+}
+
+// T012: Float-Float Conversion Test Cases
+#[test]
+fn test_f32_to_f64_extension() {
+    let matrix = PromotionMatrix::new();
+    let rule = matrix.get_promotion_rule(&IrType::F32, &IrType::F64).unwrap();
+    if let PromotionRule::Direct { cast_kind, may_lose_precision, .. } = rule {
+        assert_eq!(*cast_kind, CastKind::FloatExtend);
+        assert_eq!(*may_lose_precision, false);
+    } else {
+        panic!("Expected Direct promotion rule");
+    }
+}
+
+#[test]
+fn test_f64_to_f32_truncation() {
+    let matrix = PromotionMatrix::new();
+    let rule = matrix.get_promotion_rule(&IrType::F64, &IrType::F32).unwrap();
+    if let PromotionRule::Direct { cast_kind, may_lose_precision, .. } = rule {
+        assert_eq!(*cast_kind, CastKind::FloatTruncate);
+        assert_eq!(*may_lose_precision, true);
+    } else {
+        panic!("Expected Direct promotion rule");
+    }
+}
+
+// T017: Snapshot tests for numeric warnings
+#[test]
+fn test_integer_narrowing_warnings() {
+    use insta::assert_debug_snapshot;
+    let matrix = PromotionMatrix::new();
+
+    // Test U64 -> U32 narrowing
+    let rule_u64_u32 = matrix.get_promotion_rule(&IrType::U64, &IrType::U32).unwrap();
+    assert_debug_snapshot!("u64_to_u32_narrowing", rule_u64_u32);
+
+    // Test I64 -> I32 narrowing
+    let rule_i64_i32 = matrix.get_promotion_rule(&IrType::I64, &IrType::I32).unwrap();
+    assert_debug_snapshot!("i64_to_i32_narrowing", rule_i64_i32);
+
+    // Test U32 -> U8 narrowing (larger gap)
+    let rule_u32_u8 = matrix.get_promotion_rule(&IrType::U32, &IrType::U8).unwrap();
+    assert_debug_snapshot!("u32_to_u8_narrowing", rule_u32_u8);
+}
+
+#[test]
+fn test_float_conversion_warnings() {
+    use insta::assert_debug_snapshot;
+    let matrix = PromotionMatrix::new();
+
+    // Test F64 -> F32 precision loss
+    let rule_f64_f32 = matrix.get_promotion_rule(&IrType::F64, &IrType::F32).unwrap();
+    assert_debug_snapshot!("f64_to_f32_precision_loss", rule_f64_f32);
+
+    // Test I64 -> F32 potential precision loss
+    let rule_i64_f32 = matrix.get_promotion_rule(&IrType::I64, &IrType::F32).unwrap();
+    assert_debug_snapshot!("i64_to_f32_precision_loss", rule_i64_f32);
+
+    // Test F64 -> I32 truncation
+    let rule_f64_i32 = matrix.get_promotion_rule(&IrType::F64, &IrType::I32).unwrap();
+    assert_debug_snapshot!("f64_to_i32_truncation", rule_f64_i32);
+}
+
+// T018: Edge Case Tests for Numeric Conversions
+#[test]
+fn test_cross_signedness_same_width_i32_to_u32() {
+    let matrix = PromotionMatrix::new();
+    let rule = matrix.get_promotion_rule(&IrType::I32, &IrType::U32).unwrap();
+    if let PromotionRule::Direct { cast_kind, .. } = rule {
+        assert_eq!(*cast_kind, CastKind::IntBitcast);
+    } else {
+        panic!("Expected Direct promotion rule");
+    }
+}
+
+#[test]
+fn test_cross_signedness_same_width_u32_to_i32() {
+    let matrix = PromotionMatrix::new();
+    let rule = matrix.get_promotion_rule(&IrType::U32, &IrType::I32).unwrap();
+    if let PromotionRule::Direct { cast_kind, .. } = rule {
+        assert_eq!(*cast_kind, CastKind::IntBitcast);
+    } else {
+        panic!("Expected Direct promotion rule");
+    }
+}
+
+#[test]
+fn test_all_same_width_cross_signedness_conversions() {
+    let matrix = PromotionMatrix::new();
+
+    let pairs = vec![
+        (IrType::I8, IrType::U8),
+        (IrType::U8, IrType::I8),
+        (IrType::I16, IrType::U16),
+        (IrType::U16, IrType::I16),
+        (IrType::I32, IrType::U32),
+        (IrType::U32, IrType::I32),
+        (IrType::I64, IrType::U64),
+        (IrType::U64, IrType::I64),
+    ];
+
+    for (from_type, to_type) in pairs {
+        let rule = matrix.get_promotion_rule(&from_type, &to_type);
+        assert!(rule.is_some(), "Missing rule for {:?} -> {:?}", from_type, to_type);
+        if let Some(PromotionRule::Direct { cast_kind, .. }) = rule {
+            assert_eq!(*cast_kind, CastKind::IntBitcast, "Expected IntBitcast for {:?} -> {:?}", from_type, to_type);
+        }
+    }
+}
+
+#[test]
+fn test_large_integer_conversions_exist() {
+    let matrix = PromotionMatrix::new();
+
+    // Test that conversions from/to largest integer types exist for same signedness
+    let signed_types = vec![IrType::I8, IrType::I16, IrType::I32, IrType::I64];
+    let unsigned_types = vec![IrType::U8, IrType::U16, IrType::U32, IrType::U64];
+
+    // Test signed-to-signed conversions
+    for from_type in &signed_types {
+        for to_type in &signed_types {
+            if from_type != to_type {
+                assert!(
+                    matrix.get_promotion_rule(from_type, to_type).is_some(),
+                    "Missing rule for {:?} -> {:?}",
+                    from_type,
+                    to_type
+                );
+            }
+        }
+    }
+
+    // Test unsigned-to-unsigned conversions
+    for from_type in &unsigned_types {
+        for to_type in &unsigned_types {
+            if from_type != to_type {
+                assert!(
+                    matrix.get_promotion_rule(from_type, to_type).is_some(),
+                    "Missing rule for {:?} -> {:?}",
+                    from_type,
+                    to_type
+                );
+            }
+        }
+    }
+
+    // Test cross-signedness same-width conversions
+    let pairs = vec![
+        (IrType::I8, IrType::U8),
+        (IrType::I16, IrType::U16),
+        (IrType::I32, IrType::U32),
+        (IrType::I64, IrType::U64),
+    ];
+    for (from_type, to_type) in &pairs {
+        assert!(matrix.get_promotion_rule(from_type, to_type).is_some());
+        assert!(matrix.get_promotion_rule(to_type, from_type).is_some());
+    }
+}
+
+#[test]
+fn test_float_special_values_conversions_exist() {
+    let matrix = PromotionMatrix::new();
+
+    // Verify float to integer conversions exist (which would handle NaN/Inf)
+    let float_types = vec![IrType::F32, IrType::F64];
+    let int_types =
+        vec![IrType::I8, IrType::I16, IrType::I32, IrType::I64, IrType::U8, IrType::U16, IrType::U32, IrType::U64];
+
+    for float_type in &float_types {
+        for int_type in &int_types {
+            let rule = matrix.get_promotion_rule(float_type, int_type);
+            assert!(rule.is_some(), "Missing float->int rule for {:?} -> {:?}", float_type, int_type);
+
+            if let Some(PromotionRule::Direct { cast_kind, may_overflow, .. }) = rule {
+                assert_eq!(*cast_kind, CastKind::FloatToInt);
+                assert!(*may_overflow, "Float to int should mark may_overflow=true");
+            }
+        }
+    }
+}
+
+// ============================================================================
+// T021: Comprehensive Numeric Type Pairs Coverage Validation
+// ============================================================================
+
+#[test]
+fn test_count_implemented_numeric_rules() {
+    let matrix = PromotionMatrix::new();
+    let int_types =
+        vec![IrType::I8, IrType::I16, IrType::I32, IrType::I64, IrType::U8, IrType::U16, IrType::U32, IrType::U64];
+    let float_types = vec![IrType::F32, IrType::F64];
+
+    // Count int×int pairs
+    let mut int_int_count = 0;
+    let mut missing_int_int = Vec::new();
+    for from in &int_types {
+        for to in &int_types {
+            if matrix.get_promotion_rule(from, to).is_some() {
+                int_int_count += 1;
+            } else {
+                missing_int_int.push((from.clone(), to.clone()));
+            }
+        }
+    }
+
+    // Count int→float pairs
+    let mut int_to_float_count = 0;
+    let mut missing_int_float = Vec::new();
+    for int_ty in &int_types {
+        for float_ty in &float_types {
+            if matrix.get_promotion_rule(int_ty, float_ty).is_some() {
+                int_to_float_count += 1;
+            } else {
+                missing_int_float.push((int_ty.clone(), float_ty.clone()));
+            }
+        }
+    }
+
+    // Count float→int pairs
+    let mut float_to_int_count = 0;
+    let mut missing_float_int = Vec::new();
+    for float_ty in &float_types {
+        for int_ty in &int_types {
+            if matrix.get_promotion_rule(float_ty, int_ty).is_some() {
+                float_to_int_count += 1;
+            } else {
+                missing_float_int.push((float_ty.clone(), int_ty.clone()));
+            }
+        }
+    }
+
+    // Count float×float pairs
+    let mut float_float_count = 0;
+    for from_float in &float_types {
+        for to_float in &float_types {
+            if matrix.get_promotion_rule(from_float, to_float).is_some() {
+                float_float_count += 1;
+            }
+        }
+    }
+
+    let total = int_int_count + int_to_float_count + float_to_int_count + float_float_count;
+
+    println!("\n=== Numeric Type Conversion Rules Count ===");
+    println!("int×int:     {}/64 rules", int_int_count);
+    println!("int→float:   {}/16 rules", int_to_float_count);
+    println!("float→int:   {}/16 rules", float_to_int_count);
+    println!("float×float: {}/4 rules", float_float_count);
+    println!("TOTAL:       {}/100 numeric rules\n", total);
+
+    if !missing_int_int.is_empty() {
+        println!("Missing int×int rules ({}):", missing_int_int.len());
+        for (from, to) in missing_int_int.iter().take(10) {
+            println!("  {:?} → {:?}", from, to);
+        }
+        if missing_int_int.len() > 10 {
+            println!("  ... and {} more", missing_int_int.len() - 10);
+        }
+    }
+
+    if !missing_int_float.is_empty() {
+        println!("\nMissing int→float rules ({}):", missing_int_float.len());
+        for (from, to) in &missing_int_float {
+            println!("  {:?} → {:?}", from, to);
+        }
+    }
+
+    if !missing_float_int.is_empty() {
+        println!("\nMissing float→int rules ({}):", missing_float_int.len());
+        for (from, to) in &missing_float_int {
+            println!("  {:?} → {:?}", from, to);
+        }
+    }
+}
+
+#[test]
+fn test_all_numeric_type_pairs_defined() {
+    let matrix = PromotionMatrix::new();
+    let int_types =
+        vec![IrType::I8, IrType::I16, IrType::I32, IrType::I64, IrType::U8, IrType::U16, IrType::U32, IrType::U64];
+    let float_types = vec![IrType::F32, IrType::F64];
+
+    // Test all int×int pairs (8×8 = 64 pairs)
+    let mut int_int_count = 0;
+    for from in &int_types {
+        for to in &int_types {
+            assert!(matrix.get_promotion_rule(from, to).is_some(), "Missing rule for {:?} → {:?}", from, to);
+            int_int_count += 1;
+        }
+    }
+    assert_eq!(int_int_count, 64, "Expected 64 int×int conversion rules");
+
+    // Test all int→float pairs (8×2 = 16 pairs)
+    let mut int_to_float_count = 0;
+    for int_ty in &int_types {
+        for float_ty in &float_types {
+            assert!(
+                matrix.get_promotion_rule(int_ty, float_ty).is_some(),
+                "Missing rule for {:?} → {:?}",
+                int_ty,
+                float_ty
+            );
+            int_to_float_count += 1;
+        }
+    }
+    assert_eq!(int_to_float_count, 16, "Expected 16 int→float conversion rules");
+
+    // Test all float→int pairs (2×8 = 16 pairs)
+    let mut float_to_int_count = 0;
+    for float_ty in &float_types {
+        for int_ty in &int_types {
+            assert!(
+                matrix.get_promotion_rule(float_ty, int_ty).is_some(),
+                "Missing rule for {:?} → {:?}",
+                float_ty,
+                int_ty
+            );
+            float_to_int_count += 1;
+        }
+    }
+    assert_eq!(float_to_int_count, 16, "Expected 16 float→int conversion rules");
+
+    // Test all float×float pairs (2×2 = 4 pairs)
+    let mut float_float_count = 0;
+    for from_float in &float_types {
+        for to_float in &float_types {
+            assert!(
+                matrix.get_promotion_rule(from_float, to_float).is_some(),
+                "Missing rule for {:?} → {:?}",
+                from_float,
+                to_float
+            );
+            float_float_count += 1;
+        }
+    }
+    assert_eq!(float_float_count, 4, "Expected 4 float×float conversion rules");
+
+    // Total numeric type pairs: 64 + 16 + 16 + 4 = 100 rules
+    let total_numeric_rules = int_int_count + int_to_float_count + float_to_int_count + float_float_count;
+    assert_eq!(
+        total_numeric_rules, 100,
+        "Expected 100 total numeric conversion rules (64 int×int + 16 int→float + 16 float→int + 4 float×float)"
+    );
+}
+
+// ============================================================================
+// T023: Boolean Conversion Test Cases
+// ============================================================================
+
+// Bool → Integer conversions (8 tests)
+#[test]
+fn test_bool_to_i8() {
+    let matrix = PromotionMatrix::new();
+    let rule = matrix.get_promotion_rule(&IrType::Bool, &IrType::I8).unwrap();
+    match rule {
+        PromotionRule::Direct { cast_kind, may_lose_precision, may_overflow, .. } => {
+            assert_eq!(*cast_kind, CastKind::BoolToInt);
+            assert!(!may_lose_precision, "Bool→I8 should not lose precision");
+            assert!(!may_overflow, "Bool→I8 cannot overflow (0 or 1 fits in i8)");
+        }
+        _ => panic!("Expected Direct rule for Bool→I8"),
+    }
+}
+
+#[test]
+fn test_bool_to_i16() {
+    let matrix = PromotionMatrix::new();
+    let rule = matrix.get_promotion_rule(&IrType::Bool, &IrType::I16).unwrap();
+    match rule {
+        PromotionRule::Direct { cast_kind, .. } => assert_eq!(*cast_kind, CastKind::BoolToInt),
+        _ => panic!("Expected Direct rule"),
+    }
+}
+
+#[test]
+fn test_bool_to_i32() {
+    let matrix = PromotionMatrix::new();
+    let rule = matrix.get_promotion_rule(&IrType::Bool, &IrType::I32).unwrap();
+    match rule {
+        PromotionRule::Direct { cast_kind, .. } => assert_eq!(*cast_kind, CastKind::BoolToInt),
+        _ => panic!("Expected Direct rule"),
+    }
+}
+
+#[test]
+fn test_bool_to_i64() {
+    let matrix = PromotionMatrix::new();
+    let rule = matrix.get_promotion_rule(&IrType::Bool, &IrType::I64).unwrap();
+    match rule {
+        PromotionRule::Direct { cast_kind, .. } => assert_eq!(*cast_kind, CastKind::BoolToInt),
+        _ => panic!("Expected Direct rule"),
+    }
+}
+
+#[test]
+fn test_bool_to_u8() {
+    let matrix = PromotionMatrix::new();
+    let rule = matrix.get_promotion_rule(&IrType::Bool, &IrType::U8).unwrap();
+    match rule {
+        PromotionRule::Direct { cast_kind, .. } => assert_eq!(*cast_kind, CastKind::BoolToInt),
+        _ => panic!("Expected Direct rule"),
+    }
+}
+
+#[test]
+fn test_bool_to_u16() {
+    let matrix = PromotionMatrix::new();
+    let rule = matrix.get_promotion_rule(&IrType::Bool, &IrType::U16).unwrap();
+    match rule {
+        PromotionRule::Direct { cast_kind, .. } => assert_eq!(*cast_kind, CastKind::BoolToInt),
+        _ => panic!("Expected Direct rule"),
+    }
+}
+
+#[test]
+fn test_bool_to_u32() {
+    let matrix = PromotionMatrix::new();
+    let rule = matrix.get_promotion_rule(&IrType::Bool, &IrType::U32).unwrap();
+    match rule {
+        PromotionRule::Direct { cast_kind, .. } => assert_eq!(*cast_kind, CastKind::BoolToInt),
+        _ => panic!("Expected Direct rule"),
+    }
+}
+
+#[test]
+fn test_bool_to_u64() {
+    let matrix = PromotionMatrix::new();
+    let rule = matrix.get_promotion_rule(&IrType::Bool, &IrType::U64).unwrap();
+    match rule {
+        PromotionRule::Direct { cast_kind, .. } => assert_eq!(*cast_kind, CastKind::BoolToInt),
+        _ => panic!("Expected Direct rule"),
+    }
+}
+
+// Bool → Float conversions (2 tests)
+#[test]
+fn test_bool_to_f32() {
+    let matrix = PromotionMatrix::new();
+    let rule = matrix.get_promotion_rule(&IrType::Bool, &IrType::F32).unwrap();
+    match rule {
+        PromotionRule::Direct { cast_kind, may_lose_precision, .. } => {
+            assert_eq!(*cast_kind, CastKind::BoolToFloat);
+            assert!(!may_lose_precision, "Bool→F32 should not lose precision (0.0 or 1.0)");
+        }
+        _ => panic!("Expected Direct rule for Bool→F32"),
+    }
+}
+
+#[test]
+fn test_bool_to_f64() {
+    let matrix = PromotionMatrix::new();
+    let rule = matrix.get_promotion_rule(&IrType::Bool, &IrType::F64).unwrap();
+    match rule {
+        PromotionRule::Direct { cast_kind, .. } => assert_eq!(*cast_kind, CastKind::BoolToFloat),
+        _ => panic!("Expected Direct rule"),
+    }
+}
+
+// Integer → Bool conversions (8 tests)
+#[test]
+fn test_i8_to_bool_zero_test() {
+    let matrix = PromotionMatrix::new();
+    let rule = matrix.get_promotion_rule(&IrType::I8, &IrType::Bool).unwrap();
+    match rule {
+        PromotionRule::Direct { cast_kind, .. } => {
+            assert_eq!(*cast_kind, CastKind::IntToBool);
+            // 0 → false, non-zero → true
+        }
+        _ => panic!("Expected Direct rule for I8→Bool"),
+    }
+}
+
+#[test]
+fn test_i16_to_bool() {
+    let matrix = PromotionMatrix::new();
+    let rule = matrix.get_promotion_rule(&IrType::I16, &IrType::Bool).unwrap();
+    match rule {
+        PromotionRule::Direct { cast_kind, .. } => assert_eq!(*cast_kind, CastKind::IntToBool),
+        _ => panic!("Expected Direct rule"),
+    }
+}
+
+#[test]
+fn test_i32_to_bool_zero_test() {
+    let matrix = PromotionMatrix::new();
+    let rule = matrix.get_promotion_rule(&IrType::I32, &IrType::Bool).unwrap();
+    match rule {
+        PromotionRule::Direct { cast_kind, .. } => assert_eq!(*cast_kind, CastKind::IntToBool),
+        _ => panic!("Expected Direct rule"),
+    }
+}
+
+#[test]
+fn test_i64_to_bool() {
+    let matrix = PromotionMatrix::new();
+    let rule = matrix.get_promotion_rule(&IrType::I64, &IrType::Bool).unwrap();
+    match rule {
+        PromotionRule::Direct { cast_kind, .. } => assert_eq!(*cast_kind, CastKind::IntToBool),
+        _ => panic!("Expected Direct rule"),
+    }
+}
+
+#[test]
+fn test_u8_to_bool() {
+    let matrix = PromotionMatrix::new();
+    let rule = matrix.get_promotion_rule(&IrType::U8, &IrType::Bool).unwrap();
+    match rule {
+        PromotionRule::Direct { cast_kind, .. } => assert_eq!(*cast_kind, CastKind::IntToBool),
+        _ => panic!("Expected Direct rule"),
+    }
+}
+
+#[test]
+fn test_u16_to_bool() {
+    let matrix = PromotionMatrix::new();
+    let rule = matrix.get_promotion_rule(&IrType::U16, &IrType::Bool).unwrap();
+    match rule {
+        PromotionRule::Direct { cast_kind, .. } => assert_eq!(*cast_kind, CastKind::IntToBool),
+        _ => panic!("Expected Direct rule"),
+    }
+}
+
+#[test]
+fn test_u32_to_bool() {
+    let matrix = PromotionMatrix::new();
+    let rule = matrix.get_promotion_rule(&IrType::U32, &IrType::Bool).unwrap();
+    match rule {
+        PromotionRule::Direct { cast_kind, .. } => assert_eq!(*cast_kind, CastKind::IntToBool),
+        _ => panic!("Expected Direct rule"),
+    }
+}
+
+#[test]
+fn test_u64_to_bool() {
+    let matrix = PromotionMatrix::new();
+    let rule = matrix.get_promotion_rule(&IrType::U64, &IrType::Bool).unwrap();
+    match rule {
+        PromotionRule::Direct { cast_kind, .. } => assert_eq!(*cast_kind, CastKind::IntToBool),
+        _ => panic!("Expected Direct rule"),
+    }
+}
+
+// Float → Bool conversions (2 tests)
+#[test]
+fn test_f32_to_bool_nan_handling() {
+    let matrix = PromotionMatrix::new();
+    let rule = matrix.get_promotion_rule(&IrType::F32, &IrType::Bool).unwrap();
+    match rule {
+        PromotionRule::Direct { cast_kind, .. } => {
+            assert_eq!(*cast_kind, CastKind::FloatToBool);
+            // NaN → true (non-zero), 0.0/-0.0 → false, other → true
+        }
+        _ => panic!("Expected Direct rule for F32→Bool"),
+    }
+}
+
+#[test]
+fn test_f64_to_bool_nan_handling() {
+    let matrix = PromotionMatrix::new();
+    let rule = matrix.get_promotion_rule(&IrType::F64, &IrType::Bool).unwrap();
+    match rule {
+        PromotionRule::Direct { cast_kind, .. } => assert_eq!(*cast_kind, CastKind::FloatToBool),
+        _ => panic!("Expected Direct rule"),
+    }
+}
+
+// Bool identity conversion (1 test)
+#[test]
+fn test_bool_to_bool_identity() {
+    let matrix = PromotionMatrix::new();
+    let rule = matrix.get_promotion_rule(&IrType::Bool, &IrType::Bool).unwrap();
+    match rule {
+        PromotionRule::Direct { cast_kind, may_lose_precision, may_overflow, .. } => {
+            // Identity conversion - should be no-op
+            assert!(!may_lose_precision);
+            assert!(!may_overflow);
+        }
+        _ => panic!("Expected Direct rule for Bool→Bool identity"),
+    }
+}
+
+// ============================================================================
+// Character Conversion Tests (T024)
+// ============================================================================
+
+#[test]
+fn test_char_to_u32_unicode_scalar() {
+    let matrix = PromotionMatrix::new();
+    let rule = matrix.get_promotion_rule(&IrType::Char, &IrType::U32).unwrap();
+
+    if let PromotionRule::Direct { cast_kind, requires_validation, .. } = rule {
+        assert_eq!(cast_kind, &CastKind::CharToInt);
+        assert_eq!(requires_validation, &false);
+    } else {
+        panic!("Expected Direct rule for Char→U32");
+    }
+}
+
+#[test]
+fn test_u32_to_char_with_validation() {
+    let matrix = PromotionMatrix::new();
+    let rule = matrix.get_promotion_rule(&IrType::U32, &IrType::Char).unwrap();
+
+    if let PromotionRule::Direct { cast_kind, requires_validation, .. } = rule {
+        assert_eq!(cast_kind, &CastKind::IntToChar);
+        assert_eq!(requires_validation, &true);
+    } else {
+        panic!("Expected Direct rule for U32→Char with validation");
+    }
+}
+
+#[test]
+fn test_char_to_i32_signed_conversion() {
+    let matrix = PromotionMatrix::new();
+    let rule = matrix.get_promotion_rule(&IrType::Char, &IrType::I32).unwrap();
+
+    if let PromotionRule::Direct { cast_kind, may_lose_precision, .. } = rule {
+        assert_eq!(cast_kind, &CastKind::CharToInt);
+        assert!(!may_lose_precision);
+    } else {
+        panic!("Expected Direct rule for Char→I32");
+    }
+}
+
+#[test]
+fn test_i32_to_char_with_validation() {
+    let matrix = PromotionMatrix::new();
+    let rule = matrix.get_promotion_rule(&IrType::I32, &IrType::Char).unwrap();
+
+    if let PromotionRule::Direct { cast_kind, requires_validation, .. } = rule {
+        assert_eq!(cast_kind, &CastKind::IntToChar);
+        assert_eq!(requires_validation, &true);
+    } else {
+        panic!("Expected Direct rule for I32→Char with validation");
+    }
+}
+
+#[test]
+fn test_char_to_string_runtime_support() {
+    let matrix = PromotionMatrix::new();
+    let rule = matrix.get_promotion_rule(&IrType::Char, &IrType::String).unwrap();
+
+    if let PromotionRule::Direct { cast_kind, requires_runtime_support, .. } = rule {
+        assert_eq!(cast_kind, &CastKind::CharToString);
+        assert_eq!(requires_runtime_support, &true);
+    } else {
+        panic!("Expected Direct rule for Char→String");
+    }
+}
+
+#[test]
+fn test_string_to_char_with_validation() {
+    let matrix = PromotionMatrix::new();
+    let rule = matrix.get_promotion_rule(&IrType::String, &IrType::Char).unwrap();
+
+    if let PromotionRule::Direct { cast_kind, requires_runtime_support, requires_validation, .. } = rule {
+        assert_eq!(cast_kind, &CastKind::StringToChar);
+        assert_eq!(requires_runtime_support, &true);
+        assert_eq!(requires_validation, &true);
+    } else {
+        panic!("Expected Direct rule for String→Char");
+    }
+}
+
+#[test]
+fn test_char_to_char_identity() {
+    let matrix = PromotionMatrix::new();
+    let rule = matrix.get_promotion_rule(&IrType::Char, &IrType::Char).unwrap();
+
+    if let PromotionRule::Direct { cast_kind, may_lose_precision, may_overflow, .. } = rule {
+        assert_eq!(cast_kind, &CastKind::Bitcast);
+        assert!(!may_lose_precision);
+        assert!(!may_overflow);
+    } else {
+        panic!("Expected Direct rule for Char→Char identity");
+    }
+}
+
+// T029: Snapshot tests for boolean conversions
+#[test]
+fn test_boolean_to_numeric_snapshots() {
+    use insta::assert_debug_snapshot;
+    let matrix = PromotionMatrix::new();
+
+    // Test Bool -> I32 conversion
+    let rule_bool_i32 = matrix.get_promotion_rule(&IrType::Bool, &IrType::I32).unwrap();
+    assert_debug_snapshot!("bool_to_i32_conversion", rule_bool_i32);
+
+    // Test Bool -> U32 conversion
+    let rule_bool_u32 = matrix.get_promotion_rule(&IrType::Bool, &IrType::U32).unwrap();
+    assert_debug_snapshot!("bool_to_u32_conversion", rule_bool_u32);
+
+    // Test Bool -> F64 conversion
+    let rule_bool_f64 = matrix.get_promotion_rule(&IrType::Bool, &IrType::F64).unwrap();
+    assert_debug_snapshot!("bool_to_f64_conversion", rule_bool_f64);
+}
+
+#[test]
+fn test_numeric_to_boolean_snapshots() {
+    use insta::assert_debug_snapshot;
+    let matrix = PromotionMatrix::new();
+
+    // Test I32 -> Bool conversion (requires runtime support)
+    let rule_i32_bool = matrix.get_promotion_rule(&IrType::I32, &IrType::Bool).unwrap();
+    assert_debug_snapshot!("i32_to_bool_conversion", rule_i32_bool);
+
+    // Test U32 -> Bool conversion
+    let rule_u32_bool = matrix.get_promotion_rule(&IrType::U32, &IrType::Bool).unwrap();
+    assert_debug_snapshot!("u32_to_bool_conversion", rule_u32_bool);
+
+    // Test F64 -> Bool conversion
+    let rule_f64_bool = matrix.get_promotion_rule(&IrType::F64, &IrType::Bool).unwrap();
+    assert_debug_snapshot!("f64_to_bool_conversion", rule_f64_bool);
+}
+
+#[test]
+fn test_boolean_string_char_snapshots() {
+    use insta::assert_debug_snapshot;
+    let matrix = PromotionMatrix::new();
+
+    // Test Bool -> String conversion (requires runtime support)
+    let rule_bool_string = matrix.get_promotion_rule(&IrType::Bool, &IrType::String).unwrap();
+    assert_debug_snapshot!("bool_to_string_conversion", rule_bool_string);
+
+    // Test String -> Bool conversion (requires runtime + validation)
+    let rule_string_bool = matrix.get_promotion_rule(&IrType::String, &IrType::Bool).unwrap();
+    assert_debug_snapshot!("string_to_bool_conversion", rule_string_bool);
+
+    // Note: Bool ↔ Char conversions not implemented yet (future enhancement)
+}
+
+// T029: Unicode Validation Test Cases
+#[test]
+fn test_surrogate_u32_to_char_requires_validation() {
+    let matrix = PromotionMatrix::new();
+    let rule = matrix.get_promotion_rule(&IrType::U32, &IrType::Char).unwrap();
+
+    // U32 → Char must require validation to reject surrogate range 0xD800-0xDFFF
+    if let PromotionRule::Direct { cast_kind, requires_validation, .. } = rule {
+        assert_eq!(cast_kind, &CastKind::IntToChar, "Expected IntToChar for U32→Char");
+        assert!(requires_validation, "U32→Char must require validation for surrogate rejection");
+    } else {
+        panic!("Expected Direct rule for U32→Char");
+    }
+}
+
+#[test]
+fn test_out_of_range_u32_to_char_requires_validation() {
+    let matrix = PromotionMatrix::new();
+    let rule = matrix.get_promotion_rule(&IrType::U32, &IrType::Char).unwrap();
+
+    // Validation must reject values > 0x10FFFF (max Unicode code point)
+    if let PromotionRule::Direct { requires_validation, .. } = rule {
+        assert!(requires_validation, "U32→Char must validate range to reject values > 0x10FFFF");
+    } else {
+        panic!("Expected Direct rule for U32→Char");
+    }
+}
+
+#[test]
+fn test_i32_to_char_requires_validation() {
+    let matrix = PromotionMatrix::new();
+    let rule = matrix.get_promotion_rule(&IrType::I32, &IrType::Char).unwrap();
+
+    // I32 → Char must require validation to reject negative values
+    if let PromotionRule::Direct { cast_kind, requires_validation, .. } = rule {
+        assert_eq!(cast_kind, &CastKind::IntToChar, "Expected IntToChar for I32→Char");
+        assert!(requires_validation, "I32→Char must require validation to reject negative values");
+    } else {
+        panic!("Expected Direct rule for I32→Char");
+    }
+}
+
+#[test]
+fn test_valid_unicode_ranges_char_identity() {
+    let matrix = PromotionMatrix::new();
+
+    // Char→Char identity should not require validation (already valid)
+    let rule = matrix.get_promotion_rule(&IrType::Char, &IrType::Char).unwrap();
+    if let PromotionRule::Direct { requires_validation, .. } = rule {
+        assert!(!requires_validation, "Char→Char identity should not require validation");
+    } else {
+        panic!("Expected Direct rule for Char→Char identity");
+    }
+}
+
+#[test]
+fn test_char_to_u32_no_validation_needed() {
+    let matrix = PromotionMatrix::new();
+    let rule = matrix.get_promotion_rule(&IrType::Char, &IrType::U32).unwrap();
+
+    // Char→U32 doesn't need validation (all chars are valid Unicode scalars)
+    if let PromotionRule::Direct { cast_kind, requires_validation, .. } = rule {
+        assert_eq!(cast_kind, &CastKind::CharToInt, "Expected CharToInt for Char→U32");
+        assert!(!requires_validation, "Char→U32 should not require validation");
+    } else {
+        panic!("Expected Direct rule for Char→U32");
+    }
+}
+
+// T030: Unicode Validation Warning Generation Tests
+#[test]
+fn test_unicode_warning_generation_for_surrogate() {
+    let matrix = PromotionMatrix::new();
+
+    // Test surrogate code point (0xD800 - 0xDFFF)
+    let warning = matrix.generate_unicode_validation_warning(0xD800, &IrType::Char);
+    assert!(warning.is_some(), "Expected warning for surrogate code point");
+
+    if let Some(PromotionWarning::InvalidUnicodeCodePoint { value, reason }) = warning {
+        assert_eq!(value, 0xD800);
+        assert!(reason.contains("surrogate"), "Expected 'surrogate' in reason");
+    } else {
+        panic!("Expected InvalidUnicodeCodePoint warning");
+    }
+}
+
+#[test]
+fn test_unicode_warning_generation_for_out_of_range() {
+    let matrix = PromotionMatrix::new();
+
+    // Test value > 0x10FFFF (max Unicode code point)
+    let warning = matrix.generate_unicode_validation_warning(0x110000, &IrType::Char);
+    assert!(warning.is_some(), "Expected warning for out-of-range value");
+
+    if let Some(PromotionWarning::InvalidUnicodeCodePoint { value, reason }) = warning {
+        assert_eq!(value, 0x110000);
+        assert!(reason.contains("exceeds"), "Expected 'exceeds' in reason");
+        assert!(reason.contains("U+10FFFF"), "Expected 'U+10FFFF' in reason");
+    } else {
+        panic!("Expected InvalidUnicodeCodePoint warning");
+    }
+}
+
+#[test]
+fn test_unicode_warning_no_warning_for_valid_values() {
+    let matrix = PromotionMatrix::new();
+
+    // Test valid Unicode scalar values
+    let test_values = [
+        0x0000,   // Null character
+        0x0041,   // 'A'
+        0xD7FF,   // Just before surrogate range
+        0xE000,   // Just after surrogate range
+        0x10FFFF, // Maximum Unicode code point
+    ];
+
+    for &value in &test_values {
+        let warning = matrix.generate_unicode_validation_warning(value, &IrType::Char);
+        assert!(warning.is_none(), "Expected no warning for valid Unicode value 0x{:X}", value);
+    }
+}
+
+#[test]
+fn test_unicode_warning_only_for_char_target() {
+    let matrix = PromotionMatrix::new();
+
+    // Test that invalid value doesn't generate warning for non-char types
+    let warning_u32 = matrix.generate_unicode_validation_warning(0xD800, &IrType::U32);
+    assert!(warning_u32.is_none(), "Expected no warning for U32 target");
+
+    let warning_i32 = matrix.generate_unicode_validation_warning(0xD800, &IrType::I32);
+    assert!(warning_i32.is_none(), "Expected no warning for I32 target");
+}
+
+// T031: Snapshot Tests for Boolean/Character Warnings
+#[test]
+fn test_invalid_unicode_warning_snapshot() {
+    use insta::assert_debug_snapshot;
+
+    let matrix = PromotionMatrix::new();
+
+    // Snapshot test for surrogate code point warning
+    let warning_surrogate = matrix.generate_unicode_validation_warning(0xD800, &IrType::Char).unwrap();
+    assert_debug_snapshot!("unicode_warning_surrogate", warning_surrogate);
+
+    // Snapshot test for out-of-range warning
+    let warning_out_of_range = matrix.generate_unicode_validation_warning(0x110000, &IrType::Char).unwrap();
+    assert_debug_snapshot!("unicode_warning_out_of_range", warning_out_of_range);
+}
+
+#[test]
+fn test_precision_loss_warning_snapshot() {
+    use insta::assert_debug_snapshot;
+
+    let matrix = PromotionMatrix::new();
+
+    // Test precision loss warning for U64 → U32
+    let rule = matrix.get_promotion_rule(&IrType::U64, &IrType::U32).unwrap();
+    let warning = matrix.generate_precision_loss_warning(&IrType::U64, &IrType::U32, rule).unwrap();
+    assert_debug_snapshot!("precision_loss_u64_to_u32", warning);
+
+    // Test precision loss warning for F64 → F32
+    let rule = matrix.get_promotion_rule(&IrType::F64, &IrType::F32).unwrap();
+    let warning = matrix.generate_precision_loss_warning(&IrType::F64, &IrType::F32, rule).unwrap();
+    assert_debug_snapshot!("precision_loss_f64_to_f32", warning);
+}
+
+#[test]
+fn test_signedness_change_warning_snapshot() {
+    use insta::assert_debug_snapshot;
+
+    let matrix = PromotionMatrix::new();
+
+    // Test signedness change warning for I32 → U32
+    let rule = matrix.get_promotion_rule(&IrType::I32, &IrType::U32).unwrap();
+    let warning = matrix.generate_signedness_change_warning(&IrType::I32, &IrType::U32, rule).unwrap();
+    assert_debug_snapshot!("signedness_change_i32_to_u32", warning);
+
+    // Test signedness change warning for U32 → I32
+    let rule = matrix.get_promotion_rule(&IrType::U32, &IrType::I32).unwrap();
+    let warning = matrix.generate_signedness_change_warning(&IrType::U32, &IrType::I32, rule).unwrap();
+    assert_debug_snapshot!("signedness_change_u32_to_i32", warning);
+}
+
+// =========================================================================
+// Phase 5: String Conversion Tests (T033-T034)
+// =========================================================================
+
+// -------------------------------------------------------------------------
+// T033: String Conversion Test Cases (25 tests)
+// -------------------------------------------------------------------------
+
+/// Tests for primitive → String conversions (12 rules)
+/// These conversions always succeed and require runtime formatting support.
+#[cfg(test)]
+mod string_conversion_tests {
+    use super::*;
+
+    // Integer → String conversions (8 tests)
+
+    #[test]
+    fn test_i8_to_string_formatting() {
+        let matrix = PromotionMatrix::new();
+        let rule = matrix.get_promotion_rule(&IrType::I8, &IrType::String).unwrap();
+        if let PromotionRule::Direct {
+            cast_kind,
+            requires_runtime_support,
+            requires_validation,
+            may_lose_precision,
+            may_overflow,
+            ..
+        } = rule
+        {
+            assert_eq!(*cast_kind, CastKind::IntToString);
+            assert!(*requires_runtime_support);
+            assert!(!*requires_validation); // Always succeeds
+            assert!(!*may_lose_precision);
+            assert!(!*may_overflow);
+        } else {
+            panic!("Expected Direct promotion rule for I8→String");
+        }
+    }
+
+    #[test]
+    fn test_i16_to_string_formatting() {
+        let matrix = PromotionMatrix::new();
+        let rule = matrix.get_promotion_rule(&IrType::I16, &IrType::String).unwrap();
+        if let PromotionRule::Direct { cast_kind, requires_runtime_support, requires_validation, .. } = rule {
+            assert_eq!(*cast_kind, CastKind::IntToString);
+            assert!(*requires_runtime_support);
+            assert!(!*requires_validation);
+        } else {
+            panic!("Expected Direct promotion rule for I16→String");
+        }
+    }
+
+    #[test]
+    fn test_i32_to_string_formatting() {
+        let matrix = PromotionMatrix::new();
+        let rule = matrix.get_promotion_rule(&IrType::I32, &IrType::String).unwrap();
+        if let PromotionRule::Direct { cast_kind, requires_runtime_support, requires_validation, .. } = rule {
+            assert_eq!(*cast_kind, CastKind::IntToString);
+            assert!(*requires_runtime_support);
+            assert!(!*requires_validation);
+        } else {
+            panic!("Expected Direct promotion rule for I32→String");
+        }
+    }
+
+    #[test]
+    fn test_i64_to_string_formatting() {
+        let matrix = PromotionMatrix::new();
+        let rule = matrix.get_promotion_rule(&IrType::I64, &IrType::String).unwrap();
+        if let PromotionRule::Direct { cast_kind, requires_runtime_support, requires_validation, .. } = rule {
+            assert_eq!(*cast_kind, CastKind::IntToString);
+            assert!(*requires_runtime_support);
+            assert!(!*requires_validation);
+        } else {
+            panic!("Expected Direct promotion rule for I64→String");
+        }
+    }
+
+    #[test]
+    fn test_u8_to_string_formatting() {
+        let matrix = PromotionMatrix::new();
+        let rule = matrix.get_promotion_rule(&IrType::U8, &IrType::String).unwrap();
+        if let PromotionRule::Direct { cast_kind, requires_runtime_support, requires_validation, .. } = rule {
+            assert_eq!(*cast_kind, CastKind::IntToString);
+            assert!(*requires_runtime_support);
+            assert!(!*requires_validation);
+        } else {
+            panic!("Expected Direct promotion rule for U8→String");
+        }
+    }
+
+    #[test]
+    fn test_u16_to_string_formatting() {
+        let matrix = PromotionMatrix::new();
+        let rule = matrix.get_promotion_rule(&IrType::U16, &IrType::String).unwrap();
+        if let PromotionRule::Direct { cast_kind, requires_runtime_support, requires_validation, .. } = rule {
+            assert_eq!(*cast_kind, CastKind::IntToString);
+            assert!(*requires_runtime_support);
+            assert!(!*requires_validation);
+        } else {
+            panic!("Expected Direct promotion rule for U16→String");
+        }
+    }
+
+    #[test]
+    fn test_u32_to_string_formatting() {
+        let matrix = PromotionMatrix::new();
+        let rule = matrix.get_promotion_rule(&IrType::U32, &IrType::String).unwrap();
+        if let PromotionRule::Direct { cast_kind, requires_runtime_support, requires_validation, .. } = rule {
+            assert_eq!(*cast_kind, CastKind::IntToString);
+            assert!(*requires_runtime_support);
+            assert!(!*requires_validation);
+        } else {
+            panic!("Expected Direct promotion rule for U32→String");
+        }
+    }
+
+    #[test]
+    fn test_u64_to_string_formatting() {
+        let matrix = PromotionMatrix::new();
+        let rule = matrix.get_promotion_rule(&IrType::U64, &IrType::String).unwrap();
+        if let PromotionRule::Direct { cast_kind, requires_runtime_support, requires_validation, .. } = rule {
+            assert_eq!(*cast_kind, CastKind::IntToString);
+            assert!(*requires_runtime_support);
+            assert!(!*requires_validation);
+        } else {
+            panic!("Expected Direct promotion rule for U64→String");
+        }
+    }
+
+    // Float → String conversions (2 tests)
+
+    #[test]
+    fn test_f32_to_string_formatting() {
+        let matrix = PromotionMatrix::new();
+        let rule = matrix.get_promotion_rule(&IrType::F32, &IrType::String).unwrap();
+        if let PromotionRule::Direct {
+            cast_kind,
+            requires_runtime_support,
+            requires_validation,
+            may_lose_precision,
+            may_overflow,
+            ..
+        } = rule
+        {
+            assert_eq!(*cast_kind, CastKind::FloatToString);
+            assert!(*requires_runtime_support);
+            assert!(!*requires_validation); // Always succeeds
+            assert!(!*may_lose_precision);
+            assert!(!*may_overflow);
+        } else {
+            panic!("Expected Direct promotion rule for F32→String");
+        }
+    }
+
+    #[test]
+    fn test_f64_to_string_formatting() {
+        let matrix = PromotionMatrix::new();
+        let rule = matrix.get_promotion_rule(&IrType::F64, &IrType::String).unwrap();
+        if let PromotionRule::Direct { cast_kind, requires_runtime_support, requires_validation, .. } = rule {
+            assert_eq!(*cast_kind, CastKind::FloatToString);
+            assert!(*requires_runtime_support);
+            assert!(!*requires_validation);
+        } else {
+            panic!("Expected Direct promotion rule for F64→String");
+        }
+    }
+
+    // Bool → String conversion (1 test - already in T025 but verify here)
+
+    #[test]
+    fn test_bool_to_string_formatting() {
+        let matrix = PromotionMatrix::new();
+        let rule = matrix.get_promotion_rule(&IrType::Bool, &IrType::String).unwrap();
+        if let PromotionRule::Direct { cast_kind, requires_runtime_support, requires_validation, .. } = rule {
+            assert_eq!(*cast_kind, CastKind::BoolToString);
+            assert!(*requires_runtime_support);
+            assert!(!*requires_validation); // Always succeeds
+        } else {
+            panic!("Expected Direct promotion rule for Bool→String");
+        }
+    }
+
+    // Char → String conversion (1 test - already in T027 but verify here)
+
+    #[test]
+    fn test_char_to_string_formatting() {
+        let matrix = PromotionMatrix::new();
+        let rule = matrix.get_promotion_rule(&IrType::Char, &IrType::String).unwrap();
+        if let PromotionRule::Direct { cast_kind, requires_runtime_support, requires_validation, .. } = rule {
+            assert_eq!(*cast_kind, CastKind::CharToString);
+            assert!(*requires_runtime_support);
+            assert!(!*requires_validation); // Always succeeds
+        } else {
+            panic!("Expected Direct promotion rule for Char→String");
+        }
+    }
+
+    // String → Integer conversions (8 tests)
+
+    #[test]
+    fn test_string_to_i8_parsing() {
+        let matrix = PromotionMatrix::new();
+        let rule = matrix.get_promotion_rule(&IrType::String, &IrType::I8).unwrap();
+        if let PromotionRule::Direct {
+            cast_kind,
+            requires_runtime_support,
+            requires_validation,
+            may_lose_precision,
+            may_overflow,
+            ..
+        } = rule
+        {
+            assert_eq!(*cast_kind, CastKind::StringToInt);
+            assert!(*requires_runtime_support);
+            assert!(*requires_validation); // Parse may fail
+            assert!(!*may_lose_precision);
+            assert!(!*may_overflow);
+        } else {
+            panic!("Expected Direct promotion rule for String→I8");
+        }
+    }
+
+    #[test]
+    fn test_string_to_i16_parsing() {
+        let matrix = PromotionMatrix::new();
+        let rule = matrix.get_promotion_rule(&IrType::String, &IrType::I16).unwrap();
+        if let PromotionRule::Direct { cast_kind, requires_runtime_support, requires_validation, .. } = rule {
+            assert_eq!(*cast_kind, CastKind::StringToInt);
+            assert!(*requires_runtime_support);
+            assert!(*requires_validation);
+        } else {
+            panic!("Expected Direct promotion rule for String→I16");
+        }
+    }
+
+    #[test]
+    fn test_string_to_i32_parsing() {
+        let matrix = PromotionMatrix::new();
+        let rule = matrix.get_promotion_rule(&IrType::String, &IrType::I32).unwrap();
+        if let PromotionRule::Direct { cast_kind, requires_runtime_support, requires_validation, .. } = rule {
+            assert_eq!(*cast_kind, CastKind::StringToInt);
+            assert!(*requires_runtime_support);
+            assert!(*requires_validation);
+        } else {
+            panic!("Expected Direct promotion rule for String→I32");
+        }
+    }
+
+    #[test]
+    fn test_string_to_i64_parsing() {
+        let matrix = PromotionMatrix::new();
+        let rule = matrix.get_promotion_rule(&IrType::String, &IrType::I64).unwrap();
+        if let PromotionRule::Direct { cast_kind, requires_runtime_support, requires_validation, .. } = rule {
+            assert_eq!(*cast_kind, CastKind::StringToInt);
+            assert!(*requires_runtime_support);
+            assert!(*requires_validation);
+        } else {
+            panic!("Expected Direct promotion rule for String→I64");
+        }
+    }
+
+    #[test]
+    fn test_string_to_u8_parsing() {
+        let matrix = PromotionMatrix::new();
+        let rule = matrix.get_promotion_rule(&IrType::String, &IrType::U8).unwrap();
+        if let PromotionRule::Direct { cast_kind, requires_runtime_support, requires_validation, .. } = rule {
+            assert_eq!(*cast_kind, CastKind::StringToInt);
+            assert!(*requires_runtime_support);
+            assert!(*requires_validation);
+        } else {
+            panic!("Expected Direct promotion rule for String→U8");
+        }
+    }
+
+    #[test]
+    fn test_string_to_u16_parsing() {
+        let matrix = PromotionMatrix::new();
+        let rule = matrix.get_promotion_rule(&IrType::String, &IrType::U16).unwrap();
+        if let PromotionRule::Direct { cast_kind, requires_runtime_support, requires_validation, .. } = rule {
+            assert_eq!(*cast_kind, CastKind::StringToInt);
+            assert!(*requires_runtime_support);
+            assert!(*requires_validation);
+        } else {
+            panic!("Expected Direct promotion rule for String→U16");
+        }
+    }
+
+    #[test]
+    fn test_string_to_u32_parsing() {
+        let matrix = PromotionMatrix::new();
+        let rule = matrix.get_promotion_rule(&IrType::String, &IrType::U32).unwrap();
+        if let PromotionRule::Direct { cast_kind, requires_runtime_support, requires_validation, .. } = rule {
+            assert_eq!(*cast_kind, CastKind::StringToInt);
+            assert!(*requires_runtime_support);
+            assert!(*requires_validation);
+        } else {
+            panic!("Expected Direct promotion rule for String→U32");
+        }
+    }
+
+    #[test]
+    fn test_string_to_u64_parsing() {
+        let matrix = PromotionMatrix::new();
+        let rule = matrix.get_promotion_rule(&IrType::String, &IrType::U64).unwrap();
+        if let PromotionRule::Direct { cast_kind, requires_runtime_support, requires_validation, .. } = rule {
+            assert_eq!(*cast_kind, CastKind::StringToInt);
+            assert!(*requires_runtime_support);
+            assert!(*requires_validation);
+        } else {
+            panic!("Expected Direct promotion rule for String→U64");
+        }
+    }
+
+    // String → Float conversions (2 tests)
+
+    #[test]
+    fn test_string_to_f32_parsing() {
+        let matrix = PromotionMatrix::new();
+        let rule = matrix.get_promotion_rule(&IrType::String, &IrType::F32).unwrap();
+        if let PromotionRule::Direct {
+            cast_kind,
+            requires_runtime_support,
+            requires_validation,
+            may_lose_precision,
+            may_overflow,
+            ..
+        } = rule
+        {
+            assert_eq!(*cast_kind, CastKind::StringToFloat);
+            assert!(*requires_runtime_support);
+            assert!(*requires_validation); // Parse may fail
+            assert!(!*may_lose_precision);
+            assert!(!*may_overflow);
+        } else {
+            panic!("Expected Direct promotion rule for String→F32");
+        }
+    }
+
+    #[test]
+    fn test_string_to_f64_parsing() {
+        let matrix = PromotionMatrix::new();
+        let rule = matrix.get_promotion_rule(&IrType::String, &IrType::F64).unwrap();
+        if let PromotionRule::Direct { cast_kind, requires_runtime_support, requires_validation, .. } = rule {
+            assert_eq!(*cast_kind, CastKind::StringToFloat);
+            assert!(*requires_runtime_support);
+            assert!(*requires_validation);
+        } else {
+            panic!("Expected Direct promotion rule for String→F64");
+        }
+    }
+
+    // String → Bool conversion (1 test - already in T025 but verify here)
+
+    #[test]
+    fn test_string_to_bool_parsing() {
+        let matrix = PromotionMatrix::new();
+        let rule = matrix.get_promotion_rule(&IrType::String, &IrType::Bool).unwrap();
+        if let PromotionRule::Direct { cast_kind, requires_runtime_support, requires_validation, .. } = rule {
+            assert_eq!(*cast_kind, CastKind::StringToBool);
+            assert!(*requires_runtime_support);
+            assert!(*requires_validation); // Parse may fail
+        } else {
+            panic!("Expected Direct promotion rule for String→Bool");
+        }
+    }
+
+    // String → Char conversion (1 test - already in T027 but verify here)
+
+    #[test]
+    fn test_string_to_char_parsing() {
+        let matrix = PromotionMatrix::new();
+        let rule = matrix.get_promotion_rule(&IrType::String, &IrType::Char).unwrap();
+        if let PromotionRule::Direct { cast_kind, requires_runtime_support, requires_validation, .. } = rule {
+            assert_eq!(*cast_kind, CastKind::StringToChar);
+            assert!(*requires_runtime_support);
+            assert!(*requires_validation); // Length check
+        } else {
+            panic!("Expected Direct promotion rule for String→Char");
+        }
+    }
+
+    // String → String identity conversion (1 test)
+
+    #[test]
+    fn test_string_to_string_identity() {
+        let matrix = PromotionMatrix::new();
+        let rule = matrix.get_promotion_rule(&IrType::String, &IrType::String).unwrap();
+        if let PromotionRule::Direct {
+            cast_kind,
+            requires_runtime_support,
+            requires_validation,
+            may_lose_precision,
+            may_overflow,
+            ..
+        } = rule
+        {
+            assert_eq!(*cast_kind, CastKind::Bitcast); // No-op
+            assert!(!*requires_runtime_support);
+            assert!(!*requires_validation);
+            assert!(!*may_lose_precision);
+            assert!(!*may_overflow);
+        } else {
+            panic!("Expected Direct promotion rule for String→String");
+        }
+    }
+}
+
+// -------------------------------------------------------------------------
+// T034: String Parsing Error Test Cases
+// -------------------------------------------------------------------------
+
+/// Tests for invalid string parsing scenarios
+/// These tests verify that validation requirements are correctly set
+#[cfg(test)]
+mod string_parsing_error_tests {
+    use super::*;
+
+    #[test]
+    fn test_invalid_string_to_int_requires_validation() {
+        let matrix = PromotionMatrix::new();
+        let rule = matrix.get_promotion_rule(&IrType::String, &IrType::I32).unwrap();
+        if let PromotionRule::Direct { requires_validation, .. } = rule {
+            assert!(*requires_validation, "String→Int must require validation for invalid input like 'abc'");
+        } else {
+            panic!("Expected Direct promotion rule for String→I32");
+        }
+    }
+
+    #[test]
+    fn test_string_to_char_length_check() {
+        let matrix = PromotionMatrix::new();
+        let rule = matrix.get_promotion_rule(&IrType::String, &IrType::Char).unwrap();
+        if let PromotionRule::Direct { requires_validation, .. } = rule {
+            assert!(*requires_validation, "String→Char must require validation for multi-char or empty strings");
+        } else {
+            panic!("Expected Direct promotion rule for String→Char");
+        }
+    }
+
+    #[test]
+    fn test_string_to_float_invalid_format() {
+        let matrix = PromotionMatrix::new();
+        let rule = matrix.get_promotion_rule(&IrType::String, &IrType::F32).unwrap();
+        if let PromotionRule::Direct { requires_validation, .. } = rule {
+            assert!(*requires_validation, "String→Float must require validation for invalid formats");
+        } else {
+            panic!("Expected Direct promotion rule for String→F32");
+        }
+    }
+
+    #[test]
+    fn test_string_to_bool_invalid_value() {
+        let matrix = PromotionMatrix::new();
+        let rule = matrix.get_promotion_rule(&IrType::String, &IrType::Bool).unwrap();
+        if let PromotionRule::Direct { requires_validation, .. } = rule {
+            assert!(*requires_validation, "String→Bool must require validation for non-boolean strings");
+        } else {
+            panic!("Expected Direct promotion rule for String→Bool");
+        }
+    }
+
+    #[test]
+    fn test_string_to_unsigned_negative_check() {
+        let matrix = PromotionMatrix::new();
+        let rule = matrix.get_promotion_rule(&IrType::String, &IrType::U32).unwrap();
+        if let PromotionRule::Direct { requires_validation, .. } = rule {
+            assert!(*requires_validation, "String→Unsigned must require validation for negative values");
+        } else {
+            panic!("Expected Direct promotion rule for String→U32");
+        }
+    }
+
+    #[test]
+    fn test_string_parsing_requires_runtime_support() {
+        let matrix = PromotionMatrix::new();
+        let rule = matrix.get_promotion_rule(&IrType::String, &IrType::I64).unwrap();
+        if let PromotionRule::Direct { requires_runtime_support, .. } = rule {
+            assert!(*requires_runtime_support, "String parsing requires runtime support");
+        } else {
+            panic!("Expected Direct promotion rule for String→I64");
+        }
+    }
+}
+
+// ============================================================================
+// Phase 6: Polish & Integration Tests
+// ============================================================================
+
+/// T039: Validate that all 169 fundamental type pairs (13×13) are defined
+#[cfg(test)]
+mod comprehensive_validation_tests {
+    use super::*;
+
+    #[test]
+    fn test_all_169_type_pairs_defined() {
+        let matrix = PromotionMatrix::new();
+        let all_types = vec![
+            IrType::I8,
+            IrType::I16,
+            IrType::I32,
+            IrType::I64,
+            IrType::U8,
+            IrType::U16,
+            IrType::U32,
+            IrType::U64,
+            IrType::F32,
+            IrType::F64,
+            IrType::Bool,
+            IrType::Char,
+            IrType::String,
+        ];
+
+        assert_eq!(all_types.len(), 13, "Expected 13 fundamental types");
+
+        let mut defined_count = 0;
+        let mut missing_rules = Vec::new();
+
+        for from in &all_types {
+            for to in &all_types {
+                match matrix.get_promotion_rule(from, to) {
+                    Some(_) => {
+                        defined_count += 1;
+                    }
+                    None => {
+                        missing_rules.push(format!("{:?} → {:?}", from, to));
+                    }
+                }
+            }
+        }
+
+        if !missing_rules.is_empty() {
+            panic!("Missing {} promotion rules:\n{}", missing_rules.len(), missing_rules.join("\n"));
+        }
+
+        assert_eq!(defined_count, 169, "Expected 169 promotion rules (13×13), found {}", defined_count);
+    }
+
+    #[test]
+    fn test_type_coverage_breakdown() {
+        let matrix = PromotionMatrix::new();
+
+        // Define type groups
+        let integers =
+            vec![IrType::I8, IrType::I16, IrType::I32, IrType::I64, IrType::U8, IrType::U16, IrType::U32, IrType::U64];
+        let floats = vec![IrType::F32, IrType::F64];
+        let special_types = vec![IrType::Bool, IrType::Char, IrType::String];
+
+        // Validate integer coverage (8×8 = 64 rules)
+        let mut int_count = 0;
+        for from in &integers {
+            for to in &integers {
+                if matrix.get_promotion_rule(from, to).is_some() {
+                    int_count += 1;
+                }
+            }
+        }
+        assert_eq!(int_count, 64, "Expected 64 integer×integer rules, found {}", int_count);
+
+        // Validate integer-float coverage (8 int × 2 float × 2 directions = 32 rules)
+        let mut int_float_count = 0;
+        for int_ty in &integers {
+            for float_ty in &floats {
+                if matrix.get_promotion_rule(int_ty, float_ty).is_some() {
+                    int_float_count += 1;
+                }
+                if matrix.get_promotion_rule(float_ty, int_ty).is_some() {
+                    int_float_count += 1;
+                }
+            }
+        }
+        assert_eq!(int_float_count, 32, "Expected 32 int↔float rules, found {}", int_float_count);
+
+        // Validate float coverage (2×2 = 4 rules)
+        let mut float_count = 0;
+        for from in &floats {
+            for to in &floats {
+                if matrix.get_promotion_rule(from, to).is_some() {
+                    float_count += 1;
+                }
+            }
+        }
+        assert_eq!(float_count, 4, "Expected 4 float×float rules, found {}", float_count);
+
+        // Validate special type interactions (3×13 = 39 rules to/from Bool, Char, String)
+        let all_types = [integers.clone(), floats.clone(), special_types.clone()].concat();
+        let mut special_count = 0;
+        for special_ty in &special_types {
+            for ty in &all_types {
+                if matrix.get_promotion_rule(special_ty, ty).is_some() {
+                    special_count += 1;
+                }
+            }
+        }
+        // Bool: 13, Char: 13, String: 13 = 39 total
+        assert_eq!(special_count, 39, "Expected 39 special→all rules, found {}", special_count);
+
+        // All types to special types
+        let mut to_special_count = 0;
+        for ty in &all_types {
+            for special_ty in &special_types {
+                if matrix.get_promotion_rule(ty, special_ty).is_some() {
+                    to_special_count += 1;
+                }
+            }
+        }
+        assert_eq!(to_special_count, 39, "Expected 39 all→special rules, found {}", to_special_count);
+
+        // Coverage breakdown for diagnostics
+        println!(
+            "Coverage breakdown: {} int, {} int-float, {} float, {} special",
+            int_count, int_float_count, float_count, special_count
+        );
+    }
+
+    #[test]
+    fn test_all_24_cast_kinds_utilized() {
+        use std::collections::HashSet;
+
+        let matrix = PromotionMatrix::new();
+        let all_types = vec![
+            IrType::I8,
+            IrType::I16,
+            IrType::I32,
+            IrType::I64,
+            IrType::U8,
+            IrType::U16,
+            IrType::U32,
+            IrType::U64,
+            IrType::F32,
+            IrType::F64,
+            IrType::Bool,
+            IrType::Char,
+            IrType::String,
+        ];
+
+        // Expected CastKind variants (24 total from spec)
+        let expected_cast_kinds = vec![
+            "IntZeroExtend",
+            "IntSignExtend",
+            "IntTruncate",
+            "IntBitcast",
+            "IntToFloat",
+            "FloatToInt",
+            "FloatTruncate",
+            "FloatExtend",
+            "BoolToInt",
+            "IntToBool",
+            "BoolToFloat",
+            "FloatToBool",
+            "CharToInt",
+            "IntToChar",
+            "CharToString",
+            "StringToChar",
+            "StringToInt",
+            "StringToFloat",
+            "StringToBool",
+            "IntToString",
+            "FloatToString",
+            "BoolToString",
+            "Bitcast",
+        ];
+
+        let mut found_cast_kinds = HashSet::new();
+
+        // Iterate all promotion rules and collect CastKind variants
+        for from in &all_types {
+            for to in &all_types {
+                if let Some(rule) = matrix.get_promotion_rule(from, to) {
+                    match rule {
+                        PromotionRule::Direct { cast_kind, .. } => {
+                            found_cast_kinds.insert(format!("{:?}", cast_kind));
+                        }
+                        PromotionRule::Indirect { first_cast, second_cast, .. } => {
+                            found_cast_kinds.insert(format!("{:?}", first_cast));
+                            found_cast_kinds.insert(format!("{:?}", second_cast));
+                        }
+                        PromotionRule::Forbidden { .. } => {}
+                    }
+                }
+            }
+        }
+
+        // Check that all expected CastKind variants are found
+        let mut missing_cast_kinds = Vec::new();
+        for expected in &expected_cast_kinds {
+            if !found_cast_kinds.contains(*expected) {
+                missing_cast_kinds.push(*expected);
+            }
+        }
+
+        if !missing_cast_kinds.is_empty() {
+            panic!("Missing {} CastKind variants:\n{}", missing_cast_kinds.len(), missing_cast_kinds.join("\n"));
+        }
+
+        // Also report what we found
+        let mut found_vec: Vec<_> = found_cast_kinds.iter().collect();
+        found_vec.sort();
+        println!("Found {} unique CastKind variants:", found_vec.len());
+        for cast_kind in found_vec {
+            println!("  - {}", cast_kind);
+        }
+
+        assert!(
+            found_cast_kinds.len() >= expected_cast_kinds.len(),
+            "Expected at least {} CastKind variants, found {}",
+            expected_cast_kinds.len(),
+            found_cast_kinds.len()
+        );
+    }
+}
