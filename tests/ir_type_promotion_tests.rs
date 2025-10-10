@@ -349,6 +349,7 @@ fn test_promotion_rule_direct() {
         may_overflow: false,
         requires_runtime_support: false,
         requires_validation: false,
+        precision_loss_estimate: None,
     };
 
     match rule {
@@ -564,8 +565,8 @@ fn test_get_promotion_rule_exists() {
 fn test_get_promotion_rule_nonexistent() {
     let matrix = PromotionMatrix::new();
 
-    // A rule that shouldn't exist
-    assert!(matrix.get_promotion_rule(&IrType::Bool, &IrType::String).is_none());
+    // Test a rule that genuinely doesn't exist (Void conversions are forbidden)
+    assert!(matrix.get_promotion_rule(&IrType::Void, &IrType::String).is_none());
 }
 
 #[test]
@@ -657,8 +658,8 @@ fn test_type_group_variants() {
 fn test_promotion_matrix_edge_case_empty_rule_lookup() {
     let matrix = PromotionMatrix::new();
 
-    // Test that looking up a non-existent rule returns None
-    assert!(matrix.get_promotion_rule(&IrType::String, &IrType::Bool).is_none());
+    // Test that looking up a non-existent rule returns None (Void conversions forbidden)
+    assert!(matrix.get_promotion_rule(&IrType::Void, &IrType::I32).is_none());
 }
 
 #[test]
@@ -1638,5 +1639,405 @@ fn test_float_special_values_conversions_exist() {
                 assert!(*may_overflow, "Float to int should mark may_overflow=true");
             }
         }
+    }
+}
+
+// ============================================================================
+// T021: Comprehensive Numeric Type Pairs Coverage Validation
+// ============================================================================
+
+#[test]
+fn test_count_implemented_numeric_rules() {
+    let matrix = PromotionMatrix::new();
+    let int_types =
+        vec![IrType::I8, IrType::I16, IrType::I32, IrType::I64, IrType::U8, IrType::U16, IrType::U32, IrType::U64];
+    let float_types = vec![IrType::F32, IrType::F64];
+
+    // Count int×int pairs
+    let mut int_int_count = 0;
+    let mut missing_int_int = Vec::new();
+    for from in &int_types {
+        for to in &int_types {
+            if matrix.get_promotion_rule(from, to).is_some() {
+                int_int_count += 1;
+            } else {
+                missing_int_int.push((from.clone(), to.clone()));
+            }
+        }
+    }
+
+    // Count int→float pairs
+    let mut int_to_float_count = 0;
+    let mut missing_int_float = Vec::new();
+    for int_ty in &int_types {
+        for float_ty in &float_types {
+            if matrix.get_promotion_rule(int_ty, float_ty).is_some() {
+                int_to_float_count += 1;
+            } else {
+                missing_int_float.push((int_ty.clone(), float_ty.clone()));
+            }
+        }
+    }
+
+    // Count float→int pairs
+    let mut float_to_int_count = 0;
+    let mut missing_float_int = Vec::new();
+    for float_ty in &float_types {
+        for int_ty in &int_types {
+            if matrix.get_promotion_rule(float_ty, int_ty).is_some() {
+                float_to_int_count += 1;
+            } else {
+                missing_float_int.push((float_ty.clone(), int_ty.clone()));
+            }
+        }
+    }
+
+    // Count float×float pairs
+    let mut float_float_count = 0;
+    for from_float in &float_types {
+        for to_float in &float_types {
+            if matrix.get_promotion_rule(from_float, to_float).is_some() {
+                float_float_count += 1;
+            }
+        }
+    }
+
+    let total = int_int_count + int_to_float_count + float_to_int_count + float_float_count;
+
+    println!("\n=== Numeric Type Conversion Rules Count ===");
+    println!("int×int:     {}/64 rules", int_int_count);
+    println!("int→float:   {}/16 rules", int_to_float_count);
+    println!("float→int:   {}/16 rules", float_to_int_count);
+    println!("float×float: {}/4 rules", float_float_count);
+    println!("TOTAL:       {}/100 numeric rules\n", total);
+
+    if !missing_int_int.is_empty() {
+        println!("Missing int×int rules ({}):", missing_int_int.len());
+        for (from, to) in missing_int_int.iter().take(10) {
+            println!("  {:?} → {:?}", from, to);
+        }
+        if missing_int_int.len() > 10 {
+            println!("  ... and {} more", missing_int_int.len() - 10);
+        }
+    }
+
+    if !missing_int_float.is_empty() {
+        println!("\nMissing int→float rules ({}):", missing_int_float.len());
+        for (from, to) in &missing_int_float {
+            println!("  {:?} → {:?}", from, to);
+        }
+    }
+
+    if !missing_float_int.is_empty() {
+        println!("\nMissing float→int rules ({}):", missing_float_int.len());
+        for (from, to) in &missing_float_int {
+            println!("  {:?} → {:?}", from, to);
+        }
+    }
+}
+
+#[test]
+fn test_all_numeric_type_pairs_defined() {
+    let matrix = PromotionMatrix::new();
+    let int_types =
+        vec![IrType::I8, IrType::I16, IrType::I32, IrType::I64, IrType::U8, IrType::U16, IrType::U32, IrType::U64];
+    let float_types = vec![IrType::F32, IrType::F64];
+
+    // Test all int×int pairs (8×8 = 64 pairs)
+    let mut int_int_count = 0;
+    for from in &int_types {
+        for to in &int_types {
+            assert!(matrix.get_promotion_rule(from, to).is_some(), "Missing rule for {:?} → {:?}", from, to);
+            int_int_count += 1;
+        }
+    }
+    assert_eq!(int_int_count, 64, "Expected 64 int×int conversion rules");
+
+    // Test all int→float pairs (8×2 = 16 pairs)
+    let mut int_to_float_count = 0;
+    for int_ty in &int_types {
+        for float_ty in &float_types {
+            assert!(
+                matrix.get_promotion_rule(int_ty, float_ty).is_some(),
+                "Missing rule for {:?} → {:?}",
+                int_ty,
+                float_ty
+            );
+            int_to_float_count += 1;
+        }
+    }
+    assert_eq!(int_to_float_count, 16, "Expected 16 int→float conversion rules");
+
+    // Test all float→int pairs (2×8 = 16 pairs)
+    let mut float_to_int_count = 0;
+    for float_ty in &float_types {
+        for int_ty in &int_types {
+            assert!(
+                matrix.get_promotion_rule(float_ty, int_ty).is_some(),
+                "Missing rule for {:?} → {:?}",
+                float_ty,
+                int_ty
+            );
+            float_to_int_count += 1;
+        }
+    }
+    assert_eq!(float_to_int_count, 16, "Expected 16 float→int conversion rules");
+
+    // Test all float×float pairs (2×2 = 4 pairs)
+    let mut float_float_count = 0;
+    for from_float in &float_types {
+        for to_float in &float_types {
+            assert!(
+                matrix.get_promotion_rule(from_float, to_float).is_some(),
+                "Missing rule for {:?} → {:?}",
+                from_float,
+                to_float
+            );
+            float_float_count += 1;
+        }
+    }
+    assert_eq!(float_float_count, 4, "Expected 4 float×float conversion rules");
+
+    // Total numeric type pairs: 64 + 16 + 16 + 4 = 100 rules
+    let total_numeric_rules = int_int_count + int_to_float_count + float_to_int_count + float_float_count;
+    assert_eq!(
+        total_numeric_rules, 100,
+        "Expected 100 total numeric conversion rules (64 int×int + 16 int→float + 16 float→int + 4 float×float)"
+    );
+}
+
+// ============================================================================
+// T023: Boolean Conversion Test Cases
+// ============================================================================
+
+// Bool → Integer conversions (8 tests)
+#[test]
+fn test_bool_to_i8() {
+    let matrix = PromotionMatrix::new();
+    let rule = matrix.get_promotion_rule(&IrType::Bool, &IrType::I8).unwrap();
+    match rule {
+        PromotionRule::Direct { cast_kind, may_lose_precision, may_overflow, .. } => {
+            assert_eq!(*cast_kind, CastKind::BoolToInt);
+            assert!(!may_lose_precision, "Bool→I8 should not lose precision");
+            assert!(!may_overflow, "Bool→I8 cannot overflow (0 or 1 fits in i8)");
+        }
+        _ => panic!("Expected Direct rule for Bool→I8"),
+    }
+}
+
+#[test]
+fn test_bool_to_i16() {
+    let matrix = PromotionMatrix::new();
+    let rule = matrix.get_promotion_rule(&IrType::Bool, &IrType::I16).unwrap();
+    match rule {
+        PromotionRule::Direct { cast_kind, .. } => assert_eq!(*cast_kind, CastKind::BoolToInt),
+        _ => panic!("Expected Direct rule"),
+    }
+}
+
+#[test]
+fn test_bool_to_i32() {
+    let matrix = PromotionMatrix::new();
+    let rule = matrix.get_promotion_rule(&IrType::Bool, &IrType::I32).unwrap();
+    match rule {
+        PromotionRule::Direct { cast_kind, .. } => assert_eq!(*cast_kind, CastKind::BoolToInt),
+        _ => panic!("Expected Direct rule"),
+    }
+}
+
+#[test]
+fn test_bool_to_i64() {
+    let matrix = PromotionMatrix::new();
+    let rule = matrix.get_promotion_rule(&IrType::Bool, &IrType::I64).unwrap();
+    match rule {
+        PromotionRule::Direct { cast_kind, .. } => assert_eq!(*cast_kind, CastKind::BoolToInt),
+        _ => panic!("Expected Direct rule"),
+    }
+}
+
+#[test]
+fn test_bool_to_u8() {
+    let matrix = PromotionMatrix::new();
+    let rule = matrix.get_promotion_rule(&IrType::Bool, &IrType::U8).unwrap();
+    match rule {
+        PromotionRule::Direct { cast_kind, .. } => assert_eq!(*cast_kind, CastKind::BoolToInt),
+        _ => panic!("Expected Direct rule"),
+    }
+}
+
+#[test]
+fn test_bool_to_u16() {
+    let matrix = PromotionMatrix::new();
+    let rule = matrix.get_promotion_rule(&IrType::Bool, &IrType::U16).unwrap();
+    match rule {
+        PromotionRule::Direct { cast_kind, .. } => assert_eq!(*cast_kind, CastKind::BoolToInt),
+        _ => panic!("Expected Direct rule"),
+    }
+}
+
+#[test]
+fn test_bool_to_u32() {
+    let matrix = PromotionMatrix::new();
+    let rule = matrix.get_promotion_rule(&IrType::Bool, &IrType::U32).unwrap();
+    match rule {
+        PromotionRule::Direct { cast_kind, .. } => assert_eq!(*cast_kind, CastKind::BoolToInt),
+        _ => panic!("Expected Direct rule"),
+    }
+}
+
+#[test]
+fn test_bool_to_u64() {
+    let matrix = PromotionMatrix::new();
+    let rule = matrix.get_promotion_rule(&IrType::Bool, &IrType::U64).unwrap();
+    match rule {
+        PromotionRule::Direct { cast_kind, .. } => assert_eq!(*cast_kind, CastKind::BoolToInt),
+        _ => panic!("Expected Direct rule"),
+    }
+}
+
+// Bool → Float conversions (2 tests)
+#[test]
+fn test_bool_to_f32() {
+    let matrix = PromotionMatrix::new();
+    let rule = matrix.get_promotion_rule(&IrType::Bool, &IrType::F32).unwrap();
+    match rule {
+        PromotionRule::Direct { cast_kind, may_lose_precision, .. } => {
+            assert_eq!(*cast_kind, CastKind::BoolToFloat);
+            assert!(!may_lose_precision, "Bool→F32 should not lose precision (0.0 or 1.0)");
+        }
+        _ => panic!("Expected Direct rule for Bool→F32"),
+    }
+}
+
+#[test]
+fn test_bool_to_f64() {
+    let matrix = PromotionMatrix::new();
+    let rule = matrix.get_promotion_rule(&IrType::Bool, &IrType::F64).unwrap();
+    match rule {
+        PromotionRule::Direct { cast_kind, .. } => assert_eq!(*cast_kind, CastKind::BoolToFloat),
+        _ => panic!("Expected Direct rule"),
+    }
+}
+
+// Integer → Bool conversions (8 tests)
+#[test]
+fn test_i8_to_bool_zero_test() {
+    let matrix = PromotionMatrix::new();
+    let rule = matrix.get_promotion_rule(&IrType::I8, &IrType::Bool).unwrap();
+    match rule {
+        PromotionRule::Direct { cast_kind, .. } => {
+            assert_eq!(*cast_kind, CastKind::IntToBool);
+            // 0 → false, non-zero → true
+        }
+        _ => panic!("Expected Direct rule for I8→Bool"),
+    }
+}
+
+#[test]
+fn test_i16_to_bool() {
+    let matrix = PromotionMatrix::new();
+    let rule = matrix.get_promotion_rule(&IrType::I16, &IrType::Bool).unwrap();
+    match rule {
+        PromotionRule::Direct { cast_kind, .. } => assert_eq!(*cast_kind, CastKind::IntToBool),
+        _ => panic!("Expected Direct rule"),
+    }
+}
+
+#[test]
+fn test_i32_to_bool_zero_test() {
+    let matrix = PromotionMatrix::new();
+    let rule = matrix.get_promotion_rule(&IrType::I32, &IrType::Bool).unwrap();
+    match rule {
+        PromotionRule::Direct { cast_kind, .. } => assert_eq!(*cast_kind, CastKind::IntToBool),
+        _ => panic!("Expected Direct rule"),
+    }
+}
+
+#[test]
+fn test_i64_to_bool() {
+    let matrix = PromotionMatrix::new();
+    let rule = matrix.get_promotion_rule(&IrType::I64, &IrType::Bool).unwrap();
+    match rule {
+        PromotionRule::Direct { cast_kind, .. } => assert_eq!(*cast_kind, CastKind::IntToBool),
+        _ => panic!("Expected Direct rule"),
+    }
+}
+
+#[test]
+fn test_u8_to_bool() {
+    let matrix = PromotionMatrix::new();
+    let rule = matrix.get_promotion_rule(&IrType::U8, &IrType::Bool).unwrap();
+    match rule {
+        PromotionRule::Direct { cast_kind, .. } => assert_eq!(*cast_kind, CastKind::IntToBool),
+        _ => panic!("Expected Direct rule"),
+    }
+}
+
+#[test]
+fn test_u16_to_bool() {
+    let matrix = PromotionMatrix::new();
+    let rule = matrix.get_promotion_rule(&IrType::U16, &IrType::Bool).unwrap();
+    match rule {
+        PromotionRule::Direct { cast_kind, .. } => assert_eq!(*cast_kind, CastKind::IntToBool),
+        _ => panic!("Expected Direct rule"),
+    }
+}
+
+#[test]
+fn test_u32_to_bool() {
+    let matrix = PromotionMatrix::new();
+    let rule = matrix.get_promotion_rule(&IrType::U32, &IrType::Bool).unwrap();
+    match rule {
+        PromotionRule::Direct { cast_kind, .. } => assert_eq!(*cast_kind, CastKind::IntToBool),
+        _ => panic!("Expected Direct rule"),
+    }
+}
+
+#[test]
+fn test_u64_to_bool() {
+    let matrix = PromotionMatrix::new();
+    let rule = matrix.get_promotion_rule(&IrType::U64, &IrType::Bool).unwrap();
+    match rule {
+        PromotionRule::Direct { cast_kind, .. } => assert_eq!(*cast_kind, CastKind::IntToBool),
+        _ => panic!("Expected Direct rule"),
+    }
+}
+
+// Float → Bool conversions (2 tests)
+#[test]
+fn test_f32_to_bool_nan_handling() {
+    let matrix = PromotionMatrix::new();
+    let rule = matrix.get_promotion_rule(&IrType::F32, &IrType::Bool).unwrap();
+    match rule {
+        PromotionRule::Direct { cast_kind, .. } => {
+            assert_eq!(*cast_kind, CastKind::FloatToBool);
+            // NaN → true (non-zero), 0.0/-0.0 → false, other → true
+        }
+        _ => panic!("Expected Direct rule for F32→Bool"),
+    }
+}
+
+#[test]
+fn test_f64_to_bool_nan_handling() {
+    let matrix = PromotionMatrix::new();
+    let rule = matrix.get_promotion_rule(&IrType::F64, &IrType::Bool).unwrap();
+    match rule {
+        PromotionRule::Direct { cast_kind, .. } => assert_eq!(*cast_kind, CastKind::FloatToBool),
+        _ => panic!("Expected Direct rule"),
+    }
+}
+
+// Bool identity conversion (1 test)
+#[test]
+fn test_bool_to_bool_identity() {
+    let matrix = PromotionMatrix::new();
+    let rule = matrix.get_promotion_rule(&IrType::Bool, &IrType::Bool).unwrap();
+    match rule {
+        PromotionRule::Direct { cast_kind, may_lose_precision, may_overflow, .. } => {
+            // Identity conversion - should be no-op
+            assert!(!may_lose_precision);
+            assert!(!may_overflow);
+        }
+        _ => panic!("Expected Direct rule for Bool→Bool identity"),
     }
 }
