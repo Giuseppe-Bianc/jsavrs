@@ -2041,3 +2041,100 @@ fn test_bool_to_bool_identity() {
         _ => panic!("Expected Direct rule for Bool→Bool identity"),
     }
 }
+
+// ============================================================================
+// Character Conversion Tests (T024)
+// ============================================================================
+
+#[test]
+fn test_char_to_u32_unicode_scalar() {
+    let matrix = PromotionMatrix::new();
+    let rule = matrix.get_promotion_rule(&IrType::Char, &IrType::U32).unwrap();
+
+    if let PromotionRule::Direct { cast_kind, requires_validation, .. } = rule {
+        assert_eq!(cast_kind, &CastKind::CharToInt);
+        assert_eq!(requires_validation, &false);
+    } else {
+        panic!("Expected Direct rule for Char→U32");
+    }
+}
+
+#[test]
+fn test_u32_to_char_with_validation() {
+    let matrix = PromotionMatrix::new();
+    let rule = matrix.get_promotion_rule(&IrType::U32, &IrType::Char).unwrap();
+
+    if let PromotionRule::Direct { cast_kind, requires_validation, .. } = rule {
+        assert_eq!(cast_kind, &CastKind::IntToChar);
+        assert_eq!(requires_validation, &true);
+    } else {
+        panic!("Expected Direct rule for U32→Char with validation");
+    }
+}
+
+#[test]
+fn test_char_to_i32_signed_conversion() {
+    let matrix = PromotionMatrix::new();
+    let rule = matrix.get_promotion_rule(&IrType::Char, &IrType::I32).unwrap();
+
+    if let PromotionRule::Direct { cast_kind, may_lose_precision, .. } = rule {
+        assert_eq!(cast_kind, &CastKind::CharToInt);
+        assert!(!may_lose_precision);
+    } else {
+        panic!("Expected Direct rule for Char→I32");
+    }
+}
+
+#[test]
+fn test_i32_to_char_with_validation() {
+    let matrix = PromotionMatrix::new();
+    let rule = matrix.get_promotion_rule(&IrType::I32, &IrType::Char).unwrap();
+
+    if let PromotionRule::Direct { cast_kind, requires_validation, .. } = rule {
+        assert_eq!(cast_kind, &CastKind::IntToChar);
+        assert_eq!(requires_validation, &true);
+    } else {
+        panic!("Expected Direct rule for I32→Char with validation");
+    }
+}
+
+#[test]
+fn test_char_to_string_runtime_support() {
+    let matrix = PromotionMatrix::new();
+    let rule = matrix.get_promotion_rule(&IrType::Char, &IrType::String).unwrap();
+
+    if let PromotionRule::Direct { cast_kind, requires_runtime_support, .. } = rule {
+        assert_eq!(cast_kind, &CastKind::CharToString);
+        assert_eq!(requires_runtime_support, &true);
+    } else {
+        panic!("Expected Direct rule for Char→String");
+    }
+}
+
+#[test]
+fn test_string_to_char_with_validation() {
+    let matrix = PromotionMatrix::new();
+    let rule = matrix.get_promotion_rule(&IrType::String, &IrType::Char).unwrap();
+
+    if let PromotionRule::Direct { cast_kind, requires_runtime_support, requires_validation, .. } = rule {
+        assert_eq!(cast_kind, &CastKind::StringToChar);
+        assert_eq!(requires_runtime_support, &true);
+        assert_eq!(requires_validation, &true);
+    } else {
+        panic!("Expected Direct rule for String→Char");
+    }
+}
+
+#[test]
+fn test_char_to_char_identity() {
+    let matrix = PromotionMatrix::new();
+    let rule = matrix.get_promotion_rule(&IrType::Char, &IrType::Char).unwrap();
+
+    if let PromotionRule::Direct { cast_kind, may_lose_precision, may_overflow, .. } = rule {
+        assert_eq!(cast_kind, &CastKind::Bitcast);
+        assert!(!may_lose_precision);
+        assert!(!may_overflow);
+    } else {
+        panic!("Expected Direct rule for Char→Char identity");
+    }
+}
