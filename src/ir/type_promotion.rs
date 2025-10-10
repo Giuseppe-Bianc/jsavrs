@@ -365,6 +365,9 @@ impl PromotionMatrix {
         // Add boolean promotion rules (T025)
         self.add_boolean_promotions();
 
+        // Add character promotion rules (T027)
+        self.add_character_promotions();
+
         // Add identity promotions for all basic types
         self.add_identity_promotions();
     }
@@ -904,12 +907,102 @@ impl PromotionMatrix {
         );
     }
 
-    /// Add all character conversion rules (14 rules)
+    /// Add all character conversion rules (6 rules)
+    ///
+    /// Character conversions support:
+    /// - Char ↔ U32: Direct conversion (Unicode scalar values)
+    /// - Char ↔ I32: Direct conversion with validation for negative values
+    /// - Char ↔ String: Runtime support for character-string conversions
+    ///
+    /// All conversions require Unicode validation where applicable:
+    /// - U32 → Char: Must be valid Unicode scalar (exclude surrogates D800-DFFF)
+    /// - I32 → Char: Must be non-negative and valid scalar
+    /// - String → Char: Must be exactly one character
     fn add_character_promotions(&mut self) {
-        // Implementation in T031
-        todo!("T027: Implement character promotions")
-    }
+        // Char → U32: Direct Unicode scalar value extraction
+        self.add_promotion_rule(
+            IrType::Char,
+            IrType::U32,
+            PromotionRule::Direct {
+                cast_kind: CastKind::CharToInt,
+                may_lose_precision: false,
+                may_overflow: false,
+                requires_runtime_support: false,
+                requires_validation: false,
+                precision_loss_estimate: None,
+            },
+        );
 
+        // U32 → Char: Requires Unicode scalar validation
+        self.add_promotion_rule(
+            IrType::U32,
+            IrType::Char,
+            PromotionRule::Direct {
+                cast_kind: CastKind::IntToChar,
+                may_lose_precision: false,
+                may_overflow: false,
+                requires_runtime_support: false,
+                requires_validation: true, // Validate Unicode scalar (exclude D800-DFFF)
+                precision_loss_estimate: None,
+            },
+        );
+
+        // Char → I32: Direct conversion (Unicode values fit in i32)
+        self.add_promotion_rule(
+            IrType::Char,
+            IrType::I32,
+            PromotionRule::Direct {
+                cast_kind: CastKind::CharToInt,
+                may_lose_precision: false,
+                may_overflow: false,
+                requires_runtime_support: false,
+                requires_validation: false,
+                precision_loss_estimate: None,
+            },
+        );
+
+        // I32 → Char: Requires validation for negative values
+        self.add_promotion_rule(
+            IrType::I32,
+            IrType::Char,
+            PromotionRule::Direct {
+                cast_kind: CastKind::IntToChar,
+                may_lose_precision: false,
+                may_overflow: false,
+                requires_runtime_support: false,
+                requires_validation: true, // Validate non-negative and Unicode scalar
+                precision_loss_estimate: None,
+            },
+        );
+
+        // Char → String: Runtime support for character to string conversion
+        self.add_promotion_rule(
+            IrType::Char,
+            IrType::String,
+            PromotionRule::Direct {
+                cast_kind: CastKind::CharToString,
+                may_lose_precision: false,
+                may_overflow: false,
+                requires_runtime_support: true,
+                requires_validation: false,
+                precision_loss_estimate: None,
+            },
+        );
+
+        // String → Char: Runtime support with length validation
+        self.add_promotion_rule(
+            IrType::String,
+            IrType::Char,
+            PromotionRule::Direct {
+                cast_kind: CastKind::StringToChar,
+                may_lose_precision: false,
+                may_overflow: false,
+                requires_runtime_support: true,
+                requires_validation: true, // Validate exactly one character
+                precision_loss_estimate: None,
+            },
+        );
+    }
     /// Add all string conversion rules (25 rules)
     fn add_string_promotions(&mut self) {
         // Implementation in T035
