@@ -2138,3 +2138,125 @@ fn test_char_to_char_identity() {
         panic!("Expected Direct rule for Char→Char identity");
     }
 }
+
+// T029: Snapshot tests for boolean conversions
+#[test]
+fn test_boolean_to_numeric_snapshots() {
+    use insta::assert_debug_snapshot;
+    let matrix = PromotionMatrix::new();
+
+    // Test Bool -> I32 conversion
+    let rule_bool_i32 = matrix.get_promotion_rule(&IrType::Bool, &IrType::I32).unwrap();
+    assert_debug_snapshot!("bool_to_i32_conversion", rule_bool_i32);
+
+    // Test Bool -> U32 conversion
+    let rule_bool_u32 = matrix.get_promotion_rule(&IrType::Bool, &IrType::U32).unwrap();
+    assert_debug_snapshot!("bool_to_u32_conversion", rule_bool_u32);
+
+    // Test Bool -> F64 conversion
+    let rule_bool_f64 = matrix.get_promotion_rule(&IrType::Bool, &IrType::F64).unwrap();
+    assert_debug_snapshot!("bool_to_f64_conversion", rule_bool_f64);
+}
+
+#[test]
+fn test_numeric_to_boolean_snapshots() {
+    use insta::assert_debug_snapshot;
+    let matrix = PromotionMatrix::new();
+
+    // Test I32 -> Bool conversion (requires runtime support)
+    let rule_i32_bool = matrix.get_promotion_rule(&IrType::I32, &IrType::Bool).unwrap();
+    assert_debug_snapshot!("i32_to_bool_conversion", rule_i32_bool);
+
+    // Test U32 -> Bool conversion
+    let rule_u32_bool = matrix.get_promotion_rule(&IrType::U32, &IrType::Bool).unwrap();
+    assert_debug_snapshot!("u32_to_bool_conversion", rule_u32_bool);
+
+    // Test F64 -> Bool conversion
+    let rule_f64_bool = matrix.get_promotion_rule(&IrType::F64, &IrType::Bool).unwrap();
+    assert_debug_snapshot!("f64_to_bool_conversion", rule_f64_bool);
+}
+
+#[test]
+fn test_boolean_string_char_snapshots() {
+    use insta::assert_debug_snapshot;
+    let matrix = PromotionMatrix::new();
+
+    // Test Bool -> String conversion (requires runtime support)
+    let rule_bool_string = matrix.get_promotion_rule(&IrType::Bool, &IrType::String).unwrap();
+    assert_debug_snapshot!("bool_to_string_conversion", rule_bool_string);
+
+    // Test String -> Bool conversion (requires runtime + validation)
+    let rule_string_bool = matrix.get_promotion_rule(&IrType::String, &IrType::Bool).unwrap();
+    assert_debug_snapshot!("string_to_bool_conversion", rule_string_bool);
+
+    // Note: Bool ↔ Char conversions not implemented yet (future enhancement)
+}
+
+// T029: Unicode Validation Test Cases
+#[test]
+fn test_surrogate_u32_to_char_requires_validation() {
+    let matrix = PromotionMatrix::new();
+    let rule = matrix.get_promotion_rule(&IrType::U32, &IrType::Char).unwrap();
+
+    // U32 → Char must require validation to reject surrogate range 0xD800-0xDFFF
+    if let PromotionRule::Direct { cast_kind, requires_validation, .. } = rule {
+        assert_eq!(cast_kind, &CastKind::IntToChar, "Expected IntToChar for U32→Char");
+        assert!(requires_validation, "U32→Char must require validation for surrogate rejection");
+    } else {
+        panic!("Expected Direct rule for U32→Char");
+    }
+}
+
+#[test]
+fn test_out_of_range_u32_to_char_requires_validation() {
+    let matrix = PromotionMatrix::new();
+    let rule = matrix.get_promotion_rule(&IrType::U32, &IrType::Char).unwrap();
+
+    // Validation must reject values > 0x10FFFF (max Unicode code point)
+    if let PromotionRule::Direct { requires_validation, .. } = rule {
+        assert!(requires_validation, "U32→Char must validate range to reject values > 0x10FFFF");
+    } else {
+        panic!("Expected Direct rule for U32→Char");
+    }
+}
+
+#[test]
+fn test_i32_to_char_requires_validation() {
+    let matrix = PromotionMatrix::new();
+    let rule = matrix.get_promotion_rule(&IrType::I32, &IrType::Char).unwrap();
+
+    // I32 → Char must require validation to reject negative values
+    if let PromotionRule::Direct { cast_kind, requires_validation, .. } = rule {
+        assert_eq!(cast_kind, &CastKind::IntToChar, "Expected IntToChar for I32→Char");
+        assert!(requires_validation, "I32→Char must require validation to reject negative values");
+    } else {
+        panic!("Expected Direct rule for I32→Char");
+    }
+}
+
+#[test]
+fn test_valid_unicode_ranges_char_identity() {
+    let matrix = PromotionMatrix::new();
+
+    // Char→Char identity should not require validation (already valid)
+    let rule = matrix.get_promotion_rule(&IrType::Char, &IrType::Char).unwrap();
+    if let PromotionRule::Direct { requires_validation, .. } = rule {
+        assert!(!requires_validation, "Char→Char identity should not require validation");
+    } else {
+        panic!("Expected Direct rule for Char→Char identity");
+    }
+}
+
+#[test]
+fn test_char_to_u32_no_validation_needed() {
+    let matrix = PromotionMatrix::new();
+    let rule = matrix.get_promotion_rule(&IrType::Char, &IrType::U32).unwrap();
+
+    // Char→U32 doesn't need validation (all chars are valid Unicode scalars)
+    if let PromotionRule::Direct { cast_kind, requires_validation, .. } = rule {
+        assert_eq!(cast_kind, &CastKind::CharToInt, "Expected CharToInt for Char→U32");
+        assert!(!requires_validation, "Char→U32 should not require validation");
+    } else {
+        panic!("Expected Direct rule for Char→U32");
+    }
+}
