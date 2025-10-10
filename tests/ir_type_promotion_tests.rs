@@ -2375,3 +2375,488 @@ fn test_signedness_change_warning_snapshot() {
     let warning = matrix.generate_signedness_change_warning(&IrType::U32, &IrType::I32, rule).unwrap();
     assert_debug_snapshot!("signedness_change_u32_to_i32", warning);
 }
+
+// =========================================================================
+// Phase 5: String Conversion Tests (T033-T034)
+// =========================================================================
+
+// -------------------------------------------------------------------------
+// T033: String Conversion Test Cases (25 tests)
+// -------------------------------------------------------------------------
+
+/// Tests for primitive → String conversions (12 rules)
+/// These conversions always succeed and require runtime formatting support.
+#[cfg(test)]
+mod string_conversion_tests {
+    use super::*;
+
+    // Integer → String conversions (8 tests)
+
+    #[test]
+    fn test_i8_to_string_formatting() {
+        let matrix = PromotionMatrix::new();
+        let rule = matrix.get_promotion_rule(&IrType::I8, &IrType::String).unwrap();
+        if let PromotionRule::Direct {
+            cast_kind,
+            requires_runtime_support,
+            requires_validation,
+            may_lose_precision,
+            may_overflow,
+            ..
+        } = rule
+        {
+            assert_eq!(*cast_kind, CastKind::IntToString);
+            assert!(*requires_runtime_support);
+            assert!(!*requires_validation); // Always succeeds
+            assert!(!*may_lose_precision);
+            assert!(!*may_overflow);
+        } else {
+            panic!("Expected Direct promotion rule for I8→String");
+        }
+    }
+
+    #[test]
+    fn test_i16_to_string_formatting() {
+        let matrix = PromotionMatrix::new();
+        let rule = matrix.get_promotion_rule(&IrType::I16, &IrType::String).unwrap();
+        if let PromotionRule::Direct { cast_kind, requires_runtime_support, requires_validation, .. } = rule {
+            assert_eq!(*cast_kind, CastKind::IntToString);
+            assert!(*requires_runtime_support);
+            assert!(!*requires_validation);
+        } else {
+            panic!("Expected Direct promotion rule for I16→String");
+        }
+    }
+
+    #[test]
+    fn test_i32_to_string_formatting() {
+        let matrix = PromotionMatrix::new();
+        let rule = matrix.get_promotion_rule(&IrType::I32, &IrType::String).unwrap();
+        if let PromotionRule::Direct { cast_kind, requires_runtime_support, requires_validation, .. } = rule {
+            assert_eq!(*cast_kind, CastKind::IntToString);
+            assert!(*requires_runtime_support);
+            assert!(!*requires_validation);
+        } else {
+            panic!("Expected Direct promotion rule for I32→String");
+        }
+    }
+
+    #[test]
+    fn test_i64_to_string_formatting() {
+        let matrix = PromotionMatrix::new();
+        let rule = matrix.get_promotion_rule(&IrType::I64, &IrType::String).unwrap();
+        if let PromotionRule::Direct { cast_kind, requires_runtime_support, requires_validation, .. } = rule {
+            assert_eq!(*cast_kind, CastKind::IntToString);
+            assert!(*requires_runtime_support);
+            assert!(!*requires_validation);
+        } else {
+            panic!("Expected Direct promotion rule for I64→String");
+        }
+    }
+
+    #[test]
+    fn test_u8_to_string_formatting() {
+        let matrix = PromotionMatrix::new();
+        let rule = matrix.get_promotion_rule(&IrType::U8, &IrType::String).unwrap();
+        if let PromotionRule::Direct { cast_kind, requires_runtime_support, requires_validation, .. } = rule {
+            assert_eq!(*cast_kind, CastKind::IntToString);
+            assert!(*requires_runtime_support);
+            assert!(!*requires_validation);
+        } else {
+            panic!("Expected Direct promotion rule for U8→String");
+        }
+    }
+
+    #[test]
+    fn test_u16_to_string_formatting() {
+        let matrix = PromotionMatrix::new();
+        let rule = matrix.get_promotion_rule(&IrType::U16, &IrType::String).unwrap();
+        if let PromotionRule::Direct { cast_kind, requires_runtime_support, requires_validation, .. } = rule {
+            assert_eq!(*cast_kind, CastKind::IntToString);
+            assert!(*requires_runtime_support);
+            assert!(!*requires_validation);
+        } else {
+            panic!("Expected Direct promotion rule for U16→String");
+        }
+    }
+
+    #[test]
+    fn test_u32_to_string_formatting() {
+        let matrix = PromotionMatrix::new();
+        let rule = matrix.get_promotion_rule(&IrType::U32, &IrType::String).unwrap();
+        if let PromotionRule::Direct { cast_kind, requires_runtime_support, requires_validation, .. } = rule {
+            assert_eq!(*cast_kind, CastKind::IntToString);
+            assert!(*requires_runtime_support);
+            assert!(!*requires_validation);
+        } else {
+            panic!("Expected Direct promotion rule for U32→String");
+        }
+    }
+
+    #[test]
+    fn test_u64_to_string_formatting() {
+        let matrix = PromotionMatrix::new();
+        let rule = matrix.get_promotion_rule(&IrType::U64, &IrType::String).unwrap();
+        if let PromotionRule::Direct { cast_kind, requires_runtime_support, requires_validation, .. } = rule {
+            assert_eq!(*cast_kind, CastKind::IntToString);
+            assert!(*requires_runtime_support);
+            assert!(!*requires_validation);
+        } else {
+            panic!("Expected Direct promotion rule for U64→String");
+        }
+    }
+
+    // Float → String conversions (2 tests)
+
+    #[test]
+    fn test_f32_to_string_formatting() {
+        let matrix = PromotionMatrix::new();
+        let rule = matrix.get_promotion_rule(&IrType::F32, &IrType::String).unwrap();
+        if let PromotionRule::Direct {
+            cast_kind,
+            requires_runtime_support,
+            requires_validation,
+            may_lose_precision,
+            may_overflow,
+            ..
+        } = rule
+        {
+            assert_eq!(*cast_kind, CastKind::FloatToString);
+            assert!(*requires_runtime_support);
+            assert!(!*requires_validation); // Always succeeds
+            assert!(!*may_lose_precision);
+            assert!(!*may_overflow);
+        } else {
+            panic!("Expected Direct promotion rule for F32→String");
+        }
+    }
+
+    #[test]
+    fn test_f64_to_string_formatting() {
+        let matrix = PromotionMatrix::new();
+        let rule = matrix.get_promotion_rule(&IrType::F64, &IrType::String).unwrap();
+        if let PromotionRule::Direct { cast_kind, requires_runtime_support, requires_validation, .. } = rule {
+            assert_eq!(*cast_kind, CastKind::FloatToString);
+            assert!(*requires_runtime_support);
+            assert!(!*requires_validation);
+        } else {
+            panic!("Expected Direct promotion rule for F64→String");
+        }
+    }
+
+    // Bool → String conversion (1 test - already in T025 but verify here)
+
+    #[test]
+    fn test_bool_to_string_formatting() {
+        let matrix = PromotionMatrix::new();
+        let rule = matrix.get_promotion_rule(&IrType::Bool, &IrType::String).unwrap();
+        if let PromotionRule::Direct { cast_kind, requires_runtime_support, requires_validation, .. } = rule {
+            assert_eq!(*cast_kind, CastKind::BoolToString);
+            assert!(*requires_runtime_support);
+            assert!(!*requires_validation); // Always succeeds
+        } else {
+            panic!("Expected Direct promotion rule for Bool→String");
+        }
+    }
+
+    // Char → String conversion (1 test - already in T027 but verify here)
+
+    #[test]
+    fn test_char_to_string_formatting() {
+        let matrix = PromotionMatrix::new();
+        let rule = matrix.get_promotion_rule(&IrType::Char, &IrType::String).unwrap();
+        if let PromotionRule::Direct { cast_kind, requires_runtime_support, requires_validation, .. } = rule {
+            assert_eq!(*cast_kind, CastKind::CharToString);
+            assert!(*requires_runtime_support);
+            assert!(!*requires_validation); // Always succeeds
+        } else {
+            panic!("Expected Direct promotion rule for Char→String");
+        }
+    }
+
+    // String → Integer conversions (8 tests)
+
+    #[test]
+    fn test_string_to_i8_parsing() {
+        let matrix = PromotionMatrix::new();
+        let rule = matrix.get_promotion_rule(&IrType::String, &IrType::I8).unwrap();
+        if let PromotionRule::Direct {
+            cast_kind,
+            requires_runtime_support,
+            requires_validation,
+            may_lose_precision,
+            may_overflow,
+            ..
+        } = rule
+        {
+            assert_eq!(*cast_kind, CastKind::StringToInt);
+            assert!(*requires_runtime_support);
+            assert!(*requires_validation); // Parse may fail
+            assert!(!*may_lose_precision);
+            assert!(!*may_overflow);
+        } else {
+            panic!("Expected Direct promotion rule for String→I8");
+        }
+    }
+
+    #[test]
+    fn test_string_to_i16_parsing() {
+        let matrix = PromotionMatrix::new();
+        let rule = matrix.get_promotion_rule(&IrType::String, &IrType::I16).unwrap();
+        if let PromotionRule::Direct { cast_kind, requires_runtime_support, requires_validation, .. } = rule {
+            assert_eq!(*cast_kind, CastKind::StringToInt);
+            assert!(*requires_runtime_support);
+            assert!(*requires_validation);
+        } else {
+            panic!("Expected Direct promotion rule for String→I16");
+        }
+    }
+
+    #[test]
+    fn test_string_to_i32_parsing() {
+        let matrix = PromotionMatrix::new();
+        let rule = matrix.get_promotion_rule(&IrType::String, &IrType::I32).unwrap();
+        if let PromotionRule::Direct { cast_kind, requires_runtime_support, requires_validation, .. } = rule {
+            assert_eq!(*cast_kind, CastKind::StringToInt);
+            assert!(*requires_runtime_support);
+            assert!(*requires_validation);
+        } else {
+            panic!("Expected Direct promotion rule for String→I32");
+        }
+    }
+
+    #[test]
+    fn test_string_to_i64_parsing() {
+        let matrix = PromotionMatrix::new();
+        let rule = matrix.get_promotion_rule(&IrType::String, &IrType::I64).unwrap();
+        if let PromotionRule::Direct { cast_kind, requires_runtime_support, requires_validation, .. } = rule {
+            assert_eq!(*cast_kind, CastKind::StringToInt);
+            assert!(*requires_runtime_support);
+            assert!(*requires_validation);
+        } else {
+            panic!("Expected Direct promotion rule for String→I64");
+        }
+    }
+
+    #[test]
+    fn test_string_to_u8_parsing() {
+        let matrix = PromotionMatrix::new();
+        let rule = matrix.get_promotion_rule(&IrType::String, &IrType::U8).unwrap();
+        if let PromotionRule::Direct { cast_kind, requires_runtime_support, requires_validation, .. } = rule {
+            assert_eq!(*cast_kind, CastKind::StringToInt);
+            assert!(*requires_runtime_support);
+            assert!(*requires_validation);
+        } else {
+            panic!("Expected Direct promotion rule for String→U8");
+        }
+    }
+
+    #[test]
+    fn test_string_to_u16_parsing() {
+        let matrix = PromotionMatrix::new();
+        let rule = matrix.get_promotion_rule(&IrType::String, &IrType::U16).unwrap();
+        if let PromotionRule::Direct { cast_kind, requires_runtime_support, requires_validation, .. } = rule {
+            assert_eq!(*cast_kind, CastKind::StringToInt);
+            assert!(*requires_runtime_support);
+            assert!(*requires_validation);
+        } else {
+            panic!("Expected Direct promotion rule for String→U16");
+        }
+    }
+
+    #[test]
+    fn test_string_to_u32_parsing() {
+        let matrix = PromotionMatrix::new();
+        let rule = matrix.get_promotion_rule(&IrType::String, &IrType::U32).unwrap();
+        if let PromotionRule::Direct { cast_kind, requires_runtime_support, requires_validation, .. } = rule {
+            assert_eq!(*cast_kind, CastKind::StringToInt);
+            assert!(*requires_runtime_support);
+            assert!(*requires_validation);
+        } else {
+            panic!("Expected Direct promotion rule for String→U32");
+        }
+    }
+
+    #[test]
+    fn test_string_to_u64_parsing() {
+        let matrix = PromotionMatrix::new();
+        let rule = matrix.get_promotion_rule(&IrType::String, &IrType::U64).unwrap();
+        if let PromotionRule::Direct { cast_kind, requires_runtime_support, requires_validation, .. } = rule {
+            assert_eq!(*cast_kind, CastKind::StringToInt);
+            assert!(*requires_runtime_support);
+            assert!(*requires_validation);
+        } else {
+            panic!("Expected Direct promotion rule for String→U64");
+        }
+    }
+
+    // String → Float conversions (2 tests)
+
+    #[test]
+    fn test_string_to_f32_parsing() {
+        let matrix = PromotionMatrix::new();
+        let rule = matrix.get_promotion_rule(&IrType::String, &IrType::F32).unwrap();
+        if let PromotionRule::Direct {
+            cast_kind,
+            requires_runtime_support,
+            requires_validation,
+            may_lose_precision,
+            may_overflow,
+            ..
+        } = rule
+        {
+            assert_eq!(*cast_kind, CastKind::StringToFloat);
+            assert!(*requires_runtime_support);
+            assert!(*requires_validation); // Parse may fail
+            assert!(!*may_lose_precision);
+            assert!(!*may_overflow);
+        } else {
+            panic!("Expected Direct promotion rule for String→F32");
+        }
+    }
+
+    #[test]
+    fn test_string_to_f64_parsing() {
+        let matrix = PromotionMatrix::new();
+        let rule = matrix.get_promotion_rule(&IrType::String, &IrType::F64).unwrap();
+        if let PromotionRule::Direct { cast_kind, requires_runtime_support, requires_validation, .. } = rule {
+            assert_eq!(*cast_kind, CastKind::StringToFloat);
+            assert!(*requires_runtime_support);
+            assert!(*requires_validation);
+        } else {
+            panic!("Expected Direct promotion rule for String→F64");
+        }
+    }
+
+    // String → Bool conversion (1 test - already in T025 but verify here)
+
+    #[test]
+    fn test_string_to_bool_parsing() {
+        let matrix = PromotionMatrix::new();
+        let rule = matrix.get_promotion_rule(&IrType::String, &IrType::Bool).unwrap();
+        if let PromotionRule::Direct { cast_kind, requires_runtime_support, requires_validation, .. } = rule {
+            assert_eq!(*cast_kind, CastKind::StringToBool);
+            assert!(*requires_runtime_support);
+            assert!(*requires_validation); // Parse may fail
+        } else {
+            panic!("Expected Direct promotion rule for String→Bool");
+        }
+    }
+
+    // String → Char conversion (1 test - already in T027 but verify here)
+
+    #[test]
+    fn test_string_to_char_parsing() {
+        let matrix = PromotionMatrix::new();
+        let rule = matrix.get_promotion_rule(&IrType::String, &IrType::Char).unwrap();
+        if let PromotionRule::Direct { cast_kind, requires_runtime_support, requires_validation, .. } = rule {
+            assert_eq!(*cast_kind, CastKind::StringToChar);
+            assert!(*requires_runtime_support);
+            assert!(*requires_validation); // Length check
+        } else {
+            panic!("Expected Direct promotion rule for String→Char");
+        }
+    }
+
+    // String → String identity conversion (1 test)
+
+    #[test]
+    fn test_string_to_string_identity() {
+        let matrix = PromotionMatrix::new();
+        let rule = matrix.get_promotion_rule(&IrType::String, &IrType::String).unwrap();
+        if let PromotionRule::Direct {
+            cast_kind,
+            requires_runtime_support,
+            requires_validation,
+            may_lose_precision,
+            may_overflow,
+            ..
+        } = rule
+        {
+            assert_eq!(*cast_kind, CastKind::Bitcast); // No-op
+            assert!(!*requires_runtime_support);
+            assert!(!*requires_validation);
+            assert!(!*may_lose_precision);
+            assert!(!*may_overflow);
+        } else {
+            panic!("Expected Direct promotion rule for String→String");
+        }
+    }
+}
+
+// -------------------------------------------------------------------------
+// T034: String Parsing Error Test Cases
+// -------------------------------------------------------------------------
+
+/// Tests for invalid string parsing scenarios
+/// These tests verify that validation requirements are correctly set
+#[cfg(test)]
+mod string_parsing_error_tests {
+    use super::*;
+
+    #[test]
+    fn test_invalid_string_to_int_requires_validation() {
+        let matrix = PromotionMatrix::new();
+        let rule = matrix.get_promotion_rule(&IrType::String, &IrType::I32).unwrap();
+        if let PromotionRule::Direct { requires_validation, .. } = rule {
+            assert!(*requires_validation, "String→Int must require validation for invalid input like 'abc'");
+        } else {
+            panic!("Expected Direct promotion rule for String→I32");
+        }
+    }
+
+    #[test]
+    fn test_string_to_char_length_check() {
+        let matrix = PromotionMatrix::new();
+        let rule = matrix.get_promotion_rule(&IrType::String, &IrType::Char).unwrap();
+        if let PromotionRule::Direct { requires_validation, .. } = rule {
+            assert!(*requires_validation, "String→Char must require validation for multi-char or empty strings");
+        } else {
+            panic!("Expected Direct promotion rule for String→Char");
+        }
+    }
+
+    #[test]
+    fn test_string_to_float_invalid_format() {
+        let matrix = PromotionMatrix::new();
+        let rule = matrix.get_promotion_rule(&IrType::String, &IrType::F32).unwrap();
+        if let PromotionRule::Direct { requires_validation, .. } = rule {
+            assert!(*requires_validation, "String→Float must require validation for invalid formats");
+        } else {
+            panic!("Expected Direct promotion rule for String→F32");
+        }
+    }
+
+    #[test]
+    fn test_string_to_bool_invalid_value() {
+        let matrix = PromotionMatrix::new();
+        let rule = matrix.get_promotion_rule(&IrType::String, &IrType::Bool).unwrap();
+        if let PromotionRule::Direct { requires_validation, .. } = rule {
+            assert!(*requires_validation, "String→Bool must require validation for non-boolean strings");
+        } else {
+            panic!("Expected Direct promotion rule for String→Bool");
+        }
+    }
+
+    #[test]
+    fn test_string_to_unsigned_negative_check() {
+        let matrix = PromotionMatrix::new();
+        let rule = matrix.get_promotion_rule(&IrType::String, &IrType::U32).unwrap();
+        if let PromotionRule::Direct { requires_validation, .. } = rule {
+            assert!(*requires_validation, "String→Unsigned must require validation for negative values");
+        } else {
+            panic!("Expected Direct promotion rule for String→U32");
+        }
+    }
+
+    #[test]
+    fn test_string_parsing_requires_runtime_support() {
+        let matrix = PromotionMatrix::new();
+        let rule = matrix.get_promotion_rule(&IrType::String, &IrType::I64).unwrap();
+        if let PromotionRule::Direct { requires_runtime_support, .. } = rule {
+            assert!(*requires_runtime_support, "String parsing requires runtime support");
+        } else {
+            panic!("Expected Direct promotion rule for String→I64");
+        }
+    }
+}

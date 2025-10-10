@@ -190,6 +190,104 @@
 //! - String → Bool / String → Char conversions should generate `InvalidStringConversion` at runtime
 //! - Boolean conversions generate no warnings (all conversions well-defined)
 //!
+//! ## String Conversions (23 new rules + 2 from Bool/Char = 25 total)
+//!
+//! String conversions enable interoperability between all primitive types and string representations.
+//! These conversions fall into three categories: formatting (primitive→String), parsing (String→primitive),
+//! and identity (String→String).
+//!
+//! ### Primitive to String Formatting (12 rules - Always succeed)
+//!
+//! All primitive types can be formatted to strings with guaranteed success:
+//! - **Integers → String** (8 rules): Decimal string representation
+//!   - Types: I8, I16, I32, I64, U8, U16, U32, U64 → String
+//!   - Uses `IntToString` cast kind
+//!   - Requires `requires_runtime_support: true` (heap allocation + formatting logic)
+//!   - Examples: 42i32 → "42", -5i8 → "-5", 255u8 → "255"
+//!   - **Always succeeds** - no validation needed (`requires_validation: false`)
+//!
+//! - **Floats → String** (2 rules): Scientific/standard notation
+//!   - Types: F32, F64 → String
+//!   - Uses `FloatToString` cast kind
+//!   - Requires `requires_runtime_support: true` (heap allocation + formatting)
+//!   - Examples: 3.14f32 → "3.14", f64::NAN → "NaN", f32::INFINITY → "inf"
+//!   - **Always succeeds** - handles special values (NaN, infinity, -0.0)
+//!
+//! - **Bool → String** (1 rule): Canonical boolean representation
+//!   - Uses `BoolToString` cast kind
+//!   - Requires `requires_runtime_support: true` (heap allocation)
+//!   - Converts: `true` → "true", `false` → "false"
+//!   - **Always succeeds** - deterministic mapping
+//!
+//! - **Char → String** (1 rule): Single-character string
+//!   - Uses `CharToString` cast kind
+//!   - Requires `requires_runtime_support: true` (heap allocation)
+//!   - Examples: 'A' → "A", '🦀' → "🦀" (UTF-8 encoding)
+//!   - **Always succeeds** - valid chars produce valid UTF-8
+//!
+//! ### String to Primitive Parsing (12 rules - May fail)
+//!
+//! Parsing string representations to primitives requires validation:
+//! - **String → Integers** (8 rules): Parse decimal integers
+//!   - Types: String → I8, I16, I32, I64, U8, U16, U32, U64
+//!   - Uses `StringToInt` cast kind
+//!   - Requires `requires_runtime_support: true` (parsing logic)
+//!   - Requires `requires_validation: true` (may fail on invalid input)
+//!   - Valid examples: "42" → 42i32, "-5" → -5i8, "255" → 255u8
+//!   - Invalid examples generate `InvalidStringConversion` warning:
+//!     * "abc" → ERROR (non-numeric)
+//!     * "999999999999" → ERROR (overflow for target type)
+//!     * "-42" → ERROR when parsing to unsigned type
+//!     * "  42  " → ERROR (leading/trailing whitespace not allowed)
+//!
+//! - **String → Floats** (2 rules): Parse floating-point values
+//!   - Types: String → F32, F64
+//!   - Uses `StringToFloat` cast kind
+//!   - Requires `requires_runtime_support: true` (parsing logic)
+//!   - Requires `requires_validation: true` (may fail on invalid format)
+//!   - Valid examples: "3.14" → 3.14f32, "NaN" → f64::NAN, "inf" → f32::INFINITY
+//!   - Invalid examples generate `InvalidStringConversion` warning:
+//!     * "not a number" → ERROR
+//!     * "3.14.15" → ERROR (multiple decimal points)
+//!
+//! - **String → Bool** (1 rule): Parse boolean keywords
+//!   - Uses `StringToBool` cast kind
+//!   - Requires `requires_runtime_support: true` + `requires_validation: true`
+//!   - Valid: "true" → true, "false" → false (case-sensitive)
+//!   - Invalid examples generate `InvalidStringConversion` warning:
+//!     * "True", "FALSE", "1", "yes" → ERROR (only "true"/"false" accepted)
+//!
+//! - **String → Char** (1 rule): Extract single character
+//!   - Uses `StringToChar` cast kind
+//!   - Requires `requires_runtime_support: true` + `requires_validation: true`
+//!   - Valid: "A" → 'A', "🦀" → '🦀'
+//!   - Invalid examples generate `InvalidStringConversion` warning:
+//!     * "" → ERROR (empty string)
+//!     * "ABC" → ERROR (multiple characters)
+//!
+//! ### String to String Identity (1 rule)
+//!
+//! - **String → String**: No-op conversion
+//!   - Uses `Bitcast` cast kind (no actual operation performed)
+//!   - No runtime support needed (`requires_runtime_support: false`)
+//!   - No validation needed (`requires_validation: false`)
+//!   - Useful for uniform handling of all type conversions in IR generation
+//!
+//! ### String Conversion Warning Generation
+//!
+//! String parsing failures generate `InvalidStringConversion` warnings with detailed context:
+//! - **Compile-time validation**: If string value is const-evaluable, parsing is attempted at compile time
+//!   - Generates warning with exact string value: `InvalidStringConversion { string_value: Some("abc"), ... }`
+//!   - Reason describes specific parse failure (e.g., "Cannot parse 'abc' as i32")
+//! - **Runtime validation**: If string value is dynamic (computed at runtime)
+//!   - Generates warning without string value: `InvalidStringConversion { string_value: None, ... }`
+//!   - Reason indicates runtime check needed: "String parsing may fail at runtime"
+//! - **Parsing rules**:
+//!   - Integer parsing: Rejects non-numeric, overflow, negative for unsigned, leading/trailing whitespace
+//!   - Float parsing: Rejects invalid format, accepts "NaN", "inf", "-inf"
+//!   - Bool parsing: Only accepts "true" or "false" (case-sensitive)
+//!   - Char parsing: Only accepts single-character strings (UTF-8 encoded)
+//!
 //! ## Usage Example
 //!
 //! ```rust
@@ -467,6 +565,9 @@ impl PromotionMatrix {
 
         // Add character promotion rules (T027)
         self.add_character_promotions();
+
+        // Add string promotion rules (T035)
+        self.add_string_promotions();
 
         // Add identity promotions for all basic types
         self.add_identity_promotions();
@@ -1103,10 +1204,128 @@ impl PromotionMatrix {
             },
         );
     }
+
     /// Add all string conversion rules (25 rules)
+    ///
+    /// String conversions fall into three categories:
+    /// 1. Primitive → String (12 rules): Always succeed, require runtime formatting
+    /// 2. String → Primitive (12 rules): May fail, require runtime parsing + validation
+    /// 3. String → String (1 rule): Identity/no-op
     fn add_string_promotions(&mut self) {
-        // Implementation in T035
-        todo!("T035: Implement string promotions")
+        // =====================================================================
+        // Integers → String (8 rules) - Formatting always succeeds
+        // =====================================================================
+        let int_types =
+            [IrType::I8, IrType::I16, IrType::I32, IrType::I64, IrType::U8, IrType::U16, IrType::U32, IrType::U64];
+
+        for int_ty in &int_types {
+            self.add_promotion_rule(
+                int_ty.clone(),
+                IrType::String,
+                PromotionRule::Direct {
+                    cast_kind: CastKind::IntToString,
+                    may_lose_precision: false, // Formatting is lossless
+                    may_overflow: false,
+                    requires_runtime_support: true, // Heap allocation + formatting
+                    requires_validation: false,     // Always succeeds
+                    precision_loss_estimate: None,
+                },
+            );
+        }
+
+        // =====================================================================
+        // String → Integers (8 rules) - Parsing may fail
+        // =====================================================================
+        for int_ty in &int_types {
+            self.add_promotion_rule(
+                IrType::String,
+                int_ty.clone(),
+                PromotionRule::Direct {
+                    cast_kind: CastKind::StringToInt,
+                    may_lose_precision: false,      // Parsing is exact
+                    may_overflow: false,            // But may fail validation
+                    requires_runtime_support: true, // Parsing logic
+                    requires_validation: true,      // Invalid format, overflow, etc.
+                    precision_loss_estimate: None,
+                },
+            );
+        }
+
+        // =====================================================================
+        // Floats → String (2 rules) - Formatting always succeeds
+        // =====================================================================
+        self.add_promotion_rule(
+            IrType::F32,
+            IrType::String,
+            PromotionRule::Direct {
+                cast_kind: CastKind::FloatToString,
+                may_lose_precision: false, // Formatting preserves value
+                may_overflow: false,
+                requires_runtime_support: true, // Heap allocation + formatting
+                requires_validation: false,     // Always succeeds
+                precision_loss_estimate: None,
+            },
+        );
+
+        self.add_promotion_rule(
+            IrType::F64,
+            IrType::String,
+            PromotionRule::Direct {
+                cast_kind: CastKind::FloatToString,
+                may_lose_precision: false,
+                may_overflow: false,
+                requires_runtime_support: true,
+                requires_validation: false,
+                precision_loss_estimate: None,
+            },
+        );
+
+        // =====================================================================
+        // String → Floats (2 rules) - Parsing may fail
+        // =====================================================================
+        self.add_promotion_rule(
+            IrType::String,
+            IrType::F32,
+            PromotionRule::Direct {
+                cast_kind: CastKind::StringToFloat,
+                may_lose_precision: false,      // Parsing is exact
+                may_overflow: false,            // But may fail validation
+                requires_runtime_support: true, // Parsing logic
+                requires_validation: true,      // Invalid format, NaN, inf, etc.
+                precision_loss_estimate: None,
+            },
+        );
+
+        self.add_promotion_rule(
+            IrType::String,
+            IrType::F64,
+            PromotionRule::Direct {
+                cast_kind: CastKind::StringToFloat,
+                may_lose_precision: false,
+                may_overflow: false,
+                requires_runtime_support: true,
+                requires_validation: true,
+                precision_loss_estimate: None,
+            },
+        );
+
+        // =====================================================================
+        // String → String (1 rule) - Identity/no-op
+        // =====================================================================
+        self.add_promotion_rule(
+            IrType::String,
+            IrType::String,
+            PromotionRule::Direct {
+                cast_kind: CastKind::Bitcast, // No-op, no actual cast needed
+                may_lose_precision: false,
+                may_overflow: false,
+                requires_runtime_support: false, // Identity operation
+                requires_validation: false,      // No validation needed
+                precision_loss_estimate: None,
+            },
+        );
+
+        // Note: Bool↔String and Char↔String rules already added in T025 and T027
     }
 
     /// Generate precision loss warning for a type conversion (T019)
