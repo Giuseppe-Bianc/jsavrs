@@ -7,7 +7,7 @@ use std::collections::HashMap;
 
 use crate::ir::{CastKind, IrType};
 
-use super::types::{OverflowBehavior, PromotionRule, PromotionWarning, TypeGroup};
+use super::types::{OverflowBehavior, PromotionRule, PromotionWarning};
 
 /// Defines the complete type promotion lattice and rules
 #[derive(Debug, Clone)]
@@ -15,7 +15,7 @@ pub struct PromotionMatrix {
     /// Hashmap for O(1) promotion rule lookups: (from_type, to_type) → rule
     pub(crate) promotion_rules: HashMap<(IrType, IrType), PromotionRule>,
     /// Type precedence ordering for promotion analysis
-    pub(crate) type_precedence: Vec<TypeGroup>,
+    //pub(crate) type_precedence: Vec<TypeGroup>,
     /// Overflow behavior configuration
     pub(crate) overflow_behavior: OverflowBehavior,
 }
@@ -36,13 +36,13 @@ impl PromotionMatrix {
     pub fn with_overflow_behavior(overflow_behavior: OverflowBehavior) -> Self {
         let mut matrix = PromotionMatrix {
             promotion_rules: HashMap::new(),
-            type_precedence: vec![
+            /*type_precedence: vec![
                 TypeGroup::FloatingPoint(vec![IrType::F32, IrType::F64]),
                 TypeGroup::SignedIntegers(vec![IrType::I8, IrType::I16, IrType::I32, IrType::I64]),
                 TypeGroup::UnsignedIntegers(vec![IrType::U8, IrType::U16, IrType::U32, IrType::U64]),
                 TypeGroup::Boolean,
                 TypeGroup::Character,
-            ],
+            ],*/
             overflow_behavior,
         };
 

@@ -18,7 +18,7 @@ pub fn generate_precision_loss_warning(
         return Some(PromotionWarning::PrecisionLoss {
             from_type: from_type.clone(),
             to_type: to_type.clone(),
-            estimated_loss: estimate.clone(),
+            estimated_loss: *estimate,
         });
     }
     None
