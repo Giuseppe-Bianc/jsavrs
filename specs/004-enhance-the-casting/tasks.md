@@ -3,20 +3,20 @@
 **Feature**: `004-enhance-the-casting`  
 **Branch**: `004-enhance-the-casting`  
 **Generated**: 2025-10-08  
-**Status**: ✅ **Phase 4 In Progress (62%)** - 26/42 tasks completed
+**Status**: ✅ **Phase 4 COMPLETE (69%)** - 29/42 tasks completed
 
 ---
 
 ## Progress Summary
 
-**Current Milestone**: 🔄 User Story 2 (Boolean and Character Conversions) - 6/10 tasks complete  
+**Current Milestone**: ✅ User Story 2 (Boolean and Character Conversions) - 10/10 tasks COMPLETE  
 **Next Milestone**: ⏸️ User Story 3 (String Conversions) - Not started
 
 ### Completion Status by Phase
 - ✅ **Phase 1 (Setup)**: 3/3 tasks (100%) - All infrastructure verified
 - ✅ **Phase 2 (Foundational)**: 5/5 tasks (100%) - Data structures enhanced
 - ✅ **Phase 3 (US1 - Numeric)**: 14/15 tasks (93%) - 100/100 numeric rules implemented
-- 🔄 **Phase 4 (US2 - Bool/Char)**: 6/10 tasks (60%) - Boolean + Character + validation tests complete
+- ✅ **Phase 4 (US2 - Bool/Char)**: 10/10 tasks (100%) - **PHASE COMPLETE** ✅
 - ⏸️ **Phase 5 (US3 - String)**: 0/6 tasks (0%)
 - ⏸️ **Phase 6 (Polish)**: 0/3 tasks (0%)
 
@@ -30,21 +30,38 @@
 - ✅ **T027**: Implemented 6 character promotion rules with all tests passing
 - ✅ **T028**: Integrated character promotions into default initialization
 - ✅ **T029**: Wrote 5 Unicode validation test cases + 3 BONUS boolean snapshot tests (8 snapshots)
+- ✅ **T030**: Implemented Unicode validation warning generation with 4 tests
+- ✅ **T031**: Wrote 3 warning snapshot tests (6 snapshots for Unicode, precision loss, signedness)
+- ✅ **T032**: Added comprehensive documentation for Boolean/Character conversions (98 lines)
 
 ### Test Results
-- 🎯 **136/136** type promotion tests passing (100%) [+8 from T029]
+- 🎯 **143/143** type promotion tests passing (100%)
 - 🎯 **8/8** library unit tests passing (100%)
 - 🎯 **7/7** character conversion tests passing (100%)
 - 🎯 **11/11** boolean conversion tests passing (100%)
 - 🎯 **5/5** Unicode validation tests passing (100%)
-- 🎯 **8 insta snapshots** created for boolean rule consistency
+- 🎯 **4/4** Unicode warning generation tests passing (100%)
+- 🎯 **3/3** warning snapshot tests passing (100%)
+- 🎯 **14 insta snapshots** created (8 boolean rules + 6 warning formats)
 - 📊 **128 total promotion rules** implemented and validated (100 numeric + 22 boolean + 6 character)
+- 📖 **Module documentation**: 193 lines covering numeric, boolean, and character conversions
+
+### Deliverables Complete
+- ✅ **User Story 1 (US1)**: Basic Numeric Type Conversions - 14/15 tasks (93%)
+  - 100 numeric promotion rules with precision loss and overflow tracking
+  - Comprehensive snapshot tests and edge case coverage
+  - Full module documentation (100 lines)
+- ✅ **User Story 2 (US2)**: Boolean and Character Conversions - 10/10 tasks (100%) ⭐
+  - 22 boolean promotion rules (Bool↔Numeric, Bool↔String)
+  - 6 character promotion rules (Char↔Integer, Char↔String) with Unicode validation
+  - Unicode validation warning system for surrogate/range checks
+  - 14 insta snapshots for rule and warning consistency
+  - 98 lines of comprehensive documentation
 
 ### Next Steps
-1. **T030**: Implement Unicode validation warning generation
-2. **T031**: Write snapshot tests for boolean/character warnings
-3. **T032**: Complete Phase 4 validation and edge case testing
-4. **Phases 5-6**: String conversions and final polish
+1. **Phase 5**: Implement User Story 3 - String Conversions (T033-T038)
+2. **Phase 6**: Final polish and validation (T039-T042)
+3. **Complete remaining tasks**: 13/42 tasks remaining (31%)
 
 ---
 
@@ -900,51 +917,102 @@ fn initialize_default_promotions(&mut self) {
 
 ---
 
-### T030: Implement Unicode Validation Warning Generation
+### T030: Implement Unicode Validation Warning Generation ✅ COMPLETED
 **File**: `src/ir/type_promotion.rs`  
 **Description**: Add `InvalidUnicodeCodePoint` warning generation for u32→char conversions  
+**Implementation Summary**:
+- ✅ Implemented `generate_unicode_validation_warning()` method (lines 1055-1078)
+- ✅ Validates Unicode scalar values for integer→char conversions
+- ✅ Detects and reports three error categories:
+  * Surrogate code points (U+D800 to U+DFFF reserved for UTF-16)
+  * Out-of-range values (> U+10FFFF max Unicode code point)
+  * Other invalid Unicode scalar values
+- ✅ Implemented helper method `is_valid_unicode_scalar()` for validation logic
+- ✅ Added 4 comprehensive test functions (lines 2280-2350):
+  * `test_unicode_warning_generation_for_surrogate`: Validates surrogate detection
+  * `test_unicode_warning_generation_for_out_of_range`: Validates range checking
+  * `test_unicode_warning_no_warning_for_valid_values`: Tests 5 valid Unicode values
+  * `test_unicode_warning_only_for_char_target`: Ensures warnings only for Char target type
 **Implementation**:
 ```rust
-if rule.requires_validation && to_type == IrType::Char {
-    if let Some(value) = get_static_u32_value(from_value) {  // If const-evaluable
-        if !is_valid_unicode_scalar(value) {
-            let reason = if (0xD800..=0xDFFF).contains(&value) {
-                "surrogate code point (reserved for UTF-16)"
-            } else if value > 0x10FFFF {
-                "value exceeds maximum Unicode code point U+10FFFF"
-            } else {
-                "invalid Unicode scalar value"
-            };
-            warnings.push(PromotionWarning::InvalidUnicodeCodePoint { value, reason: reason.to_string() });
-        }
+pub fn generate_unicode_validation_warning(&self, value: u32, to_type: &IrType) -> Option<PromotionWarning> {
+    if *to_type != IrType::Char {
+        return None;
     }
+
+    if !Self::is_valid_unicode_scalar(value) {
+        let reason = if (0xD800..=0xDFFF).contains(&value) {
+            "surrogate code point (reserved for UTF-16)".to_string()
+        } else if value > 0x10FFFF {
+            "value exceeds maximum Unicode code point U+10FFFF".to_string()
+        } else {
+            "invalid Unicode scalar value".to_string()
+        };
+        return Some(PromotionWarning::InvalidUnicodeCodePoint { value, reason });
+    }
+    None
 }
 
 fn is_valid_unicode_scalar(value: u32) -> bool {
     value <= 0x10FFFF && !(0xD800..=0xDFFF).contains(&value)
 }
 ```
-**Validation**: Run T029 validation tests  
+**Validation**: ✅ All T030 tests passing (4/4), total suite 140/140 tests passing  
+**Test Results**: ✅ No regressions, +4 Unicode warning generation tests  
 **Dependencies**: T028, T029  
 **Story**: US2
 
 ---
 
-### T031: [TEST] Write Snapshot Tests for Boolean/Character Warnings [P]
+### T031: [TEST] Write Snapshot Tests for Boolean/Character Warnings [P] ✅ COMPLETED
 **File**: `tests/ir_type_promotion_tests.rs`  
 **Description**: Write insta snapshot tests for warning messages from boolean and character conversions  
+**Implementation Summary**:
+- ✅ Implemented 3 snapshot test functions (lines 2352-2401):
+  * `test_invalid_unicode_warning_snapshot`: 2 Unicode warning snapshots (surrogate + out-of-range)
+  * `test_precision_loss_warning_snapshot`: 2 precision loss snapshots (U64→U32, F64→F32)
+  * `test_signedness_change_warning_snapshot`: 2 signedness change snapshots (I32↔U32)
+- ✅ Total: 6 insta snapshot baselines created for warning consistency
+- ✅ Snapshots cover all three major warning types:
+  * `InvalidUnicodeCodePoint`: Surrogate and out-of-range scenarios
+  * `PrecisionLoss`: Integer narrowing and float truncation
+  * `SignednessChange`: Bidirectional signed↔unsigned conversions
 **Test Cases**:
 ```rust
 #[test]
 fn test_invalid_unicode_warning_snapshot() {
-    let warning = PromotionWarning::InvalidUnicodeCodePoint {
-        value: 0xD800,
-        reason: "surrogate code point".to_string(),
-    };
-    insta::assert_debug_snapshot!(warning);
+    let warning_surrogate = matrix.generate_unicode_validation_warning(0xD800, &IrType::Char).unwrap();
+    assert_debug_snapshot!("unicode_warning_surrogate", warning_surrogate);
+    
+    let warning_out_of_range = matrix.generate_unicode_validation_warning(0x110000, &IrType::Char).unwrap();
+    assert_debug_snapshot!("unicode_warning_out_of_range", warning_out_of_range);
 }
 ```
-**Expected Results**: Snapshots capture consistent formats  
+**Expected Results**: ✅ Snapshots capture consistent formats  
+**Validation**: ✅ All T031 tests passing (3/3), total suite 143/143 tests passing  
+**Test Results**: ✅ No regressions, +3 snapshot tests, +6 warning snapshots (total 14 snapshots)  
+**Dependencies**: T030  
+**Story**: US2
+
+---
+
+### T032: Update Documentation for Boolean/Character Conversions
+**File**: `src/ir/type_promotion.rs`  
+**Description**: Add rustdoc documentation for boolean and character conversion rules  
+**Implementation**:
+```rust
+//! ## Boolean Conversions (24 rules)
+//! 
+//! Boolean to numeric: `true` → 1, `false` → 0
+//! Numeric to boolean: 0 → `false`, non-zero → `true` (including NaN)
+//! 
+//! ## Character Conversions (16 rules)
+//! 
+//! - `char` → `u32`: Direct Unicode scalar value extraction
+//! - `u32` → `char`: Validated conversion (rejects surrogates U+D800-U+DFFF and values >U+10FFFF)
+//! - `char` ↔ other integers: Indirect via `u32`
+//! - `char` ↔ `String`: Runtime support required
+```
 **Dependencies**: T030  
 **Story**: US2
 
@@ -972,7 +1040,29 @@ fn test_invalid_unicode_warning_snapshot() {
 
 ---
 
-**CHECKPOINT US2**: Boolean and character conversions implemented and tested. Independent user story complete.
+### T032: Update Documentation for Boolean/Character Conversions ✅ COMPLETED
+**File**: `src/ir/type_promotion.rs`  
+**Description**: Add rustdoc documentation for boolean and character conversion rules  
+**Implementation Summary**:
+- ✅ Added comprehensive module documentation (lines 96-193) covering:
+  * **Boolean Conversions (22 rules)**: Complete documentation with examples
+    - Boolean → Numeric (10 rules): BoolToInt/BoolToFloat semantics
+    - Numeric → Boolean (10 rules): Zero test semantics for integers and floats
+    - Boolean ↔ String (2 rules): Runtime support and validation requirements
+  * **Character Conversions (6 rules)**: Unicode scalar value handling
+    - Char → Integer (2 rules): Direct Unicode code point extraction
+    - Integer → Char (2 rules): Validated conversions with surrogate/range checks
+    - Char ↔ String (2 rules): Runtime support for single-character conversions
+  * **Warning Generation**: Documentation for `generate_unicode_validation_warning()`
+- ✅ Documented validation requirements and usage examples
+**Validation**: ✅ Documentation compiles successfully, all tests passing (143/143)  
+**Test Results**: ✅ No regressions, library tests passing (8/8)  
+**Dependencies**: T031  
+**Story**: US2
+
+---
+
+**CHECKPOINT US2 ✅ COMPLETE**: Boolean and character conversions fully implemented, tested, and documented. User Story 2 delivered successfully with 10/10 tasks complete (T023-T032).
 
 ---
 

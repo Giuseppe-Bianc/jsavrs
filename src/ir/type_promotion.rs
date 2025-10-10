@@ -90,6 +90,106 @@
 //! - `generate_precision_loss_warning()`: Analyzes `may_lose_precision` flag and estimates
 //! - `generate_signedness_change_warning()`: Detects Bitcast operations changing signedness
 //!
+//! ## Boolean Conversions (22 rules implemented)
+//!
+//! Boolean types support bidirectional conversions with numeric and string types.
+//! All boolean conversions use `Direct` rules with no precision loss or overflow risk.
+//!
+//! ### Boolean to Numeric (10 rules)
+//!
+//! Converts boolean values to numeric representation using `BoolToInt` and `BoolToFloat` cast kinds:
+//! - **Bool → Integers** (8 rules): `true` → 1, `false` → 0
+//!   - Supported targets: I8, I16, I32, I64, U8, U16, U32, U64
+//!   - Examples: `true → i32` yields 1, `false → u8` yields 0
+//! - **Bool → Floats** (2 rules): `true` → 1.0, `false` → 0.0
+//!   - Supported targets: F32, F64
+//!   - Exact representation (0.0 and 1.0 exactly representable in IEEE 754)
+//!
+//! No runtime support or validation required. Conversions are deterministic and lossless.
+//!
+//! ### Numeric to Boolean (10 rules)
+//!
+//! Converts numeric values to boolean using zero test semantics:
+//! - **Integers → Bool** (8 rules): `0` → `false`, non-zero → `true`
+//!   - Uses `IntToBool` cast kind
+//!   - All integer values map deterministically (e.g., -5 → true, 0 → false)
+//! - **Floats → Bool** (2 rules): `±0.0` → `false`, other → `true`
+//!   - Uses `FloatToBool` cast kind
+//!   - Special values: `NaN` → `true`, `±Infinity` → `true`
+//!   - Example: `3.14 → true`, `-0.0 → false`, `f64::NAN → true`
+//!
+//! No runtime support or validation required. Zero test is well-defined for all numeric types.
+//!
+//! ### Boolean to String (2 rules)
+//!
+//! String formatting conversions require runtime support for memory allocation:
+//! - **Bool → String**: `true` → `"true"`, `false` → `"false"`
+//!   - Uses `BoolToString` cast kind
+//!   - Requires `requires_runtime_support: true` for string allocation
+//!   - Lossless conversion (exact string representation)
+//! - **String → Bool**: Parses `"true"` / `"false"` (case-sensitive)
+//!   - Uses `StringToBool` cast kind
+//!   - Requires `requires_runtime_support: true` for parsing
+//!   - Requires `requires_validation: true` to reject invalid strings (e.g., "True", "1", "yes")
+//!   - Invalid strings should generate `InvalidStringConversion` warning
+//!
+//! ## Character Conversions (6 rules implemented)
+//!
+//! Character types represent Unicode scalar values (U+0000 to U+10FFFF, excluding surrogates).
+//! All character conversions use `Direct` rules with validation where necessary.
+//!
+//! ### Character to Integer (2 rules)
+//!
+//! Extracts the Unicode scalar value as an integer:
+//! - **Char → U32**: Direct extraction of Unicode code point
+//!   - Uses `CharToInt` cast kind
+//!   - Lossless conversion (e.g., 'A' → 65, '🦀' → 129408)
+//!   - No validation required (all `char` values are valid Unicode scalars)
+//! - **Char → I32**: Same as Char → U32 (Unicode values fit in i32 range 0..=0x10FFFF)
+//!   - Uses `CharToInt` cast kind
+//!   - No validation required (max Unicode U+10FFFF fits in i32)
+//!
+//! ### Integer to Character (2 rules with validation)
+//!
+//! Converts integer values to Unicode characters with validation:
+//! - **U32 → Char**: Validates Unicode scalar range
+//!   - Uses `IntToChar` cast kind
+//!   - Requires `requires_validation: true` to check:
+//!     * Value ≤ 0x10FFFF (maximum Unicode code point)
+//!     * Value ∉ [0xD800, 0xDFFF] (surrogate range reserved for UTF-16)
+//!   - Invalid values generate `InvalidUnicodeCodePoint` warning via `generate_unicode_validation_warning()`
+//!   - Examples: 65 → 'A', 0xD800 → ERROR (surrogate), 0x110000 → ERROR (out of range)
+//! - **I32 → Char**: Validates non-negative and Unicode range
+//!   - Uses `IntToChar` cast kind
+//!   - Requires `requires_validation: true` to check:
+//!     * Value ≥ 0 (negative values invalid)
+//!     * Value ≤ 0x10FFFF and ∉ [0xD800, 0xDFFF] (same as U32 → Char)
+//!   - Invalid values generate `InvalidUnicodeCodePoint` warning
+//!
+//! ### Character to String (2 rules with runtime support)
+//!
+//! Converts between single-character representations:
+//! - **Char → String**: Converts character to single-character string
+//!   - Uses `CharToString` cast kind
+//!   - Requires `requires_runtime_support: true` for string allocation
+//!   - Lossless conversion (e.g., 'A' → "A", '🦀' → "🦀")
+//! - **String → Char**: Extracts character from single-character string
+//!   - Uses `StringToChar` cast kind
+//!   - Requires `requires_runtime_support: true` for parsing
+//!   - Requires `requires_validation: true` to ensure string length == 1
+//!   - Empty strings or multi-character strings generate `InvalidStringConversion` warning
+//!
+//! ## Warning Generation for Boolean/Character Conversions
+//!
+//! Three warning generation methods handle validation scenarios:
+//! - `generate_unicode_validation_warning()`: Validates integer → char conversions
+//!   - Checks Unicode scalar range (0..=0x10FFFF excluding 0xD800..=0xDFFF)
+//!   - Generates `InvalidUnicodeCodePoint` with descriptive reasons:
+//!     * "surrogate code point (reserved for UTF-16)" for 0xD800..=0xDFFF
+//!     * "value exceeds maximum Unicode code point U+10FFFF" for values > 0x10FFFF
+//! - String → Bool / String → Char conversions should generate `InvalidStringConversion` at runtime
+//! - Boolean conversions generate no warnings (all conversions well-defined)
+//!
 //! ## Usage Example
 //!
 //! ```rust
@@ -1048,6 +1148,37 @@ impl PromotionMatrix {
             }
         }
         None
+    }
+
+    /// Generate Unicode validation warning for integer→char conversions (T030)
+    /// This method validates Unicode scalar values for u32→char and i32→char conversions
+    /// Validates that the value is a valid Unicode scalar (U+0000 to U+10FFFF, excluding surrogates U+D800-U+DFFF)
+    pub fn generate_unicode_validation_warning(&self, value: u32, to_type: &IrType) -> Option<PromotionWarning> {
+        // Only generate warnings for char target type
+        if *to_type != IrType::Char {
+            return None;
+        }
+
+        // Validate Unicode scalar value
+        if !Self::is_valid_unicode_scalar(value) {
+            let reason = if (0xD800..=0xDFFF).contains(&value) {
+                "surrogate code point (reserved for UTF-16)".to_string()
+            } else if value > 0x10FFFF {
+                "value exceeds maximum Unicode code point U+10FFFF".to_string()
+            } else {
+                "invalid Unicode scalar value".to_string()
+            };
+
+            return Some(PromotionWarning::InvalidUnicodeCodePoint { value, reason });
+        }
+
+        None
+    }
+
+    /// Check if a u32 value is a valid Unicode scalar value
+    /// Valid range: U+0000 to U+10FFFF, excluding surrogate pairs U+D800 to U+DFFF
+    fn is_valid_unicode_scalar(value: u32) -> bool {
+        value <= 0x10FFFF && !(0xD800..=0xDFFF).contains(&value)
     }
 }
 

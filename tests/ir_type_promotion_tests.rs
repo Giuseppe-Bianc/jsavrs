@@ -2260,3 +2260,118 @@ fn test_char_to_u32_no_validation_needed() {
         panic!("Expected Direct rule for Char→U32");
     }
 }
+
+// T030: Unicode Validation Warning Generation Tests
+#[test]
+fn test_unicode_warning_generation_for_surrogate() {
+    let matrix = PromotionMatrix::new();
+
+    // Test surrogate code point (0xD800 - 0xDFFF)
+    let warning = matrix.generate_unicode_validation_warning(0xD800, &IrType::Char);
+    assert!(warning.is_some(), "Expected warning for surrogate code point");
+
+    if let Some(PromotionWarning::InvalidUnicodeCodePoint { value, reason }) = warning {
+        assert_eq!(value, 0xD800);
+        assert!(reason.contains("surrogate"), "Expected 'surrogate' in reason");
+    } else {
+        panic!("Expected InvalidUnicodeCodePoint warning");
+    }
+}
+
+#[test]
+fn test_unicode_warning_generation_for_out_of_range() {
+    let matrix = PromotionMatrix::new();
+
+    // Test value > 0x10FFFF (max Unicode code point)
+    let warning = matrix.generate_unicode_validation_warning(0x110000, &IrType::Char);
+    assert!(warning.is_some(), "Expected warning for out-of-range value");
+
+    if let Some(PromotionWarning::InvalidUnicodeCodePoint { value, reason }) = warning {
+        assert_eq!(value, 0x110000);
+        assert!(reason.contains("exceeds"), "Expected 'exceeds' in reason");
+        assert!(reason.contains("U+10FFFF"), "Expected 'U+10FFFF' in reason");
+    } else {
+        panic!("Expected InvalidUnicodeCodePoint warning");
+    }
+}
+
+#[test]
+fn test_unicode_warning_no_warning_for_valid_values() {
+    let matrix = PromotionMatrix::new();
+
+    // Test valid Unicode scalar values
+    let test_values = [
+        0x0000,   // Null character
+        0x0041,   // 'A'
+        0xD7FF,   // Just before surrogate range
+        0xE000,   // Just after surrogate range
+        0x10FFFF, // Maximum Unicode code point
+    ];
+
+    for &value in &test_values {
+        let warning = matrix.generate_unicode_validation_warning(value, &IrType::Char);
+        assert!(warning.is_none(), "Expected no warning for valid Unicode value 0x{:X}", value);
+    }
+}
+
+#[test]
+fn test_unicode_warning_only_for_char_target() {
+    let matrix = PromotionMatrix::new();
+
+    // Test that invalid value doesn't generate warning for non-char types
+    let warning_u32 = matrix.generate_unicode_validation_warning(0xD800, &IrType::U32);
+    assert!(warning_u32.is_none(), "Expected no warning for U32 target");
+
+    let warning_i32 = matrix.generate_unicode_validation_warning(0xD800, &IrType::I32);
+    assert!(warning_i32.is_none(), "Expected no warning for I32 target");
+}
+
+// T031: Snapshot Tests for Boolean/Character Warnings
+#[test]
+fn test_invalid_unicode_warning_snapshot() {
+    use insta::assert_debug_snapshot;
+
+    let matrix = PromotionMatrix::new();
+
+    // Snapshot test for surrogate code point warning
+    let warning_surrogate = matrix.generate_unicode_validation_warning(0xD800, &IrType::Char).unwrap();
+    assert_debug_snapshot!("unicode_warning_surrogate", warning_surrogate);
+
+    // Snapshot test for out-of-range warning
+    let warning_out_of_range = matrix.generate_unicode_validation_warning(0x110000, &IrType::Char).unwrap();
+    assert_debug_snapshot!("unicode_warning_out_of_range", warning_out_of_range);
+}
+
+#[test]
+fn test_precision_loss_warning_snapshot() {
+    use insta::assert_debug_snapshot;
+
+    let matrix = PromotionMatrix::new();
+
+    // Test precision loss warning for U64 → U32
+    let rule = matrix.get_promotion_rule(&IrType::U64, &IrType::U32).unwrap();
+    let warning = matrix.generate_precision_loss_warning(&IrType::U64, &IrType::U32, rule).unwrap();
+    assert_debug_snapshot!("precision_loss_u64_to_u32", warning);
+
+    // Test precision loss warning for F64 → F32
+    let rule = matrix.get_promotion_rule(&IrType::F64, &IrType::F32).unwrap();
+    let warning = matrix.generate_precision_loss_warning(&IrType::F64, &IrType::F32, rule).unwrap();
+    assert_debug_snapshot!("precision_loss_f64_to_f32", warning);
+}
+
+#[test]
+fn test_signedness_change_warning_snapshot() {
+    use insta::assert_debug_snapshot;
+
+    let matrix = PromotionMatrix::new();
+
+    // Test signedness change warning for I32 → U32
+    let rule = matrix.get_promotion_rule(&IrType::I32, &IrType::U32).unwrap();
+    let warning = matrix.generate_signedness_change_warning(&IrType::I32, &IrType::U32, rule).unwrap();
+    assert_debug_snapshot!("signedness_change_i32_to_u32", warning);
+
+    // Test signedness change warning for U32 → I32
+    let rule = matrix.get_promotion_rule(&IrType::U32, &IrType::I32).unwrap();
+    let warning = matrix.generate_signedness_change_warning(&IrType::U32, &IrType::I32, rule).unwrap();
+    assert_debug_snapshot!("signedness_change_u32_to_i32", warning);
+}
