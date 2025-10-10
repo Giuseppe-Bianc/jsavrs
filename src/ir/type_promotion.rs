@@ -1514,16 +1514,15 @@ impl PromotionMatrix {
     pub fn generate_precision_loss_warning(
         &self, from_type: &IrType, to_type: &IrType, rule: &PromotionRule,
     ) -> Option<PromotionWarning> {
-        if let PromotionRule::Direct { may_lose_precision, precision_loss_estimate, .. } = rule {
-            if *may_lose_precision {
-                if let Some(estimate) = precision_loss_estimate {
-                    return Some(PromotionWarning::PrecisionLoss {
-                        from_type: from_type.clone(),
-                        to_type: to_type.clone(),
-                        estimated_loss: estimate.clone(),
-                    });
-                }
-            }
+        if let PromotionRule::Direct { may_lose_precision, precision_loss_estimate, .. } = rule
+            && *may_lose_precision
+            && let Some(estimate) = precision_loss_estimate
+        {
+            return Some(PromotionWarning::PrecisionLoss {
+                from_type: from_type.clone(),
+                to_type: to_type.clone(),
+                estimated_loss: estimate.clone(),
+            });
         }
         None
     }
@@ -1533,18 +1532,18 @@ impl PromotionMatrix {
     pub fn generate_signedness_change_warning(
         &self, from_type: &IrType, to_type: &IrType, rule: &PromotionRule,
     ) -> Option<PromotionWarning> {
-        if let PromotionRule::Direct { cast_kind, .. } = rule {
-            if *cast_kind == CastKind::IntBitcast {
-                let from_signed = from_type.is_signed_integer();
-                let to_signed = to_type.is_signed_integer();
-                // Check if exactly one is signed (XOR logic)
-                if from_signed != to_signed {
-                    return Some(PromotionWarning::SignednessChange {
-                        from_signed,
-                        to_signed,
-                        may_affect_comparisons: true,
-                    });
-                }
+        if let PromotionRule::Direct { cast_kind, .. } = rule
+            && *cast_kind == CastKind::IntBitcast
+        {
+            let from_signed = from_type.is_signed_integer();
+            let to_signed = to_type.is_signed_integer();
+            // Check if exactly one is signed (XOR logic)
+            if from_signed != to_signed {
+                return Some(PromotionWarning::SignednessChange {
+                    from_signed,
+                    to_signed,
+                    may_affect_comparisons: true,
+                });
             }
         }
         None

@@ -10,42 +10,42 @@ use std::fmt;
 pub enum CastKind {
     /// Default (safe) integer widening cast
     #[default]
-    IntZeroExtend,          // Unsigned widening (u8 -> u32)
-    IntSignExtend,          // Signed widening (i8 -> i32)
-    IntTruncate,            // Narrowing (u64 -> u16, i64 -> i32)
+    IntZeroExtend, // Unsigned widening (u8 -> u32)
+    IntSignExtend, // Signed widening (i8 -> i32)
+    IntTruncate,   // Narrowing (u64 -> u16, i64 -> i32)
 
     /// Signed ↔ Unsigned of same width (bit reinterpret)
-    IntBitcast,             // i32 ↔ u32 (same bit width reinterpretation)
+    IntBitcast, // i32 ↔ u32 (same bit width reinterpretation)
 
     /// Integer ↔ Float
-    IntToFloat,             // i32 -> f32, u64 -> f64
-    FloatToInt,             // f32 -> i32, f64 -> u64
+    IntToFloat, // i32 -> f32, u64 -> f64
+    FloatToInt, // f32 -> i32, f64 -> u64
 
     /// Float ↔ Float
-    FloatTruncate,          // f64 -> f32
-    FloatExtend,            // f32 -> f64
+    FloatTruncate, // f64 -> f32
+    FloatExtend, // f32 -> f64
 
     /// Integer/Float ↔ Bool
-    BoolToInt,              // bool -> u8/i32
-    IntToBool,              // i32 -> bool (nonzero)
-    BoolToFloat,            // bool -> f32/f64 (0.0 or 1.0)
-    FloatToBool,            // f32/f64 -> bool (nonzero)
+    BoolToInt, // bool -> u8/i32
+    IntToBool,   // i32 -> bool (nonzero)
+    BoolToFloat, // bool -> f32/f64 (0.0 or 1.0)
+    FloatToBool, // f32/f64 -> bool (nonzero)
 
     /// Char ↔ Integer
-    CharToInt,              // char -> u32 (Unicode scalar)
-    IntToChar,              // u32 -> char (checked, valid Unicode only)
+    CharToInt, // char -> u32 (Unicode scalar)
+    IntToChar, // u32 -> char (checked, valid Unicode only)
 
     /// Char ↔ String
-    CharToString,           // char -> String
-    StringToChar,           // String (len == 1) -> char
+    CharToString, // char -> String
+    StringToChar, // String (len == 1) -> char
 
     /// String ↔ Numeric/Bool
-    StringToInt,            // "123" -> 123_i32 (via parse)
-    StringToFloat,          // "3.14" -> f64 (via parse)
-    StringToBool,           // "true" -> true (via parse)
-    IntToString,            // 42 -> "42"
-    FloatToString,          // 3.14 -> "3.14"
-    BoolToString,           // true -> "true"
+    StringToInt, // "123" -> 123_i32 (via parse)
+    StringToFloat, // "3.14" -> f64 (via parse)
+    StringToBool,  // "true" -> true (via parse)
+    IntToString,   // 42 -> "42"
+    FloatToString, // 3.14 -> "3.14"
+    BoolToString,  // true -> "true"
 
     /*/// Pointer conversions
     IntToPtr,               // usize/u64 -> *const T
@@ -53,11 +53,9 @@ pub enum CastKind {
     PtrCast,                // *const A -> *const B (bit reinterpretation)
     RefToPtr,               // &T -> *const T
     PtrToRef,               // *const T -> &T (unsafe)*/
-
     /// Bit reinterpretation (same size types)
-    Bitcast,                // f32 <-> u32, f64 <-> u64, pointer <-> pointer
+    Bitcast, // f32 <-> u32, f64 <-> u64, pointer <-> pointer
 }
-
 
 #[repr(u8)]
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Hash)]
