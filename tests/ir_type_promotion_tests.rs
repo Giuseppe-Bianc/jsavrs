@@ -1530,7 +1530,7 @@ fn test_cross_signedness_same_width_i32_to_u32() {
     let matrix = PromotionMatrix::new();
     let rule = matrix.get_promotion_rule(&IrType::I32, &IrType::U32).unwrap();
     if let PromotionRule::Direct { cast_kind, .. } = rule {
-        assert_eq!(*cast_kind, CastKind::Bitcast);
+        assert_eq!(*cast_kind, CastKind::IntBitcast);
     } else {
         panic!("Expected Direct promotion rule");
     }
@@ -1541,7 +1541,7 @@ fn test_cross_signedness_same_width_u32_to_i32() {
     let matrix = PromotionMatrix::new();
     let rule = matrix.get_promotion_rule(&IrType::U32, &IrType::I32).unwrap();
     if let PromotionRule::Direct { cast_kind, .. } = rule {
-        assert_eq!(*cast_kind, CastKind::Bitcast);
+        assert_eq!(*cast_kind, CastKind::IntBitcast);
     } else {
         panic!("Expected Direct promotion rule");
     }
@@ -1566,7 +1566,7 @@ fn test_all_same_width_cross_signedness_conversions() {
         let rule = matrix.get_promotion_rule(&from_type, &to_type);
         assert!(rule.is_some(), "Missing rule for {:?} -> {:?}", from_type, to_type);
         if let Some(PromotionRule::Direct { cast_kind, .. }) = rule {
-            assert_eq!(*cast_kind, CastKind::Bitcast, "Expected Bitcast for {:?} -> {:?}", from_type, to_type);
+            assert_eq!(*cast_kind, CastKind::IntBitcast, "Expected IntBitcast for {:?} -> {:?}", from_type, to_type);
         }
     }
 }
@@ -2858,5 +2858,232 @@ mod string_parsing_error_tests {
         } else {
             panic!("Expected Direct promotion rule for String→I64");
         }
+    }
+}
+
+// ============================================================================
+// Phase 6: Polish & Integration Tests
+// ============================================================================
+
+/// T039: Validate that all 169 fundamental type pairs (13×13) are defined
+#[cfg(test)]
+mod comprehensive_validation_tests {
+    use super::*;
+
+    #[test]
+    fn test_all_169_type_pairs_defined() {
+        let matrix = PromotionMatrix::new();
+        let all_types = vec![
+            IrType::I8,
+            IrType::I16,
+            IrType::I32,
+            IrType::I64,
+            IrType::U8,
+            IrType::U16,
+            IrType::U32,
+            IrType::U64,
+            IrType::F32,
+            IrType::F64,
+            IrType::Bool,
+            IrType::Char,
+            IrType::String,
+        ];
+
+        assert_eq!(all_types.len(), 13, "Expected 13 fundamental types");
+
+        let mut defined_count = 0;
+        let mut missing_rules = Vec::new();
+
+        for from in &all_types {
+            for to in &all_types {
+                match matrix.get_promotion_rule(from, to) {
+                    Some(_) => {
+                        defined_count += 1;
+                    }
+                    None => {
+                        missing_rules.push(format!("{:?} → {:?}", from, to));
+                    }
+                }
+            }
+        }
+
+        if !missing_rules.is_empty() {
+            panic!("Missing {} promotion rules:\n{}", missing_rules.len(), missing_rules.join("\n"));
+        }
+
+        assert_eq!(defined_count, 169, "Expected 169 promotion rules (13×13), found {}", defined_count);
+    }
+
+    #[test]
+    fn test_type_coverage_breakdown() {
+        let matrix = PromotionMatrix::new();
+
+        // Define type groups
+        let integers =
+            vec![IrType::I8, IrType::I16, IrType::I32, IrType::I64, IrType::U8, IrType::U16, IrType::U32, IrType::U64];
+        let floats = vec![IrType::F32, IrType::F64];
+        let special_types = vec![IrType::Bool, IrType::Char, IrType::String];
+
+        // Validate integer coverage (8×8 = 64 rules)
+        let mut int_count = 0;
+        for from in &integers {
+            for to in &integers {
+                if matrix.get_promotion_rule(from, to).is_some() {
+                    int_count += 1;
+                }
+            }
+        }
+        assert_eq!(int_count, 64, "Expected 64 integer×integer rules, found {}", int_count);
+
+        // Validate integer-float coverage (8 int × 2 float × 2 directions = 32 rules)
+        let mut int_float_count = 0;
+        for int_ty in &integers {
+            for float_ty in &floats {
+                if matrix.get_promotion_rule(int_ty, float_ty).is_some() {
+                    int_float_count += 1;
+                }
+                if matrix.get_promotion_rule(float_ty, int_ty).is_some() {
+                    int_float_count += 1;
+                }
+            }
+        }
+        assert_eq!(int_float_count, 32, "Expected 32 int↔float rules, found {}", int_float_count);
+
+        // Validate float coverage (2×2 = 4 rules)
+        let mut float_count = 0;
+        for from in &floats {
+            for to in &floats {
+                if matrix.get_promotion_rule(from, to).is_some() {
+                    float_count += 1;
+                }
+            }
+        }
+        assert_eq!(float_count, 4, "Expected 4 float×float rules, found {}", float_count);
+
+        // Validate special type interactions (3×13 = 39 rules to/from Bool, Char, String)
+        let all_types = [integers.clone(), floats.clone(), special_types.clone()].concat();
+        let mut special_count = 0;
+        for special_ty in &special_types {
+            for ty in &all_types {
+                if matrix.get_promotion_rule(special_ty, ty).is_some() {
+                    special_count += 1;
+                }
+            }
+        }
+        // Bool: 13, Char: 13, String: 13 = 39 total
+        assert_eq!(special_count, 39, "Expected 39 special→all rules, found {}", special_count);
+
+        // All types to special types
+        let mut to_special_count = 0;
+        for ty in &all_types {
+            for special_ty in &special_types {
+                if matrix.get_promotion_rule(ty, special_ty).is_some() {
+                    to_special_count += 1;
+                }
+            }
+        }
+        assert_eq!(to_special_count, 39, "Expected 39 all→special rules, found {}", to_special_count);
+
+        // Coverage breakdown for diagnostics
+        println!(
+            "Coverage breakdown: {} int, {} int-float, {} float, {} special",
+            int_count, int_float_count, float_count, special_count
+        );
+    }
+
+    #[test]
+    fn test_all_24_cast_kinds_utilized() {
+        use std::collections::HashSet;
+
+        let matrix = PromotionMatrix::new();
+        let all_types = vec![
+            IrType::I8,
+            IrType::I16,
+            IrType::I32,
+            IrType::I64,
+            IrType::U8,
+            IrType::U16,
+            IrType::U32,
+            IrType::U64,
+            IrType::F32,
+            IrType::F64,
+            IrType::Bool,
+            IrType::Char,
+            IrType::String,
+        ];
+
+        // Expected CastKind variants (24 total from spec)
+        let expected_cast_kinds = vec![
+            "IntZeroExtend",
+            "IntSignExtend",
+            "IntTruncate",
+            "IntBitcast",
+            "IntToFloat",
+            "FloatToInt",
+            "FloatTruncate",
+            "FloatExtend",
+            "BoolToInt",
+            "IntToBool",
+            "BoolToFloat",
+            "FloatToBool",
+            "CharToInt",
+            "IntToChar",
+            "CharToString",
+            "StringToChar",
+            "StringToInt",
+            "StringToFloat",
+            "StringToBool",
+            "IntToString",
+            "FloatToString",
+            "BoolToString",
+            "Bitcast",
+        ];
+
+        let mut found_cast_kinds = HashSet::new();
+
+        // Iterate all promotion rules and collect CastKind variants
+        for from in &all_types {
+            for to in &all_types {
+                if let Some(rule) = matrix.get_promotion_rule(from, to) {
+                    match rule {
+                        PromotionRule::Direct { cast_kind, .. } => {
+                            found_cast_kinds.insert(format!("{:?}", cast_kind));
+                        }
+                        PromotionRule::Indirect { first_cast, second_cast, .. } => {
+                            found_cast_kinds.insert(format!("{:?}", first_cast));
+                            found_cast_kinds.insert(format!("{:?}", second_cast));
+                        }
+                        PromotionRule::Forbidden { .. } => {}
+                    }
+                }
+            }
+        }
+
+        // Check that all expected CastKind variants are found
+        let mut missing_cast_kinds = Vec::new();
+        for expected in &expected_cast_kinds {
+            if !found_cast_kinds.contains(*expected) {
+                missing_cast_kinds.push(*expected);
+            }
+        }
+
+        if !missing_cast_kinds.is_empty() {
+            panic!("Missing {} CastKind variants:\n{}", missing_cast_kinds.len(), missing_cast_kinds.join("\n"));
+        }
+
+        // Also report what we found
+        let mut found_vec: Vec<_> = found_cast_kinds.iter().collect();
+        found_vec.sort();
+        println!("Found {} unique CastKind variants:", found_vec.len());
+        for cast_kind in found_vec {
+            println!("  - {}", cast_kind);
+        }
+
+        assert!(
+            found_cast_kinds.len() >= expected_cast_kinds.len(),
+            "Expected at least {} CastKind variants, found {}",
+            expected_cast_kinds.len(),
+            found_cast_kinds.len()
+        );
     }
 }
