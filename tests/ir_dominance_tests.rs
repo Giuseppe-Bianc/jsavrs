@@ -149,3 +149,40 @@ fn test_compute_dominance_frontiers() {
     let _merge_frontier = dominance.dominance_frontier(condition_idx);
     // Note: The exact frontier computation depends on the implementation details
 }
+
+#[test]
+fn test_dominance_info_new() {
+    let dominance = DominanceInfo::new();
+    assert!(dominance.idom.is_empty());
+    assert!(dominance.dominance_frontiers.is_empty());
+    assert!(dominance.dom_tree_children.is_empty());
+}
+
+#[test]
+fn test_compute_dominators_simple() {
+    // Create a simple CFG: entry -> block1 -> block2
+    let mut cfg = ControlFlowGraph::new("entry".to_string());
+    let entry_block = BasicBlock::new("entry", SourceSpan::default());
+    let block1 = BasicBlock::new("block1", SourceSpan::default());
+    let block2 = BasicBlock::new("block2", SourceSpan::default());
+
+    let entry_idx = cfg.add_block(entry_block);
+    let block1_idx = cfg.add_block(block1);
+    let block2_idx = cfg.add_block(block2);
+
+    cfg.add_edge(entry_idx, block1_idx);
+    cfg.add_edge(block1_idx, block2_idx);
+
+    let mut dominance = DominanceInfo::new();
+    let result = dominance.compute_dominators(&cfg);
+    assert!(result.is_ok());
+
+    // Entry dominates itself
+    assert_eq!(dominance.immediate_dominator(entry_idx), Some(entry_idx));
+
+    // block1's immediate dominator should be entry
+    assert_eq!(dominance.immediate_dominator(block1_idx), Some(entry_idx));
+
+    // block2's immediate dominator should be block1
+    assert_eq!(dominance.immediate_dominator(block2_idx), Some(block1_idx));
+}
