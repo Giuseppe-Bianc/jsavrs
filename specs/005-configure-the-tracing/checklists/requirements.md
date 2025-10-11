@@ -52,7 +52,7 @@
 ✅ **PASS** - Success criteria are measurable:
   - SC-001: Sub-millisecond granularity (measurable)
   - SC-002: Zero overhead (benchmarkable)
-  - SC-003: <10% overhead (benchmarkable)
+  - SC-003: <1% overhead (benchmarkable)
   - SC-004: At least 5 test cases (countable)
   - SC-005-010: All have specific metrics
 
@@ -81,7 +81,7 @@
   - P1: Developer diagnostics (core value proposition)
   - P2: Production monitoring (operational concerns)
   - P3: Library integration (ecosystem enablement)
-  - P1: Test suite integration (quality assurance)
+  - P4: Test suite integration (quality assurance)
 
 ✅ **PASS** - Success criteria align with feature goals:
   - Performance diagnostics: SC-001, SC-005
