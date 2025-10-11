@@ -5,6 +5,16 @@
 **Status**: Draft  
 **Input**: User description: "Configure the tracing system within the project to ensure complete and consistent integration. Include centralized tracing initialization, connection to the core library and executable modules, and automatic propagation of the tracing context across the various components. Then verify correct operation through integration tests and sample logs, ensuring that every part of the system can be monitored uniformly and transparently."
 
+## Clarifications
+
+### Session 2025-10-11
+
+- Q: When trace output destination becomes unavailable during runtime (disk full, file locked), what should be the fallback behavior? → A: Failover to stderr (automatically redirect all traces to stderr, continue compilation)
+- Q: When trace initialization fails (e.g., invalid configuration, missing permissions), should the compiler: → A: Continue with tracing disabled (log warning to stderr, proceed with compilation without any tracing)
+- Q: For the default trace format when no explicit format is specified, which should be used? → A: ErrorReporterStyle (custom format matching error_reporter.rs with colored, styled console output)
+- Q: When compilation is interrupted by signal (Ctrl+C, SIGTERM), should the tracing system: → A: Flush and exit immediately (write buffered traces to disk/stream, then terminate without delay)
+- Q: For multi-threaded compilation (future scenario), how should trace context be managed across threads? → A: Automatic with parent span (child threads inherit parent span ID, maintain hierarchical relationship)
+
 ## User Scenarios & Testing *(mandatory)*
 
 ### User Story 1 - Developer Diagnoses Compilation Performance Issues (Priority: P1)
@@ -73,11 +83,11 @@ The continuous integration system runs the compiler test suite and needs to capt
 
 ### Edge Cases
 
-- What happens when trace output destination becomes unavailable (disk full, network log collector unreachable)?
-- How does the system handle trace initialization failures without crashing the compiler?
-- What is the behavior when trace levels are dynamically changed during long-running compilation processes?
-- How are traces handled when compilation is interrupted (Ctrl+C, system signals)?
-- What happens with trace context propagation when compilation uses parallel processing or multi-threading?
+- What happens when trace output destination becomes unavailable (disk full, network log collector unreachable)? → **Automatic failover to stderr**: system redirects all traces to stderr and continues compilation
+- How does the system handle trace initialization failures without crashing the compiler? → **Continue with tracing disabled**: log warning to stderr, proceed with compilation without any tracing
+- What is the behavior when trace levels are dynamically changed during long-running compilation processes? → **Ignore dynamic changes**: configuration changes take effect only on next compiler execution, not during active compilation
+- How are traces handled when compilation is interrupted (Ctrl+C, system signals)? → **Flush and exit immediately**: write all buffered traces to disk/stream, then terminate without delay
+- What happens with trace context propagation when compilation uses parallel processing or multi-threading? → **Automatic parent span inheritance**: child threads automatically inherit parent span ID and maintain hierarchical relationship for correlated tracing
 - How does the system prevent trace output from corrupting compiler binary output to stdout?
 
 ## Requirements *(mandatory)*
@@ -85,14 +95,14 @@ The continuous integration system runs the compiler test suite and needs to capt
 ### Functional Requirements
 
 - **FR-001**: System MUST provide centralized initialization of the tracing subsystem that can be called from both the main executable and library entry points
-- **FR-002**: System MUST support multiple trace output formats including structured (JSON) and human-readable text following the error_reporter.rs formatting style (colored, styled console output)
+- **FR-002**: System MUST support multiple trace output formats including structured (JSON) and human-readable text following the error_reporter.rs formatting style (colored, styled console output), with ErrorReporterStyle as the default format
 - **FR-003**: System MUST allow configuration of trace level (error, warning, info, debug, trace) through command-line arguments, environment variables, and programmatic API
 - **FR-004**: System MUST automatically instrument all major compilation phases: lexing, parsing, semantic analysis (type checking), IR generation, and assembly generation
-- **FR-005**: System MUST propagate trace context across all module boundaries within the compiler
+- **FR-005**: System MUST propagate trace context across all module boundaries within the compiler, with automatic parent span inheritance for multi-threaded operations
 - **FR-006**: System MUST capture timing information for each instrumented operation with microsecond precision
 - **FR-007**: System MUST provide trace span identifiers that allow correlation of related events across different phases of compilation
 - **FR-008**: System MUST integrate with the existing error reporting system, ensuring compile errors include relevant trace context
-- **FR-009**: System MUST gracefully degrade when trace output fails, logging the failure but allowing compilation to continue
+- **FR-009**: System MUST gracefully degrade when trace output fails, automatically redirecting to stderr as failover and allowing compilation to continue
 - **FR-010**: System MUST provide filtering capabilities to trace specific compilation phases or source files independently
 - **FR-011**: System MUST support trace output to multiple destinations simultaneously (e.g., file and console)
 - **FR-012**: System MUST include integration tests that validate trace output completeness and correctness for representative compilation scenarios
@@ -154,7 +164,7 @@ The tracing system focuses exclusively on compiler operations and does not exten
 ## Assumptions *(optional)*
 
 - The console crate is already available as a dependency (confirmed in Cargo.toml) and provides sufficient styling capabilities
-- Compilation is single-threaded or uses explicit parallelism where trace context can be propagated manually
+- Compilation is single-threaded or uses explicit parallelism where trace context can be propagated automatically via parent span inheritance
 - Trace output volumes will remain manageable (< 1GB per compilation) for typical use cases
 - Developers have basic familiarity with structured logging concepts
 - The existing error_reporter.rs format is well-established and should be used as the model for trace output styling
@@ -437,12 +447,15 @@ pub fn compile() -> Result<(), CompileError> {
 ### Reliability
 
 - Trace system failures must not cause compilation failures
-- Graceful degradation when output destinations become unavailable
+- Trace initialization failures result in warning to stderr and compilation continues without tracing
+- Graceful degradation when output destinations become unavailable (automatic failover to stderr)
 - No data loss for critical error traces (buffered writes with flush on error)
+- On signal interruption (Ctrl+C, SIGTERM), flush all buffered traces before exit to ensure diagnostic data preservation
 
 ### Usability
 
 - Default trace configuration provides useful information without overwhelming output
+- Default trace format is ErrorReporterStyle (matching error_reporter.rs visual style and color scheme)
 - Trace output uses clear, consistent terminology matching compiler phase names
 - Colored output improves readability but degrades gracefully on non-terminal outputs
 
