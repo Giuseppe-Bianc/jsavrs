@@ -63,3 +63,83 @@ fn test_resource_id_default() {
     // Ensure default values are unique and format as valid UUIDs
     assert_default_uuid_is_unique_and_valid::<ResourceId>();
 }
+
+#[test]
+fn test_get_bit_width_for_all_integer_types() {
+    // Test all signed integer types
+    assert_eq!(IrType::I8.get_bit_width(), 8);
+    assert_eq!(IrType::I16.get_bit_width(), 16);
+    assert_eq!(IrType::I32.get_bit_width(), 32);
+    assert_eq!(IrType::I64.get_bit_width(), 64);
+
+    // Test all unsigned integer types
+    assert_eq!(IrType::U8.get_bit_width(), 8);
+    assert_eq!(IrType::U16.get_bit_width(), 16);
+    assert_eq!(IrType::U32.get_bit_width(), 32);
+    assert_eq!(IrType::U64.get_bit_width(), 64);
+}
+
+#[test]
+fn test_get_bit_width_for_float_types() {
+    // Test all float types
+    assert_eq!(IrType::F32.get_bit_width(), 32);
+    assert_eq!(IrType::F64.get_bit_width(), 64);
+}
+
+#[test]
+fn test_get_bit_width_for_special_types() {
+    // Test types that should return default bit width (32)
+    assert_eq!(IrType::Bool.get_bit_width(), 32);
+    assert_eq!(IrType::Char.get_bit_width(), 32);
+    assert_eq!(IrType::String.get_bit_width(), 32);
+    assert_eq!(IrType::Void.get_bit_width(), 32);
+}
+
+#[test]
+fn test_get_bit_width_for_complex_types() {
+    // Test pointer type - should return default bit width (32)
+    assert_eq!(IrType::Pointer(Box::new(IrType::I32)).get_bit_width(), 32);
+    
+    // Test array type - should return default bit width (32)
+    assert_eq!(IrType::Array(Box::new(IrType::I32), 10).get_bit_width(), 32);
+    
+    // Test custom type - should return default bit width (32)
+    let custom_type = IrType::Custom("MyCustomType".into(), SourceSpan::default());
+    assert_eq!(custom_type.get_bit_width(), 32);
+    
+    // Test struct type - should return default bit width (32)
+    let struct_type = IrType::Struct(
+        "MyStruct".into(),
+        vec![("field1".into(), IrType::I32), ("field2".into(), IrType::F64)],
+        SourceSpan::default(),
+    );
+    assert_eq!(struct_type.get_bit_width(), 32);
+}
+
+#[test]
+fn test_get_bit_width_consistency() {
+    // Verify that integer and unsigned integer pairs have the same bit widths
+    assert_eq!(IrType::I8.get_bit_width(), IrType::U8.get_bit_width());
+    assert_eq!(IrType::I16.get_bit_width(), IrType::U16.get_bit_width());
+    assert_eq!(IrType::I32.get_bit_width(), IrType::U32.get_bit_width());
+    assert_eq!(IrType::I64.get_bit_width(), IrType::U64.get_bit_width());
+    
+    // Verify that float sizes match expected bit widths
+    assert_eq!(IrType::F32.get_bit_width(), 32);
+    assert_eq!(IrType::F64.get_bit_width(), 64);
+}
+
+#[test]
+fn test_get_bit_width_edge_cases() {
+    // Test with deeply nested types to ensure default behavior
+    let nested_pointer = IrType::Pointer(Box::new(
+        IrType::Pointer(Box::new(IrType::I32))
+    ));
+    assert_eq!(nested_pointer.get_bit_width(), 32);
+    
+    // Test with a complex nested array
+    let nested_array = IrType::Array(Box::new(
+        IrType::Array(Box::new(IrType::I8), 5)
+    ), 10);
+    assert_eq!(nested_array.get_bit_width(), 32);
+}
