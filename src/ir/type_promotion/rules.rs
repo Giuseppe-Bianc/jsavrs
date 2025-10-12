@@ -15,8 +15,7 @@ impl PromotionMatrix {
         self.add_float_promotions();
 
         // Integer widening and narrowing
-        self.add_integer_widening_promotions_signed();
-        self.add_integer_widening_promotions_unsigned();
+        self.add_integer_widening_promotions_signed_and_unsigned();
         self.add_integer_narrowing_promotions();
 
         // Float-Integer conversions
@@ -70,17 +69,7 @@ impl PromotionMatrix {
         );
     }
 
-    /// Add signed integer widening promotions
-    fn add_integer_widening_promotions_signed(&mut self) {
-        let types = [(IrType::I8, 8), (IrType::I16, 16), (IrType::I32, 32), (IrType::I64, 64)];
-        self.add_integer_widening_promotions(&types, CastKind::IntSignExtend);
-    }
 
-    /// Add unsigned integer widening promotions
-    fn add_integer_widening_promotions_unsigned(&mut self) {
-        let types = [(IrType::U8, 8), (IrType::U16, 16), (IrType::U32, 32), (IrType::U64, 64)];
-        self.add_integer_widening_promotions(&types, CastKind::IntZeroExtend);
-    }
 
     /// Helper function to add widening promotions for integer types
     fn add_integer_widening_promotions(&mut self, types: &[(IrType, u32)], cast_kind: CastKind) {
@@ -102,6 +91,17 @@ impl PromotionMatrix {
                 );
             }
         }
+    }
+
+    /// Add integer widening promotions for both signed and unsigned types
+    fn add_integer_widening_promotions_signed_and_unsigned(&mut self) {
+        // Signed integer widening promotions
+        let signed_types = [(IrType::I8, 8), (IrType::I16, 16), (IrType::I32, 32), (IrType::I64, 64)];
+        self.add_integer_widening_promotions(&signed_types, CastKind::IntSignExtend);
+
+        // Unsigned integer widening promotions
+        let unsigned_types = [(IrType::U8, 8), (IrType::U16, 16), (IrType::U32, 32), (IrType::U64, 64)];
+        self.add_integer_widening_promotions(&unsigned_types, CastKind::IntZeroExtend);
     }
 
     /// Add all integer narrowing conversion rules (24 rules)
