@@ -1,4 +1,5 @@
 use console::Style;
+use std::fmt::Write;
 
 #[repr(u8)]
 #[derive(Debug, Clone, Copy, PartialEq)]
@@ -66,11 +67,15 @@ pub fn print_children<T, F>(children: &[T], indent: &str, output: &mut String, s
 where
     F: FnMut(&T, &str, BranchType, &mut String, &StyleManager),
 {
-    let last_idx = children.len().saturating_sub(1);
-    for (i, child) in children.iter().enumerate() {
-        let branch_type = if i == last_idx { BranchType::Last } else { BranchType::Middle };
-        print_fn(child, indent, branch_type, output, styles);
+    let len = children.len();
+    if len == 0 {
+        return;
     }
+
+    for child in &children[..len - 1] {
+        print_fn(child, indent, BranchType::Middle, output, styles);
+    }
+    print_fn(&children[len - 1], indent, BranchType::Last, output, styles);
 }
 
 // Keep existing helper functions
@@ -85,5 +90,5 @@ pub fn get_indent(indent: &str, branch_type: &BranchType) -> String {
 pub fn append_line(output: &mut String, indent: &str, branch_type: BranchType, style: Style, text: &str) {
     let branch = branch_type.symbol();
     let styled_text = style.apply_to(text);
-    output.push_str(&format!("{indent}{branch}{styled_text}\n"));
+    write!(output, "{}{}{}\n", indent, branch, styled_text).unwrap();
 }

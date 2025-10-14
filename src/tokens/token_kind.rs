@@ -361,11 +361,7 @@ pub enum TokenKind {
     IdentifierUnicode(Arc<str>),
 
     /// Numeric literals (supports integer, float, scientific, and multi-char suffixes)
-    #[regex(
-        r"(\d+\.?\d*|\.\d+)([eE][+-]?\d+)?([uUfFdD]|[iIuU](?:8|16|32))?",
-        parse_number,
-        priority = 4
-    )]
+    #[regex(r"(\d+\.?\d*|\.\d+)([eE][+-]?\d+)?([uUfFdD]|[iIuU](?:8|16|32))?", parse_number, priority = 4)]
     Numeric(Number),
 
     /// Binary literals (e.g., "#b1010u")

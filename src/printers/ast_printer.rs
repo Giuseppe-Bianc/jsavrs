@@ -23,7 +23,7 @@ pub fn pretty_print(expr: &Expr) -> String {
 fn count_expr_nodes(expr: &Expr) -> usize {
     let mut count = 0;
     let mut stack = vec![expr];
-    
+
     while let Some(current) = stack.pop() {
         count += 1;
         match current {
@@ -56,7 +56,7 @@ fn count_expr_nodes(expr: &Expr) -> usize {
             Expr::Literal { .. } | Expr::Variable { .. } => {}
         }
     }
-    
+
     count
 }
 
@@ -191,7 +191,7 @@ pub fn pretty_print_stmt(stmt: &Stmt) -> String {
 ///
 /// Performs a recursive traversal to compute the total number of nodes,
 /// which is used to preallocate string capacity in [`pretty_print_stmt`].
-/// The count is an estimate; complex statements with many sub-labels 
+/// The count is an estimate; complex statements with many sub-labels
 /// (e.g., function parameters with type annotations) may generate more
 /// output lines than the node count suggests.
 ///
@@ -204,7 +204,7 @@ pub fn pretty_print_stmt(stmt: &Stmt) -> String {
 /// # Examples
 ///
 /// ```rust
-/// let stmt = Stmt::Expression { 
+/// let stmt = Stmt::Expression {
 ///     expr: Expr::Literal { value: 42.0, span: Span::default() }
 /// };
 /// let count = count_stmt_nodes(&stmt); // Returns 2 (stmt + expr)
@@ -215,22 +215,16 @@ fn count_stmt_nodes(stmt: &Stmt) -> usize {
         Stmt::VarDeclaration { variables, initializers, .. } => {
             variables.len() + initializers.iter().map(count_expr_nodes).sum::<usize>()
         }
-        Stmt::Function { parameters, body, .. } => {
-            parameters.len() + body.iter().map(count_stmt_nodes).sum::<usize>()
-        }
+        Stmt::Function { parameters, body, .. } => parameters.len() + body.iter().map(count_stmt_nodes).sum::<usize>(),
         Stmt::If { condition, then_branch, else_branch, .. } => {
             count_expr_nodes(condition)
                 + then_branch.iter().map(count_stmt_nodes).sum::<usize>()
-                + else_branch.as_ref().map_or(0, |branch| {
-                    branch.iter().map(count_stmt_nodes).sum::<usize>()
-                })
+                + else_branch.as_ref().map_or(0, |branch| branch.iter().map(count_stmt_nodes).sum::<usize>())
         }
         Stmt::MainFunction { body, .. } | Stmt::Block { statements: body, .. } => {
             body.iter().map(count_stmt_nodes).sum::<usize>()
         }
-        Stmt::Return { value, .. } => {
-            value.as_ref().map_or(0, count_expr_nodes)
-        }
+        Stmt::Return { value, .. } => value.as_ref().map_or(0, count_expr_nodes),
         Stmt::While { condition, body, .. } => {
             count_expr_nodes(condition) + body.iter().map(count_stmt_nodes).sum::<usize>()
         }
