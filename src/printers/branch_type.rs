@@ -1,3 +1,17 @@
+//! Branch type printer utilities for tree-like output structures.
+//!
+//! This module provides types and functions for printing hierarchical data
+//! with proper indentation and branch symbols (├──, └──, etc.).
+//!
+//! # Key Types
+//! - [`BranchType`]: Represents the position of a node (Last or Middle)
+//! - [`BranchConfig`]: Configuration for parent/current/child branch types
+//! - [`StyleManager`]: Console styling configuration for different element types
+//!
+//! # Usage
+//! Use [`print_children`] to iterate over child elements with correct branch symbols,
+//! and [`append_line`] to add formatted lines with proper indentation.
+
 use console::Style;
 use std::fmt::Write;
 
@@ -62,7 +76,21 @@ impl StyleManager {
     }
 }
 
-/// Helper function to print lists of children with correct indentation
+/// Prints a list of children with correct branch symbols and indentation.
+///
+/// Iterates through all children, assigning [`BranchType::Middle`] to all but the last child,
+/// and [`BranchType::Last`] to the final child. For each child, calls the provided closure
+/// with the appropriate branch type.
+///
+/// # Parameters
+/// - `children`: Slice of child elements to print
+/// - `indent`: Current indentation string
+/// - `output`: Mutable string buffer to append formatted output
+/// - `styles`: Style configuration for formatting
+/// - `print_fn`: Closure invoked for each child with signature `(child, indent, branch_type, output, styles)`
+///
+/// # Behavior
+/// Returns early without calling `print_fn` if `children` is empty.
 pub fn print_children<T, F>(children: &[T], indent: &str, output: &mut String, styles: &StyleManager, mut print_fn: F)
 where
     F: FnMut(&T, &str, BranchType, &mut String, &StyleManager),
