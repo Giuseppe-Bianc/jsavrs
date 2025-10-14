@@ -93,6 +93,7 @@ fn main() -> Result<(), CompileError> {
 
     //Print statements with color if verbose
     if args.verbose {
+        let print_ast_timer = Timer::new("AST Pretty Print");
         //println!("{}", pretty_print(&statements.unwrap()));
         if num_statements > 5 {
             println!("{num_statements_str}");
@@ -101,6 +102,7 @@ fn main() -> Result<(), CompileError> {
                 println!("{}", pretty_print_stmt(stat));
             }
         }
+        println!("{print_ast_timer}");
     } else {
         println!("{num_statements_str}");
     }

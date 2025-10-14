@@ -2,11 +2,39 @@ use crate::parser::ast::{Expr, Stmt};
 use crate::printers::branch_type::{BranchConfig, BranchType, StyleManager, append_line, get_indent, print_children};
 
 /// Pretty-print an expression AST into a styled, tree-like string.
+/// Optimized with capacity preallocation.
 pub fn pretty_print(expr: &Expr) -> String {
-    let mut output = String::new();
+    let node_count = count_expr_nodes(expr);
+    // Estimate ~45 chars per node (branch chars + label + styling)
+    let mut output = String::with_capacity(node_count * 45);
     let styles = StyleManager::new();
     print_expr(expr, "", BranchType::Last, &mut output, &styles);
     output
+}
+
+/// Count total nodes in expression tree for capacity estimation
+fn count_expr_nodes(expr: &Expr) -> usize {
+    1 + match expr {
+        Expr::Binary { left, right, .. } => {
+            count_expr_nodes(left) + count_expr_nodes(right)
+        }
+        Expr::Unary { expr, .. } | Expr::Grouping { expr, .. } => {
+            count_expr_nodes(expr)
+        }
+        Expr::Assign { target, value, .. } => {
+            count_expr_nodes(target) + count_expr_nodes(value)
+        }
+        Expr::Call { callee, arguments, .. } => {
+            count_expr_nodes(callee) + arguments.iter().map(count_expr_nodes).sum::<usize>()
+        }
+        Expr::ArrayAccess { array, index, .. } => {
+            count_expr_nodes(array) + count_expr_nodes(index)
+        }
+        Expr::ArrayLiteral { elements, .. } => {
+            elements.iter().map(count_expr_nodes).sum::<usize>()
+        }
+        Expr::Literal { .. } | Expr::Variable { .. } => 0,
+    }
 }
 
 /// Unified function to print labeled branches
@@ -128,10 +156,48 @@ fn print_expr(expr: &Expr, indent: &str, branch_type: BranchType, output: &mut S
 /// Pretty-print a single statement AST into a styled, tree-like string.
 /// Mirrors `pretty_print` for expressions.
 pub fn pretty_print_stmt(stmt: &Stmt) -> String {
-    let mut output = String::new();
+    let node_count = count_stmt_nodes(stmt);
+    // Statements typically have longer labels, estimate ~50 chars per node
+    let mut output = String::with_capacity(node_count * 50);
     let styles = StyleManager::new();
     print_stmt(stmt, "", BranchType::Last, &mut output, &styles);
     output
+}
+
+/// Count total nodes in statement tree for capacity estimation
+fn count_stmt_nodes(stmt: &Stmt) -> usize {
+    1 + match stmt {
+        Stmt::Expression { expr } => count_expr_nodes(expr),
+        Stmt::VarDeclaration { variables, initializers, .. } => {
+            variables.len() + initializers.iter().map(count_expr_nodes).sum::<usize>()
+        }
+        Stmt::Function { parameters, body, .. } => {
+            parameters.len() + body.iter().map(count_stmt_nodes).sum::<usize>()
+        }
+        Stmt::If { condition, then_branch, else_branch, .. } => {
+            count_expr_nodes(condition)
+                + then_branch.iter().map(count_stmt_nodes).sum::<usize>()
+                + else_branch.as_ref().map_or(0, |branch| {
+                    branch.iter().map(count_stmt_nodes).sum::<usize>()
+                })
+        }
+        Stmt::MainFunction { body, .. } | Stmt::Block { statements: body, .. } => {
+            body.iter().map(count_stmt_nodes).sum::<usize>()
+        }
+        Stmt::Return { value, .. } => {
+            value.as_ref().map_or(0, count_expr_nodes)
+        }
+        Stmt::While { condition, body, .. } => {
+            count_expr_nodes(condition) + body.iter().map(count_stmt_nodes).sum::<usize>()
+        }
+        Stmt::For { initializer, condition, increment, body, .. } => {
+            initializer.as_ref().map_or(0, |s| count_stmt_nodes(s))
+                + condition.as_ref().map_or(0, count_expr_nodes)
+                + increment.as_ref().map_or(0, count_expr_nodes)
+                + body.iter().map(count_stmt_nodes).sum::<usize>()
+        }
+        Stmt::Break { .. } | Stmt::Continue { .. } => 0,
+    }
 }
 
 fn print_stmt(stmt: &Stmt, indent: &str, branch_type: BranchType, output: &mut String, styles: &StyleManager) {
