@@ -362,7 +362,7 @@ pub enum TokenKind {
 
     /// Numeric literals (supports integer, float, scientific, and multi-char suffixes)
     #[regex(
-        r"(\d+\.?\d*|\.\d+)([eE][+-]?\d+)?([uU]|[fF]|[dD]|[iI](8|16|32)|[uU](8|16|32))?",
+        r"(\d+\.?\d*|\.\d+)([eE][+-]?\d+)?([uUfFdD]|[iIuU](?:8|16|32))?",
         parse_number,
         priority = 4
     )]
@@ -436,13 +436,13 @@ pub enum TokenKind {
     TypeBool,
 
     // Whitespace and comments (skipped by lexer)
-    #[regex(r"[ \t\r\n\f\u{00A0}\u{1680}\u{2000}-\u{200A}\u{202F}\u{205F}\u{3000}]+", logos::skip)]
+    #[regex(r"\p{White_Space}+", logos::skip)]
     #[regex(r";")]
     Semicolon,
     Whitespace,
     /// Matches both single-line and multi-line comments
     #[regex(r"//[^\n\r]*", logos::skip)]
-    #[regex(r"/\*([^*]|\*[^/])*\*/", logos::skip)]
+    #[regex(r"/\*[^*]*\*+(?:[^*/][^*]*\*+)*/", logos::skip)]
     Comment,
 
     /// End-of-file marker
