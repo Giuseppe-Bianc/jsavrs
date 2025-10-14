@@ -200,15 +200,6 @@ pub fn pretty_print_stmt(stmt: &Stmt) -> String {
 /// Runs in O(n) time where n is the number of statement and expression nodes.
 /// This upfront traversal cost is amortized by avoiding reallocations
 /// during string building.
-///
-/// # Examples
-///
-/// ```rust
-/// let stmt = Stmt::Expression {
-///     expr: Expr::Literal { value: 42.0, span: Span::default() }
-/// };
-/// let count = count_stmt_nodes(&stmt); // Returns 2 (stmt + expr)
-/// ```
 fn count_stmt_nodes(stmt: &Stmt) -> usize {
     1 + match stmt {
         Stmt::Expression { expr } => count_expr_nodes(expr),
