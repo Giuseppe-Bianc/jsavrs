@@ -19,9 +19,7 @@ use std::sync::Arc;
 pub fn parse_number(lex: &mut logos::Lexer<TokenKind>) -> Option<Number> {
     let slice = lex.slice();
     let (numeric_part, suffix) = split_numeric_and_suffix(slice);
-    // Convert String to &str for the suffix
-    let suffix_str = suffix.as_deref();
-    handle_suffix(numeric_part, suffix_str)
+    handle_suffix(numeric_part, suffix)
 }
 
 /// Splits a numeric literal string into its numeric part and optional suffix.
@@ -43,25 +41,64 @@ pub fn parse_number(lex: &mut logos::Lexer<TokenKind>) -> Option<Number> {
 /// assert_eq!(split_numeric_and_suffix("6.022e23u32"), ("6.022e23", Some("u32".to_string())));
 /// assert_eq!(split_numeric_and_suffix("100"), ("100", None));
 /// ```
-pub fn split_numeric_and_suffix(slice: &str) -> (&str, Option<String>) {
+pub fn split_numeric_and_suffix(slice: &str) -> (&str, Option<&str>) {
     if slice.is_empty() {
         return (slice, None);
     }
-    let lowered = slice.to_ascii_lowercase();
-    // Supported suffixes, longest first:
-    const SUFFIXES: [&str; 9] = [
-        "i16", "i32", "u16", "u32", // length == 3
-        "i8", "u8", // length == 2
-        "u", "f", "d", // length == 1
-    ];
-    for &suf in SUFFIXES.iter() {
-        if lowered.ends_with(suf) {
-            let cut_pos = slice.len() - suf.len();
-            let numeric_part = &slice[..cut_pos];
-            let suffix_part = slice[cut_pos..].to_ascii_lowercase();
-            return (numeric_part, Some(suffix_part));
+
+    let bytes = slice.as_bytes();
+    let len = bytes.len();
+    
+    // Fast path: check last character first
+    let last_char = bytes[len - 1].to_ascii_lowercase();
+    
+    // Single-char suffixes: 'u', 'f', 'd'
+    match last_char {
+        b'u' | b'f' | b'd' => {
+            return (&slice[..len - 1], Some(&slice[len - 1..]));
+        }
+        _ => {}
+    }
+    
+    // Multi-char suffixes: check if we have at least 3 chars
+    if len < 3 {
+        return (slice, None);
+    }
+    
+    // Check 3-char suffixes (i16, i32, u16, u32)
+    if len >= 3 {
+        let last_three = &bytes[len - 3..];
+        let suffix_lower = [
+            last_three[0].to_ascii_lowercase(),
+            last_three[1].to_ascii_lowercase(),
+            last_three[2].to_ascii_lowercase(),
+        ];
+        
+        match suffix_lower {
+            [b'i', b'1', b'6'] | [b'i', b'3', b'2'] |
+            [b'u', b'1', b'6'] | [b'u', b'3', b'2'] => {
+                return (&slice[..len - 3], Some(&slice[len - 3..]));
+            }
+            _ => {}
         }
     }
+    
+    // Check 2-char suffixes (i8, u8)
+    if len >= 2 {
+        let last_two = &bytes[len - 2..];
+        let suffix_lower = [
+            last_two[0].to_ascii_lowercase(),
+            last_two[1].to_ascii_lowercase(),
+        ];
+        
+        match suffix_lower {
+            [b'i', b'8'] | [b'u', b'8'] => {
+                return (&slice[..len - 2], Some(&slice[len - 2..]));
+            }
+            _ => {}
+        }
+    }
+    
     (slice, None)
 }
 
@@ -80,25 +117,17 @@ where
 ///
 /// # Returns
 /// Parsed [`Number`] variant matching suffix, or `None` for invalid formats
-pub fn handle_suffix(numeric_part: &str, suffix: Option<&str>) -> Option<Number> {
-    match suffix {
-        // Unsigned‐integer suffixes
-        Some("u") | Some("U") => parse_integer::<u64>(numeric_part, Number::UnsignedInteger),
-        Some("u8") | Some("U8") => parse_integer::<u8>(numeric_part, Number::U8),
-        Some("u16") | Some("U16") => parse_integer::<u16>(numeric_part, Number::U16),
-        Some("u32") | Some("U32") => parse_integer::<u32>(numeric_part, Number::U32),
-
-        // Signed‐integer suffixes
-        Some("i8") | Some("I8") => parse_integer::<i8>(numeric_part, Number::I8),
-        Some("i16") | Some("I16") => parse_integer::<i16>(numeric_part, Number::I16),
-        Some("i32") | Some("I32") => parse_integer::<i32>(numeric_part, Number::I32),
-
-        // Float32 suffix
-        Some("f") | Some("F") => handle_float_suffix(numeric_part),
-
-        // Double (f64) o nessun suffisso
-        Some("d") | Some("D") | None => handle_default_suffix(numeric_part),
-
+fn handle_suffix(numeric_part: &str, suffix: Option<&str>) -> Option<Number> {
+    match suffix.map(|s| s.to_ascii_lowercase()).as_deref() {
+        Some("u") => parse_integer::<u64>(numeric_part, Number::UnsignedInteger),
+        Some("u8") => parse_integer::<u8>(numeric_part, Number::U8),
+        Some("u16") => parse_integer::<u16>(numeric_part, Number::U16),
+        Some("u32") => parse_integer::<u32>(numeric_part, Number::U32),
+        Some("i8") => parse_integer::<i8>(numeric_part, Number::I8),
+        Some("i16") => parse_integer::<i16>(numeric_part, Number::I16),
+        Some("i32") => parse_integer::<i32>(numeric_part, Number::I32),
+        Some("f") => handle_float_suffix(numeric_part),
+        Some("d") | None => handle_default_suffix(numeric_part),
         _ => None,
     }
 }
