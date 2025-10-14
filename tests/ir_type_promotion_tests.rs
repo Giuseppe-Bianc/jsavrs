@@ -3227,7 +3227,7 @@ mod compute_common_type_tests {
         assert_eq!(matrix.compute_common_type(&IrType::I16, &IrType::I32), Some(IrType::I32));
         assert_eq!(matrix.compute_common_type(&IrType::I32, &IrType::I8), Some(IrType::I32));
         assert_eq!(matrix.compute_common_type(&IrType::I8, &IrType::I32), Some(IrType::I32));
-        
+
         // I32 should take precedence over smaller unsigned integer types
         assert_eq!(matrix.compute_common_type(&IrType::I32, &IrType::U16), Some(IrType::I32));
         assert_eq!(matrix.compute_common_type(&IrType::U16, &IrType::I32), Some(IrType::I32));
@@ -3244,7 +3244,7 @@ mod compute_common_type_tests {
         assert_eq!(matrix.compute_common_type(&IrType::U16, &IrType::U32), Some(IrType::U32));
         assert_eq!(matrix.compute_common_type(&IrType::U32, &IrType::U8), Some(IrType::U32));
         assert_eq!(matrix.compute_common_type(&IrType::U8, &IrType::U32), Some(IrType::U32));
-        
+
         // U32 should take precedence over smaller signed integer types
         assert_eq!(matrix.compute_common_type(&IrType::U32, &IrType::I16), Some(IrType::U32));
         assert_eq!(matrix.compute_common_type(&IrType::I16, &IrType::U32), Some(IrType::U32));
@@ -3259,7 +3259,7 @@ mod compute_common_type_tests {
         // I16 should take precedence over smaller signed integer types
         assert_eq!(matrix.compute_common_type(&IrType::I16, &IrType::I8), Some(IrType::I16));
         assert_eq!(matrix.compute_common_type(&IrType::I8, &IrType::I16), Some(IrType::I16));
-        
+
         // I16 should take precedence over smaller unsigned integer types
         assert_eq!(matrix.compute_common_type(&IrType::I16, &IrType::U8), Some(IrType::I16));
         assert_eq!(matrix.compute_common_type(&IrType::U8, &IrType::I16), Some(IrType::I16));
@@ -3272,7 +3272,7 @@ mod compute_common_type_tests {
         // U16 should take precedence over smaller unsigned integer types
         assert_eq!(matrix.compute_common_type(&IrType::U16, &IrType::U8), Some(IrType::U16));
         assert_eq!(matrix.compute_common_type(&IrType::U8, &IrType::U16), Some(IrType::U16));
-        
+
         // U16 should take precedence over smaller signed integer types
         assert_eq!(matrix.compute_common_type(&IrType::U16, &IrType::I8), Some(IrType::U16));
         assert_eq!(matrix.compute_common_type(&IrType::I8, &IrType::U16), Some(IrType::U16));
@@ -3311,30 +3311,36 @@ mod compute_common_type_tests {
     #[test]
     fn test_compute_common_type_comprehensive_coverage() {
         let matrix = PromotionMatrix::new();
-        
+
         // Test various combinations to ensure all major promotion scenarios work
         let basic_types = vec![
-            IrType::I8, IrType::I16, IrType::I32, IrType::I64,
-            IrType::U8, IrType::U16, IrType::U32, IrType::U64,
-            IrType::F32, IrType::F64,
+            IrType::I8,
+            IrType::I16,
+            IrType::I32,
+            IrType::I64,
+            IrType::U8,
+            IrType::U16,
+            IrType::U32,
+            IrType::U64,
+            IrType::F32,
+            IrType::F64,
         ];
-        
+
         // Test that float types always take precedence over integer types
-        for int_type in [
-            IrType::I8, IrType::I16, IrType::I32, IrType::I64,
-            IrType::U8, IrType::U16, IrType::U32, IrType::U64
-        ] {
+        for int_type in
+            [IrType::I8, IrType::I16, IrType::I32, IrType::I64, IrType::U8, IrType::U16, IrType::U32, IrType::U64]
+        {
             assert_eq!(matrix.compute_common_type(&int_type, &IrType::F32), Some(IrType::F32));
             assert_eq!(matrix.compute_common_type(&int_type, &IrType::F64), Some(IrType::F64));
             assert_eq!(matrix.compute_common_type(&IrType::F32, &int_type), Some(IrType::F32));
             assert_eq!(matrix.compute_common_type(&IrType::F64, &int_type), Some(IrType::F64));
         }
-        
+
         // Test that wider signed types take precedence over narrower ones
         assert_eq!(matrix.compute_common_type(&IrType::I16, &IrType::I8), Some(IrType::I16));
         assert_eq!(matrix.compute_common_type(&IrType::I32, &IrType::I16), Some(IrType::I32));
         assert_eq!(matrix.compute_common_type(&IrType::I64, &IrType::I32), Some(IrType::I64));
-        
+
         // Test that wider unsigned types take precedence over narrower ones
         assert_eq!(matrix.compute_common_type(&IrType::U16, &IrType::U8), Some(IrType::U16));
         assert_eq!(matrix.compute_common_type(&IrType::U32, &IrType::U16), Some(IrType::U32));

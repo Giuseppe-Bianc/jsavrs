@@ -69,8 +69,6 @@ impl PromotionMatrix {
         );
     }
 
-
-
     /// Helper function to add widening promotions for integer types
     fn add_integer_widening_promotions(&mut self, types: &[(IrType, u32)], cast_kind: CastKind) {
         for i in 0..types.len() {

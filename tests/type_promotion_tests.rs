@@ -6,12 +6,12 @@ use jsavrs::location::source_span::SourceSpan;
 fn test_with_flags() {
     let span = SourceSpan::default();
     let promotion = TypePromotion::with_flags(
-        IrType::I32, // from_type
-        IrType::I64, // to_type
+        IrType::I32,             // from_type
+        IrType::I64,             // to_type
         CastKind::IntSignExtend, // cast_kind
-        true, // may_lose_precision
-        false, // may_overflow
-        span.clone(), // source_span
+        true,                    // may_lose_precision
+        false,                   // may_overflow
+        span.clone(),            // source_span
     );
 
     assert_eq!(promotion.from_type, IrType::I32);
@@ -65,14 +65,7 @@ fn test_with_flags_all_true() {
 #[test]
 fn test_is_widening_int_zero_extend() {
     let span = SourceSpan::default();
-    let promotion = TypePromotion::with_flags(
-        IrType::U8,
-        IrType::U32,
-        CastKind::IntZeroExtend,
-        false,
-        false,
-        span,
-    );
+    let promotion = TypePromotion::with_flags(IrType::U8, IrType::U32, CastKind::IntZeroExtend, false, false, span);
 
     assert!(promotion.is_widening());
 }
@@ -80,14 +73,7 @@ fn test_is_widening_int_zero_extend() {
 #[test]
 fn test_is_widening_int_sign_extend() {
     let span = SourceSpan::default();
-    let promotion = TypePromotion::with_flags(
-        IrType::I16,
-        IrType::I64,
-        CastKind::IntSignExtend,
-        false,
-        false,
-        span,
-    );
+    let promotion = TypePromotion::with_flags(IrType::I16, IrType::I64, CastKind::IntSignExtend, false, false, span);
 
     assert!(promotion.is_widening());
 }
@@ -95,14 +81,7 @@ fn test_is_widening_int_sign_extend() {
 #[test]
 fn test_is_widening_float_extend() {
     let span = SourceSpan::default();
-    let promotion = TypePromotion::with_flags(
-        IrType::F32,
-        IrType::F64,
-        CastKind::FloatExtend,
-        false,
-        false,
-        span,
-    );
+    let promotion = TypePromotion::with_flags(IrType::F32, IrType::F64, CastKind::FloatExtend, false, false, span);
 
     assert!(promotion.is_widening());
 }
@@ -110,14 +89,7 @@ fn test_is_widening_float_extend() {
 #[test]
 fn test_is_narrowing_int_truncate() {
     let span = SourceSpan::default();
-    let promotion = TypePromotion::with_flags(
-        IrType::I64,
-        IrType::I16,
-        CastKind::IntTruncate,
-        false,
-        false,
-        span,
-    );
+    let promotion = TypePromotion::with_flags(IrType::I64, IrType::I16, CastKind::IntTruncate, false, false, span);
 
     assert!(promotion.is_narrowing());
 }
@@ -125,14 +97,7 @@ fn test_is_narrowing_int_truncate() {
 #[test]
 fn test_is_narrowing_float_truncate() {
     let span = SourceSpan::default();
-    let promotion = TypePromotion::with_flags(
-        IrType::F64,
-        IrType::F32,
-        CastKind::FloatTruncate,
-        false,
-        false,
-        span,
-    );
+    let promotion = TypePromotion::with_flags(IrType::F64, IrType::F32, CastKind::FloatTruncate, false, false, span);
 
     assert!(promotion.is_narrowing());
 }
@@ -163,14 +128,7 @@ fn test_not_widening_narrowing() {
     ];
 
     for cast_kind in test_cases {
-        let promotion = TypePromotion::with_flags(
-            IrType::I32,
-            IrType::F32,
-            cast_kind,
-            false,
-            false,
-            span.clone(),
-        );
+        let promotion = TypePromotion::with_flags(IrType::I32, IrType::F32, cast_kind, false, false, span.clone());
 
         assert!(!promotion.is_widening(), "CastKind::{:?} should not be considered widening", cast_kind);
         assert!(!promotion.is_narrowing(), "CastKind::{:?} should not be considered narrowing", cast_kind);
@@ -181,40 +139,19 @@ fn test_not_widening_narrowing() {
 fn test_widening_vs_narrowing_exclusivity() {
     let span = SourceSpan::default();
     // A promotion should never be both widening and narrowing
-    let widening_cases = vec![
-        CastKind::IntZeroExtend,
-        CastKind::IntSignExtend,
-        CastKind::FloatExtend,
-    ];
+    let widening_cases = vec![CastKind::IntZeroExtend, CastKind::IntSignExtend, CastKind::FloatExtend];
 
     for cast_kind in widening_cases {
-        let promotion = TypePromotion::with_flags(
-            IrType::I32,
-            IrType::I64,
-            cast_kind,
-            false,
-            false,
-            span.clone(),
-        );
+        let promotion = TypePromotion::with_flags(IrType::I32, IrType::I64, cast_kind, false, false, span.clone());
 
         assert!(promotion.is_widening());
         assert!(!promotion.is_narrowing());
     }
 
-    let narrowing_cases = vec![
-        CastKind::IntTruncate,
-        CastKind::FloatTruncate,
-    ];
+    let narrowing_cases = vec![CastKind::IntTruncate, CastKind::FloatTruncate];
 
     for cast_kind in narrowing_cases {
-        let promotion = TypePromotion::with_flags(
-            IrType::I64,
-            IrType::I32,
-            cast_kind,
-            false,
-            false,
-            span.clone(),
-        );
+        let promotion = TypePromotion::with_flags(IrType::I64, IrType::I32, cast_kind, false, false, span.clone());
 
         assert!(promotion.is_narrowing());
         assert!(!promotion.is_widening());

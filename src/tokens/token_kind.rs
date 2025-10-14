@@ -35,10 +35,10 @@ pub fn parse_number(lex: &mut logos::Lexer<TokenKind>) -> Option<Number> {
 /// # Examples
 /// ```
 /// use jsavrs::tokens::token_kind::split_numeric_and_suffix;
-/// assert_eq!(split_numeric_and_suffix("42u"), ("42", Some("u".to_string())));
-/// assert_eq!(split_numeric_and_suffix("3.14F"), ("3.14", Some("f".to_string())));
-/// assert_eq!(split_numeric_and_suffix("100i16"), ("100", Some("i16".to_string())));
-/// assert_eq!(split_numeric_and_suffix("6.022e23u32"), ("6.022e23", Some("u32".to_string())));
+/// assert_eq!(split_numeric_and_suffix("42u"), ("42", Some("u")));
+/// assert_eq!(split_numeric_and_suffix("3.14F"), ("3.14", Some("F")));
+/// assert_eq!(split_numeric_and_suffix("100i16"), ("100", Some("i16")));
+/// assert_eq!(split_numeric_and_suffix("6.022e23u32"), ("6.022e23", Some("u32")));
 /// assert_eq!(split_numeric_and_suffix("100"), ("100", None));
 /// ```
 pub fn split_numeric_and_suffix(slice: &str) -> (&str, Option<&str>) {
@@ -48,10 +48,10 @@ pub fn split_numeric_and_suffix(slice: &str) -> (&str, Option<&str>) {
 
     let bytes = slice.as_bytes();
     let len = bytes.len();
-    
+
     // Fast path: check last character first
     let last_char = bytes[len - 1].to_ascii_lowercase();
-    
+
     // Single-char suffixes: 'u', 'f', 'd'
     match last_char {
         b'u' | b'f' | b'd' => {
@@ -59,12 +59,12 @@ pub fn split_numeric_and_suffix(slice: &str) -> (&str, Option<&str>) {
         }
         _ => {}
     }
-    
+
     // Multi-char suffixes: check if we have at least 3 chars
     if len < 3 {
         return (slice, None);
     }
-    
+
     // Check 3-char suffixes (i16, i32, u16, u32)
     if len >= 3 {
         let last_three = &bytes[len - 3..];
@@ -73,24 +73,20 @@ pub fn split_numeric_and_suffix(slice: &str) -> (&str, Option<&str>) {
             last_three[1].to_ascii_lowercase(),
             last_three[2].to_ascii_lowercase(),
         ];
-        
+
         match suffix_lower {
-            [b'i', b'1', b'6'] | [b'i', b'3', b'2'] |
-            [b'u', b'1', b'6'] | [b'u', b'3', b'2'] => {
+            [b'i', b'1', b'6'] | [b'i', b'3', b'2'] | [b'u', b'1', b'6'] | [b'u', b'3', b'2'] => {
                 return (&slice[..len - 3], Some(&slice[len - 3..]));
             }
             _ => {}
         }
     }
-    
+
     // Check 2-char suffixes (i8, u8)
     if len >= 2 {
         let last_two = &bytes[len - 2..];
-        let suffix_lower = [
-            last_two[0].to_ascii_lowercase(),
-            last_two[1].to_ascii_lowercase(),
-        ];
-        
+        let suffix_lower = [last_two[0].to_ascii_lowercase(), last_two[1].to_ascii_lowercase()];
+
         match suffix_lower {
             [b'i', b'8'] | [b'u', b'8'] => {
                 return (&slice[..len - 2], Some(&slice[len - 2..]));
@@ -98,7 +94,7 @@ pub fn split_numeric_and_suffix(slice: &str) -> (&str, Option<&str>) {
             _ => {}
         }
     }
-    
+
     (slice, None)
 }
 
@@ -117,7 +113,7 @@ where
 ///
 /// # Returns
 /// Parsed [`Number`] variant matching suffix, or `None` for invalid formats
-fn handle_suffix(numeric_part: &str, suffix: Option<&str>) -> Option<Number> {
+pub fn handle_suffix(numeric_part: &str, suffix: Option<&str>) -> Option<Number> {
     match suffix.map(|s| s.to_ascii_lowercase()).as_deref() {
         Some("u") => parse_integer::<u64>(numeric_part, Number::UnsignedInteger),
         Some("u8") => parse_integer::<u8>(numeric_part, Number::U8),
