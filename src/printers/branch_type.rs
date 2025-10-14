@@ -75,7 +75,11 @@ where
 
 // Keep existing helper functions
 pub fn get_indent(indent: &str, branch_type: &BranchType) -> String {
-    format!("{}{}", indent, branch_type.indent_continuation())
+    let continuation = branch_type.indent_continuation();
+    let mut result = String::with_capacity(indent.len() + continuation.len());
+    result.push_str(indent);
+    result.push_str(continuation);
+    result
 }
 
 pub fn append_line(output: &mut String, indent: &str, branch_type: BranchType, style: Style, text: &str) {

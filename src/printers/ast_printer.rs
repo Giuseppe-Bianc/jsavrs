@@ -21,27 +21,43 @@ pub fn pretty_print(expr: &Expr) -> String {
 /// which is used to preallocate string capacity in [`pretty_print`].
 ///
 fn count_expr_nodes(expr: &Expr) -> usize {
-    1 + match expr {
-        Expr::Binary { left, right, .. } => {
-            count_expr_nodes(left) + count_expr_nodes(right)
+    let mut count = 0;
+    let mut stack = vec![expr];
+    
+    while let Some(current) = stack.pop() {
+        count += 1;
+        match current {
+            Expr::Binary { left, right, .. } => {
+                stack.push(left);
+                stack.push(right);
+            }
+            Expr::Unary { expr, .. } | Expr::Grouping { expr, .. } => {
+                stack.push(expr);
+            }
+            Expr::Assign { target, value, .. } => {
+                stack.push(target);
+                stack.push(value);
+            }
+            Expr::Call { callee, arguments, .. } => {
+                stack.push(callee);
+                for arg in arguments {
+                    stack.push(arg);
+                }
+            }
+            Expr::ArrayAccess { array, index, .. } => {
+                stack.push(array);
+                stack.push(index);
+            }
+            Expr::ArrayLiteral { elements, .. } => {
+                for elem in elements {
+                    stack.push(elem);
+                }
+            }
+            Expr::Literal { .. } | Expr::Variable { .. } => {}
         }
-        Expr::Unary { expr, .. } | Expr::Grouping { expr, .. } => {
-            count_expr_nodes(expr)
-        }
-        Expr::Assign { target, value, .. } => {
-            count_expr_nodes(target) + count_expr_nodes(value)
-        }
-        Expr::Call { callee, arguments, .. } => {
-            count_expr_nodes(callee) + arguments.iter().map(count_expr_nodes).sum::<usize>()
-        }
-        Expr::ArrayAccess { array, index, .. } => {
-            count_expr_nodes(array) + count_expr_nodes(index)
-        }
-        Expr::ArrayLiteral { elements, .. } => {
-            elements.iter().map(count_expr_nodes).sum::<usize>()
-        }
-        Expr::Literal { .. } | Expr::Variable { .. } => 0,
     }
+    
+    count
 }
 
 /// Unified function to print labeled branches
