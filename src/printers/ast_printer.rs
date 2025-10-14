@@ -1,18 +1,25 @@
 use crate::parser::ast::{Expr, Stmt};
 use crate::printers::branch_type::{BranchConfig, BranchType, StyleManager, append_line, get_indent, print_children};
 
+const EXPR_CAPACITY_PER_NODE: usize = 45;
+const STMT_CAPACITY_PER_NODE: usize = 50;
+
 /// Pretty-print an expression AST into a styled, tree-like string.
 /// Optimized with capacity preallocation.
 pub fn pretty_print(expr: &Expr) -> String {
     let node_count = count_expr_nodes(expr);
     // Estimate ~45 chars per node (branch chars + label + styling)
-    let mut output = String::with_capacity(node_count * 45);
+    let mut output = String::with_capacity(node_count * EXPR_CAPACITY_PER_NODE);
     let styles = StyleManager::new();
     print_expr(expr, "", BranchType::Last, &mut output, &styles);
     output
 }
 
-/// Count total nodes in expression tree for capacity estimation
+/// Counts total nodes in an expression tree for capacity estimation.
+///
+/// Performs a recursive traversal to compute the total number of nodes,
+/// which is used to preallocate string capacity in [`pretty_print`].
+///
 fn count_expr_nodes(expr: &Expr) -> usize {
     1 + match expr {
         Expr::Binary { left, right, .. } => {
@@ -158,13 +165,34 @@ fn print_expr(expr: &Expr, indent: &str, branch_type: BranchType, output: &mut S
 pub fn pretty_print_stmt(stmt: &Stmt) -> String {
     let node_count = count_stmt_nodes(stmt);
     // Statements typically have longer labels, estimate ~50 chars per node
-    let mut output = String::with_capacity(node_count * 50);
+    let mut output = String::with_capacity(node_count * STMT_CAPACITY_PER_NODE);
     let styles = StyleManager::new();
     print_stmt(stmt, "", BranchType::Last, &mut output, &styles);
     output
 }
 
-/// Count total nodes in statement tree for capacity estimation
+/// Counts total nodes in a statement tree for capacity estimation.
+///
+/// Performs a recursive traversal to compute the total number of nodes,
+/// which is used to preallocate string capacity in [`pretty_print_stmt`].
+/// The count is an estimate; complex statements with many sub-labels 
+/// (e.g., function parameters with type annotations) may generate more
+/// output lines than the node count suggests.
+///
+/// # Performance
+///
+/// Runs in O(n) time where n is the number of statement and expression nodes.
+/// This upfront traversal cost is amortized by avoiding reallocations
+/// during string building.
+///
+/// # Examples
+///
+/// ```rust
+/// let stmt = Stmt::Expression { 
+///     expr: Expr::Literal { value: 42.0, span: Span::default() }
+/// };
+/// let count = count_stmt_nodes(&stmt); // Returns 2 (stmt + expr)
+/// ```
 fn count_stmt_nodes(stmt: &Stmt) -> usize {
     1 + match stmt {
         Stmt::Expression { expr } => count_expr_nodes(expr),
