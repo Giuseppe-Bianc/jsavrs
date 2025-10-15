@@ -75,7 +75,7 @@ impl AssemblySection {
         self.elements.push(AssemblyElement::EmptyLine);
     }
 
-    pub fn tesxt_section() -> Self {
+    pub fn text_section() -> Self {
         Self::new(Section::Text)
     }
 
