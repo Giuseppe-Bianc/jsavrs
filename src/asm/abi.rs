@@ -1,15 +1,27 @@
 use super::Platform;
 use super::register::{GPRegister64, X86Register, XMMRegister};
 
+/// Represents the kind of Application Binary Interface (ABI) convention.
+///
+/// This determines how function calls are made, including parameter passing,
+/// register usage, and stack layout conventions.
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
 pub enum AbiKind {
+    /// System V AMD64 ABI used on Unix-like systems (Linux, macOS, BSD).
     SystemV,
+    /// Microsoft x64 calling convention used on Windows.
     Windows,
 }
 
+/// Represents a complete ABI specification for x86-64 function calls.
+///
+/// Combines the calling convention kind with the target platform to provide
+/// complete information about parameter passing, register usage, and stack layout.
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
 pub struct Abi {
+    /// The calling convention kind (System V or Windows).
     pub kind: AbiKind,
+    /// The target platform (Linux, macOS, Windows, etc.).
     pub platform: Platform,
 }
 
@@ -22,9 +34,12 @@ impl Abi {
         };
         Abi { kind, platform }
     }
-    
+
+    /// System V ABI for Linux x86-64 platform.
     pub const SYSTEM_V_LINUX: Abi = Abi { kind: AbiKind::SystemV, platform: Platform::Linux };
+    /// System V ABI for macOS x86-64 platform.
     pub const SYSTEM_V_MACOS: Abi = Abi { kind: AbiKind::SystemV, platform: Platform::MacOS };
+    /// Microsoft x64 calling convention for Windows platform.
     pub const WINDOWS: Abi = Abi { kind: AbiKind::Windows, platform: Platform::Windows };
 
     /// Returns the required stack alignment in bytes.
@@ -126,12 +141,12 @@ impl Abi {
         reg.is_volatile(self.platform)
     }
 
-    /// Verifica se il registro può essere usato per passaggio parametri
+    ///  Checks if a register is used for passing the parameter at the given index.
     pub fn is_parameter_register(&self, reg: X86Register, param_index: usize) -> bool {
         reg.is_parameter_register(self.platform, param_index)
     }
 
-    /// Verifica se il registro viene usato per il valore di ritorno
+    /// Checks if a register is used for the return value.
     pub fn is_return_register(&self, reg: X86Register) -> bool {
         reg.is_return_register(self.platform)
     }
