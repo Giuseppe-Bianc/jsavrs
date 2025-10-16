@@ -119,7 +119,7 @@ fn align_down(value: i32, alignment: i32) -> i32 {
   } else {
     // For negative: align to next lower (more negative) multiple
     let rem = (-value) % alignment;
-    if rem == 0 { value } else { value - rem }
+    if rem == 0 { value } else { value - (alignment - rem) }
   }
 }
 

@@ -88,7 +88,6 @@ The `Value` struct contains:
 Enum `Operand`:
 - `Register(X86Register)`
 - `Memory { base: X86Register, index: Option<(X86Register, i32)>, disp: i32, size: usize }` — scale must be 1, 2, 4, or 8
-- `Immediate(IrLiteralValue)`
 - `Immediate(IrLiteralValue)` — supports integer and floating-point literals compatible with x86 immediate encoding
 Invariants:
 - Memory `disp` aligned to `size` or ABI alignment where appropriate
