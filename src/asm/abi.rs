@@ -2,19 +2,30 @@ use super::Platform;
 use super::register::{GPRegister64, X86Register, XMMRegister};
 
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
-pub enum Abi {
+pub enum AbiKind {
     SystemV,
     Windows,
+}
+
+#[derive(Debug, Clone, Copy, PartialEq, Eq)]
+pub struct Abi {
+    pub kind: AbiKind,
+    pub platform: Platform,
 }
 
 #[allow(dead_code)]
 impl Abi {
     pub fn from_platform(platform: Platform) -> Self {
-        match platform {
-            Platform::Windows => Abi::Windows,
-            _ => Abi::SystemV,
-        }
+        let kind = match platform {
+            Platform::Windows => AbiKind::Windows,
+            _ => AbiKind::SystemV,
+        };
+        Abi { kind, platform }
     }
+    
+    pub const SYSTEM_V_LINUX: Abi = Abi { kind: AbiKind::SystemV, platform: Platform::Linux };
+    pub const SYSTEM_V_MACOS: Abi = Abi { kind: AbiKind::SystemV, platform: Platform::MacOS };
+    pub const WINDOWS: Abi = Abi { kind: AbiKind::Windows, platform: Platform::Windows };
 
     /// Returns the required stack alignment in bytes.
     pub fn alignment(&self) -> u32 {
@@ -25,9 +36,9 @@ impl Abi {
     /// The red zone is an optimization where leaf functions can use
     /// stack space below RSP without adjusting the stack pointer.
     pub fn red_zone(&self) -> u32 {
-        match self {
-            Abi::SystemV => 128,
-            Abi::Windows => 0,
+        match self.kind {
+            AbiKind::SystemV => 128,
+            AbiKind::Windows => 0,
         }
     }
 
@@ -35,200 +46,118 @@ impl Abi {
     /// Shadow space is stack space that must be allocated by the caller
     /// for the callee to spill register parameters if needed.
     pub fn shadow_space(&self) -> u32 {
-        match self {
-            Abi::SystemV => 0,
-            Abi::Windows => 32, // 4 registers × 8 bytes
+        match self.kind {
+            AbiKind::SystemV => 0,
+            AbiKind::Windows => 32, // 4 registers × 8 bytes
         }
     }
 
     /// Returns the integer parameter registers in order.
     pub fn int_param_registers(&self) -> &'static [GPRegister64] {
-        match self {
-            Abi::SystemV => &[
-                GPRegister64::Rdi,
-                GPRegister64::Rsi,
-                GPRegister64::Rdx,
-                GPRegister64::Rcx,
-                GPRegister64::R8,
-                GPRegister64::R9,
-            ],
-            Abi::Windows => &[GPRegister64::Rcx, GPRegister64::Rdx, GPRegister64::R8, GPRegister64::R9],
+        match self.kind {
+            AbiKind::SystemV => super::register::INT_PARAM_REGS_SYSTEMV,
+            AbiKind::Windows => super::register::INT_PARAM_REGS_WINDOWS,
         }
     }
 
     /// Returns the floating-point parameter registers in order.
     pub fn float_param_registers(&self) -> &'static [XMMRegister] {
-        match self {
-            Abi::SystemV => &[
-                XMMRegister::Xmm0,
-                XMMRegister::Xmm1,
-                XMMRegister::Xmm2,
-                XMMRegister::Xmm3,
-                XMMRegister::Xmm4,
-                XMMRegister::Xmm5,
-                XMMRegister::Xmm6,
-                XMMRegister::Xmm7,
-            ],
-            Abi::Windows => &[XMMRegister::Xmm0, XMMRegister::Xmm1, XMMRegister::Xmm2, XMMRegister::Xmm3],
+        match self.kind {
+            AbiKind::SystemV => super::register::FLOAT_PARAM_REGS_SYSTEMV,
+            AbiKind::Windows => super::register::FLOAT_PARAM_REGS_WINDOWS,
         }
     }
 
     /// Returns the integer return value registers.
     /// First register is primary, second is used for 128-bit returns.
     pub fn int_return_registers(&self) -> &'static [GPRegister64] {
-        &[GPRegister64::Rax, GPRegister64::Rdx]
+        super::register::INT_RETURN_REGS
     }
 
     /// Returns the floating-point return value registers.
     pub fn float_return_registers(&self) -> &'static [XMMRegister] {
-        match self {
-            Abi::SystemV => &[XMMRegister::Xmm0, XMMRegister::Xmm1],
-            Abi::Windows => &[XMMRegister::Xmm0],
+        match self.kind {
+            AbiKind::SystemV => super::register::FLOAT_RETURN_REGS_SYSTEMV,
+            AbiKind::Windows => super::register::FLOAT_RETURN_REGS_WINDOWS,
         }
     }
 
     /// Returns the callee-saved (non-volatile) general purpose registers.
     /// These must be preserved across function calls.
     pub fn callee_saved_gp_registers(&self) -> &'static [GPRegister64] {
-        match self {
-            Abi::SystemV => &[
-                GPRegister64::Rbx,
-                GPRegister64::Rbp,
-                GPRegister64::R12,
-                GPRegister64::R13,
-                GPRegister64::R14,
-                GPRegister64::R15,
-            ],
-            Abi::Windows => &[
-                GPRegister64::Rbx,
-                GPRegister64::Rbp,
-                GPRegister64::Rdi,
-                GPRegister64::Rsi,
-                GPRegister64::R12,
-                GPRegister64::R13,
-                GPRegister64::R14,
-                GPRegister64::R15,
-            ],
+        match self.kind {
+            AbiKind::SystemV => super::register::CALLEE_SAVED_GP_SYSTEMV,
+            AbiKind::Windows => super::register::CALLEE_SAVED_GP_WINDOWS,
         }
     }
 
     /// Returns the callee-saved (non-volatile) XMM registers.
     pub fn callee_saved_xmm_registers(&self) -> &'static [XMMRegister] {
-        match self {
-            Abi::SystemV => &[], // All XMM registers are caller-saved
-            Abi::Windows => &[
-                XMMRegister::Xmm6,
-                XMMRegister::Xmm7,
-                XMMRegister::Xmm8,
-                XMMRegister::Xmm9,
-                XMMRegister::Xmm10,
-                XMMRegister::Xmm11,
-                XMMRegister::Xmm12,
-                XMMRegister::Xmm13,
-                XMMRegister::Xmm14,
-                XMMRegister::Xmm15,
-            ],
+        match self.kind {
+            AbiKind::SystemV => &[], // All XMM registers are caller-saved
+            AbiKind::Windows => super::register::CALLEE_SAVED_XMM_WINDOWS,
         }
     }
 
     /// Returns the caller-saved (volatile) general purpose registers.
     pub fn caller_saved_gp_registers(&self) -> &'static [GPRegister64] {
-        match self {
-            Abi::SystemV => &[
-                GPRegister64::Rax,
-                GPRegister64::Rcx,
-                GPRegister64::Rdx,
-                GPRegister64::Rsi,
-                GPRegister64::Rdi,
-                GPRegister64::R8,
-                GPRegister64::R9,
-                GPRegister64::R10,
-                GPRegister64::R11,
-            ],
-            Abi::Windows => &[
-                GPRegister64::Rax,
-                GPRegister64::Rcx,
-                GPRegister64::Rdx,
-                GPRegister64::R8,
-                GPRegister64::R9,
-                GPRegister64::R10,
-                GPRegister64::R11,
-            ],
+        match self.kind {
+            AbiKind::SystemV => super::register::CALLER_SAVED_GP_SYSTEMV,
+            AbiKind::Windows => super::register::CALLER_SAVED_GP_WINDOWS,
         }
     }
 
     /// Returns the caller-saved (volatile) XMM registers.
     pub fn caller_saved_xmm_registers(&self) -> &'static [XMMRegister] {
-        match self {
-            Abi::SystemV => &[
-                XMMRegister::Xmm0,
-                XMMRegister::Xmm1,
-                XMMRegister::Xmm2,
-                XMMRegister::Xmm3,
-                XMMRegister::Xmm4,
-                XMMRegister::Xmm5,
-                XMMRegister::Xmm6,
-                XMMRegister::Xmm7,
-                XMMRegister::Xmm8,
-                XMMRegister::Xmm9,
-                XMMRegister::Xmm10,
-                XMMRegister::Xmm11,
-                XMMRegister::Xmm12,
-                XMMRegister::Xmm13,
-                XMMRegister::Xmm14,
-                XMMRegister::Xmm15,
-            ],
-            Abi::Windows => &[
-                XMMRegister::Xmm0,
-                XMMRegister::Xmm1,
-                XMMRegister::Xmm2,
-                XMMRegister::Xmm3,
-                XMMRegister::Xmm4,
-                XMMRegister::Xmm5,
-            ],
+        match self.kind {
+            AbiKind::SystemV => super::register::CALLER_SAVED_XMM_SYSTEMV,
+            AbiKind::Windows => super::register::CALLER_SAVED_XMM_WINDOWS,
         }
     }
 
     /// Checks if a register is callee-saved (non-volatile).
     pub fn is_callee_saved(&self, reg: X86Register) -> bool {
-        match reg {
-            X86Register::GP64(gp) => self.callee_saved_gp_registers().contains(&gp),
-            X86Register::Xmm(xmm) => self.callee_saved_xmm_registers().contains(&xmm),
-            _ => false,
-        }
+        // Delegate to X86Register logic using the stored platform.
+        reg.is_callee_saved(self.platform)
     }
 
     /// Checks if a register is caller-saved (volatile).
     pub fn is_caller_saved(&self, reg: X86Register) -> bool {
-        match reg {
-            X86Register::GP64(gp) => self.caller_saved_gp_registers().contains(&gp),
-            X86Register::Xmm(xmm) => self.caller_saved_xmm_registers().contains(&xmm),
-            _ => false,
-        }
+        reg.is_volatile(self.platform)
+    }
+
+    /// Verifica se il registro può essere usato per passaggio parametri
+    pub fn is_parameter_register(&self, reg: X86Register, param_index: usize) -> bool {
+        reg.is_parameter_register(self.platform, param_index)
+    }
+
+    /// Verifica se il registro viene usato per il valore di ritorno
+    pub fn is_return_register(&self, reg: X86Register) -> bool {
+        reg.is_return_register(self.platform)
     }
 
     /// Returns whether the frame pointer (RBP) must be used.
     /// Some ABIs require it for stack unwinding or debugging.
     pub fn requires_frame_pointer(&self) -> bool {
-        match self {
-            Abi::SystemV => false, // Optional, can use RBP as general purpose
-            Abi::Windows => false, // Optional, but recommended for debugging
+        match self.kind {
+            AbiKind::SystemV => false, // Optional, can use RBP as general purpose
+            AbiKind::Windows => false, // Optional, but recommended for debugging
         }
     }
 
     /// Returns the register used for struct return pointers (if too large for registers).
     pub fn struct_return_pointer_register(&self) -> GPRegister64 {
-        match self {
-            Abi::SystemV => GPRegister64::Rdi, // First parameter position
-            Abi::Windows => GPRegister64::Rcx, // First parameter position
+        match self.kind {
+            AbiKind::SystemV => GPRegister64::Rdi, // First parameter position
+            AbiKind::Windows => GPRegister64::Rcx, // First parameter position
         }
     }
 
     /// Returns the maximum size in bytes for a struct to be returned in registers.
     pub fn max_struct_return_size(&self) -> usize {
-        match self {
-            Abi::SystemV => 16, // Can return up to 128 bits in RAX:RDX or XMM0:XMM1
-            Abi::Windows => 8,  // Only 64-bit structs returned in RAX
+        match self.kind {
+            AbiKind::SystemV => 16, // Can return up to 128 bits in RAX:RDX or XMM0:XMM1
+            AbiKind::Windows => 8,  // Only 64-bit structs returned in RAX
         }
     }
 
@@ -240,22 +169,22 @@ impl Abi {
     /// Returns the offset from the stack pointer where the first stack parameter is located.
     /// This accounts for the return address pushed by the call instruction.
     pub fn first_stack_param_offset(&self) -> u32 {
-        match self {
-            Abi::SystemV => 8,                       // Just the return address
-            Abi::Windows => 8 + self.shadow_space(), // Return address + shadow space
+        match self.kind {
+            AbiKind::SystemV => 8,                       // Just the return address
+            AbiKind::Windows => 8 + self.shadow_space(), // Return address + shadow space
         }
     }
 
     /// Returns whether variadic arguments are allowed and how they're handled.
     pub fn variadic_info(&self) -> VariadicInfo {
-        match self {
-            Abi::SystemV => VariadicInfo {
+        match self.kind {
+            AbiKind::SystemV => VariadicInfo {
                 supported: true,
                 requires_va_list: true,
                 // AL register contains number of vector registers used
                 requires_vector_count_in_al: true,
             },
-            Abi::Windows => {
+            AbiKind::Windows => {
                 VariadicInfo { supported: true, requires_va_list: true, requires_vector_count_in_al: false }
             }
         }
@@ -268,9 +197,9 @@ impl Abi {
 
     /// Returns information about calling convention name and documentation.
     pub fn name(&self) -> &'static str {
-        match self {
-            Abi::SystemV => "System V AMD64 ABI",
-            Abi::Windows => "Microsoft x64 Calling Convention",
+        match self.kind {
+            AbiKind::SystemV => "System V AMD64 ABI",
+            AbiKind::Windows => "Microsoft x64 Calling Convention",
         }
     }
 }

@@ -282,6 +282,104 @@ pub enum X86Register {
     InstructionPointer(InstructionPointer),
 }
 
+// Shared static register lists used by ABI logic. Defining them here
+// avoids duplicating the same arrays in multiple places.
+pub const INT_PARAM_REGS_SYSTEMV: &[GPRegister64] =
+    &[GPRegister64::Rdi, GPRegister64::Rsi, GPRegister64::Rdx, GPRegister64::Rcx, GPRegister64::R8, GPRegister64::R9];
+
+pub const INT_PARAM_REGS_WINDOWS: &[GPRegister64] =
+    &[GPRegister64::Rcx, GPRegister64::Rdx, GPRegister64::R8, GPRegister64::R9];
+
+pub const FLOAT_PARAM_REGS_SYSTEMV: &[XMMRegister] = &[
+    XMMRegister::Xmm0,
+    XMMRegister::Xmm1,
+    XMMRegister::Xmm2,
+    XMMRegister::Xmm3,
+    XMMRegister::Xmm4,
+    XMMRegister::Xmm5,
+    XMMRegister::Xmm6,
+    XMMRegister::Xmm7,
+];
+
+pub const FLOAT_PARAM_REGS_WINDOWS: &[XMMRegister] =
+    &[XMMRegister::Xmm0, XMMRegister::Xmm1, XMMRegister::Xmm2, XMMRegister::Xmm3];
+
+pub const INT_RETURN_REGS: &[GPRegister64] = &[GPRegister64::Rax, GPRegister64::Rdx];
+
+pub const FLOAT_RETURN_REGS_SYSTEMV: &[XMMRegister] = &[XMMRegister::Xmm0, XMMRegister::Xmm1];
+pub const FLOAT_RETURN_REGS_WINDOWS: &[XMMRegister] = &[XMMRegister::Xmm0];
+
+pub const CALLEE_SAVED_GP_SYSTEMV: &[GPRegister64] =
+    &[GPRegister64::Rbx, GPRegister64::Rbp, GPRegister64::R12, GPRegister64::R13, GPRegister64::R14, GPRegister64::R15];
+
+pub const CALLEE_SAVED_GP_WINDOWS: &[GPRegister64] = &[
+    GPRegister64::Rbx,
+    GPRegister64::Rbp,
+    GPRegister64::Rdi,
+    GPRegister64::Rsi,
+    GPRegister64::R12,
+    GPRegister64::R13,
+    GPRegister64::R14,
+    GPRegister64::R15,
+];
+
+pub const CALLEE_SAVED_XMM_WINDOWS: &[XMMRegister] = &[
+    XMMRegister::Xmm6,
+    XMMRegister::Xmm7,
+    XMMRegister::Xmm8,
+    XMMRegister::Xmm9,
+    XMMRegister::Xmm10,
+    XMMRegister::Xmm11,
+    XMMRegister::Xmm12,
+    XMMRegister::Xmm13,
+    XMMRegister::Xmm14,
+    XMMRegister::Xmm15,
+];
+
+pub const CALLER_SAVED_GP_SYSTEMV: &[GPRegister64] = &[
+    GPRegister64::Rax,
+    GPRegister64::Rcx,
+    GPRegister64::Rdx,
+    GPRegister64::Rsi,
+    GPRegister64::Rdi,
+    GPRegister64::R8,
+    GPRegister64::R9,
+    GPRegister64::R10,
+    GPRegister64::R11,
+];
+
+pub const CALLER_SAVED_GP_WINDOWS: &[GPRegister64] = &[
+    GPRegister64::Rax,
+    GPRegister64::Rcx,
+    GPRegister64::Rdx,
+    GPRegister64::R8,
+    GPRegister64::R9,
+    GPRegister64::R10,
+    GPRegister64::R11,
+];
+
+pub const CALLER_SAVED_XMM_SYSTEMV: &[XMMRegister] = &[
+    XMMRegister::Xmm0,
+    XMMRegister::Xmm1,
+    XMMRegister::Xmm2,
+    XMMRegister::Xmm3,
+    XMMRegister::Xmm4,
+    XMMRegister::Xmm5,
+    XMMRegister::Xmm6,
+    XMMRegister::Xmm7,
+    XMMRegister::Xmm8,
+    XMMRegister::Xmm9,
+    XMMRegister::Xmm10,
+    XMMRegister::Xmm11,
+    XMMRegister::Xmm12,
+    XMMRegister::Xmm13,
+    XMMRegister::Xmm14,
+    XMMRegister::Xmm15,
+];
+
+pub const CALLER_SAVED_XMM_WINDOWS: &[XMMRegister] =
+    &[XMMRegister::Xmm0, XMMRegister::Xmm1, XMMRegister::Xmm2, XMMRegister::Xmm3, XMMRegister::Xmm4, XMMRegister::Xmm5];
+
 impl X86Register {
     /// Verifica se il registro è volatile secondo la calling convention
     pub fn is_volatile(&self, platform: Platform) -> bool {
