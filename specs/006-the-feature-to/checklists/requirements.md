@@ -1,7 +1,7 @@
 # Specification Quality Checklist: x86_64 NASM Assembly Code Generator
 
 **Purpose**: Validate specification completeness and quality before proceeding to planning
-**Created**: mercoledì 15 ottobre 2025
+**Created**: Wednesday, October 15, 2025
 **Feature**: [Link to spec.md](../spec.md)
 
 ## Content Quality

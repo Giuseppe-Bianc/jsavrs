@@ -51,4 +51,4 @@ cargo test --test codegen_snapshot_tests
 
 Use `INSTA_UPDATE=1 cargo test` to refresh snapshots when intentionally changing output.
 
-_Last updated: 2025-10-15"}
+_Last updated: 2025-10-15_

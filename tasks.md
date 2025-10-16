@@ -48,6 +48,8 @@ description: "Task list for Cross-Platform x86_64 Assembly Code Generator"
 - [ ] T009 Create CodeGenerator trait in src/asm/codegen/mod.rs
 - [ ] T010 [P] Configure test infrastructure in tests/
 - [ ] T011 [P] Implement Error conversion from CodegenError to CompileError
+- [ ] T056 [P] Implement error enrichment for assembler failures in src/asm/codegen/error.rs
+- [ ] T057 [P] Implement detailed error messages with line numbers in src/asm/codegen/error.rs
 
 **Checkpoint**: Foundation ready - user story implementation can now begin in parallel
 
@@ -81,7 +83,8 @@ description: "Task list for Cross-Platform x86_64 Assembly Code Generator"
 - [ ] T024 [US1] Implement map_value for local variables in src/asm/codegen/value_mapper.rs
 - [ ] T025 [US1] Implement map_value for temporary values in src/asm/codegen/value_mapper.rs
 - [ ] T026 [P] [US1] Implement Emitter for text generation in src/asm/codegen/emitter.rs
-- [ ] T027 [US1] Implement ABI selection based on platform in src/asm/codegen/generator.rs
+- [ ] T027 [US1] Implement data sections handling according to target platform conventions in src/asm/codegen/emitter.rs
+- [ ] T028 [US1] Implement ABI selection based on platform in src/asm/codegen/generator.rs
 
 **Checkpoint**: At this point, User Story 1 should be fully functional and testable independently
 
@@ -95,17 +98,17 @@ description: "Task list for Cross-Platform x86_64 Assembly Code Generator"
 
 ### Tests for User Story 2 (OPTIONAL - only if tests requested) ⚠️
 
-- [ ] T028 [P] [US2] Create Windows ABI detection test in tests/abi_tests.rs
-- [ ] T029 [P] [US2] Create Linux ABI detection test in tests/abi_tests.rs
-- [ ] T030 [P] [US2] Create MacOS ABI detection test in tests/abi_tests.rs
+- [ ] T029 [P] [US2] Create Windows ABI detection test in tests/abi_tests.rs
+- [ ] T030 [P] [US2] Create Linux ABI detection test in tests/abi_tests.rs
+- [ ] T031 [P] [US2] Create MacOS ABI detection test in tests/abi_tests.rs
 
 ### Implementation for User Story 2
 
-- [ ] T031 [US2] Enhance ABI selection logic to auto-detect platform in src/asm/abi.rs
-- [ ] T032 [US2] Implement platform-specific parameter mapping in src/asm/codegen/instruction_selector.rs
-- [ ] T033 [US2] Implement platform-specific return value handling in src/asm/codegen/instruction_selector.rs
-- [ ] T034 [US2] Implement shadow space handling for Windows in src/asm/codegen/function_prologue.rs
-- [ ] T035 [US2] Implement red zone handling for SystemV in src/asm/codegen/function_prologue.rs
+- [ ] T032 [US2] Enhance ABI selection logic to auto-detect platform in src/asm/abi.rs
+- [ ] T033 [US2] Implement platform-specific parameter mapping in src/asm/codegen/instruction_selector.rs
+- [ ] T034 [US2] Implement platform-specific return value handling in src/asm/codegen/instruction_selector.rs
+- [ ] T035 [US2] Implement shadow space handling for Windows in src/asm/codegen/function_prologue.rs
+- [ ] T036 [US2] Implement red zone handling for SystemV in src/asm/codegen/function_prologue.rs
 
 **Checkpoint**: At this point, User Stories 1 AND 2 should both work independently
 
@@ -119,21 +122,22 @@ description: "Task list for Cross-Platform x86_64 Assembly Code Generator"
 
 ### Tests for User Story 3 (OPTIONAL - only if tests requested) ⚠️
 
-- [ ] T036 [P] [US3] Create parameter passing test in tests/codegen_tests.rs
-- [ ] T037 [P] [US3] Create return value handling test in tests/codegen_tests.rs
-- [ ] T038 [P] [US3] Create resource preservation test in tests/codegen_tests.rs
+- [ ] T037 [P] [US3] Create parameter passing test in tests/codegen_tests.rs
+- [ ] T038 [P] [US3] Create return value handling test in tests/codegen_tests.rs
+- [ ] T039 [P] [US3] Create resource preservation test in tests/codegen_tests.rs
 
 ### Implementation for User Story 3
 
-- [ ] T039 [US3] Implement RegisterAllocator trait in src/asm/codegen/register_allocator.rs
-- [ ] T040 [US3] Implement GP register allocation in src/asm/codegen/register_allocator.rs
-- [ ] T041 [US3] Implement XMM register allocation in src/asm/codegen/register_allocator.rs
-- [ ] T042 [US3] Implement register spilling mechanism in src/asm/codegen/register_allocator.rs
-- [ ] T043 [US3] Implement function prologue generation in src/asm/codegen/function_prologue.rs
-- [ ] T044 [US3] Implement function epilogue generation in src/asm/codegen/function_epilogue.rs
-- [ ] T045 [US3] Implement callee-saved register preservation in src/asm/codegen/function_prologue.rs
-- [ ] T046 [US3] Implement stack frame management in src/asm/codegen/stack_frame.rs
-- [ ] T047 [US3] Implement alignment in stack frame allocation in src/asm/codegen/stack_frame.rs
+- [ ] T040 [US3] Implement RegisterAllocator trait in src/asm/codegen/register_allocator.rs
+- [ ] T041 [US3] Implement GP register allocation in src/asm/codegen/register_allocator.rs
+- [ ] T042 [US3] Implement XMM register allocation in src/asm/codegen/register_allocator.rs
+- [ ] T043 [US3] Implement register spilling mechanism in src/asm/codegen/register_allocator.rs
+- [ ] T044 [US3] Implement function prologue generation in src/asm/codegen/function_prologue.rs
+- [ ] T045 [US3] Implement function epilogue generation in src/asm/codegen/function_epilogue.rs
+- [ ] T046 [US3] Implement callee-saved register preservation in src/asm/codegen/function_prologue.rs
+- [ ] T047 [US3] Implement variadic function handling according to ABI specifications in src/asm/codegen/function_prologue.rs
+- [ ] T048 [US3] Implement stack frame management in src/asm/codegen/stack_frame.rs
+- [ ] T049 [US3] Implement alignment in stack frame allocation in src/asm/codegen/stack_frame.rs
 
 **Checkpoint**: All user stories should now be independently functional
 
@@ -143,15 +147,13 @@ description: "Task list for Cross-Platform x86_64 Assembly Code Generator"
 
 **Purpose**: Improvements that affect multiple user stories
 
-- [ ] T048 [P] Documentation updates in docs/
-- [ ] T049 Code cleanup and refactoring
-- [ ] T050 Performance optimization across all stories
-- [ ] T051 [P] Additional unit tests for edge cases in tests/unit/
-- [ ] T052 Security hardening
-- [ ] T053 Run quickstart.md validation
-- [ ] T054 [P] Implement error enrichment for assembler failures in src/asm/codegen/error.rs
-- [ ] T055 [P] Implement detailed error messages with line numbers in src/asm/codegen/error.rs
-- [ ] T056 [P] Complete rustdoc comments for all public APIs in src/asm/codegen/
+- [ ] T050 [P] Documentation updates in docs/
+- [ ] T051 Code cleanup and refactoring
+- [ ] T052 Performance optimization across all stories
+- [ ] T053 [P] Additional unit tests for edge cases in tests/unit/
+- [ ] T054 Security hardening
+- [ ] T055 Run quickstart.md validation
+- [ ] T058 [P] Complete rustdoc comments for all public APIs in src/asm/codegen/
 
 ---
 

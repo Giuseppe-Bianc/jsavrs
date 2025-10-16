@@ -113,8 +113,14 @@ Allocation algorithm:
 Alignment helper (corrected):
 
 fn align_down(value: i32, alignment: i32) -> i32 {
-    let rem = value % alignment;
+// For negative values (stack offsets), align to more negative (larger magnitude)
+  if value >= 0 {
+    value - (value % alignment)
+  } else {
+    // For negative: align to next lower (more negative) multiple
+    let rem = (-value) % alignment;
     if rem == 0 { value } else { value - rem }
+  }
 }
 
 Edge cases:

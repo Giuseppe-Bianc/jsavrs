@@ -2,6 +2,7 @@
 
 ```rust
 use crate::ir::Module;
+use crate::ir::Function;
 use crate::asm::codegen::error::CodegenError;
 
 pub trait CodeGenerator {
@@ -9,7 +10,7 @@ pub trait CodeGenerator {
     fn generate_module(&mut self, module: &Module) -> Result<String, CodegenError>;
 
     /// Generate assembly code for a single function
-    fn generate_function(&mut self, function: &crate::ir::Function) -> Result<Vec<crate::asm::data_directive::AssemblyElement>, CodegenError>;
+    fn generate_function(&mut self, function: &Function) -> Result<Vec<crate::asm::data_directive::AssemblyElement>, CodegenError>;
 }
 ```
 

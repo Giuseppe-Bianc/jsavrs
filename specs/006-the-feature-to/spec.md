@@ -105,6 +105,10 @@ The generator must handle resource allocation properly according to ABI specific
 - **FR-021**: System MUST reject code generation and produce a detailed error message when encountering IR operations that require CPU features beyond baseline x86_64
 - **FR-022**: When external assembler (NASM) fails, system MUST capture assembler output, analyze it, and provide enriched error messages that link assembly errors to original IR constructs when possible
 
+**Cross-References**:
+- Implementation details for all Functional Requirements: See plan.md for architectural approach and implementation phases
+- ABI-specific requirements implementation: Refer to plan.md section "ABI Compliance Implementation"
+
 ### Key Entities
 
 - **ABI (Application Binary Interface)**: Defines how functions receive parameters, return values, and manage resources based on the target platform

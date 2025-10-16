@@ -11,6 +11,10 @@ This feature implements a production-grade x86_64 assembly code generator that t
 
 **Core Technical Approach**: Modular pipeline architecture with specialized components for instruction selection, register allocation, stack frame management, and ABI-compliant function prologue/epilogue generation. All conversions utilize type-safe enumerations to eliminate string-based validation errors.
 
+**Cross-References**:
+- ABI compliance requirements from spec.md: See Functional Requirements FR-003 through FR-008
+- Detailed ABI specifications: Refer to spec.md section "Requirements" and "Edge Cases"
+
 ## Technical Context
 
 **Language/Version**: Rust 1.75+ with strict type safety, zero-cost abstractions, and comprehensive error handling  
@@ -252,7 +256,7 @@ No simpler architecture would meet the requirements while maintaining the qualit
 - Design `CodegenError` enumeration covering all error cases
 - Design conversion to `CompileError` for integration with existing error system
 - Document error cases: invalid IR, unsupported operations, register allocation failures
-- Design assembler failure analysis and error enrichment
+- Design assembler failure analysis and error enrichment (See spec.md:FR-022 for detailed requirements)
 - Design error context tracking (source spans, IR instruction references)
 
 **Deliverable**: Error handling design in `research.md` section "Error Handling Strategy"
@@ -434,9 +438,9 @@ cd C:\dev\vscode\rust\jsavrs
 
 ---
 
-## Phase 2: Implementation Planning (NOT EXECUTED BY /speckit.plan)
+## Phase 2: Implementation Planning
 
-**NOTE**: This section documents the planned implementation phases, but the actual task breakdown will be created by the `/speckit.tasks` command. The information here serves as a guide for that command.
+**NOTE**: This section documents the planned implementation phases. The actual task breakdown was created by the `/speckit.tasks` command based on this plan. The information here serves as a guide for task generation.
 
 ### Implementation Phases Overview
 

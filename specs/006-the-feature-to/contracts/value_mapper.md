@@ -2,9 +2,11 @@
 
 ```rust
 use crate::ir::Value;
+use crate::ir::IrType;
 use crate::asm::codegen::context::CodegenContext;
 use crate::asm::codegen::operand::Operand;
 use crate::asm::codegen::error::CodegenError;
+use crate::asm::register::RegisterClass;
 
 pub trait ValueMapper {
     /// Map an IR value to an assembly operand
