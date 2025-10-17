@@ -186,7 +186,7 @@ Compiler developers need the generated assembly to be automatically saved to a f
 ### Functional Requirements
 
 - **FR-001**: Generator MUST accept an IR Module as input containing one or more functions with their control flow graphs
-- **FR-002**: Generator MUST translate IR instructions from all supported InstructionKind variants (Alloca, Store, Load, Binary, Unary, Call, GetElementPtr, Cast, Phi, Vector) into equivalent x86-64 assembly instructions
+- **FR-002**: Generator MUST translate IR instructions from supported InstructionKind variants (Alloca, Store, Load, Binary, Unary, Call, GetElementPtr, Cast, Phi) into equivalent x86-64 assembly instructions; **Note**: Vector operations are NOT supported and MUST generate UnsupportedType errors per FR-031
 - **FR-003**: Generator MUST translate IR terminators (Return, Branch, ConditionalBranch, Switch) into appropriate control flow assembly (ret, jmp, conditional jumps, jump tables)
 - **FR-004**: Generator MUST emit assembly in valid NASM syntax that can be assembled without errors
 - **FR-005**: Generator MUST respect the target platform's calling convention (System V AMD64 ABI for Linux/macOS, Microsoft x64 for Windows) when generating function prologues, epilogues, and call sites
@@ -202,25 +202,25 @@ Compiler developers need the generated assembly to be automatically saved to a f
 - **FR-015**: Generator MUST ensure stack alignment requirements of the target ABI are maintained (16-byte alignment at call sites)
 - **FR-016**: Generator MUST generate unique labels for each IR basic block to serve as jump targets
 - **FR-017**: Generator MUST emit assembly directives to define appropriate sections (section .text, section .data, section .bss, section .rodata)
-- **FR-018**: Generator MUST place IR string constants and global constants in the appropriate data sections with proper labels
-- **FR-019**: Generator MUST generate a function prologue that sets up the stack frame (push rbp, mov rbp rsp, sub rsp for locals); stack allocation MUST include space for local variables, spill slots, and shadow space (if Windows x64 and function makes calls)
+- **FR-018**: Generator MUST place IR string constants and global constants in the appropriate data sections with proper labels and alignment: **String literals** are placed in `.rodata` section with null terminator (e.g., `.str0: db "hello", 0`), 1-byte aligned; **Numeric array constants** are placed in `.rodata` with natural element alignment (e.g., `align 4` for I32 arrays, `align 8` for I64/F64 arrays) using labels `.arr0:`, `.arr1:`, etc.; **Scalar global constants** use appropriate alignment (1/2/4/8 bytes per FR-021 type mapping); Generator MUST track emitted constants to avoid duplication (identical string/array values share the same label)
+- **FR-019**: Generator MUST generate a function prologue that sets up the stack frame (push rbp, mov rbp rsp, sub rsp for locals); stack allocation MUST include space for local variables, spill slots, and shadow space per FR-039 (if Windows x64 and function makes calls)
 - **FR-020**: Generator MUST generate a function epilogue that tears down the stack frame and returns (mov rsp rbp, pop rbp, ret or leave, ret)
-- **FR-021**: Generator MUST select appropriate instruction sizes (byte, word, dword, qword) based on IR type information
-- **FR-022**: Generator MUST use appropriate register sizes (r8, r16, r32, r64) matching the IR operand types
+- **FR-021**: Generator MUST select appropriate instruction sizes (byte, word, dword, qword) based on IR type information according to the following mapping: **I8/U8 → byte (8-bit)**, **I16/U16 → word (16-bit)**, **I32/U32 → dword (32-bit)**, **I64/U64 → qword (64-bit)**, **F32 → dword (32-bit single-precision)**, **F64 → qword (64-bit double-precision)**, **Bool → byte (1 byte, 0=false, 1=true)**, **Char → dword (4 bytes, UTF-32 code point)**, **Pointer → qword (8 bytes on x86-64)**
+- **FR-022**: Generator MUST use appropriate register sizes (r8, r16, r32, r64) matching the IR operand types according to FR-021 size mapping (byte→r8 like al/bl, word→r16 like ax/bx, dword→r32 like eax/ebx, qword→r64 like rax/rbx)
 - **FR-023**: Generator MUST translate IR floating-point operations into SSE2 scalar instructions (addss, addsd, mulss, mulsd, etc.)
 - **FR-024**: Generator MUST use XMM registers for floating-point values and operations
 - **FR-025**: Generator MUST handle IR conditional branches by generating comparison instructions followed by conditional jumps (cmp + je/jne/jg/jl/ja/jb)
 - **FR-026**: Generator MUST implement IR phi functions by splitting critical edges in the control flow graph and generating appropriate move instructions at the end of predecessor blocks to resolve phi nodes correctly
-- **FR-027**: Generator MUST collect error messages when encountering genuinely unsupported or malformed IR constructs without terminating the generation process; core supported features MUST produce correct assembly without errors; generation MUST continue for valid portions, skipping only the problematic instruction or block
+- **FR-027**: Generator MUST collect error messages when encountering genuinely unsupported or malformed IR constructs without terminating the generation process; core supported features MUST produce correct assembly without errors; generation MUST continue for valid portions, skipping only the problematic instruction; if a terminator instruction fails, the generator MUST emit an unreachable/trap instruction as fallback to maintain valid block structure
 - **FR-028**: Generator MUST return both the generated assembly code (including partial code from successful portions) and a list of all collected error messages
-- **FR-029**: Error messages MUST include sufficient context to identify the problematic IR construct (instruction type, location, operands)
-- **FR-030**: Generator MUST save the generated assembly output to a file with .asm extension; when no explicit output path is provided, the file MUST be written to the same directory as the input .vn source file with the same base name
+- **FR-029**: Error messages MUST include sufficient context to identify the problematic IR construct: **minimum required context** includes (1) instruction kind or construct type, (2) source location as SourceSpan (file path, line number, column number), (3) operand types involved, and (4) one-sentence explanation of why the error occurred
+- **FR-030**: Generator MUST save the generated assembly output to a file with .asm extension; when no explicit output path is provided, the file MUST be written to the same directory as the input .vn source file with the same base name. Path resolution follows these rules: (1) if input path is absolute, output directory is the absolute directory of the input file; (2) if input path is relative, output directory is resolved relative to current working directory, then output file is placed in the resolved input file's directory; (3) if explicit output path is provided, it is used as-is (absolute or relative to current working directory)
 - **FR-031**: Generator MUST support generating assembly for the IR types I8, I16, I32, I64, U8, U16, U32, U64, F32, F64, Bool, Char, Pointer, and Void; types not in this list (e.g., I128, custom structs, arrays as first-class values) MUST generate errors
 - **FR-032**: Generator MUST handle IR void-returning functions by generating return without a value (ret without operands)
-- **FR-033**: Generator MUST generate assembly that implements the correct signed vs unsigned semantics for IR operations (using imul vs mul, idiv vs div, signed vs unsigned comparison jumps)
+- **FR-033**: Generator MUST generate assembly that implements the correct signed vs unsigned semantics for IR operations by checking the IR value type signedness (I8-I64 are signed, U8-U64 are unsigned) and selecting appropriate instructions: **signed types use imul, idiv, jg, jl, jge, jle**; **unsigned types use mul, div, ja, jb, jae, jbe**; this applies to multiplication, division, and comparison operations where signed/unsigned distinction affects results
 - **FR-034**: Generator MUST respect the target platform specified in the IR Module metadata (Linux, Windows, macOS) when selecting conventions
 - **FR-035**: Generator MUST emit proper symbol visibility and linkage directives (global, extern) for IR functions based on their attributes
-- **FR-036**: Generator MUST handle IR comparison operations by generating comparison instructions and capturing results in flags or registers as needed by subsequent use
+- **FR-036**: Generator MUST handle IR comparison operations by generating comparison instructions and capturing results appropriately: if the comparison result is used by a conditional branch terminator, results remain in CPU flags (ZF, CF, SF, OF); if the comparison result is used by a non-branch instruction (e.g., assignment, arithmetic), the generator MUST use setcc instructions (sete, setne, setg, setl, seta, setb, etc.) to materialize the boolean result (0 or 1) into a register
 - **FR-037**: Generator MUST manage the x87 FPU stack or avoid x87 instructions, preferring SSE for floating-point operations
 - **FR-038**: Generator MUST handle register pressure by implementing register spilling to stack temporaries when all physical registers are allocated; spilling MUST select the value with the furthest next use (standard linear scan furthest-use heuristic)
 - **FR-039**: Generator MUST generate correct shadow space (32 bytes) on the stack for Windows x64 calling convention; shadow space MUST be allocated once in the function prologue if the function makes any calls and reused for all call sites
@@ -244,6 +244,10 @@ Compiler developers need the generated assembly to be automatically saved to a f
 - **Label**: Named target for jumps, representing basic blocks or data locations in the generated assembly
 - **Memory Operand**: Assembly addressing mode (base + index*scale + displacement) representing memory access
 - **Error Message**: Diagnostic information about unsupported or malformed IR constructs encountered during generation, includes context and location
+- **Symbol Directive**: NASM directive controlling symbol visibility and linkage per FR-035:
+  - **`global <symbol>`**: Exports symbol (used for External linkage functions with `entry` attribute, or any External function with a body)
+  - **`extern <symbol>`**: Imports symbol (used for External linkage functions without a body—forward declarations)
+  - **Internal linkage**: No directive emitted (function is local to the module)
 
 ## Success Criteria *(mandatory)*
 
@@ -256,7 +260,7 @@ Compiler developers need the generated assembly to be automatically saved to a f
 - **SC-005**: Generated assembly for functions allocating local variables correctly reserves stack space and accesses variables at proper offsets without corruption
 - **SC-006**: Floating-point arithmetic functions generate assembly using SSE2 instructions that produce numerically correct results (within floating-point precision)
 - **SC-007**: When generator encounters unsupported IR constructs, error messages clearly identify the construct type and location, enabling developer diagnosis
-- **SC-008**: Generator completes translation of the project's test IR modules in under 1 second per 1000 IR instructions on standard development hardware as a best-effort performance goal (not a hard requirement that would reject complex functions)
+- **SC-008**: Generator completes translation of the project's test IR modules in under 1 second per 1000 IR instructions as a best-effort performance goal, measured relative to baseline benchmarks established during initial implementation. This is informational guidance tracked via Criterion benchmarks, not a hard acceptance criterion that would reject the implementation. Performance targets are relative to the development environment where benchmarks are run.
 - **SC-009**: Generated assembly files are valid NASM syntax verified by assembling without errors using nasm -f elf64 (Linux) or nasm -f win64 (Windows)
 - **SC-010**: Cross-platform IR module targeting Linux generates System V ABI-compliant assembly, while the same IR targeting Windows generates Microsoft x64-compliant assembly
 - **SC-011**: 95% of IR instructions in typical compiler test cases translate to assembly without requiring manual intervention or error workarounds
@@ -334,7 +338,7 @@ Compiler developers need the generated assembly to be automatically saved to a f
 - Q: The specification describes error accumulation for "unsupported or malformed IR constructs" but doesn't specify whether generation should continue after encountering an error or halt immediately for that function. → A: Continue generating code for valid portions; skip only the problematic instruction/block
 - Q: The specification mentions handling "IR with very deep expression nesting requiring many temporary registers" as an edge case but doesn't specify the maximum expression nesting depth the generator should support before failing or using alternative strategies. → A: No hard limit; rely on spilling
 - Q: The specification lists several IR types that must be supported (I8-I64, U8-U64, F32, F64, Bool, Char, Pointer) but the edge cases mention "types that don't directly map to x86-64 registers (e.g., i128, custom structs)" without specifying how to handle them. → A: Generate error for unsupported types (i128, structs); support only listed types
-- Q: The specification mentions "correct shadow space (32 bytes) on the stack for Windows x64 calling convention" but doesn't specify whether this shadow space should be allocated once in the function prologue or dynamically before each call. → A: Allocate in prologue if function makes calls; reuse for all calls
+- Q: The edge cases mention "How are IR string constants and array constants represented in the generated assembly's data section?" but don't provide an answer. → A: String constants are placed in .rodata section with unique labels (e.g., `.str0: db "hello", 0` with null terminator), aligned to 1-byte boundary. Numeric array constants are placed in .rodata with element-size alignment (e.g., `align 4` for i32 arrays, `align 8` for i64 arrays). Array labels use format `.arr0:`, `.arr1:`, etc. See FR-018 for data section placement requirements.
 
 ## Out of Scope *(clarify what this feature does NOT include)*
 

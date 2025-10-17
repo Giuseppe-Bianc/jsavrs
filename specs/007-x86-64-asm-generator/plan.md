@@ -22,9 +22,10 @@ The primary requirement is to create a comprehensive Assembly code generator wit
 **Target Platform**: x86-64 architecture on Windows (MSVC x64 ABI), Linux (System V AMD64 ABI), macOS (System V AMD64 ABI with platform-specific symbol mangling)  
 **Project Type**: Single Rust library/binary project (compiler infrastructure)  
 **Performance Goals**: 
-- Best-effort target: <1 second per 1000 IR instructions on standard dev hardware
+- Best-effort target: <1 second per 1000 IR instructions, measured via Criterion benchmarks relative to baseline established during initial implementation
 - Linear scan register allocation: O(n) complexity where n = number of IR instructions
 - File I/O: Sub-millisecond for typical .asm file writes (<100KB)
+- Performance targets are tracked relative to development environment, not absolute hardware specifications
 
 **Constraints**: 
 - Memory safety: Zero unsafe code in generator (unless absolutely necessary for performance with extensive justification)

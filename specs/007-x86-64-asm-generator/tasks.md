@@ -35,12 +35,13 @@
 
 - [ ] T005 Implement `AsmGenerator::new(target: TargetTriple) -> Self` constructor in `src/asm/generator.rs` that selects appropriate ABI (System V for Linux/macOS, Microsoft x64 for Windows) based on target triple
 - [ ] T006 [P] Create register allocator module in `src/asm/register_allocator.rs` with `LinearScanAllocator` struct (intervals, active, available_regs, spilled_values) and empty method stubs
-- [ ] T007 [P] Create instruction selector module in `src/asm/instruction_selector.rs` with `InstructionSelector` struct and `select_instruction(inst: &Instruction) -> Result<Vec<AsmInstruction>, CodeGenError>` signature
+- [ ] T007 [P] Create instruction selector module in `src/asm/instruction_selector.rs` with `InstructionSelector` struct and `select_instruction(inst: &Instruction) -> Result<Vec<AsmInstruction>, CodeGenError>` signature; **Note**: this module MUST handle both Binary operations (per T013-T013-A) and Unary operations (Negate→neg, Not→not per FR-008)
 - [ ] T008 [P] Create phi resolver module in `src/asm/phi_resolver.rs` with `PhiResolver` struct and `resolve_phis(func: &Function) -> Result<(), CodeGenError>` signature
 - [ ] T009 [P] Create prologue/epilogue generator module in `src/asm/prologue_epilogue.rs` with `FrameGenerator` struct and method signatures for `generate_prologue` and `generate_epilogue`
 - [ ] T010 Create `FunctionContext` struct in `src/asm/generator.rs` to track per-function state (register_assignment, stack_frame, used_callee_saved, block_labels, value_locations)
 - [ ] T011 Implement label generation in `src/asm/generator.rs`: `new_label(&mut self, prefix: &str) -> String` using monotonic label_counter
 - [ ] T012 Implement assembly emission in `src/asm/generator.rs`: `emit_assembly(&self) -> String` that formats sections (.text, .data, .bss, .rodata) into valid NASM syntax with proper directives
+- [ ] T012-A Populate assembly sections in `src/asm/generator.rs`: emit `section .text` directive before function code, `section .data` for initialized global variables, `section .bss` for uninitialized globals, `section .rodata` for constants, ensure each section contains appropriate content with proper ordering
 
 **Checkpoint**: Foundation ready - user story implementation can now begin in parallel
 
@@ -55,6 +56,7 @@
 ### Implementation for User Story 1
 
 - [ ] T013 [P] [US1] Implement basic instruction selection for integer binary operations in `src/asm/instruction_selector.rs`: Add, Subtract, Multiply for I32/I64 types mapping to `add`, `sub`, `imul` instructions
+- [ ] T013-A [P] [US1] Implement signed/unsigned operation detection in `src/asm/instruction_selector.rs`: check IR value type signedness (I8-I64 vs U8-U64), select signed operations (`imul`, `idiv`, `jg`, `jl`, `jge`, `jle`) for signed types and unsigned operations (`mul`, `div`, `ja`, `jb`, `jae`, `jbe`) for unsigned types per FR-033
 - [ ] T014 [P] [US1] Implement alloca instruction selection in `src/asm/instruction_selector.rs`: translate IR `Alloca` to stack offset calculation with proper alignment
 - [ ] T015 [P] [US1] Implement load instruction selection in `src/asm/instruction_selector.rs`: translate IR `Load` to `mov` instruction with memory operand
 - [ ] T016 [P] [US1] Implement store instruction selection in `src/asm/instruction_selector.rs`: translate IR `Store` to `mov` instruction with memory destination
@@ -82,8 +84,8 @@
 - [ ] T025 [P] [US2] Implement basic block label generation in `src/asm/generator.rs`: create unique labels for each basic block using `new_label` with block ID
 - [ ] T026 [P] [US2] Implement unconditional branch translation in `src/asm/instruction_selector.rs`: translate `Branch` terminator to `jmp target_label` instruction
 - [ ] T027 [P] [US2] Implement conditional branch translation in `src/asm/instruction_selector.rs`: translate `ConditionalBranch` to comparison instruction (`cmp`/`test`) followed by conditional jump (`je`, `jne`, `jg`, `jl`, `ja`, `jb` based on condition type)
-- [ ] T028 [US2] Implement comparison instruction selection in `src/asm/instruction_selector.rs`: translate IR comparison operations (Eq, Ne, Lt, Le, Gt, Ge) to `cmp` instruction with appropriate flags checking, handling signed vs unsigned comparisons
-- [ ] T029 [US2] Implement switch terminator translation in `src/asm/instruction_selector.rs`: translate `Switch` to jump table or conditional chain based on number of cases (jump table for >4 cases, conditional chain otherwise)
+- [ ] T028 [US2] Implement comparison instruction selection in `src/asm/instruction_selector.rs` per FR-036: translate IR comparison operations (Eq, Ne, Lt, Le, Gt, Ge) to `cmp` instruction; if result used by conditional branch, leave in CPU flags; if result used by non-branch instruction (assignment, arithmetic), generate setcc instructions (sete, setne, setg, setl, seta, setb) to materialize boolean (0 or 1) into register; handle signed vs unsigned comparisons
+- [ ] T029 [US2] Implement switch terminator translation in `src/asm/instruction_selector.rs`: translate `Switch` to jump table (for >4 cases) or conditional chain (for ≤4 cases). Note: This threshold optimizes for dense sequential case values (0,1,2,3,...); sparse cases (e.g., 100,200,300,400,500) may benefit from conditional chains even with >4 cases. Future enhancement: calculate density ratio (cases/range) to decide strategy.
 - [ ] T030 [US2] Update `generate_function` in `src/asm/generator.rs` to handle terminators: call instruction selector for each block's terminator after block instructions
 - [ ] T031 [US2] Implement CFG traversal ordering in `src/asm/generator.rs`: use existing `ControlFlowGraph` from `src/ir/cfg.rs` to traverse blocks in proper order for code layout
 
@@ -121,10 +123,13 @@
 ### Implementation for User Story 4
 
 - [ ] T040 [P] [US4] Implement GetElementPtr translation in `src/asm/instruction_selector.rs`: translate array indexing to `lea` instruction with indexed addressing mode `[base + index*scale + offset]`
+- [ ] T040-A [P] [US4] Handle multi-level GEP with complex scaling in `src/asm/instruction_selector.rs`: for non-power-of-2 element sizes (e.g., 3-byte structs, 6-byte fields), use `imul` to compute `index * element_size`, then combine with `lea` for final address calculation with base and offset
 - [ ] T041 [P] [US4] Implement pointer arithmetic in `src/asm/instruction_selector.rs`: handle pointer addition/subtraction using `add`/`sub` instructions with scaled offsets
 - [ ] T042 [US4] Implement alignment calculation in `src/asm/prologue_epilogue.rs`: update `StackFrame::calculate_frame_size` to align local variables to natural alignment (1/2/4/8 bytes based on type)
-- [ ] T043 [US4] Implement memory operand generation in `src/asm/instruction_selector.rs`: helper to create `MemoryOperand` with base register, optional index register, scale, and displacement for load/store instructions
+- [ ] T043 [US4] Implement memory operand generation in `src/asm/instruction_selector.rs`: helper to create `MemoryOperand` with base register, optional index register, scale, and displacement for load/store instructions; **addressing mode preference hierarchy**: (1) single LEA instruction if address fits `[base + index*scale + disp]` format with valid scale (1/2/4/8), (2) LEA followed by add/sub for displacement overflow or additional offset, (3) multiple instructions (imul for non-power-of-2 scales, then add/lea sequence) for complex addresses
 - [ ] T044 [US4] Handle global variable references in `src/asm/generator.rs`: emit globals in `.data` or `.bss` sections with proper labels, generate RIP-relative addressing for access on Linux/macOS or absolute addressing on Windows
+- [ ] T044-A [P] [US4] Emit global constants in `src/asm/generator.rs` per FR-018: place string literals in `.rodata` section with null terminator and labels (e.g., `.str0: db "hello", 0`), 1-byte aligned; place numeric array constants in `.rodata` with natural element alignment (`align 4` for I32 arrays, `align 8` for I64/F64 arrays) using labels `.arr0:`, `.arr1:`; track emitted constants to avoid duplication (identical values share labels)
+- [ ] T044-B [P] [US4] Emit platform-specific data section directives in `src/asm/generator.rs`: use NASM-compatible directives (`db`, `dw`, `dd`, `dq` for 1/2/4/8-byte data), handle platform differences in data alignment (Windows may require explicit `align` directives more frequently than Linux), ensure section directives are NASM-compliant across all target platforms
 
 **Checkpoint**: Memory operations working - can compile programs with arrays, pointers, and complex data access
 
@@ -179,6 +184,7 @@
 ### Implementation for User Story 7
 
 - [ ] T059 [P] [US7] Implement platform-specific symbol mangling in `src/asm/generator.rs`: add underscore prefix for macOS symbols (_main, _function), no prefix for Linux/Windows (main, function)
+- [ ] T059-A [P] [US7] Emit symbol visibility directives in `src/asm/generator.rs`: emit `global <name>` for exported functions (IR function with linkage=External + entry_point attribute), emit `extern <name>` for imported functions (IR function declarations with no body), omit directives for internal linkage functions (not exported or imported), handle platform-specific export requirements
 - [ ] T060 [P] [US7] Implement platform-specific directives in `src/asm/generator.rs`: emit `default rel` for RIP-relative addressing on Linux/macOS, absolute addressing on Windows
 - [ ] T061 [US7] Implement ABI-specific parameter passing in `src/asm/prologue_epilogue.rs`: use `Abi::parameter_registers` to select register order (RDI, RSI, RDX, RCX, R8, R9 for System V vs RCX, RDX, R8, R9 for Microsoft x64)
 - [ ] T062 [US7] Verify shadow space handling in `src/asm/prologue_epilogue.rs`: ensure shadow space only allocated for Microsoft x64 ABI (32 bytes), not for System V
@@ -216,7 +222,7 @@
 
 ### Implementation for User Story 9
 
-- [ ] T071 [US9] Implement output path resolution in `src/asm/generator.rs`: determine output path (explicit path if provided, else same directory as input .vn file with .asm extension)
+- [ ] T071 [US9] Implement output path resolution in `src/asm/generator.rs` per FR-030 path resolution rules: **(1)** if explicit output path is provided, it is used as-is (absolute or relative to current working directory); **(2)** if input path is absolute, output directory is the absolute directory of the input file; **(3)** if input path is relative, output directory is resolved relative to current working directory, then output file is placed in the resolved input file's directory; always use .asm extension and same base name as input
 - [ ] T072 [US9] Implement directory creation in `src/asm/generator.rs`: create output directory if it doesn't exist using `std::fs::create_dir_all`, handle `IoError`
 - [ ] T073 [US9] Implement file writing in `src/asm/generator.rs`: write assembly string to file using `std::fs::write`, wrap I/O errors in `CodeGenError::IoError`
 - [ ] T074 [US9] Handle partial assembly file output in `src/asm/generator.rs`: write partial assembly to file even when errors present, document which functions failed in assembly comments
@@ -256,7 +262,7 @@
 
 - [ ] T083 [P] Implement critical edge detection in `src/asm/phi_resolver.rs`: `find_critical_edges(&Function) -> Vec<(BlockId, BlockId)>` identifying edges from blocks with multiple successors to blocks with multiple predecessors
 - [ ] T084 Implement edge splitting in `src/asm/phi_resolver.rs`: `split_edge(&mut Function, from: BlockId, to: BlockId) -> BlockId` creates new basic block with unconditional branch, updates CFG
-- [ ] T085 Implement phi resolution in `src/asm/phi_resolver.rs`: `resolve_phis(&mut Function)` splits critical edges, then converts phi(val1 from B1, val2 from B2) to moves at end of predecessor blocks
+- [ ] T085 Implement phi resolution in `src/asm/phi_resolver.rs`: `resolve_phis(&mut Function)` first identifies and splits only critical edges (per T083), then converts phi instructions to move instructions placed at the end of appropriate predecessor blocks (before the terminator jump); non-critical phi sources handled directly without creating new blocks
 - [ ] T086 Integrate phi resolver in `src/asm/generator.rs`: call `phi_resolver.resolve_phis()` at start of function generation before register allocation
 
 **Checkpoint**: SSA phi resolution complete - can handle IR in SSA form with phi functions
@@ -270,12 +276,12 @@
 - [ ] T087 [P] Add comprehensive rustdoc comments to all public APIs in `src/asm/generator.rs`, `src/asm/register_allocator.rs`, `src/asm/instruction_selector.rs`
 - [ ] T088 [P] Add assembly comments in `src/asm/generator.rs`: emit comments showing original IR instruction above each translated assembly block
 - [ ] T089 [P] Add statistics collection in `src/asm/generator.rs`: track register spills, stack frame sizes, instruction counts in `CodeGenStats`
-- [ ] T090 [P] Create integration tests in `tests/codegen_integration_tests.rs`: end-to-end tests for each user story with IR input → assembly output → NASM assembly → execution → result verification
+- [ ] T090 [P] Create integration tests in `tests/codegen_integration_tests.rs`: end-to-end tests for each user story with IR input → assembly output → NASM assembly → execution → result verification. **MUST include x87 avoidance validation per FR-037**: `grep -E '(fld|fst|fadd|fmul|fsub|fdiv|fldz|fld1|fldpi)' <output.asm>` returns no matches (SSE-only policy, zero x87 instructions). MUST verify switch translation: IR with 3 cases generates conditional chain (3× cmp+je), IR with 5 cases generates jump table (1× bounds check + indexed jmp)
 - [ ] T091 [P] Create snapshot tests in `tests/codegen_snapshot_tests.rs`: Insta snapshot tests for generated assembly from test IR examples
 - [ ] T092 [P] Create benchmarks in `benches/codegen_benchmark.rs`: Criterion benchmarks for generation performance (IR instructions/second), verify <1s per 1000 instructions target
 - [ ] T093 Code cleanup: run rustfmt, clippy, address all warnings
 - [ ] T094 Update `README.md` or create `docs/assembly-generator.md` with usage examples, architecture overview, and extension guide
-- [ ] T095 Validate quickstart.md examples: ensure all code examples compile and execute correctly
+- [ ] T095 Validate quickstart.md examples: ensure all code examples compile and execute correctly. Document C library linking assumptions: generated assembly can call libc functions (printf, malloc, etc.) by declaring them as `extern` and relying on the linker to resolve symbols; Windows requires linking with MSVCRT (cl.exe handles automatically), Linux requires glibc (gcc handles automatically); no special ABI handling needed beyond standard calling conventions (FR-034)
 - [ ] T096 Final validation: run full test suite (`cargo test --all`), benchmarks (`cargo bench`), verify all user story acceptance criteria met
 
 ---
@@ -383,24 +389,24 @@ After MVP, deliver user stories in priority order (P2 → P3 → P4...), with ea
 
 **Total Tasks**: 96
 - Setup: 5 tasks (T001, T001-A, T002-T004)
-- Foundational: 8 tasks (T005-T012)
-- US1 (Basic Translation): 12 tasks (T013-T024)
+- Foundational: 9 tasks (T005-T012, T012-A)
+- US1 (Basic Translation): 13 tasks (T013, T013-A, T014-T024)
 - US2 (Control Flow): 7 tasks (T025-T031)
 - US3 (Function Calls/ABI): 8 tasks (T032-T039)
-- US4 (Memory Operations): 5 tasks (T040-T044)
+- US4 (Memory Operations): 7 tasks (T040, T040-A, T041-T044, T044-A, T044-B)
 - US5 (Type Conversions): 7 tasks (T045-T051)
 - US6 (Error Handling): 7 tasks (T052-T058)
-- US7 (Cross-Platform): 5 tasks (T059-T063)
+- US7 (Cross-Platform): 6 tasks (T059, T059-A, T060-T063)
 - US8 (Floating-Point): 7 tasks (T064-T070)
 - US9 (Output Files): 4 tasks (T071-T074)
 - Register Allocation: 8 tasks (T075-T082)
 - Phi Resolution: 4 tasks (T083-T086)
 - Polish: 10 tasks (T087-T096)
 
-**Total Tasks**: 97 tasks (was 96, added T001-A for error conversion trait implementation)
+**Total Tasks**: 103 tasks (was 102, added T013-A for signed/unsigned operation selection)
 
-**Parallel Opportunities**: 44 tasks marked [P] can run in parallel with others in same phase (added T001-A)
+**Parallel Opportunities**: 50 tasks marked [P] can run in parallel with others in same phase (includes T013-A, T040-A, T044-A, T044-B, T059-A)
 
 **Independent Test Criteria**: Each user story phase includes clear verification criteria for independent testing
 
-**MVP Scope**: Phase 1 (5) + Phase 2 (8) + Phase 3/US1 (12) + Phase 12 partial (3) = ~28 tasks for minimal viable product
+**MVP Scope**: Phase 1 (5) + Phase 2 (9) + Phase 3/US1 (13) + Phase 12 partial (3) = ~30 tasks for minimal viable product
