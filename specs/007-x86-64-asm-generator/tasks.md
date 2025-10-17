@@ -19,7 +19,8 @@
 
 **Purpose**: Project initialization, error types, and basic generator structure
 
-- [ ] T001 Create error module in `src/asm/error.rs` with `CodeGenError` enum covering all error variants (UnsupportedType, UnknownInstruction, MalformedInstruction, RegisterAllocationFailed, InvalidCallingConvention, CfgVerificationFailed, PhiResolutionFailed, IoError) with `From<CodeGenError>` for `CompileError` trait implementation
+- [ ] T001 Create error module in `src/asm/error.rs` with `CodeGenError` enum covering all error variants (UnsupportedType, UnknownInstruction, MalformedInstruction, RegisterAllocationFailed, InvalidCallingConvention, CfgVerificationFailed, PhiResolutionFailed, IoError)
+- [ ] T001-A [P] Implement `From<CodeGenError>` for `CompileError` trait in `src/error/compile_error.rs` with automatic span preservation from `CodeGenError::span()`, help text mapping for each error variant (UnsupportedType→"This type is not supported by the assembly generator. Supported types: I8-I64, U8-U64, F32, F64, Bool, Char, Pointer, Void", UnknownInstruction→"Unknown IR instruction encountered", etc.), and conversion to appropriate `CompileError::AsmGeneratorError` variant with preserved source location
 - [ ] T002 [P] Create generator module skeleton in `src/asm/generator.rs` with `AsmGenerator` struct fields (target_triple, abi, errors, sections, label_counter)
 - [ ] T003 [P] Create result types in `src/asm/generator.rs`: `CodeGenResult` (assembly, errors, stats) and `CodeGenStats` (functions_generated, functions_failed, instructions_translated, assembly_instructions, register_spills, total_stack_size)
 - [ ] T004 Update `src/asm/mod.rs` to export new modules (error, generator)
@@ -381,7 +382,7 @@ After MVP, deliver user stories in priority order (P2 → P3 → P4...), with ea
 ## Task Summary
 
 **Total Tasks**: 96
-- Setup: 4 tasks
+- Setup: 5 tasks (T001, T001-A, T002-T004)
 - Foundational: 8 tasks (T005-T012)
 - US1 (Basic Translation): 12 tasks (T013-T024)
 - US2 (Control Flow): 7 tasks (T025-T031)
@@ -396,8 +397,10 @@ After MVP, deliver user stories in priority order (P2 → P3 → P4...), with ea
 - Phi Resolution: 4 tasks (T083-T086)
 - Polish: 10 tasks (T087-T096)
 
-**Parallel Opportunities**: 43 tasks marked [P] can run in parallel with others in same phase
+**Total Tasks**: 97 tasks (was 96, added T001-A for error conversion trait implementation)
+
+**Parallel Opportunities**: 44 tasks marked [P] can run in parallel with others in same phase (added T001-A)
 
 **Independent Test Criteria**: Each user story phase includes clear verification criteria for independent testing
 
-**MVP Scope**: Phase 1 (4) + Phase 2 (8) + Phase 3/US1 (12) + Phase 12 partial (3) = ~27 tasks for minimal viable product
+**MVP Scope**: Phase 1 (5) + Phase 2 (8) + Phase 3/US1 (12) + Phase 12 partial (3) = ~28 tasks for minimal viable product
