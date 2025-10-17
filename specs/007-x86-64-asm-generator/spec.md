@@ -167,11 +167,11 @@ Compiler developers need the generated assembly to be automatically saved to a f
 
 - Phi functions from SSA form are resolved using critical edge splitting, with move instructions inserted at the end of predecessor blocks before the terminator jump
 - How does the generator handle IR functions with no return statement (unreachable terminator)?
-- What happens when IR uses types that don't directly map to x86-64 registers (e.g., i128, custom structs)?
-- How are IR pointer types translated when generating memory operands?
+- IR types that don't directly map to x86-64 registers (e.g., i128, custom structs, arrays as values) generate errors; only the types listed in FR-031 are supported
+- Pointer types are translated as 64-bit integer registers (rax, rbx, etc.) when used as values; when dereferenced, they serve as base addresses for memory operands
 - What happens when IR contains indirect branches with unknown target labels?
-- How does the generator handle IR with very deep expression nesting requiring many temporary registers?
-- What happens when the number of live variables exceeds available registers (register spilling)?
+- Deep expression nesting requiring many temporary registers is handled through the register spilling mechanism without imposing artificial nesting depth limits
+- Register spilling is triggered when all physical registers are allocated, using furthest-use heuristic to select spill candidates
 - How are IR string constants and array constants represented in the generated assembly's data section?
 - What happens when IR function calls exceed the available parameter registers for the calling convention?
 - How does the generator handle IR vector operations if SIMD support is limited or absent?
@@ -203,7 +203,7 @@ Compiler developers need the generated assembly to be automatically saved to a f
 - **FR-016**: Generator MUST generate unique labels for each IR basic block to serve as jump targets
 - **FR-017**: Generator MUST emit assembly directives to define appropriate sections (section .text, section .data, section .bss, section .rodata)
 - **FR-018**: Generator MUST place IR string constants and global constants in the appropriate data sections with proper labels
-- **FR-019**: Generator MUST generate a function prologue that sets up the stack frame (push rbp, mov rbp rsp, sub rsp for locals)
+- **FR-019**: Generator MUST generate a function prologue that sets up the stack frame (push rbp, mov rbp rsp, sub rsp for locals); stack allocation MUST include space for local variables, spill slots, and shadow space (if Windows x64 and function makes calls)
 - **FR-020**: Generator MUST generate a function epilogue that tears down the stack frame and returns (mov rsp rbp, pop rbp, ret or leave, ret)
 - **FR-021**: Generator MUST select appropriate instruction sizes (byte, word, dword, qword) based on IR type information
 - **FR-022**: Generator MUST use appropriate register sizes (r8, r16, r32, r64) matching the IR operand types
@@ -211,19 +211,19 @@ Compiler developers need the generated assembly to be automatically saved to a f
 - **FR-024**: Generator MUST use XMM registers for floating-point values and operations
 - **FR-025**: Generator MUST handle IR conditional branches by generating comparison instructions followed by conditional jumps (cmp + je/jne/jg/jl/ja/jb)
 - **FR-026**: Generator MUST implement IR phi functions by splitting critical edges in the control flow graph and generating appropriate move instructions at the end of predecessor blocks to resolve phi nodes correctly
-- **FR-027**: Generator MUST collect error messages when encountering genuinely unsupported or malformed IR constructs without terminating the generation process; core supported features MUST produce correct assembly without errors
-- **FR-028**: Generator MUST return both the generated assembly code and a list of all collected error messages
+- **FR-027**: Generator MUST collect error messages when encountering genuinely unsupported or malformed IR constructs without terminating the generation process; core supported features MUST produce correct assembly without errors; generation MUST continue for valid portions, skipping only the problematic instruction or block
+- **FR-028**: Generator MUST return both the generated assembly code (including partial code from successful portions) and a list of all collected error messages
 - **FR-029**: Error messages MUST include sufficient context to identify the problematic IR construct (instruction type, location, operands)
 - **FR-030**: Generator MUST save the generated assembly output to a file with .asm extension; when no explicit output path is provided, the file MUST be written to the same directory as the input .vn source file with the same base name
-- **FR-031**: Generator MUST support generating assembly for the IR types I8, I16, I32, I64, U8, U16, U32, U64, F32, F64, Bool, Char, Pointer
+- **FR-031**: Generator MUST support generating assembly for the IR types I8, I16, I32, I64, U8, U16, U32, U64, F32, F64, Bool, Char, Pointer, and Void; types not in this list (e.g., I128, custom structs, arrays as first-class values) MUST generate errors
 - **FR-032**: Generator MUST handle IR void-returning functions by generating return without a value (ret without operands)
 - **FR-033**: Generator MUST generate assembly that implements the correct signed vs unsigned semantics for IR operations (using imul vs mul, idiv vs div, signed vs unsigned comparison jumps)
 - **FR-034**: Generator MUST respect the target platform specified in the IR Module metadata (Linux, Windows, macOS) when selecting conventions
 - **FR-035**: Generator MUST emit proper symbol visibility and linkage directives (global, extern) for IR functions based on their attributes
 - **FR-036**: Generator MUST handle IR comparison operations by generating comparison instructions and capturing results in flags or registers as needed by subsequent use
 - **FR-037**: Generator MUST manage the x87 FPU stack or avoid x87 instructions, preferring SSE for floating-point operations
-- **FR-038**: Generator MUST handle register pressure by implementing register spilling to stack temporaries when necessary
-- **FR-039**: Generator MUST generate correct shadow space (32 bytes) on the stack for Windows x64 calling convention before calls
+- **FR-038**: Generator MUST handle register pressure by implementing register spilling to stack temporaries when all physical registers are allocated; spilling MUST select the value with the furthest next use (standard linear scan furthest-use heuristic)
+- **FR-039**: Generator MUST generate correct shadow space (32 bytes) on the stack for Windows x64 calling convention; shadow space MUST be allocated once in the function prologue if the function makes any calls and reused for all call sites
 - **FR-040**: Generator MUST translate IR GetElementPtr with array indices into scaled index addressing modes when possible (e.g., mov rax, [base + index*8])
 
 ### Key Entities
@@ -330,6 +330,11 @@ Compiler developers need the generated assembly to be automatically saved to a f
 - Q: The specification mentions saving output to ".asm files" but doesn't specify where these files should be written by default when no explicit path is provided. → A: Write to same directory as input .vn file
 - Q: The specification mentions phi function handling but doesn't specify the concrete approach for resolving SSA phi nodes into conventional assignments during code generation. → A: Critical edge splitting with phi resolution at predecessor block ends
 - Q: The specification mentions performance expectations ("under 1 second per 1000 IR instructions") but doesn't specify how the generator should handle scenarios where this performance target cannot be met due to very large or complex functions. → A: No special handling; performance target is best-effort goal, not hard requirement
+- Q: When the generator encounters register pressure (more live values than available physical registers), the spec mentions "register spilling to stack" but doesn't specify the spilling strategy's aggressiveness or when to trigger spilling. → A: Spill the furthest-use value when all registers are full
+- Q: The specification describes error accumulation for "unsupported or malformed IR constructs" but doesn't specify whether generation should continue after encountering an error or halt immediately for that function. → A: Continue generating code for valid portions; skip only the problematic instruction/block
+- Q: The specification mentions handling "IR with very deep expression nesting requiring many temporary registers" as an edge case but doesn't specify the maximum expression nesting depth the generator should support before failing or using alternative strategies. → A: No hard limit; rely on spilling
+- Q: The specification lists several IR types that must be supported (I8-I64, U8-U64, F32, F64, Bool, Char, Pointer) but the edge cases mention "types that don't directly map to x86-64 registers (e.g., i128, custom structs)" without specifying how to handle them. → A: Generate error for unsupported types (i128, structs); support only listed types
+- Q: The specification mentions "correct shadow space (32 bytes) on the stack for Windows x64 calling convention" but doesn't specify whether this shadow space should be allocated once in the function prologue or dynamically before each call. → A: Allocate in prologue if function makes calls; reuse for all calls
 
 ## Out of Scope *(clarify what this feature does NOT include)*
 
