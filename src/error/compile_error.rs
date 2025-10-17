@@ -63,13 +63,8 @@ pub enum CompileError {
     ///
     /// Contains:
     /// - `message`: Description of the assembly generation failure
-    /// - `span`: Optional source location associated with the error
-    /// - `help`: Optional guidance for fixing the error
-    #[error("Assembly generation error: {message}{}{}",
-        .span.as_ref().map_or(String::new(), |s| format!(" at {s}")),
-        .help.as_ref().map_or(String::new(), |h| format!("\nhelp: {h}"))
-    )]
-    AsmGeneratorError { message: String, span: Option<SourceSpan>, help: Option<String> },
+    #[error("Assembly generation error: {message}")]
+    AsmGeneratorError { message: String },
 
     /// I/O operation failure during compilation (e.g., file access issues).
     ///
@@ -102,7 +97,7 @@ impl CompileError {
             | CompileError::SyntaxError { message, .. }
             | CompileError::TypeError { message, .. }
             | CompileError::IrGeneratorError { message, .. }
-            | CompileError::AsmGeneratorError { message, .. } => Some(message),
+            | CompileError::AsmGeneratorError { message } => Some(message),
             _ => None,
         }
     }
@@ -133,7 +128,6 @@ impl CompileError {
             | CompileError::SyntaxError { span, .. }
             | CompileError::TypeError { span, .. }
             | CompileError::IrGeneratorError { span, .. } => Some(span),
-            CompileError::AsmGeneratorError { span, .. } => span.as_ref(),
             _ => None,
         }
     }
@@ -160,8 +154,7 @@ impl CompileError {
             CompileError::LexerError { help, .. }
             | CompileError::SyntaxError { help, .. }
             | CompileError::TypeError { help, .. }
-            | CompileError::IrGeneratorError { help, .. }
-            | CompileError::AsmGeneratorError { help, .. } => help.as_deref(),
+            | CompileError::IrGeneratorError { help, .. } => help.as_deref(),
             _ => None,
         }
     }
@@ -191,7 +184,7 @@ impl CompileError {
             | CompileError::SyntaxError { message, .. }
             | CompileError::TypeError { message, .. }
             | CompileError::IrGeneratorError { message, .. }
-            | CompileError::AsmGeneratorError { message, .. } => *message = new_message,
+            | CompileError::AsmGeneratorError { message } => *message = new_message,
             _ => {}
         }
     }
@@ -224,7 +217,6 @@ impl CompileError {
             | CompileError::SyntaxError { span, .. }
             | CompileError::TypeError { span, .. }
             | CompileError::IrGeneratorError { span, .. } => *span = new_span,
-            CompileError::AsmGeneratorError { span, .. } => *span = Some(new_span),
             _ => {}
         }
     }
@@ -253,8 +245,7 @@ impl CompileError {
             CompileError::LexerError { help, .. }
             | CompileError::SyntaxError { help, .. }
             | CompileError::TypeError { help, .. }
-            | CompileError::IrGeneratorError { help, .. }
-            | CompileError::AsmGeneratorError { help, .. } => *help = new_help,
+            | CompileError::IrGeneratorError { help, .. } => *help = new_help,
             _ => {}
         }
     }
