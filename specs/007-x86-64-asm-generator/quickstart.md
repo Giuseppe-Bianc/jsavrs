@@ -10,7 +10,7 @@ The x86-64 NASM assembly code generator translates jsavrs Intermediate Represent
 
 ## Prerequisites
 
-- Rust 2024 Edition (1.75+)
+- Rust 2024 Edition (1.85+)
 - Familiarity with jsavrs IR structure (`src/ir/`)
 - Basic understanding of x86-64 assembly and calling conventions
 - NASM assembler for testing generated code
