@@ -92,9 +92,11 @@ pub enum AssemblyElement {
     Label(String),
     /// Istruzione
     Instruction(Instruction),
+    /// Istruzione con commento in linea
+    InstructionWithComment(Instruction, String),
     /// Direttiva di dati
     Data(String, DataDirective),
-    /// Commento
+    /// Commento (block-style)
     Comment(String),
     /// Linea vuota
     EmptyLine,
@@ -105,6 +107,7 @@ impl fmt::Display for AssemblyElement {
         match self {
             AssemblyElement::Label(name) => write!(f, "{}:", name),
             AssemblyElement::Instruction(instr) => write!(f, "    {}", instr),
+            AssemblyElement::InstructionWithComment(instr, comment) => write!(f, "    {}    ; {}", instr, comment),
             AssemblyElement::Data(label, directive) => write!(f, "{}: {}", label, directive),
             AssemblyElement::Comment(comment) => write!(f, "; {}", comment),
             AssemblyElement::EmptyLine => write!(f, ""),
@@ -150,6 +153,10 @@ impl AssemblySection {
 
     pub fn add_comment(&mut self, comment: impl Into<String>) {
         self.elements.push(AssemblyElement::Comment(comment.into()));
+    }
+
+    pub fn add_instruction_with_comment(&mut self, instr: Instruction, comment: impl Into<String>) {
+        self.elements.push(AssemblyElement::InstructionWithComment(instr, comment.into()));
     }
 
     pub fn add_empty_line(&mut self) {

@@ -1,7 +1,7 @@
 // run --package jsavrs --bin jsavrs -- -i C:/dev/visualStudio/transpiler/Vandior/input.vn -v
 use clap::Parser;
 use console::style;
-use jsavrs::asm::{Abi, AbiKind, AssemblyElement, AssemblySection, CommentType, DataDirective, GPRegister64, Immediate, Instruction, MemoryOperand, Operand, Platform, Section, X86Register};
+use jsavrs::asm::{Abi, AbiKind, AssemblyElement, AssemblySection, DataDirective, GPRegister64, Immediate, Instruction, MemoryOperand, Operand, Platform, Section, X86Register};
 use jsavrs::cli::Args;
 use jsavrs::error::error_reporter::ErrorReporter;
 use jsavrs::ir::generator::NIrGenerator;
@@ -180,11 +180,11 @@ fn main() -> Result<(), CompileError> {
     // Test assembly element display
     let elem_label = AssemblyElement::Label("my_label".to_string());
     let elem_instr = AssemblyElement::Instruction(Instruction::Nop);
-    let elem_comment = AssemblyElement::Comment("This is a block comment".to_string(), CommentType::Block);
+    let elem_comment = AssemblyElement::Comment("This is a block comment".to_string());
     let elem_data = AssemblyElement::Data("my_var".to_string(), DataDirective::Db(vec![1, 2, 3]));
-    
-    let elem_inline_comment = AssemblyElement::Comment("This is an inline comment".to_string(), CommentType::Inline);
-    
+
+    let elem_inline_comment = AssemblyElement::InstructionWithComment(Instruction::Nop, "This is an inline comment".to_string());
+
     println!("Label element: {}", elem_label);
     println!("Instruction element: {}", elem_instr);
     println!("Block comment element: {}", elem_comment);
@@ -201,11 +201,10 @@ fn main() -> Result<(), CompileError> {
     section.add_data("message", DataDirective::Asciz("Hello, World!".to_string()));
     section.add_comment("End of example");
     section.add_label("start");
-    section.add_instruction(Instruction::Mov { 
+    section.add_instruction_with_comment(Instruction::Mov { 
         dest: Operand::Register(X86Register::GP64(GPRegister64::Rcx)), 
         src: Operand::Immediate(Immediate::Imm64(200)) 
-    });
-    section.add_inline_comment("move 200 -> rcx");
+    }, "move 200 -> rcx");
     
     println!("\nAssemblySection:\n{}", section);
 
