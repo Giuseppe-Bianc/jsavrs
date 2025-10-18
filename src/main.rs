@@ -212,6 +212,7 @@ fn main() -> Result<(), CompileError> {
 
     let mut assembly_file = AssemblyFile::new(Abi::SYSTEM_V_LINUX);
     assembly_file.data_sec_add_data("message", DataDirective::new_asciz("Hello, World!".to_string()));
+    assembly_file.data_sec_add_data("message_len", DataDirective::new_equ_length_of("message"));
     assembly_file.text_sec_add_label("start");
     assembly_file.text_sec_add_instruction(Instruction::Mov {
         dest: Operand::Register(X86Register::GP64(GPRegister64::Rax)),

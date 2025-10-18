@@ -25,7 +25,22 @@ pub enum DataDirective {
     Resd(usize),
     /// Spazio riservato in quad word
     Resq(usize),
+    /// EQU - costante calcolata (es: len equ $ - msg)
+    Equ(EquExpression),
 }
+
+#[derive(Debug, Clone)]
+#[allow(dead_code)]
+pub enum EquExpression {
+    /// Valore costante
+    Constant(i64),
+    /// Calcolo di lunghezza: $ - label
+    LengthOf(String),
+    /// Espressione generica (per casi più complessi)
+    Generic(String),
+}
+
+
 
 impl DataDirective {
     pub fn new_asciz(s: impl Into<String>) -> Self {
@@ -34,6 +49,28 @@ impl DataDirective {
 
     pub fn new_asciiz_with_terminator(s: impl Into<String>, terminator: u8) -> Self {
         DataDirective::Asciz(s.into(), terminator)
+    }
+
+    pub fn new_equ_constant(value: i64) -> Self {
+        DataDirective::Equ(EquExpression::Constant(value))
+    }
+
+    pub fn new_equ_length_of(label: impl Into<String>) -> Self {
+        DataDirective::Equ(EquExpression::LengthOf(label.into()))
+    }
+
+    pub fn new_equ_generic(expr: impl Into<String>) -> Self {
+        DataDirective::Equ(EquExpression::Generic(expr.into()))
+    }
+}
+
+impl fmt::Display for EquExpression {
+    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
+        match self {
+            EquExpression::Constant(value) => write!(f, "{}", value),
+            EquExpression::LengthOf(label) => write!(f, "$ - {}", label),
+            EquExpression::Generic(expr) => write!(f, "{}", expr),
+        }
     }
 }
 
@@ -90,9 +127,11 @@ impl fmt::Display for DataDirective {
             DataDirective::Resw(size) => write!(f, "resw {}", size),
             DataDirective::Resd(size) => write!(f, "resd {}", size),
             DataDirective::Resq(size) => write!(f, "resq {}", size),
+            DataDirective::Equ(expr) => write!(f, "equ {}", expr),
         }
     }
 }
+
 
 /// Rappresenta un elemento in una sezione assembly
 #[derive(Debug, Clone)]
