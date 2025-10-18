@@ -15,10 +15,9 @@ pub struct AssemblyFile {
 
 impl AssemblyFile {
     pub fn new(abi: Abi) -> Self {
-        let (bss_section, rodata_section) = match abi {
-            Abi::SYSTEM_V_MACOS | Abi::SYSTEM_V_LINUX => (Some(AssemblySection::bss_section()), None),
-            Abi::WINDOWS => (None, Some(AssemblySection::rodata_section())),
-            _ => (None, None),
+        let (bss_section, rodata_section) = match abi.kind {
+            AbiKind::SystemV => (Some(AssemblySection::bss_section()), None),
+            AbiKind::Windows => (None, Some(AssemblySection::rodata_section())),
         };
 
         Self {
