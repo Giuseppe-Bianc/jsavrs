@@ -1,5 +1,6 @@
 use super::Platform;
 use super::register::{GPRegister64, X86Register, XMMRegister};
+use std::fmt;
 
 /// Represents the kind of Application Binary Interface (ABI) convention.
 ///
@@ -13,6 +14,15 @@ pub enum AbiKind {
     Windows,
 }
 
+impl fmt::Display for AbiKind {
+    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
+        match self {
+            AbiKind::SystemV => write!(f, "System V AMD64 ABI"),
+            AbiKind::Windows => write!(f, "Microsoft x64 Calling Convention"),
+        }
+    }
+}
+
 /// Represents a complete ABI specification for x86-64 function calls.
 ///
 /// Combines the calling convention kind with the target platform to provide
@@ -23,6 +33,12 @@ pub struct Abi {
     pub kind: AbiKind,
     /// The target platform (Linux, macOS, Windows, etc.).
     pub platform: Platform,
+}
+
+impl fmt::Display for Abi {
+    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
+        write!(f, "{} on {}", self.kind, self.platform)
+    }
 }
 
 #[allow(dead_code)]
@@ -229,4 +245,11 @@ pub struct VariadicInfo {
     pub requires_va_list: bool,
     /// Whether AL must contain the number of vector registers used (System V).
     pub requires_vector_count_in_al: bool,
+}
+
+impl fmt::Display for VariadicInfo {
+    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
+        write!(f, "VariadicInfo {{ supported: {}, requires_va_list: {}, requires_vector_count_in_al: {} }}", 
+               self.supported, self.requires_va_list, self.requires_vector_count_in_al)
+    }
 }

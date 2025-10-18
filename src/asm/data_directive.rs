@@ -1,5 +1,7 @@
 /// Rappresenta una direttiva di dati nell'assembly
 use super::{Instruction, Section};
+use std::fmt;
+
 #[derive(Debug, Clone)]
 #[allow(dead_code)]
 pub enum DataDirective {
@@ -25,6 +27,63 @@ pub enum DataDirective {
     Resq(usize),
 }
 
+impl fmt::Display for DataDirective {
+    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
+        match self {
+            DataDirective::Db(bytes) => {
+                write!(f, "db ")?;
+                for (i, byte) in bytes.iter().enumerate() {
+                    if i > 0 {
+                        write!(f, ", ")?;
+                    }
+                    write!(f, "0x{:02x}", byte)?;
+                }
+                Ok(())
+            }
+            DataDirective::Dw(words) => {
+                write!(f, "dw ")?;
+                for (i, word) in words.iter().enumerate() {
+                    if i > 0 {
+                        write!(f, ", ")?;
+                    }
+                    write!(f, "0x{:04x}", word)?;
+                }
+                Ok(())
+            }
+            DataDirective::Dd(dwords) => {
+                write!(f, "dd ")?;
+                for (i, dword) in dwords.iter().enumerate() {
+                    if i > 0 {
+                        write!(f, ", ")?;
+                    }
+                    write!(f, "0x{:08x}", dword)?;
+                }
+                Ok(())
+            }
+            DataDirective::Dq(qwords) => {
+                write!(f, "dq ")?;
+                for (i, qword) in qwords.iter().enumerate() {
+                    if i > 0 {
+                        write!(f, ", ")?;
+                    }
+                    write!(f, "0x{:016x}", qword)?;
+                }
+                Ok(())
+            }
+            DataDirective::Asciz(s) => {
+                write!(f, "db \"{}\", 0", escape_string(s))
+            }
+            DataDirective::Ascii(s) => {
+                write!(f, "db \"{}\"", escape_string(s))
+            }
+            DataDirective::Resb(size) => write!(f, "resb {}", size),
+            DataDirective::Resw(size) => write!(f, "resw {}", size),
+            DataDirective::Resd(size) => write!(f, "resd {}", size),
+            DataDirective::Resq(size) => write!(f, "resq {}", size),
+        }
+    }
+}
+
 /// Rappresenta un elemento in una sezione assembly
 #[derive(Debug, Clone)]
 #[allow(dead_code)]
@@ -41,12 +100,34 @@ pub enum AssemblyElement {
     EmptyLine,
 }
 
+impl fmt::Display for AssemblyElement {
+    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
+        match self {
+            AssemblyElement::Label(name) => write!(f, "{}:", name),
+            AssemblyElement::Instruction(instr) => write!(f, "    {}", instr),
+            AssemblyElement::Data(label, directive) => write!(f, "{}: {}", label, directive),
+            AssemblyElement::Comment(comment) => write!(f, "; {}", comment),
+            AssemblyElement::EmptyLine => write!(f, ""),
+        }
+    }
+}
+
 /// Sezione assembly con i suoi elementi
 #[derive(Debug, Clone)]
 #[allow(dead_code)]
 pub struct AssemblySection {
     pub section: Section,
     pub elements: Vec<AssemblyElement>,
+}
+
+impl fmt::Display for AssemblySection {
+    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
+        writeln!(f, "{}", self.section)?;
+        for element in &self.elements {
+            writeln!(f, "{}", element)?;
+        }
+        Ok(())
+    }
 }
 
 #[allow(dead_code)]
@@ -90,4 +171,12 @@ impl AssemblySection {
     pub fn rodata_section() -> Self {
         Self::new(Section::Rodata)
     }
+}
+
+/// Helper function to escape special characters in strings for assembly output
+fn escape_string(s: &str) -> String {
+    s.replace("\\", "\\\\")
+     .replace("\"", "\\\"")
+     .replace("\n", "\\n")
+     .replace("\t", "\\t")
 }

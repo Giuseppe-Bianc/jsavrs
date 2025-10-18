@@ -1,3 +1,5 @@
+use std::fmt;
+
 /// Assembly sections
 #[derive(Debug, Clone, Hash, PartialEq, Eq)]
 #[allow(dead_code)]
@@ -6,6 +8,12 @@ pub enum Section {
     Data,
     Bss,
     Rodata,
+}
+
+impl fmt::Display for Section {
+    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
+        write!(f, "section {}", self.name())
+    }
 }
 
 #[allow(dead_code)]
