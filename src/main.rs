@@ -1,7 +1,10 @@
 // run --package jsavrs --bin jsavrs -- -i C:/dev/visualStudio/transpiler/Vandior/input.vn -v
 use clap::Parser;
 use console::style;
-use jsavrs::asm::{Abi, AbiKind, AssemblyElement, AssemblySection, DataDirective, GPRegister64, Immediate, Instruction, MemoryOperand, Operand, Platform, Section, X86Register};
+use jsavrs::asm::{
+    Abi, AbiKind, AssemblyElement, AssemblyFile, AssemblySection, DataDirective, GPRegister64, Immediate, Instruction,
+    MemoryOperand, Operand, Platform, Section, X86Register,
+};
 use jsavrs::cli::Args;
 use jsavrs::error::error_reporter::ErrorReporter;
 use jsavrs::ir::generator::NIrGenerator;
@@ -136,47 +139,46 @@ fn main() -> Result<(), CompileError> {
         println!("{module}");
     }
 
-
-    // Test Platform display
+    /*// Test Platform display
     println!("Platform: {}", Platform::Linux);
-    
+
     // Test AbiKind display
     println!("AbiKind: {}", AbiKind::SystemV);
-    
+
     // Test Abi display
     let abi = Abi::SYSTEM_V_LINUX;
     println!("Abi: {}", abi);
-    
+
     // Test Section display
     println!("Section: {}", Section::Text);
-    
+
     // Test register display
     println!("Register: {}", GPRegister64::Rax);
     println!("X86Register: {}", X86Register::GP64(GPRegister64::Rbx));
-    
+
     // Test immediate display
     let imm = Immediate::Imm32(42);
     println!("Immediate: {}", imm);
-    
+
     // Test operand display
     let operand = Operand::Register(X86Register::GP64(GPRegister64::Rcx));
     println!("Operand: {}", operand);
-    
+
     // Test memory operand display
     let mem_op = MemoryOperand::new(Some(GPRegister64::Rsp)).with_displacement(8);
     println!("MemoryOperand: {}", mem_op);
-    
+
     // Test instruction display
-    let instr = Instruction::Mov { 
-        dest: Operand::Register(X86Register::GP64(GPRegister64::Rax)), 
-        src: Operand::Immediate(Immediate::Imm32(42)) 
+    let instr = Instruction::Mov {
+        dest: Operand::Register(X86Register::GP64(GPRegister64::Rax)),
+        src: Operand::Immediate(Immediate::Imm32(42))
     };
     println!("Instruction: {}", instr);
-    
+
     // Test data directive display
     let data_dir = DataDirective::Dd(vec![1, 2, 3]);
     println!("DataDirective: {}", data_dir);
-    
+
     // Test assembly element display
     let elem_label = AssemblyElement::Label("my_label".to_string());
     let elem_instr = AssemblyElement::Instruction(Instruction::Nop);
@@ -190,23 +192,43 @@ fn main() -> Result<(), CompileError> {
     println!("Block comment element: {}", elem_comment);
     println!("Inline comment element: {}", elem_inline_comment);
     println!("Data element: {}", elem_data);
-    
+
     // Test assembly section display
     let mut section = AssemblySection::text_section();
     section.add_label("start");
-    section.add_instruction(Instruction::Mov { 
-        dest: Operand::Register(X86Register::GP64(GPRegister64::Rax)), 
-        src: Operand::Immediate(Immediate::Imm64(100)) 
+    section.add_instruction(Instruction::Mov {
+        dest: Operand::Register(X86Register::GP64(GPRegister64::Rax)),
+        src: Operand::Immediate(Immediate::Imm64(100))
     });
     section.add_data("message", DataDirective::Asciz("Hello, World!".to_string()));
     section.add_comment("End of example");
     section.add_label("start");
-    section.add_instruction_with_comment(Instruction::Mov { 
-        dest: Operand::Register(X86Register::GP64(GPRegister64::Rcx)), 
-        src: Operand::Immediate(Immediate::Imm64(200)) 
+    section.add_instruction_with_comment(Instruction::Mov {
+        dest: Operand::Register(X86Register::GP64(GPRegister64::Rcx)),
+        src: Operand::Immediate(Immediate::Imm64(200))
     }, "move 200 -> rcx");
-    
-    println!("\nAssemblySection:\n{}", section);
+
+    println!("\nAssemblySection:\n{}", section);*/
+
+    let mut assembly_file = AssemblyFile::new(Abi::SYSTEM_V_LINUX);
+    assembly_file.data_sec_add_data("message", DataDirective::new_asciz("Hello, World!".to_string()));
+    assembly_file.text_sec_add_label("start");
+    assembly_file.text_sec_add_instruction(Instruction::Mov {
+        dest: Operand::Register(X86Register::GP64(GPRegister64::Rax)),
+        src: Operand::Immediate(Immediate::Imm64(100)),
+    });
+
+    assembly_file.text_sec_add_label("start2");
+
+    assembly_file.text_sec_add_instruction_with_comment(
+        Instruction::Mov {
+            dest: Operand::Register(X86Register::GP64(GPRegister64::Rcx)),
+            src: Operand::Immediate(Immediate::Imm64(200)),
+        },
+        "move 200 -> rcx",
+    );
+
+    println!("file:\n{}", assembly_file);
 
     Ok(())
 }

@@ -13,8 +13,8 @@ pub enum DataDirective {
     Dd(Vec<u32>),
     /// Quad word (64-bit)
     Dq(Vec<u64>),
-    /// String (con null terminator)
-    Asciz(String),
+    /// String (con null terminator o altro terminatore)
+    Asciz(String, u8),
     /// String (senza null terminator)
     Ascii(String),
     /// Spazio riservato in byte
@@ -25,6 +25,16 @@ pub enum DataDirective {
     Resd(usize),
     /// Spazio riservato in quad word
     Resq(usize),
+}
+
+impl DataDirective {
+    pub fn new_asciz(s: impl Into<String>) -> Self {
+        DataDirective::Asciz(s.into(), 0)
+    }
+
+    pub fn new_asciiz_with_terminator(s: impl Into<String>, terminator: u8) -> Self {
+        DataDirective::Asciz(s.into(), terminator)
+    }
 }
 
 impl fmt::Display for DataDirective {
@@ -70,8 +80,8 @@ impl fmt::Display for DataDirective {
                 }
                 Ok(())
             }
-            DataDirective::Asciz(s) => {
-                write!(f, "db \"{}\", 0", escape_string(s))
+            DataDirective::Asciz(s, terminator) => {
+                write!(f, "db \"{}\", {}", escape_string(s), terminator)
             }
             DataDirective::Ascii(s) => {
                 write!(f, "db \"{}\"", escape_string(s))
@@ -108,7 +118,7 @@ impl fmt::Display for AssemblyElement {
             AssemblyElement::Label(name) => write!(f, "{}:", name),
             AssemblyElement::Instruction(instr) => write!(f, "    {}", instr),
             AssemblyElement::InstructionWithComment(instr, comment) => write!(f, "    {}    ; {}", instr, comment),
-            AssemblyElement::Data(label, directive) => write!(f, "{}: {}", label, directive),
+            AssemblyElement::Data(label, directive) => write!(f, "{} {}", label, directive),
             AssemblyElement::Comment(comment) => write!(f, "; {}", comment),
             AssemblyElement::EmptyLine => write!(f, ""),
         }
