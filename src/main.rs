@@ -2,8 +2,7 @@
 use clap::Parser;
 use console::style;
 use jsavrs::asm::{
-    Abi, AbiKind, AssemblyElement, AssemblyFile, AssemblySection, DataDirective, GPRegister64, Immediate, Instruction,
-    MemoryOperand, Operand, Platform, Section, X86Register,
+    Abi, AssemblyFile, DataDirective, GPRegister64, Immediate, Instruction, Operand, X86Register
 };
 use jsavrs::cli::Args;
 use jsavrs::error::error_reporter::ErrorReporter;
