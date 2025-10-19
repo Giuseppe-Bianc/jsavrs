@@ -1,277 +1,9 @@
-#![allow(dead_code)]
+use crate::asm::{
+    ControlRegister, DebugRegister, FPURegister, FlagsRegister, GPRegister8, GPRegister16, GPRegister32, GPRegister64,
+    InstructionPointer, MMXRegister, MaskRegister, SegmentRegister, XMMRegister, YMMRegister, ZMMRegister,
+    platform::Platform,
+};
 use std::fmt;
-
-/// Piattaforma target
-#[derive(Debug, Clone, Copy, PartialEq, Eq)]
-pub enum Platform {
-    Windows,
-    Linux,
-    MacOS,
-}
-
-impl fmt::Display for Platform {
-    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
-        match self {
-            Platform::Windows => write!(f, "Windows"),
-            Platform::Linux => write!(f, "Linux"),
-            Platform::MacOS => write!(f, "macOS"),
-        }
-    }
-}
-
-/// Registri General Purpose a 64-bit
-#[derive(Debug, Clone, Copy, PartialEq, Eq)]
-pub enum GPRegister64 {
-    Rax,
-    Rbx,
-    Rcx,
-    Rdx,
-    Rsi,
-    Rdi,
-    Rbp,
-    Rsp,
-    R8,
-    R9,
-    R10,
-    R11,
-    R12,
-    R13,
-    R14,
-    R15,
-}
-
-/// Registri General Purpose a 32-bit
-#[derive(Debug, Clone, Copy, PartialEq, Eq)]
-pub enum GPRegister32 {
-    Eax,
-    Ebx,
-    Ecx,
-    Edx,
-    Esi,
-    Edi,
-    Ebp,
-    Esp,
-    R8d,
-    R9d,
-    R10d,
-    R11d,
-    R12d,
-    R13d,
-    R14d,
-    R15d,
-}
-
-/// Registri General Purpose a 16-bit
-#[derive(Debug, Clone, Copy, PartialEq, Eq)]
-pub enum GPRegister16 {
-    Ax,
-    Bx,
-    Cx,
-    Dx,
-    Si,
-    Di,
-    Bp,
-    Sp,
-    R8w,
-    R9w,
-    R10w,
-    R11w,
-    R12w,
-    R13w,
-    R14w,
-    R15w,
-}
-
-/// Registri General Purpose a 8-bit
-#[derive(Debug, Clone, Copy, PartialEq, Eq)]
-pub enum GPRegister8 {
-    Al,
-    Bl,
-    Cl,
-    Dl,
-    Ah,
-    Bh,
-    Ch,
-    Dh,
-    Sil,
-    Dil,
-    Bpl,
-    Spl,
-    R8b,
-    R9b,
-    R10b,
-    R11b,
-    R12b,
-    R13b,
-    R14b,
-    R15b,
-}
-
-/// Registri x87 FPU
-#[derive(Debug, Clone, Copy, PartialEq, Eq)]
-pub enum FPURegister {
-    St0,
-    St1,
-    St2,
-    St3,
-    St4,
-    St5,
-    St6,
-    St7,
-}
-
-/// Registri MMX
-#[derive(Debug, Clone, Copy, PartialEq, Eq)]
-pub enum MMXRegister {
-    Mm0,
-    Mm1,
-    Mm2,
-    Mm3,
-    Mm4,
-    Mm5,
-    Mm6,
-    Mm7,
-}
-
-/// Registri XMM (SSE)
-#[derive(Debug, Clone, Copy, PartialEq, Eq)]
-pub enum XMMRegister {
-    Xmm0,
-    Xmm1,
-    Xmm2,
-    Xmm3,
-    Xmm4,
-    Xmm5,
-    Xmm6,
-    Xmm7,
-    Xmm8,
-    Xmm9,
-    Xmm10,
-    Xmm11,
-    Xmm12,
-    Xmm13,
-    Xmm14,
-    Xmm15,
-}
-
-/// Registri YMM (AVX)
-#[derive(Debug, Clone, Copy, PartialEq, Eq)]
-pub enum YMMRegister {
-    Ymm0,
-    Ymm1,
-    Ymm2,
-    Ymm3,
-    Ymm4,
-    Ymm5,
-    Ymm6,
-    Ymm7,
-    Ymm8,
-    Ymm9,
-    Ymm10,
-    Ymm11,
-    Ymm12,
-    Ymm13,
-    Ymm14,
-    Ymm15,
-}
-
-/// Registri ZMM (AVX-512)
-#[derive(Debug, Clone, Copy, PartialEq, Eq)]
-pub enum ZMMRegister {
-    Zmm0,
-    Zmm1,
-    Zmm2,
-    Zmm3,
-    Zmm4,
-    Zmm5,
-    Zmm6,
-    Zmm7,
-    Zmm8,
-    Zmm9,
-    Zmm10,
-    Zmm11,
-    Zmm12,
-    Zmm13,
-    Zmm14,
-    Zmm15,
-    Zmm16,
-    Zmm17,
-    Zmm18,
-    Zmm19,
-    Zmm20,
-    Zmm21,
-    Zmm22,
-    Zmm23,
-    Zmm24,
-    Zmm25,
-    Zmm26,
-    Zmm27,
-    Zmm28,
-    Zmm29,
-    Zmm30,
-    Zmm31,
-}
-
-/// Registri Mask (AVX-512)
-#[derive(Debug, Clone, Copy, PartialEq, Eq)]
-pub enum MaskRegister {
-    K0,
-    K1,
-    K2,
-    K3,
-    K4,
-    K5,
-    K6,
-    K7,
-}
-
-/// Registri di segmento
-#[derive(Debug, Clone, Copy, PartialEq, Eq)]
-pub enum SegmentRegister {
-    Cs,
-    Ds,
-    Es,
-    Fs,
-    Gs,
-    Ss,
-}
-
-/// Registri di controllo
-#[derive(Debug, Clone, Copy, PartialEq, Eq)]
-pub enum ControlRegister {
-    Cr0,
-    Cr2,
-    Cr3,
-    Cr4,
-    Cr8,
-}
-
-/// Registri di debug
-#[derive(Debug, Clone, Copy, PartialEq, Eq)]
-pub enum DebugRegister {
-    Dr0,
-    Dr1,
-    Dr2,
-    Dr3,
-    Dr6,
-    Dr7,
-}
-
-/// Registro dei flag
-#[derive(Debug, Clone, Copy, PartialEq, Eq)]
-pub enum FlagsRegister {
-    Rflags, // 64-bit
-    Eflags, // 32-bit
-    Flags,  // 16-bit
-}
-
-/// Registro instruction pointer
-#[derive(Debug, Clone, Copy, PartialEq, Eq)]
-pub enum InstructionPointer {
-    Rip, // 64-bit
-    Eip, // 32-bit
-    Ip,  // 16-bit
-}
 
 /// Enumerazione principale che raggruppa tutti i tipi di registri
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
@@ -618,8 +350,8 @@ impl X86Register {
 macro_rules! impl_display_for_register {
     ($($t:ty),*) => {
         $(
-            impl std::fmt::Display for $t {
-                fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+            impl fmt::Display for $t {
+                fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
                     write!(f, "{}", format!("{:?}", self).to_lowercase())
                 }
             }
@@ -646,8 +378,8 @@ impl_display_for_register!(
 );
 
 // Implementazione specifica per FPURegister
-impl std::fmt::Display for FPURegister {
-    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+impl fmt::Display for FPURegister {
+    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
         let idx = match self {
             FPURegister::St0 => 0,
             FPURegister::St1 => 1,
@@ -662,8 +394,8 @@ impl std::fmt::Display for FPURegister {
     }
 }
 
-impl std::fmt::Display for X86Register {
-    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+impl fmt::Display for X86Register {
+    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
         write!(f, "{}", self.nasm_name())
     }
 }

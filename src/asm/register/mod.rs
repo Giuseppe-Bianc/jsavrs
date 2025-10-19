@@ -1,0 +1,27 @@
+mod gp_register;
+mod fpu_register;
+mod mmx_register;
+mod xmm_register;
+mod ymm_register;
+mod zmm_register;
+mod mask_register;
+mod segment_register;
+mod control_register;
+mod debug_register;
+mod flags_register;
+mod instruction_pointer;
+mod x86_register;
+
+pub use gp_register::*;
+pub use fpu_register::*;
+pub use mmx_register::*;
+pub use xmm_register::*;
+pub use ymm_register::*;
+pub use zmm_register::*;
+pub use mask_register::*;
+pub use segment_register::*;
+pub use control_register::*;
+pub use debug_register::*;
+pub use flags_register::*;
+pub use instruction_pointer::*;
+pub use x86_register::*;
