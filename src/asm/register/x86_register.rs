@@ -5,7 +5,11 @@ use crate::asm::{
 };
 use std::fmt;
 
-/// Enumerazione principale che raggruppa tutti i tipi di registri
+/// Unified enumeration for all x86-64 register types.
+///
+/// Provides type-safe unified interface for any register. Enables generic
+/// register handling in assemblers and code generators with ABI-aware methods
+/// for querying volatility, size, calling convention roles, and assembly names.
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
 pub enum X86Register {
     GP64(GPRegister64),
@@ -124,9 +128,8 @@ pub const CALLER_SAVED_XMM_WINDOWS: &[XMMRegister] =
     &[XMMRegister::Xmm0, XMMRegister::Xmm1, XMMRegister::Xmm2, XMMRegister::Xmm3, XMMRegister::Xmm4, XMMRegister::Xmm5];
 
 impl X86Register {
-    /// Verifica se il registro è volatile secondo la calling convention
-    pub fn is_volatile(&self, platform: Platform) -> bool {
-        match self {
+    /// Returns true if register is volatile (caller-saved) for given platform.
+    pub fn is_volatile(&self, platform: Platform) -> bool { match self {
             X86Register::GP64(r) => match platform {
                 Platform::Windows => matches!(
                     r,
@@ -179,9 +182,9 @@ impl X86Register {
         }
     }
 
-    /// Verifica se il registro è non-volatile (callee-saved)
+    /// Returns true if register is callee-saved (non-volatile) for given platform.
     pub fn is_callee_saved(&self, platform: Platform) -> bool {
-        match self {
+match self {
             X86Register::GP64(r) => match platform {
                 Platform::Windows => matches!(
                     r,
@@ -226,7 +229,7 @@ impl X86Register {
         }
     }
 
-    /// Ottiene la dimensione del registro in bit
+    /// Returns register size in bits (8, 16, 32, 64, 80, 128, 256, 512).
     pub fn size_bits(&self) -> usize {
         match self {
             X86Register::GP64(_)
@@ -250,12 +253,12 @@ impl X86Register {
         }
     }
 
-    /// Ottiene la dimensione del registro in byte
+    /// Returns register size in bytes.
     pub fn size_bytes(&self) -> usize {
         self.size_bits() / 8
     }
 
-    /// Verifica se il registro può essere usato per passaggio parametri
+    /// Checks if register is used for Nth parameter (0-indexed) on platform.
     pub fn is_parameter_register(&self, platform: Platform, param_index: usize) -> bool {
         match platform {
             Platform::Windows => {
@@ -307,7 +310,7 @@ impl X86Register {
         }
     }
 
-    /// Verifica se il registro viene usato per il valore di ritorno
+    /// Checks if register is used for return values on platform.
     pub fn is_return_register(&self, platform: Platform) -> bool {
         match platform {
             Platform::Windows | Platform::Linux | Platform::MacOS => {
@@ -322,6 +325,7 @@ impl X86Register {
         }
     }
 
+    /// Returns NASM-compatible lowercase register name.
     pub fn nasm_name(&self) -> String {
         match self {
             X86Register::GP64(r) => format!("{:?}", r).to_lowercase(),

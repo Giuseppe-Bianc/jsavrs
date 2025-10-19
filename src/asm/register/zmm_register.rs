@@ -1,4 +1,10 @@
-/// Registri ZMM (AVX-512)
+/// ZMM registers for AVX-512 operations (512-bit SIMD).
+///
+/// 32 registers (ZMM0-ZMM31, 16 in non-64-bit modes) for maximum SIMD width.
+/// Lower portions are XMM/YMM registers. Supports 64×8-bit, 32×16-bit,
+/// 16×32-bit, 8×64-bit elements. Features: per-element masking, embedded
+/// broadcast/rounding, compressed displacement. May reduce CPU frequency on
+/// some processors. Check CPUID for AVX-512 variants (F, BW, DQ, VL, etc.).
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Hash)]
 pub enum ZMMRegister {
     Zmm0,

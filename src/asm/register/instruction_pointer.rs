@@ -1,10 +1,14 @@
-//! Instruction pointer register types.
-//!
-//! This module defines the `InstructionPointer` enum, which represents
-//! different CPU instruction pointer register sizes used across x86 architectures.
+/// Instruction pointer register for different processor modes.
+///
+/// Contains offset of next instruction to execute. Modified by control flow
+/// instructions (JMP, CALL, RET), not by direct MOV. RIP-relative addressing
+/// in 64-bit mode enables position-independent code.
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
 pub enum InstructionPointer {
-    Rip, // 64-bit
-    Eip, // 32-bit
-    Ip,  // 16-bit
+    /// 64-bit instruction pointer. Supports RIP-relative addressing for PIC.
+    Rip,
+    /// 32-bit instruction pointer (Protected/Compatibility Mode).
+    Eip,
+    /// 16-bit instruction pointer (Real Mode). Combined with CS as CS:IP.
+    Ip,
 }

@@ -1,16 +1,20 @@
-/// Registri di segmento
+/// Segment registers for x86 memory segmentation.
+///
+/// Store segment selectors referencing GDT/LDT descriptors. In 64-bit mode,
+/// CS/DS/ES/SS largely ignored (flat memory). FS/GS remain useful for
+/// thread-local storage (TLS) and per-CPU data.
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
 pub enum SegmentRegister {
-    /// Code Segment register - points to the segment containing executable code
+    /// Code Segment - Executable code. Modified via far JMP/CALL/IRET only.
     Cs,
-    /// Data Segment register - points to the segment containing data
+    /// Data Segment - Default for most memory accesses.
     Ds,
-    /// Extra Segment register - additional data segment
+    /// Extra Segment - Additional data, often string operation destination.
     Es,
-    /// FS Segment register - general-purpose segment register
+    /// FS Segment - Thread-local storage (Linux). Base via WRFSBASE/MSR.
     Fs,
-    /// GS Segment register - general-purpose segment register
+    /// GS Segment - TLS (Windows user), per-CPU (kernel). Base via WRGSBASE/SWAPGS.
     Gs,
-    /// Stack Segment register - points to the segment containing the stack
+    /// Stack Segment - Default for stack operations with RSP/ESP/SP.
     Ss,
 }

@@ -1,4 +1,8 @@
-/// Registri General Purpose a 64-bit
+/// General-purpose 64-bit registers.
+///
+/// Primary registers for integer arithmetic, addressing, and data manipulation.
+/// Conventional uses: RAX (accumulator/return), RCX (counter), RDX (data),
+/// RSI/RDI (string operations), RBP (base pointer), RSP (stack pointer).
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
 pub enum GPRegister64 {
     Rax,
@@ -19,7 +23,11 @@ pub enum GPRegister64 {
     R15,
 }
 
-/// Registri General Purpose a 32-bit
+/// General-purpose 32-bit registers.
+///
+/// Lower 32 bits of 64-bit GP registers. Writing to 32-bit registers
+/// zero-extends to 64 bits (upper 32 bits cleared). This eliminates
+/// partial register stalls in 64-bit mode.
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
 pub enum GPRegister32 {
     Eax,
@@ -40,7 +48,10 @@ pub enum GPRegister32 {
     R15d,
 }
 
-/// Registri General Purpose a 16-bit
+/// General-purpose 16-bit registers.
+///
+/// Lower 16 bits of GP registers. Writing does NOT zero-extend; upper bits
+/// remain unchanged. May cause partial register dependencies on some CPUs.
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
 pub enum GPRegister16 {
     Ax,
@@ -61,7 +72,12 @@ pub enum GPRegister16 {
     R15w,
 }
 
-/// Registri General Purpose a 8-bit
+/// General-purpose 8-bit registers.
+///
+/// AL/BL/CL/DL: Low byte of AX/BX/CX/DX.
+/// AH/BH/CH/DH: High byte (bits 8-15), incompatible with REX prefix.
+/// SIL/DIL/BPL/SPL: Low byte of SI/DI/BP/SP, require REX prefix.
+/// R8B-R15B: Low byte of R8-R15.
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
 pub enum GPRegister8 {
     Al,
