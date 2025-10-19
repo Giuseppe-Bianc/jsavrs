@@ -1,5 +1,5 @@
 /// Registri YMM (AVX)
-#[derive(Debug, Clone, Copy, PartialEq, Eq)]
+#[derive(Debug, Clone, Copy, PartialEq, Eq, Hash)]
 pub enum YMMRegister {
     Ymm0,
     Ymm1,

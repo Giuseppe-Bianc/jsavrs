@@ -1,5 +1,5 @@
 /// Registri XMM (SSE)
-#[derive(Debug, Clone, Copy, PartialEq, Eq)]
+#[derive(Debug, Clone, Copy, PartialEq, Eq, Hash)]
 pub enum XMMRegister {
     Xmm0,
     Xmm1,

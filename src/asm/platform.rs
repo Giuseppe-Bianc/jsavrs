@@ -3,8 +3,11 @@ use std::fmt;
 /// Piattaforma target
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
 pub enum Platform {
+    /// Microsoft Windows operating system
     Windows,
+    /// Linux operating system
     Linux,
+    /// Apple macOS operating system
     MacOS,
 }
 

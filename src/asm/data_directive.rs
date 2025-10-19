@@ -40,8 +40,6 @@ pub enum EquExpression {
     Generic(String),
 }
 
-
-
 impl DataDirective {
     pub fn new_asciz(s: impl Into<String>) -> Self {
         DataDirective::Asciz(s.into(), 0)
@@ -131,7 +129,6 @@ impl fmt::Display for DataDirective {
         }
     }
 }
-
 
 /// Rappresenta un elemento in una sezione assembly
 #[derive(Debug, Clone)]
@@ -231,8 +228,5 @@ impl AssemblySection {
 
 /// Helper function to escape special characters in strings for assembly output
 fn escape_string(s: &str) -> String {
-    s.replace("\\", "\\\\")
-     .replace("\"", "\\\"")
-     .replace("\n", "\\n")
-     .replace("\t", "\\t")
+    s.replace("\\", "\\\\").replace("\"", "\\\"").replace("\n", "\\n").replace("\t", "\\t")
 }

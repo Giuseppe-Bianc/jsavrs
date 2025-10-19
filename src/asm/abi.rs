@@ -249,7 +249,10 @@ pub struct VariadicInfo {
 
 impl fmt::Display for VariadicInfo {
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
-        write!(f, "VariadicInfo {{ supported: {}, requires_va_list: {}, requires_vector_count_in_al: {} }}", 
-               self.supported, self.requires_va_list, self.requires_vector_count_in_al)
+        write!(
+            f,
+            "VariadicInfo {{ supported: {}, requires_va_list: {}, requires_vector_count_in_al: {} }}",
+            self.supported, self.requires_va_list, self.requires_vector_count_in_al
+        )
     }
 }

@@ -345,8 +345,8 @@ impl X86Register {
     }
 }
 
-// Implementazione del trait Display per tutti i tipi di registri
-// Macro per implementare automaticamente il trait Display per i tipi di registri
+// Internal macro to implement Display for register types.
+// Generates Display impls that delegate to Debug formatting (lowercase).
 macro_rules! impl_display_for_register {
     ($($t:ty),*) => {
         $(
@@ -359,7 +359,7 @@ macro_rules! impl_display_for_register {
     }
 }
 
-// Implementazione del trait Display per tutti i tipi di registri che seguono lo stesso pattern
+// Implement Display for register types that follow the same pattern (Debug lowercase).
 impl_display_for_register!(
     GPRegister64,
     GPRegister32,
@@ -375,9 +375,7 @@ impl_display_for_register!(
     DebugRegister,
     FlagsRegister,
     InstructionPointer
-);
-
-// Implementazione specifica per FPURegister
+); // Implementazione specifica per FPURegister
 impl fmt::Display for FPURegister {
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
         let idx = match self {

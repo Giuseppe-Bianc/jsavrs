@@ -1,5 +1,5 @@
 /// Registri ZMM (AVX-512)
-#[derive(Debug, Clone, Copy, PartialEq, Eq)]
+#[derive(Debug, Clone, Copy, PartialEq, Eq, Hash)]
 pub enum ZMMRegister {
     Zmm0,
     Zmm1,

@@ -1,5 +1,5 @@
 /// Registri Mask (AVX-512)
-#[derive(Debug, Clone, Copy, PartialEq, Eq)]
+#[derive(Debug, Clone, Copy, PartialEq, Eq, Hash)]
 pub enum MaskRegister {
     K0,
     K1,

@@ -29,35 +29,34 @@ impl AssemblyFile {
         }
     }
 
-    pub fn data_sec_add_data(&mut self, label: impl Into<String>, directive: DataDirective) { 
+    pub fn data_sec_add_data(&mut self, label: impl Into<String>, directive: DataDirective) {
         self.data_section.add_data(label, directive);
     }
-	pub fn text_sec_add_instruction(&mut self, instr: Instruction) {
-		self.text_section.add_instruction(instr);
-	}
-	pub fn text_sec_add_label(&mut self, label: impl Into<String>) {
-		self.text_section.add_label(label);
-	}
-	pub fn text_sec_add_comment(&mut self, comment: impl Into<String>) {
-		self.text_section.add_comment(comment);
-	}
-	pub fn text_sec_add_instruction_with_comment(&mut self, instr: Instruction, comment: impl Into<String>) {
-		self.text_section.add_instruction_with_comment(instr, comment);
-	}
+    pub fn text_sec_add_instruction(&mut self, instr: Instruction) {
+        self.text_section.add_instruction(instr);
+    }
+    pub fn text_sec_add_label(&mut self, label: impl Into<String>) {
+        self.text_section.add_label(label);
+    }
+    pub fn text_sec_add_comment(&mut self, comment: impl Into<String>) {
+        self.text_section.add_comment(comment);
+    }
+    pub fn text_sec_add_instruction_with_comment(&mut self, instr: Instruction, comment: impl Into<String>) {
+        self.text_section.add_instruction_with_comment(instr, comment);
+    }
 }
 
-
 impl fmt::Display for AssemblyFile {
-	fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
-		writeln!(f, "; Assembly File - ABI: {}", self.abi)?;
-		writeln!(f, "{}", self.data_section)?;
-		if let Some(bss) = &self.bss_section {
-			writeln!(f, "{}", bss)?;
-		}
-		if let Some(rodata) = &self.rodata_section {
-			writeln!(f, "{}", rodata)?;
-		}
-		writeln!(f, "{}", self.text_section)?;
-		Ok(())
-	}
+    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
+        writeln!(f, "; Assembly File - ABI: {}", self.abi)?;
+        writeln!(f, "{}", self.data_section)?;
+        if let Some(bss) = &self.bss_section {
+            writeln!(f, "{}", bss)?;
+        }
+        if let Some(rodata) = &self.rodata_section {
+            writeln!(f, "{}", rodata)?;
+        }
+        writeln!(f, "{}", self.text_section)?;
+        Ok(())
+    }
 }

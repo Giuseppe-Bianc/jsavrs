@@ -1,9 +1,7 @@
 // run --package jsavrs --bin jsavrs -- -i C:/dev/visualStudio/transpiler/Vandior/input.vn -v
 use clap::Parser;
 use console::style;
-use jsavrs::asm::{
-    Abi, AssemblyFile, DataDirective, GPRegister64, Immediate, Instruction, Operand, X86Register
-};
+use jsavrs::asm::{Abi, AssemblyFile, DataDirective, GPRegister64, Immediate, Instruction, Operand, X86Register};
 use jsavrs::cli::Args;
 use jsavrs::error::error_reporter::ErrorReporter;
 use jsavrs::ir::generator::NIrGenerator;
