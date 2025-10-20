@@ -1,13 +1,13 @@
-/// # Utilities Module
-///
-/// The utilities module provides helper functions, macros, and utilities used
-/// throughout the compiler. It contains common functionality that doesn't belong
-/// to a specific compilation phase.
-///
-/// ## Phase-specific responsibilities:
-/// * Initialization: Provides helper functions for AST construction and testing
-/// * Runtime: Offers utility functions for token processing, string manipulation, and more
-/// * Termination: Provides formatting and sanitization utilities for output  
+//! # Utilities Module
+//!
+//! The utilities module provides helper functions, macros, and utilities used
+//! throughout the compiler. It contains common functionality that doesn't belong
+//! to a specific compilation phase.
+//!
+//! ## Phase-specific responsibilities:
+//! * Initialization: Provides helper functions for AST construction and testing
+//! * Runtime: Offers utility functions for token processing, string manipulation, and more
+//! * Termination: Provides formatting and sanitization utilities for output  
 use crate::ir::Module;
 use crate::location::source_location::SourceLocation;
 use crate::location::source_span::SourceSpan;
