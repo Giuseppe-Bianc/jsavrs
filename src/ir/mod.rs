@@ -1,3 +1,14 @@
+//! # Intermediate Representation (IR) Module
+//!
+//! The IR module manages the intermediate representation of the code for optimization.
+//! This is a critical phase in the compilation process, providing a representation 
+//! that's suitable for analysis and transformation.
+//!
+//! ## Phase-specific responsibilities:
+//! * Initialization: Sets up module structure and type system for IR
+//! * Runtime: Manages transformation of AST to IR and optimization passes
+//! * Termination: Finalizes optimized IR ready for code generation
+
 mod access_control;
 pub mod basic_block;
 pub mod cfg;

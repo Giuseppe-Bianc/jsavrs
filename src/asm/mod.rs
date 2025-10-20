@@ -1,3 +1,14 @@
+/// # Assembly Module
+///
+/// The assembly module handles the generation of assembly code from intermediate 
+/// representation. This module is responsible for translating IR into specific 
+/// assembly instructions for the target architecture.
+///
+/// ## Phase-specific responsibilities:
+/// * Initialization: Sets up target architecture specifications and register allocation
+/// * Runtime: Translates IR operations to appropriate assembly instructions
+/// * Termination: Finalizes assembly with proper linking information and directives
+
 mod abi;
 mod assembly_file;
 mod data_directive;

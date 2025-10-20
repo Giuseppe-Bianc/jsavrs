@@ -1,4 +1,14 @@
 // src/lexer.rs
+/// # Lexer Module
+///
+/// The lexer module handles the transformation of source text into tokens.
+/// This is the first phase of the compilation process, responsible for
+/// recognizing language keywords, identifiers, literals, and operators.
+///
+/// ## Phase-specific responsibilities:
+/// * Initialization: Sets up character scanning and token recognition patterns using logos
+/// * Runtime: Processes input character stream, identifying and categorizing tokens
+/// * Termination: Finalizes token output, ensuring proper stream termination
 use crate::{
     error::compile_error::CompileError,
     location::{line_tracker::LineTracker, source_span::SourceSpan},
@@ -7,6 +17,12 @@ use crate::{
 use logos::Logos;
 use std::collections::{HashMap, HashSet};
 
+/// The Lexer struct handles the tokenization of source code.
+///
+/// # Behavior in Phases
+/// * Initialization: Sets up the internal logos lexer and line tracking for the source
+/// * Runtime: Provides next_token functionality to process the source character by character
+/// * Termination: Manages EOF token emission and resource cleanup
 pub struct Lexer<'a> {
     inner: logos::Lexer<'a, TokenKind>,
     line_tracker: LineTracker,
@@ -15,6 +31,26 @@ pub struct Lexer<'a> {
 }
 
 impl<'a> Lexer<'a> {
+    /// Creates a new Lexer instance for the given file path and source code.
+    ///
+    /// # Behavior in Phases
+    /// * Initialization: Sets up the logos lexer with the provided source and creates a line tracker
+    /// * Runtime: Not applicable - this is a setup method
+    /// * Termination: Not applicable - this is a setup method
+    ///
+    /// # Parameters
+    /// * `file_path` - Path to the source file being lexed
+    /// * `source` - Reference to the source code string to be tokenized
+    ///
+    /// # Returns
+    /// A new Lexer instance ready to tokenize the source code
+    ///
+    /// # Examples
+    /// ```
+    /// # use jsavrs::lexer::Lexer;
+    /// let source = "let x = 42;";
+    /// let mut lexer = Lexer::new("test.js", source);
+    /// ```
     pub fn new(file_path: &str, source: &'a str) -> Self {
         let line_tracker = LineTracker::new(file_path, source.to_owned());
         let inner = TokenKind::lexer(source);
@@ -22,11 +58,40 @@ impl<'a> Lexer<'a> {
         Lexer { inner, line_tracker, eof_emitted: false, source_len }
     }
 
+    /// Returns a reference to the line tracker containing position information.
+    ///
+    /// # Behavior in Phases
+    /// * Initialization: Provides access to position tracking set up during lexer creation
+    /// * Runtime: Used to retrieve position information for error reporting
+    /// * Termination: Provides final position information when processing completes
+    ///
+    /// # Returns
+    /// A reference to the LineTracker instance used by this lexer
     // OTTIMIZZAZIONE 1: Restituisce riferimento invece di clone
     pub fn get_line_tracker(&self) -> &LineTracker {
         &self.line_tracker
     }
 
+    /// Retrieves the next token from the source code.
+    ///
+    /// # Behavior in Phases
+    /// * Initialization: Not applicable - this processes existing setup
+    /// * Runtime: Processes the next sequence of characters to identify a token
+    /// * Termination: Eventually emits an EOF token to signal end of input
+    ///
+    /// # Returns
+    /// * `Some(Ok(Token))` - A successfully identified token
+    /// * `Some(Err(CompileError))` - An error occurred during tokenization
+    /// * `None` - End of file has been reached
+    ///
+    /// # Examples
+    /// ```
+    /// # use jsavrs::lexer::Lexer;
+    /// let mut lexer = Lexer::new("test.js", "let x = 42;");
+    /// if let Some(Ok(token)) = lexer.next_token() {
+    ///     // Process the token
+    /// }
+    /// ```
     #[inline]
     pub fn next_token(&mut self) -> Option<Result<Token, CompileError>> {
         if self.eof_emitted {
@@ -77,6 +142,26 @@ impl Iterator for Lexer<'_> {
     }
 }
 
+/// Tokenizes the source code using the provided lexer, collecting both tokens and errors.
+///
+/// # Behavior in Phases
+/// * Initialization: Sets up vectors with estimated capacity for tokens and errors
+/// * Runtime: Processes all tokens from the lexer, separating valid tokens from errors
+/// * Termination: Performs post-processing to handle special error cases like hashtag tokens
+///
+/// # Parameters
+/// * `lexer` - A mutable reference to the Lexer instance to use for tokenization
+///
+/// # Returns
+/// A tuple containing (valid tokens, compilation errors) found during tokenization
+///
+/// # Examples
+/// ```
+/// # use jsavrs::lexer::{Lexer, lexer_tokenize_with_errors};
+/// let mut lexer = Lexer::new("test.vn", "let x = 42;");
+/// let (tokens, errors) = lexer_tokenize_with_errors(&mut lexer);
+/// assert!(errors.is_empty());
+/// ```
 pub fn lexer_tokenize_with_errors(lexer: &mut Lexer) -> (Vec<Token>, Vec<CompileError>) {
     let estimated_tokens = lexer.source_len / 5;
     let mut tokens = Vec::with_capacity(estimated_tokens);
