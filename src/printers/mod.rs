@@ -8,6 +8,5 @@
 /// * Initialization: Sets up code generation context and target format specifications
 /// * Runtime: Processes IR nodes to generate target code with proper formatting
 /// * Termination: Finalizes output with complete program representation
-
 pub mod ast_printer;
 pub mod branch_type;

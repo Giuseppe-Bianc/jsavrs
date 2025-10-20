@@ -8,7 +8,6 @@
 /// * Initialization: Sets up target architecture specifications and register allocation
 /// * Runtime: Translates IR operations to appropriate assembly instructions
 /// * Termination: Finalizes assembly with proper linking information and directives
-
 mod abi;
 mod assembly_file;
 mod data_directive;

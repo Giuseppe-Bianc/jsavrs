@@ -8,6 +8,5 @@
 /// * Initialization: Sets up error type definitions and reporting infrastructure
 /// * Runtime: Captures and categorizes errors from different compilation phases
 /// * Termination: Provides comprehensive error reporting before compilation failure
-
 pub mod compile_error;
 pub mod error_reporter;

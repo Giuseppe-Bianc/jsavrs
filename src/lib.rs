@@ -1,7 +1,7 @@
 // src/lib.rs
 /// # jsavrs Compiler Library
 ///
-/// The jsavrs compiler library is a transpiler written in Rust that provides 
+/// The jsavrs compiler library is a transpiler written in Rust that provides
 /// a complete toolchain for compiling source code through various phases:
 /// lexical analysis, parsing, semantic analysis, intermediate representation,
 /// and code generation.
@@ -20,7 +20,6 @@
 /// * `asm` - Manages assembly code generation
 /// * `error` - Defines error types and error handling utilities
 /// * `cli` - Provides command-line interface functionality
-
 pub mod asm;
 pub mod cli;
 pub mod error;

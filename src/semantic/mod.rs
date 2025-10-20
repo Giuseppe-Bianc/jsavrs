@@ -8,6 +8,5 @@
 /// * Initialization: Sets up symbol tables and type checking context
 /// * Runtime: Processes AST nodes to verify types and relationships
 /// * Termination: Finalizes symbol table and reports semantic errors
-
 pub mod symbol_table;
 pub mod type_checker;
