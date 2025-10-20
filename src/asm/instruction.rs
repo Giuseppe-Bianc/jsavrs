@@ -661,12 +661,12 @@ impl Operand {
         Self::Immediate(Immediate::Imm64(val))
     }
 
-    /// Crea un operando memoria semplice [base]
+    /// Crea un operando memoria semplice (base)
     pub fn mem(base: GPRegister64) -> Self {
         Self::Memory(MemoryOperand::new(Some(base)))
     }
 
-    /// Crea un operando memoria con displacement [base + disp]
+    /// Crea un operando memoria con displacement (base + disp)
     pub fn mem_disp(base: GPRegister64, disp: i32) -> Self {
         Self::Memory(MemoryOperand::new(Some(base)).with_displacement(disp))
     }
