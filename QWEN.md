@@ -2,7 +2,23 @@
 
 ## Project Overview
 
-**jsavrs** is a sophisticated, high-performance compiler implemented in Rust, designed to be completely OS-independent. It's engineered to compile a custom programming language (with `.vn` file extension) into multiple target formats, including intermediate representations and potentially assembly code. The project emphasizes performance, cross-platform compatibility, extensibility, and leverages Rust's safety guarantees to ensure reliability.
+**jsavrs** is a sophisticated, high-performance Rust-based OS-independent compiler/transpiler written in Rust. It's designed to take source code written in a custom language (with `.vn` file extension) and compile it through multiple phases: lexical analysis, parsing, semantic analysis, intermediate representation (IR) generation, and finally assembly code generation. The project leverages Rust's safety and performance features to provide a robust and efficient compilation framework.
+
+### Architecture & Components
+
+The project follows a classic compiler architecture with distinct phases:
+
+1. **Lexer** (`src/lexer.rs`): Uses the `logos` crate to tokenize input source code. Handles character scanning, token recognition, and error reporting with line/column tracking.
+
+2. **Parser** (`src/parser/`): Implements a Pratt parser for handling expressions with proper precedence. Converts tokens into an Abstract Syntax Tree (AST) with error recovery capabilities and recursion depth limits.
+
+3. **Semantic Analysis** (`src/semantic/type_checker.rs`): Performs type checking, symbol table management, and validation of the AST. Implements scope management, type promotion, and ensures type safety across the entire program.
+
+4. **Intermediate Representation (IR)** (`src/ir/`): Generates a Control Flow Graph (CFG) based IR with basic blocks, instructions, and SSA (Static Single Assignment) transformation.
+
+5. **Assembly Generation** (`src/asm/`): Translates IR into x86 assembly code with support for multiple platforms and ABIs.
+
+6. **Command Line Interface** (`src/cli.rs`): Built with `clap` for parsing command-line arguments, enforcing `.vn` file extension, and providing verbose output options.
 
 ### Key Features
 - High-performance implementation in Rust
