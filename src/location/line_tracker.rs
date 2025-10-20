@@ -105,8 +105,8 @@ impl LineTracker {
     /// # Returns
     /// [`SourceSpan`] containing:
     /// - File path
-    /// - Start location (converted via [`location_for`])
-    /// - End location (converted via [`location_for`])
+    /// - Start location (converted via `location_for`)
+    /// - End location (converted via `location_for`)
     ///
     /// # Panics
     /// Panics if either offset exceeds source length

@@ -46,7 +46,6 @@ impl TypePromotionEngine {
     }
 
     /// Analyzes binary operation for proper type promotion
-    /// T032 [P] analyze_binary_promotion function in src/ir/type_promotion_engine.rs
     pub fn analyze_binary_promotion(
         &self, left_type: &IrType, right_type: &IrType, operation: IrBinaryOp, span: SourceSpan,
     ) -> PromotionResult {
@@ -146,7 +145,6 @@ impl TypePromotionEngine {
     }
 
     /// Inserts promotion casts for binary operations
-    /// T033 [P] insert_promotion_casts function in src/ir/type_promotion_engine.rs
     pub fn insert_promotion_casts(
         &self,
         generator: &mut NIrGenerator,
