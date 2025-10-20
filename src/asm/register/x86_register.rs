@@ -129,7 +129,8 @@ pub const CALLER_SAVED_XMM_WINDOWS: &[XMMRegister] =
 
 impl X86Register {
     /// Returns true if register is volatile (caller-saved) for given platform.
-    pub fn is_volatile(&self, platform: Platform) -> bool { match self {
+    pub fn is_volatile(&self, platform: Platform) -> bool {
+        match self {
             X86Register::GP64(r) => match platform {
                 Platform::Windows => matches!(
                     r,
@@ -184,7 +185,7 @@ impl X86Register {
 
     /// Returns true if register is callee-saved (non-volatile) for given platform.
     pub fn is_callee_saved(&self, platform: Platform) -> bool {
-match self {
+        match self {
             X86Register::GP64(r) => match platform {
                 Platform::Windows => matches!(
                     r,
@@ -262,51 +263,50 @@ match self {
     pub fn is_gp(&self) -> bool {
         matches!(self, X86Register::GP64(_) | X86Register::GP32(_) | X86Register::GP16(_) | X86Register::GP8(_))
     }
-    
+
     /// Returns true if this is a SIMD register (XMM, YMM, ZMM)
     pub fn is_simd(&self) -> bool {
         matches!(self, X86Register::Xmm(_) | X86Register::Ymm(_) | X86Register::Zmm(_))
     }
-    
+
     /// Returns true if this is a floating point register (FPU, XMM, YMM, ZMM)
     pub fn is_float(&self) -> bool {
         matches!(self, X86Register::Fpu(_) | X86Register::Xmm(_) | X86Register::Ymm(_) | X86Register::Zmm(_))
     }
-    
+
     /// Returns true if this is a special register (segment, control, debug, flags, IP)
     pub fn is_special(&self) -> bool {
-        matches!(self, 
-            X86Register::Segment(_) | 
-            X86Register::Control(_) | 
-            X86Register::Debug(_) | 
-            X86Register::Flags(_) | 
-            X86Register::InstructionPointer(_)
+        matches!(
+            self,
+            X86Register::Segment(_)
+                | X86Register::Control(_)
+                | X86Register::Debug(_)
+                | X86Register::Flags(_)
+                | X86Register::InstructionPointer(_)
         )
     }
-    
+
     /// Returns true if this is a 64-bit register
     pub fn is_64bit(&self) -> bool {
         self.size_bits() == 64
     }
-    
+
     /// Returns true if this is a 32-bit register
     pub fn is_32bit(&self) -> bool {
         self.size_bits() == 32
     }
-    
+
     /// Returns true if this is a 16-bit register
     pub fn is_16bit(&self) -> bool {
         self.size_bits() == 16
     }
-    
+
     /// Returns true if this is an 8-bit register
     pub fn is_8bit(&self) -> bool {
         self.size_bits() == 8
     }
 
-    
-
-    /// Checks if register is used for Nth parameter (0-indexed) on platform.
+    /// Checks if register is used for Nth parameter (0-indexed) on platform.    /// Checks if register is used for Nth parameter (0-indexed) on platform.
     pub fn is_parameter_register(&self, platform: Platform, param_index: usize) -> bool {
         match platform {
             Platform::Windows => {

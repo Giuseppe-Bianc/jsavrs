@@ -13,12 +13,12 @@ pub enum DebugRegister {
     Dr2,
     /// Debug register 3 - Linear address for fourth hardware breakpoint.
     Dr3,
-    
+
     /// Debug register 6 - Debug status register.
     /// Reports which breakpoint triggered (B0-B3), single-step (BS), etc.
     /// Software must manually clear status bits.
     Dr6,
-    
+
     /// Debug register 7 - Debug control register.
     /// Configures breakpoint enable (L0-L3, G0-G3), conditions (RW), and
     /// length (LEN) for all hardware breakpoints.
