@@ -6,35 +6,77 @@ use std::sync::Arc;
 
 /// Parses a numeric literal token into a structured [`Number`] representation.
 ///
-/// Handles:
-/// - Integer vs float detection
-/// - Scientific notation
-/// - Multi-character suffixes (i8, i16, i32, u8, u16, u32, u, f, d)
+/// This function is called by the Logos lexer when it encounters a numeric literal.
+/// It handles all numeric formats including:
+/// - Pure integers (e.g., `42`)
+/// - Floating-point numbers (e.g., `3.14`)
+/// - Scientific notation (e.g., `6.022e23`)
+/// - Type suffixes (e.g., `42u8`, `3.14f`, `100i16`)
 ///
 /// # Arguments
-/// * `lex` - Lexer context from Logos
+///
+/// * `lex` - Mutable reference to the Logos lexer context, providing access to
+///           the matched slice via `lex.slice()`
 ///
 /// # Returns
-/// Parsed [`Number`] or `None` for invalid literals
+///
+/// * `Some(Number)` - Successfully parsed numeric literal
+/// * `None` - Invalid numeric format or overflow/underflow
+///
+/// # Implementation Strategy
+///
+/// 1. Extract the full matched slice from the lexer
+/// 2. Split into numeric part and optional type suffix
+/// 3. Route to appropriate parser based on suffix type
+///
+/// # Examples
+///
+/// ```ignore
+/// // Called internally by Logos for patterns like:
+/// // "42"      -> Some(Number::Integer(42))
+/// // "3.14f"   -> Some(Number::Float32(3.14))
+/// // "100u16"  -> Some(Number::U16(100))
+/// // "6.022e23" -> Some(Number::Scientific64(6.022, 23))
+/// ```
 pub fn parse_number(lex: &mut logos::Lexer<TokenKind>) -> Option<Number> {
     let slice = lex.slice();
     let (numeric_part, suffix) = split_numeric_and_suffix(slice);
     handle_suffix(numeric_part, suffix)
 }
 
-/// Splits a numeric literal string into its numeric part and optional suffix.
+/// Splits a numeric literal string into its numeric part and optional type suffix.
+///
+/// This function performs efficient suffix detection using byte-level pattern matching
+/// with optimized fast paths for common cases.
+///
+/// # Supported Suffixes
+///
+/// - Single-character: `u`, `f`, `d`
+/// - Two-character: `i8`, `u8`
+/// - Three-character: `i16`, `i32`, `u16`, `u32`
 ///
 /// # Arguments
-/// * `slice` - Full numeric literal string
+///
+/// * `slice` - Full numeric literal string including any suffix
 ///
 /// # Returns
-/// Tuple containing:
+///
+/// A tuple containing:
 /// - Numeric portion (without suffix)
-/// - Optional suffix (normalized to lowercase)
+/// - Optional suffix (original case preserved, but matching is case-insensitive)
+///
+/// # Performance Notes
+///
+/// Uses byte-level operations and fast-path checking for optimal performance:
+/// 1. First checks the last character for single-char suffixes
+/// 2. Then checks for 3-char suffixes if string is long enough
+/// 3. Finally checks for 2-char suffixes
 ///
 /// # Examples
+///
 /// ```
 /// use jsavrs::tokens::token_kind::split_numeric_and_suffix;
+///
 /// assert_eq!(split_numeric_and_suffix("42u"), ("42", Some("u")));
 /// assert_eq!(split_numeric_and_suffix("3.14F"), ("3.14", Some("F")));
 /// assert_eq!(split_numeric_and_suffix("100i16"), ("100", Some("i16")));
@@ -49,10 +91,10 @@ pub fn split_numeric_and_suffix(slice: &str) -> (&str, Option<&str>) {
     let bytes = slice.as_bytes();
     let len = bytes.len();
 
-    // Fast path: check last character first
+    // Fast path: check last character first for single-char suffixes
     let last_char = bytes[len - 1].to_ascii_lowercase();
 
-    // Single-char suffixes: 'u', 'f', 'd'
+    // Single-char suffixes: 'u' (unsigned), 'f' (float32), 'd' (float64)
     match last_char {
         b'u' | b'f' | b'd' => {
             return (&slice[..len - 1], Some(&slice[len - 1..]));
@@ -98,21 +140,82 @@ pub fn split_numeric_and_suffix(slice: &str) -> (&str, Option<&str>) {
     (slice, None)
 }
 
+/// Helper function to parse integer literals with generic type support.
+///
+/// This function validates that the numeric string represents a valid integer
+/// (no decimal point or exponent), then attempts to parse it into the target type.
+///
+/// # Type Parameters
+///
+/// * `T` - The target integer type (must implement `FromStr`)
+///
+/// # Arguments
+///
+/// * `numeric_part` - The numeric string without suffix
+/// * `map_fn` - Function to wrap the parsed value in a [`Number`] variant
+///
+/// # Returns
+///
+/// * `Some(Number)` - Successfully parsed and wrapped integer
+/// * `None` - Invalid format or value out of range for type `T`
+///
+/// # Examples
+///
+/// ```ignore
+/// parse_integer::<i8>("42", Number::I8)     // Some(Number::I8(42))
+/// parse_integer::<i8>("999", Number::I8)    // None (overflow)
+/// parse_integer::<u64>("42", Number::UnsignedInteger)  // Some(Number::UnsignedInteger(42))
+/// ```
 fn parse_integer<T>(numeric_part: &str, map_fn: fn(T) -> Number) -> Option<Number>
 where
     T: std::str::FromStr,
 {
-    if is_valid_integer_literal(numeric_part) { numeric_part.parse::<T>().ok().map(map_fn) } else { None }
+    if is_valid_integer_literal(numeric_part) { 
+        numeric_part.parse::<T>().ok().map(map_fn) 
+    } else { 
+        None 
+    }
 }
 
-/// Routes numeric literal parsing based on suffix type.
+/// Routes numeric literal parsing based on type suffix.
+///
+/// This function dispatches to the appropriate parser based on the suffix,
+/// implementing the language's type inference rules:
+/// - No suffix: defaults to i64 for integers, f64 for floats
+/// - 'u': unsigned 64-bit integer
+/// - 'f': 32-bit float
+/// - 'd': 64-bit float (explicit)
+/// - Sized suffixes (i8, u32, etc.): specific type
 ///
 /// # Arguments
+///
 /// * `numeric_part` - Numeric portion without suffix
-/// * `suffix` - Optional suffix indicating type
+/// * `suffix` - Optional type suffix (case-insensitive)
 ///
 /// # Returns
-/// Parsed [`Number`] variant matching suffix, or `None` for invalid formats
+///
+/// * `Some(Number)` - Parsed number matching the suffix type
+/// * `None` - Invalid format or unsupported suffix
+///
+/// # Type Resolution Table
+///
+/// | Suffix | Type | Example |
+/// |--------|------|---------|
+/// | None | i64/f64 | `42` → Integer(42), `3.14` → Float64(3.14) |
+/// | `u` | u64 | `42u` → UnsignedInteger(42) |
+/// | `i8` | i8 | `42i8` → I8(42) |
+/// | `u16` | u16 | `1000u16` → U16(1000) |
+/// | `f` | f32 | `3.14f` → Float32(3.14) |
+/// | `d` | f64 | `3.14d` → Float64(3.14) |
+///
+/// # Examples
+///
+/// ```ignore
+/// handle_suffix("42", Some("u"))     // Some(Number::UnsignedInteger(42))
+/// handle_suffix("42", Some("i8"))    // Some(Number::I8(42))
+/// handle_suffix("3.14", Some("f"))   // Some(Number::Float32(3.14))
+/// handle_suffix("42", None)          // Some(Number::Integer(42))
+/// ```
 pub fn handle_suffix(numeric_part: &str, suffix: Option<&str>) -> Option<Number> {
     match suffix.map(|s| s.to_ascii_lowercase()).as_deref() {
         Some("u") => parse_integer::<u64>(numeric_part, Number::UnsignedInteger),
@@ -124,18 +227,37 @@ pub fn handle_suffix(numeric_part: &str, suffix: Option<&str>) -> Option<Number>
         Some("i32") => parse_integer::<i32>(numeric_part, Number::I32),
         Some("f") => handle_float_suffix(numeric_part),
         Some("d") | None => handle_default_suffix(numeric_part),
-        _ => None,
+        _ => None, // Unknown suffix
     }
 }
 
-/// Helper to check if a string represents a valid pure-integer literal:
-/// no decimal point, no 'e'/'E', no sign (we assume negative sign is a separate token).
+/// Validates that a string represents a pure integer literal.
+///
+/// A valid integer literal must:
+/// - Contain only ASCII digits (0-9)
+/// - Have no decimal point (`.`)
+/// - Have no exponent marker (`e` or `E`)
+/// - Have no sign character (handled as separate token by lexer)
 ///
 /// # Arguments
+///
 /// * `numeric_part` - Numeric string to validate
 ///
 /// # Returns
-/// `true` if it contains only digits (0–9)
+///
+/// `true` if the string is a valid integer literal, `false` otherwise
+///
+/// # Examples
+///
+/// ```
+/// use jsavrs::tokens::token_kind::is_valid_integer_literal;
+///
+/// assert!(is_valid_integer_literal("42"));
+/// assert!(is_valid_integer_literal("1234567890"));
+/// assert!(!is_valid_integer_literal("3.14"));      // Has decimal point
+/// assert!(!is_valid_integer_literal("6.022e23"));  // Has exponent
+/// assert!(!is_valid_integer_literal("-42"));       // Has sign
+/// ```
 pub fn is_valid_integer_literal(numeric_part: &str) -> bool {
     if numeric_part.contains('.') || numeric_part.contains('e') || numeric_part.contains('E') {
         return false;
@@ -143,35 +265,86 @@ pub fn is_valid_integer_literal(numeric_part: &str) -> bool {
     numeric_part.chars().all(|c| c.is_ascii_digit())
 }
 
-/// Parses numeric string with float32 suffix ('f').
+/// Parses numeric strings with 32-bit float suffix ('f').
+///
+/// Handles both regular floating-point notation and scientific notation,
+/// producing either [`Number::Float32`] or [`Number::Scientific32`] respectively.
 ///
 /// # Arguments
-/// * `numeric_part` - Numeric string without suffix
+///
+/// * `numeric_part` - Numeric string without the 'f' suffix
 ///
 /// # Returns
-/// [`Number::Float32`] or [`Number::Scientific32`] if valid
+///
+/// * `Some(Number::Float32)` - For regular float literals
+/// * `Some(Number::Scientific32)` - For scientific notation
+/// * `None` - If parsing fails
+///
+/// # Examples
+///
+/// ```ignore
+/// handle_float_suffix("3.14")      // Some(Number::Float32(3.14))
+/// handle_float_suffix("6.022e23")  // Some(Number::Scientific32(6.022, 23))
+/// handle_float_suffix("invalid")   // None
+/// ```
 pub fn handle_float_suffix(numeric_part: &str) -> Option<Number> {
-    parse_scientific(numeric_part, true).or_else(|| numeric_part.parse::<f32>().ok().map(Number::Float32))
+    parse_scientific(numeric_part, true)
+        .or_else(|| numeric_part.parse::<f32>().ok().map(Number::Float32))
 }
 
-/// Parses numeric strings with default suffix (no suffix or 'd').
+/// Parses numeric strings with default or 'd' suffix.
+///
+/// Implements the default type inference rules:
+/// - Integer literals (no decimal/exponent) → i64
+/// - Floating-point literals → f64
+/// - Scientific notation → Scientific64
 ///
 /// # Arguments
-/// * `numeric_part` - Numeric string without suffix
+///
+/// * `numeric_part` - Numeric string without suffix (or with 'd' suffix removed)
 ///
 /// # Returns
-/// [`Number::Integer`], [`Number::Float64`], or [`Number::Scientific64`]
+///
+/// * `Some(Number::Integer)` - For integer literals
+/// * `Some(Number::Float64)` - For floating-point literals
+/// * `Some(Number::Scientific64)` - For scientific notation
+/// * `None` - If parsing fails
+///
+/// # Examples
+///
+/// ```ignore
+/// handle_default_suffix("42")        // Some(Number::Integer(42))
+/// handle_default_suffix("3.14")      // Some(Number::Float64(3.14))
+/// handle_default_suffix("6.022e23")  // Some(Number::Scientific64(6.022, 23))
+/// ```
 pub fn handle_default_suffix(numeric_part: &str) -> Option<Number> {
-    parse_scientific(numeric_part, false).or_else(|| handle_non_scientific(numeric_part))
+    parse_scientific(numeric_part, false)
+        .or_else(|| handle_non_scientific(numeric_part))
 }
 
-/// Parses non-scientific notation numbers.
+/// Parses non-scientific notation numbers (integers and simple floats).
+///
+/// Determines the appropriate type based on the presence of a decimal point:
+/// - No decimal point → i64 integer
+/// - Has decimal point → f64 float
 ///
 /// # Arguments
+///
 /// * `numeric_part` - Numeric string to parse
 ///
 /// # Returns
-/// [`Number::Integer`] if no decimal point, [`Number::Float64`] otherwise
+///
+/// * `Some(Number::Integer)` - For literals without decimal point
+/// * `Some(Number::Float64)` - For literals with decimal point
+/// * `None` - If parsing fails (overflow, underflow, or invalid format)
+///
+/// # Examples
+///
+/// ```ignore
+/// handle_non_scientific("42")     // Some(Number::Integer(42))
+/// handle_non_scientific("3.14")   // Some(Number::Float64(3.14))
+/// handle_non_scientific(".5")     // Some(Number::Float64(0.5))
+/// ```
 pub fn handle_non_scientific(numeric_part: &str) -> Option<Number> {
     if numeric_part.contains('.') {
         numeric_part.parse::<f64>().ok().map(Number::Float64)
@@ -182,12 +355,35 @@ pub fn handle_non_scientific(numeric_part: &str) -> Option<Number> {
 
 /// Parses scientific notation numbers (e.g., "6.022e23").
 ///
+/// Scientific notation format: `base[e|E][+|-]exponent`
+/// where the base can be an integer or floating-point number.
+///
 /// # Arguments
-/// * `s` - Full numeric string
-/// * `is_f32` - Whether to parse as 32-bit float
+///
+/// * `s` - Full numeric string in scientific notation
+/// * `is_f32` - If `true`, parses as 32-bit float; if `false`, as 64-bit float
 ///
 /// # Returns
-/// [`Number::Scientific32`] or [`Number::Scientific64`] if valid
+///
+/// * `Some(Number::Scientific32)` - For 32-bit scientific notation
+/// * `Some(Number::Scientific64)` - For 64-bit scientific notation
+/// * `None` - If not in scientific notation or parsing fails
+///
+/// # Format Details
+///
+/// - Exponent marker: `e` or `E` (case-insensitive)
+/// - Optional sign: `+` or `-` before exponent
+/// - Base: can be integer or floating-point
+/// - Exponent: must be valid i32 integer
+///
+/// # Examples
+///
+/// ```ignore
+/// parse_scientific("6.022e23", false)   // Some(Number::Scientific64(6.022, 23))
+/// parse_scientific("1.5e-10", true)     // Some(Number::Scientific32(1.5, -10))
+/// parse_scientific("3E+8", false)       // Some(Number::Scientific64(3.0, 8))
+/// parse_scientific("42", false)         // None (no exponent marker)
+/// ```
 pub fn parse_scientific(s: &str, is_f32: bool) -> Option<Number> {
     let pos = s.find(['e', 'E'])?;
     let (base_str, exp_str) = s.split_at(pos);
@@ -202,14 +398,45 @@ pub fn parse_scientific(s: &str, is_f32: bool) -> Option<Number> {
     }
 }
 
-/// Generic parser for base-specific numbers (binary, octal, hex).
+/// Generic parser for base-specific number literals (binary, octal, hexadecimal).
+///
+/// Handles literals with prefixes:
+/// - Binary: `#b` (e.g., `#b1010`)
+/// - Octal: `#o` (e.g., `#o755`)
+/// - Hexadecimal: `#x` (e.g., `#xDEADBEEF`)
+///
+/// Supports optional unsigned suffix (`u` or `U`).
 ///
 /// # Arguments
-/// * `radix` - Numeric base (2, 8, or 16)
-/// * `lex` - Lexer context
+///
+/// * `radix` - Numeric base (2 for binary, 8 for octal, 16 for hexadecimal)
+/// * `lex` - Mutable reference to the Logos lexer context
 ///
 /// # Returns
-/// Parsed [`Number`] with optional unsigned suffix
+///
+/// * `Some(Number::Integer)` - For signed literals (no 'u' suffix)
+/// * `Some(Number::UnsignedInteger)` - For unsigned literals (with 'u' suffix)
+/// * `None` - If parsing fails or contains invalid digits for the radix
+///
+/// # Implementation Notes
+///
+/// - Strips the 2-character prefix (`#b`, `#o`, or `#x`)
+/// - Checks for optional trailing `u` or `U` suffix
+/// - Uses `i64::from_str_radix` or `u64::from_str_radix` for parsing
+///
+/// # Examples
+///
+/// ```ignore
+/// // Binary literals
+/// parse_base_number(2, lex_for("#b1010"))    // Some(Number::Integer(10))
+/// parse_base_number(2, lex_for("#b1111u"))   // Some(Number::UnsignedInteger(15))
+///
+/// // Octal literals
+/// parse_base_number(8, lex_for("#o755"))     // Some(Number::Integer(493))
+///
+/// // Hexadecimal literals
+/// parse_base_number(16, lex_for("#xDEAD"))   // Some(Number::Integer(57005))
+/// ```
 #[inline]
 pub fn parse_base_number(radix: u32, lex: &mut logos::Lexer<TokenKind>) -> Option<Number> {
     let slice = lex.slice();
@@ -226,21 +453,104 @@ pub fn parse_base_number(radix: u32, lex: &mut logos::Lexer<TokenKind>) -> Optio
     }
 }
 
-/// Parses binary literals (e.g., "#b1010u").
+/// Parses binary literals prefixed with `#b`.
+///
+/// Binary literals use base-2 representation with digits 0 and 1.
+/// Supports optional unsigned suffix.
+///
+/// # Arguments
+///
+/// * `lex` - Mutable reference to the Logos lexer context
+///
+/// # Returns
+///
+/// * `Some(Number::Integer)` - For signed binary literals
+/// * `Some(Number::UnsignedInteger)` - For unsigned binary literals (with 'u' suffix)
+/// * `None` - If parsing fails or contains non-binary digits
+///
+/// # Format
+///
+/// - Prefix: `#b` (required)
+/// - Digits: `0`, `1` only
+/// - Suffix: `u` or `U` (optional, for unsigned)
+///
+/// # Examples
+///
+/// ```ignore
+/// // In source code:
+/// #b1010    // → Number::Integer(10)
+/// #b1111u   // → Number::UnsignedInteger(15)
+/// #b0       // → Number::Integer(0)
+/// ```
 pub fn parse_binary(lex: &mut logos::Lexer<TokenKind>) -> Option<Number> {
     parse_base_number(2, lex)
 }
 
-/// Parses octal literals (e.g., "#o755").
+/// Parses octal literals prefixed with `#o`.
+///
+/// Octal literals use base-8 representation with digits 0-7.
+/// Supports optional unsigned suffix.
+///
+/// # Arguments
+///
+/// * `lex` - Mutable reference to the Logos lexer context
+///
+/// # Returns
+///
+/// * `Some(Number::Integer)` - For signed octal literals
+/// * `Some(Number::UnsignedInteger)` - For unsigned octal literals (with 'u' suffix)
+/// * `None` - If parsing fails or contains non-octal digits
+///
+/// # Format
+///
+/// - Prefix: `#o` (required)
+/// - Digits: `0-7` only
+/// - Suffix: `u` or `U` (optional, for unsigned)
+///
+/// # Examples
+///
+/// ```ignore
+/// // In source code:
+/// #o755     // → Number::Integer(493)  (Unix file permissions)
+/// #o77u     // → Number::UnsignedInteger(63)
+/// #o10      // → Number::Integer(8)
+/// ```
 pub fn parse_octal(lex: &mut logos::Lexer<TokenKind>) -> Option<Number> {
     parse_base_number(8, lex)
 }
 
-/// Parses hexadecimal literals (e.g., "#xdeadbeefu").
+/// Parses hexadecimal literals prefixed with `#x`.
+///
+/// Hexadecimal literals use base-16 representation with digits 0-9 and A-F (case-insensitive).
+/// Supports optional unsigned suffix.
+///
+/// # Arguments
+///
+/// * `lex` - Mutable reference to the Logos lexer context
+///
+/// # Returns
+///
+/// * `Some(Number::Integer)` - For signed hexadecimal literals
+/// * `Some(Number::UnsignedInteger)` - For unsigned hexadecimal literals (with 'u' suffix)
+/// * `None` - If parsing fails or contains non-hexadecimal digits
+///
+/// # Format
+///
+/// - Prefix: `#x` (required)
+/// - Digits: `0-9`, `A-F`, `a-f`
+/// - Suffix: `u` or `U` (optional, for unsigned)
+///
+/// # Examples
+///
+/// ```ignore
+/// // In source code:
+/// #xDEADBEEF    // → Number::Integer(3735928559)
+/// #xFFu         // → Number::UnsignedInteger(255)
+/// #x1A2B        // → Number::Integer(6699)
+/// ```
 pub fn parse_hex(lex: &mut logos::Lexer<TokenKind>) -> Option<Number> {
     parse_base_number(16, lex)
 }
-
 /// Represents all possible token types in the language.
 ///
 /// Generated by the lexer and consumed by the parser. Variants include:

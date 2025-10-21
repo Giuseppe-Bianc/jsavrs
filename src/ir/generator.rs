@@ -7,23 +7,42 @@ use crate::parser::ast::*;
 use crate::tokens::number::Number;
 use std::collections::HashMap;
 use std::sync::Arc;
+
+/// Represents control flow operations within loops (break and continue statements)
 #[repr(u8)]
 enum LoopControl {
     Break,
     Continue,
 }
 
+/// The NIR (Normalized Intermediate Representation) Generator transforms Abstract Syntax Tree (AST) nodes
+/// into intermediate representation suitable for optimization and code generation.
+/// 
+/// This generator creates a control flow graph with basic blocks, handles variable scoping,
+/// type mapping, and applies SSA (Static Single Assignment) transformation to optimize
+/// the generated IR for further analysis and compilation.
 pub struct NIrGenerator {
+    /// The currently active basic block being constructed
     current_block: Option<BasicBlock>,
+    /// The label of the current basic block
     current_block_label: Option<String>,
+    /// Manages variable scoping and symbol lookups during IR generation
     scope_manager: ScopeManager,
+    /// Counter for generating unique temporary variable IDs
     temp_counter: u64,
+    /// Counter for generating unique basic block labels
     block_counter: usize,
+    /// Collection of errors encountered during IR generation
     errors: Vec<CompileError>,
+    /// Stack of block labels for break operations in nested loops
     break_stack: Vec<String>,
+    /// Stack of block labels for continue operations in nested loops
     continue_stack: Vec<String>,
+    /// Context for type information including struct definitions and type aliases
     type_context: TypeContext,
+    /// Access controller for enforcing access rules during IR generation
     _access_controller: AccessController,
+    /// The root scope ID for the generator's scope hierarchy
     root_scope: Option<ScopeId>,
     /// Whether to apply SSA transformation to generated IR
     apply_ssa: bool,
@@ -38,6 +57,14 @@ struct TypeContext {
 
 #[allow(clippy::collapsible_if, clippy::collapsible_else_if)]
 impl NIrGenerator {
+    /// Creates a new NIR generator instance with default settings
+    /// 
+    /// # Returns
+    /// A new instance of NIrGenerator with:
+    /// - Initialized scope manager
+    /// - Default access controller  
+    /// - Empty error collection
+    /// - SSA transformation enabled by default
     pub fn new() -> Self {
         let scope_manager = ScopeManager::new();
         let access_controller = AccessController::new(&scope_manager);
@@ -58,6 +85,11 @@ impl NIrGenerator {
     }
 
     /// Creates a new generator with SSA transformation disabled
+    /// 
+    /// This is useful when you want to see the raw IR without SSA transformations applied.
+    /// 
+    /// # Returns
+    /// A new instance of NIrGenerator with SSA transformation disabled
     pub fn new_without_ssa() -> Self {
         let mut generator = Self::new();
         generator.apply_ssa = false;
@@ -68,6 +100,20 @@ impl NIrGenerator {
         self.current_block.as_ref().is_some_and(|b| !b.terminator.is_terminator())
     }
 
+    /// Generates intermediate representation for a module of statements
+    /// 
+    /// This is the main entry point for IR generation. It processes the AST in two passes:
+    /// 1. Declaration pass: Creates function declarations and adds them to the symbol table
+    /// 2. Generation pass: Generates code for function bodies and other statements
+    /// 
+    /// # Parameters
+    /// * `stmts` - Vector of AST statements to convert to IR
+    /// * `module_name` - Name of the module being generated
+    /// 
+    /// # Returns
+    /// A tuple containing:
+    /// * The generated Module with all functions and global variables
+    /// * A vector of compilation errors encountered during generation
     pub fn generate(&mut self, stmts: Vec<Stmt>, module_name: &str) -> (Module, Vec<CompileError>) {
         //let mut functions = Vec::new();
         let mut module = Module::new(module_name, self.root_scope);
@@ -121,6 +167,13 @@ impl NIrGenerator {
     }
 
     /// Applies SSA transformation to all functions in the module.
+    /// 
+    /// Static Single Assignment (SSA) form is a property of IR where each variable is assigned
+    /// exactly once, and every variable is defined before it is used. This form enables
+    /// more efficient optimization passes.
+    /// 
+    /// # Parameters
+    /// * `module` - The module containing functions to transform to SSA form
     fn apply_ssa_transformation(&mut self, module: &mut Module) {
         // Use a single transformer for all functions to ensure unique temporary IDs
         let mut transformer = SsaTransformer::new(Some(self.temp_counter));
@@ -132,16 +185,39 @@ impl NIrGenerator {
         }
     }
 
+    /// Adds a new compilation error to the generator's error collection
+    /// 
+    /// # Parameters
+    /// * `message` - Human-readable description of the error
+    /// * `span` - Source location where the error occurred
     fn new_error(&mut self, message: String, span: SourceSpan) {
         self.errors.push(CompileError::IrGeneratorError { message, span, help: None });
     }
 
+    /// Adds a branch terminator to the current block if it doesn't already have one
+    /// 
+    /// This ensures that control flow is properly maintained when exiting blocks.
+    /// 
+    /// # Parameters
+    /// * `func` - The function containing the block
+    /// * `target_label` - The label of the target block to branch to
+    /// * `span` - Source location information for error reporting
     fn add_branch_if_needed(&mut self, func: &mut Function, target_label: &str, span: SourceSpan) {
         if self.block_needs_terminator() {
             self.add_terminator(func, Terminator::new(TerminatorKind::Branch { label: target_label.into() }, span));
         }
     }
 
+    /// Creates a new function with mapped parameter and return types
+    /// 
+    /// # Parameters
+    /// * `name` - The name of the function
+    /// * `params` - Vector of AST parameters to map to IR parameters
+    /// * `return_type` - The AST return type to map to an IR type
+    /// * `span` - Source location of the function declaration
+    /// 
+    /// # Returns
+    /// A new Function instance with properly mapped types and attributes
     fn create_function(&mut self, name: &str, params: &[Parameter], return_type: Type, span: SourceSpan) -> Function {
         let ir_params = params
             .iter()
@@ -162,6 +238,16 @@ impl NIrGenerator {
         func
     }
 
+    /// Maps an AST type to its corresponding IR type representation
+    /// 
+    /// This function converts high-level language types to their IR equivalents,
+    /// handling complex types like arrays and custom types appropriately.
+    /// 
+    /// # Parameters
+    /// * `ty` - The AST Type to map to an IR type
+    /// 
+    /// # Returns
+    /// The corresponding IrType for the given AST type
     fn map_type(&self, ty: &Type) -> IrType {
         match ty {
             Type::I8 => IrType::I8,
