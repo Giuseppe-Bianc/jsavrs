@@ -147,14 +147,6 @@ pub fn split_numeric_and_suffix(slice: &str) -> (&str, Option<&str>) {
 ///
 /// * `Some(Number)` - Successfully parsed and wrapped integer
 /// * `None` - Invalid format or value out of range for type `T`
-///
-/// # Examples
-///
-/// ```ignore
-/// parse_integer::<i8>("42", Number::I8)     // Some(Number::I8(42))
-/// parse_integer::<i8>("999", Number::I8)    // None (overflow)
-/// parse_integer::<u64>("42", Number::UnsignedInteger)  // Some(Number::UnsignedInteger(42))
-/// ```
 fn parse_integer<T>(numeric_part: &str, map_fn: fn(T) -> Number) -> Option<Number>
 where
     T: std::str::FromStr,
@@ -196,15 +188,6 @@ where
 /// | `u16` | u16 | `1000u16` → U16(1000) |
 /// | `f` | f32 | `3.14f` → Float32(3.14) |
 /// | `d` | f64 | `3.14d` → Float64(3.14) |
-///
-/// # Examples
-///
-/// ```ignore
-/// handle_suffix("42", Some("u"))     // Some(Number::UnsignedInteger(42))
-/// handle_suffix("42", Some("i8"))    // Some(Number::I8(42))
-/// handle_suffix("3.14", Some("f"))   // Some(Number::Float32(3.14))
-/// handle_suffix("42", None)          // Some(Number::Integer(42))
-/// ```
 pub fn handle_suffix(numeric_part: &str, suffix: Option<&str>) -> Option<Number> {
     match suffix.map(|s| s.to_ascii_lowercase()).as_deref() {
         Some("u") => parse_integer::<u64>(numeric_part, Number::UnsignedInteger),
@@ -268,14 +251,6 @@ pub fn is_valid_integer_literal(numeric_part: &str) -> bool {
 /// * `Some(Number::Float32)` - For regular float literals
 /// * `Some(Number::Scientific32)` - For scientific notation
 /// * `None` - If parsing fails
-///
-/// # Examples
-///
-/// ```ignore
-/// handle_float_suffix("3.14")      // Some(Number::Float32(3.14))
-/// handle_float_suffix("6.022e23")  // Some(Number::Scientific32(6.022, 23))
-/// handle_float_suffix("invalid")   // None
-/// ```
 pub fn handle_float_suffix(numeric_part: &str) -> Option<Number> {
     parse_scientific(numeric_part, true)
         .or_else(|| numeric_part.parse::<f32>().ok().map(Number::Float32))
@@ -298,14 +273,6 @@ pub fn handle_float_suffix(numeric_part: &str) -> Option<Number> {
 /// * `Some(Number::Float64)` - For floating-point literals
 /// * `Some(Number::Scientific64)` - For scientific notation
 /// * `None` - If parsing fails
-///
-/// # Examples
-///
-/// ```ignore
-/// handle_default_suffix("42")        // Some(Number::Integer(42))
-/// handle_default_suffix("3.14")      // Some(Number::Float64(3.14))
-/// handle_default_suffix("6.022e23")  // Some(Number::Scientific64(6.022, 23))
-/// ```
 pub fn handle_default_suffix(numeric_part: &str) -> Option<Number> {
     parse_scientific(numeric_part, false)
         .or_else(|| handle_non_scientific(numeric_part))
@@ -326,14 +293,6 @@ pub fn handle_default_suffix(numeric_part: &str) -> Option<Number> {
 /// * `Some(Number::Integer)` - For literals without decimal point
 /// * `Some(Number::Float64)` - For literals with decimal point
 /// * `None` - If parsing fails (overflow, underflow, or invalid format)
-///
-/// # Examples
-///
-/// ```ignore
-/// handle_non_scientific("42")     // Some(Number::Integer(42))
-/// handle_non_scientific("3.14")   // Some(Number::Float64(3.14))
-/// handle_non_scientific(".5")     // Some(Number::Float64(0.5))
-/// ```
 pub fn handle_non_scientific(numeric_part: &str) -> Option<Number> {
     if numeric_part.contains('.') {
         numeric_part.parse::<f64>().ok().map(Number::Float64)
@@ -364,15 +323,6 @@ pub fn handle_non_scientific(numeric_part: &str) -> Option<Number> {
 /// - Optional sign: `+` or `-` before exponent
 /// - Base: can be integer or floating-point
 /// - Exponent: must be valid i32 integer
-///
-/// # Examples
-///
-/// ```ignore
-/// parse_scientific("6.022e23", false)   // Some(Number::Scientific64(6.022, 23))
-/// parse_scientific("1.5e-10", true)     // Some(Number::Scientific32(1.5, -10))
-/// parse_scientific("3E+8", false)       // Some(Number::Scientific64(3.0, 8))
-/// parse_scientific("42", false)         // None (no exponent marker)
-/// ```
 pub fn parse_scientific(s: &str, is_f32: bool) -> Option<Number> {
     let pos = s.find(['e', 'E'])?;
     let (base_str, exp_str) = s.split_at(pos);
@@ -412,20 +362,6 @@ pub fn parse_scientific(s: &str, is_f32: bool) -> Option<Number> {
 /// - Strips the 2-character prefix (`#b`, `#o`, or `#x`)
 /// - Checks for optional trailing `u` or `U` suffix
 /// - Uses `i64::from_str_radix` or `u64::from_str_radix` for parsing
-///
-/// # Examples
-///
-/// ```ignore
-/// // Binary literals
-/// parse_base_number(2, lex_for("#b1010"))    // Some(Number::Integer(10))
-/// parse_base_number(2, lex_for("#b1111u"))   // Some(Number::UnsignedInteger(15))
-///
-/// // Octal literals
-/// parse_base_number(8, lex_for("#o755"))     // Some(Number::Integer(493))
-///
-/// // Hexadecimal literals
-/// parse_base_number(16, lex_for("#xDEAD"))   // Some(Number::Integer(57005))
-/// ```
 #[inline]
 pub fn parse_base_number(radix: u32, lex: &mut logos::Lexer<TokenKind>) -> Option<Number> {
     let slice = lex.slice();
@@ -462,15 +398,6 @@ pub fn parse_base_number(radix: u32, lex: &mut logos::Lexer<TokenKind>) -> Optio
 /// - Prefix: `#b` (required)
 /// - Digits: `0`, `1` only
 /// - Suffix: `u` or `U` (optional, for unsigned)
-///
-/// # Examples
-///
-/// ```ignore
-/// // In source code:
-/// #b1010    // → Number::Integer(10)
-/// #b1111u   // → Number::UnsignedInteger(15)
-/// #b0       // → Number::Integer(0)
-/// ```
 pub fn parse_binary(lex: &mut logos::Lexer<TokenKind>) -> Option<Number> {
     parse_base_number(2, lex)
 }
@@ -495,15 +422,6 @@ pub fn parse_binary(lex: &mut logos::Lexer<TokenKind>) -> Option<Number> {
 /// - Prefix: `#o` (required)
 /// - Digits: `0-7` only
 /// - Suffix: `u` or `U` (optional, for unsigned)
-///
-/// # Examples
-///
-/// ```ignore
-/// // In source code:
-/// #o755     // → Number::Integer(493)  (Unix file permissions)
-/// #o77u     // → Number::UnsignedInteger(63)
-/// #o10      // → Number::Integer(8)
-/// ```
 pub fn parse_octal(lex: &mut logos::Lexer<TokenKind>) -> Option<Number> {
     parse_base_number(8, lex)
 }
@@ -528,15 +446,6 @@ pub fn parse_octal(lex: &mut logos::Lexer<TokenKind>) -> Option<Number> {
 /// - Prefix: `#x` (required)
 /// - Digits: `0-9`, `A-F`, `a-f`
 /// - Suffix: `u` or `U` (optional, for unsigned)
-///
-/// # Examples
-///
-/// ```ignore
-/// // In source code:
-/// #xDEADBEEF    // → Number::Integer(3735928559)
-/// #xFFu         // → Number::UnsignedInteger(255)
-/// #x1A2B        // → Number::Integer(6699)
-/// ```
 pub fn parse_hex(lex: &mut logos::Lexer<TokenKind>) -> Option<Number> {
     parse_base_number(16, lex)
 }
