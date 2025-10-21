@@ -103,6 +103,51 @@ The framework encompasses four distinct agent roles, each designed to address sp
 
 This detailed diff output ensures complete audit trail capabilities and facilitates thorough code review processes.
 
+### 5. Security Agent: Vulnerability Detection and Hardening
+
+**Primary Responsibility:** The Security Agent focuses on identifying, prioritizing, and remediating security vulnerabilities and risky coding patterns across the codebase. Its goal is to reduce the project's attack surface and ensure safe defaults for public APIs and tooling.
+
+**Input Specifications:** The agent consumes source code, dependency manifests (e.g., `Cargo.toml`), CI configuration, and a threat model describing expected trust boundaries and attacker capabilities. It can optionally take security policies or compliance targets (e.g., SLSA levels, internal guidelines).
+
+**Output Deliverables:**
+
+- Vulnerability reports mapped to files and functions with remediation suggestions
+- Dependency CVE audits and suggested pin/upgrade actions with version constraints
+- Safe-configuration patches (e.g., clippy and rustc lints, CI gate rules)
+- Security-focused unit/integration tests or property checks
+
+**Technical Infrastructure:** The Security Agent integrates with tools such as `cargo audit`, `rustsec`, and CI pipelines. It supports automated CVE lookups for dependencies and uses static analysis (lints, taint analysis) to surface unsafe usage patterns. For critical fixes, it may produce atomic patch suggestions and an explicit risk rationale.
+
+### 6. Performance Agent: Profiling and Optimization
+
+**Primary Responsibility:** The Performance Agent analyzes runtime and compile-time performance characteristics, locates hotspots, and proposes targeted optimizations that preserve correctness while improving throughput, latency, or resource usage.
+
+**Input Specifications:** The agent accepts benchmarks, flamegraphs, compiled artifacts, and performance requirements (targets or SLOs). It can also ingest CI benchmark history to detect regressions.
+
+**Output Deliverables:**
+
+- Hotspot analysis reports with concrete file/function-level recommendations
+- Microbenchmarks and regression tests (based on `criterion` or `cargo bench`)
+- Safe refactor suggestions (algorithmic improvements, data layout changes)
+- Patch sets with before/after performance measurements and CI integration guidance
+
+**Technical Infrastructure:** The agent uses profiling tools (e.g., perf, Windows ETW, flamegraph generators), `criterion` for benchmarking, and instrumentation builds. It emits reproducible benchmark harnesses and integrates with CI to track performance over time.
+
+### 7. Documentation Agent: API Docs and Onboarding Guides
+
+**Primary Responsibility:** The Documentation Agent produces and maintains high-quality developer and user documentation. It automates generation of rustdoc comments, usage examples, design notes, and onboarding guides to reduce cognitive load for contributors.
+
+**Input Specifications:** The agent consumes public APIs, module interfaces, example code, README drafts, and issue/PR discussions that indicate unclear areas. It can be given audience targets (new contributor, maintainer, end user).
+
+**Output Deliverables:**
+
+- Complete and idiomatic `rustdoc` comments for public crates and modules
+- Usage examples and short how-to guides for common workflows
+- Changelogs and release notes templated for maintainers
+- A contributor onboarding checklist and guided tutorial (small sample project)
+
+**Technical Infrastructure:** The agent leverages the Rust toolchain (`cargo doc`, rustdoc) and integrates with documentation linting tools. For snapshot examples it may create small runnable playground snippets and CI verification that examples compile.
+
 ## Agent Interaction Protocol and Workflow Architecture
 
 The agent ecosystem operates through a carefully orchestrated sequential workflow designed to maximize efficiency while maintaining quality assurance:
@@ -286,4 +331,9 @@ The final deliverable serves as a cornerstone reference that facilitates efficie
 
 The implementation of this agent-based code generation framework represents a significant advancement in automated software development capabilities for the `jsavrs` compiler project. Through the strategic deployment of specialized artificial intelligence agents, the framework enables substantial acceleration of development cycles while maintaining rigorous quality standards and architectural coherence.
 
+
 The modular design of the agent ecosystem ensures scalability and adaptability, allowing for future enhancements and specialized agent development as project requirements evolve. This approach positions the `jsavrs` project at the forefront of intelligent software development methodologies, demonstrating the practical application of artificial intelligence in complex compiler development scenarios.
+
+## Closing Remarks
+
+The addition of these specialized agents extends the original Planner/Coder/Tester/Refactor roles to cover security, performance, documentation, and release operations — giving the `jsavrs` project a fuller automation lifecycle while preserving human oversight for high-risk actions.
