@@ -15,8 +15,7 @@ use std::sync::Arc;
 ///
 /// # Arguments
 ///
-/// * `lex` - Mutable reference to the Logos lexer context, providing access to
-///           the matched slice via `lex.slice()`
+/// * `lex` - Mutable reference to the Logos lexer context, providing access to the matched slice via lex.slice()
 ///
 /// # Returns
 ///
@@ -28,16 +27,6 @@ use std::sync::Arc;
 /// 1. Extract the full matched slice from the lexer
 /// 2. Split into numeric part and optional type suffix
 /// 3. Route to appropriate parser based on suffix type
-///
-/// # Examples
-///
-/// ```ignore
-/// // Called internally by Logos for patterns like:
-/// // "42"      -> Some(Number::Integer(42))
-/// // "3.14f"   -> Some(Number::Float32(3.14))
-/// // "100u16"  -> Some(Number::U16(100))
-/// // "6.022e23" -> Some(Number::Scientific64(6.022, 23))
-/// ```
 pub fn parse_number(lex: &mut logos::Lexer<TokenKind>) -> Option<Number> {
     let slice = lex.slice();
     let (numeric_part, suffix) = split_numeric_and_suffix(slice);
