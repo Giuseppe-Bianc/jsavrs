@@ -31,25 +31,39 @@ The project follows a classic compiler architecture with distinct phases:
 
 ```
 jsavrs/
-├── src/                 # Source code
-│   ├── cli.rs          # Command-line interface
-│   ├── lexer.rs        # Lexer implementation using Logos
-│   ├── lib.rs          # Library exports
-│   ├── main.rs         # Main entry point
-│   ├── error/          # Error handling
-│   ├── ir/             # Intermediate representation
-│   ├── location/       # Source location tracking
-│   ├── parser/         # Parser and AST
-│   ├── printers/       # AST/HIR printers
-│   ├── semantic/       # Semantic analysis (type checking)
-│   ├── time/           # Timing utilities
-│   ├── tokens/         # Token definitions
-│   └── utils/          # Utility functions
-├── tests/              # Test suite
-├── benches/            # Benchmarking
-├── Cargo.toml          # Rust package manifest
-├── README.md           # Project documentation
-└── .github/workflows/  # CI/CD workflows
+├── src/                  # Source code
+│   ├── cli.rs            # Command-line interface
+│   ├── lexer.rs          # Lexer implementation
+│   ├── lib.rs            # Library exports
+│   ├── main.rs           # Main entry point
+│   ├── asm/              # Assembly generation helpers
+│   ├── error/            # Error handling types & helpers
+│   ├── ir/               # Intermediate representation (IR)
+│   ├── location/         # Source location tracking
+│   ├── parser/           # Parser and AST
+│   ├── printers/         # AST / IR printers
+│   ├── semantic/         # Semantic analysis (type checking)
+│   ├── time/             # Timing utilities
+│   ├── tokens/           # Token definitions
+│   └── utils/            # Misc utilities
+├── tests/                # Unit & integration tests (many files + snapshots)
+│   └── snapshots/        # insta snapshots used by tests
+├── benches/              # Criterion benchmarks (e.g. jsavrs_benchmark.rs)
+├── asm_output/           # Example / generated .asm outputs (not source)
+├── vn_files/             # Example .vn source files used by tests/examples
+├── specs/                # Design notes, RFCs and proposal directories
+├── .github/              # CI / GitHub workflows
+│   └── workflows/
+├── Cargo.toml            # Rust package manifest
+├── README.md             # Project documentation
+├── QWEN.md               # This file (project context & docs)
+├── AGENTS.md             # Agent-based dev notes (project-specific)
+├── CONTRIBUTING.md
+├── CODE_OF_CONDUCT.md
+├── SECURITY.md
+├── LICENSE
+├── rustfmt.toml
+└──  sonar-project.properties
 ```
 
 ## Technology Stack
