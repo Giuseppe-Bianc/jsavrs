@@ -108,6 +108,7 @@ impl SymbolTable {
     /// # Examples
     ///
     /// ```
+    /// use jsavrs::semantic::symbol_table::SymbolTable;
     /// let symbol_table = SymbolTable::new();
     /// assert_eq!(symbol_table.scope_count(), 1);
     /// ```
@@ -128,6 +129,7 @@ impl SymbolTable {
     /// # Examples
     ///
     /// ```
+    /// use jsavrs::semantic::symbol_table::SymbolTable;
     /// let mut table = SymbolTable::new();
     /// table.push_scope(ScopeKind::Block, None);
     /// assert_eq!(table.scope_count(), 2);
@@ -144,6 +146,7 @@ impl SymbolTable {
     /// # Examples
     ///
     /// ```
+    /// use jsavrs::semantic::symbol_table::SymbolTable;
     /// let mut table = SymbolTable::new();
     /// table.push_scope(ScopeKind::Block, None);
     /// table.pop_scope();
