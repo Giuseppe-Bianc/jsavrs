@@ -2,7 +2,7 @@
 //! # Parser Module
 //!
 //! The parser module handles the transformation of tokens into abstract syntax trees (AST).
-//! This is the second phase of the compilation process, responsible for recognizing 
+//! This is the second phase of the compilation process, responsible for recognizing
 //! syntactic structures according to the language grammar.
 //!
 //! ## Phase-specific responsibilities:

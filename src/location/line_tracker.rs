@@ -12,16 +12,16 @@ use std::sync::Arc;
 /// - Column numbers are 1-indexed (first column in a line is column 1)
 /// - Handles multibyte UTF-8 characters correctly through `char_indices()`
 /// - Uses binary search for efficient offset lookups
-#[allow(dead_code)]
 #[derive(Debug, Clone, PartialEq, Eq)]
 pub struct LineTracker {
-    /// Precomputed starting byte offsets for each line
+    /// Precomputed starting byte offsets for each line.
+    /// First element is always 0, subsequent elements mark positions after newlines.
     line_starts: Vec<usize>,
 
-    /// Path to source file (shared reference)
+    /// Path to source file, shared via Arc for efficient cloning.
     file_path: Arc<str>,
 
-    /// Original source code content
+    /// Original source code content, shared via Arc.
     source: Arc<str>,
 }
 
@@ -84,12 +84,11 @@ impl LineTracker {
         }
 
         match self.line_starts.binary_search(&offset) {
-            // Exact match: offset is start of a line
+            // Exact match: offset is at line start
             Ok(line) => SourceLocation::new(line + 1, 1, offset),
 
-            // Offset between two line starts
+            // Between lines: calculate column from preceding line start
             Err(line) => {
-                // Find nearest preceding line start
                 let line_index = line.saturating_sub(1);
                 let column = offset - self.line_starts[line_index] + 1;
                 SourceLocation::new(line_index + 1, column, offset)
@@ -125,7 +124,10 @@ impl LineTracker {
 
     /// Gets a specific line from the source (1-indexed)
     pub fn get_line(&self, line_number: usize) -> Option<&str> {
+        // Convert to 0-indexed and get line start offset
         let start_index = *self.line_starts.get(line_number.checked_sub(1)?)?;
+
+        // Find line end (next newline or EOF)
         let end_index = self.source[start_index..].find('\n').map(|rel| start_index + rel).unwrap_or(self.source.len());
 
         Some(&self.source[start_index..end_index])

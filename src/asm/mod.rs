@@ -1,7 +1,7 @@
 //! # Assembly Module
 //!
-//! The assembly module handles the generation of assembly code from intermediate 
-//! representation. This module is responsible for translating IR into specific 
+//! The assembly module handles the generation of assembly code from intermediate
+//! representation. This module is responsible for translating IR into specific
 //! assembly instructions for the target architecture.
 //!
 //! ## Phase-specific responsibilities:

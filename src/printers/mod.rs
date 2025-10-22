@@ -1,7 +1,7 @@
 //! # Printers Module
 //!
-//! The printers module handles the generation of target code from the intermediate 
-//! representation. This is the final phase of the compilation process, responsible 
+//! The printers module handles the generation of target code from the intermediate
+//! representation. This is the final phase of the compilation process, responsible
 //! for producing the output in various formats (e.g., assembly code, bytecode).
 //!
 //! ## Phase-specific responsibilities:

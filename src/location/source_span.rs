@@ -175,6 +175,11 @@ pub fn truncate_path(path: &Path, depth: usize) -> String {
     truncated.display().to_string()
 }
 
+/// Trait for types that have an associated source span.
+///
+/// Enables generic functions that need to access source location information
+/// from various AST nodes or token types.
 pub trait HasSpan {
+    /// Returns a reference to this type's source span.
     fn span(&self) -> &SourceSpan;
 }

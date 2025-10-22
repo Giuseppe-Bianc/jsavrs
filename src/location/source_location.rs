@@ -21,13 +21,13 @@
 /// while maintaining consistency with the derived implementations of `PartialOrd`/`Ord`.
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Ord, PartialOrd, Default, Hash)]
 pub struct SourceLocation {
-    /// Line number in source file (1-indexed)
+    /// Line number in source file (1-indexed).
     pub line: usize,
 
-    /// Column position in line (1-indexed)
+    /// Column position in line (1-indexed, byte-based).
     pub column: usize,
 
-    /// Absolute byte offset from start of source (0-indexed)
+    /// Absolute byte offset from start of source (0-indexed).
     pub absolute_pos: usize,
 }
 

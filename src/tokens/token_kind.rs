@@ -151,11 +151,7 @@ fn parse_integer<T>(numeric_part: &str, map_fn: fn(T) -> Number) -> Option<Numbe
 where
     T: std::str::FromStr,
 {
-    if is_valid_integer_literal(numeric_part) { 
-        numeric_part.parse::<T>().ok().map(map_fn) 
-    } else { 
-        None 
-    }
+    if is_valid_integer_literal(numeric_part) { numeric_part.parse::<T>().ok().map(map_fn) } else { None }
 }
 
 /// Routes numeric literal parsing based on type suffix.
@@ -252,8 +248,7 @@ pub fn is_valid_integer_literal(numeric_part: &str) -> bool {
 /// * `Some(Number::Scientific32)` - For scientific notation
 /// * `None` - If parsing fails
 pub fn handle_float_suffix(numeric_part: &str) -> Option<Number> {
-    parse_scientific(numeric_part, true)
-        .or_else(|| numeric_part.parse::<f32>().ok().map(Number::Float32))
+    parse_scientific(numeric_part, true).or_else(|| numeric_part.parse::<f32>().ok().map(Number::Float32))
 }
 
 /// Parses numeric strings with default or 'd' suffix.
@@ -274,8 +269,7 @@ pub fn handle_float_suffix(numeric_part: &str) -> Option<Number> {
 /// * `Some(Number::Scientific64)` - For scientific notation
 /// * `None` - If parsing fails
 pub fn handle_default_suffix(numeric_part: &str) -> Option<Number> {
-    parse_scientific(numeric_part, false)
-        .or_else(|| handle_non_scientific(numeric_part))
+    parse_scientific(numeric_part, false).or_else(|| handle_non_scientific(numeric_part))
 }
 
 /// Parses non-scientific notation numbers (integers and simple floats).

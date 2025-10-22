@@ -1,7 +1,7 @@
 //! # Semantic Analysis Module
 //!
-//! The semantic analysis module handles the verification of syntactic correctness 
-//! and type checking of the abstract syntax tree. This is the third phase of the 
+//! The semantic analysis module handles the verification of syntactic correctness
+//! and type checking of the abstract syntax tree. This is the third phase of the
 //! compilation process, responsible for ensuring the code follows semantic rules.
 //!
 //! ## Phase-specific responsibilities:

@@ -17,7 +17,7 @@ enum LoopControl {
 
 /// The NIR (Normalized Intermediate Representation) Generator transforms Abstract Syntax Tree (AST) nodes
 /// into intermediate representation suitable for optimization and code generation.
-/// 
+///
 /// This generator creates a control flow graph with basic blocks, handles variable scoping,
 /// type mapping, and applies SSA (Static Single Assignment) transformation to optimize
 /// the generated IR for further analysis and compilation.
@@ -58,7 +58,7 @@ struct TypeContext {
 #[allow(clippy::collapsible_if, clippy::collapsible_else_if)]
 impl NIrGenerator {
     /// Creates a new NIR generator instance with default settings
-    /// 
+    ///
     /// # Returns
     /// A new instance of NIrGenerator with:
     /// - Initialized scope manager
@@ -85,9 +85,9 @@ impl NIrGenerator {
     }
 
     /// Creates a new generator with SSA transformation disabled
-    /// 
+    ///
     /// This is useful when you want to see the raw IR without SSA transformations applied.
-    /// 
+    ///
     /// # Returns
     /// A new instance of NIrGenerator with SSA transformation disabled
     pub fn new_without_ssa() -> Self {
@@ -101,15 +101,15 @@ impl NIrGenerator {
     }
 
     /// Generates intermediate representation for a module of statements
-    /// 
+    ///
     /// This is the main entry point for IR generation. It processes the AST in two passes:
     /// 1. Declaration pass: Creates function declarations and adds them to the symbol table
     /// 2. Generation pass: Generates code for function bodies and other statements
-    /// 
+    ///
     /// # Parameters
     /// * `stmts` - Vector of AST statements to convert to IR
     /// * `module_name` - Name of the module being generated
-    /// 
+    ///
     /// # Returns
     /// A tuple containing:
     /// * The generated Module with all functions and global variables
@@ -167,11 +167,11 @@ impl NIrGenerator {
     }
 
     /// Applies SSA transformation to all functions in the module.
-    /// 
+    ///
     /// Static Single Assignment (SSA) form is a property of IR where each variable is assigned
     /// exactly once, and every variable is defined before it is used. This form enables
     /// more efficient optimization passes.
-    /// 
+    ///
     /// # Parameters
     /// * `module` - The module containing functions to transform to SSA form
     fn apply_ssa_transformation(&mut self, module: &mut Module) {
@@ -186,7 +186,7 @@ impl NIrGenerator {
     }
 
     /// Adds a new compilation error to the generator's error collection
-    /// 
+    ///
     /// # Parameters
     /// * `message` - Human-readable description of the error
     /// * `span` - Source location where the error occurred
@@ -195,9 +195,9 @@ impl NIrGenerator {
     }
 
     /// Adds a branch terminator to the current block if it doesn't already have one
-    /// 
+    ///
     /// This ensures that control flow is properly maintained when exiting blocks.
-    /// 
+    ///
     /// # Parameters
     /// * `func` - The function containing the block
     /// * `target_label` - The label of the target block to branch to
@@ -209,13 +209,13 @@ impl NIrGenerator {
     }
 
     /// Creates a new function with mapped parameter and return types
-    /// 
+    ///
     /// # Parameters
     /// * `name` - The name of the function
     /// * `params` - Vector of AST parameters to map to IR parameters
     /// * `return_type` - The AST return type to map to an IR type
     /// * `span` - Source location of the function declaration
-    /// 
+    ///
     /// # Returns
     /// A new Function instance with properly mapped types and attributes
     fn create_function(&mut self, name: &str, params: &[Parameter], return_type: Type, span: SourceSpan) -> Function {
@@ -239,13 +239,13 @@ impl NIrGenerator {
     }
 
     /// Maps an AST type to its corresponding IR type representation
-    /// 
+    ///
     /// This function converts high-level language types to their IR equivalents,
     /// handling complex types like arrays and custom types appropriately.
-    /// 
+    ///
     /// # Parameters
     /// * `ty` - The AST Type to map to an IR type
-    /// 
+    ///
     /// # Returns
     /// The corresponding IrType for the given AST type
     fn map_type(&self, ty: &Type) -> IrType {
