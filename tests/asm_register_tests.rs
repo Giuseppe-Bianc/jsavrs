@@ -1,4 +1,7 @@
-use jsavrs::asm::*;
+use jsavrs::asm::{
+    ControlRegister, DebugRegister, FPURegister, FlagsRegister, GPRegister8, GPRegister16, GPRegister32, GPRegister64,
+    InstructionPointer, SegmentRegister, XMMRegister, YMMRegister, ZMMRegister,
+};
 
 #[test]
 fn test_gp_register64_variants() {

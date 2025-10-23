@@ -30,26 +30,34 @@ impl AssemblyFile {
     }
 
     // Getters
+    /// Returns a reference to the ABI configuration.
     pub fn abi(&self) -> &Abi {
         &self.abi
     }
 
-    pub fn bss_section(&self) -> &Option<AssemblySection> {
-        &self.bss_section
+    /// Returns a reference to the optional BSS section.
+    ///
+    /// The BSS section is present for SystemV ABI and absent for Windows ABI.
+    pub fn bss_section(&self) -> Option<&AssemblySection> {
+        self.bss_section.as_ref()
     }
 
-    pub fn rodata_section(&self) -> &Option<AssemblySection> {
-        &self.rodata_section
+    /// Returns a reference to the optional read-only data section.
+    ///
+    /// The rodata section is present for Windows ABI and absent for SystemV ABI.
+    pub fn rodata_section(&self) -> Option<&AssemblySection> {
+        self.rodata_section.as_ref()
     }
 
+    /// Returns a reference to the data section.
     pub fn data_section(&self) -> &AssemblySection {
         &self.data_section
     }
 
+    /// Returns a reference to the text (code) section.
     pub fn text_section(&self) -> &AssemblySection {
         &self.text_section
     }
-
     pub fn data_sec_add_data(&mut self, label: impl Into<String>, directive: DataDirective) {
         self.data_section.add_data(label, directive);
     }

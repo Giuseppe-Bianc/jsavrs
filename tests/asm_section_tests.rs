@@ -75,9 +75,13 @@ fn test_section_hash() {
     let mut map = HashMap::new();
     map.insert(Section::Text, "code");
     map.insert(Section::Data, "data");
+    map.insert(Section::Bss, "uninitialized");
+    map.insert(Section::Rodata, "constants");
 
     assert_eq!(map.get(&Section::Text), Some(&"code"));
     assert_eq!(map.get(&Section::Data), Some(&"data"));
+    assert_eq!(map.get(&Section::Bss), Some(&"uninitialized"));
+    assert_eq!(map.get(&Section::Rodata), Some(&"constants"));
 }
 
 #[test]

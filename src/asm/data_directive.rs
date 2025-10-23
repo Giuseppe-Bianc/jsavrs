@@ -6,7 +6,6 @@
 use super::{Instruction, Section};
 use std::fmt;
 
-
 /// Represents an expression used in EQU directives.
 ///
 /// EQU expressions define constant values or calculations that can be used
@@ -615,5 +614,5 @@ impl AssemblySection {
 /// * `\n` becomes `\\n` (newline)
 /// * `\t` becomes `\\t` (tab)
 fn escape_string(s: &str) -> String {
-     s.replace("\\", "\\\\").replace("\"", "\\\"").replace("\n", "\\\\n").replace("\t", "\\\\t") 
+    s.replace("\\", "\\\\").replace("\"", "\\\"").replace("\n", "\\\\n").replace("\t", "\\\\t")
 }
