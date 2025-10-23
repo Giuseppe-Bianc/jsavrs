@@ -45,6 +45,8 @@ impl fmt::Display for AbiKind {
 /// # Examples
 ///
 /// ```
+/// use jsavrs::asm::Abi;
+/// use jsavrs::asm::Platform;
 /// let abi = Abi::from_platform(Platform::Linux);
 /// assert_eq!(abi.kind, AbiKind::SystemV);
 /// assert_eq!(abi.alignment(), 16);
@@ -466,15 +468,6 @@ impl Abi {
 /// Variadic functions (like `printf` and `scanf`) accept a variable number
 /// of arguments. Different ABIs have different requirements for how these
 /// functions must be implemented.
-///
-/// # Examples
-///
-/// ```
-/// let info = abi.variadic_info();
-/// if info.requires_vector_count_in_al {
-///     // System V requires AL to contain the number of XMM registers used
-/// }
-/// ```
 #[derive(Debug, Clone, Copy)]
 #[allow(dead_code)]
 pub struct VariadicInfo {

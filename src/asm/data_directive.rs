@@ -93,7 +93,7 @@ pub enum DataDirective {
 ///
 /// EQU expressions define constant values or calculations that can be used
 /// throughout the assembly program. These are evaluated at assembly time.
-#[derive(Debug, Clone)]
+#[derive(Debug, Clone, PartialEq, Eq)]
 #[allow(dead_code)]
 pub enum EquExpression {
     /// A constant integer value.
@@ -130,6 +130,7 @@ impl DataDirective {
     /// # Examples
     ///
     /// ```
+    /// use jsavrs::asm::DataDirective;
     /// let directive = DataDirective::new_asciz("Hello, World!");
     /// // Results in: db "Hello, World!", 0
     /// ```
@@ -151,6 +152,7 @@ impl DataDirective {
     /// # Examples
     ///
     /// ```
+    /// use jsavrs::asm::DataDirective;
     /// let directive = DataDirective::new_asciiz_with_terminator("data", 0x0A);
     /// // Results in: db "data", 10  (terminated with newline)
     /// ```
@@ -171,6 +173,7 @@ impl DataDirective {
     /// # Examples
     ///
     /// ```
+    /// use jsavrs::asm::DataDirective;
     /// let directive = DataDirective::new_equ_constant(42);
     /// // Results in: equ 42
     /// ```
@@ -213,6 +216,7 @@ impl DataDirective {
     /// # Examples
     ///
     /// ```
+    /// use jsavrs::asm::DataDirective;
     /// let directive = DataDirective::new_equ_generic("BUFFER_SIZE * 2");
     /// // Results in: equ BUFFER_SIZE * 2
     /// ```
