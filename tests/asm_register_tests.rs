@@ -190,10 +190,34 @@ fn test_instruction_pointer_variants() {
 
 #[test]
 fn test_fpu_register_variants() {
-    // These are tested in the x86_register tests, but let's add a few here too
+    // Test all FPU register variants to ensure complete Display trait coverage
     assert_eq!(format!("{}", FPURegister::St0), "st0");
     assert_eq!(format!("{}", FPURegister::St1), "st1");
+    assert_eq!(format!("{}", FPURegister::St2), "st2");
+    assert_eq!(format!("{}", FPURegister::St3), "st3");
+    assert_eq!(format!("{}", FPURegister::St4), "st4");
+    assert_eq!(format!("{}", FPURegister::St5), "st5");
+    assert_eq!(format!("{}", FPURegister::St6), "st6");
     assert_eq!(format!("{}", FPURegister::St7), "st7");
+}
+
+#[test]
+fn test_fpu_register_display_consistency() {
+    // Test that all FPU registers follow the 'st' + index pattern
+    let fpu_registers = [
+        (FPURegister::St0, "st0"),
+        (FPURegister::St1, "st1"),
+        (FPURegister::St2, "st2"),
+        (FPURegister::St3, "st3"),
+        (FPURegister::St4, "st4"),
+        (FPURegister::St5, "st5"),
+        (FPURegister::St6, "st6"),
+        (FPURegister::St7, "st7"),
+    ];
+    
+    for (reg, expected) in fpu_registers.iter() {
+        assert_eq!(format!("{}", reg), *expected);
+    }
 }
 
 #[test]
