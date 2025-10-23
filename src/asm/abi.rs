@@ -45,6 +45,7 @@ impl fmt::Display for AbiKind {
 /// # Examples
 ///
 /// ```
+/// use jsavrs::asm::AbiKind;
 /// use jsavrs::asm::Abi;
 /// use jsavrs::asm::Platform;
 /// let abi = Abi::from_platform(Platform::Linux);

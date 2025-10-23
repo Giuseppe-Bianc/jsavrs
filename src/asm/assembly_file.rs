@@ -29,6 +29,27 @@ impl AssemblyFile {
         }
     }
 
+    // Getters
+    pub fn abi(&self) -> &Abi {
+        &self.abi
+    }
+
+    pub fn bss_section(&self) -> &Option<AssemblySection> {
+        &self.bss_section
+    }
+
+    pub fn rodata_section(&self) -> &Option<AssemblySection> {
+        &self.rodata_section
+    }
+
+    pub fn data_section(&self) -> &AssemblySection {
+        &self.data_section
+    }
+
+    pub fn text_section(&self) -> &AssemblySection {
+        &self.text_section
+    }
+
     pub fn data_sec_add_data(&mut self, label: impl Into<String>, directive: DataDirective) {
         self.data_section.add_data(label, directive);
     }

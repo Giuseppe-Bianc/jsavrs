@@ -6,6 +6,34 @@
 use super::{Instruction, Section};
 use std::fmt;
 
+
+/// Represents an expression used in EQU directives.
+///
+/// EQU expressions define constant values or calculations that can be used
+/// throughout the assembly program. These are evaluated at assembly time.
+#[derive(Debug, Clone, PartialEq, Eq)]
+#[allow(dead_code)]
+pub enum EquExpression {
+    /// A constant integer value.
+    ///
+    /// Represents a simple numeric constant that can be positive or negative.
+    Constant(i64),
+
+    /// Length calculation expression: `$ - label`.
+    ///
+    /// Calculates the distance from a specified label to the current position ($).
+    /// Commonly used to determine the length of data sections (e.g., string length).
+    /// The string contains the name of the label to calculate from.
+    LengthOf(String),
+
+    /// Generic expression for complex calculations.
+    ///
+    /// Represents any other type of expression that doesn't fit the predefined
+    /// categories. The string contains the raw expression text to be included
+    /// in the assembly output.
+    Generic(String),
+}
+
 /// Represents a data directive in assembly language.
 ///
 /// Data directives are used to declare and initialize data in assembly programs.
@@ -89,33 +117,6 @@ pub enum DataDirective {
     Equ(EquExpression),
 }
 
-/// Represents an expression used in EQU directives.
-///
-/// EQU expressions define constant values or calculations that can be used
-/// throughout the assembly program. These are evaluated at assembly time.
-#[derive(Debug, Clone, PartialEq, Eq)]
-#[allow(dead_code)]
-pub enum EquExpression {
-    /// A constant integer value.
-    ///
-    /// Represents a simple numeric constant that can be positive or negative.
-    Constant(i64),
-
-    /// Length calculation expression: `$ - label`.
-    ///
-    /// Calculates the distance from a specified label to the current position ($).
-    /// Commonly used to determine the length of data sections (e.g., string length).
-    /// The string contains the name of the label to calculate from.
-    LengthOf(String),
-
-    /// Generic expression for complex calculations.
-    ///
-    /// Represents any other type of expression that doesn't fit the predefined
-    /// categories. The string contains the raw expression text to be included
-    /// in the assembly output.
-    Generic(String),
-}
-
 impl DataDirective {
     /// Creates a new null-terminated string directive (ASCIZ).
     ///
@@ -195,6 +196,7 @@ impl DataDirective {
     /// # Examples
     ///
     /// ```
+    /// use jsavrs::asm::DataDirective;
     /// let directive = DataDirective::new_equ_length_of("msg");
     /// // Results in: equ $ - msg
     /// ```
@@ -613,5 +615,5 @@ impl AssemblySection {
 /// * `\n` becomes `\\n` (newline)
 /// * `\t` becomes `\\t` (tab)
 fn escape_string(s: &str) -> String {
-    s.replace("\\", "\\\\").replace("\"", "\\\"").replace("\n", "\\n").replace("\t", "\\t")
+     s.replace("\\", "\\\\").replace("\"", "\\\"").replace("\n", "\\\\n").replace("\t", "\\\\t") 
 }
