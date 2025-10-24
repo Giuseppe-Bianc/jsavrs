@@ -1,7 +1,14 @@
-use std::fmt;
 use super::operand::Operand;
+use std::fmt;
 
-/// Enumerazione principale per tutte le istruzioni x86_64
+/// Representation of all supported x86_64 instructions.
+///
+/// This enum models the instruction set used by the assembler/IR. Each
+/// variant corresponds to an instruction mnemonic and carries the operands
+/// required by that form (registers, immediates, memory references, labels,
+/// etc.). The enum is intentionally exhaustive for the subset of x86_64
+/// targeted by this project and is used for formatting, analysis and
+/// lowering/encoding phases.
 #[derive(Debug, Clone, PartialEq, Eq)]
 pub enum Instruction {
     // === Istruzioni Aritmetiche ===
@@ -367,8 +374,11 @@ impl Instruction {
             Self::Stosq => "stosq",
         }
     }
-
-    /// Verifica se l'istruzione è un salto
+    /// Return the textual mnemonic for this instruction.
+    ///
+    /// Inputs: `&self`.
+    /// Outputs: `&str` — the canonical lowercase mnemonic (e.g. "mov", "add").
+    /// Side effects: none.
     pub fn is_jump(&self) -> bool {
         matches!(
             self,
@@ -393,21 +403,33 @@ impl Instruction {
                 | Self::Jnp { .. }
         )
     }
-
-    /// Verifica se l'istruzione è una chiamata
+    /// Return true if this instruction is a call instruction.
+    ///
+    /// Inputs: `&self`.
+    /// Outputs: `bool`.
+    /// Side effects: none.
     pub fn is_call(&self) -> bool {
         matches!(self, Self::Call { .. })
     }
 
-    /// Verifica se l'istruzione è un return
+    /// Return true if this instruction is a return instruction.
+    ///
+    /// Covers both plain `ret` and `ret imm16` forms.
     pub fn is_return(&self) -> bool {
         matches!(self, Self::Ret | Self::RetImm { .. })
     }
 }
 
-
-
 impl fmt::Display for Instruction {
+    /// Format the instruction as human-readable assembly.
+    ///
+    /// The formatting uses the mnemonic followed by comma-separated
+    /// operands when applicable. The specific layout mirrors common Intel
+    /// assembly formatting conventions used across the project.
+    ///
+    /// Inputs: `&self`, `Formatter`.
+    /// Outputs: `fmt::Result` after writing the textual representation.
+    /// Side effects: writes to the provided formatter.
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
         match self {
             // Istruzioni binarie (dest, src)
