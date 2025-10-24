@@ -1,12 +1,10 @@
 use jsavrs::asm::{
-    ControlRegister, DebugRegister, FPURegister, FlagsRegister, GPRegister16, GPRegister32,
-    GPRegister64, GPRegister8, InstructionPointer, MMXRegister, MaskRegister, Platform,
-    SegmentRegister, X86Register, XMMRegister, YMMRegister, ZMMRegister,
-    INT_PARAM_REGS_SYSTEMV, INT_PARAM_REGS_WINDOWS, FLOAT_PARAM_REGS_SYSTEMV, 
-    FLOAT_PARAM_REGS_WINDOWS, INT_RETURN_REGS, FLOAT_RETURN_REGS_SYSTEMV, 
-    FLOAT_RETURN_REGS_WINDOWS, CALLEE_SAVED_GP_SYSTEMV, CALLEE_SAVED_GP_WINDOWS,
-    CALLEE_SAVED_XMM_WINDOWS, CALLER_SAVED_GP_SYSTEMV, CALLER_SAVED_GP_WINDOWS,
-    CALLER_SAVED_XMM_SYSTEMV, CALLER_SAVED_XMM_WINDOWS,
+    CALLEE_SAVED_GP_SYSTEMV, CALLEE_SAVED_GP_WINDOWS, CALLEE_SAVED_XMM_WINDOWS, CALLER_SAVED_GP_SYSTEMV,
+    CALLER_SAVED_GP_WINDOWS, CALLER_SAVED_XMM_SYSTEMV, CALLER_SAVED_XMM_WINDOWS, ControlRegister, DebugRegister,
+    FLOAT_PARAM_REGS_SYSTEMV, FLOAT_PARAM_REGS_WINDOWS, FLOAT_RETURN_REGS_SYSTEMV, FLOAT_RETURN_REGS_WINDOWS,
+    FPURegister, FlagsRegister, GPRegister8, GPRegister16, GPRegister32, GPRegister64, INT_PARAM_REGS_SYSTEMV,
+    INT_PARAM_REGS_WINDOWS, INT_RETURN_REGS, InstructionPointer, MMXRegister, MaskRegister, Platform, SegmentRegister,
+    X86Register, XMMRegister, YMMRegister, ZMMRegister,
 };
 
 #[test]
@@ -129,16 +127,8 @@ fn test_is_volatile_xmm_registers() {
             15 => X86Register::Xmm(XMMRegister::Xmm15),
             _ => panic!("Invalid XMM register index"),
         };
-        assert!(
-            xmm_reg.is_volatile(Platform::Linux),
-            "XMM{} should be volatile on Linux",
-            i
-        );
-        assert!(
-            xmm_reg.is_volatile(Platform::MacOS),
-            "XMM{} should be volatile on MacOS",
-            i
-        );
+        assert!(xmm_reg.is_volatile(Platform::Linux), "XMM{} should be volatile on Linux", i);
+        assert!(xmm_reg.is_volatile(Platform::MacOS), "XMM{} should be volatile on MacOS", i);
     }
 }
 
@@ -175,16 +165,8 @@ fn test_is_volatile_ymm_registers() {
             15 => X86Register::Ymm(YMMRegister::Ymm15),
             _ => panic!("Invalid YMM register index"),
         };
-        assert!(
-            ymm_reg.is_volatile(Platform::Linux),
-            "YMM{} should be volatile on Linux",
-            i
-        );
-        assert!(
-            ymm_reg.is_volatile(Platform::MacOS),
-            "YMM{} should be volatile on MacOS",
-            i
-        );
+        assert!(ymm_reg.is_volatile(Platform::Linux), "YMM{} should be volatile on Linux", i);
+        assert!(ymm_reg.is_volatile(Platform::MacOS), "YMM{} should be volatile on MacOS", i);
     }
 }
 
@@ -250,11 +232,7 @@ fn test_is_callee_saved_xmm() {
             15 => X86Register::Xmm(XMMRegister::Xmm15),
             _ => panic!("Invalid XMM register index"),
         };
-        assert!(
-            xmm_reg.is_callee_saved(Platform::Windows),
-            "XMM{} should be callee-saved on Windows",
-            i
-        );
+        assert!(xmm_reg.is_callee_saved(Platform::Windows), "XMM{} should be callee-saved on Windows", i);
     }
 
     // On Windows, XMM0-XMM5 are not callee-saved
@@ -268,11 +246,7 @@ fn test_is_callee_saved_xmm() {
             5 => X86Register::Xmm(XMMRegister::Xmm5),
             _ => panic!("Invalid XMM register index"),
         };
-        assert!(
-            !xmm_reg.is_callee_saved(Platform::Windows),
-            "XMM{} should not be callee-saved on Windows",
-            i
-        );
+        assert!(!xmm_reg.is_callee_saved(Platform::Windows), "XMM{} should not be callee-saved on Windows", i);
     }
 
     // On System V, no XMM registers are callee-saved
@@ -296,16 +270,8 @@ fn test_is_callee_saved_xmm() {
             15 => X86Register::Xmm(XMMRegister::Xmm15),
             _ => panic!("Invalid XMM register index"),
         };
-        assert!(
-            !xmm_reg.is_callee_saved(Platform::Linux),
-            "XMM{} should not be callee-saved on Linux",
-            i
-        );
-        assert!(
-            !xmm_reg.is_callee_saved(Platform::MacOS),
-            "XMM{} should not be callee-saved on MacOS",
-            i
-        );
+        assert!(!xmm_reg.is_callee_saved(Platform::Linux), "XMM{} should not be callee-saved on Linux", i);
+        assert!(!xmm_reg.is_callee_saved(Platform::MacOS), "XMM{} should not be callee-saved on MacOS", i);
     }
 }
 
@@ -356,18 +322,9 @@ fn test_size_bits() {
     assert_eq!(X86Register::Flags(FlagsRegister::Flags).size_bits(), 16);
 
     // Instruction pointer registers - Rip is 64, Eip is 32, Ip is 16
-    assert_eq!(
-        X86Register::InstructionPointer(InstructionPointer::Rip).size_bits(),
-        64
-    );
-    assert_eq!(
-        X86Register::InstructionPointer(InstructionPointer::Eip).size_bits(),
-        32
-    );
-    assert_eq!(
-        X86Register::InstructionPointer(InstructionPointer::Ip).size_bits(),
-        16
-    );
+    assert_eq!(X86Register::InstructionPointer(InstructionPointer::Rip).size_bits(), 64);
+    assert_eq!(X86Register::InstructionPointer(InstructionPointer::Eip).size_bits(), 32);
+    assert_eq!(X86Register::InstructionPointer(InstructionPointer::Ip).size_bits(), 16);
 }
 
 #[test]
@@ -502,12 +459,7 @@ fn test_is_parameter_register_linux() {
             7 => X86Register::Xmm(XMMRegister::Xmm7),
             _ => panic!("Invalid XMM register index"),
         };
-        assert!(
-            xmm_reg.is_parameter_register(platform, i),
-            "XMM{} should be {}th float param on Linux",
-            i,
-            i
-        );
+        assert!(xmm_reg.is_parameter_register(platform, i), "XMM{} should be {}th float param on Linux", i, i);
     }
 
     // Test non-parameter registers
@@ -593,38 +545,20 @@ fn test_nasm_name() {
     assert_eq!(X86Register::Segment(SegmentRegister::Gs).nasm_name(), "gs");
 
     // Control registers
-    assert_eq!(
-        X86Register::Control(ControlRegister::Cr0).nasm_name(),
-        "cr0"
-    );
-    assert_eq!(
-        X86Register::Control(ControlRegister::Cr4).nasm_name(),
-        "cr4"
-    );
+    assert_eq!(X86Register::Control(ControlRegister::Cr0).nasm_name(), "cr0");
+    assert_eq!(X86Register::Control(ControlRegister::Cr4).nasm_name(), "cr4");
 
     // Debug registers
     assert_eq!(X86Register::Debug(DebugRegister::Dr0).nasm_name(), "dr0");
     assert_eq!(X86Register::Debug(DebugRegister::Dr7).nasm_name(), "dr7");
 
     // Flags registers
-    assert_eq!(
-        X86Register::Flags(FlagsRegister::Rflags).nasm_name(),
-        "rflags"
-    );
-    assert_eq!(
-        X86Register::Flags(FlagsRegister::Eflags).nasm_name(),
-        "eflags"
-    );
+    assert_eq!(X86Register::Flags(FlagsRegister::Rflags).nasm_name(), "rflags");
+    assert_eq!(X86Register::Flags(FlagsRegister::Eflags).nasm_name(), "eflags");
 
     // Instruction pointer registers
-    assert_eq!(
-        X86Register::InstructionPointer(InstructionPointer::Rip).nasm_name(),
-        "rip"
-    );
-    assert_eq!(
-        X86Register::InstructionPointer(InstructionPointer::Eip).nasm_name(),
-        "eip"
-    );
+    assert_eq!(X86Register::InstructionPointer(InstructionPointer::Rip).nasm_name(), "rip");
+    assert_eq!(X86Register::InstructionPointer(InstructionPointer::Eip).nasm_name(), "eip");
 }
 
 #[test]
@@ -643,28 +577,13 @@ fn test_display_format() {
 #[test]
 fn test_register_equality() {
     // Same register should be equal
-    assert_eq!(
-        X86Register::GP64(GPRegister64::Rax),
-        X86Register::GP64(GPRegister64::Rax)
-    );
-    assert_eq!(
-        X86Register::Xmm(XMMRegister::Xmm0),
-        X86Register::Xmm(XMMRegister::Xmm0)
-    );
+    assert_eq!(X86Register::GP64(GPRegister64::Rax), X86Register::GP64(GPRegister64::Rax));
+    assert_eq!(X86Register::Xmm(XMMRegister::Xmm0), X86Register::Xmm(XMMRegister::Xmm0));
 
     // Different registers should not be equal
-    assert_ne!(
-        X86Register::GP64(GPRegister64::Rax),
-        X86Register::GP64(GPRegister64::Rbx)
-    );
-    assert_ne!(
-        X86Register::Xmm(XMMRegister::Xmm0),
-        X86Register::Ymm(YMMRegister::Ymm0)
-    );
-    assert_ne!(
-        X86Register::GP64(GPRegister64::Rax),
-        X86Register::GP32(GPRegister32::Eax)
-    );
+    assert_ne!(X86Register::GP64(GPRegister64::Rax), X86Register::GP64(GPRegister64::Rbx));
+    assert_ne!(X86Register::Xmm(XMMRegister::Xmm0), X86Register::Ymm(YMMRegister::Ymm0));
+    assert_ne!(X86Register::GP64(GPRegister64::Rax), X86Register::GP32(GPRegister32::Eax));
 }
 
 #[test]

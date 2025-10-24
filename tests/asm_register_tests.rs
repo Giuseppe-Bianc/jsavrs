@@ -214,7 +214,7 @@ fn test_fpu_register_display_consistency() {
         (FPURegister::St6, "st6"),
         (FPURegister::St7, "st7"),
     ];
-    
+
     for (reg, expected) in fpu_registers.iter() {
         assert_eq!(format!("{}", reg), *expected);
     }

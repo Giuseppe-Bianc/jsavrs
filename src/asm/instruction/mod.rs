@@ -22,11 +22,11 @@
 //! - Side effects: none (pure data structures and small helpers); parsing/IO
 //!   is handled elsewhere.
 mod immediate;
+mod instruction;
 mod memory_operand;
 mod operand;
-mod instruction;
 
 pub use immediate::*;
+pub use instruction::*;
 pub use memory_operand::*;
 pub use operand::*;
-pub use instruction::*;

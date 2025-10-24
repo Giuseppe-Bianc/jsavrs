@@ -1,7 +1,7 @@
-use std::fmt;
-use crate::asm::register::*;
 use super::immediate::Immediate;
 use super::memory_operand::MemoryOperand;
+use crate::asm::register::*;
+use std::fmt;
 
 /// An operand used by x86_64 instructions.
 ///
