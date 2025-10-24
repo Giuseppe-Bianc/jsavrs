@@ -70,6 +70,22 @@ fn test_int_return_register() {
 }
 
 #[test]
+fn test_float_return_register() {
+    assert_eq!(
+        Abi::SYSTEM_V_LINUX.float_return_registers()[0],
+        XMMRegister::Xmm0
+    );
+    assert_eq!(
+        Abi::SYSTEM_V_MACOS.float_return_registers()[0],
+        XMMRegister::Xmm0
+    );
+    assert_eq!(
+        Abi::WINDOWS.float_return_registers()[0],
+        XMMRegister::Xmm0
+    );
+}
+
+#[test]
 fn test_callee_saved() {
     let abi = Abi::SYSTEM_V_LINUX;
     assert!(abi.is_callee_saved(X86Register::GP64(GPRegister64::Rbx)));
@@ -82,6 +98,18 @@ fn test_callee_saved() {
     let mac_abi = Abi::SYSTEM_V_MACOS;
     assert!(mac_abi.is_callee_saved(X86Register::GP64(GPRegister64::Rbx)));
     assert!(!mac_abi.is_callee_saved(X86Register::GP64(GPRegister64::Rax)));
+    let sysv_saved = abi.callee_saved_gp_registers();
+    assert!(sysv_saved.contains(&GPRegister64::Rbx));
+    assert!(sysv_saved.contains(&GPRegister64::Rbp));
+    assert!(sysv_saved.contains(&GPRegister64::R12));
+    assert!(!sysv_saved.contains(&GPRegister64::Rax));
+
+    let windows_saved = win_abi.callee_saved_gp_registers();
+    assert!(windows_saved.contains(&GPRegister64::Rbx));
+    assert!(windows_saved.contains(&GPRegister64::Rdi));
+    assert!(windows_saved.contains(&GPRegister64::Rsi));
+    assert!(!windows_saved.contains(&GPRegister64::Rax));
+
 }
 
 #[test]
