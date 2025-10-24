@@ -198,7 +198,6 @@ impl From<i64> for Immediate {
 /// Inputs: `v: u64`.
 /// Outputs: `Immediate::Imm64u(v)`.
 /// Side effects: none.
-
 impl From<u64> for Immediate {
     fn from(v: u64) -> Self {
         Self::Imm64u(v)

@@ -21,6 +21,7 @@
 //! - Outputs: strongly-typed Rust values that model assembly constructs.
 //! - Side effects: none (pure data structures and small helpers); parsing/IO
 //!   is handled elsewhere.
+#![allow(clippy::module_inception)]
 mod immediate;
 mod instruction;
 mod memory_operand;
