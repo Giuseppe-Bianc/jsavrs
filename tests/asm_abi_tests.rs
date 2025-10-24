@@ -3,7 +3,7 @@
 //! Tests the Windows and System V ABI conventions including calling conventions,
 //! register usage, stack alignment, and parameter passing.
 
-use jsavrs::asm::{Abi, GPRegister64, Platform, X86Register, XMMRegister};
+use jsavrs::asm::{Abi, AbiKind, GPRegister64, Platform, X86Register, XMMRegister};
 
 #[test]
 fn test_abi_from_platform() {
@@ -44,6 +44,32 @@ fn test_int_param_registers() {
 }
 
 #[test]
+fn test_float_param_registers() {
+    assert_eq!(Abi::SYSTEM_V_LINUX.float_param_registers().len(), 8);
+    assert_eq!(Abi::SYSTEM_V_MACOS.float_param_registers().len(), 8);
+    assert_eq!(Abi::WINDOWS.float_param_registers().len(), 4);
+    assert_eq!(Abi::SYSTEM_V_LINUX.float_param_registers()[0], XMMRegister::Xmm0);
+    assert_eq!(Abi::SYSTEM_V_MACOS.float_param_registers()[0], XMMRegister::Xmm0);
+    assert_eq!(Abi::WINDOWS.float_param_registers()[0], XMMRegister::Xmm0);
+}
+
+#[test]
+fn test_int_return_register() {
+    assert_eq!(
+        Abi::SYSTEM_V_LINUX.int_return_registers()[0],
+        GPRegister64::Rax
+    );
+    assert_eq!(
+        Abi::SYSTEM_V_MACOS.int_return_registers()[0],
+        GPRegister64::Rax
+    );
+    assert_eq!(
+        Abi::WINDOWS.int_return_registers()[0],
+        GPRegister64::Rax
+    );
+}
+
+#[test]
 fn test_callee_saved() {
     let abi = Abi::SYSTEM_V_LINUX;
     assert!(abi.is_callee_saved(X86Register::GP64(GPRegister64::Rbx)));
@@ -56,4 +82,10 @@ fn test_callee_saved() {
     let mac_abi = Abi::SYSTEM_V_MACOS;
     assert!(mac_abi.is_callee_saved(X86Register::GP64(GPRegister64::Rbx)));
     assert!(!mac_abi.is_callee_saved(X86Register::GP64(GPRegister64::Rax)));
+}
+
+#[test]
+fn test_abi_kind_fmt() {
+    assert_eq!(format!("{}", AbiKind::SystemV), "System V AMD64 ABI");
+    assert_eq!(format!("{}", AbiKind::Windows), "Microsoft x64 Calling Convention");
 }
