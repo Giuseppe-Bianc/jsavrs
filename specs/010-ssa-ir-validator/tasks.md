@@ -13,9 +13,9 @@ Implementation of a comprehensive validator for Static Single Assignment (SSA)-b
 - User Story 4 (Diagnostics and fixes) depends on all other validation components
 
 ## Parallel Execution Examples
-- T005-T010 (Structural validation components) can run in parallel with T011-T015 (Semantic validation components)
-- T016-T020 (CFG validation components) can run after foundational components are complete
-- T021-T025 (Diagnostics and fixes) run after all validation components are implemented
+- T016-T020 (Structural validation components) can run in parallel with T025-T029 (Semantic validation components)
+- T033-T037 (CFG validation components) can run after foundational components are complete
+- T041-T047 (Diagnostics and fixes) run after all validation components are implemented
 
 ## Implementation Strategy
 - **MVP Scope**: Focus on User Story 1 (Structural validation) in initial implementation
@@ -28,19 +28,24 @@ Implementation of a comprehensive validator for Static Single Assignment (SSA)-b
 
 - [ ] T001 Create validator module structure in src/ir/validator/ with mod.rs, structural.rs, semantic.rs, cfg.rs, diagnostics.rs
 - [ ] T002 Update src/ir/mod.rs to include validator module with pub mod validator;
-- [ ] T003 Define core data structures in validator/mod.rs: ValidationError, ValidationErrorType, SeverityLevel enums
-- [ ] T004 Define ValidationConfig and ValidationResult structs in validator/mod.rs
-- [ ] T005 Define AutoFixInfo and AutoFixType in validator/mod.rs
+- [ ] T003 Define core data structures in src/ir/validator/mod.rs: ValidationError, ValidationErrorType, SeverityLevel enums
+- [ ] T004 Define ValidationConfig and ValidationResult structs in src/ir/validator/mod.rs
+- [ ] T005 Define AutoFixInfo and AutoFixType in src/ir/validator/mod.rs
+- [ ] T006 Add comprehensive rustdoc documentation to AutoFixInfo and AutoFixType in src/ir/validator/mod.rs
 
 ---
 
 ## Phase 2: Foundational Components
 
-- [ ] T006 Create ValidationConfig implementation with Default trait in validator/mod.rs
-- [ ] T007 Implement ValidationError struct with all required fields in validator/mod.rs
-- [ ] T008 Implement ValidationResult methods (has_errors, errors, warnings, etc.) in validator/mod.rs
-- [ ] T009 Set up CLI integration for validator options in src/cli.rs
-- [ ] T010 Create IrValidator struct and constructor in validator/mod.rs
+- [ ] T007 Create ValidationConfig implementation with Default trait in validator/mod.rs
+- [ ] T008 Implement ValidationError struct with all required fields in validator/mod.rs
+- [ ] T009 Implement ValidationResult methods (has_errors, errors, warnings, etc.) in validator/mod.rs
+- [ ] T010 Set up CLI integration for validator options in src/cli.rs
+- [ ] T011 Create IrValidator struct and constructor in validator/mod.rs
+- [ ] T012 Add comprehensive rustdoc documentation to ValidationConfig in validator/mod.rs
+- [ ] T013 Add comprehensive rustdoc documentation to ValidationError in validator/mod.rs
+- [ ] T014 Add comprehensive rustdoc documentation to ValidationResult in validator/mod.rs
+- [ ] T015 Add comprehensive rustdoc documentation to IrValidator in validator/mod.rs
 
 ---
 
@@ -52,16 +57,17 @@ Implementation of a comprehensive validator for Static Single Assignment (SSA)-b
 
 ### Implementation Tasks:
 
-- [ ] T011 [P] [US1] Implement validate_structural_invariants function in validator/structural.rs
-- [ ] T012 [P] [US1] Implement variable definition/use tracking in validator/structural.rs
-- [ ] T013 [P] [US1] Implement unreachable code detection in validator/structural.rs
-- [ ] T014 [P] [US1] Implement loop structure validation in validator/structural.rs
-- [ ] T015 [P] [US1] Add structural validation to IrValidator's validate method in validator/mod.rs
+- [ ] T016 [P] [US1] Implement validate_structural_invariants function in validator/structural.rs
+- [ ] T017 [P] [US1] Implement variable definition/use tracking in validator/structural.rs
+- [ ] T018 [P] [US1] Implement unreachable code detection in validator/structural.rs
+- [ ] T019 [P] [US1] Implement loop structure validation in validator/structural.rs
+- [ ] T020 [P] [US1] Add structural validation to IrValidator's validate method in validator/mod.rs
 
 ### Tests (Optional):
-- [ ] T016 [US1] Create structural validation tests in tests/ir/validator/structural.rs
-- [ ] T017 [US1] Test variable use before definition scenarios in tests/ir/validator/structural.rs
-- [ ] T018 [US1] Test unreachable code detection in tests/ir/validator/structural.rs
+- [ ] T021 [US1] Create structural validation tests in tests/ir/validator/structural.rs
+- [ ] T022 [US1] Test variable use before definition scenarios in tests/ir/validator/structural.rs
+- [ ] T023 [US1] Test unreachable code detection in tests/ir/validator/structural.rs
+- [ ] T024 [US1] Add comprehensive rustdoc documentation to structural validation functions in validator/structural.rs
 
 ---
 
@@ -73,15 +79,16 @@ Implementation of a comprehensive validator for Static Single Assignment (SSA)-b
 
 ### Implementation Tasks:
 
-- [ ] T019 [P] [US2] Implement validate_semantic_invariants function in validator/semantic.rs
-- [ ] T020 [P] [US2] Implement type consistency checking in validator/semantic.rs
-- [ ] T021 [P] [US2] Implement operand validation for operations in validator/semantic.rs
-- [ ] T022 [P] [US2] Add semantic validation to IrValidator's validate method in validator/mod.rs
-- [ ] T023 [P] [US2] Integrate with existing ir::types module for type information
+- [ ] T025 [P] [US2] Implement validate_semantic_invariants function in validator/semantic.rs
+- [ ] T026 [P] [US2] Implement type consistency checking in validator/semantic.rs
+- [ ] T027 [P] [US2] Implement operand validation for operations in validator/semantic.rs
+- [ ] T028 [P] [US2] Add semantic validation to IrValidator's validate method in validator/mod.rs
+- [ ] T029 [P] [US2] Integrate with existing ir::types module for type information
 
 ### Tests (Optional):
-- [ ] T024 [US2] Create semantic validation tests in tests/ir/validator/semantic.rs
-- [ ] T025 [US2] Test type mismatch scenarios in tests/ir/validator/semantic.rs
+- [ ] T030 [US2] Create semantic validation tests in tests/ir/validator/semantic.rs
+- [ ] T031 [US2] Test type mismatch scenarios in tests/ir/validator/semantic.rs
+- [ ] T032 [US2] Add comprehensive rustdoc documentation to semantic validation functions in validator/semantic.rs
 
 ---
 
@@ -93,15 +100,16 @@ Implementation of a comprehensive validator for Static Single Assignment (SSA)-b
 
 ### Implementation Tasks:
 
-- [ ] T026 [P] [US3] Implement validate_cfg_integrity function in validator/cfg.rs
-- [ ] T027 [P] [US3] Implement entry/exit node accessibility check in validator/cfg.rs
-- [ ] T028 [P] [US3] Implement graph construction validation in validator/cfg.rs
-- [ ] T029 [P] [US3] Add CFG validation to IrValidator's validate method in validator/mod.rs
-- [ ] T030 [P] [US3] Integrate with existing ir::cfg module for graph operations
+- [ ] T033 [P] [US3] Implement validate_cfg_integrity function in validator/cfg.rs
+- [ ] T034 [P] [US3] Implement entry/exit node accessibility check in validator/cfg.rs
+- [ ] T035 [P] [US3] Implement graph construction validation in validator/cfg.rs
+- [ ] T036 [P] [US3] Add CFG validation to IrValidator's validate method in validator/mod.rs
+- [ ] T037 [P] [US3] Integrate with existing ir::cfg module for graph operations
 
 ### Tests (Optional):
-- [ ] T031 [US3] Create CFG validation tests in tests/ir/validator/cfg.rs
-- [ ] T032 [US3] Test unreachable block scenarios in tests/ir/validator/cfg.rs
+- [ ] T038 [US3] Create CFG validation tests in tests/ir/validator/cfg.rs
+- [ ] T039 [US3] Test unreachable block scenarios in tests/ir/validator/cfg.rs
+- [ ] T040 [US3] Add comprehensive rustdoc documentation to CFG validation functions in validator/cfg.rs
 
 ---
 
@@ -113,28 +121,33 @@ Implementation of a comprehensive validator for Static Single Assignment (SSA)-b
 
 ### Implementation Tasks:
 
-- [ ] T033 [P] [US4] Implement generate_suggested_fix function in validator/diagnostics.rs
-- [ ] T034 [P] [US4] Implement detailed error reporting with SourceSpan locations in validator/diagnostics.rs
-- [ ] T035 [P] [US4] Implement automatic fix application functionality in validator/mod.rs
-- [ ] T036 [P] [US4] Update ValidationError to include suggested_fix and help_text fields
-- [ ] T037 [P] [US4] Implement logging of all automatic fixes performed in validator/mod.rs
-- [ ] T038 [P] [US4] Add CLI flags for validation mode and auto-fix in src/cli.rs
-- [ ] T039 [P] [US4] Create detailed error output formatting in validator/diagnostics.rs
+- [ ] T041 [P] [US4] Implement generate_suggested_fix function in validator/diagnostics.rs
+- [ ] T042 [P] [US4] Implement detailed error reporting with SourceSpan locations in validator/diagnostics.rs
+- [ ] T043 [P] [US4] Implement automatic fix application functionality in validator/mod.rs
+- [ ] T044 [P] [US4] Update ValidationError to include suggested_fix and help_text fields
+- [ ] T045 [P] [US4] Implement logging of all automatic fixes performed in validator/mod.rs
+- [ ] T046 [P] [US4] Add CLI flags for validation mode and auto-fix in src/cli.rs
+- [ ] T047 [P] [US4] Create detailed error output formatting in validator/diagnostics.rs
 
 ### Tests (Optional):
-- [ ] T040 [US4] Create diagnostics tests in tests/ir/validator/diagnostics.rs
-- [ ] T041 [US4] Test auto-fix functionality in tests/ir/validator/diagnostics.rs
+- [ ] T048 [US4] Create diagnostics tests in tests/ir/validator/diagnostics.rs
+- [ ] T049 [US4] Test auto-fix functionality in tests/ir/validator/diagnostics.rs
+- [ ] T050 [US4] Add comprehensive rustdoc documentation to diagnostic functions in validator/diagnostics.rs
 
 ---
 
 ## Phase 7: Polish & Cross-Cutting Concerns
 
-- [ ] T042 Update main CLI entry point in src/main.rs to support --validate-only and --validate-and-fix options
-- [ ] T043 Add comprehensive error handling in validation functions to catch edge cases
-- [ ] T044 Implement batch validation mode for processing multiple files
-- [ ] T045 Create benchmark tests for performance validation (10,000 lines in 5 minutes)
-- [ ] T046 Add documentation comments to all public functions and structs in validator module
-- [ ] T047 Run full test suite and fix any failing tests
-- [ ] T048 Update Cargo.toml with any new dependencies if needed
-- [ ] T049 Add integration tests with end-to-end validation scenarios
-- [ ] T050 Final validation and performance testing of the complete validator system
+- [ ] T051 Update main CLI entry point in src/main.rs to support --validate-only and --validate-and-fix options
+- [ ] T052 Add comprehensive error handling in validation functions to catch edge cases
+- [ ] T053 Implement batch validation mode for processing multiple files
+- [ ] T054 Create benchmark tests for performance validation (10,000 lines in 5 minutes)
+- [ ] T055 Add documentation comments to all public functions and structs in validator module
+- [ ] T056 Add snapshot tests for error output validation to align with snapshot validation principle
+- [ ] T057 Run full test suite and fix any failing tests
+- [ ] T058 Update Cargo.toml with any new dependencies if needed
+- [ ] T059 Add integration tests with end-to-end validation scenarios
+- [ ] T060 Add comprehensive documentation for library API usage per FR-017
+- [ ] T061 Implement support for multiple input formats (textual and binary) per FR-016
+- [ ] T062 Create tests for multiple input format validation
+- [ ] T063 Final validation and performance testing of the complete validator system

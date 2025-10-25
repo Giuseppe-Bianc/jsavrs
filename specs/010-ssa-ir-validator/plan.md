@@ -56,8 +56,7 @@ specs/[###-feature]/
 src/
 ├── ir/                 # Existing IR module (where validator will be implemented)
 │   ├── mod.rs
-│   ├── validator.rs    # New validator module for SSA-based IR validation
-│   ├── validator/      # Validator sub-module with detailed implementation
+│   ├── validator/      # Validator module with detailed implementation
 │   │   ├── mod.rs
 │   │   ├── structural.rs    # Structural invariant validation
 │   │   ├── semantic.rs      # Semantic invariant validation  
@@ -76,7 +75,7 @@ tests/
 └── [other test files]
 ```
 
-**Structure Decision**: The validator will be implemented as a comprehensive module within the existing IR module with separate files for each validation type (structural, semantic, CFG integrity) and diagnostics. This modular approach ensures maintainability and separation of concerns while integrating seamlessly with the existing IR architecture. The CLI interface in `src/cli/mod.rs` and `src/main.rs` will support the command-line usage pattern described in the spec with standard options (-i for input, -o for output, -v for verbose, -c for config).
+**Structure Decision**: The validator will be implemented as a comprehensive module within the existing IR module with separate files for each validation type (structural, semantic, CFG integrity) and diagnostics, located in the `src/ir/validator/` subdirectory. This modular approach ensures maintainability and separation of concerns while integrating seamlessly with the existing IR architecture. The CLI interface in `src/cli/mod.rs` and `src/main.rs` will support the command-line usage pattern described in the spec with standard options (-i for input, -o for output, -v for verbose, -c for config).
 
 ## Complexity Tracking
 
