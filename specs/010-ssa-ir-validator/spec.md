@@ -14,6 +14,11 @@
 - Q: What input formats should the validator support? → A: Support multiple input formats including textual and binary representations
 - Q: How should the validator handle errors during processing? → A: Provide a configurable option for error handling behavior
 - Q: What interfaces should the validator provide? → A: Support both command-line interface and library integration
+- Q: How should the validator handle error recovery after finding errors? → A: Collect all errors and present comprehensive report
+- Q: Should the validator prioritize precision or recall? → A: High precision (95%) preferred over high recall (90%)
+- Q: What CLI interface approach should be implemented? → A: CLI with standard options (-i for input, -o for output, -v for verbose, -c for config)
+- Q: What log format should the validator use? → A: Dual format - both structured and human-readable output
+- Q: How should validation be executed? → A: Batch validation only, run periodically or on-demand
 
 ## User Scenarios & Testing *(mandatory)*
 
@@ -92,33 +97,36 @@ Compiler developers need detailed diagnostics to understand and fix IR validatio
 - **FR-009**: System MUST include suggestions for potential corrections or refactorings for each error identified
 - **FR-010**: System MUST automatically fix common corrections where feasible, such as renaming variables to avoid conflicts
 - **FR-011**: System MUST adjust control flow to ensure reachability when possible
-- **FR-012**: System MUST provide a log of all automated fixes performed, ensuring transparency in modifications
-- **FR-013**: System MUST minimize false positives and negatives in the analysis
+- **FR-012**: System MUST provide a log of all automated fixes performed, ensuring transparency in modifications with dual format - both structured and human-readable output
+- **FR-013**: System MUST minimize false positives and negatives in the analysis with high precision (95%) preferred over high recall (90%)
 - **FR-014**: System MUST support different validation modes (structural, semantic, CFG integrity)
 - **FR-015**: System MUST be configurable to enable/disable specific validation checks
 - **FR-016**: System MUST support multiple input formats including textual and binary representations for the custom internal IR
-- **FR-017**: System MUST provide both command-line interface and library integration for flexible usage
-- **FR-018**: System MUST offer configurable error handling behavior to continue processing or stop at first error
+- **FR-017**: System MUST provide both command-line interface (with standard options -i for input, -o for output, -v for verbose, -c for config) and library integration for flexible usage
+- **FR-018**: System MUST offer configurable error handling behavior to collect all errors and present comprehensive report
+- **FR-019**: System MUST implement batch validation only, run periodically or on-demand
 
 ### Key Entities
 
 - **Validation Error**: Represents an issue found in the IR or CFG, containing location (line numbers), error type, severity, and suggested fixes
 - **Control Flow Graph (CFG)**: Represents the flow of control through program constructs, containing basic blocks connected by edges
 - **Static Single Assignment (SSA) IR**: The intermediate representation where each variable is assigned exactly once
-- **Correction Log**: A record of all automated fixes applied during validation, including what was changed and why
+- **Correction Log**: A record of all automated fixes applied during validation, including what was changed and why, with dual format - both structured and human-readable output
 - **IR Input Format**: Multiple formats supported including textual and binary representations for the custom internal IR
-- **Validator Interface**: Supports both command-line interface and library integration for flexible usage
-- **Error Handling Configuration**: Configurable option for determining whether to continue processing after errors or stop at first error
+- **Validator Interface**: Supports both command-line interface (with standard options -i for input, -o for output, -v for verbose, -c for config) and library integration for flexible usage
+- **Error Handling Configuration**: Collect all errors and present comprehensive report
+- **Validation Execution Mode**: Batch validation only, run periodically or on-demand
 
 ## Success Criteria *(mandatory)*
 
 ### Measurable Outcomes
 
-- **SC-001**: 95% of structural validation errors are correctly identified with no more than 5% false positives
-- **SC-002**: 95% of semantic validation errors are correctly identified with no more than 5% false positives
-- **SC-003**: 95% of CFG integrity errors are correctly identified with no more than 5% false positives
+- **SC-001**: 95% of structural validation errors are correctly identified with no more than 5% false positives (high precision approach)
+- **SC-002**: 95% of semantic validation errors are correctly identified with no more than 5% false positives (high precision approach)
+- **SC-003**: 95% of CFG integrity errors are correctly identified with no more than 5% false positives (high precision approach)
 - **SC-004**: Error reports include accurate line numbers and specific constructs for at least 90% of validation errors
 - **SC-005**: At least 70% of common validation errors include actionable suggestions for corrections
 - **SC-006**: At least 50% of common structural errors can be automatically fixed with user approval
 - **SC-007**: Users can identify and fix IR validation issues 50% faster with the validator compared to manual inspection
 - **SC-008**: Validation process completes within 5 minutes for programs containing up to 10,000 lines of IR code
+- **SC-009**: Batch validation mode completes all error collection before presenting comprehensive report
