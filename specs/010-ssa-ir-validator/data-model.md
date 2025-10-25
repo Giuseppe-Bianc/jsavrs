@@ -32,7 +32,7 @@ Represents an issue found in the IR or CFG during validation.
 
 **Validation Rules:**
 - `id` must be unique within a validation session
-	- IDs should be generated sequentially or use a UUID-based scheme (specify preference)
+	- IDs should be generated sequentially or use a UUID-based scheme
 	- Duplicate IDs within a single ValidationResult are invalid and must be rejected
 - `error_type` must be one of the predefined validation error types
 - `location` must be a valid SourceSpan if provided
@@ -81,8 +81,6 @@ Configuration that controls validation behavior.
 **Validation Rules:**
 - `precision_target` must be between 0.0 and 100.0
 - `max_lines_to_process` and `max_errors_to_report` must be positive values
--  Consider adding `timeout: Option<Duration>` to ValidationConfig if processing time is a concern
-
 ### 5. ValidationResult
 Result of a validation run that includes all errors found and metadata.
 

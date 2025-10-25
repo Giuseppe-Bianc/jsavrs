@@ -69,7 +69,7 @@ This document outlines the research conducted to support the implementation of a
 
 Based on initial analysis, the following unknowns have been resolved:
 
-1. **Language/Version**: Rust 1.75 (determined from project context)
+1. **Language/Version**: Rust 1.75+
 2. **Primary Dependencies**: Internal IR modules, thiserror for errors, insta for testing
 3. **Testing**: cargo test and insta
 4. **Target Platform**: Linux, Windows, macOS
