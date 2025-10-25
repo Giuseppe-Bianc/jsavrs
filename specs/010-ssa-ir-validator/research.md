@@ -70,9 +70,9 @@ This document outlines the research conducted to support the implementation of a
 Based on initial analysis, the following unknowns have been resolved:
 
 1. **Language/Version**: Rust 1.75 (determined from project context)
-2. **Primary Dependencies**: Internal IR modules, thiserror for errors, insta for testing (determined from project structure)
-3. **Testing**: cargo test and insta (determined from project structure)
-4. **Target Platform**: Linux, Windows, macOS (from constitution)
+2. **Primary Dependencies**: Internal IR modules, thiserror for errors, insta for testing
+3. **Testing**: cargo test and insta
+4. **Target Platform**: Linux, Windows, macOS
 5. **Project Type**: Single binary/library (compiler component)
 6. **Performance Goals**: Process up to 10,000 lines within 5 minutes, <5% false positives (from spec)
 7. **Constraints**: Integrate with existing IR architecture, maintain 95% precision (from spec)

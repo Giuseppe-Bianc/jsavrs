@@ -1,5 +1,10 @@
 # Data Model: SSA-based IR Validator
 
+## Type Definitions & Imports
+- `SourceSpan` - Location information (file, line, column); assumed to be imported from `location::source_span::SourceSpan` or similar
+- `Duration` - Time measurement; assumed to be from standard library
+
+
 ## Overview
 This document specifies the data model for the SSA-based IR validator with Control Flow Graph (CFG) validation. The validator checks structural invariants (variable usage, loops, reachability), semantic invariants (type consistency, valid operands), and CFG integrity (proper construction, entry/exit nodes).
 
@@ -21,9 +26,14 @@ Represents an issue found in the IR or CFG during validation.
 **Relationships:**
 - Belongs to a specific IR function or module
 - May be related to other ValidationError instances for complex issues
+- Example: A type mismatch error may relate to a use-before-definition error in the same expression
+- Related errors share a common conceptual issue but are reported separately
+- Use `related_locations` to cross-reference; if more complex relationships are needed, add a `parent_error_id: Option<String>` field
 
 **Validation Rules:**
 - `id` must be unique within a validation session
+	- IDs should be generated sequentially or use a UUID-based scheme (specify preference)
+	- Duplicate IDs within a single ValidationResult are invalid and must be rejected
 - `error_type` must be one of the predefined validation error types
 - `location` must be a valid SourceSpan if provided
 - `severity` must be one of Error, Warning, or Info
@@ -46,6 +56,14 @@ Enumeration representing the severity of validation errors.
 
 **Values:**
 - `Error` - Critical issue that prevents compilation
+  - Used for structural/semantic violations that make IR invalid (e.g., undefined variable, type mismatch)
+- `Warning` - Potential issue that may cause problems
+  - Used for suboptimal patterns or edge cases that don't prevent compilation (e.g., unused variables, inefficient loops)
+- `Info` - Informational message for awareness
+  - Used for diagnostic information (e.g., function has no loops, basic block has single predecessor)
+
+**Values:**
+- `Error` - Critical issue that prevents compilation
 - `Warning` - Potential issue that may cause problems
 - `Info` - Informational message for awareness
 
@@ -63,6 +81,7 @@ Configuration that controls validation behavior.
 **Validation Rules:**
 - `precision_target` must be between 0.0 and 100.0
 - `max_lines_to_process` and `max_errors_to_report` must be positive values
+-  Consider adding `timeout: Option<Duration>` to ValidationConfig if processing time is a concern
 
 ### 5. ValidationResult
 Result of a validation run that includes all errors found and metadata.
@@ -79,6 +98,9 @@ Result of a validation run that includes all errors found and metadata.
 **Validation Rules:**
 - All ValidationError items must have valid source locations
 - Processing time should be reasonable (less than 5 minutes for 10,000 lines)
+- If auto-fixing is enabled, `auto_fixes_performed` must not be empty unless auto-fixing was disabled or no fixes were applicable
+- Each AutoFixInfo in `auto_fixes_performed` must have a corresponding original location in the source IR
+- Auto-fixes with `applied: false` must include diagnostic information in their description field
 
 ### 6. AutoFixInfo
 Information about an automatic fix applied during validation.
@@ -93,6 +115,12 @@ Information about an automatic fix applied during validation.
 ### 7. AutoFixType
 Enumeration representing types of automatic fixes.
 
+**Applicability:**
+- `VariableRename` - Triggered by StructuralVariableUseBeforeDefinition when safe renaming resolves conflicts
+- `ControlFlowAdjustment` - Triggered by StructuralUnreachableCode or StructuralLoopIntegrity issues
+- `TypeCoercion` - Triggered by SemanticTypeMismatch when safe implicit coercion is available
+- `PhiFunctionInsertion` - Triggered by SSA form violations in CFG validation
+
 **Values:**
 - `VariableRename` - Renaming a variable to avoid conflicts
 - `ControlFlowAdjustment` - Adjusting control flow to ensure reachability
@@ -105,9 +133,14 @@ Enumeration representing types of automatic fixes.
 Describes the states of a validation session:
 
 1. **Initialized** → **Running**: When validation starts
+   - Guard: Configuration must be valid (precision_target in range, check set non-empty if specified)
 2. **Running** → **Completed**: When all checks complete successfully
+   - Guard: All errors have been processed and reported
 3. **Running** → **Failed**: When validation encounters an irrecoverable error
+   - Guard: E.g., IR file not found, CFG malformed beyond recovery
+   - Transitions are irreversible from Failed/Completed/Stopped
 4. **Running** → **Stopped**: When validation is stopped manually (e.g., timeout)
+   - Guard: Timeout exceeded or external stop signal received
 
 ## Relationships and Dependencies
 
@@ -138,6 +171,11 @@ The validator provides data to:
 2. Semantic validation checks type consistency and operand validity
 3. CFG validation verifies graph integrity and reachability
 4. Errors are collected and categorized
+
+**Processing Model:**
+- Checks run sequentially in the order above; later checks may skip blocks if earlier checks found critical errors (controlled by `collect_all_errors` flag)
+- If auto-fixing is enabled, fixes are attempted after all validation checks complete
+- Auto-fix failures are logged but do not block validation result generation
 
 ### Output from Validator
 1. `ValidationResult` - Complete result of the validation run
