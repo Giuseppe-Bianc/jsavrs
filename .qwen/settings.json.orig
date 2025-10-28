@@ -1,0 +1,56 @@
+{
+  "contextFileName": "AGENTS.md",
+  "projectType": "rust",
+  "language": "rust",
+  "additionalContextFiles": [
+    "README.md",
+    "Cargo.toml",
+    "rustfmt.toml"
+  ],
+  "ignore": [
+    "target/",
+    "benches/",
+    ".git/"
+  ],
+  "codingStandards": {
+    "lineLength": 120,
+    "indentation": 4,
+    "formatter": "rustfmt"
+  },
+  "mcpServers": {
+    "github": {
+      "command": "docker",
+      "args": [
+        "run",
+        "-i",
+        "--rm",
+        "-e",
+        "GITHUB_PERSONAL_ACCESS_TOKEN",
+        "ghcr.io/github/github-mcp-server"
+      ],
+      "env": {
+        "GITHUB_PERSONAL_ACCESS_TOKEN": "${GITHUB_PERSONAL_ACCESS_TOKEN}"
+      }
+    },
+    "context7": {
+      "httpUrl": "https://mcp.context7.com/mcp",
+      "headers": {
+        "CONTEXT7_API_KEY": "${CONTEXT7_API_KEY}"
+      }
+    }/*, 
+    "serena": {
+      "type": "stdio",
+      "command": "uvx",
+      "args": [
+        "--from",
+        "git+https://github.com/oraios/serena",
+        "serena",
+        "start-mcp-server",
+        "--context",
+        "ide-assistant",
+        "--project",
+        "$(pwd)"
+      ]
+    }*/
+  }
+}
