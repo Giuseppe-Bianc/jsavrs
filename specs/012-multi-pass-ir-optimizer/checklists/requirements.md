@@ -2,7 +2,7 @@
 # Specification Quality Checklist: Multi-pass IR optimizer
 
 **Purpose**: Validate specification completeness and quality before proceeding to planning
-**Created**: 28 ottobre 2025
+**Created**: 28-10-2025
 **Feature**: ../spec.md
 
 ## Content Quality
