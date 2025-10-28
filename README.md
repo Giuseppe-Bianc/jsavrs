@@ -158,6 +158,39 @@ concise, deterministic, and focused on verifying a single aspect of functionalit
 By consistently integrating new tests alongside feature development and bug fixes, developers contribute to a robust,
 maintainable, and reliable codebase.
 
+### Snapshot Testing
+
+The `jsavrs` project incorporates snapshot testing through the `insta` library to verify the correctness of compiler outputs and intermediate representations. Snapshot testing captures the output of a function or process and compares it against a previously approved reference, ensuring that changes to the codebase do not inadvertently alter expected behavior. This approach is particularly valuable for compiler development, where outputs such as abstract syntax trees, intermediate representations, and generated code must maintain consistency across modifications.
+
+To execute snapshot tests alongside the standard test suite:
+```bash
+cargo test
+```
+
+When snapshot tests detect differences between current output and stored references, the `insta` tool provides facilities for reviewing and accepting changes:
+```bash
+cargo insta review
+# or in alternative cargo insta test  --review
+```
+
+This command presents each detected difference, allowing developers to approve legitimate changes or reject unintended modifications. Accepted snapshots are automatically updated in the repository.
+
+#### Example of a Snapshot Test
+
+A snapshot test verifies that a function's output remains consistent with established expectations:
+
+```rust
+use insta::assert_snapshot;
+
+#[test]
+fn test_parser_output() {
+    let input = "fn main() { return 42; }";
+    let ast = parse(input);
+    assert_snapshot!(ast);
+}
+```
+
+In this example, the test captures the abstract syntax tree produced by the parser and compares it against the stored snapshot. Snapshot tests should focus on verifiable outputs that are expected to remain stable across routine maintenance activities.
 
 ## Contributing
 
@@ -211,4 +244,4 @@ The `jsavrs` project is distributed under the terms of the Apache License, Versi
 
 ## Contact
 
-For inquiries regarding the use of the `jsavrs` framework, proposals for new features, or reports of technical issues, please contact the development team through the project's [GitHub repository](https://github.com/Giuseppe-Bianc/jsavrs/issues). When submitting inquiries or reports, please provide comprehensive information including detailed descriptions of the issue, steps to reproduce the problem
+For inquiries regarding the use of the `jsavrs` framework, proposals for new features, or reports of technical issues, please contact the development team through the project's [GitHub repository](https://github.com/Giuseppe-Bianc/jsavrs/issues). When submitting inquiries or reports, please provide comprehensive information including detailed descriptions of the issue, steps to reproduce the problem, and any relevant system configuration details.
