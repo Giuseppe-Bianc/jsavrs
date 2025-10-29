@@ -58,17 +58,27 @@ As a QA engineer, I want every pass to be verifiable and revertible so that opti
 - Functions with hand-written inline assembly snippets or external calls which cannot be analyzed precisely: optimizer must treat memory and side-effecting calls conservatively and avoid moving or eliminating memory operations across such calls.
 - Very large functions/loops: optimizer must respect configurable thresholds (max iterations, unroll limits) to avoid explosion of compile time or code size.
 
+## Clarifications
+
+### Session 2025-10-29
+
+- Q: How should the optimizer handle recursive function calls or complex control flow like nested exceptions? → A: Explicitly handle recursion with bounded iteration limits and conservative assumptions for exceptions
+- Q: What should be the bailout threshold when optimization iterations approach limits? → A: Use max iterations fully
+- Q: How should the optimizer handle external library calls or FFI functions? → A: Treat all external/FFI calls conservatively with full side-effect assumptions and no inlining
+- Q: What is the scope of rollbacks when an optimization pass fails verification? → A: Function-level rollback only
+- Q: What constitutes a "pass iteration" in the context of the maximum iteration limit? → A: One full pass-sequence execution
+
 ## Requirements *(mandatory)*
 
 ### Functional Requirements
 
 - **FR-001**: The optimizer MUST accept SSA-form `Module` inputs where each `Function` has a complete CFG and valid `DominanceInfo` computed.
-- **FR-002**: The optimizer MUST provide an analysis framework that exposes reaching-definition queries, available-expression/value-numbering interfaces, live-variable queries, use-def and def-use chain access, aliasing/points-to summaries, and loop/induction metadata; analyses must be incrementally invalidatable by passes.
+- **FR-002**: The optimizer MUST provide an analysis framework that exposes reaching-definition queries, available-expression/value-numbering interfaces, live-variable queries, use-def and def-use chain access, aliasing/points-to summaries, and loop/induction metadata; analyses must be incrementally invalidatable by passes. The analysis framework MUST handle recursive function calls with bounded iteration limits and conservative assumptions for exceptions.
 - **FR-003**: The optimizer MUST implement phased transformation passes (early, middle, late) that cover at minimum: constant propagation and branch simplification, dead code elimination, copy propagation, global redundancy elimination (CSE), loop transformations (invariant hoisting, induction-variable optimization, controlled unrolling), instruction combining and algebraic simplification, memory-redundancy elimination (store/load forwarding, redundant-load elimination, dead-store elimination), and type/cast simplifications.
 - **FR-004**: Each pass MUST implement the `OptimizationPass` trait that declares required analyses, lists analyses invalidated by the pass, and exposes a `run(&mut Function) -> bool` method returning true when modifications occurred.
 - **FR-005**: The optimizer MUST maintain SSA invariants: every SSA temporary has a single definition, every use is dominated by its definition, phi nodes contain exactly one entry per predecessor, and no uses of undefined values exist after verification; on violation a pass must be rolled back for the affected Function.
 - **FR-006**: The optimizer MUST maintain CFG integrity when merging/splitting/removing blocks: update phi nodes, fix terminator targets, and recompute dominator information incrementally when required by CFG edits.
-- **FR-007**: The system MUST provide a verification subsystem that validates SSA form, CFG well-formedness, and type consistency after each pass; verification failures must trigger an automatic rollback for affected changes and produce actionable diagnostics.
+- **FR-007**: The system MUST provide a verification subsystem that validates SSA form, CFG well-formedness, and type consistency after each pass; verification failures must trigger an automatic rollback for affected changes at the Function level only and produce actionable diagnostics.
 - **FR-008**: The optimizer MUST collect per-pass and aggregate metrics (instructions eliminated, constants propagated, CSE replacements, phi removals, blocks removed, instruction-count delta, block/edge counts, per-pass time and memory) and make them available as structured reports.
 - **FR-009**: The optimizer MUST support configurable optimization levels (O0, O1, O2, O3) with documented pass sets and iteration limits (default max iterations = 10) and provide knobs for unroll thresholds and speculative options.
 - **FR-010**: The optimizer MUST be extensible via a plugin/pass manager allowing external passes to register with declared analysis dependencies and optional cost models.
