@@ -40,7 +40,7 @@ As a developer, I want a fast, low-optimization mode so that compilation latency
 
 ### User Story 3 - Reliable Semantic Preservation and Debuggability (Priority: P1)
 
-As a QA engineer, I want every pass to be verifiable and revertible so that optimizations never introduce semantic regressions and debugging information remains available.
+As a QA engineer, I require each optimization pass to be fully verifiable and easily revertible, ensuring that performance improvements do not alter the intended semantics or introduce functional regressions. Every transformation must preserve traceable debugging metadata and maintain sufficient auditability to facilitate precise issue isolation, reproducibility, and rollback during validation or post-deployment analysis.
 
 **Why this priority**: Correctness is mandatory; optimizations must not change observable behavior.
 
