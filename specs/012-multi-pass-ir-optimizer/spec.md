@@ -85,10 +85,49 @@ As a QA engineer, I require each optimization pass to be fully verifiable and ea
 
 ### Key Entities *(include if feature involves data)*
 
-- **Module**: Compiler IR container containing multiple `Function`s, CFGs, and metadata required by the optimizer (dominance info, debug info).
-- **Function**: Contains BasicBlocks, Instructions, Terminators, and Phi nodes; the unit of many optimization passes and verification.
-- **BasicBlock**: Sequence of instructions ending with a terminator; predecessor/successor lists updated as CFG changes.
-- **Value / Temporary**: SSA-defined temporary with a unique definition and zero or more uses; tracked by use-def and def-use chains.
+- **Module**: Compiler IR container containing multiple `Function`s, CFGs, and metadata required by the optimizer (dominance info, debug info). Includes `DataLayout` and `TargetTriple` for target-specific information.
+- **Function**: Contains BasicBlocks, Instructions, Terminators, and Phi nodes; the unit of many optimization passes and verification. Includes `FunctionAttributes` and `IrParameter` for function metadata and parameters.
+- **BasicBlock**: Sequence of instructions ending with a terminator; predecessor/successor lists updated as CFG changes. Contains `SourceSpan` for debug information and optional scoping via `ScopeId`.
+- **Instruction**: Atomic operations that perform computations, memory access, or control flow. Includes various instruction kinds like binary/unary operations, memory access, calls, and casting through `CastKind` and `InstructionKind`.
+- **Terminator**: Defines how control flow exits a basic block (e.g., return, branch, switch). Contains `TerminatorKind` variants and debug information (`DebugInfo`).
+- **Value**: Represents values in the IR with different kinds (literal, constant, local, global, temporary). Includes `ValueId`, types (`IrType`), debug info (`ValueDebugInfo`), and scope information. Has subtypes like `IrLiteralValue` and `IrConstantValue`.
+- **IrLiteralValue**: Enum representing literal values including integers (`I8`, `I16`, `I32`, `I64`, `U8`, `U16`, `U32`, `U64`), floats (`F32`, `F64`), and other types (`Bool`, `Char`).
+- **IrConstantValue**: Enum representing constant values including `String`, `Array`, and `Struct` constants for compile-time values.
+- **ValueKind**: Enum representing different value types (literal, constant, local, global, temporary) that classify how a value is stored and accessed in the IR.
+- **ValueId**: Unique identifier for values in the IR, implemented using UUID for global uniqueness across compilation units.
+- **IrParameter**: Parameter definition including name, type, and attributes for function parameters.
+- **ParamAttributes**: Attributes for function parameters such as `by_val` and `no_alias`.
+- **FunctionAttributes**: Attributes for functions such as `is_entry`, `is_varargs`, and calling convention.
+- **CastKind**: Enum specifying different kinds of type casting operations including integer widening/narrowing, integer/float conversions, and bit reinterpretations.
+- **IrBinaryOp**: Enum for binary operations including arithmetic, comparison, logical, and bitwise operations.
+- **IrUnaryOp**: Enum for unary operations such as negation and logical not.
+- **VectorOp**: Enum for vector operations including arithmetic, dot product, and shuffling operations.
+- **InstructionKind**: Enum representing different types of instructions such as `Alloca`, `Store`, `Load`, `Binary`, `Unary`, `Call`, `GetElementPtr`, `Cast`, `Phi`, and `Vector`.
+- **TerminatorKind**: Enum representing different terminator types such as `Return`, `Branch`, `ConditionalBranch`, `IndirectBranch`, `Switch`, and `Unreachable`.
+- **DebugInfo**: Debugging metadata for instructions and terminators, including source span information.
+- **ScopeId**: Unique identifier representing a scope within the IR (e.g., function, block, module) implemented as UUID for global uniqueness.
+- **ResourceId**: Globally unique identifier representing resources such as types, modules, or external symbols.
+- **ValueDebugInfo**: Debugging information for values including name and source span mapping.
+- **TypeGroup**: Classification of types for promotion purposes (integer, float, boolean, character, string).
+- **PromotionMatrix**: Matrix containing promotion rules for each pair of types to determine valid type conversions.
+- **PromotionRule**: Rule defining how to promote one type to another including direct and indirect conversion paths.
+- **PromotionWarning**: Warnings generated for potentially unsafe type conversions such as precision loss or overflow.
+- **OverflowBehavior**: Defines behavior for handling overflow conditions during type promotions.
+- **PrecisionLossEstimate**: Estimate of precision loss during type conversions, particularly floating-point to integer conversions.
+- **FloatSpecialValueType**: Special floating-point values like infinity, NaN, and negative zero that may require special handling during type promotion.
+- **BinaryOperationPromotion**: Result type for binary operations that determines the common type for operand promotion.
+- **PromotionResult**: Result of a type promotion operation including the target type and any warnings.
+- **TypePromotion**: Comprehensive system for handling type promotions across all type pairs.
+- **AccessController/AccessRules**: Access control system for managing visibility and permissions for IR elements.
+- **Operation**: Enum representing different types of access operations that can be controlled.
+- **Scope**: Representation of a lexical or semantic scope containing symbol mappings and hierarchical relationships.
+- **ControlFlowGraph (CFG)**: Directed graph of BasicBlocks with edges representing possible control flow paths. Uses petgraph's DiGraph internally for analysis and transformations.
+- **DominanceInfo**: Contains dominance relationships in the control flow graph, including immediate dominators (`idom`), dominance frontiers, and dominator tree children used for SSA construction and optimization passes.
+- **IrType**: Enum representing all possible IR types including primitives (integers, floats, bool, char, string), compound types (pointers, arrays, structs), and custom types with source span information.
+- **SsaTransformer**: Manages the Static Single Assignment transformation process, handling phi-node insertion and SSA form maintenance for optimization passes.
+- **Scope/ScopeManager**: Hierarchical scoping system for managing variable lifetimes and symbol resolution. `Scope` contains symbol mappings and hierarchy information; `ScopeManager` manages the scope stack and provides scoping operations for IR generation and analysis.
+- **TypePromotion**: Comprehensive type promotion system handling conversions between types with a 169-type-pair matrix. Includes `PromotionMatrix`, `PromotionRule`, `TypePromotion`, `PromotionResult`, and `PromotionWarning` for safe type conversions during analysis and optimization.
+- **TypePromotionEngine**: Core logic for analyzing and implementing type promotions in binary operations, using the promotion matrix to determine target types and generate appropriate cast instructions with proper warnings for precision loss or overflow.
 - **AnalysisResult**: Objects produced by analyses (ReachingDefs, LiveVars, ValueNumbering, PointsToSets, DominanceInfo, LoopInfo) with clear invalidation rules.
 
 ## Success Criteria *(mandatory)*
