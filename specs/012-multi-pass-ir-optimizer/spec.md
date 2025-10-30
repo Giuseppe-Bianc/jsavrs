@@ -11,7 +11,7 @@ This feature targets compiler developers and maintainers who need an IR-level op
 
 ### User Story 1 - Optimize Release Builds (Priority: P1)
 
-As a compiler maintainer, I want the optimizer to reduce instruction count and improve loop performance for production builds so that generated binaries run faster without changing program semantics.
+As a compiler maintainer, I want the optimizer to minimize instruction count and enhance loop execution efficiency in production builds, ensuring that generated binaries achieve maximal runtime performance. These optimizations must preserve exact program semantics, guaranteeing that improvements in speed and code compactness do not alter observable behavior or computational results.
 
 **Why this priority**: Improves runtime performance and is the primary reason to add an optimizer.
 
