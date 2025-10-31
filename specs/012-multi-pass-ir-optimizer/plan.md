@@ -102,11 +102,10 @@ tests/
 ├── gvn_tests.rs               # Unit tests for Global Value Numbering
 ├── licm_tests.rs              # Unit tests for Loop Invariant Code Motion
 ├── integration/               # Integration tests
-│   ├── basic_optimization.rs  # Basic optimization integration tests
-│   ├── loop_optimization.rs   # Loop optimization integration tests
-│   └── memory_optimization.rs # Memory optimization integration tests
-└── property/                # Property-based tests
-    └── ssa_preservation.rs    # SSA preservation property tests
+├── basic_optimization.rs  # Basic optimization integration tests
+├── loop_optimization.rs   # Loop optimization integration tests
+├──  memory_optimization.rs # Memory optimization integration tests
+└── ssa_preservation.rs    # SSA preservation property tests
 
 benches/
 └── optimizer_bench.rs         # Criterion benchmarks for optimization performance
