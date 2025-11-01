@@ -41,5 +41,6 @@
     "lineLength": 120,
     "indentation": 4,
     "formatter": "rustfmt"
-  }
+  },
+  "$version": 2
 }
