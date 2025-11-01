@@ -101,7 +101,6 @@ tests/
 ├── dce_tests.rs               # Unit tests for Dead Code Elimination
 ├── gvn_tests.rs               # Unit tests for Global Value Numbering
 ├── licm_tests.rs              # Unit tests for Loop Invariant Code Motion
-├── integration/               # Integration tests
 ├── basic_optimization.rs  # Basic optimization integration tests
 ├── loop_optimization.rs   # Loop optimization integration tests
 ├──  memory_optimization.rs # Memory optimization integration tests
