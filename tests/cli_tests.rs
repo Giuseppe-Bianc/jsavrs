@@ -1,64 +1,64 @@
 // tests/cli_tests.rs
-use assert_cmd::Command;
 use clap::Parser;
 use clap::error::ErrorKind;
 use jsavrs::cli::Args;
 use predicates::prelude::*;
 use std::path::PathBuf;
 
+use assert_cmd::cargo::cargo_bin_cmd;
+use predicate::str::contains;
+
+
 #[test]
 fn help_displays_correctly() {
-    Command::cargo_bin("jsavrs")
-        .unwrap()
+    cargo_bin_cmd!("jsavrs")
         .arg("--help")
         .assert()
         .success()
-        .stdout(predicate::str::contains("Usage"))
-        .stdout(predicate::str::contains("-i, --input <FILE>"));
+        .stdout(contains("Usage"))
+        .stdout(contains("-i, --input <FILE>"));
 }
 
 #[test]
 fn help_short_flag_works() {
-    Command::cargo_bin("jsavrs")
-        .unwrap()
+    cargo_bin_cmd!("jsavrs")
         .arg("-h")
         .assert()
         .success()
-        .stdout(predicate::str::contains("Usage"))
-        .stdout(predicate::str::contains("-i, --input <FILE>"));
+        .stdout(contains("Usage"))
+        .stdout(contains("-i, --input <FILE>"));
 }
 
 #[test]
 fn version_displays_correctly() {
     let version = format!("{} {}", env!("CARGO_PKG_NAME"), env!("CARGO_PKG_VERSION"));
-    Command::cargo_bin("jsavrs").unwrap().arg("--version").assert().success().stdout(predicate::str::contains(version));
+    cargo_bin_cmd!("jsavrs").arg("--version").assert().success().stdout(contains(version));
 }
 
 #[test]
 fn version_short_flag_works() {
     let version = format!("{} {}", env!("CARGO_PKG_NAME"), env!("CARGO_PKG_VERSION"));
-    Command::cargo_bin("jsavrs").unwrap().arg("-V").assert().success().stdout(predicate::str::contains(version));
+    cargo_bin_cmd!("jsavrs").arg("-V").assert().success().stdout(contains(version));
 }
 
 #[test]
 fn missing_input_argument() {
-    Command::cargo_bin("jsavrs")
-        .unwrap()
+    cargo_bin_cmd!("jsavrs")
         .assert()
         .failure()
-        .stderr(predicate::str::contains("required arguments were not provided"));
+        .stderr(contains("required arguments were not provided"));
 }
 
 #[test]
 fn invalid_file_extension() {
-    let mut cmd = Command::cargo_bin("jsavrs").unwrap();
+    let mut cmd = cargo_bin_cmd!("jsavrs");
     let mut path = PathBuf::from(env!("CARGO_MANIFEST_DIR"));
     path.push("invalid_file.txt");
 
     // Create temporary test file with wrong extension
     std::fs::write(&path, "test content").unwrap();
 
-    cmd.arg("-i").arg(&path).assert().failure().stderr(predicate::str::contains("expected a path to a .vn file"));
+    cmd.arg("-i").arg(&path).assert().failure().stderr(contains("expected a path to a .vn file"));
 
     // Cleanup
     std::fs::remove_file(&path).unwrap();
@@ -66,16 +66,16 @@ fn invalid_file_extension() {
 
 #[test]
 fn invalid_file_path() {
-    let mut cmd = Command::cargo_bin("jsavrs").unwrap();
+    let mut cmd = cargo_bin_cmd!("jsavrs");
     let mut path = PathBuf::from(env!("CARGO_MANIFEST_DIR"));
     path.push("non_existent_file.vn");
 
-    cmd.arg("-i").arg(path).assert().failure().stderr(predicate::str::contains("I/O"));
+    cmd.arg("-i").arg(path).assert().failure().stderr(contains("I/O"));
 }
 
 #[test]
 fn valid_file_with_short_flags() {
-    let mut cmd = Command::cargo_bin("jsavrs").unwrap();
+    let mut cmd = cargo_bin_cmd!("jsavrs");
     let mut path = PathBuf::from(env!("CARGO_MANIFEST_DIR"));
     path.push("test.vn");
 
@@ -90,7 +90,7 @@ fn valid_file_with_short_flags() {
 
 #[test]
 fn verbose_flag_works() {
-    let mut cmd = Command::cargo_bin("jsavrs").unwrap();
+    let mut cmd = cargo_bin_cmd!("jsavrs");
     let mut path = PathBuf::from(env!("CARGO_MANIFEST_DIR"));
     path.push("test_verbose_unique.vn");
 
@@ -105,7 +105,7 @@ fn verbose_flag_works() {
 
 #[test]
 fn test_relative_path_input() {
-    let mut cmd = Command::cargo_bin("jsavrs").unwrap();
+    let mut cmd = cargo_bin_cmd!("jsavrs");
     let path = PathBuf::from("test_relative.vn");
 
     // Create temporary test file
@@ -119,7 +119,7 @@ fn test_relative_path_input() {
 
 #[test]
 fn long_flag_works() {
-    let mut cmd = Command::cargo_bin("jsavrs").unwrap();
+    let mut cmd = cargo_bin_cmd!("jsavrs");
     let mut path = PathBuf::from(env!("CARGO_MANIFEST_DIR"));
     path.push("test2.vn");
 
@@ -134,7 +134,7 @@ fn long_flag_works() {
 
 #[test]
 fn long_verbose_flag_works() {
-    let mut cmd = Command::cargo_bin("jsavrs").unwrap();
+    let mut cmd = cargo_bin_cmd!("jsavrs");
     let mut path = PathBuf::from(env!("CARGO_MANIFEST_DIR"));
     path.push("test3.vn");
 
@@ -149,7 +149,7 @@ fn long_verbose_flag_works() {
 
 #[test]
 fn multiple_combinations_of_flags() {
-    let mut cmd = Command::cargo_bin("jsavrs").unwrap();
+    let mut cmd = cargo_bin_cmd!("jsavrs");
     let mut path = PathBuf::from(env!("CARGO_MANIFEST_DIR"));
     path.push("test4.vn");
 
@@ -245,20 +245,19 @@ fn test_file_extension_validation() {
 
 #[test]
 fn test_help_content_completeness() {
-    Command::cargo_bin("jsavrs")
-        .unwrap()
+    cargo_bin_cmd!("jsavrs")
         .arg("--help")
         .assert()
         .success()
-        .stdout(predicate::str::contains("Input file for compilation"))
-        .stdout(predicate::str::contains("Show verbose output"))
-        .stdout(predicate::str::contains("Print help"))
-        .stdout(predicate::str::contains("Print version"));
+        .stdout(contains("Input file for compilation"))
+        .stdout(contains("Show verbose output"))
+        .stdout(contains("Print help"))
+        .stdout(contains("Print version"));
 }
 
 #[test]
 fn test_empty_input_file() {
-    let mut cmd = Command::cargo_bin("jsavrs").unwrap();
+    let mut cmd = cargo_bin_cmd!("jsavrs");
     let mut path = PathBuf::from(env!("CARGO_MANIFEST_DIR"));
     path.push("empty_test.vn");
 
@@ -273,7 +272,7 @@ fn test_empty_input_file() {
 
 #[test]
 fn test_file_with_spaces_in_name() {
-    let mut cmd = Command::cargo_bin("jsavrs").unwrap();
+    let mut cmd = cargo_bin_cmd!("jsavrs");
     let mut path = PathBuf::from(env!("CARGO_MANIFEST_DIR"));
     path.push("test file with spaces.vn");
 
@@ -288,7 +287,7 @@ fn test_file_with_spaces_in_name() {
 
 #[test]
 fn test_absolute_path_input() {
-    let mut cmd = Command::cargo_bin("jsavrs").unwrap();
+    let mut cmd = cargo_bin_cmd!("jsavrs");
     let mut path = PathBuf::from(env!("CARGO_MANIFEST_DIR"));
     path.push("test_absolute.vn");
 
