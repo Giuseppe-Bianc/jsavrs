@@ -56,13 +56,13 @@ As a QA engineer, I require each optimization pass to be fully verifiable and ea
 
 - Modules where pointer/alias information is uncertain: optimizer must default to conservative (may-alias) decisions and avoid speculative memory-based transformations.
 - Functions with hand-written inline assembly snippets or external calls which cannot be analyzed precisely: optimizer must treat memory and side-effecting calls conservatively and avoid moving or eliminating memory operations across such calls.
-- Very large functions/loops: optimizer must respect configurable thresholds (max iterations, unroll limits) to avoid explosion of compile time or code size.
+- Very large functions/loops: optimizer must respect configurable thresholds to avoid explosion of compile time or code size. Large functions are defined as those exceeding: (1) 5000 instructions, OR (2) 500 basic blocks, OR (3) loops with >1000 iterations (when statically determinable). For such functions, the optimizer applies reduced optimization strategies with essential passes only and limited iterations (max 2 per phase).
 
 ## Clarifications
 
 ### Session 2025-10-29
 
-- Q: How should the optimizer handle recursive function calls or complex control flow like nested exceptions? → A: Explicitly handle recursion with bounded iteration limits and conservative assumptions for exceptions
+- Q: How should the optimizer handle recursive function calls or complex control flow? → A: Explicitly handle recursion with bounded iteration limits (default: 1000 recursion depth) and conservative assumptions for exception-like control flow (panic handlers, abort paths)
 - Q: What should be the bailout threshold when optimization iterations approach limits? → A: Use max iterations fully
 - Q: How should the optimizer handle external library calls or FFI functions? → A: Treat all external/FFI calls conservatively with full side-effect assumptions and no inlining
 - Q: What is the scope of rollbacks when an optimization pass fails verification? → A: Function-level rollback only
@@ -73,18 +73,19 @@ As a QA engineer, I require each optimization pass to be fully verifiable and ea
 ### Functional Requirements
 
 - **FR-001**: The optimizer MUST accept SSA-form `Module` inputs where each `Function` has a complete CFG and valid `DominanceInfo` computed.
-- **FR-002**: The optimizer MUST provide an analysis framework that exposes reaching-definition queries, available-expression/value-numbering interfaces, live-variable queries, use-def and def-use chain access, aliasing/points-to summaries, and loop/induction metadata; analyses must be incrementally invalidatable by passes. The analysis framework MUST handle recursive function calls with bounded iteration limits and conservative assumptions for exceptions.
+- **FR-002**: The optimizer MUST provide an analysis framework that exposes reaching-definition queries, available-expression/value-numbering interfaces, live-variable queries, use-def and def-use chain access, aliasing/points-to summaries, and loop/induction metadata; analyses must be incrementally invalidatable by passes. The analysis framework MUST handle recursive function calls with bounded iteration limits (default: 1000 recursion depth) and conservative assumptions for exceptions.
 - **FR-003**: The optimizer MUST implement phased transformation passes (early, middle, late) that cover at minimum: constant propagation and branch simplification, dead code elimination, copy propagation, global redundancy elimination (CSE), loop transformations (invariant hoisting, induction-variable optimization, controlled unrolling), instruction combining and algebraic simplification, memory-redundancy elimination (store/load forwarding, redundant-load elimination, dead-store elimination), and type/cast simplifications.
 - **FR-004**: Each pass MUST implement the `OptimizationPass` trait that declares required analyses, lists analyses invalidated by the pass, and exposes a `run(&mut Function) -> bool` method returning true when modifications occurred.
-- **FR-005**: The optimizer MUST maintain SSA invariants: every SSA temporary has a single definition, every use is dominated by its definition, phi nodes contain exactly one entry per predecessor, and no uses of undefined values exist after verification; on violation a pass must be rolled back for the affected Function.
-- **FR-006**: The optimizer MUST maintain CFG integrity when merging/splitting/removing blocks: update phi nodes, fix terminator targets, and recompute dominator information incrementally when required by CFG edits.
-- **FR-007**: The system MUST provide a verification subsystem that validates SSA form, CFG well-formedness, and type consistency after each pass; verification failures must trigger an automatic rollback for affected changes at the Function level only and produce actionable diagnostics.
+- **FR-005**: The optimizer MUST maintain SSA invariants: every SSA value has a single definition, every use is dominated by its definition, phi nodes contain exactly one entry per predecessor, and no uses of undefined values exist after verification; on violation a pass must be rolled back for the affected Function.
+- **FR-006**: The optimizer MUST maintain CFG integrity when merging/splitting/removing blocks: update phi nodes, fix terminator targets, and recompute dominator information incrementally using the semi-NCA (Semi-Naive Common Ancestor) algorithm when required by CFG edits.
+- **FR-007**: The system MUST provide a verification subsystem that validates SSA form, CFG well-formedness, and type consistency after each pass; verification failures must trigger an automatic rollback for affected changes at the Function level only and produce actionable diagnostics. When verification failures occur, the optimizer SHALL (1) restore the Function to its pre-pass state using FunctionSnapshot, (2) log the failure with pass name, function name, error kind, and diagnostic message, (3) mark the pass as failed for this function and skip it in subsequent iterations, (4) continue optimization with remaining passes for the same function unless critical errors accumulate (default: max 3 verification failures per function before skipping all remaining passes for that function), and (5) report all verification failures in the final OptimizerReport for user review.
 - **FR-008**: The optimizer MUST collect per-pass and aggregate metrics (instructions eliminated, constants propagated, CSE replacements, phi removals, blocks removed, instruction-count delta, block/edge counts, per-pass time and memory) and make them available as structured reports.
 - **FR-009**: The optimizer MUST support configurable optimization levels (O0, O1, O2, O3) with documented pass sets and iteration limits (default max iterations = 10) and provide knobs for unroll thresholds and speculative options.
 - **FR-010**: The optimizer MUST be extensible via a plugin/pass manager allowing external passes to register with declared analysis dependencies and optional cost models.
 
 ### Key Entities *(include if feature involves data)*
 
+**Core IR Entities** (from existing jsavrs infrastructure):
 - **Module**: Compiler IR container containing multiple `Function`s, CFGs, and metadata required by the optimizer (dominance info, debug info). Includes `DataLayout` and `TargetTriple` for target-specific information.
 - **Function**: Contains BasicBlocks, Instructions, Terminators, and Phi nodes; the unit of many optimization passes and verification. Includes `FunctionAttributes` and `IrParameter` for function metadata and parameters.
 - **BasicBlock**: Sequence of instructions ending with a terminator; predecessor/successor lists updated as CFG changes. Contains `SourceSpan` for debug information and optional scoping via `ScopeId`.
@@ -136,6 +137,6 @@ As a QA engineer, I require each optimization pass to be fully verifiable and ea
 
 - **SC-001**: For the standard benchmark suite (defined by maintainers), optimization at O2 yields >= 5% median instruction-count reduction across benchmarks compared to unoptimized IR, while preserving test-suite outputs.
 - **SC-002**: Optimizer verification must report zero unchecked SSA/CFG errors for >= 95% of Functions in typical code; functions failing verification must be automatically rolled back and logged.
-- **SC-003**: Compile-time overhead introduced by optimization (total of all passes) must be < 30% for O1, < 100% for O2 relative to a baseline compilation without optimizer in the representative project; thresholds configurable per project.
+- **SC-003**: Compile-time overhead introduced by optimization (total of all passes) must be < 30% for O1, < 100% for O2 relative to a baseline compilation (defined as: O0 optimization level with completely bypassed optimizer pipeline, measured from Module input to optimized Module output) in the representative project; thresholds configurable per project.
 - **SC-004**: Debug information (SourceSpan) must be preserved for at least 90% of instructions that remain after optimization, and optimization provenance must be recordable for any value transformed.
 

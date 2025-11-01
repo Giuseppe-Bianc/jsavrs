@@ -1,43 +1,45 @@
-# Implementation Plan: [FEATURE]
+# Implementation Plan: Multi-pass IR Optimizer
 
-**Branch**: `[###-feature-name]` | **Date**: [DATE] | **Spec**: [link]
-**Input**: Feature specification from `/specs/[###-feature-name]/spec.md`
-
-**Note**: This template is filled in by the `/speckit.plan` command. See `.specify/templates/commands/plan.md` for the execution workflow.
+**Branch**: `012-multi-pass-ir-optimizer` | **Date**: 2025-11-01 | **Spec**: [spec.md](./spec.md)  
+**Input**: Feature specification from `/specs/012-multi-pass-ir-optimizer/spec.md`
 
 ## Summary
 
-[Extract from feature spec: primary requirement + technical approach from research]
+The multi-pass IR optimizer transforms SSA-form Modules through systematic analysis and optimization passes while guaranteeing semantic preservation. It implements a layered architecture with three core subsystems: an analysis framework computing dataflow information (reaching definitions, live variables, use-def chains, alias analysis, loop detection, constant propagation), transformation passes organized in phases (early: SCCP, ADCE, copy propagation; middle: GVN/CSE, LICM, IV optimization, loop unrolling; late: instruction combining, algebraic simplification, strength reduction, phi optimization; memory: store-to-load forwarding, redundant load elimination, dead store elimination), and verification infrastructure ensuring SSA/CFG/type consistency with automatic rollback on failures. The optimizer leverages existing jsavrs IR infrastructure (Module, Function, BasicBlock, Instruction, Value, ControlFlowGraph via petgraph DiGraph, DominanceInfo, SsaTransformer) with zero external dependencies beyond petgraph, operating at configurable optimization levels (O0: disabled, O1: basic single-iteration passes, O2: full multi-iteration with Andersen alias analysis, O3: aggressive with increased thresholds) and producing detailed performance metrics.
 
 ## Technical Context
 
-**Language/Version**: Rust 1.75+ (current stable used by jsavrs project)  
-**Primary Dependencies**: petgraph (for CFG representation), bit-vec (for dense boolean sets in dataflow), existing jsavrs IR infrastructure (Module, Function, BasicBlock, Instruction, Value, ControlFlowGraph from petgraph DiGraph, DominanceInfo, SsaTransformer) with zero external dependencies beyond petgraph already used for CFG representation
-**Storage**: In-memory data structures (HashMap, Vec, BitVec) for analysis results, no persistent storage required
-**Testing**: cargo test for unit and integration tests, proptest for property-based testing, criterion for benchmarking
-**Target Platform**: Multi-platform (Windows, macOS, Linux) as per jsavrs cross-platform compatibility principle
-**Project Type**: Single compiler component module within existing jsavrs compiler codebase
-**Performance Goals**: < 30% compile-time overhead for O1, < 100% for O2 relative to baseline compilation; >= 5% median instruction-count reduction at O2; optimizer verification must report zero unchecked SSA/CFG errors for >= 95% of Functions
-**Constraints**: Must maintain SSA invariants, preserve debug information for 90%+ of remaining instructions, respect configurable thresholds (max iterations=10, loop unroll threshold=4), handle external/FFI calls conservatively
-**Scale/Scope**: Designed for typical compiler Functions and Modules within jsavrs codebase, with configurable optimization levels (O0, O1, O2, O3)
+**Language/Version**: Rust 1.75+ (stable, using existing jsavrs toolchain)  
+**Primary Dependencies**: petgraph (already in use for CFG representation), bit-vec (for dense boolean sets in dataflow analysis)  
+**Storage**: In-memory IR structures (Module, Function, BasicBlock, Instruction, Value) with no persistent storage  
+**Testing**: cargo test (unit tests), insta (snapshot tests for IR transformations), criterion (benchmarks for optimization performance)  
+**Target Platform**: Cross-platform (Windows, macOS, Linux) compiler infrastructure  
+**Project Type**: Single project (compiler optimization module within existing jsavrs codebase)  
+**Performance Goals**: >=5% median instruction reduction at O2, <30% compile-time overhead at O1, <100% overhead at O2  
+**Constraints**: Zero semantic changes (test suite must pass identically), SSA/CFG invariants must be preserved, function-level rollback on verification failure  
+**Scale/Scope**: Handles functions with 100s-1000s of instructions, 10s-100s of basic blocks, max 10 pass iterations at O2/O3
 
 ## Constitution Check
 
 *GATE: Must pass before Phase 0 research. Re-check after Phase 1 design.*
 
-**Safety First**: Implementation must leverage Rust's ownership model with zero unsafe code except where present in petgraph graph indexing; use proper Result<T, OptimizerError> for error handling where OptimizerError enum contains VerificationFailed, AnalysisFailed, and PassError variants; ensure memory safety during transformations by properly maintaining SSA form and CFG integrity.
+**Evaluation**:
 
-**Performance Excellence**: All data structures must be optimized using Vec for instruction sequences enabling cache-friendly iteration, HashMap with FxHasher for faster hashing of small keys like ValueId, BitVec from bit-vec crate for dense boolean sets in dataflow; use petgraph DiGraph<BasicBlock, ()> reused from existing CFG to avoid duplication; implement appropriate algorithms with optimal complexity for analysis and transformation passes.
+✅ **Safety First**: Optimizer maintains memory safety through Rust ownership, uses Result<T, OptimizerError> for error handling, minimal unsafe (only petgraph graph indexing), verification prevents invalid IR states.
 
-**Cross-Platform Compatibility**: Ensure the optimizer works consistently across Windows, macOS, and Linux; verify that all performance measurements and thresholds work consistently across platforms; maintain consistent behavior regardless of host environment.
+✅ **Performance Excellence**: Designed for compilation speed with efficient data structures (Vec for instruction sequences, HashMap with FxHasher, BitVec for dataflow, petgraph DiGraph reused from CFG), configurable iteration limits, early-exit on fixed point.
 
-**Modular Extensibility**: The optimizer architecture must follow three layer design: analysis framework in src/ir/optimizer/analysis/, transformation passes in src/ir/optimizer/passes/, and verification in src/ir/optimizer/verification/ with clearly defined interfaces; implement trait-based designs (Analysis trait, OptimizationPass trait) for extensibility; support plugin/pass manager allowing external passes to register.
+✅ **Cross-Platform Compatibility**: Pure Rust implementation with no platform-specific dependencies, leverages existing jsavrs cross-platform infrastructure.
 
-**Test-Driven Reliability**: All optimization passes must include comprehensive unit tests with hand-built CFGs, integration tests loading source files and verifying output equivalence, and property tests using proptest to validate SSA/CFG invariants preserved via quickcheck_ssa_preservation; use cargo test framework and insta for snapshot validation.
+✅ **Modular Extensibility**: Plugin architecture via OptimizationPass trait, clear separation of analysis/transformation/verification layers, new passes register with PassManager declaring analysis dependencies.
 
-**Snapshot Validation**: Use Insta library for snapshot testing to ensure consistent output and catch regressions in optimized IR; validate that SSA form, CFG well-formedness, and type consistency are preserved across all transformations; maintain reproducible benchmarks using criterion.
+✅ **Test-Driven Reliability**: Comprehensive testing strategy (unit tests for individual passes, integration tests comparing program outputs, property tests for SSA/CFG invariant preservation, benchmarks for performance validation).
 
-**Documentation Rigor**: Document public APIs with comprehensive rustdoc comments including Examples section showing usage; create detailed research.md and data_model.md files with complete precision and meticulous attention to detail; document all new modules and components following existing project conventions.
+✅ **Snapshot Validation**: Uses insta for IR transformation snapshot tests, verifies instruction sequences, CFG structure, and debug information preservation.
+
+✅ **Documentation Rigor**: Detailed rustdoc comments for all public APIs with Examples sections, comprehensive research.md and data-model.md, architectural decision documentation in quickstart.md.
+
+**Result**: PASS - All constitution principles are satisfied without violations.
 
 ## Project Structure
 
@@ -45,78 +47,90 @@
 
 ```text
 specs/012-multi-pass-ir-optimizer/
-├── plan.md              # This file (/speckit.plan command output)
-├── research.md          # Phase 0 output (/speckit.plan command)
-├── data-model.md        # Phase 1 output (/speckit.plan command)
-├── quickstart.md        # Phase 1 output (/speckit.plan command)
-├── contracts/           # Phase 1 output (/speckit.plan command)
-└── tasks.md             # Phase 2 output (/speckit.tasks command - NOT created by /speckit.plan)
+├── plan.md              # This file (implementation strategy and architecture)
+├── research.md          # Phase 0 output (optimization algorithms, dataflow analysis, alias analysis)
+├── data-model.md        # Phase 1 output (IR structures, analysis results, pass interfaces)
+├── quickstart.md        # Phase 1 output (integration guide, usage examples, configuration)
+├── contracts/           # Phase 1 output (OptimizationPass trait, Analysis trait, verification interfaces)
+│   ├── optimization_pass.md
+│   ├── analysis_trait.md
+│   └── verification.md
+└── tasks.md             # Phase 2 output (generated by /speckit.tasks)
 ```
 
 ### Source Code (repository root)
 
 ```text
 src/
-└── ir/
-    └── optimizer/                 # Main optimizer module
-        ├── mod.rs                 # Main entry point with optimize_module function
-        ├── analysis/              # Analysis framework
-        │   ├── mod.rs             # Analysis trait and AnalysisManager
-        │   ├── use_def.rs         # UseDefManager with use-def and def-use chains
-        │   ├── reaching_defs.rs   # ReachingDefinitions analysis using worklist algorithm
-        │   ├── live_vars.rs       # LiveVariables analysis via backward dataflow
-        │   ├── constants.rs       # ConstantLattice for sparse conditional constant propagation
-        │   ├── alias.rs           # AliasAnalysis trait with AndersenAnalysis and ConservativeAnalysis
-        │   ├── loops.rs           # LoopInfo detecting natural loops using dominator tree
-        │   └── gvn.rs             # GlobalValueNumbering for expression hashing
-        ├── passes/                # Transformation passes
-        │   ├── mod.rs             # OptimizationPass trait and pass implementations
-        │   ├── sccp.rs            # Sparse Conditional Constant Propagation pass
-        │   ├── dce.rs             # Aggressive Dead Code Elimination pass
-        │   ├── copy_prop.rs       # Copy Propagation pass
-        │   ├── gvn_cse.rs         # Global Value Numbering + Common Subexpression Elimination
-        │   ├── licm.rs            # Loop Invariant Code Motion pass
-        │   ├── iv_opt.rs          # Induction Variable Optimization pass
-        │   ├── loop_unroll.rs     # Loop Unrolling pass
-        │   ├── instruction_combining.rs # Instruction Combining pass
-        │   ├── algebraic_simp.rs  # Algebraic Simplification pass
-        │   ├── strength_red.rs    # Strength Reduction pass
-        │   ├── phi_opt.rs         # Phi Node Optimization pass
-        │   ├── store_to_load.rs   # Store-to-Load Forwarding pass
-        │   ├── redundant_loads.rs # Redundant Load Elimination pass
-        │   └── dead_store.rs      # Dead Store Elimination pass
-        ├── verification/          # Verification infrastructure
-        │   ├── mod.rs             # Main verification functions
-        │   ├── ssa_check.rs       # SSA form verification
-        │   ├── cfg_check.rs       # CFG consistency verification
-        │   ├── type_check.rs      # Type consistency verification
-        │   └── rollback.rs        # FunctionSnapshot for verification rollback
-        ├── pass/                  # Pass management
-        │   └── manager.rs         # PassManager with optimization pipeline
-        ├── config.rs              # OptimizerConfig and OptLevel enum
-        └── metrics.rs             # PassMetrics and OptimizerReport
+├── ir/
+│   ├── optimizer/
+│   │   ├── mod.rs                    # Main entry point: optimize_module()
+│   │   ├── config.rs                 # OptimizerConfig, OptLevel enum
+│   │   ├── error.rs                  # OptimizerError enum
+│   │   ├── metrics.rs                # PassMetrics, OptimizerReport
+│   │   ├── analysis/
+│   │   │   ├── mod.rs                # Analysis trait, AnalysisKind enum
+│   │   │   ├── use_def.rs            # UseDefManager: use-def and def-use chains
+│   │   │   ├── reaching_defs.rs      # ReachingDefinitions: worklist dataflow
+│   │   │   ├── live_vars.rs          # LiveVariables: backward dataflow
+│   │   │   ├── constants.rs          # ConstantLattice: SCCP lattice
+│   │   │   ├── alias.rs              # AliasAnalysis trait, AndersenAnalysis, ConservativeAnalysis
+│   │   │   ├── loops.rs              # LoopInfo: natural loop detection
+│   │   │   └── gvn.rs                # GlobalValueNumbering: expression hashing
+│   │   ├── passes/
+│   │   │   ├── mod.rs                # OptimizationPass trait, PassResult
+│   │   │   ├── sccp.rs               # Sparse conditional constant propagation
+│   │   │   ├── adce.rs               # Aggressive dead code elimination
+│   │   │   ├── copy_prop.rs          # Copy propagation
+│   │   │   ├── gvn_cse.rs            # Global value numbering / CSE
+│   │   │   ├── licm.rs               # Loop-invariant code motion
+│   │   │   ├── iv_opt.rs             # Induction variable optimization
+│   │   │   ├── loop_unroll.rs        # Loop unrolling
+│   │   │   ├── inst_combine.rs       # Instruction combining
+│   │   │   ├── algebraic_simp.rs     # Algebraic simplification
+│   │   │   ├── strength_reduction.rs # Strength reduction
+│   │   │   ├── phi_opt.rs            # Phi node optimization
+│   │   │   ├── type_cast_opt.rs      # Type/cast optimization
+│   │   │   ├── store_to_load_fwd.rs  # Store-to-load forwarding
+│   │   │   ├── redundant_loads.rs    # Redundant load elimination
+│   │   │   └── dead_stores.rs        # Dead store elimination
+│   │   ├── verification/
+│   │   │   ├── mod.rs                # VerificationError enum
+│   │   │   ├── ssa_verify.rs         # verify_ssa_form()
+│   │   │   ├── cfg_verify.rs         # verify_cfg_consistency()
+│   │   │   ├── type_verify.rs        # verify_type_consistency()
+│   │   │   └── rollback.rs           # FunctionSnapshot capture/restore
+│   │   └── pass_manager.rs           # PassManager, AnalysisManager
+│   ├── module.rs                     # Existing Module IR structure
+│   ├── function.rs                   # Existing Function IR structure
+│   ├── basic_block.rs                # Existing BasicBlock IR structure
+│   ├── instruction.rs                # Existing Instruction IR structure
+│   ├── value.rs                      # Existing Value IR structure
+│   ├── cfg.rs                        # Existing ControlFlowGraph (petgraph DiGraph)
+│   ├── dominance.rs                  # Existing DominanceInfo
+│   └── ssa.rs                        # Existing SsaTransformer
+├── main.rs                           # Main compiler driver (integration point)
+└── cli.rs                            # CLI argument parsing (--opt-level flag)
 
 tests/
-├── sccp_tests.rs              # Unit tests for Sparse Conditional Constant Propagation
-├── dce_tests.rs               # Unit tests for Dead Code Elimination
-├── gvn_tests.rs               # Unit tests for Global Value Numbering
-├── licm_tests.rs              # Unit tests for Loop Invariant Code Motion
-├── basic_optimization.rs  # Basic optimization integration tests
-├── loop_optimization.rs   # Loop optimization integration tests
-├──  memory_optimization.rs # Memory optimization integration tests
-└── ssa_preservation.rs    # SSA preservation property tests
+
+├── sccp_tests.rs                 # Unit tests for SCCP
+├── adce_tests.rs                 # Unit tests for ADCE
+├── gvn_cse_tests.rs              # Unit tests for GVN/CSE
+├── licm_tests.rs                 # Unit tests for LICM
+├── iv_opt_tests.rs               # Unit tests for IV optimization
+├── loop_unroll_tests.rs          # Unit tests for loop unrolling
+├── verification_tests.rs         # Unit tests for verification
+├── integration_tests.rs          # End-to-end optimization tests
+├── property_tests.rs             # Proptest-based invariant checks
+└── snapshots/                        # Insta snapshot files for IR transformations
 
 benches/
-└── optimizer_bench.rs         # Criterion benchmarks for optimization performance
+└── optimizer_bench.rs                # Criterion benchmarks for optimizer
 ```
 
-**Structure Decision**: The optimizer is implemented as a submodule within the existing jsavrs IR module (`src/ir/optimizer/`) following the modular extensibility principle. The architecture is organized into three layers: analysis framework, transformation passes, and verification infrastructure, with additional modules for configuration, metrics, and pass management. The test structure includes unit tests for individual passes, integration tests for complete optimization workflows, and property tests for verifying invariants.
+**Structure Decision**: Single project structure (Option 1) is selected because the optimizer is a core compiler component integrated directly into the existing jsavrs codebase. It extends the existing `src/ir/` module with a new `optimizer/` subdirectory, maintaining consistency with the existing module organization (lexer, parser, semantic, ir, asm). This structure supports the modular extensibility principle by keeping optimization as a well-defined layer with clear interfaces to existing IR infrastructure.
 
 ## Complexity Tracking
 
-> **Fill ONLY if Constitution Check has violations that must be justified**
-
-| Violation | Why Needed | Simpler Alternative Rejected Because |
-|-----------|------------|-------------------------------------|
-| [e.g., 4th project] | [current need] | [why 3 projects insufficient] |
-| [e.g., Repository pattern] | [specific problem] | [why direct DB access insufficient] |
+*No violations detected - section not required.*
