@@ -4,7 +4,7 @@ use console::style;
 use jsavrs::asm::{Abi, AssemblyFile, DataDirective, GPRegister64, Immediate, Instruction, Operand, X86Register};
 use jsavrs::cli::Args;
 use jsavrs::error::error_reporter::ErrorReporter;
-use jsavrs::ir::generator::NIrGenerator;
+use jsavrs::ir::{Phase, generator::NIrGenerator, optimizer::DeadCodeElimination, run_pipeline};
 use jsavrs::lexer::Lexer;
 use jsavrs::parser::jsav_parser::JsavParser;
 use jsavrs::printers::ast_printer::pretty_print_stmt;
@@ -136,76 +136,9 @@ fn main() -> Result<(), CompileError> {
         println!("{module}");
     }
 
-    /*// Test Platform display
-    println!("Platform: {}", Platform::Linux);
+    let pipeline: Vec<Box<dyn Phase>> = vec![Box::new(DeadCodeElimination)];
 
-    // Test AbiKind display
-    println!("AbiKind: {}", AbiKind::SystemV);
-
-    // Test Abi display
-    let abi = Abi::SYSTEM_V_LINUX;
-    println!("Abi: {}", abi);
-
-    // Test Section display
-    println!("Section: {}", Section::Text);
-
-    // Test register display
-    println!("Register: {}", GPRegister64::Rax);
-    println!("X86Register: {}", X86Register::GP64(GPRegister64::Rbx));
-
-    // Test immediate display
-    let imm = Immediate::Imm32(42);
-    println!("Immediate: {}", imm);
-
-    // Test operand display
-    let operand = Operand::Register(X86Register::GP64(GPRegister64::Rcx));
-    println!("Operand: {}", operand);
-
-    // Test memory operand display
-    let mem_op = MemoryOperand::new(Some(GPRegister64::Rsp)).with_displacement(8);
-    println!("MemoryOperand: {}", mem_op);
-
-    // Test instruction display
-    let instr = Instruction::Mov {
-        dest: Operand::Register(X86Register::GP64(GPRegister64::Rax)),
-        src: Operand::Immediate(Immediate::Imm32(42))
-    };
-    println!("Instruction: {}", instr);
-
-    // Test data directive display
-    let data_dir = DataDirective::Dd(vec![1, 2, 3]);
-    println!("DataDirective: {}", data_dir);
-
-    // Test assembly element display
-    let elem_label = AssemblyElement::Label("my_label".to_string());
-    let elem_instr = AssemblyElement::Instruction(Instruction::Nop);
-    let elem_comment = AssemblyElement::Comment("This is a block comment".to_string());
-    let elem_data = AssemblyElement::Data("my_var".to_string(), DataDirective::Db(vec![1, 2, 3]));
-
-    let elem_inline_comment = AssemblyElement::InstructionWithComment(Instruction::Nop, "This is an inline comment".to_string());
-
-    println!("Label element: {}", elem_label);
-    println!("Instruction element: {}", elem_instr);
-    println!("Block comment element: {}", elem_comment);
-    println!("Inline comment element: {}", elem_inline_comment);
-    println!("Data element: {}", elem_data);
-
-    // Test assembly section display
-    let mut section = AssemblySection::text_section();
-    section.add_label("start");
-    section.add_instruction(Instruction::Mov {
-        dest: Operand::Register(X86Register::GP64(GPRegister64::Rax)),
-        src: Operand::Immediate(Immediate::Imm64(100))
-    });
-    section.add_data("message", DataDirective::Asciz("Hello, World!".to_string()));
-    section.add_comment("End of example");
-    section.add_label("start");
-    section.add_instruction_with_comment(Instruction::Mov {
-        dest: Operand::Register(X86Register::GP64(GPRegister64::Rcx)),
-        src: Operand::Immediate(Immediate::Imm64(200))
-    }, "move 200 -> rcx");
-
-    println!("\nAssemblySection:\n{}", section);*/
+    run_pipeline(&mut module.clone(), pipeline);
 
     let mut assembly_file = AssemblyFile::new(Abi::SYSTEM_V_LINUX);
     assembly_file.data_sec_add_data("message", DataDirective::new_asciz("Hello, World!".to_string()));
