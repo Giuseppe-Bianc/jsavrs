@@ -8,7 +8,6 @@ use std::path::PathBuf;
 use assert_cmd::cargo::cargo_bin_cmd;
 use predicate::str::contains;
 
-
 #[test]
 fn help_displays_correctly() {
     cargo_bin_cmd!("jsavrs")
@@ -43,10 +42,7 @@ fn version_short_flag_works() {
 
 #[test]
 fn missing_input_argument() {
-    cargo_bin_cmd!("jsavrs")
-        .assert()
-        .failure()
-        .stderr(contains("required arguments were not provided"));
+    cargo_bin_cmd!("jsavrs").assert().failure().stderr(contains("required arguments were not provided"));
 }
 
 #[test]

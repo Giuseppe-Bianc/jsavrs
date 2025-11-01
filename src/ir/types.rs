@@ -49,7 +49,7 @@ pub enum IrType {
     /// Array type — represents a fixed-size array of a specific element type.
     Array(Box<IrType>, usize),
     /// Custom user-defined type — identified by name and source span.
-    Custom(Arc<str>, SourceSpan),                        // Added source span
+    Custom(Arc<str>, SourceSpan), // Added source span
     /// Struct type — consists of named fields and a source span for debugging.
     Struct(Arc<str>, Vec<(String, IrType)>, SourceSpan), // New struct type
 }

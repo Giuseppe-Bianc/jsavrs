@@ -55,34 +55,16 @@ fn test_float_param_registers() {
 
 #[test]
 fn test_int_return_register() {
-    assert_eq!(
-        Abi::SYSTEM_V_LINUX.int_return_registers()[0],
-        GPRegister64::Rax
-    );
-    assert_eq!(
-        Abi::SYSTEM_V_MACOS.int_return_registers()[0],
-        GPRegister64::Rax
-    );
-    assert_eq!(
-        Abi::WINDOWS.int_return_registers()[0],
-        GPRegister64::Rax
-    );
+    assert_eq!(Abi::SYSTEM_V_LINUX.int_return_registers()[0], GPRegister64::Rax);
+    assert_eq!(Abi::SYSTEM_V_MACOS.int_return_registers()[0], GPRegister64::Rax);
+    assert_eq!(Abi::WINDOWS.int_return_registers()[0], GPRegister64::Rax);
 }
 
 #[test]
 fn test_float_return_register() {
-    assert_eq!(
-        Abi::SYSTEM_V_LINUX.float_return_registers()[0],
-        XMMRegister::Xmm0
-    );
-    assert_eq!(
-        Abi::SYSTEM_V_MACOS.float_return_registers()[0],
-        XMMRegister::Xmm0
-    );
-    assert_eq!(
-        Abi::WINDOWS.float_return_registers()[0],
-        XMMRegister::Xmm0
-    );
+    assert_eq!(Abi::SYSTEM_V_LINUX.float_return_registers()[0], XMMRegister::Xmm0);
+    assert_eq!(Abi::SYSTEM_V_MACOS.float_return_registers()[0], XMMRegister::Xmm0);
+    assert_eq!(Abi::WINDOWS.float_return_registers()[0], XMMRegister::Xmm0);
 }
 
 #[test]
@@ -109,7 +91,6 @@ fn test_callee_saved() {
     assert!(windows_saved.contains(&GPRegister64::Rdi));
     assert!(windows_saved.contains(&GPRegister64::Rsi));
     assert!(!windows_saved.contains(&GPRegister64::Rax));
-
 }
 
 #[test]

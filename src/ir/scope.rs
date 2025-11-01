@@ -38,12 +38,7 @@ impl Scope {
     /// # Returns
     /// A newly initialized `Scope` with an empty symbol table and no children.
     pub fn new(parent: Option<ScopeId>, depth: usize) -> Self {
-        Scope {
-            symbols: HashMap::new(),
-            parent,
-            children: Vec::new(),
-            depth,
-        }
+        Scope { symbols: HashMap::new(), parent, children: Vec::new(), depth }
     }
 
     /// Inserts a new symbol and its corresponding value into the scope.

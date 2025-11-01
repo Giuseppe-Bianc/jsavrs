@@ -42,11 +42,7 @@ impl ScopeManager {
         let mut scopes = HashMap::new();
         scopes.insert(root_id, root_scope);
 
-        ScopeManager {
-            scopes,
-            current_scope: root_id,
-            root_scope: root_id,
-        }
+        ScopeManager { scopes, current_scope: root_id, root_scope: root_id }
     }
 
     /// Enters a new nested scope, creating and switching to it.
@@ -64,11 +60,7 @@ impl ScopeManager {
         let new_scope = Scope::new(Some(self.current_scope), depth);
 
         // Register new scope as a child of the current one.
-        self.scopes
-            .get_mut(&self.current_scope)
-            .expect("current scope must exist in scopes map")
-            .children
-            .push(new_id);
+        self.scopes.get_mut(&self.current_scope).expect("current scope must exist in scopes map").children.push(new_id);
 
         self.scopes.insert(new_id, new_scope);
         self.current_scope = new_id;
@@ -161,11 +153,7 @@ impl ScopeManager {
 
         loop {
             if self.scopes[&current].symbols.contains_key(name) {
-                return self.scopes
-                    .get_mut(&current)
-                    .unwrap()
-                    .symbols
-                    .get_mut(name);
+                return self.scopes.get_mut(&current).unwrap().symbols.get_mut(name);
             }
 
             if let Some(parent) = self.scopes[&current].parent {
@@ -229,9 +217,8 @@ impl ScopeManager {
                     new_scope.depth = self.scopes[&root_id].depth + 1;
                 } else if let Some(new_parent_id) = id_mapping.get(&old_parent_id) {
                     new_scope.parent = Some(*new_parent_id);
-                    new_scope.depth = self.scopes.get(new_parent_id)
-                        .map(|p| p.depth + 1)
-                        .unwrap_or(self.scopes[&root_id].depth + 1);
+                    new_scope.depth =
+                        self.scopes.get(new_parent_id).map(|p| p.depth + 1).unwrap_or(self.scopes[&root_id].depth + 1);
                 } else {
                     new_scope.parent = Some(root_id);
                     new_scope.depth = self.scopes[&root_id].depth + 1;
