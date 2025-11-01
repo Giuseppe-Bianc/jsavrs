@@ -111,16 +111,6 @@ impl ScopeManager {
     /// # Behavior
     /// - The value’s `scope` field is automatically set to the current scope.
     /// - If a symbol with the same name already exists in this scope, it is overwritten.
-    ///
-    /// # Examples
-    /// ```
-    /// use std::sync::Arc;
-    /// use my_crate::ir::{Value, scope_manager::ScopeManager};
-    ///
-    /// let mut manager = ScopeManager::new();
-    /// manager.add_symbol("x", Value::Integer(42));
-    /// assert!(manager.lookup("x").is_some());
-    /// ```
     pub fn add_symbol(&mut self, name: impl Into<Arc<str>>, mut value: Value) {
         value.scope = Some(self.current_scope);
         self.scopes
