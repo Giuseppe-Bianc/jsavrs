@@ -75,6 +75,12 @@ impl Value {
         Self::new_value(ValueKind::Temporary(tmp_id), ty)
     }
 
+    /// Creates a new temporary value (alias for `new_temporary`).
+    /// Convenient for test code.
+    pub fn new_temp(tmp_id: u64, ty: IrType) -> Self {
+        Self::new_temporary(tmp_id, ty)
+    }
+
     pub fn with_debug_info(mut self, name: Option<Arc<str>>, span: SourceSpan) -> Self {
         self.debug_info = Some(ValueDebugInfo { name, source_span: span });
         self
