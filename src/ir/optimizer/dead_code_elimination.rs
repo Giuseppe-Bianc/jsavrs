@@ -1538,9 +1538,9 @@ impl Phase for DeadCodeElimination {
         let dce_stats = self.get_statistics();
         if dce_stats.had_effect() {
             println!("\n{}", style("Dead Code Elimination Statistics:").cyan().bold());
-            println!(" ✂️  Instructions removed: {}", dce_stats.instructions_removed);
+            println!("✂️  Instructions removed: {}", dce_stats.instructions_removed);
             println!("🗑️  Blocks removed: {}", dce_stats.blocks_removed);
-            println!("🔄 Iterations to convergence: {}", dce_stats.iterations);
+            println!("🔄  Iterations to convergence: {}", dce_stats.iterations);
 
             if !dce_stats.conservative_warnings.is_empty() {
                 println!("⚠️  Conservative warnings: {}", dce_stats.conservative_warnings.len());
