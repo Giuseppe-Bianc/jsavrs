@@ -29,17 +29,17 @@ The Dead Code Elimination (DCE) optimization phase is implemented as a Rust modu
 **Project Type**: Single project (compiler optimization phase)
 
 **Performance Goals**: 
-- Complete analysis and removal for a 10,000-instruction function in under 1 second
-- Reach fixed-point within 5 iterations for typical programs (<1000 instructions)
-- Remove 100% of provably-dead unreachable code
-- Remove at least 90% of provably-dead unused instructions
+- Complete analysis and removal for a 10,000-instruction function in under 1 second (see SC-004 in spec.md)
+- Reach fixed-point within 5 iterations for typical programs (<1000 instructions) (see SC-003 in spec.md)
+- Remove 100% of provably-dead unreachable code (see SC-001 in spec.md)
+- Remove at least 90% of provably-dead unused instructions (see SC-002 in spec.md)
 
 **Constraints**: 
-- Must preserve SSA form integrity (no undefined value uses)
-- Must maintain CFG validity after transformations
-- Conservative analysis required (preserve any instruction that may have observable effects)
-- Must preserve debug information and source location metadata
-- Must respect scope boundaries when removing instructions
+- Must preserve SSA form integrity (see FR-013 in spec.md)
+- Must maintain CFG validity after transformations (see FR-011 in spec.md)
+- Conservative analysis required for store and call instructions (see FR-007, FR-008 in spec.md)
+- Must preserve debug information and source location metadata (see FR-014 in spec.md)
+- Must respect scope boundaries when removing instructions (see FR-015 in spec.md)
 
 **Scale/Scope**: 
 - Operates on individual functions within IR modules
