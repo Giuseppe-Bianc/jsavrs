@@ -100,6 +100,29 @@ impl ControlFlowGraph {
         self.graph.node_weights_mut()
     }
 
+    /// Removes a block from the CFG by its label.
+    ///
+    /// # Arguments
+    ///
+    /// * `label` - The label of the block to remove
+    ///
+    /// # Returns
+    ///
+    /// `true` if the block was found and removed, `false` otherwise
+    ///
+    /// # Note
+    ///
+    /// This also removes all incoming and outgoing edges for the block.
+    /// Callers should ensure the removal maintains CFG validity.
+    pub fn remove_block(&mut self, label: &str) -> bool {
+        if let Some(idx) = self.find_block_by_label(label) {
+            self.graph.remove_node(idx);
+            true
+        } else {
+            false
+        }
+    }
+
     pub fn dfs_post_order(&self) -> Box<dyn Iterator<Item = NodeIndex> + '_> {
         if let Some(entry_idx) = self.get_entry_block_index() {
             let mut dfs = Dfs::new(&self.graph, entry_idx);

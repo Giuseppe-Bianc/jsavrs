@@ -126,6 +126,23 @@ impl Terminator {
         }
     }
 
+    /// Retrieves all values used by this terminator.
+    ///
+    /// This is useful for liveness analysis to determine which values are live
+    /// at the end of a basic block.
+    ///
+    /// # Returns
+    /// A vector of references to values used by this terminator.
+    pub fn get_used_values(&self) -> Vec<&Value> {
+        match &self.kind {
+            TerminatorKind::Return { value, .. } => vec![value],
+            TerminatorKind::ConditionalBranch { condition, .. } => vec![condition],
+            TerminatorKind::Switch { value, .. } => vec![value],
+            TerminatorKind::IndirectBranch { address, .. } => vec![address],
+            _ => Vec::new(),
+        }
+    }
+
     /// Creates a new [`Terminator`] with the given kind and source span.
     ///
     /// # Arguments

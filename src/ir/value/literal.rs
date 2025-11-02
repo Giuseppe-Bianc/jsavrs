@@ -18,6 +18,32 @@ pub enum IrLiteralValue {
     Char(char),
 }
 
+// Manual Eq implementation to handle f32/f64 (which don't implement Eq)
+// We use bitwise equality for floats to ensure Hash consistency
+impl Eq for IrLiteralValue {}
+
+// Manual Hash implementation to handle f32/f64
+// We hash the bit representation to be consistent with our Eq impl
+impl std::hash::Hash for IrLiteralValue {
+    fn hash<H: std::hash::Hasher>(&self, state: &mut H) {
+        core::mem::discriminant(self).hash(state);
+        match self {
+            IrLiteralValue::I8(v) => v.hash(state),
+            IrLiteralValue::I16(v) => v.hash(state),
+            IrLiteralValue::I32(v) => v.hash(state),
+            IrLiteralValue::I64(v) => v.hash(state),
+            IrLiteralValue::U8(v) => v.hash(state),
+            IrLiteralValue::U16(v) => v.hash(state),
+            IrLiteralValue::U32(v) => v.hash(state),
+            IrLiteralValue::U64(v) => v.hash(state),
+            IrLiteralValue::F32(v) => v.to_bits().hash(state),
+            IrLiteralValue::F64(v) => v.to_bits().hash(state),
+            IrLiteralValue::Bool(v) => v.hash(state),
+            IrLiteralValue::Char(v) => v.hash(state),
+        }
+    }
+}
+
 impl From<&IrLiteralValue> for IrType {
     fn from(imm: &IrLiteralValue) -> Self {
         match imm {

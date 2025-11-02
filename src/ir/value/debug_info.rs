@@ -2,7 +2,7 @@
 use crate::location::source_span::SourceSpan;
 use std::sync::Arc;
 
-#[derive(Debug, Clone, PartialEq)]
+#[derive(Debug, Clone, PartialEq, Eq, Hash)]
 pub struct ValueDebugInfo {
     pub name: Option<Arc<str>>,
     pub source_span: SourceSpan,

@@ -1,6 +1,7 @@
 // rust
 use criterion::{BenchmarkId, Criterion, Throughput, criterion_group, criterion_main};
 use jsavrs::ir::generator::NIrGenerator;
+use jsavrs::ir::optimizer::{DeadCodeElimination, Phase};
 use jsavrs::lexer::{Lexer, lexer_tokenize_with_errors};
 use jsavrs::parser::jsav_parser::JsavParser;
 use jsavrs::semantic::type_checker::TypeChecker;
@@ -240,6 +241,210 @@ pub fn benchmark_end_to_end(c: &mut Criterion) {
     pipeline_group.finish();
 }
 
+/// Benchmark Dead Code Elimination optimization on small functions (<100 instructions)
+pub fn benchmark_dce_small(c: &mut Criterion) {
+    let mut dce_group = c.benchmark_group("jsavrs-dce-small");
+    dce_group
+        .significance_level(0.005)
+        .sample_size(500)
+        .confidence_level(0.99)
+        .warm_up_time(Duration::from_secs(3))
+        .measurement_time(Duration::from_secs(10));
+
+    // Small function with unreachable code and dead variables
+    let small_func = r#"
+        fun test_small(x: i32): i32 {
+            var dead1: i32 = 10;
+            var dead2: i32 = 20;
+            if false {
+                var unreachable: i32 = 30;
+                return unreachable;
+            }
+            return x;
+        }
+    "#;
+
+    dce_group.bench_function("small_function", |b| {
+        b.iter(|| {
+            let mut lexer = Lexer::new("bench.vn", black_box(small_func));
+            let (tokens, _) = lexer_tokenize_with_errors(&mut lexer);
+            let parser = JsavParser::new(tokens);
+            let (ast, _) = parser.parse();
+            let mut type_checker = TypeChecker::new();
+            let _ = type_checker.check(&ast);
+            let mut ir_generator = NIrGenerator::new();
+            let (mut ir_module, _) = ir_generator.generate(ast, "bench.vn");
+
+            let mut dce = DeadCodeElimination::default();
+            dce.run(&mut ir_module);
+            black_box(&ir_module);
+        })
+    });
+
+    dce_group.finish();
+}
+
+/// Benchmark Dead Code Elimination optimization on medium functions (~1000 instructions)
+pub fn benchmark_dce_medium(c: &mut Criterion) {
+    let mut dce_group = c.benchmark_group("jsavrs-dce-medium");
+    dce_group
+        .significance_level(0.005)
+        .sample_size(100)
+        .confidence_level(0.99)
+        .warm_up_time(Duration::from_secs(3))
+        .measurement_time(Duration::from_secs(15));
+
+    // Generate medium function with many dead variables (avoids deep nesting)
+    let mut medium_func = String::from("fun test_medium(x: i32): i32 {\n");
+    medium_func.push_str("    var result: i32 = x;\n");
+    for i in 0..50 {
+        medium_func.push_str(&format!("    var dead{}: i32 = {} + x;\n", i, i));
+        medium_func.push_str(&format!("    var unused{}: i32 = dead{} + 1;\n", i, i));
+    }
+    medium_func.push_str("    return result;\n");
+    medium_func.push_str("}\n");
+
+    dce_group.bench_function("medium_function", |b| {
+        b.iter(|| {
+            let mut lexer = Lexer::new("bench.vn", black_box(medium_func.as_str()));
+            let (tokens, _) = lexer_tokenize_with_errors(&mut lexer);
+            let parser = JsavParser::new(tokens);
+            let (ast, _) = parser.parse();
+            let mut type_checker = TypeChecker::new();
+            let _ = type_checker.check(&ast);
+            let mut ir_generator = NIrGenerator::new();
+            let (mut ir_module, _) = ir_generator.generate(ast, "bench.vn");
+
+            let mut dce = DeadCodeElimination::default();
+            dce.run(&mut ir_module);
+            black_box(&ir_module);
+        })
+    });
+
+    dce_group.finish();
+}
+/// Benchmark Dead Code Elimination optimization on large functions (~10000 instructions)
+pub fn benchmark_dce_large(c: &mut Criterion) {
+    let mut dce_group = c.benchmark_group("jsavrs-dce-large");
+    dce_group
+        .significance_level(0.005)
+        .sample_size(20)
+        .confidence_level(0.99)
+        .warm_up_time(Duration::from_secs(5))
+        .measurement_time(Duration::from_secs(20));
+
+    // Generate large function with many dead variables (avoids deep nesting)
+    let mut large_func = String::from("fun test_large(x: i32): i32 {\n");
+    large_func.push_str("    var result: i32 = x;\n");
+    for i in 0..200 {
+        large_func.push_str(&format!("    var dead{}: i32 = {} + x;\n", i, i));
+        large_func.push_str(&format!("    var unused{}: i32 = dead{} + 1;\n", i, i));
+    }
+    large_func.push_str("    return result;\n");
+    large_func.push_str("}\n");
+
+    dce_group.bench_function("large_function", |b| {
+        b.iter(|| {
+            let mut lexer = Lexer::new("bench.vn", black_box(large_func.as_str()));
+            let (tokens, _) = lexer_tokenize_with_errors(&mut lexer);
+            let parser = JsavParser::new(tokens);
+            let (ast, _) = parser.parse();
+            let mut type_checker = TypeChecker::new();
+            let _ = type_checker.check(&ast);
+            let mut ir_generator = NIrGenerator::new();
+            let (mut ir_module, _) = ir_generator.generate(ast, "bench.vn");
+
+            let mut dce = DeadCodeElimination::default();
+            dce.run(&mut ir_module);
+            black_box(&ir_module);
+        })
+    });
+
+    dce_group.finish();
+}
+
+/// Benchmark Dead Code Elimination optimization on modules with multiple functions
+pub fn benchmark_dce_module(c: &mut Criterion) {
+    let mut dce_group = c.benchmark_group("jsavrs-dce-module");
+    dce_group
+        .significance_level(0.005)
+        .sample_size(100)
+        .confidence_level(0.99)
+        .warm_up_time(Duration::from_secs(3))
+        .measurement_time(Duration::from_secs(15));
+
+    // Module with 10 functions, each with dead code (simplified to avoid stack overflow)
+    let mut module_code = String::new();
+    for func_idx in 0..10 {
+        module_code.push_str(&format!("fun test_func{}(x: i32): i32 {{\n", func_idx));
+        module_code.push_str("    var result: i32 = x;\n");
+        for i in 0..10 {
+            module_code.push_str(&format!("    var dead{}: i32 = {} + x;\n", i, i));
+        }
+        module_code.push_str("    return result;\n");
+        module_code.push_str("}\n\n");
+    }
+
+    dce_group.bench_function("module_with_multiple_functions", |b| {
+        b.iter(|| {
+            let mut lexer = Lexer::new("bench.vn", black_box(module_code.as_str()));
+            let (tokens, _) = lexer_tokenize_with_errors(&mut lexer);
+            let parser = JsavParser::new(tokens);
+            let (ast, _) = parser.parse();
+            let mut type_checker = TypeChecker::new();
+            let _ = type_checker.check(&ast);
+            let mut ir_generator = NIrGenerator::new();
+            let (mut ir_module, _) = ir_generator.generate(ast, "bench.vn");
+
+            let mut dce = DeadCodeElimination::default();
+            dce.run(&mut ir_module);
+            black_box(&ir_module);
+        })
+    });
+
+    dce_group.finish();
+}
+/// Benchmark worst-case iteration count (deeply nested code)
+pub fn benchmark_dce_worst_case(c: &mut Criterion) {
+    let mut dce_group = c.benchmark_group("jsavrs-dce-worst-case");
+    dce_group
+        .significance_level(0.005)
+        .sample_size(50)
+        .confidence_level(0.99)
+        .warm_up_time(Duration::from_secs(3))
+        .measurement_time(Duration::from_secs(15));
+
+    // Deep nesting with cascading dead code (requires multiple iterations)
+    let mut worst_case = String::from("fun test_worst_case(x: i32): i32 {\n");
+    for i in 0..20 {
+        worst_case.push_str(&format!("    var v{}: i32 = x + {};\n", i, i));
+        if i > 0 {
+            worst_case.push_str(&format!("    var chain{}: i32 = v{};\n", i, i - 1));
+        }
+    }
+    worst_case.push_str("    return x;\n");
+    worst_case.push_str("}\n");
+
+    dce_group.bench_function("worst_case_deep_nesting", |b| {
+        b.iter(|| {
+            let mut lexer = Lexer::new("bench.vn", black_box(worst_case.as_str()));
+            let (tokens, _) = lexer_tokenize_with_errors(&mut lexer);
+            let parser = JsavParser::new(tokens);
+            let (ast, _) = parser.parse();
+            let mut type_checker = TypeChecker::new();
+            let _ = type_checker.check(&ast);
+            let mut ir_generator = NIrGenerator::new();
+            let (mut ir_module, _) = ir_generator.generate(ast, "bench.vn");
+
+            let mut dce = DeadCodeElimination::default();
+            dce.run(&mut ir_module);
+            black_box(&ir_module);
+        })
+    });
+
+    dce_group.finish();
+}
+
 criterion_group!(
     benches,
     benchmark_lexer,
@@ -247,6 +452,11 @@ criterion_group!(
     benchmark_parser_nodes,
     benchmark_semantic_analysis,
     benchmark_ir_generation,
-    benchmark_end_to_end
+    benchmark_end_to_end,
+    benchmark_dce_small,
+    benchmark_dce_medium,
+    benchmark_dce_large,
+    benchmark_dce_module,
+    benchmark_dce_worst_case
 );
 criterion_main!(benches);

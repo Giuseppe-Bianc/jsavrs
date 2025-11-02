@@ -3,7 +3,7 @@ use super::Value;
 use std::fmt;
 use std::sync::Arc;
 
-#[derive(Debug, Clone, PartialEq)]
+#[derive(Debug, Clone, PartialEq, Eq, Hash)]
 pub enum IrConstantValue {
     String { string: Arc<str> },
     Array { elements: Vec<Value> },
