@@ -121,7 +121,7 @@ fn main() -> Result<(), CompileError> {
     // Extract type information from the type checker to guide IR generation
     let mut generator = NIrGenerator::new();
     let nir_timer = Timer::new("NIR Generation");
-    let (module, ir_errors) = generator.generate(statements.clone(), file_path.to_str().unwrap());
+    let (irmodule, ir_errors) = generator.generate(statements.clone(), file_path.to_str().unwrap());
     println!("{nir_timer}");
 
     if !ir_errors.is_empty() {
@@ -133,12 +133,24 @@ fn main() -> Result<(), CompileError> {
 
     // Print the module
     if args.verbose {
+        println!("{irmodule}");
+    }
+
+    let pipeline: Vec<Box<dyn Phase>> = vec![
+        Box::new(DeadCodeElimination::new())
+    ];
+    let mut module = irmodule;
+
+    let optimization_timer = Timer::new("IR Optimization Pipeline");
+    run_pipeline(&mut module, pipeline);
+    println!("IR optimization done");
+    println!("{optimization_timer}");
+    if args.verbose {
+        println!("module after optimizations:");
         println!("{module}");
     }
 
-    let pipeline: Vec<Box<dyn Phase>> = vec![Box::new(DeadCodeElimination)];
 
-    run_pipeline(&mut module.clone(), pipeline);
 
     let mut assembly_file = AssemblyFile::new(Abi::SYSTEM_V_LINUX);
     assembly_file.data_sec_add_data("message", DataDirective::new_asciz("Hello, World!".to_string()));
