@@ -137,7 +137,7 @@ fn main() -> Result<(), CompileError> {
     }
 
     let pipeline: Vec<Box<dyn Phase>> = vec![
-        Box::new(DeadCodeElimination::new())
+        Box::new(DeadCodeElimination)
     ];
     let mut module = irmodule;
 
