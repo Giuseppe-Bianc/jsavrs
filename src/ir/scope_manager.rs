@@ -255,10 +255,10 @@ impl ScopeManager {
         }
 
         // Update current scope to the other manager’s active scope.
-        if other.current_scope != other.root_scope {
-            if let Some(new_current_scope_id) = id_mapping.get(&other.current_scope) {
-                self.current_scope = *new_current_scope_id;
-            }
+        if other.current_scope != other.root_scope
+            && let Some(new_current_scope_id) = id_mapping.get(&other.current_scope)
+        {
+            self.current_scope = *new_current_scope_id;
         }
     }
 }
