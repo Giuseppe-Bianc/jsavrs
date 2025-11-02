@@ -136,9 +136,7 @@ fn main() -> Result<(), CompileError> {
         println!("{irmodule}");
     }
 
-    let pipeline: Vec<Box<dyn Phase>> = vec![
-        Box::new(DeadCodeElimination)
-    ];
+    let pipeline: Vec<Box<dyn Phase>> = vec![Box::new(DeadCodeElimination::default())];
     let mut module = irmodule;
 
     let optimization_timer = Timer::new("IR Optimization Pipeline");
@@ -146,11 +144,9 @@ fn main() -> Result<(), CompileError> {
     println!("IR optimization done");
     println!("{optimization_timer}");
     if args.verbose {
-        println!("module after optimizations:");
+        println!("\n{}", style("Optimized IR Module:").cyan().bold());
         println!("{module}");
     }
-
-
 
     let mut assembly_file = AssemblyFile::new(Abi::SYSTEM_V_LINUX);
     assembly_file.data_sec_add_data("message", DataDirective::new_asciz("Hello, World!".to_string()));

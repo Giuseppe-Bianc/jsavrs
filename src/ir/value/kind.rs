@@ -2,7 +2,7 @@
 use super::{constant::IrConstantValue, literal::IrLiteralValue};
 use std::sync::Arc;
 
-#[derive(Debug, Clone, PartialEq)]
+#[derive(Debug, Clone, PartialEq, Eq, Hash)]
 pub enum ValueKind {
     Literal(IrLiteralValue),
     Constant(IrConstantValue),

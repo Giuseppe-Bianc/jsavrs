@@ -34,7 +34,7 @@ impl fmt::Display for ValueId {
     }
 }
 
-#[derive(Debug, Clone, PartialEq)]
+#[derive(Debug, Clone, PartialEq, Eq, Hash)]
 pub struct Value {
     pub id: ValueId,
     pub kind: ValueKind,
