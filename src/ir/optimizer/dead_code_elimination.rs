@@ -329,10 +329,10 @@ impl DefUseChains {
     /// * `value` - The value being used
     fn add_use(&mut self, inst_idx: InstructionIndex, value: crate::ir::Value) {
         // Add to value_to_uses map
-        self.value_to_uses.entry(value.clone()).or_insert_with(HashSet::new).insert(inst_idx);
+        self.value_to_uses.entry(value.clone()).or_default().insert(inst_idx);
 
         // Add to instruction_to_used_values map
-        self.instruction_to_used_values.entry(inst_idx).or_insert_with(HashSet::new).insert(value);
+        self.instruction_to_used_values.entry(inst_idx).or_default().insert(value);
     }
 
     /// Returns the set of instructions that use the given value.
@@ -345,6 +345,7 @@ impl DefUseChains {
     ///
     /// An empty set if the value is never used, otherwise the set of instruction indices
     /// that reference this value.
+    #[allow(dead_code)]
     fn get_uses(&self, value: &crate::ir::Value) -> HashSet<InstructionIndex> {
         self.value_to_uses.get(value).cloned().unwrap_or_default()
     }
@@ -386,7 +387,7 @@ impl DefUseChains {
     ///
     /// `true` if at least one instruction uses this value, `false` otherwise.
     fn has_uses(&self, value: &crate::ir::Value) -> bool {
-        self.value_to_uses.get(value).map_or(false, |uses| !uses.is_empty())
+        self.value_to_uses.get(value).is_some_and(|uses| !uses.is_empty())
     }
 }
 
@@ -483,10 +484,10 @@ impl EscapeAnalyzer {
         // Step 1: Initialize allocas as Local
         for block in function.cfg.blocks() {
             for instruction in &block.instructions {
-                if let InstructionKind::Alloca { .. } = instruction.kind {
-                    if let Some(result) = &instruction.result {
-                        self.escape_map.insert(result.clone(), EscapeStatus::Local);
-                    }
+                if let InstructionKind::Alloca { .. } = instruction.kind
+                    && let Some(result) = &instruction.result
+                {
+                    self.escape_map.insert(result.clone(), EscapeStatus::Local);
                 }
             }
         }
@@ -524,10 +525,10 @@ impl EscapeAnalyzer {
 
             // T061: Return of alloca pointer marks it as Escaped
             let terminator = &block.terminator;
-            if let crate::ir::TerminatorKind::Return { value, .. } = &terminator.kind {
-                if self.is_alloca_value(value) {
-                    self.mark_escaped(value);
-                }
+            if let crate::ir::TerminatorKind::Return { value, .. } = &terminator.kind
+                && self.is_alloca_value(value)
+            {
+                self.mark_escaped(value);
             }
         }
 
@@ -542,10 +543,10 @@ impl EscapeAnalyzer {
 
     /// Marks a value as having its address taken.
     fn mark_address_taken(&mut self, value: &crate::ir::Value) {
-        if let Some(status) = self.escape_map.get_mut(value) {
-            if *status == EscapeStatus::Local {
-                *status = EscapeStatus::AddressTaken;
-            }
+        if let Some(status) = self.escape_map.get_mut(value)
+            && *status == EscapeStatus::Local
+        {
+            *status = EscapeStatus::AddressTaken;
         }
     }
 
@@ -588,6 +589,7 @@ impl SideEffectClass {
     /// - **MemoryRead**: Load (may be observable in concurrent contexts)
     /// - **MemoryWrite**: Store, AtomicRMW, AtomicCmpXchg
     /// - **EffectFul**: Calls, I/O, volatile/atomic operations, fences
+    #[allow(dead_code)]
     fn classify(instruction: &crate::ir::Instruction, _escape_analyzer: &EscapeAnalyzer) -> Self {
         use crate::ir::InstructionKind;
 
@@ -1038,10 +1040,10 @@ impl DeadCodeElimination {
 
             // Remove unreachable blocks
             for label in &blocks_to_remove {
-                if self.verbose_warnings {
-                    if let Some(block) = function.cfg.get_block(label) {
-                        self.log_block_removal_debug_info(block);
-                    }
+                if self.verbose_warnings
+                    && let Some(block) = function.cfg.get_block(label)
+                {
+                    self.log_block_removal_debug_info(block);
                 }
 
                 if function.cfg.remove_block(label) {
@@ -1261,10 +1263,10 @@ impl DeadCodeElimination {
 
         for block in function.cfg.blocks() {
             for instruction in &block.instructions {
-                if let InstructionKind::Load { src, .. } = &instruction.kind {
-                    if src == ptr {
-                        return true;
-                    }
+                if let InstructionKind::Load { src, .. } = &instruction.kind
+                    && src == ptr
+                {
+                    return true;
                 }
             }
         }
@@ -1536,16 +1538,12 @@ impl Phase for DeadCodeElimination {
         let dce_stats = self.get_statistics();
         if dce_stats.had_effect() {
             println!("\n{}", style("Dead Code Elimination Statistics:").cyan().bold());
-            println!(
-                " ✂️  Instructions removed: {}", dce_stats.instructions_removed);
+            println!(" ✂️  Instructions removed: {}", dce_stats.instructions_removed);
             println!("🗑️  Blocks removed: {}", dce_stats.blocks_removed);
             println!("🔄 Iterations to convergence: {}", dce_stats.iterations);
 
             if !dce_stats.conservative_warnings.is_empty() {
-                println!(
-                    "⚠️  Conservative warnings: {}",
-                    dce_stats.conservative_warnings.len()
-                );
+                println!("⚠️  Conservative warnings: {}", dce_stats.conservative_warnings.len());
                 for warning in &dce_stats.conservative_warnings {
                     println!("    - {}", style(&warning.reason).yellow());
                 }
