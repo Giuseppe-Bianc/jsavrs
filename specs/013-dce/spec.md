@@ -5,6 +5,12 @@
 **Status**: Draft  
 **Input**: User description: "Build a Dead Code Elimination (DCE) optimization phase for an intermediate representation (IR) compiler that removes unused code and unreachable instructions from functions."
 
+## Clarifications
+
+### Session 2025-11-02
+
+- Q: Logging and Diagnostics Detail Level - What level of diagnostic information should be provided when optimization encounters limitations? → A: Balanced approach - Report summary statistics plus structured warnings when conservative decisions prevent removal (aliasing uncertainty, unknown call purity) with decision rationale included.
+
 ## User Scenarios & Testing *(mandatory)*
 
 ### User Story 1 - Remove Unreachable Code Blocks (Priority: P1)
@@ -107,7 +113,7 @@ A compiler developer compiles a program where removing dead code creates additio
 - **FR-013**: System MUST preserve SSA form properties - no uses of undefined values after optimization
 - **FR-014**: System MUST preserve debug information and source location metadata where possible
 - **FR-015**: System MUST respect scope boundaries when removing instructions
-- **FR-016**: System MUST track and report statistics including number of instructions removed, blocks removed, and iterations to fixed-point
+- **FR-016**: System MUST track and report statistics including number of instructions removed, blocks removed, and iterations to fixed-point; system MUST emit structured warnings with rationale when conservative decisions prevent removal (e.g., aliasing uncertainty, unknown call purity, potential side effects)
 - **FR-017**: System MUST operate on entire modules, iterating over all functions
 - **FR-018**: System MUST skip external function declarations (functions without bodies)
 - **FR-019**: System MUST perform escape analysis to track which allocated objects may be accessed outside their defining function
@@ -143,3 +149,4 @@ A compiler developer compiles a program where removing dead code creates additio
 - **SC-008**: For programs with no dead code, system completes in a single iteration with zero removals reported
 - **SC-009**: SSA form validation passes 100% after optimization (no undefined value uses created)
 - **SC-010**: All existing compiler test suites continue to pass after enabling DCE optimization phase
+- **SC-011**: When optimization is limited by conservative analysis decisions, system emits structured diagnostic warnings identifying the reason (aliasing, call purity, etc.) for at least 95% of preservation decisions
