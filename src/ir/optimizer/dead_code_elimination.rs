@@ -25,13 +25,12 @@
 //! let mut dce = DeadCodeElimination::default();
 //! dce.run(&mut module);
 //! ```
-
-use crate::ir::Phase;
-use crate::ir::{Function, Module};
+use crate::ir::{Function, Module, Phase, Value};
 use console::style;
 use petgraph::graph::NodeIndex;
 use std::collections::HashSet;
 use std::fmt;
+use std::fmt::Write;
 
 // ============================================================================
 // Core Data Structures
@@ -181,15 +180,15 @@ pub struct InstructionIndex {
 struct DefUseChains {
     /// Maps each value to the set of instruction indices that use it.
     /// Key: Value (temporary ID or global), Value: Set of InstructionIndex
-    value_to_uses: std::collections::HashMap<crate::ir::Value, HashSet<InstructionIndex>>,
+    value_to_uses: std::collections::HashMap<Value, HashSet<InstructionIndex>>,
 
     /// Maps each instruction to the values it uses.
     /// Key: InstructionIndex, Value: Set of Values
-    instruction_to_used_values: std::collections::HashMap<InstructionIndex, HashSet<crate::ir::Value>>,
+    instruction_to_used_values: std::collections::HashMap<InstructionIndex, HashSet<Value>>,
 
     /// Maps each instruction to the value it defines (if any).
     /// Key: InstructionIndex, Value: Value (typically a temporary)
-    instruction_to_defined_value: std::collections::HashMap<InstructionIndex, crate::ir::Value>,
+    instruction_to_defined_value: std::collections::HashMap<InstructionIndex, Value>,
 }
 
 /// Liveness information for a value.
@@ -254,16 +253,16 @@ struct LivenessAnalyzer {
     def_use_chains: DefUseChains,
 
     /// Gen sets: values used before being defined in each block.
-    gen_sets: std::collections::HashMap<NodeIndex, HashSet<crate::ir::Value>>,
+    gen_sets: std::collections::HashMap<NodeIndex, HashSet<Value>>,
 
     /// Kill sets: values defined in each block.
-    kill_sets: std::collections::HashMap<NodeIndex, HashSet<crate::ir::Value>>,
+    kill_sets: std::collections::HashMap<NodeIndex, HashSet<Value>>,
 
     /// Live-in sets: values live at the start of each block.
-    live_in: std::collections::HashMap<NodeIndex, HashSet<crate::ir::Value>>,
+    live_in: std::collections::HashMap<NodeIndex, HashSet<Value>>,
 
     /// Live-out sets: values live at the end of each block.
-    live_out: std::collections::HashMap<NodeIndex, HashSet<crate::ir::Value>>,
+    live_out: std::collections::HashMap<NodeIndex, HashSet<Value>>,
 }
 
 // ============================================================================
@@ -1537,17 +1536,25 @@ impl Phase for DeadCodeElimination {
         self.last_stats = aggregated_stats;
         let dce_stats = self.get_statistics();
         if dce_stats.had_effect() {
-            println!("\n{}", style("Dead Code Elimination Statistics:").cyan().bold());
-            println!("✂️  Instructions removed: {}", dce_stats.instructions_removed);
-            println!("🗑️  Blocks removed: {}", dce_stats.blocks_removed);
-            println!("🔄  Iterations to convergence: {}", dce_stats.iterations);
+            let mut output = String::with_capacity(256);
+            // Use write! macro to write directly into the buffer
+            writeln!(output, "\n{}", style("Dead Code Elimination Statistics:").cyan().bold()).unwrap();
+            writeln!(output, "✂️  Instructions removed: {}", dce_stats.instructions_removed).unwrap();
+            writeln!(output, "🗑️  Blocks removed: {}", dce_stats.blocks_removed).unwrap();
+            writeln!(output, "🔄  Iterations to convergence: {}", dce_stats.iterations).unwrap();
 
             if !dce_stats.conservative_warnings.is_empty() {
-                println!("⚠️  Conservative warnings: {}", dce_stats.conservative_warnings.len());
+                writeln!(output, "⚠️  Conservative warnings: {}", dce_stats.conservative_warnings.len()).unwrap();
+
+                // Reserve additional space for warnings
+                output.reserve(dce_stats.conservative_warnings.len() * 50);
+
                 for warning in &dce_stats.conservative_warnings {
-                    println!("    - {}", style(&warning.reason).yellow());
+                    writeln!(output, "    - {}", style(&warning.reason).yellow()).unwrap();
                 }
             }
+
+            print!("{}", output);
         } else {
             println!("{}", style("No dead code found - module already optimal").green());
         }
