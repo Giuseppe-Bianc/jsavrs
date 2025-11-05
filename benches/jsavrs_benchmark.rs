@@ -246,10 +246,11 @@ pub fn benchmark_dce_small(c: &mut Criterion) {
     let mut dce_group = c.benchmark_group("jsavrs-dce-small");
     dce_group
         .significance_level(0.005)
-        .sample_size(500)
+        .sample_size(1000)
         .confidence_level(0.99)
-        .warm_up_time(Duration::from_secs(3))
-        .measurement_time(Duration::from_secs(10));
+        .warm_up_time(Duration::from_secs(5))
+        .measurement_time(Duration::from_secs(15))
+        .nresamples(500_000);
 
     // Small function with unreachable code and dead variables
     let small_func = r#"
@@ -289,10 +290,11 @@ pub fn benchmark_dce_medium(c: &mut Criterion) {
     let mut dce_group = c.benchmark_group("jsavrs-dce-medium");
     dce_group
         .significance_level(0.005)
-        .sample_size(100)
+        .sample_size(1000)
         .confidence_level(0.99)
-        .warm_up_time(Duration::from_secs(3))
-        .measurement_time(Duration::from_secs(15));
+        .warm_up_time(Duration::from_secs(5))
+        .measurement_time(Duration::from_secs(15))
+        .nresamples(500_000);
 
     // Generate medium function with many dead variables (avoids deep nesting)
     let mut medium_func = String::from("fun test_medium(x: i32): i32 {\n");
@@ -328,10 +330,11 @@ pub fn benchmark_dce_large(c: &mut Criterion) {
     let mut dce_group = c.benchmark_group("jsavrs-dce-large");
     dce_group
         .significance_level(0.005)
-        .sample_size(20)
+        .sample_size(1000)
         .confidence_level(0.99)
         .warm_up_time(Duration::from_secs(5))
-        .measurement_time(Duration::from_secs(20));
+        .measurement_time(Duration::from_secs(15))
+        .nresamples(500_000);
 
     // Generate large function with many dead variables (avoids deep nesting)
     let mut large_func = String::from("fun test_large(x: i32): i32 {\n");
@@ -368,10 +371,11 @@ pub fn benchmark_dce_module(c: &mut Criterion) {
     let mut dce_group = c.benchmark_group("jsavrs-dce-module");
     dce_group
         .significance_level(0.005)
-        .sample_size(100)
+        .sample_size(1000)
         .confidence_level(0.99)
-        .warm_up_time(Duration::from_secs(3))
-        .measurement_time(Duration::from_secs(15));
+        .warm_up_time(Duration::from_secs(5))
+        .measurement_time(Duration::from_secs(15))
+        .nresamples(500_000);
 
     // Module with 10 functions, each with dead code (simplified to avoid stack overflow)
     let mut module_code = String::new();
@@ -409,10 +413,11 @@ pub fn benchmark_dce_worst_case(c: &mut Criterion) {
     let mut dce_group = c.benchmark_group("jsavrs-dce-worst-case");
     dce_group
         .significance_level(0.005)
-        .sample_size(50)
+        .sample_size(1000)
         .confidence_level(0.99)
-        .warm_up_time(Duration::from_secs(3))
-        .measurement_time(Duration::from_secs(15));
+        .warm_up_time(Duration::from_secs(5))
+        .measurement_time(Duration::from_secs(15))
+        .nresamples(500_000);
 
     // Deep nesting with cascading dead code (requires multiple iterations)
     let mut worst_case = String::from("fun test_worst_case(x: i32): i32 {\n");
