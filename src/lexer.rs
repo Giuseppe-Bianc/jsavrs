@@ -355,7 +355,7 @@ fn apply_error_replacements(
 ///
 /// # Performance Characteristics
 /// - **Time Complexity**: O(n) single pass through tokens
-/// - **Space Complexity**: O(1) - in-place modification, no additional allocations
+/// - **Space Complexity**: O(n) single pass through tokens
 /// - **Fast Path**: Immediate return if `to_remove` is empty (common case)
 ///
 /// # Parameters
