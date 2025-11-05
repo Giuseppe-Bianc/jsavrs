@@ -31,6 +31,7 @@ use petgraph::graph::NodeIndex;
 use std::collections::HashSet;
 use std::fmt;
 use std::fmt::Write;
+use std::sync::Arc;
 
 // ============================================================================
 // Core Data Structures
@@ -104,13 +105,13 @@ pub struct OptimizationStats {
 pub struct ConservativeWarning {
     /// Human-readable description of the instruction.
     /// Example: "call @unknown_func(42) in block 'entry'"
-    pub instruction_debug: String,
+    pub instruction_debug: Arc<str>,
 
     /// The specific reason this instruction was conservatively kept.
     pub reason: ConservativeReason,
 
     /// Optional: The basic block label where this instruction appears.
-    pub block_label: Option<String>,
+    pub block_label: Option<Arc<str>>,
 }
 
 /// Reasons why an instruction was conservatively preserved.
@@ -1019,14 +1020,14 @@ impl DeadCodeElimination {
             // Phase 1: Reachability analysis and block removal
             let reachable_blocks = ReachabilityAnalyzer::analyze(&function.cfg);
 
-            let blocks_to_remove: Vec<String> = function
+            let blocks_to_remove: Vec<Arc<str>> = function
                 .cfg
                 .blocks()
                 .filter(|block| {
                     let block_idx = function.cfg.find_block_by_label(&block.label);
                     if let Some(idx) = block_idx { !reachable_blocks.contains(&idx) } else { false }
                 })
-                .map(|block| block.label.to_string())
+                .map(|block| block.label.clone())
                 .collect();
 
             // T079: Track changes - blocks removed
@@ -1128,7 +1129,7 @@ impl DeadCodeElimination {
             escape_analyzer.analyze(function);
 
             // Collect dead instructions to remove
-            let mut dead_instructions = Vec::new();
+            let mut dead_instructions: Vec<(Arc<str>, usize)> = Vec::new();
 
             for block_idx in function.cfg.graph().node_indices() {
                 let block = &function.cfg.graph()[block_idx];
@@ -1213,7 +1214,7 @@ impl DeadCodeElimination {
                     };
 
                     if can_remove {
-                        dead_instructions.push((block.label.to_string(), inst_offset));
+                        dead_instructions.push((block.label.clone(), inst_offset));
                     }
                 }
             }
@@ -1336,7 +1337,7 @@ impl DeadCodeElimination {
     /// Iterates through all blocks and their instructions, filtering out incoming
     /// phi entries that reference blocks in `removed_labels`.
     fn update_phi_nodes_for_removed_blocks(
-        &self, cfg: &mut crate::ir::cfg::ControlFlowGraph, removed_labels: &[String],
+        &self, cfg: &mut crate::ir::cfg::ControlFlowGraph, removed_labels: &[Arc<str>],
     ) {
         use crate::ir::instruction::InstructionKind;
 
@@ -1347,7 +1348,9 @@ impl DeadCodeElimination {
                 // Check if this is a Phi instruction
                 if let InstructionKind::Phi { incoming, .. } = &mut instruction.kind {
                     // Filter out incoming edges from removed blocks
-                    incoming.retain(|(_, predecessor_label)| !removed_labels.contains(predecessor_label));
+                    incoming.retain(|(_, predecessor_label)| {
+                        !removed_labels.iter().any(|removed| &**removed == &**predecessor_label)
+                    });
                 }
             }
         }
@@ -1380,10 +1383,10 @@ impl DeadCodeElimination {
             let block_idx = cfg.find_block_by_label(&block.label);
 
             // Get actual CFG predecessors for this block
-            let predecessors: std::collections::HashSet<String> = if let Some(idx) = block_idx {
+            let predecessors: std::collections::HashSet<Arc<str>> = if let Some(idx) = block_idx {
                 cfg.graph()
                     .neighbors_directed(idx, Direction::Incoming)
-                    .map(|pred_idx| cfg.graph()[pred_idx].label.to_string())
+                    .map(|pred_idx| cfg.graph()[pred_idx].label.clone())
                     .collect()
             } else {
                 std::collections::HashSet::new()
@@ -1410,7 +1413,7 @@ impl DeadCodeElimination {
 
                         // Check 3: All incoming edges correspond to actual CFG predecessors
                         assert!(
-                            predecessors.contains(pred_label),
+                            predecessors.iter().any(|p| &**p == pred_label.as_str()),
                             "SSA violation: Phi node in block '{}' references '{}' which is not a CFG predecessor",
                             block.label,
                             pred_label
@@ -1618,7 +1621,7 @@ impl ConservativeWarning {
     /// * `instruction_debug` - Human-readable instruction description
     /// * `reason` - The conservative reason for keeping the instruction
     /// * `block_label` - Optional block location for context
-    pub fn new(instruction_debug: String, reason: ConservativeReason, block_label: Option<String>) -> Self {
+    pub fn new(instruction_debug: Arc<str>, reason: ConservativeReason, block_label: Option<Arc<str>>) -> Self {
         Self { instruction_debug, reason, block_label }
     }
 }

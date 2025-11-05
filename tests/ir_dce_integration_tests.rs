@@ -80,9 +80,9 @@ mod integration_tests {
             blocks_removed: 7,
             iterations: 3,
             conservative_warnings: vec![ConservativeWarning::new(
-                "test instruction".to_string(),
+                "test instruction".into(),
                 ConservativeReason::MayAlias,
-                Some("entry".to_string()),
+                Some("entry".into()),
             )],
         };
 
@@ -117,30 +117,28 @@ mod integration_tests {
     #[test]
     fn test_conservative_warning_new() {
         let warning = ConservativeWarning::new(
-            "store %x, *%ptr".to_string(),
+            "store %x, *%ptr".into(),
             ConservativeReason::EscapedPointer,
-            Some("main_block".to_string()),
+            Some("main_block".into()),
         );
 
-        assert_eq!(warning.instruction_debug, "store %x, *%ptr");
+        assert_eq!(&*warning.instruction_debug, "store %x, *%ptr");
         assert_eq!(warning.reason, ConservativeReason::EscapedPointer);
-        assert_eq!(warning.block_label, Some("main_block".to_string()));
+        assert_eq!(warning.block_label.as_deref(), Some("main_block"));
     }
 
     #[test]
     fn test_conservative_warning_without_block() {
-        let warning =
-            ConservativeWarning::new("call @unknown()".to_string(), ConservativeReason::UnknownCallPurity, None);
+        let warning = ConservativeWarning::new("call @unknown()".into(), ConservativeReason::UnknownCallPurity, None);
 
-        assert_eq!(warning.instruction_debug, "call @unknown()");
+        assert_eq!(&*warning.instruction_debug, "call @unknown()");
         assert_eq!(warning.reason, ConservativeReason::UnknownCallPurity);
         assert_eq!(warning.block_label, None);
     }
 
     #[test]
     fn test_conservative_warning_display_with_block() {
-        let warning =
-            ConservativeWarning::new("test_inst".to_string(), ConservativeReason::MayAlias, Some("bb1".to_string()));
+        let warning = ConservativeWarning::new("test_inst".into(), ConservativeReason::MayAlias, Some("bb1".into()));
 
         let display = format!("{}", warning);
         assert!(display.contains("test_inst"));
@@ -150,8 +148,7 @@ mod integration_tests {
 
     #[test]
     fn test_conservative_warning_display_without_block() {
-        let warning =
-            ConservativeWarning::new("volatile_load".to_string(), ConservativeReason::PotentialSideEffect, None);
+        let warning = ConservativeWarning::new("volatile_load".into(), ConservativeReason::PotentialSideEffect, None);
 
         let display = format!("{}", warning);
         assert!(display.contains("volatile_load"));
