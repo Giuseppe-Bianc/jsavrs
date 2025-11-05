@@ -315,6 +315,7 @@ impl DefUseChains {
     ///
     /// * `inst_idx` - The instruction that defines the value
     /// * `value` - The value being defined (typically a temporary)
+    #[inline]
     fn add_definition(&mut self, inst_idx: InstructionIndex, value: crate::ir::Value) {
         self.instruction_to_defined_value.insert(inst_idx, value);
     }
@@ -327,12 +328,13 @@ impl DefUseChains {
     ///
     /// * `inst_idx` - The instruction that uses the value
     /// * `value` - The value being used
+    #[inline]
     fn add_use(&mut self, inst_idx: InstructionIndex, value: crate::ir::Value) {
-        // Add to value_to_uses map
-        self.value_to_uses.entry(value.clone()).or_default().insert(inst_idx);
+        // Add to instruction_to_used_values map first
+        self.instruction_to_used_values.entry(inst_idx).or_default().insert(value.clone());
 
-        // Add to instruction_to_used_values map
-        self.instruction_to_used_values.entry(inst_idx).or_default().insert(value);
+        // Add to value_to_uses map - reuse the existing entry to avoid lookup
+        self.value_to_uses.entry(value).or_default().insert(inst_idx);
     }
 
     /// Returns the set of instructions that use the given value.
@@ -386,6 +388,7 @@ impl DefUseChains {
     /// # Returns
     ///
     /// `true` if at least one instruction uses this value, `false` otherwise.
+    #[inline]
     fn has_uses(&self, value: &crate::ir::Value) -> bool {
         self.value_to_uses.get(value).is_some_and(|uses| !uses.is_empty())
     }
@@ -497,10 +500,8 @@ impl EscapeAnalyzer {
             for instruction in &block.instructions {
                 match &instruction.kind {
                     // T059: Store of alloca pointer marks it as Escaped
-                    InstructionKind::Store { value, .. } => {
-                        if self.is_alloca_value(value) {
-                            self.mark_escaped(value);
-                        }
+                    InstructionKind::Store { value, .. } if self.is_alloca_value(value) => {
+                        self.mark_escaped(value);
                     }
 
                     // T060: Call with alloca as argument marks it as Escaped
@@ -513,10 +514,8 @@ impl EscapeAnalyzer {
                     }
 
                     // T062: GetElementPtr of alloca marks it as AddressTaken
-                    InstructionKind::GetElementPtr { base, .. } => {
-                        if self.is_alloca_value(base) {
-                            self.mark_address_taken(base);
-                        }
+                    InstructionKind::GetElementPtr { base, .. } if self.is_alloca_value(base) => {
+                        self.mark_address_taken(base);
                     }
 
                     _ => {}
@@ -524,8 +523,7 @@ impl EscapeAnalyzer {
             }
 
             // T061: Return of alloca pointer marks it as Escaped
-            let terminator = &block.terminator;
-            if let crate::ir::TerminatorKind::Return { value, .. } = &terminator.kind
+            if let crate::ir::TerminatorKind::Return { value, .. } = &block.terminator.kind
                 && self.is_alloca_value(value)
             {
                 self.mark_escaped(value);
@@ -542,6 +540,7 @@ impl EscapeAnalyzer {
     }
 
     /// Marks a value as having its address taken.
+    #[inline]
     fn mark_address_taken(&mut self, value: &crate::ir::Value) {
         if let Some(status) = self.escape_map.get_mut(value)
             && *status == EscapeStatus::Local
@@ -551,6 +550,7 @@ impl EscapeAnalyzer {
     }
 
     /// Marks a value as escaped.
+    #[inline]
     fn mark_escaped(&mut self, value: &crate::ir::Value) {
         self.escape_map.insert(value.clone(), EscapeStatus::Escaped);
     }
@@ -562,6 +562,7 @@ impl EscapeAnalyzer {
     /// - `Local` if provably local allocation
     /// - `AddressTaken` if address computed but may not escape
     /// - `Escaped` if unknown or provably escaped (conservative default)
+    #[inline]
     fn get_status(&self, value: &crate::ir::Value) -> EscapeStatus {
         self.escape_map.get(value).copied().unwrap_or(EscapeStatus::Escaped)
     }
@@ -686,46 +687,40 @@ impl LivenessAnalyzer {
     /// A vector of all values referenced by this instruction.
     fn extract_used_values(&self, instruction: &crate::ir::Instruction) -> Vec<crate::ir::Value> {
         use crate::ir::InstructionKind;
-        let mut values = Vec::new();
 
         match &instruction.kind {
             InstructionKind::Binary { left, right, .. } => {
-                values.push(left.clone());
-                values.push(right.clone());
+                vec![left.clone(), right.clone()]
             }
             InstructionKind::Unary { operand, .. } => {
-                values.push(operand.clone());
+                vec![operand.clone()]
             }
             InstructionKind::Load { src, .. } => {
-                values.push(src.clone());
+                vec![src.clone()]
             }
             InstructionKind::Store { value, dest } => {
-                values.push(value.clone());
-                values.push(dest.clone());
+                vec![value.clone(), dest.clone()]
             }
             InstructionKind::Call { func, args, .. } => {
+                let mut values = Vec::with_capacity(args.len() + 1);
                 values.push(func.clone());
                 values.extend(args.iter().cloned());
+                values
             }
             InstructionKind::GetElementPtr { base, index, .. } => {
-                values.push(base.clone());
-                values.push(index.clone());
+                vec![base.clone(), index.clone()]
             }
             InstructionKind::Cast { value, .. } => {
-                values.push(value.clone());
+                vec![value.clone()]
             }
             InstructionKind::Phi { incoming, .. } => {
+                let mut values = Vec::with_capacity(incoming.len());
                 values.extend(incoming.iter().map(|(v, _)| v.clone()));
+                values
             }
-            InstructionKind::Vector { operands, .. } => {
-                values.extend(operands.iter().cloned());
-            }
-            InstructionKind::Alloca { .. } => {
-                // Alloca doesn't use any values
-            }
+            InstructionKind::Vector { operands, .. } => operands.clone(),
+            InstructionKind::Alloca { .. } => Vec::new(),
         }
-
-        values
     }
 
     /// Extracts all values used by a terminator.
@@ -739,28 +734,25 @@ impl LivenessAnalyzer {
     /// A vector of all values referenced by this terminator.
     fn extract_terminator_uses(&self, terminator: &crate::ir::Terminator) -> Vec<crate::ir::Value> {
         use crate::ir::TerminatorKind;
-        let mut values = Vec::new();
 
         match &terminator.kind {
             TerminatorKind::Return { value, .. } => {
-                values.push(value.clone());
+                vec![value.clone()]
             }
             TerminatorKind::ConditionalBranch { condition, .. } => {
-                values.push(condition.clone());
+                vec![condition.clone()]
             }
             TerminatorKind::IndirectBranch { address, .. } => {
-                values.push(address.clone());
+                vec![address.clone()]
             }
             TerminatorKind::Switch { value, cases, .. } => {
+                let mut values = Vec::with_capacity(cases.len() + 1);
                 values.push(value.clone());
                 values.extend(cases.iter().map(|(v, _)| v.clone()));
+                values
             }
-            TerminatorKind::Branch { .. } | TerminatorKind::Unreachable => {
-                // These don't use any values
-            }
+            TerminatorKind::Branch { .. } | TerminatorKind::Unreachable => Vec::new(),
         }
-
-        values
     }
 
     /// Computes gen and kill sets for each basic block.
@@ -781,8 +773,10 @@ impl LivenessAnalyzer {
         for block_idx in function.cfg.graph().node_indices() {
             let block = &function.cfg.graph()[block_idx];
 
-            let mut gen_set = HashSet::new();
-            let mut kill_set = HashSet::new();
+            // Pre-allocate based on typical block size
+            let estimated_size = block.instructions.len().saturating_div(2);
+            let mut gen_set = HashSet::with_capacity(estimated_size);
+            let mut kill_set = HashSet::with_capacity(estimated_size);
 
             // Process instructions in forward order
             for (inst_offset, _instruction) in block.instructions.iter().enumerate() {
@@ -790,11 +784,7 @@ impl LivenessAnalyzer {
 
                 // Add used values to gen (if not already killed)
                 let used_values = self.def_use_chains.get_used_values(&inst_idx);
-                for value in used_values {
-                    if !kill_set.contains(&value) {
-                        gen_set.insert(value);
-                    }
-                }
+                gen_set.extend(used_values.into_iter().filter(|v| !kill_set.contains(v)));
 
                 // Add defined value to kill
                 if let Some(defined_value) = self.def_use_chains.get_defined_value(&inst_idx) {
@@ -805,11 +795,7 @@ impl LivenessAnalyzer {
             // Process terminator uses
             let term_idx = InstructionIndex { block_idx, inst_offset: block.instructions.len() };
             let used_values = self.def_use_chains.get_used_values(&term_idx);
-            for value in used_values {
-                if !kill_set.contains(&value) {
-                    gen_set.insert(value);
-                }
-            }
+            gen_set.extend(used_values.into_iter().filter(|v| !kill_set.contains(v)));
 
             self.gen_sets.insert(block_idx, gen_set);
             self.kill_sets.insert(block_idx, kill_set);
@@ -861,26 +847,30 @@ impl LivenessAnalyzer {
                 let mut new_live_out = HashSet::new();
                 for successor in function.cfg.graph().neighbors(block_idx) {
                     if let Some(succ_live_in) = self.live_in.get(&successor) {
+                        // Extend without cloning - use references where possible
                         new_live_out.extend(succ_live_in.iter().cloned());
                     }
                 }
 
                 // Compute live_in[B] = gen[B] ∪ (live_out[B] - kill[B])
-                let gen_set = self.gen_sets.get(&block_idx).cloned().unwrap_or_default();
-                let kill_set = self.kill_sets.get(&block_idx).cloned().unwrap_or_default();
+                let gen_set = self.gen_sets.get(&block_idx);
+                let kill_set = self.kill_sets.get(&block_idx);
 
-                let mut new_live_in = gen_set.clone();
-                for value in &new_live_out {
-                    if !kill_set.contains(value) {
-                        new_live_in.insert(value.clone());
-                    }
+                // Build new_live_in incrementally to minimize clones
+                let mut new_live_in = gen_set.cloned().unwrap_or_default();
+
+                // Add (live_out - kill) to new_live_in
+                if let Some(kill) = kill_set {
+                    new_live_in.extend(new_live_out.iter().filter(|v| !kill.contains(v)).cloned());
+                } else {
+                    new_live_in.extend(new_live_out.iter().cloned());
                 }
 
-                // Check for changes
-                let old_live_in = self.live_in.get(&block_idx).cloned().unwrap_or_default();
-                let old_live_out = self.live_out.get(&block_idx).cloned().unwrap_or_default();
+                // Check for changes - avoid unnecessary clones
+                let changed_in = self.live_in.get(&block_idx).map_or(true, |old| old != &new_live_in);
+                let changed_out = self.live_out.get(&block_idx).map_or(true, |old| old != &new_live_out);
 
-                if new_live_in != old_live_in || new_live_out != old_live_out {
+                if changed_in || changed_out {
                     changed = true;
                     self.live_in.insert(block_idx, new_live_in);
                     self.live_out.insert(block_idx, new_live_out);
@@ -1023,11 +1013,10 @@ impl DeadCodeElimination {
             let blocks_to_remove: Vec<Arc<str>> = function
                 .cfg
                 .blocks()
-                .filter(|block| {
-                    let block_idx = function.cfg.find_block_by_label(&block.label);
-                    if let Some(idx) = block_idx { !reachable_blocks.contains(&idx) } else { false }
+                .filter_map(|block| {
+                    let block_idx = function.cfg.find_block_by_label(&block.label)?;
+                    (!reachable_blocks.contains(&block_idx)).then(|| block.label.clone())
                 })
-                .map(|block| block.label.clone())
                 .collect();
 
             // T079: Track changes - blocks removed
@@ -1128,8 +1117,9 @@ impl DeadCodeElimination {
             let mut escape_analyzer = EscapeAnalyzer::new();
             escape_analyzer.analyze(function);
 
-            // Collect dead instructions to remove
-            let mut dead_instructions: Vec<(Arc<str>, usize)> = Vec::new();
+            // Collect dead instructions to remove - use Vec with capacity hint
+            let estimated_capacity = function.cfg.blocks().map(|b| b.instructions.len()).sum::<usize>() / 10;
+            let mut dead_instructions: Vec<(Arc<str>, usize)> = Vec::with_capacity(estimated_capacity);
 
             for block_idx in function.cfg.graph().node_indices() {
                 let block = &function.cfg.graph()[block_idx];
@@ -1247,7 +1237,6 @@ impl DeadCodeElimination {
 
         total_removed
     }
-
     /// Checks if there are any Load instructions from the given pointer.
     ///
     /// # Arguments
@@ -1312,6 +1301,7 @@ impl DeadCodeElimination {
     /// Conservative classification:
     /// - Pure: arithmetic, logical, comparison operations
     /// - Impure: stores, calls, I/O operations
+    #[inline]
     fn is_pure_instruction(&self, instruction: &crate::ir::Instruction) -> bool {
         use crate::ir::InstructionKind;
 
@@ -1376,13 +1366,13 @@ impl DeadCodeElimination {
         use petgraph::Direction;
 
         // Build set of all block labels for quick lookup
-        let all_labels: std::collections::HashSet<_> = cfg.blocks().map(|b| b.label.as_ref()).collect();
+        let all_labels: std::collections::HashSet<&str> = cfg.blocks().map(|b| b.label.as_ref()).collect();
 
         // Verify each block
         for block in cfg.blocks() {
             let block_idx = cfg.find_block_by_label(&block.label);
 
-            // Get actual CFG predecessors for this block
+            // Get actual CFG predecessors for this block with capacity hint
             let predecessors: std::collections::HashSet<Arc<str>> = if let Some(idx) = block_idx {
                 cfg.graph()
                     .neighbors_directed(idx, Direction::Incoming)
@@ -1581,18 +1571,19 @@ impl OptimizationStats {
 
     /// Formats statistics for human-readable display.
     pub fn format_report(&self, function_name: &str) -> String {
-        format!(
-            "📊 DCE Statistics for '{}':\n\
-             ✂️  Instructions removed: {}\n\
-             🗑️  Blocks removed: {}\n\
-             🔄 Iterations: {}\n\
-             ⚠️  Conservative warnings: {}",
-            function_name,
-            self.instructions_removed,
-            self.blocks_removed,
-            self.iterations,
-            self.conservative_warnings.len()
-        )
+        use std::fmt::Write;
+
+        // Pre-allocate string buffer with estimated capacity
+        let mut output = String::with_capacity(256);
+
+        // Use write! macro for more efficient string building
+        writeln!(output, "📊 DCE Statistics for '{}':", function_name).unwrap();
+        writeln!(output, "✂️  Instructions removed: {}", self.instructions_removed).unwrap();
+        writeln!(output, "🗑️  Blocks removed: {}", self.blocks_removed).unwrap();
+        writeln!(output, "🔄 Iterations: {}", self.iterations).unwrap();
+        writeln!(output, "⚠️  Conservative warnings: {}", self.conservative_warnings.len()).unwrap();
+
+        output
     }
 }
 

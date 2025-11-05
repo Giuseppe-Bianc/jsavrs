@@ -1,13 +1,13 @@
 // run --package jsavrs --bin jsavrs -- -i C:/dev/visualStudio/transpiler/Vandior/input.vn -v
 use clap::Parser;
 use console::style;
-use jsavrs::asm::{Abi, AssemblyFile, DataDirective, GPRegister64, Immediate, Instruction, Operand, X86Register};
+// use jsavrs::asm::{Abi, AssemblyFile, DataDirective, GPRegister64, Immediate, Instruction, Operand, X86Register};
 use jsavrs::cli::Args;
 use jsavrs::error::error_reporter::ErrorReporter;
 use jsavrs::ir::{Phase, generator::NIrGenerator, optimizer::DeadCodeElimination, run_pipeline};
 use jsavrs::lexer::Lexer;
 use jsavrs::parser::jsav_parser::JsavParser;
-use jsavrs::printers::ast_printer::pretty_print_stmt;
+//use jsavrs::printers::ast_printer::pretty_print_stmt;
 use jsavrs::semantic::type_checker::TypeChecker;
 use jsavrs::time::timer::{AutoTimer, Timer};
 use jsavrs::{error::compile_error::CompileError, lexer::lexer_tokenize_with_errors};
@@ -92,21 +92,8 @@ fn main() -> Result<(), CompileError> {
 
     println!("parsing done");
 
-    //Print statements with color if verbose
-    if args.verbose {
-        let print_ast_timer = Timer::new("AST Pretty Print");
-        //println!("{}", pretty_print(&statements.unwrap()));
-        if num_statements > 5 {
-            println!("{num_statements_str}");
-        } else {
-            for stat in &statements {
-                println!("{}", pretty_print_stmt(stat));
-            }
-        }
-        println!("{print_ast_timer}");
-    } else {
-        println!("{num_statements_str}");
-    }
+    //Print statements
+    println!("{num_statements_str}");
 
     let type_check_timer = Timer::new("Type Checking");
     let mut type_checkr = TypeChecker::new();
@@ -131,11 +118,6 @@ fn main() -> Result<(), CompileError> {
 
     println!("NIR generation done");
 
-    // Print the module
-    if args.verbose {
-        println!("{irmodule}");
-    }
-
     let pipeline: Vec<Box<dyn Phase>> = vec![Box::new(DeadCodeElimination::default())];
     let mut module = irmodule;
 
@@ -143,12 +125,8 @@ fn main() -> Result<(), CompileError> {
     run_pipeline(&mut module, pipeline);
     println!("IR optimization done");
     println!("{optimization_timer}");
-    if args.verbose {
-        println!("\n{}", style("Optimized IR Module:").cyan().bold());
-        println!("{module}");
-    }
 
-    let mut assembly_file = AssemblyFile::new(Abi::SYSTEM_V_LINUX);
+    /*let mut assembly_file = AssemblyFile::new(Abi::SYSTEM_V_LINUX);
     assembly_file.data_sec_add_data("message", DataDirective::new_asciz("Hello, World!".to_string()));
     assembly_file.data_sec_add_data("message_len", DataDirective::new_equ_length_of("message"));
     assembly_file.text_sec_add_label("start");
@@ -167,7 +145,7 @@ fn main() -> Result<(), CompileError> {
         "move 200 -> rcx",
     );
 
-    println!("file:\n{}", assembly_file);
+    println!("file:\n{}", assembly_file);*/
 
     Ok(())
 }
