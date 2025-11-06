@@ -7,7 +7,7 @@
 mod snapshot_tests {
     use jsavrs::ir::instruction::{DebugInfo, Instruction, InstructionKind};
     use jsavrs::ir::optimizer::{DeadCodeElimination, Phase};
-    use jsavrs::ir::{self, Function, IrBinaryOp, IrLiteralValue, IrType, Terminator, TerminatorKind, Value};
+    use jsavrs::ir::{Function, IrBinaryOp, IrLiteralValue, IrType, Terminator, TerminatorKind, Value};
     use jsavrs::location::{source_location::SourceLocation, source_span::SourceSpan};
     use jsavrs::utils::module_redacted;
     use std::sync::Arc;

@@ -802,7 +802,7 @@ mod integration_tests {
     /// This test is DEFERRED because creating phi nodes requires CFG API improvements
     /// Current CFG API doesn't expose easy way to add phi nodes to blocks
     /// Future: Implement when CFG provides phi node management methods
-    #[test]
+    /*#[test]
     #[ignore = "Deferred - CFG API doesn't expose phi node creation"]
     fn test_circular_phi_dependencies_in_unreachable_blocks() {
         // TODO: Implement when CFG provides phi node API
@@ -822,7 +822,7 @@ mod integration_tests {
         // Scenario: A block with phi node, all predecessor blocks become unreachable
         // Expected: Phi node block also becomes unreachable and is removed
         println!("⚠ Test deferred: phi node with all predecessors removed (CFG API limitation)");
-    }
+    }*/
 
     /// T108 [Phase 9]: Test for debug information preservation after optimization (FR-014)
     #[test]

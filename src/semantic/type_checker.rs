@@ -45,19 +45,6 @@ impl TypeChecker {
         std::mem::take(&mut self.errors)
     }
 
-    /// Check statements and process errors in a streaming fashion
-    pub fn check_streaming<F>(&mut self, statements: &[Stmt], mut error_handler: F)
-    where
-        F: FnMut(CompileError),
-    {
-        self.visit_statements(statements);
-
-        // Process errors as they're generated
-        for error in self.errors.drain(..) {
-            error_handler(error);
-        }
-    }
-
     // Helper method per dichiarare simboli
     fn declare_symbol(&mut self, name: &str, symbol: Symbol) {
         if let Err(e) = self.symbol_table.declare(name, symbol) {

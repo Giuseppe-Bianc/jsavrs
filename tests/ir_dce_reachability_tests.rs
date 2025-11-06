@@ -278,13 +278,13 @@ mod reachability_tests {
     // This will be implemented when we add insta snapshot testing
     // ========================================================================
 
-    #[test]
+    /*#[test]
     #[ignore] // Ignored until snapshot infrastructure is ready
     fn test_cfg_snapshot_unreachable_removal() {
         // TODO: Implement snapshot test using insta crate
         // This should capture the CFG structure before and after DCE
         // to detect any regressions in the optimization
-    }
+    }*/
 
     // ========================================================================
     // T026: Test phi node updates when removing unreachable blocks
