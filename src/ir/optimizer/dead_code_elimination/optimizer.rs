@@ -38,6 +38,10 @@ impl DeadCodeElimination {
     }
 
     /// Creates a new DCE optimizer with custom settings.
+    ///
+    /// # Panics
+    ///
+    /// Panics if `max_iterations` is 0.
     pub fn with_config(max_iterations: usize, enable_statistics: bool, verbose_warnings: bool) -> Self {
         assert!(max_iterations > 0, "max_iterations must be > 0");
         Self { max_iterations, enable_statistics, verbose_warnings, last_stats: OptimizationStats::default() }
@@ -251,12 +255,18 @@ impl DeadCodeElimination {
     fn remove_instructions(&self, function: &mut Function, dead_instructions: Vec<(Arc<str>, usize)>) -> usize {
         let mut total_removed = 0;
 
-        for (block_label, _) in dead_instructions.iter().rev() {
-            let block_dead_offsets: Vec<usize> =
-                dead_instructions.iter().filter(|(label, _)| label == block_label).map(|(_, offset)| *offset).collect();
+        // Group by block label
+        let mut by_block: std::collections::HashMap<Arc<str>, Vec<usize>> = std::collections::HashMap::new();
+        for (label, offset) in dead_instructions {
+            by_block.entry(label).or_insert_with(Vec::new).push(offset);
+        }
 
-            if let Some(block) = function.cfg.get_block_mut(block_label) {
-                for &offset in block_dead_offsets.iter().rev() {
+        for (block_label, mut offsets) in by_block {
+            // Sort in reverse to remove from back to front
+            offsets.sort_unstable_by(|a, b| b.cmp(a));
+
+            if let Some(block) = function.cfg.get_block_mut(&block_label) {
+                for offset in offsets {
                     if offset < block.instructions.len() {
                         block.instructions.remove(offset);
                         total_removed += 1;
@@ -396,10 +406,16 @@ impl Default for DeadCodeElimination {
 }
 
 impl Phase for DeadCodeElimination {
+    /// Returns the name of this optimization phase
     fn name(&self) -> &'static str {
         "Dead Code Elimination"
     }
 
+    /// Runs the Dead Code Elimination optimization on the entire module.
+    ///
+    /// Optimizes all functions in the module by removing unreachable blocks and
+    /// dead instructions. Statistics are collected if enabled and printed after
+    /// optimization completes.
     fn run(&mut self, module: &mut Module) {
         let function_names: Vec<String> = module.functions().iter().map(|f| f.name.clone()).collect();
         let mut aggregated_stats = OptimizationStats::default();
