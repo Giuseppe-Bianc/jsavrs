@@ -867,8 +867,8 @@ impl LivenessAnalyzer {
                 }
 
                 // Check for changes - avoid unnecessary clones
-                let changed_in = self.live_in.get(&block_idx).map_or(true, |old| old != &new_live_in);
-                let changed_out = self.live_out.get(&block_idx).map_or(true, |old| old != &new_live_out);
+                let changed_in = self.live_in.get(&block_idx) != Some(&new_live_in);
+                let changed_out = self.live_out.get(&block_idx) != Some(&new_live_out);
 
                 if changed_in || changed_out {
                     changed = true;
@@ -1339,7 +1339,7 @@ impl DeadCodeElimination {
                 if let InstructionKind::Phi { incoming, .. } = &mut instruction.kind {
                     // Filter out incoming edges from removed blocks
                     incoming.retain(|(_, predecessor_label)| {
-                        !removed_labels.iter().any(|removed| &**removed == &**predecessor_label)
+                        !removed_labels.iter().any(|removed| **removed == **predecessor_label)
                     });
                 }
             }
