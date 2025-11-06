@@ -1,4 +1,4 @@
-// rust
+// benches/jsavrs_benchmark.rs
 use criterion::measurement::WallTime;
 use criterion::{BenchmarkGroup, BenchmarkId, Criterion, Throughput, criterion_group, criterion_main};
 use jsavrs::ir::generator::NIrGenerator;

@@ -13,10 +13,12 @@ categories = ["compilers", "parsing"]
 [lib]
 name = "jsavrs"
 path = "src/lib.rs"
+bench = false  # Non includere i test della lib nei benchmark
 
 [[bin]]
 name = "jsavrs"
 path = "src/main.rs"
+bench = false  # Non includere i test del bin nei benchmark
 
 [dependencies]
 clap = { version = "4.5.51", features = ["cargo", "derive"] }
