@@ -1,5 +1,6 @@
 // rust
-use criterion::{BenchmarkId, Criterion, Throughput, criterion_group, criterion_main};
+use criterion::measurement::WallTime;
+use criterion::{BenchmarkGroup, BenchmarkId, Criterion, Throughput, criterion_group, criterion_main};
 use jsavrs::ir::generator::NIrGenerator;
 use jsavrs::ir::optimizer::{DeadCodeElimination, Phase};
 use jsavrs::lexer::{Lexer, lexer_tokenize_with_errors};
@@ -8,16 +9,20 @@ use jsavrs::semantic::type_checker::TypeChecker;
 use std::hint::black_box;
 use std::time::Duration;
 
-pub fn benchmark_lexer(c: &mut Criterion) {
-    // Lexer-only con throughput (byte/s)
-    let mut lex_group = c.benchmark_group("jsavrs-lexer");
-    lex_group
+/// Helper function to configure benchmark groups with standard settings
+fn configure_benchmark_group(group: &mut BenchmarkGroup<WallTime>, warm_up: u64, measurement: u64) {
+    group
         .significance_level(0.005)
         .sample_size(1000)
         .confidence_level(0.99)
-        .warm_up_time(Duration::from_secs(5))
-        .measurement_time(Duration::from_secs(15))
+        .warm_up_time(Duration::from_secs(warm_up))
+        .measurement_time(Duration::from_secs(measurement))
         .nresamples(500_000);
+}
+
+pub fn benchmark_lexer(c: &mut Criterion) {
+    let mut lex_group = c.benchmark_group("jsavrs-lexer");
+    configure_benchmark_group(&mut lex_group, 5, 15);
 
     let lex_cases = [
         ("simple", "var x: i64 = 42".to_string()),
@@ -52,13 +57,7 @@ pub fn benchmark_lexer(c: &mut Criterion) {
 pub fn benchmark_parser(c: &mut Criterion) {
     // Lexer + Parser (end-to-end) con throughput (byte/s)
     let mut parse_group = c.benchmark_group("jsavrs-parser");
-    parse_group
-        .significance_level(0.005)
-        .sample_size(1000)
-        .confidence_level(0.99)
-        .warm_up_time(Duration::from_secs(5))
-        .measurement_time(Duration::from_secs(15))
-        .nresamples(500_000);
+    configure_benchmark_group(&mut parse_group, 5, 15);
 
     let parse_cases = [
         ("simple", "var x: i64 = 42".to_string()),
@@ -90,13 +89,7 @@ pub fn benchmark_parser(c: &mut Criterion) {
 pub fn benchmark_parser_nodes(c: &mut Criterion) {
     // Parser benchmarks for specific AST node types
     let mut node_group = c.benchmark_group("jsavrs-parser-nodes");
-    node_group
-        .significance_level(0.005)
-        .sample_size(1000)
-        .confidence_level(0.99)
-        .warm_up_time(Duration::from_secs(3))
-        .measurement_time(Duration::from_secs(10))
-        .nresamples(500_000);
+    configure_benchmark_group(&mut node_group, 3, 10);
 
     let node_cases = [
         ("binary_expr", "var x: i64 = 10 + 20 * 30 - 40 / 50".to_string()),
@@ -124,13 +117,7 @@ pub fn benchmark_parser_nodes(c: &mut Criterion) {
 pub fn benchmark_semantic_analysis(c: &mut Criterion) {
     // Semantic analysis benchmarks
     let mut semantic_group = c.benchmark_group("jsavrs-semantic");
-    semantic_group
-        .significance_level(0.005)
-        .sample_size(1000)
-        .confidence_level(0.99)
-        .warm_up_time(Duration::from_secs(3))
-        .measurement_time(Duration::from_secs(10))
-        .nresamples(500_000);
+    configure_benchmark_group(&mut semantic_group, 3, 10);
 
     let semantic_cases = [
         ("simple_types", "var x: i64 = 42\nvar y: f64 = 3.14\nvar z: bool = true".to_string()),
@@ -163,13 +150,7 @@ pub fn benchmark_semantic_analysis(c: &mut Criterion) {
 pub fn benchmark_ir_generation(c: &mut Criterion) {
     // IR generation benchmarks
     let mut ir_group = c.benchmark_group("jsavrs-ir-generation");
-    ir_group
-        .significance_level(0.005)
-        .sample_size(1000)
-        .confidence_level(0.99)
-        .warm_up_time(Duration::from_secs(3))
-        .measurement_time(Duration::from_secs(10))
-        .nresamples(500_000);
+    configure_benchmark_group(&mut ir_group, 3, 10);
 
     let ir_cases = [
         ("simple_expr", "var x: i64 = 42\nvar y: i64 = x + 10".to_string()),
@@ -203,13 +184,7 @@ pub fn benchmark_ir_generation(c: &mut Criterion) {
 pub fn benchmark_end_to_end(c: &mut Criterion) {
     // End-to-end compilation pipeline benchmarks
     let mut pipeline_group = c.benchmark_group("jsavrs-end-to-end");
-    pipeline_group
-        .significance_level(0.005)
-        .sample_size(1000)
-        .confidence_level(0.99)
-        .warm_up_time(Duration::from_secs(5))
-        .measurement_time(Duration::from_secs(15))
-        .nresamples(500_000);
+    configure_benchmark_group(&mut pipeline_group, 5, 15);
 
     let pipeline_cases = [
         ("simple", "var x: i64 = 42".to_string()),
@@ -244,13 +219,7 @@ pub fn benchmark_end_to_end(c: &mut Criterion) {
 /// Benchmark Dead Code Elimination optimization on small functions (<100 instructions)
 pub fn benchmark_dce_small(c: &mut Criterion) {
     let mut dce_group = c.benchmark_group("jsavrs-dce-small");
-    dce_group
-        .significance_level(0.005)
-        .sample_size(1000)
-        .confidence_level(0.99)
-        .warm_up_time(Duration::from_secs(5))
-        .measurement_time(Duration::from_secs(15))
-        .nresamples(500_000);
+    configure_benchmark_group(&mut dce_group, 5, 15);
 
     // Small function with unreachable code and dead variables
     let small_func = r#"
@@ -288,13 +257,7 @@ pub fn benchmark_dce_small(c: &mut Criterion) {
 /// Benchmark Dead Code Elimination optimization on medium functions (~1000 instructions)
 pub fn benchmark_dce_medium(c: &mut Criterion) {
     let mut dce_group = c.benchmark_group("jsavrs-dce-medium");
-    dce_group
-        .significance_level(0.005)
-        .sample_size(1000)
-        .confidence_level(0.99)
-        .warm_up_time(Duration::from_secs(5))
-        .measurement_time(Duration::from_secs(15))
-        .nresamples(500_000);
+    configure_benchmark_group(&mut dce_group, 5, 15);
 
     // Generate medium function with many dead variables (avoids deep nesting)
     let mut medium_func = String::from("fun test_medium(x: i32): i32 {\n");
@@ -328,13 +291,7 @@ pub fn benchmark_dce_medium(c: &mut Criterion) {
 /// Benchmark Dead Code Elimination optimization on large functions (~10000 instructions)
 pub fn benchmark_dce_large(c: &mut Criterion) {
     let mut dce_group = c.benchmark_group("jsavrs-dce-large");
-    dce_group
-        .significance_level(0.005)
-        .sample_size(1000)
-        .confidence_level(0.99)
-        .warm_up_time(Duration::from_secs(5))
-        .measurement_time(Duration::from_secs(15))
-        .nresamples(500_000);
+    configure_benchmark_group(&mut dce_group, 5, 15);
 
     // Generate large function with many dead variables (avoids deep nesting)
     let mut large_func = String::from("fun test_large(x: i32): i32 {\n");
@@ -369,13 +326,7 @@ pub fn benchmark_dce_large(c: &mut Criterion) {
 /// Benchmark Dead Code Elimination optimization on modules with multiple functions
 pub fn benchmark_dce_module(c: &mut Criterion) {
     let mut dce_group = c.benchmark_group("jsavrs-dce-module");
-    dce_group
-        .significance_level(0.005)
-        .sample_size(1000)
-        .confidence_level(0.99)
-        .warm_up_time(Duration::from_secs(5))
-        .measurement_time(Duration::from_secs(15))
-        .nresamples(500_000);
+    configure_benchmark_group(&mut dce_group, 5, 15);
 
     // Module with 10 functions, each with dead code (simplified to avoid stack overflow)
     let mut module_code = String::new();
@@ -411,13 +362,7 @@ pub fn benchmark_dce_module(c: &mut Criterion) {
 /// Benchmark worst-case iteration count (deeply nested code)
 pub fn benchmark_dce_worst_case(c: &mut Criterion) {
     let mut dce_group = c.benchmark_group("jsavrs-dce-worst-case");
-    dce_group
-        .significance_level(0.005)
-        .sample_size(1000)
-        .confidence_level(0.99)
-        .warm_up_time(Duration::from_secs(5))
-        .measurement_time(Duration::from_secs(15))
-        .nresamples(500_000);
+    configure_benchmark_group(&mut dce_group, 5, 15);
 
     // Deep nesting with cascading dead code (requires multiple iterations)
     let mut worst_case = String::from("fun test_worst_case(x: i32): i32 {\n");
