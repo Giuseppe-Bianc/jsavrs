@@ -4,9 +4,9 @@
 //! This module contains the main parsing logic for decimal numeric literals,
 //! including integers, floating-point numbers, and scientific notation.
 
+use super::suffix::{handle_suffix, split_numeric_and_suffix};
 use crate::tokens::number::Number;
 use crate::tokens::token_kind::TokenKind;
-use super::suffix::{split_numeric_and_suffix, handle_suffix};
 
 /// Parses a numeric literal token into a structured [`Number`] representation.
 ///
@@ -53,11 +53,7 @@ pub fn parse_integer<T>(numeric_part: &str, map_fn: fn(T) -> Number) -> Option<N
 where
     T: std::str::FromStr,
 {
-    if is_valid_integer_literal(numeric_part) {
-        numeric_part.parse::<T>().ok().map(map_fn)
-    } else {
-        None
-    }
+    if is_valid_integer_literal(numeric_part) { numeric_part.parse::<T>().ok().map(map_fn) } else { None }
 }
 
 /// Validates that a string represents a pure integer literal.
@@ -88,6 +84,9 @@ where
 /// assert!(!is_valid_integer_literal("-42"));       // Has sign
 /// ```
 pub fn is_valid_integer_literal(numeric_part: &str) -> bool {
+    if numeric_part.is_empty() {
+        return false;
+    }
     if numeric_part.contains('.') || numeric_part.contains('e') || numeric_part.contains('E') {
         return false;
     }
@@ -109,8 +108,7 @@ pub fn is_valid_integer_literal(numeric_part: &str) -> bool {
 /// * `Some(Number::Scientific32)` - For scientific notation
 /// * `None` - If parsing fails
 pub fn handle_float_suffix(numeric_part: &str) -> Option<Number> {
-    parse_scientific(numeric_part, true)
-        .or_else(|| numeric_part.parse::<f32>().ok().map(Number::Float32))
+    parse_scientific(numeric_part, true).or_else(|| numeric_part.parse::<f32>().ok().map(Number::Float32))
 }
 
 /// Parses numeric strings with default or 'd' suffix.
@@ -131,10 +129,12 @@ pub fn handle_float_suffix(numeric_part: &str) -> Option<Number> {
 /// * `Some(Number::Scientific64)` - For scientific notation
 /// * `None` - If parsing fails
 pub fn handle_default_suffix(numeric_part: &str) -> Option<Number> {
-    parse_scientific(numeric_part, false)
-        .or_else(|| handle_non_scientific(numeric_part))
+    parse_scientific(numeric_part, false).or_else(|| handle_non_scientific(numeric_part))
 }
 
+/// Parses non-scientific notation numbers (integers and simple floats).
+///
+/// Determines the appropriate type based on the presence of a decimal point:
 /// Parses non-scientific notation numbers (integers and simple floats).
 ///
 /// Determines the appropriate type based on the presence of a decimal point:
@@ -150,6 +150,22 @@ pub fn handle_default_suffix(numeric_part: &str) -> Option<Number> {
 /// * `Some(Number::Integer)` - For literals without decimal point
 /// * `Some(Number::Float64)` - For literals with decimal point
 /// * `None` - If parsing fails (overflow, underflow, or invalid format)
+///
+/// # Examples
+///
+/// ```
+/// # use jsavrs::tokens::parsers::numeric::handle_non_scientific;
+/// # use jsavrs::tokens::number::Number;
+/// let int_result = handle_non_scientific("42");
+/// assert!(matches!(int_result, Some(Number::Integer(_))));
+///
+/// let float_result = handle_non_scientific("3.14");
+/// assert!(matches!(float_result, Some(Number::Float64(_))));
+/// ```
+///
+/// # Panics
+///
+/// This function does not panic.
 pub fn handle_non_scientific(numeric_part: &str) -> Option<Number> {
     if numeric_part.contains('.') {
         numeric_part.parse::<f64>().ok().map(Number::Float64)

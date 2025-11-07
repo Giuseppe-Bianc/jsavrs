@@ -1,6 +1,7 @@
 use insta::assert_debug_snapshot;
 use jsavrs::tokens::number::Number;
-use jsavrs::tokens::token_kind::{TokenKind, split_numeric_and_suffix};
+use jsavrs::tokens::parsers::suffix::split_numeric_and_suffix;
+use jsavrs::tokens::token_kind::TokenKind;
 use logos::Logos;
 use std::sync::Arc;
 

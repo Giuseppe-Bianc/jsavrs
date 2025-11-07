@@ -1,6 +1,7 @@
 use jsavrs::tokens::number::Number::*;
+use jsavrs::tokens::parsers::suffix::{handle_suffix, split_numeric_and_suffix};
+use jsavrs::tokens::token_kind::TokenKind;
 use jsavrs::tokens::token_kind::TokenKind::*;
-use jsavrs::tokens::token_kind::{TokenKind, handle_suffix, split_numeric_and_suffix};
 use logos::Logos;
 use std::sync::Arc;
 
