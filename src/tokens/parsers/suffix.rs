@@ -6,8 +6,7 @@
 //! type-specific parsers.
 
 use crate::tokens::number::Number;
-
-
+use super::numeric::{handle_default_suffix, handle_float_suffix, parse_integer};
 /// Splits a numeric literal string into its numeric part and optional type suffix.
 ///
 /// This function performs efficient suffix detection using byte-level pattern matching
@@ -161,9 +160,6 @@ pub fn split_numeric_and_suffix(slice: &str) -> (&str, Option<&str>) {
 /// assert_eq!(result, None);
 /// ```
 pub fn handle_suffix(numeric_part: &str, suffix: Option<&str>) -> Option<Number> {
-    use super::numeric::{
-        parse_integer, handle_float_suffix, handle_default_suffix
-    };
 
     match suffix.map(|s| s.to_ascii_lowercase()).as_deref() {
         Some("u") => parse_integer::<u64>(numeric_part, Number::UnsignedInteger),

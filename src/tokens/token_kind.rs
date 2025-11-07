@@ -10,8 +10,8 @@ use std::fmt;
 use std::sync::Arc;
 
 // Re-export parsing modules for use by Logos callbacks
+use crate::tokens::parsers::base::{parse_binary, parse_hex, parse_octal};
 use crate::tokens::parsers::numeric::parse_number;
-use crate::tokens::parsers::base::{parse_binary, parse_octal, parse_hex};
 
 /// Represents all possible token types in the language.
 ///

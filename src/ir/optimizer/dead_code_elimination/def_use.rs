@@ -95,17 +95,12 @@ pub struct LivenessInfo {
 impl LivenessInfo {
     /// Creates a new LivenessInfo for a dead value (never used).
     pub fn dead() -> Self {
-        Self {
-            first_use: None,
-            last_use: None,
-            used_in_blocks: HashSet::new(),
-        }
+        Self { first_use: None, last_use: None, used_in_blocks: HashSet::new() }
     }
 
     /// Creates a new LivenessInfo with the given use information.
     pub fn with_uses(
-        first_use: Option<InstructionIndex>,
-        last_use: Option<InstructionIndex>,
+        first_use: Option<InstructionIndex>, last_use: Option<InstructionIndex>,
         used_in_blocks: HashSet<petgraph::graph::NodeIndex>,
     ) -> Self {
         Self { first_use, last_use, used_in_blocks }
