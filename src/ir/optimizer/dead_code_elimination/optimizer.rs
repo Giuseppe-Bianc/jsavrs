@@ -107,10 +107,10 @@ impl DeadCodeElimination {
         self.update_phi_nodes_for_removed_blocks(&mut function.cfg, &blocks_to_remove);
 
         for label in &blocks_to_remove {
-            if self.verbose_warnings {
-                if let Some(block) = function.cfg.get_block(label) {
-                    self.log_block_removal_debug_info(block);
-                }
+            if self.verbose_warnings
+                && let Some(block) = function.cfg.get_block(label)
+            {
+                self.log_block_removal_debug_info(block);
             }
 
             if function.cfg.remove_block(label) {
@@ -258,7 +258,7 @@ impl DeadCodeElimination {
         // Group by block label
         let mut by_block: std::collections::HashMap<Arc<str>, Vec<usize>> = std::collections::HashMap::new();
         for (label, offset) in dead_instructions {
-            by_block.entry(label).or_insert_with(Vec::new).push(offset);
+            by_block.entry(label).or_default().push(offset);
         }
 
         for (block_label, mut offsets) in by_block {
@@ -282,10 +282,10 @@ impl DeadCodeElimination {
     fn has_loads_from(&self, function: &Function, ptr: &crate::ir::Value) -> bool {
         for block in function.cfg.blocks() {
             for instruction in &block.instructions {
-                if let InstructionKind::Load { src, .. } = &instruction.kind {
-                    if src == ptr {
-                        return true;
-                    }
+                if let InstructionKind::Load { src, .. } = &instruction.kind
+                    && src == ptr
+                {
+                    return true;
                 }
             }
         }

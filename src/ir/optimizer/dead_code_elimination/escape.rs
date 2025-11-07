@@ -77,10 +77,10 @@ impl EscapeAnalyzer {
     fn initialize_allocas(&mut self, function: &Function) {
         for block in function.cfg.blocks() {
             for instruction in &block.instructions {
-                if let InstructionKind::Alloca { .. } = instruction.kind {
-                    if let Some(result) = &instruction.result {
-                        self.escape_map.insert(result.clone(), EscapeStatus::Local);
-                    }
+                if let InstructionKind::Alloca { .. } = instruction.kind
+                    && let Some(result) = &instruction.result
+                {
+                    self.escape_map.insert(result.clone(), EscapeStatus::Local);
                 }
             }
         }
@@ -111,10 +111,10 @@ impl EscapeAnalyzer {
                 }
             }
 
-            if let crate::ir::TerminatorKind::Return { value, .. } = &block.terminator.kind {
-                if self.is_alloca_value(value) {
-                    self.mark_escaped(value);
-                }
+            if let crate::ir::TerminatorKind::Return { value, .. } = &block.terminator.kind
+                && self.is_alloca_value(value)
+            {
+                self.mark_escaped(value);
             }
         }
     }
@@ -127,10 +127,10 @@ impl EscapeAnalyzer {
     /// Marks a value as having its address taken.
     #[inline]
     fn mark_address_taken(&mut self, value: &Value) {
-        if let Some(status) = self.escape_map.get_mut(value) {
-            if *status == EscapeStatus::Local {
-                *status = EscapeStatus::AddressTaken;
-            }
+        if let Some(status) = self.escape_map.get_mut(value)
+            && *status == EscapeStatus::Local
+        {
+            *status = EscapeStatus::AddressTaken;
         }
     }
 
