@@ -27,6 +27,17 @@ use crate::tokens::token_kind::TokenKind;
 /// * `Some(Number::UnsignedInteger)` - For unsigned literals (with 'u' suffix)
 /// * `None` - If parsing fails or contains invalid digits for the radix
 ///
+/// # Panics
+///
+/// Panics if the lexer slice is shorter than 2 characters (i.e., missing the required prefix).
+///
+/// # Errors
+///
+/// Returns `None` if:
+/// - The number string contains invalid digits for the specified radix
+/// - The number string is empty after removing prefix and suffix
+/// - The parsed value overflows i64 (signed) or u64 (unsigned)
+///
 /// # Implementation Notes
 ///
 /// - Strips the 2-character prefix (`#b`, `#o`, or `#x`)
@@ -35,6 +46,9 @@ use crate::tokens::token_kind::TokenKind;
 #[inline]
 pub fn parse_base_number(radix: u32, lex: &mut logos::Lexer<TokenKind>) -> Option<Number> {
     let slice = lex.slice();
+    if slice.len() < 2 {
+        return None;
+    }
     let (_, num_part) = slice.split_at(2); // Remove prefix ("#b", "#o", or "#x")
     let (num_str, suffix_u) = match num_part.chars().last() {
         Some('u') | Some('U') => (&num_part[..num_part.len() - 1], true),
@@ -68,6 +82,7 @@ pub fn parse_base_number(radix: u32, lex: &mut logos::Lexer<TokenKind>) -> Optio
 /// - Prefix: `#b` (required)
 /// - Digits: `0`, `1` only
 /// - Suffix: `u` or `U` (optional, for unsigned)
+#[inline]
 pub fn parse_binary(lex: &mut logos::Lexer<TokenKind>) -> Option<Number> {
     parse_base_number(2, lex)
 }
@@ -92,6 +107,10 @@ pub fn parse_binary(lex: &mut logos::Lexer<TokenKind>) -> Option<Number> {
 /// - Prefix: `#o` (required)
 /// - Digits: `0-7` only
 /// - Suffix: `u` or `U` (optional, for unsigned)
+///
+/// # Panics
+///
+/// Panics if the lexer slice is shorter than 2 characters. See [`parse_base_number`] for details.
 pub fn parse_octal(lex: &mut logos::Lexer<TokenKind>) -> Option<Number> {
     parse_base_number(8, lex)
 }
@@ -116,6 +135,10 @@ pub fn parse_octal(lex: &mut logos::Lexer<TokenKind>) -> Option<Number> {
 /// - Prefix: `#x` (required)
 /// - Digits: `0-9`, `A-F`, `a-f`
 /// - Suffix: `u` or `U` (optional, for unsigned)
+///
+/// # Panics
+///
+/// Panics if the lexer slice is shorter than 2 characters. See [`parse_base_number`] for details.
 pub fn parse_hex(lex: &mut logos::Lexer<TokenKind>) -> Option<Number> {
     parse_base_number(16, lex)
 }

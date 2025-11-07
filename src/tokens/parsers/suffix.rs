@@ -134,6 +134,32 @@ pub fn split_numeric_and_suffix(slice: &str) -> (&str, Option<&str>) {
 /// | `u16` | u16 | `1000u16` → U16(1000) |
 /// | `f` | f32 | `3.14f` → Float32(3.14) |
 /// | `d` | f64 | `3.14d` → Float64(3.14) |
+/// # Examples
+///
+/// ```
+/// use jsavrs::tokens::parsers::suffix::handle_suffix;
+/// use jsavrs::tokens::number::Number;
+///
+/// // Parse with unsigned suffix
+/// let result = handle_suffix("42", Some("u"));
+/// assert!(matches!(result, Some(Number::UnsignedInteger(42))));
+///
+/// // Parse with no suffix (defaults to i64/f64)
+/// let result = handle_suffix("42", None);
+/// assert!(matches!(result, Some(Number::Integer(42))));
+///
+/// // Parse with no suffix (defaults to i64/f64)
+/// let result = handle_suffix("42", None);
+/// assert!(matches!(result, Some(Number::Integer(42))));
+///
+/// // Parse float with f32 suffix
+/// let result = handle_suffix("3.14", Some("f"));
+/// assert!(matches!(result, Some(Number::Float32(_))));
+///
+/// // Invalid suffix returns None
+/// let result = handle_suffix("42", Some("invalid"));
+/// assert_eq!(result, None);
+/// ```
 pub fn handle_suffix(numeric_part: &str, suffix: Option<&str>) -> Option<Number> {
     use super::numeric::{
         parse_integer, handle_float_suffix, handle_default_suffix
