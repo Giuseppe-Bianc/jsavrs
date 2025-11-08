@@ -187,7 +187,10 @@ impl Hash for Number {
     /// # Panics
     ///
     /// This method does not panic.
+    #[inline]
     fn hash<H: Hasher>(&self, state: &mut H) {
+        // Hash discriminant first for better distribution
+        core::mem::discriminant(self).hash(state);
         match self {
             Number::I8(i) => i.hash(state),
             Number::I16(i) => i.hash(state),

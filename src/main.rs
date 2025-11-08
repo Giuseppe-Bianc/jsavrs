@@ -123,8 +123,8 @@ fn main() -> Result<(), CompileError> {
 
     let optimization_timer = Timer::new("IR Optimization Pipeline");
     run_pipeline(&mut module, pipeline);
-    println!("IR optimization done");
     println!("{optimization_timer}");
+    println!("IR optimization done");
 
     /*let mut assembly_file = AssemblyFile::new(Abi::SYSTEM_V_LINUX);
     assembly_file.data_sec_add_data("message", DataDirective::new_asciz("Hello, World!".to_string()));

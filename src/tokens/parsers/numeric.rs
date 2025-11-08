@@ -87,10 +87,10 @@ pub fn is_valid_integer_literal(numeric_part: &str) -> bool {
     if numeric_part.is_empty() {
         return false;
     }
-    if numeric_part.contains('.') || numeric_part.contains('e') || numeric_part.contains('E') {
+    if numeric_part.bytes().any(|b| b == b'.' || b == b'e' || b == b'E') {
         return false;
     }
-    numeric_part.chars().all(|c| c.is_ascii_digit())
+    numeric_part.bytes().all(|b| b.is_ascii_digit())
 }
 
 /// Parses numeric strings with 32-bit float suffix ('f').
