@@ -6,11 +6,11 @@ use std::ops::{Div, DivAssign};
 use std::time::{Duration, Instant};
 
 pub struct Timer {
-    title: String,
-    title_padding: usize,
-    time_print: TimePrintFn,
     start: Instant,
+    time_print: TimePrintFn,
     cycles: usize,
+    title_padding: usize,
+    title: String,
 }
 
 impl Timer {
