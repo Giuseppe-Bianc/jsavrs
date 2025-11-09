@@ -156,28 +156,25 @@ impl DominanceInfo {
 
     /// Intersects two dominator paths to find their common ancestor.
     fn intersect(&self, node1: NodeIndex, node2: NodeIndex, idom: &HashMap<NodeIndex, Option<NodeIndex>>) -> NodeIndex {
-        let mut n1 = node1;
-        let mut n2 = node2;
+        let mut finger1 = node1;
+        let mut finger2 = node2;
 
-        // Move up the dominator tree until we find a common ancestor
-        while n1 != n2 {
-            // Move the node with higher index up the tree
-            while n1.index() > n2.index() {
-                if let Some(Some(n1_idom)) = idom.get(&n1) {
-                    n1 = *n1_idom;
-                } else {
-                    break;
-                }
-            }
-            while n2.index() > n1.index() {
-                if let Some(Some(n2_idom)) = idom.get(&n2) {
-                    n2 = *n2_idom;
-                } else {
-                    break;
-                }
-            }
+        // Phase 1: Equalize depths in O(|d1 - d2|) instead of O(|d1 - d2| * 2)
+        while finger1.index() > finger2.index() {
+            finger1 = idom.get(&finger1).and_then(|&opt| opt).expect("Invalid dominator tree structure");
         }
-        n1
+
+        while finger2.index() > finger1.index() {
+            finger2 = idom.get(&finger2).and_then(|&opt| opt).expect("Invalid dominator tree structure");
+        }
+
+        // Phase 2: Move both up simultaneously until convergence
+        while finger1 != finger2 {
+            finger1 = idom.get(&finger1).and_then(|&opt| opt).expect("Invalid dominator tree structure");
+            finger2 = idom.get(&finger2).and_then(|&opt| opt).expect("Invalid dominator tree structure");
+        }
+
+        finger1
     }
 
     /// Checks if node1 dominates node2.

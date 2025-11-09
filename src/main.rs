@@ -128,9 +128,9 @@ fn main() -> Result<(), CompileError> {
     run_pipeline(&mut module, pipeline);
     println!("{optimization_timer}");
     println!("IR optimization done");
-    if args.verbose {
+    /*if args.verbose {
         println!("optimized NIR Module:\n{}", module);
-    }
+    }*/
 
     /*let mut assembly_file = AssemblyFile::new(Abi::SYSTEM_V_LINUX);
     assembly_file.data_sec_add_data("message", DataDirective::new_asciz("Hello, World!".to_string()));
