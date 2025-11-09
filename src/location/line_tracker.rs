@@ -12,7 +12,7 @@ use std::sync::Arc;
 /// - Column numbers are 1-indexed (first column in a line is column 1)
 /// - Handles multibyte UTF-8 characters correctly through `char_indices()`
 /// - Uses binary search for efficient offset lookups
-#[repr(C)]  // For predictable layout
+#[repr(C)] // For predictable layout
 #[derive(Debug, Clone, PartialEq, Eq)]
 pub struct LineTracker {
     /// Original source code content, shared via Arc.

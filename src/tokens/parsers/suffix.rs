@@ -16,7 +16,7 @@ use crate::tokens::number::Number;
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
 pub enum SuffixPattern {
     /// Single-character suffixes: 'u', 'f', 'd'
-    SingleChar = 0,  // Most frequent case
+    SingleChar = 0, // Most frequent case
     /// Two-character suffixes: 'i8', 'u8'
     TwoChar = 1,
     /// Three-character suffixes: 'i16', 'i32', 'u16', 'u32'

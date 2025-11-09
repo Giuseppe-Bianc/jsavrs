@@ -119,12 +119,18 @@ fn main() -> Result<(), CompileError> {
     println!("NIR generation done");
 
     let pipeline: Vec<Box<dyn Phase>> = vec![Box::new(DeadCodeElimination::default())];
+    if args.verbose {
+        println!("Generated NIR Module:\n{}", irmodule);
+    }
     let mut module = irmodule;
 
     let optimization_timer = Timer::new("IR Optimization Pipeline");
     run_pipeline(&mut module, pipeline);
     println!("{optimization_timer}");
     println!("IR optimization done");
+    if args.verbose {
+        println!("optimized NIR Module:\n{}", module);
+    }
 
     /*let mut assembly_file = AssemblyFile::new(Abi::SYSTEM_V_LINUX);
     assembly_file.data_sec_add_data("message", DataDirective::new_asciz("Hello, World!".to_string()));
