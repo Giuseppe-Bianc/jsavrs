@@ -3,7 +3,6 @@
 
 use super::cfg::ControlFlowGraph;
 use petgraph::graph::NodeIndex;
-use petgraph::visit::Dfs;
 use std::collections::{HashMap, HashSet};
 
 /// Information about dominance relationships in a control flow graph.
@@ -23,7 +22,7 @@ impl DominanceInfo {
         Self { idom: HashMap::new(), dominance_frontiers: HashMap::new(), dom_tree_children: HashMap::new() }
     }
 
-    /// Computes the dominator tree using the  "A Simple, Fast Dominance Algorithm" by Keith D. Cooper, Timothy J. Harvey, and Ken Kennedy.
+    /// Computes the dominator tree using the "A Simple, Fast Dominance Algorithm" by Keith D. Cooper, Timothy J. Harvey, and Ken Kennedy.
     pub fn compute_dominators(&mut self, cfg: &ControlFlowGraph) -> Result<(), String> {
         let entry_idx = cfg.get_entry_block_index().ok_or_else(|| "CFG has no entry block".to_string())?;
 
@@ -33,18 +32,12 @@ impl DominanceInfo {
         // Set the entry node's immediate dominator to itself
         self.idom.insert(entry_idx, Some(entry_idx));
 
-        // Get all nodes in reverse post-order (except entry)
-        let mut post_order = Vec::new();
-        {
-            let mut dfs = Dfs::new(cfg.graph(), entry_idx);
-            while let Some(node) = dfs.next(cfg.graph()) {
-                post_order.push(node);
-            }
-        }
-        post_order.reverse();
+        // Get the precomputed reverse post-order traversal from CFG
+        let reverse_post_order = cfg.reverse_post_order();
 
-        // Remove entry from the list as it's already initialized
-        post_order.retain(|&node| node != entry_idx);
+        // Filter out the entry node as it's already initialized
+        let post_order: Vec<NodeIndex> =
+            reverse_post_order.iter().filter(|&&node| node != entry_idx).cloned().collect();
 
         // Initialize all other nodes to have no immediate dominator
         for &node in &post_order {
@@ -92,9 +85,7 @@ impl DominanceInfo {
 
                 // Intersect the dominators of all processed predecessors
                 for &pred in preds {
-                    if pred != new_idom
-                        && let Some(Some(_pred_idom)) = self.idom.get(&pred)
-                    {
+                    if pred != new_idom && self.idom.get(&pred).and_then(|&x| x).is_some() {
                         new_idom = self.intersect(new_idom, pred, &self.idom);
                     }
                 }
@@ -155,10 +146,10 @@ impl DominanceInfo {
         self.dom_tree_children.clear();
 
         for (&node, &idom_opt) in &self.idom {
-            if let Some(idom) = idom_opt
-                && node != idom
-            {
-                self.dom_tree_children.entry(idom).or_default().push(node);
+            if let Some(idom) = idom_opt {
+                if node != idom {
+                    self.dom_tree_children.entry(idom).or_default().push(node);
+                }
             }
         }
     }

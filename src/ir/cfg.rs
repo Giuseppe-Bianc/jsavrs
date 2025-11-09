@@ -11,10 +11,11 @@ use std::sync::Arc;
 pub struct ControlFlowGraph {
     graph: DiGraph<BasicBlock, ()>,
     pub entry_label: String,
+    reverse_post_order: Vec<NodeIndex>,
 }
 impl ControlFlowGraph {
     pub fn new(entry_label: String) -> Self {
-        ControlFlowGraph { graph: DiGraph::new(), entry_label }
+        ControlFlowGraph { graph: DiGraph::new(), entry_label, reverse_post_order: Vec::new() }
     }
 
     pub fn graph(&self) -> &DiGraph<BasicBlock, ()> {
@@ -29,12 +30,19 @@ impl ControlFlowGraph {
         &self.entry_label
     }
 
+    pub fn reverse_post_order(&self) -> &[NodeIndex] {
+        &self.reverse_post_order
+    }
+
     pub fn add_block(&mut self, block: BasicBlock) -> NodeIndex {
-        self.graph.add_node(block)
+        let idx = self.graph.add_node(block);
+        self.recompute_reverse_post_order();
+        idx
     }
 
     pub fn add_edge(&mut self, from: NodeIndex, to: NodeIndex) {
         self.graph.add_edge(from, to, ());
+        self.recompute_reverse_post_order();
     }
 
     pub fn find_block_by_label(&self, label: &str) -> Option<NodeIndex> {
@@ -157,5 +165,20 @@ impl ControlFlowGraph {
         }
 
         Ok(())
+    }
+
+    // Add this method to recompute RPOT when CFG changes
+    pub fn recompute_reverse_post_order(&mut self) {
+        if let Some(entry_idx) = self.get_entry_block_index() {
+            let mut post_order = Vec::new();
+            let mut dfs = Dfs::new(&self.graph, entry_idx);
+            while let Some(node) = dfs.next(&self.graph) {
+                post_order.push(node);
+            }
+            post_order.reverse(); // This makes it reverse post-order
+            self.reverse_post_order = post_order;
+        } else {
+            self.reverse_post_order.clear();
+        }
     }
 }
