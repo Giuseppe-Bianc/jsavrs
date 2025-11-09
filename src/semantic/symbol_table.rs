@@ -45,7 +45,7 @@ pub struct VariableSymbol {
 #[derive(Debug, Clone, PartialEq)]
 pub struct FunctionSymbol {
     /// The name of the function
-    pub name: String,
+    pub name: Arc<str>,
     /// The function's parameters with their types
     pub parameters: Vec<Parameter>,
     /// The return type of the function
@@ -80,7 +80,7 @@ pub struct Scope {
     /// The kind of scope (global, function, block)
     pub kind: ScopeKind,
     /// Symbols defined in this scope
-    pub symbols: HashMap<String, Symbol>,
+    pub symbols: HashMap<Arc<str>, Symbol>,
     /// Optional source location where this scope was created
     pub defined_at: Option<SourceSpan>,
 }
@@ -165,6 +165,7 @@ impl SymbolTable {
     /// # Returns
     ///
     /// The count of scopes in the stack (always at least 1 for global scope).
+    #[inline(always)]
     pub fn scope_count(&self) -> usize {
         self.scopes.len()
     }
@@ -175,6 +176,7 @@ impl SymbolTable {
     ///
     /// An optional reference to the current scope, or `None` if no scopes exist
     /// (which should never happen in practice due to the global scope invariant).
+    #[inline]
     pub fn current_scope(&self) -> Option<&Scope> {
         self.scopes.last()
     }
@@ -194,6 +196,7 @@ impl SymbolTable {
     /// # Returns
     ///
     /// An optional `ScopeKind` indicating the type of the current scope.
+    #[inline]
     pub fn current_scope_kind(&self) -> Option<ScopeKind> {
         self.current_scope().map(|s| s.kind)
     }
@@ -229,7 +232,7 @@ impl SymbolTable {
             });
         }
 
-        current_scope.symbols.insert(name.to_string(), symbol);
+        current_scope.symbols.insert(name.into(), symbol);
         Ok(())
     }
 

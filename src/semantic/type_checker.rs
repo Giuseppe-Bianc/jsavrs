@@ -129,7 +129,7 @@ impl TypeChecker {
         &mut self, name: &str, parameters: &[Parameter], return_type: &Type, body: &[Stmt], span: &SourceSpan,
     ) {
         let func_symbol = FunctionSymbol {
-            name: name.to_string(),
+            name: name.into(),
             parameters: parameters.to_vec(),
             return_type: return_type.clone(),
             defined_at: span.clone(),

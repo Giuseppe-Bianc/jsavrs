@@ -237,7 +237,7 @@ pub fn create_var_symbol(name: &str, mutable: bool) -> Symbol {
 
 // Generic helper function to create function symbols
 pub fn create_function_symbol(name: &str) -> FunctionSymbol {
-    FunctionSymbol { name: name.to_string(), parameters: Vec::new(), return_type: Type::Void, defined_at: dummy_span() }
+    FunctionSymbol { name: name.into(), parameters: Vec::new(), return_type: Type::Void, defined_at: dummy_span() }
 }
 
 // Generic helper function to create function symbols wrapped in Symbol enum
