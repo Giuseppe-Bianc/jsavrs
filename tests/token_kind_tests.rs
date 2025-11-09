@@ -268,7 +268,7 @@ fn test_all_ascii_characters() {
         let result = is_valid_integer_literal(&input);
 
         // Only ASCII digits should be valid
-        let expected = ('0'..='9').contains(&c);
+        let expected = c.is_ascii_digit();
 
         assert_eq!(
             result,
@@ -569,14 +569,14 @@ fn test_two_characters_with_suffix() {
 fn test_two_characters_exact_i8() {
     // Edge case: Just the i8 suffix
     // Tests 2-char suffix with no numeric part
-    assert_eq!(split_numeric_and_suffix("i8"), ("i8", None));
+    assert_eq!(split_numeric_and_suffix("i8"), ("", Some("i8")));
 }
 
 #[test]
 fn test_two_characters_exact_u8() {
     // Edge case: Just the u8 suffix
     // Another 2-char suffix-only case
-    assert_eq!(split_numeric_and_suffix("u8"), ("u8", None));
+    assert_eq!(split_numeric_and_suffix("u8"), ("", Some("u8")));
 }
 
 #[test]
@@ -899,13 +899,13 @@ fn test_lone_plus_with_suffix() {
 #[test]
 fn test_unknown_suffix_for_handle_suffix() {
     // Fixed typo in test name
-    assert!(handle_suffix("123", Some("x".into())).is_none());
+    assert!(handle_suffix("123", Some("x")).is_none());
 }
 
 #[test]
 fn test_malformed_numeric_part_handle_unsigned_suffix() {
     // Fixed typo in test name
-    assert!(handle_suffix("123.45", Some("u".into())).is_none());
+    assert!(handle_suffix("123.45", Some("u")).is_none());
 }
 
 #[test]

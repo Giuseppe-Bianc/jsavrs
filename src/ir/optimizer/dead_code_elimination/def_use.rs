@@ -56,6 +56,14 @@ impl DefUseChains {
     }
 
     /// Returns the value defined by the given instruction, if any.
+    ///
+    /// # Arguments
+    ///
+    /// * `inst_idx` - The instruction index to query
+    ///
+    /// # Returns
+    ///
+    /// `Some(&value)` if the instruction defines a value, `None` otherwise.
     pub fn get_defined_value(&self, inst_idx: &InstructionIndex) -> Option<&Value> {
         self.instruction_to_defined_value.get(inst_idx)
     }

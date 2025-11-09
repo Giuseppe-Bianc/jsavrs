@@ -14,7 +14,7 @@ use crate::tokens::number::Number;
 /// making the code more maintainable and testable.
 #[repr(u8)]
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
-enum SuffixPattern {
+pub enum SuffixPattern {
     /// Single-character suffixes: 'u', 'f', 'd'
     SingleChar = 0,  // Most frequent case
     /// Two-character suffixes: 'i8', 'u8'
@@ -51,14 +51,14 @@ impl SuffixPattern {
 /// # Examples
 ///
 /// ```
-/// # use suffix::check_single_char_suffix;
+/// use jsavrs::tokens::parsers::suffix::check_single_char_suffix;
 /// assert!(check_single_char_suffix(b"42u").is_some());
 /// assert!(check_single_char_suffix(b"3.14f").is_some());
 /// assert!(check_single_char_suffix(b"100d").is_some());
 /// assert!(check_single_char_suffix(b"42x").is_none());
 /// ```
 #[inline]
-fn check_single_char_suffix(bytes: &[u8]) -> Option<SuffixPattern> {
+pub fn check_single_char_suffix(bytes: &[u8]) -> Option<SuffixPattern> {
     if bytes.is_empty() {
         return None;
     }
@@ -86,13 +86,13 @@ fn check_single_char_suffix(bytes: &[u8]) -> Option<SuffixPattern> {
 /// # Examples
 ///
 /// ```
-/// # use suffix::check_three_char_suffix;
+/// use jsavrs::tokens::parsers::suffix::check_three_char_suffix;
 /// assert!(check_three_char_suffix(b"100i16").is_some());
 /// assert!(check_three_char_suffix(b"42u32").is_some());
 /// assert!(check_three_char_suffix(b"100abc").is_none());
 /// ```
 #[inline]
-fn check_three_char_suffix(bytes: &[u8]) -> Option<SuffixPattern> {
+pub fn check_three_char_suffix(bytes: &[u8]) -> Option<SuffixPattern> {
     if bytes.len() < 3 {
         return None;
     }
@@ -124,13 +124,13 @@ fn check_three_char_suffix(bytes: &[u8]) -> Option<SuffixPattern> {
 /// # Examples
 ///
 /// ```
-/// # use suffix::check_two_char_suffix;
+/// use jsavrs::tokens::parsers::suffix::check_two_char_suffix;
 /// assert!(check_two_char_suffix(b"42i8").is_some());
 /// assert!(check_two_char_suffix(b"255u8").is_some());
 /// assert!(check_two_char_suffix(b"42xy").is_none());
 /// ```
 #[inline]
-fn check_two_char_suffix(bytes: &[u8]) -> Option<SuffixPattern> {
+pub fn check_two_char_suffix(bytes: &[u8]) -> Option<SuffixPattern> {
     if bytes.len() < 2 {
         return None;
     }
