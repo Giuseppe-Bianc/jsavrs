@@ -8,10 +8,10 @@ use std::collections::HashMap;
 use std::sync::{Arc, OnceLock};
 
 pub struct TypeChecker {
-    symbol_table: SymbolTable,
-    errors: Vec<CompileError>,
     in_loop: bool,
     return_type_stack: Vec<Type>,
+    errors: Vec<CompileError>,
+    symbol_table: SymbolTable,
 }
 
 // Gerarchia per la promozione dei tipi numerici
