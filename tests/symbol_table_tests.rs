@@ -57,7 +57,7 @@ fn duplicate_declaration_same_scope() {
 fn function_symbol_tracking() {
     let mut table = SymbolTable::new();
     let func = FunctionSymbol {
-        name: "foo".to_string(),
+        name: "foo".into(),
         parameters: vec![Parameter {
             name: "arg".into(),
             type_annotation: Type::I8, // Use correct field name

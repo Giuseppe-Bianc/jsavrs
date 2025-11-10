@@ -18,14 +18,14 @@ use std::sync::Arc;
 /// * `depth` - The depth level of this scope in the hierarchy (root scope = 0).
 #[derive(Debug, Clone, PartialEq)]
 pub struct Scope {
-    /// A map of symbol names to their corresponding values within the current scope.
-    pub symbols: HashMap<Arc<str>, Value>,
     /// An optional reference to the parent scope, if this is not the root scope.
     pub parent: Option<ScopeId>,
-    /// A list of child scope identifiers that originate from this scope.
-    pub children: Vec<ScopeId>,
     /// The nesting depth of this scope relative to the global or root scope.
     pub depth: usize,
+    /// A list of child scope identifiers that originate from this scope.
+    pub children: Vec<ScopeId>,
+    /// A map of symbol names to their corresponding values within the current scope.
+    pub symbols: HashMap<Arc<str>, Value>,
 }
 
 impl Scope {

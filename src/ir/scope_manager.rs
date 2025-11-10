@@ -22,12 +22,12 @@ use std::sync::Arc;
 ///   structural integrity and avoiding `ScopeId` collisions.
 #[derive(Debug, Clone, PartialEq)]
 pub struct ScopeManager {
-    /// A mapping from `ScopeId` to the corresponding [`Scope`] instance.
-    scopes: HashMap<ScopeId, Scope>,
     /// The identifier of the currently active scope.
     current_scope: ScopeId,
     /// The identifier of the root (global) scope.
     root_scope: ScopeId,
+    /// A mapping from `ScopeId` to the corresponding [`Scope`] instance.
+    scopes: HashMap<ScopeId, Scope>,
 }
 
 impl ScopeManager {
