@@ -27,6 +27,9 @@ pub struct DeadCodeElimination {
     /// Whether to emit warnings for conservative decisions.
     pub verbose_warnings: bool,
 
+    /// Whether to emit warnings for conservative decisions.
+    pub verbose: bool,
+
     /// Statistics from the last optimization run.
     last_stats: OptimizationStats,
 }
@@ -42,9 +45,9 @@ impl DeadCodeElimination {
     /// # Panics
     ///
     /// Panics if `max_iterations` is 0.
-    pub fn with_config(max_iterations: usize, enable_statistics: bool, verbose_warnings: bool) -> Self {
+    pub fn with_config(max_iterations: usize, enable_statistics: bool, verbose: bool, verbose_warnings: bool) -> Self {
         assert!(max_iterations > 0, "max_iterations must be > 0");
-        Self { max_iterations, enable_statistics, verbose_warnings, last_stats: OptimizationStats::default() }
+        Self { max_iterations, enable_statistics, verbose, verbose_warnings, last_stats: OptimizationStats::default() }
     }
 
     /// Returns a reference to the statistics from the last optimization run.
@@ -107,12 +110,6 @@ impl DeadCodeElimination {
         self.update_phi_nodes_for_removed_blocks(&mut function.cfg, &blocks_to_remove);
 
         for label in &blocks_to_remove {
-            if self.verbose_warnings
-                && let Some(block) = function.cfg.get_block(label)
-            {
-                self.log_block_removal_debug_info(block);
-            }
-
             if function.cfg.remove_block(label) {
                 stats.blocks_removed += 1;
             }
@@ -198,7 +195,7 @@ impl DeadCodeElimination {
             }
 
             InstructionKind::Call { .. } => {
-                if is_dead && self.verbose_warnings {
+                if is_dead && self.verbose {
                     self.log_conservative_warning(
                         inst_idx,
                         ConservativeReason::UnknownCallPurity,
@@ -220,13 +217,11 @@ impl DeadCodeElimination {
         match escape_analyzer.get_status(dest) {
             EscapeStatus::Local => !self.has_loads_from(function, dest),
             EscapeStatus::AddressTaken | EscapeStatus::Escaped => {
-                if self.verbose_warnings {
-                    self.log_conservative_warning(
-                        inst_idx,
-                        ConservativeReason::EscapedPointer,
-                        "Store to escaped or address-taken allocation preserved",
-                    );
-                }
+                self.log_conservative_warning(
+                    inst_idx,
+                    ConservativeReason::EscapedPointer,
+                    "Store to escaped or address-taken allocation preserved",
+                );
                 false
             }
         }
@@ -239,13 +234,12 @@ impl DeadCodeElimination {
         match escape_analyzer.get_status(src) {
             EscapeStatus::Local => true,
             EscapeStatus::AddressTaken | EscapeStatus::Escaped => {
-                if self.verbose_warnings {
-                    self.log_conservative_warning(
-                        inst_idx,
-                        ConservativeReason::EscapedPointer,
-                        "Load from escaped or address-taken allocation preserved",
-                    );
-                }
+                self.log_conservative_warning(
+                    inst_idx,
+                    ConservativeReason::EscapedPointer,
+                    "Load from escaped or address-taken allocation preserved",
+                );
+
                 false
             }
         }
@@ -375,23 +369,6 @@ impl DeadCodeElimination {
             }
         }
     }
-
-    /// Logs debug information when removing a block.
-    fn log_block_removal_debug_info(&self, block: &crate::ir::basic_block::BasicBlock) {
-        eprintln!("DCE: Removing unreachable block '{}'", block.label);
-        eprintln!("     Source location: {}", block.source_span);
-
-        if !block.instructions.is_empty() {
-            eprintln!("     Contained {} instruction(s):", block.instructions.len());
-            for (idx, instr) in block.instructions.iter().enumerate() {
-                eprintln!("       [{}] {:?} at {}", idx, instr.kind, instr.debug_info.source_span);
-            }
-        }
-
-        if block.terminator.is_terminator() {
-            eprintln!("     Terminator: {:?} at {}", block.terminator.kind, block.terminator.debug_info.source_span);
-        }
-    }
 }
 
 impl Default for DeadCodeElimination {
@@ -399,6 +376,7 @@ impl Default for DeadCodeElimination {
         Self {
             max_iterations: 10,
             enable_statistics: true,
+            verbose: false,
             verbose_warnings: false,
             last_stats: OptimizationStats::default(),
         }
@@ -436,7 +414,10 @@ impl Phase for DeadCodeElimination {
         }
 
         self.last_stats = aggregated_stats;
-        self.print_statistics();
+
+        if self.verbose {
+            self.print_statistics();
+        }
     }
 }
 
