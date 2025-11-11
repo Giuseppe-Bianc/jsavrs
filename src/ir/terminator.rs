@@ -100,6 +100,7 @@ impl Terminator {
     /// # Returns
     /// - `true` if the terminator affects control flow (e.g., branch, return, switch).
     /// - `false` if it is `Unreachable`.
+    #[inline]
     pub fn is_terminator(&self) -> bool {
         !matches!(self.kind, TerminatorKind::Unreachable)
     }

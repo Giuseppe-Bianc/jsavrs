@@ -41,7 +41,7 @@ pub struct IrGenerator {
     /// Context for type information including struct definitions and type aliases
     type_context: TypeContext,
     /// Access controller for enforcing access rules during IR generation
-    _access_controller: AccessController,
+    //_access_controller: AccessController,
     /// The root scope ID for the generator's scope hierarchy
     root_scope: Option<ScopeId>,
     /// Whether to apply SSA transformation to generated IR
@@ -67,7 +67,7 @@ impl IrGenerator {
     /// - SSA transformation enabled by default
     pub fn new() -> Self {
         let scope_manager = ScopeManager::new();
-        let access_controller = AccessController::new(&scope_manager);
+        //let access_controller = AccessController::new(&scope_manager);
         Self {
             current_block: None,
             current_block_label: None,
@@ -77,7 +77,7 @@ impl IrGenerator {
             errors: Vec::new(),
             break_stack: Vec::new(),
             continue_stack: Vec::new(),
-            _access_controller: access_controller,
+            //_access_controller: access_controller,
             type_context: TypeContext::default(),
             root_scope: scope_manager.root_scope(),
             apply_ssa: true, // Enable SSA by default
