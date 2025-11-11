@@ -435,7 +435,7 @@ mod reachability_tests {
         let mut module = jsavrs::ir::Module::new("test_module", None);
         module.add_function(func);
 
-        let mut dce = DeadCodeElimination::with_config(10, true, true);
+        let mut dce = DeadCodeElimination::with_config(10, true, true, true);
         dce.run(&mut module);
 
         // Verify block was removed

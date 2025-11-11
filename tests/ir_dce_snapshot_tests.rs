@@ -167,7 +167,7 @@ mod snapshot_tests {
         let ir_before = module_redacted(module.clone());
 
         // Run DCE with statistics enabled to track iterations
-        let mut dce = DeadCodeElimination::with_config(10, true, false);
+        let mut dce = DeadCodeElimination::with_config(10, true, true, false);
         dce.run(&mut module);
 
         // Capture IR after optimization and stats

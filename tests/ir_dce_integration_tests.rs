@@ -365,7 +365,7 @@ mod integration_tests {
         let mut module = Module::new("test_module", None);
         module.add_function(func);
 
-        let mut dce = DeadCodeElimination::with_config(10, true, false);
+        let mut dce = DeadCodeElimination::with_config(10, true, true, false);
         dce.run(&mut module);
 
         let optimized_func = &module.functions()[0];
@@ -415,7 +415,7 @@ mod integration_tests {
         let mut module = Module::new("test_module", None);
         module.add_function(func);
 
-        let mut dce = DeadCodeElimination::with_config(10, true, false);
+        let mut dce = DeadCodeElimination::with_config(10, true, true, false);
         dce.run(&mut module);
 
         let optimized_func = &module.functions()[0];
@@ -475,7 +475,7 @@ mod integration_tests {
 
         // Measure DCE performance
         let start = Instant::now();
-        let mut dce = DeadCodeElimination::with_config(100, true, false);
+        let mut dce = DeadCodeElimination::with_config(100, true, true, false);
         dce.run(&mut module);
         let duration = start.elapsed();
 
@@ -559,7 +559,7 @@ mod integration_tests {
         module.add_function(func2);
 
         // Run DCE on entire module
-        let mut dce = DeadCodeElimination::with_config(10, true, false);
+        let mut dce = DeadCodeElimination::with_config(10, true, true, false);
         dce.run(&mut module);
 
         // Verify both functions were optimized
@@ -615,7 +615,7 @@ mod integration_tests {
         module.add_function(internal_func);
 
         // Run DCE - should skip external function, optimize internal
-        let mut dce = DeadCodeElimination::with_config(10, true, false);
+        let mut dce = DeadCodeElimination::with_config(10, true, true, false);
         dce.run(&mut module);
 
         // Verify external function unchanged (still has no blocks)
@@ -669,7 +669,7 @@ mod integration_tests {
         module.add_function(func);
 
         // Run DCE
-        let mut dce = DeadCodeElimination::with_config(10, true, false);
+        let mut dce = DeadCodeElimination::with_config(10, true, true, false);
         dce.run(&mut module);
 
         // Verify CFG integrity
@@ -777,7 +777,7 @@ mod integration_tests {
         module.add_function(func);
 
         // Run DCE
-        let mut dce = DeadCodeElimination::with_config(10, true, false);
+        let mut dce = DeadCodeElimination::with_config(10, true, true, false);
         dce.run(&mut module);
 
         // Verify only entry block remains
