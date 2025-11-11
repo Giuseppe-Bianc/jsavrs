@@ -15,7 +15,7 @@ enum LoopControl {
     Continue,
 }
 
-/// The NIR (Normalized Intermediate Representation) Generator transforms Abstract Syntax Tree (AST) nodes
+/// The IR (Intermediate Representation) Generator transforms Abstract Syntax Tree (AST) nodes
 /// into intermediate representation suitable for optimization and code generation.
 ///
 /// This generator creates a control flow graph with basic blocks, handles variable scoping,
