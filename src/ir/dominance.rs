@@ -146,10 +146,10 @@ impl DominanceInfo {
         self.dom_tree_children.clear();
 
         for (&node, &idom_opt) in &self.idom {
-            if let Some(idom) = idom_opt {
-                if node != idom {
-                    self.dom_tree_children.entry(idom).or_default().push(node);
-                }
+            if let Some(idom) = idom_opt
+                && node != idom
+            {
+                self.dom_tree_children.entry(idom).or_default().push(node);
             }
         }
     }
