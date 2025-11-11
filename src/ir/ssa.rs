@@ -9,6 +9,7 @@ use super::types::IrType;
 use super::value::{Value, ValueKind};
 use petgraph::graph::NodeIndex;
 use std::collections::{HashMap, HashSet};
+use std::sync::Arc;
 
 /// Manages the SSA transformation process.
 #[derive(Debug)]
@@ -18,13 +19,13 @@ pub struct SsaTransformer {
     /// Counter for generating unique variable names
     temp_counter: u64,
     /// Map from original variable names to their definitions in each block
-    var_defs: HashMap<String, HashMap<NodeIndex, Vec<String>>>,
+    var_defs: HashMap<Arc<str>, HashMap<NodeIndex, Vec<Arc<str>>>>,
     /// Set of variables that need phi-functions
-    phi_variables: HashSet<String>,
+    phi_variables: HashSet<Arc<str>>,
     /// Map from variable names to their current SSA values (stack for scoping)
-    value_stack: HashMap<String, Vec<Value>>,
+    value_stack: HashMap<Arc<str>, Vec<Value>>,
     /// Map to store the type of each variable
-    variable_types: HashMap<String, IrType>,
+    variable_types: HashMap<Arc<str>, IrType>,
 }
 
 impl SsaTransformer {
@@ -101,6 +102,14 @@ impl SsaTransformer {
         // Don't reset temp_counter here - it should be unique across the entire module
     }
 
+    fn extract_variable_name(dest: &&Value, temp_id: &u64) -> Arc<str> {
+        if let Some(debug_info) = &dest.debug_info {
+            if let Some(name) = &debug_info.name { name.clone() } else { Arc::from(format!("t{}", temp_id)) }
+        } else {
+            Arc::from(format!("t{}", temp_id))
+        }
+    }
+
     /// Identifies variables that need phi-functions by analyzing definitions.
     fn identify_phi_variables(&mut self, cfg: &ControlFlowGraph) {
         self.phi_variables.clear();
@@ -116,16 +125,7 @@ impl SsaTransformer {
                         InstructionKind::Store { value: _, dest } => {
                             if let ValueKind::Temporary(temp_id) = &dest.kind {
                                 // Get the variable name from debug info if available
-                                let var_name = if let Some(debug_info) = &dest.debug_info {
-                                    if let Some(name) = &debug_info.name {
-                                        name.to_string()
-                                    } else {
-                                        format!("t{}", temp_id)
-                                    }
-                                } else {
-                                    format!("t{}", temp_id)
-                                };
-
+                                let var_name = Self::extract_variable_name(&dest, temp_id);
                                 // Store the variable type
                                 if let IrType::Pointer(inner_ty) = &dest.ty {
                                     self.variable_types.insert(var_name.clone(), (**inner_ty).clone());
@@ -137,7 +137,7 @@ impl SsaTransformer {
                                     .or_default()
                                     .entry(node_idx)
                                     .or_default()
-                                    .push(var_name.clone());
+                                    .push(var_name);
                             }
                         }
                         // Check for alloca instructions that define variables
@@ -146,15 +146,7 @@ impl SsaTransformer {
                                 && let ValueKind::Temporary(temp_id) = &result.kind
                             {
                                 // Get the variable name from debug info if available
-                                let var_name = if let Some(debug_info) = &result.debug_info {
-                                    if let Some(name) = &debug_info.name {
-                                        name.to_string()
-                                    } else {
-                                        format!("t{}", temp_id)
-                                    }
-                                } else {
-                                    format!("t{}", temp_id)
-                                };
+                                let var_name = Self::extract_variable_name(&result, temp_id);
 
                                 // Store the variable type
                                 self.variable_types.insert(var_name.clone(), ty.clone());
@@ -165,7 +157,7 @@ impl SsaTransformer {
                                     .or_default()
                                     .entry(node_idx)
                                     .or_default()
-                                    .push(var_name.clone());
+                                    .push(var_name);
                             }
                         }
                         _ => {}
@@ -185,7 +177,7 @@ impl SsaTransformer {
     /// Inserts phi-functions at dominance frontiers.
     fn insert_phi_functions(&mut self, cfg: &mut ControlFlowGraph) {
         // Collect all phi variables first to avoid borrowing issues
-        let phi_vars: Vec<String> = self.phi_variables.iter().cloned().collect();
+        let phi_vars: Vec<Arc<str>> = self.phi_variables.iter().cloned().collect();
 
         // For each variable that needs phi-functions
         for var_name in &phi_vars {
@@ -267,7 +259,7 @@ impl SsaTransformer {
             };
 
             // Get the current value from the stack
-            if let Some(stack) = self.value_stack.get(&var_name)
+            if let Some(stack) = self.value_stack.get(&Arc::from(var_name))
                 && let Some(current_value) = stack.last()
             {
                 *value = current_value.clone();
@@ -326,7 +318,7 @@ impl SsaTransformer {
                 {
                     // Pop the value from the stack - convert var_name to String
                     let var_name_string = var_name.to_string();
-                    if let Some(stack) = self.value_stack.get_mut(&var_name_string) {
+                    if let Some(stack) = self.value_stack.get_mut(&Arc::from(var_name_string)) {
                         stack.pop();
                     }
                 }
@@ -382,7 +374,7 @@ impl SsaTransformer {
             block.instructions[i].result = Some(new_value.clone());
 
             // Push the new value onto the stack
-            self.value_stack.entry(var_name.clone()).or_default().push(new_value);
+            self.value_stack.entry(Arc::from(var_name.clone())).or_default().push(new_value);
         }
 
         // Process instructions in this block
@@ -404,7 +396,7 @@ impl SsaTransformer {
                         // Create a new unique name for this definition
                         let ty = dest.ty.clone();
                         let new_value = Value::new_temporary(self.temp_counter, ty).with_debug_info(
-                            Some(var_name.clone().into()),
+                            Some(Arc::from(var_name.clone())),
                             dest.debug_info.as_ref().map(|d| d.source_span.clone()).unwrap_or_default(),
                         );
                         self.temp_counter += 1;
@@ -413,7 +405,7 @@ impl SsaTransformer {
                         *dest = new_value.clone();
 
                         // Push the new value onto the stack
-                        self.value_stack.entry(var_name).or_default().push(new_value);
+                        self.value_stack.entry(Arc::from(var_name)).or_default().push(new_value);
                     }
                 }
                 InstructionKind::Load { src, .. } => {
@@ -480,7 +472,7 @@ impl SsaTransformer {
                                 if let Some(result) = &instruction.result
                                     && let Some(debug_info) = &result.debug_info
                                     && let Some(phi_var_name) = &debug_info.name
-                                    && phi_var_name.as_ref() == var_name
+                                    && *phi_var_name.as_ref() == **var_name
                                 {
                                     // This is the phi-function for the current variable
                                     incoming.push((current_value.clone(), pred_label.clone()));
