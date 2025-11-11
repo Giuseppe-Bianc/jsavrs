@@ -4,7 +4,7 @@ use console::style;
 // use jsavrs::asm::{Abi, AssemblyFile, DataDirective, GPRegister64, Immediate, Instruction, Operand, X86Register};
 use jsavrs::cli::Args;
 use jsavrs::error::error_reporter::ErrorReporter;
-use jsavrs::ir::{Phase, generator::NIrGenerator, optimizer::DeadCodeElimination, run_pipeline};
+use jsavrs::ir::{Phase, generator::IrGenerator, optimizer::DeadCodeElimination, run_pipeline};
 use jsavrs::lexer::Lexer;
 use jsavrs::parser::jsav_parser::JsavParser;
 //use jsavrs::printers::ast_printer::pretty_print_stmt;
@@ -106,7 +106,7 @@ fn main() -> Result<(), CompileError> {
     }
 
     // Extract type information from the type checker to guide IR generation
-    let mut generator = NIrGenerator::new();
+    let mut generator = IrGenerator::new();
     let nir_timer = Timer::new("NIR Generation");
     let (irmodule, ir_errors) = generator.generate(statements.clone(), file_path.to_str().unwrap());
     println!("{nir_timer}");

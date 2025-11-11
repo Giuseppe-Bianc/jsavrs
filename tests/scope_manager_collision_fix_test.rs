@@ -1,4 +1,4 @@
-use jsavrs::ir::generator::NIrGenerator;
+use jsavrs::ir::generator::IrGenerator;
 use jsavrs::parser::ast::{Stmt, Type};
 use jsavrs::utils::*;
 
@@ -22,7 +22,7 @@ fn test_ir_generator_multiple_functions_no_collision() {
     ];
 
     // This should not panic anymore
-    let mut generator = NIrGenerator::new();
+    let mut generator = IrGenerator::new();
     let (module, ir_errors) = generator.generate(ast, "test_file.vn");
 
     // Verify no errors

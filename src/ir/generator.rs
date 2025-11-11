@@ -21,7 +21,7 @@ enum LoopControl {
 /// This generator creates a control flow graph with basic blocks, handles variable scoping,
 /// type mapping, and applies SSA (Static Single Assignment) transformation to optimize
 /// the generated IR for further analysis and compilation.
-pub struct NIrGenerator {
+pub struct IrGenerator {
     /// The currently active basic block being constructed
     current_block: Option<BasicBlock>,
     /// The label of the current basic block
@@ -56,7 +56,7 @@ struct TypeContext {
 }
 
 #[allow(clippy::collapsible_if, clippy::collapsible_else_if)]
-impl NIrGenerator {
+impl IrGenerator {
     /// Creates a new NIR generator instance with default settings
     ///
     /// # Returns
@@ -968,7 +968,7 @@ impl NIrGenerator {
     }
 }
 
-impl Default for NIrGenerator {
+impl Default for IrGenerator {
     fn default() -> Self {
         Self::new()
     }

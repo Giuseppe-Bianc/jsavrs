@@ -1,7 +1,7 @@
 // benches/jsavrs_benchmark.rs
 use criterion::measurement::WallTime;
 use criterion::{BenchmarkGroup, BenchmarkId, Criterion, Throughput, criterion_group, criterion_main};
-use jsavrs::ir::generator::NIrGenerator;
+use jsavrs::ir::generator::IrGenerator;
 use jsavrs::ir::optimizer::{DeadCodeElimination, Phase};
 use jsavrs::lexer::{Lexer, lexer_tokenize_with_errors};
 use jsavrs::parser::jsav_parser::JsavParser;
@@ -172,7 +172,7 @@ pub fn benchmark_ir_generation(c: &mut Criterion) {
                 let (tokens, _lex_errors) = lexer_tokenize_with_errors(&mut lexer);
                 let parser = JsavParser::new(tokens);
                 let (ast, _parse_errors) = parser.parse();
-                let mut ir_generator = NIrGenerator::new();
+                let mut ir_generator = IrGenerator::new();
                 let (ir_module, _ir_errors) = ir_generator.generate(ast, "bench.vn");
                 black_box(&ir_module);
             })
@@ -207,7 +207,7 @@ pub fn benchmark_end_to_end(c: &mut Criterion) {
                 let (ast, _parse_errors) = parser.parse();
                 let mut type_checker = TypeChecker::new();
                 let _semantic_errors = type_checker.check(&ast);
-                let mut ir_generator = NIrGenerator::new();
+                let mut ir_generator = IrGenerator::new();
                 let (ir_module, _ir_errors) = ir_generator.generate(ast, "bench.vn");
                 black_box(&ir_module);
             })
@@ -242,7 +242,7 @@ pub fn benchmark_dce_small(c: &mut Criterion) {
             let (ast, _) = parser.parse();
             let mut type_checker = TypeChecker::new();
             let _ = type_checker.check(&ast);
-            let mut ir_generator = NIrGenerator::new();
+            let mut ir_generator = IrGenerator::new();
             let (mut ir_module, _) = ir_generator.generate(ast, "bench.vn");
 
             let mut dce = DeadCodeElimination::default();
@@ -277,7 +277,7 @@ pub fn benchmark_dce_medium(c: &mut Criterion) {
             let (ast, _) = parser.parse();
             let mut type_checker = TypeChecker::new();
             let _ = type_checker.check(&ast);
-            let mut ir_generator = NIrGenerator::new();
+            let mut ir_generator = IrGenerator::new();
             let (mut ir_module, _) = ir_generator.generate(ast, "bench.vn");
 
             let mut dce = DeadCodeElimination::default();
@@ -311,7 +311,7 @@ pub fn benchmark_dce_large(c: &mut Criterion) {
             let (ast, _) = parser.parse();
             let mut type_checker = TypeChecker::new();
             let _ = type_checker.check(&ast);
-            let mut ir_generator = NIrGenerator::new();
+            let mut ir_generator = IrGenerator::new();
             let (mut ir_module, _) = ir_generator.generate(ast, "bench.vn");
 
             let mut dce = DeadCodeElimination::default();
@@ -348,7 +348,7 @@ pub fn benchmark_dce_module(c: &mut Criterion) {
             let (ast, _) = parser.parse();
             let mut type_checker = TypeChecker::new();
             let _ = type_checker.check(&ast);
-            let mut ir_generator = NIrGenerator::new();
+            let mut ir_generator = IrGenerator::new();
             let (mut ir_module, _) = ir_generator.generate(ast, "bench.vn");
 
             let mut dce = DeadCodeElimination::default();
@@ -383,7 +383,7 @@ pub fn benchmark_dce_worst_case(c: &mut Criterion) {
             let (ast, _) = parser.parse();
             let mut type_checker = TypeChecker::new();
             let _ = type_checker.check(&ast);
-            let mut ir_generator = NIrGenerator::new();
+            let mut ir_generator = IrGenerator::new();
             let (mut ir_module, _) = ir_generator.generate(ast, "bench.vn");
 
             let mut dce = DeadCodeElimination::default();

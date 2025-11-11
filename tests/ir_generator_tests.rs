@@ -1,4 +1,4 @@
-use jsavrs::ir::generator::NIrGenerator;
+use jsavrs::ir::generator::IrGenerator;
 use jsavrs::ir::{
     InstructionKind, IrBinaryOp, IrConstantValue, IrLiteralValue, IrType, IrUnaryOp, TerminatorKind, ValueKind,
 };
@@ -152,7 +152,7 @@ fn test_generate_function_with_return() {
         vec![Stmt::Return { value: Some(num_lit_i32(42)), span: dummy_span() }],
     )];
 
-    let mut generator = NIrGenerator::new_without_ssa();
+    let mut generator = IrGenerator::new_without_ssa();
     let (functions, ir_errors) = generator.generate(ast, "test_file.vn");
     assert_eq!(ir_errors.len(), 0);
     assert_eq!(functions.functions.len(), 1);
@@ -176,7 +176,7 @@ fn test_generate_void_function() {
         vec![Stmt::Return { value: None, span: dummy_span() }],
     )];
 
-    let mut generator = NIrGenerator::new_without_ssa();
+    let mut generator = IrGenerator::new_without_ssa();
     let (functions, ir_errors) = generator.generate(ast, "test_file.vn");
     assert_eq!(ir_errors.len(), 0);
     assert_eq!(functions.functions.len(), 1);
@@ -195,7 +195,7 @@ fn test_generate_main_function() {
     let ast =
         vec![Stmt::MainFunction { body: vec![Stmt::Return { value: None, span: dummy_span() }], span: dummy_span() }];
 
-    let mut generator = NIrGenerator::new_without_ssa();
+    let mut generator = IrGenerator::new_without_ssa();
     let (functions, ir_errors) = generator.generate(ast, "test_file.vn");
     assert_eq!(ir_errors.len(), 0);
     assert_eq!(functions.functions.len(), 1);
@@ -222,7 +222,7 @@ fn test_generate_binary_expression() {
         }],
     )];
 
-    let mut generator = NIrGenerator::new_without_ssa();
+    let mut generator = IrGenerator::new_without_ssa();
     let (functions, ir_errors) = generator.generate(ast, "test_file.vn");
 
     // Verifica assenza errori
@@ -265,7 +265,7 @@ fn test_generate_variable_assignment() {
         ],
     )];
 
-    let mut generator = NIrGenerator::new_without_ssa();
+    let mut generator = IrGenerator::new_without_ssa();
     let (functions, ir_errors) = generator.generate(ast, "test_file.vn");
 
     // Verifica assenza errori
@@ -306,7 +306,7 @@ fn test_generate_if_statement() {
         }],
     )];
 
-    let mut generator = NIrGenerator::new_without_ssa();
+    let mut generator = IrGenerator::new_without_ssa();
     let (functions, ir_errors) = generator.generate(ast, "test_file.vn");
     assert_eq!(ir_errors.len(), 0);
     assert_eq!(functions.functions.len(), 1);
@@ -347,7 +347,7 @@ fn test_generate_nested_expressions() {
         }],
     )];
 
-    let mut generator = NIrGenerator::new_without_ssa();
+    let mut generator = IrGenerator::new_without_ssa();
     let (functions, ir_errors) = generator.generate(ast, "test_file.vn");
     assert_eq!(ir_errors.len(), 0);
     assert_eq!(functions.functions.len(), 1);
@@ -394,7 +394,7 @@ fn test_generate_custom_type() {
         vec![Stmt::Return { value: Some(variable_expr("param")), span: dummy_span() }],
     )];
 
-    let mut generator = NIrGenerator::new_without_ssa();
+    let mut generator = IrGenerator::new_without_ssa();
     let (functions, ir_errors) = generator.generate(ast, "test_file.vn");
     assert_eq!(ir_errors.len(), 0);
     assert_eq!(functions.functions.len(), 1);
@@ -417,7 +417,7 @@ fn test_generate_array_type() {
         )],
     )];
 
-    let mut generator = NIrGenerator::new_without_ssa();
+    let mut generator = IrGenerator::new_without_ssa();
     let (functions, ir_errors) = generator.generate(ast, "test_file.vn");
     assert_eq!(ir_errors.len(), 0);
     assert_eq!(functions.functions.len(), 1);
@@ -441,7 +441,7 @@ fn test_generate_missing_return() {
         span: dummy_span(),
     }];
 
-    let mut generator = NIrGenerator::new_without_ssa();
+    let mut generator = IrGenerator::new_without_ssa();
     let (functions, ir_errors) = generator.generate(ast, "test_file.vn");
     assert_eq!(ir_errors.len(), 0);
     assert_eq!(functions.functions.len(), 1);
@@ -469,7 +469,7 @@ fn test_generate_multiple_functions() {
         ),
     ];
 
-    let mut generator = NIrGenerator::new_without_ssa();
+    let mut generator = IrGenerator::new_without_ssa();
     let (functions, ir_errors) = generator.generate(ast, "test_file.vn");
     assert_eq!(ir_errors.len(), 0);
     assert_eq!(functions.functions.len(), 2);
@@ -487,7 +487,7 @@ fn test_generate_string_literal() {
         span: dummy_span(),
     }];
 
-    let mut generator = NIrGenerator::new_without_ssa();
+    let mut generator = IrGenerator::new_without_ssa();
     let (functions, ir_errors) = generator.generate(ast, "test_file.vn");
     assert_eq!(ir_errors.len(), 0);
     assert_eq!(functions.functions.len(), 1);
@@ -508,7 +508,7 @@ fn test_generate_nullptr() {
         span: dummy_span(),
     }];
 
-    let mut generator = NIrGenerator::new_without_ssa();
+    let mut generator = IrGenerator::new_without_ssa();
     let (functions, ir_errors) = generator.generate(ast, "test_file.vn");
     assert_eq!(ir_errors.len(), 0);
     assert_eq!(functions.functions.len(), 1);
@@ -543,7 +543,7 @@ fn test_generate_simple_block() {
         ],
     )];
 
-    let mut generator = NIrGenerator::new_without_ssa();
+    let mut generator = IrGenerator::new_without_ssa();
     let (functions, ir_errors) = generator.generate(ast, "test_file.vn");
     assert_eq!(ir_errors.len(), 0);
     assert_eq!(functions.functions.len(), 1);
@@ -589,7 +589,7 @@ fn test_generate_simple_while_loop() {
         ],
     )];
 
-    let mut generator = NIrGenerator::new_without_ssa();
+    let mut generator = IrGenerator::new_without_ssa();
     let (functions, ir_errors) = generator.generate(ast, "test_file.vn");
     assert_eq!(ir_errors.len(), 0);
     assert_eq!(functions.functions.len(), 1);
@@ -663,7 +663,7 @@ fn test_generate_for_loop_basic() {
         }],
     )];
 
-    let mut generator = NIrGenerator::new_without_ssa();
+    let mut generator = IrGenerator::new_without_ssa();
     let (functions, ir_errors) = generator.generate(ast, "test_file.vn");
     assert_eq!(ir_errors.len(), 0);
     assert_eq!(functions.functions.len(), 1);
@@ -708,7 +708,7 @@ fn test_generate_for_loop_with_break() {
         }],
     )];
 
-    let mut generator = NIrGenerator::new_without_ssa();
+    let mut generator = IrGenerator::new_without_ssa();
     let (functions, ir_errors) = generator.generate(ast, "test_file.vn");
     assert_eq!(ir_errors.len(), 0);
     assert_eq!(functions.functions.len(), 1);
@@ -753,7 +753,7 @@ fn test_generate_for_loop_with_continue() {
         }],
     )];
 
-    let mut generator = NIrGenerator::new_without_ssa();
+    let mut generator = IrGenerator::new_without_ssa();
     let (functions, ir_errors) = generator.generate(ast, "test_file.vn");
     assert_eq!(ir_errors.len(), 0);
     assert_eq!(functions.functions.len(), 1);
@@ -789,7 +789,7 @@ fn test_generate_grouping_expression() {
         }],
     )];
 
-    let mut generator = NIrGenerator::new_without_ssa();
+    let mut generator = IrGenerator::new_without_ssa();
     let (functions, ir_errors) = generator.generate(ast, "test_file.vn");
     assert_eq!(ir_errors.len(), 0);
     assert_eq!(functions.functions.len(), 1);
@@ -822,7 +822,7 @@ fn test_generate_array_literal_with_elements() {
         }],
     )];
 
-    let mut generator = NIrGenerator::new_without_ssa();
+    let mut generator = IrGenerator::new_without_ssa();
     let (functions, ir_errors) = generator.generate(ast, "test_file.vn");
     assert_eq!(ir_errors.len(), 0);
     assert_eq!(functions.functions.len(), 1);
@@ -877,7 +877,7 @@ fn test_default_implementation() {
         vec![Stmt::Return { value: Some(num_lit_i32(42)), span: dummy_span() }],
     )];
 
-    let mut generator = NIrGenerator::default();
+    let mut generator = IrGenerator::default();
     let (functions, ir_errors) = generator.generate(ast, "test_file.vn");
     assert_eq!(ir_errors.len(), 0);
     assert_eq!(functions.functions.len(), 1);
@@ -922,7 +922,7 @@ fn test_generate_binary_all_operations() {
             }],
         )];
 
-        let mut generator = NIrGenerator::default();
+        let mut generator = IrGenerator::default();
         let (functions, ir_errors) = generator.generate(ast, "test_file.vn");
         assert_eq!(ir_errors.len(), 0);
         assert_eq!(functions.functions.len(), 1);
@@ -953,7 +953,7 @@ fn test_generate_unary_expression() {
             vec![Stmt::Return { value: Some(unary_expr(ast_op, num_lit_i32(42))), span: dummy_span() }],
         )];
 
-        let mut generator = NIrGenerator::default();
+        let mut generator = IrGenerator::default();
         let (functions, ir_errors) = generator.generate(ast, "test_file.vn");
         assert_eq!(ir_errors.len(), 0);
         assert_eq!(functions.functions.len(), 1);
@@ -1012,7 +1012,7 @@ fn test_generate_integer_literals() {
             }],
         )];
 
-        let mut generator = NIrGenerator::default();
+        let mut generator = IrGenerator::default();
         let (functions, ir_errors) = generator.generate(ast, "test_file.vn");
         assert_eq!(ir_errors.len(), 0);
         assert_eq!(functions.functions.len(), 1);
@@ -1061,7 +1061,7 @@ fn test_generate_float_literals() {
             }],
         )];
 
-        let mut generator = NIrGenerator::default();
+        let mut generator = IrGenerator::default();
         let (functions, ir_errors) = generator.generate(ast, "test_file.vn");
         assert_eq!(ir_errors.len(), 0);
         assert_eq!(functions.functions.len(), 1);
@@ -1095,7 +1095,7 @@ fn test_generate_boolean_literals() {
             vec![Stmt::Return { value: Some(bool_lit(b)), span: dummy_span() }],
         )];
 
-        let mut generator = NIrGenerator::default();
+        let mut generator = IrGenerator::default();
         let (functions, ir_errors) = generator.generate(ast, "test_file.vn");
         assert_eq!(ir_errors.len(), 0);
         assert_eq!(functions.functions.len(), 1);
@@ -1126,7 +1126,7 @@ fn test_generate_char_literal() {
         vec![Stmt::Return { value: Some(char_lit("A")), span: dummy_span() }],
     )];
 
-    let mut generator = NIrGenerator::default();
+    let mut generator = IrGenerator::default();
     let (functions, ir_errors) = generator.generate(ast, "test_file.vn");
     assert_eq!(ir_errors.len(), 0);
     assert_eq!(functions.functions.len(), 1);
@@ -1156,7 +1156,7 @@ fn test_generate_nullptr_literal() {
         vec![Stmt::Return { value: Some(nullptr_lit()), span: dummy_span() }],
     )];
 
-    let mut generator = NIrGenerator::default();
+    let mut generator = IrGenerator::default();
     let (functions, ir_errors) = generator.generate(ast, "test_file.vn");
     assert_eq!(ir_errors.len(), 0);
     assert_eq!(functions.functions.len(), 1);
@@ -1198,7 +1198,7 @@ fn test_generate_array_access_assignment() {
         ],
     )];
 
-    let mut generator = NIrGenerator::new_without_ssa();
+    let mut generator = IrGenerator::new_without_ssa();
     let (functions, ir_errors) = generator.generate(ast, "test_file.vn");
 
     // Verifica che non ci siano errori
@@ -1269,7 +1269,7 @@ fn test_generate_simple_function_call() {
         ),
     ];
 
-    let mut generator = NIrGenerator::new_without_ssa();
+    let mut generator = IrGenerator::new_without_ssa();
     let (functions, ir_errors) = generator.generate(ast, "test_file.vn");
     assert_eq!(ir_errors.len(), 0);
     assert_eq!(functions.functions.len(), 2);
@@ -1323,7 +1323,7 @@ fn test_generate_recursive_function_call() {
         }],
     )];
 
-    let mut generator = NIrGenerator::new_without_ssa();
+    let mut generator = IrGenerator::new_without_ssa();
     let (functions, ir_errors) = generator.generate(ast, "test_file.vn");
     assert_eq!(ir_errors.len(), 0);
     assert_eq!(functions.functions.len(), 1);

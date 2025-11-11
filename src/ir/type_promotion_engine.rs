@@ -32,7 +32,7 @@ use super::{
     CastKind, Instruction, InstructionKind, IrBinaryOp, IrType, PromotionMatrix, PromotionResult, PromotionWarning,
     TypePromotion, Value,
 };
-use crate::ir::generator::NIrGenerator;
+use crate::ir::generator::IrGenerator;
 use crate::location::source_span::SourceSpan;
 
 #[derive(Debug, Clone, Default)]
@@ -147,7 +147,7 @@ impl TypePromotionEngine {
     /// Inserts promotion casts for binary operations
     pub fn insert_promotion_casts(
         &self,
-        generator: &mut NIrGenerator,
+        generator: &mut IrGenerator,
         func: &mut super::function::Function, // Function is now used in the implementation
         left_value: Value,
         right_value: Value,
@@ -187,7 +187,7 @@ impl TypePromotionEngine {
     /// Helper function to insert a cast instruction
     fn insert_cast_instruction(
         &self,
-        generator: &mut NIrGenerator,
+        generator: &mut IrGenerator,
         _func: &mut super::function::Function, // Using _ to indicate it's intentionally unused for now
         value: Value,
         to_type: &IrType,

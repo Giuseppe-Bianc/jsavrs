@@ -34,10 +34,7 @@ impl PromotionMatrix {
 
     /// Creates a new promotion matrix with specified overflow behavior
     pub fn with_overflow_behavior(overflow_behavior: OverflowBehavior) -> Self {
-        let mut matrix = PromotionMatrix {
-            promotion_rules: HashMap::new(),
-            overflow_behavior,
-        };
+        let mut matrix = PromotionMatrix { promotion_rules: HashMap::new(), overflow_behavior };
 
         // Initialize all promotion rules
         matrix.initialize_all_rules();
