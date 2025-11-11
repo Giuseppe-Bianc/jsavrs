@@ -36,13 +36,6 @@ impl PromotionMatrix {
     pub fn with_overflow_behavior(overflow_behavior: OverflowBehavior) -> Self {
         let mut matrix = PromotionMatrix {
             promotion_rules: HashMap::new(),
-            /*type_precedence: vec![
-                TypeGroup::FloatingPoint(vec![IrType::F32, IrType::F64]),
-                TypeGroup::SignedIntegers(vec![IrType::I8, IrType::I16, IrType::I32, IrType::I64]),
-                TypeGroup::UnsignedIntegers(vec![IrType::U8, IrType::U16, IrType::U32, IrType::U64]),
-                TypeGroup::Boolean,
-                TypeGroup::Character,
-            ],*/
             overflow_behavior,
         };
 
