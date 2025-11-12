@@ -1,3 +1,5 @@
+use std::sync::Arc;
+
 use jsavrs::ir::basic_block::BasicBlock;
 use jsavrs::ir::cfg::ControlFlowGraph;
 use jsavrs::ir::dominance::DominanceInfo;
@@ -6,7 +8,7 @@ use jsavrs::location::source_span::SourceSpan;
 #[test]
 fn test_dominance_simple_linear() {
     // Create a simple linear CFG: entry -> block1 -> block2
-    let mut cfg = ControlFlowGraph::new("entry".to_string());
+    let mut cfg = ControlFlowGraph::new(Arc::from("entry"));
     let entry_block = BasicBlock::new("entry", SourceSpan::default());
     let block1 = BasicBlock::new("block1", SourceSpan::default());
     let block2 = BasicBlock::new("block2", SourceSpan::default());
@@ -37,7 +39,7 @@ fn test_dominance_if_else() {
     // Create an if-else CFG:
     // entry -> condition -> then_branch -> merge
     //                    -> else_branch -/
-    let mut cfg = ControlFlowGraph::new("entry".to_string());
+    let mut cfg = ControlFlowGraph::new(Arc::from("entry"));
     let entry_block = BasicBlock::new("entry", SourceSpan::default());
     let condition_block = BasicBlock::new("condition", SourceSpan::default());
     let then_block = BasicBlock::new("then_branch", SourceSpan::default());
@@ -81,7 +83,7 @@ fn test_dominance_while_loop() {
     // Create a while loop CFG:
     // entry -> loop_header -> loop_body -> loop_header (back edge)
     //                       -> loop_exit
-    let mut cfg = ControlFlowGraph::new("entry".to_string());
+    let mut cfg = ControlFlowGraph::new(Arc::from("entry"));
     let entry_block = BasicBlock::new("entry", SourceSpan::default());
     let header_block = BasicBlock::new("loop_header", SourceSpan::default());
     let body_block = BasicBlock::new("loop_body", SourceSpan::default());
@@ -119,7 +121,7 @@ fn test_compute_dominance_frontiers() {
     // Create an if-else CFG:
     // entry -> condition -> then_branch -> merge
     //                    -> else_branch -/
-    let mut cfg = ControlFlowGraph::new("entry".to_string());
+    let mut cfg = ControlFlowGraph::new(Arc::from("entry"));
     let entry_block = BasicBlock::new("entry", SourceSpan::default());
     let condition_block = BasicBlock::new("condition", SourceSpan::default());
     let then_block = BasicBlock::new("then_branch", SourceSpan::default());
@@ -161,7 +163,7 @@ fn test_dominance_info_new() {
 #[test]
 fn test_compute_dominators_simple() {
     // Create a simple CFG: entry -> block1 -> block2
-    let mut cfg = ControlFlowGraph::new("entry".to_string());
+    let mut cfg = ControlFlowGraph::new(Arc::from("entry"));
     let entry_block = BasicBlock::new("entry", SourceSpan::default());
     let block1 = BasicBlock::new("block1", SourceSpan::default());
     let block2 = BasicBlock::new("block2", SourceSpan::default());

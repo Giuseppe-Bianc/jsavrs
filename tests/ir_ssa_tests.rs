@@ -47,7 +47,7 @@ fn test_simple_ssa_transformation() {
 
     // Add the block to the function's CFG
     let _node_idx = func.cfg.add_block(block);
-    func.cfg.entry_label = "entry".to_string();
+    func.cfg.entry_label = Arc::from("entry");
 
     // Transform to SSA form
     let mut transformer = SsaTransformer::new(None);
@@ -131,7 +131,7 @@ fn test_ssa_with_if_else() {
     func.cfg.connect_blocks("then_branch", "merge");
     func.cfg.connect_blocks("else_branch", "merge");
 
-    func.cfg.entry_label = "entry".to_string();
+    func.cfg.entry_label = Arc::from("entry");
 
     // Transform to SSA form
     let mut transformer = SsaTransformer::new(None);
@@ -159,7 +159,7 @@ fn test_simple_if_else_transformation() {
     func.add_block("merge", SourceSpan::default());
 
     // Set entry block
-    func.cfg.entry_label = "entry".to_string();
+    func.cfg.entry_label = Arc::from("entry");
 
     // Create a variable x
     let x_var = Value::new_temporary(0, IrType::I32).with_debug_info(Some("x".into()), SourceSpan::default());
@@ -210,7 +210,7 @@ fn test_loop_transformation() {
     func.add_block("loop_exit", SourceSpan::default());
 
     // Set entry block
-    func.cfg.entry_label = "entry".to_string();
+    func.cfg.entry_label = Arc::from("entry");
 
     // Create a variable i
     let i_var = Value::new_temporary(0, IrType::I32).with_debug_info(Some("i".into()), SourceSpan::default());

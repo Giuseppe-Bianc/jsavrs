@@ -160,7 +160,7 @@ fn test_generate_function_with_return() {
     assert_eq!(func.name, "test");
     assert_eq!(func.return_type, IrType::I32);
     assert_eq!(func.cfg.blocks().count(), 1);
-    assert_eq!(func.cfg.entry_label, "entry_test");
+    assert_eq!(func.cfg.entry_label, Arc::from("entry_test"));
     let entry_block = func.cfg.get_block("entry_test").unwrap();
     assert_eq!(entry_block.clone().instructions.len(), 0);
     // VERIFICA TERMINATOR
@@ -184,7 +184,7 @@ fn test_generate_void_function() {
     assert_eq!(func.name, "void_func");
     assert_eq!(func.return_type, IrType::Void);
     assert_eq!(func.cfg.blocks().count(), 1);
-    assert_eq!(func.cfg.entry_label, "entry_void_func");
+    assert_eq!(func.cfg.entry_label, Arc::from("entry_void_func"));
     let entry_block = func.cfg.get_block("entry_void_func").unwrap();
     assert_eq!(entry_block.clone().instructions.len(), 0);
     assert_return_literal!(entry_block, &IrType::Void, IrLiteralValue::I32(0));
@@ -203,7 +203,7 @@ fn test_generate_main_function() {
     assert_eq!(func.name, "main");
     assert_eq!(func.return_type, IrType::Void);
     assert_eq!(func.cfg.blocks().count(), 1);
-    assert_eq!(func.cfg.entry_label, "entry_main");
+    assert_eq!(func.cfg.entry_label, Arc::from("entry_main"));
     let entry_block = func.cfg.get_block("entry_main").unwrap();
     assert_eq!(entry_block.clone().instructions.len(), 0);
     // VERIFICA TERMINATOR
@@ -236,7 +236,7 @@ fn test_generate_binary_expression() {
 
     // Verifica struttura CFG
     assert_eq!(func.cfg.blocks().count(), 1);
-    assert_eq!(func.cfg.entry_label, "entry_test");
+    assert_eq!(func.cfg.entry_label, Arc::from("entry_test"));
 
     // Verifica contenuto blocco entry
     let entry_block = func.cfg.get_block("entry_test").unwrap();
@@ -279,7 +279,7 @@ fn test_generate_variable_assignment() {
 
     // Verifica struttura CFG
     assert_eq!(func.cfg.blocks().count(), 1);
-    assert_eq!(func.cfg.entry_label, "entry_test");
+    assert_eq!(func.cfg.entry_label, Arc::from("entry_test"));
 
     // Verifica contenuto blocco entry
     let entry_block = func.cfg.get_block("entry_test").unwrap();
@@ -312,7 +312,7 @@ fn test_generate_if_statement() {
     assert_eq!(functions.functions.len(), 1);
     let func = &functions.functions[0];
     assert_eq!(func.cfg.blocks().count(), 4);
-    assert_eq!(func.cfg.entry_label, "entry_test");
+    assert_eq!(func.cfg.entry_label, Arc::from("entry_test"));
     let entry_block = func.cfg.get_block("entry_test").unwrap();
     assert_conditional_branch!(
         entry_block,
@@ -353,7 +353,7 @@ fn test_generate_nested_expressions() {
     assert_eq!(functions.functions.len(), 1);
     let func = &functions.functions[0];
     assert_eq!(func.cfg.blocks().count(), 1);
-    assert_eq!(func.cfg.entry_label, "entry_test");
+    assert_eq!(func.cfg.entry_label, Arc::from("entry_test"));
     let entry_block = func.cfg.get_block("entry_test").unwrap();
     assert_eq!(entry_block.instructions.len(), 3);
 
@@ -423,7 +423,7 @@ fn test_generate_array_type() {
     assert_eq!(functions.functions.len(), 1);
     let func = &functions.functions[0];
     assert_eq!(func.cfg.blocks().count(), 1);
-    assert_eq!(func.cfg.entry_label, "entry_test");
+    assert_eq!(func.cfg.entry_label, Arc::from("entry_test"));
     let entry_block = func.cfg.get_block("entry_test").unwrap();
     assert_eq!(entry_block.instructions.len(), 1);
     // VERIFICA ISTRUZIONE ALLOCA
@@ -447,7 +447,7 @@ fn test_generate_missing_return() {
     assert_eq!(functions.functions.len(), 1);
     let func = &functions.functions[0];
     assert_eq!(func.cfg.blocks().count(), 1);
-    assert_eq!(func.cfg.entry_label, "entry_test");
+    assert_eq!(func.cfg.entry_label, Arc::from("entry_test"));
     let entry_block = func.cfg.get_block("entry_test").unwrap();
     assert_return_literal!(entry_block, &IrType::I32, IrLiteralValue::I32(0));
 }
@@ -493,7 +493,7 @@ fn test_generate_string_literal() {
     assert_eq!(functions.functions.len(), 1);
     let func = &functions.functions[0];
     assert_eq!(func.cfg.blocks().count(), 1);
-    assert_eq!(func.cfg.entry_label, "entry_test");
+    assert_eq!(func.cfg.entry_label, Arc::from("entry_test"));
     let entry_block = func.cfg.get_block("entry_test").unwrap();
     assert_return_constant_string!(entry_block, "hello");
 }
@@ -514,7 +514,7 @@ fn test_generate_nullptr() {
     assert_eq!(functions.functions.len(), 1);
     let func = &functions.functions[0];
     assert_eq!(func.cfg.blocks().count(), 1);
-    assert_eq!(func.cfg.entry_label, "entry_test");
+    assert_eq!(func.cfg.entry_label, Arc::from("entry_test"));
     let entry_block = func.cfg.get_block("entry_test").unwrap();
     assert_return_nullptr!(entry_block);
 }
@@ -549,7 +549,7 @@ fn test_generate_simple_block() {
     assert_eq!(functions.functions.len(), 1);
     let func = &functions.functions[0];
     assert_eq!(func.cfg.blocks().count(), 1);
-    assert_eq!(func.cfg.entry_label, "entry_test");
+    assert_eq!(func.cfg.entry_label, Arc::from("entry_test"));
     let entry_block = func.cfg.get_block("entry_test").unwrap();
     assert_eq!(entry_block.instructions.len(), 3);
     // Verifica istruzioni all'interno del blocco
@@ -595,7 +595,7 @@ fn test_generate_simple_while_loop() {
     assert_eq!(functions.functions.len(), 1);
     let func = &functions.functions[0];
     assert_eq!(func.cfg.blocks().count(), 4);
-    assert_eq!(func.cfg.entry_label, "entry_test");
+    assert_eq!(func.cfg.entry_label, Arc::from("entry_test"));
     let entry_block = func.cfg.get_block("entry_test").unwrap();
     assert_eq!(entry_block.instructions.len(), 2);
     assert_alloca_instruction!(entry_block.instructions[0], IrType::I32);
@@ -670,7 +670,7 @@ fn test_generate_for_loop_basic() {
     let func = &functions.functions[0];
     // Verify block structure: entry, for_start, for_body, for_inc, for_end
     assert_eq!(func.cfg.blocks().count(), 5);
-    assert_eq!(func.cfg.entry_label, "entry_test");
+    assert_eq!(func.cfg.entry_label, Arc::from("entry_test"));
     let entry_block = func.cfg.get_block("entry_test").unwrap();
     assert_branch!(entry_block, &Arc::from("for_start_1"));
     let for_start = func.cfg.get_block("for_start_1").unwrap();
@@ -715,7 +715,7 @@ fn test_generate_for_loop_with_break() {
     let func = &functions.functions[0];
     // Verify block structure: entry, for_start, for_body, for_inc, for_end
     assert_eq!(func.cfg.blocks().count(), 5);
-    assert_eq!(func.cfg.entry_label, "entry_test");
+    assert_eq!(func.cfg.entry_label, Arc::from("entry_test"));
     let entry_block = func.cfg.get_block("entry_test").unwrap();
     assert_branch!(entry_block, &Arc::from("for_start_1"));
     let for_start = func.cfg.get_block("for_start_1").unwrap();
@@ -760,7 +760,7 @@ fn test_generate_for_loop_with_continue() {
     let func = &functions.functions[0];
     // Verify block structure: entry, for_start, for_body, for_inc, for_end
     assert_eq!(func.cfg.blocks().count(), 5);
-    assert_eq!(func.cfg.entry_label, "entry_test");
+    assert_eq!(func.cfg.entry_label, Arc::from("entry_test"));
     let entry_block = func.cfg.get_block("entry_test").unwrap();
     assert_branch!(entry_block, &Arc::from("for_start_1"));
     let for_start = func.cfg.get_block("for_start_1").unwrap();
@@ -795,7 +795,7 @@ fn test_generate_grouping_expression() {
     assert_eq!(functions.functions.len(), 1);
     let func = &functions.functions[0];
     assert_eq!(func.cfg.blocks().count(), 1);
-    assert_eq!(func.cfg.entry_label, "entry_test");
+    assert_eq!(func.cfg.entry_label, Arc::from("entry_test"));
     let entry_block = func.cfg.get_block("entry_test").unwrap();
     assert_eq!(entry_block.instructions.len(), 1);
     assert_binary_instruction!(
@@ -828,7 +828,7 @@ fn test_generate_array_literal_with_elements() {
     assert_eq!(functions.functions.len(), 1);
     let func = &functions.functions[0];
     assert_eq!(func.cfg.blocks().count(), 1);
-    assert_eq!(func.cfg.entry_label, "entry_test");
+    assert_eq!(func.cfg.entry_label, Arc::from("entry_test"));
     let entry_block = func.cfg.get_block("entry_test").unwrap();
     assert_eq!(entry_block.instructions.len(), 7);
 
@@ -883,7 +883,7 @@ fn test_default_implementation() {
     assert_eq!(functions.functions.len(), 1);
     let func = &functions.functions[0];
     assert_eq!(func.cfg.blocks().count(), 1);
-    assert_eq!(func.cfg.entry_label, "entry_test");
+    assert_eq!(func.cfg.entry_label, Arc::from("entry_test"));
     let entry_block = func.cfg.get_block("entry_test").unwrap();
     assert_return_literal!(entry_block, &IrType::I32, IrLiteralValue::I32(42));
 }
@@ -928,7 +928,7 @@ fn test_generate_binary_all_operations() {
         assert_eq!(functions.functions.len(), 1);
         let func = &functions.functions[0];
         assert_eq!(func.cfg.blocks().count(), 1);
-        assert_eq!(func.cfg.entry_label, "entry_test");
+        assert_eq!(func.cfg.entry_label, Arc::from("entry_test"));
         let entry_block = func.cfg.get_block("entry_test").unwrap();
         assert_eq!(entry_block.instructions.len(), 1);
         assert_binary_instruction!(
@@ -959,7 +959,7 @@ fn test_generate_unary_expression() {
         assert_eq!(functions.functions.len(), 1);
         let func = &functions.functions[0];
         assert_eq!(func.cfg.blocks().count(), 1);
-        assert_eq!(func.cfg.entry_label, "entry_test");
+        assert_eq!(func.cfg.entry_label, Arc::from("entry_test"));
         let entry_block = func.cfg.get_block("entry_test").unwrap();
         assert_eq!(entry_block.instructions.len(), 1);
 
@@ -1018,7 +1018,7 @@ fn test_generate_integer_literals() {
         assert_eq!(functions.functions.len(), 1);
         let func = &functions.functions[0];
         assert_eq!(func.cfg.blocks().count(), 1);
-        assert_eq!(func.cfg.entry_label, "entry_test");
+        assert_eq!(func.cfg.entry_label, Arc::from("entry_test"));
         let entry_block = func.cfg.get_block("entry_test").unwrap();
 
         match &entry_block.terminator().kind {
@@ -1067,7 +1067,7 @@ fn test_generate_float_literals() {
         assert_eq!(functions.functions.len(), 1);
         let func = &functions.functions[0];
         assert_eq!(func.cfg.blocks().count(), 1);
-        assert_eq!(func.cfg.entry_label, "entry_test");
+        assert_eq!(func.cfg.entry_label, Arc::from("entry_test"));
         let entry_block = func.cfg.get_block("entry_test").unwrap();
 
         match &entry_block.terminator().kind {
@@ -1101,7 +1101,7 @@ fn test_generate_boolean_literals() {
         assert_eq!(functions.functions.len(), 1);
         let func = &functions.functions[0];
         assert_eq!(func.cfg.blocks().count(), 1);
-        assert_eq!(func.cfg.entry_label, "entry_test");
+        assert_eq!(func.cfg.entry_label, Arc::from("entry_test"));
         let entry_block = func.cfg.get_block("entry_test").unwrap();
 
         match &entry_block.terminator().kind {
@@ -1132,7 +1132,7 @@ fn test_generate_char_literal() {
     assert_eq!(functions.functions.len(), 1);
     let func = &functions.functions[0];
     assert_eq!(func.cfg.blocks().count(), 1);
-    assert_eq!(func.cfg.entry_label, "entry_test");
+    assert_eq!(func.cfg.entry_label, Arc::from("entry_test"));
     let entry_block = func.cfg.get_block("entry_test").unwrap();
 
     match &entry_block.terminator().kind {
@@ -1162,7 +1162,7 @@ fn test_generate_nullptr_literal() {
     assert_eq!(functions.functions.len(), 1);
     let func = &functions.functions[0];
     assert_eq!(func.cfg.blocks().count(), 1);
-    assert_eq!(func.cfg.entry_label, "entry_test");
+    assert_eq!(func.cfg.entry_label, Arc::from("entry_test"));
     let entry_block = func.cfg.get_block("entry_test").unwrap();
 
     assert_return_nullptr!(entry_block);
@@ -1211,7 +1211,7 @@ fn test_generate_array_access_assignment() {
 
     // Verifica la struttura del CFG
     assert_eq!(func.cfg.blocks().count(), 1);
-    assert_eq!(func.cfg.entry_label, "entry_test");
+    assert_eq!(func.cfg.entry_label, Arc::from("entry_test"));
 
     let entry_block = func.cfg.get_block("entry_test").unwrap();
 

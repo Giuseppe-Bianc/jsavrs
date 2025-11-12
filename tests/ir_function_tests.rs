@@ -10,44 +10,6 @@ fn create_dummy_value() -> Value {
     Value::new_literal(IrLiteralValue::I32(42))
 }
 
-/*#[test]
-fn test_cfg_creation() {
-    let cfg = ControlFlowGraph::new("entry".to_string());
-    assert_eq!(cfg.entry_label, "entry");
-    assert_eq!(cfg.blocks().count(), 1);
-    assert!(cfg.blocks.contains_key("entry"));
-    assert_eq!(cfg.successors.get("entry").unwrap().len(), 0);
-    assert_eq!(cfg.predecessors.get("entry").unwrap().len(), 0);
-}
-
-#[test]
-fn test_cfg_add_block() {
-    let mut cfg = ControlFlowGraph::new("entry".to_string());
-    let block = BasicBlock::new("block1", dummy_span());
-    cfg.add_block(block);
-
-    assert_eq!(cfg.blocks().count(), 2);
-    assert!(cfg.blocks.contains_key("block1"));
-    assert_eq!(cfg.successors.get("block1").unwrap().len(), 0);
-    assert_eq!(cfg.predecessors.get("block1").unwrap().len(), 0);
-}
-
-#[test]
-fn test_cfg_add_edge() {
-    let mut cfg = ControlFlowGraph::new("entry".to_string());
-    let block = BasicBlock::new("block1", dummy_span());
-    cfg.add_block(block);
-    cfg.add_edge("entry", "block1");
-
-    assert_eq!(cfg.successors.get("entry").unwrap().len(), 1);
-    assert!(cfg.successors.get("entry").unwrap().contains("block1"));
-    assert_eq!(cfg.predecessors.get("block1").unwrap().len(), 1);
-    assert!(cfg.predecessors.get("block1").unwrap().contains("entry"));
-
-    let block = cfg.blocks.get("block1").unwrap();
-    assert_eq!(block.predecessors, vec!["entry"]);
-}*/
-
 #[test]
 fn test_function_creation() {
     let params = vec![IrParameter { name: "param1".into(), ty: IrType::I32, attributes: ParamAttributes::default() }];
@@ -56,7 +18,7 @@ fn test_function_creation() {
     assert_eq!(func.name, "test");
     assert_eq!(func.parameters, params);
     assert_eq!(func.return_type, IrType::Void);
-    assert_eq!(func.cfg.entry_label, "entry_test");
+    assert_eq!(func.cfg.entry_label, Arc::from("entry_test"));
     //assert!(func.cfg.blocks().contains_key("entry_test"));
     assert_eq!(func.local_vars.len(), 0);
 }
@@ -68,38 +30,6 @@ fn test_function_add_block() {
     // Fixed: Use get_block to check existence
     assert!(func.cfg.get_block("block1").is_some());
 }
-
-/*#[test]
-fn test_function_add_local() {
-    let mut func = Function::new("test", vec![], IrType::Void);
-    func.add_local("var1".to_string(), IrType::I32);
-
-    assert_eq!(func.local_vars.len(), 1);
-    assert_eq!(func.local_vars.get("var1").unwrap(), &IrType::I32);
-}*/
-
-/*#[test]
-fn test_function_add_edge() {
-    let mut func = Function::new("test", vec![], IrType::Void);
-    let block = BasicBlock::new("block1", dummy_span());
-    func.add_block(block);
-    func.add_edge("entry_test", "block1");
-
-    let cfg = &func.cfg;
-    assert!(cfg.successors.get("entry_test").unwrap().contains("block1"));
-    assert!(cfg.predecessors.get("block1").unwrap().contains("entry_test"));
-}*/
-
-/*#[test]
-fn test_basic_block_creation() {
-    let block = BasicBlock::new("block1", dummy_span());
-
-    assert_eq!(block.label, "block1");
-    assert_eq!(block.instructions.len(), 0);
-    assert_eq!(block.terminator().kind, TerminatorKind::Unreachable);
-    assert_eq!(block.predecessors.len(), 0);
-    assert!(block.dominator_info.is_none());
-}*/
 
 #[test]
 fn test_basic_block_display() {
@@ -185,41 +115,6 @@ fn test_ir_parameter() {
     assert!(param.attributes.no_alias);
 }
 
-/*#[test]
-fn test_complex_cfg() {
-    let mut func = Function::new("complex", vec![], IrType::Void);
-
-    // Create blocks
-    let blocks =
-        vec![("entry", vec!["a", "b"]), ("a", vec!["c"]), ("b", vec!["c"]), ("c", vec!["exit"]), ("exit", vec![])];
-
-    // Add blocks
-    for (label, _) in &blocks {
-        let block = BasicBlock::new(label, dummy_span());
-        func.add_block(block);
-    }
-
-    // Add edges
-    for (src, dests) in blocks {
-        for dest in dests {
-            func.add_edge(src, dest);
-        }
-    }
-
-    // Verify CFG
-    let cfg = &func.cfg;
-    assert_eq!(cfg.successors.get("entry").unwrap().len(), 2);
-    assert!(cfg.successors.get("entry").unwrap().contains("a"));
-    assert!(cfg.successors.get("entry").unwrap().contains("b"));
-
-    assert_eq!(cfg.predecessors.get("c").unwrap().len(), 2);
-    assert!(cfg.predecessors.get("c").unwrap().contains("a"));
-    assert!(cfg.predecessors.get("c").unwrap().contains("b"));
-
-    assert_eq!(cfg.predecessors.get("exit").unwrap().len(), 1);
-    assert!(cfg.predecessors.get("exit").unwrap().contains("c"));
-}*/
-
 #[test]
 fn test_terminator_targets() {
     let return_term =
@@ -277,7 +172,7 @@ fn test_function_with_parameters() {
 
 #[test]
 fn test_cfg_get_block() {
-    let mut cfg = ControlFlowGraph::new("entry".to_string());
+    let mut cfg = ControlFlowGraph::new(Arc::from("entry"));
     cfg.add_block(BasicBlock::new("entry", dummy_span())); // Ensure entry block exists
     let block = BasicBlock::new("block1", dummy_span());
     cfg.add_block(block);
@@ -294,38 +189,9 @@ fn test_cfg_get_block() {
     assert!(cfg.get_block("entry").is_some());
 }
 
-/*#[test]
-fn test_cfg_get_block_mut() {
-    let mut cfg = ControlFlowGraph::new("entry");
-    let block = BasicBlock::new("block1", dummy_span());
-    cfg.add_block(block);
-
-    // Modify existing block
-    if let Some(block) = cfg.get_block_mut("block1") {
-        block.add_predecessor("new_pred".to_string());
-    }
-
-    let retrieved_block = cfg.get_block("block1").unwrap();
-    assert_eq!(retrieved_block.predecessors, vec!["new_pred"]);
-
-    // Try to modify non-existent block
-    assert!(cfg.get_block_mut("invalid").is_none());
-
-    // Modify entry block
-    if let Some(entry) = cfg.get_block_mut("entry") {
-        entry.terminator = Terminator::new(TerminatorKind::Branch { label: "new_target".into() }, dummy_span());
-    }
-
-    let entry = cfg.get_block("entry").unwrap();
-    match &entry.terminator().kind {
-        TerminatorKind::Branch { label } => assert_eq!(label, "new_target".into()),
-        _ => panic!("Terminator not modified correctly"),
-    }
-}*/
-
 #[test]
 fn test_cfg_get_block_mut_persists_changes() {
-    let mut cfg = ControlFlowGraph::new("entry".to_string());
+    let mut cfg = ControlFlowGraph::new(Arc::from("entry"));
     let block = BasicBlock::new("block1", dummy_span());
     cfg.add_block(block);
 
@@ -344,7 +210,7 @@ fn test_cfg_get_block_mut_persists_changes() {
 
 #[test]
 fn test_cfg_get_block_mut_entry_block() {
-    let mut cfg = ControlFlowGraph::new("entry".to_string());
+    let mut cfg = ControlFlowGraph::new(Arc::from("entry"));
     cfg.add_block(BasicBlock::new("entry", dummy_span()));
 
     // Modify entry block
@@ -358,7 +224,7 @@ fn test_cfg_get_block_mut_entry_block() {
 
 #[test]
 fn test_get_entry_block_exists() {
-    let mut cfg = ControlFlowGraph::new("entry".to_string());
+    let mut cfg = ControlFlowGraph::new(Arc::from("entry"));
     let entry_block = BasicBlock::new("entry", dummy_span());
     cfg.add_block(entry_block);
 
@@ -369,7 +235,7 @@ fn test_get_entry_block_exists() {
 
 #[test]
 fn test_get_entry_block_nonexistent() {
-    let cfg = ControlFlowGraph::new("nonexistent".to_string());
+    let cfg = ControlFlowGraph::new(Arc::from("nonexistent"));
     // Don't add the block with the entry label
 
     let entry_block_ref = cfg.get_entry_block();
@@ -378,7 +244,7 @@ fn test_get_entry_block_nonexistent() {
 
 #[test]
 fn test_get_entry_block_after_modifications() {
-    let mut cfg = ControlFlowGraph::new("entry".to_string());
+    let mut cfg = ControlFlowGraph::new(Arc::from("entry"));
     let mut entry_block = BasicBlock::new("entry", dummy_span());
     entry_block.set_terminator(Terminator::new(TerminatorKind::Branch { label: "target".into() }, dummy_span()));
     cfg.add_block(entry_block);
@@ -391,7 +257,7 @@ fn test_get_entry_block_after_modifications() {
 
 #[test]
 fn test_blocks_mut_basic() {
-    let mut cfg = ControlFlowGraph::new("entry".to_string());
+    let mut cfg = ControlFlowGraph::new(Arc::from("entry"));
     let entry_block = BasicBlock::new("entry", dummy_span());
     let block1 = BasicBlock::new("block1", dummy_span());
     cfg.add_block(entry_block);
@@ -411,7 +277,7 @@ fn test_blocks_mut_basic() {
 
 #[test]
 fn test_blocks_mut_empty_cfg() {
-    let mut cfg = ControlFlowGraph::new("entry".to_string());
+    let mut cfg = ControlFlowGraph::new(Arc::from("entry"));
     // Don't add any blocks
 
     let count = cfg.blocks_mut().count();
@@ -420,7 +286,7 @@ fn test_blocks_mut_empty_cfg() {
 
 #[test]
 fn test_blocks_mut_single_block() {
-    let mut cfg = ControlFlowGraph::new("entry".to_string());
+    let mut cfg = ControlFlowGraph::new(Arc::from("entry"));
     let entry_block = BasicBlock::new("entry", dummy_span());
     cfg.add_block(entry_block);
 
@@ -437,7 +303,7 @@ fn test_blocks_mut_single_block() {
 
 #[test]
 fn test_blocks_mut_multiple_blocks() {
-    let mut cfg = ControlFlowGraph::new("entry".to_string());
+    let mut cfg = ControlFlowGraph::new(Arc::from("entry"));
     let entry_block = BasicBlock::new("entry", dummy_span());
     let block1 = BasicBlock::new("block1", dummy_span());
     let block2 = BasicBlock::new("block2", dummy_span());
@@ -465,7 +331,7 @@ fn test_blocks_mut_multiple_blocks() {
 
 #[test]
 fn test_dfs_post_order_linear() {
-    let mut cfg = ControlFlowGraph::new("entry".to_string());
+    let mut cfg = ControlFlowGraph::new(Arc::from("entry"));
     let entry_block = BasicBlock::new("entry", dummy_span());
     let block1 = BasicBlock::new("block1", dummy_span());
     let block2 = BasicBlock::new("block2", dummy_span());
@@ -499,7 +365,7 @@ fn test_dfs_post_order_linear() {
 
 #[test]
 fn test_dfs_post_order_empty_cfg() {
-    let cfg = ControlFlowGraph::new("entry".to_string());
+    let cfg = ControlFlowGraph::new(Arc::from("entry"));
     // No blocks added - no entry block exists
 
     let post_order: Vec<String> = cfg.dfs_post_order().map(|idx| cfg.graph()[idx].label.to_string()).collect();
@@ -509,7 +375,7 @@ fn test_dfs_post_order_empty_cfg() {
 
 #[test]
 fn test_dfs_post_order_single_block() {
-    let mut cfg = ControlFlowGraph::new("entry".to_string());
+    let mut cfg = ControlFlowGraph::new(Arc::from("entry"));
     let entry_block = BasicBlock::new("entry", dummy_span());
     cfg.add_block(entry_block);
 
@@ -520,7 +386,7 @@ fn test_dfs_post_order_single_block() {
 
 #[test]
 fn test_dfs_post_order_branching() {
-    let mut cfg = ControlFlowGraph::new("entry".to_string());
+    let mut cfg = ControlFlowGraph::new(Arc::from("entry"));
     let entry_block = BasicBlock::new("entry", dummy_span());
     let branch_block = BasicBlock::new("branch", dummy_span());
     let then_block = BasicBlock::new("then", dummy_span());
@@ -554,7 +420,7 @@ fn test_dfs_post_order_branching() {
 
 #[test]
 fn test_dfs_post_order_cycles() {
-    let mut cfg = ControlFlowGraph::new("entry".to_string());
+    let mut cfg = ControlFlowGraph::new(Arc::from("entry"));
     let entry_block = BasicBlock::new("entry", dummy_span());
     let loop_block = BasicBlock::new("loop", dummy_span());
     let back_block = BasicBlock::new("back", dummy_span());
@@ -579,7 +445,7 @@ fn test_dfs_post_order_cycles() {
 
 #[test]
 fn test_verify_success() {
-    let mut cfg = ControlFlowGraph::new("entry".to_string());
+    let mut cfg = ControlFlowGraph::new(Arc::from("entry"));
     let mut entry_block = BasicBlock::new("entry", dummy_span());
     let mut target_block = BasicBlock::new("target", dummy_span());
 
@@ -599,7 +465,7 @@ fn test_verify_success() {
 
 #[test]
 fn test_verify_no_entry_block() {
-    let cfg = ControlFlowGraph::new("entry".to_string());
+    let cfg = ControlFlowGraph::new(Arc::from("entry"));
     // Don't add the entry block
 
     let result = cfg.verify();
@@ -609,7 +475,7 @@ fn test_verify_no_entry_block() {
 
 #[test]
 fn test_verify_block_without_terminator() {
-    let mut cfg = ControlFlowGraph::new("entry".to_string());
+    let mut cfg = ControlFlowGraph::new(Arc::from("entry"));
     let mut entry_block = BasicBlock::new("entry", dummy_span());
     let target_block = BasicBlock::new("target", dummy_span());
 
@@ -627,7 +493,7 @@ fn test_verify_block_without_terminator() {
 
 #[test]
 fn test_verify_nonexistent_terminator_target() {
-    let mut cfg = ControlFlowGraph::new("entry".to_string());
+    let mut cfg = ControlFlowGraph::new(Arc::from("entry"));
     let mut entry_block = BasicBlock::new("entry", dummy_span());
 
     // Set terminator to point to non-existent block
@@ -642,7 +508,7 @@ fn test_verify_nonexistent_terminator_target() {
 
 #[test]
 fn test_verify_conditional_branch_nonexistent_targets() {
-    let mut cfg = ControlFlowGraph::new("entry".to_string());
+    let mut cfg = ControlFlowGraph::new(Arc::from("entry"));
     let mut entry_block = BasicBlock::new("entry", dummy_span());
 
     // Set conditional branch to point to non-existent blocks
@@ -665,7 +531,7 @@ fn test_verify_conditional_branch_nonexistent_targets() {
 
 #[test]
 fn test_verify_complex_cfg_success() {
-    let mut cfg = ControlFlowGraph::new("entry".to_string());
+    let mut cfg = ControlFlowGraph::new(Arc::from("entry"));
 
     let mut entry_block = BasicBlock::new("entry", dummy_span());
     let mut branch_block = BasicBlock::new("branch", dummy_span());
