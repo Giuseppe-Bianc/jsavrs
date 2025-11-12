@@ -16,9 +16,12 @@ pub enum DataLayout {
     DragonFlyX86_64,
 }
 
-impl fmt::Display for DataLayout {
-    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
-        let layout = match self {
+impl DataLayout {
+    /// Returns the data layout string without allocation.
+    /// This can be used in const contexts unlike Display.
+    #[inline(always)]
+    pub const fn as_str(&self) -> &'static str {
+        match self {
             DataLayout::LinuxX86_64 => "e-m:e-p270:32:32-p271:32:32-p272:64:64-i64:64-f80:128-n8:16:32:64-S128",
             DataLayout::LinuxAArch64 => "e-m:e-i8:8:32-i16:16:32-i64:64-i128:128-n32:64-S128",
             DataLayout::WindowsX86_64 => "e-m:w-p270:32:32-p271:32:32-p272:64:64-i64:64-f80:128-n8:16:32:64-S128",
@@ -27,11 +30,17 @@ impl fmt::Display for DataLayout {
             DataLayout::NetBSDX86_64 => "e-m:e-p270:32:32-p271:32:32-p272:64:64-i64:64-f80:128-n8:16:32:64-S128",
             DataLayout::OpenBSDX86_64 => "e-m:e-p270:32:32-p271:32:32-p272:64:64-i64:64-f80:128-n8:16:32:64-S128",
             DataLayout::DragonFlyX86_64 => "e-m:e-p270:32:32-p271:32:32-p272:64:64-i64:64-f80:128-n8:16:32:64-S128",
-        };
-        f.write_str(layout)
+        }
     }
 }
 
+// Then Display becomes:
+impl fmt::Display for DataLayout {
+    #[inline]
+    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
+        f.write_str(self.as_str())
+    }
+}
 /// Identifies the target triple (arch-os-environment).
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Hash)]
 pub enum TargetTriple {
@@ -46,9 +55,10 @@ pub enum TargetTriple {
     Wasm32UnknownEmscripten,
 }
 
-impl fmt::Display for TargetTriple {
-    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
-        let triple = match self {
+impl TargetTriple {
+    #[inline(always)]
+    pub const fn as_str(&self) -> &'static str {
+        match self {
             TargetTriple::X86_64UnknownLinuxGnu => "x86_64-unknown-linux-gnu",
             TargetTriple::X86_64PcWindowsGnu => "x86_64-pc-windows-gnu",
             TargetTriple::X86_64AppleDarwin => "x86_64-apple-darwin",
@@ -58,8 +68,14 @@ impl fmt::Display for TargetTriple {
             TargetTriple::I686PcWindowsGnu => "i686-pc-windows-gnu",
             TargetTriple::I686UnknownLinuxGnu => "i686-unknown-linux-gnu",
             TargetTriple::Wasm32UnknownEmscripten => "wasm32-unknown-emscripten",
-        };
-        f.write_str(triple)
+        }
+    }
+}
+
+impl fmt::Display for TargetTriple {
+    #[inline]
+    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
+        f.write_str(self.as_str())
     }
 }
 
@@ -69,13 +85,14 @@ impl fmt::Display for TargetTriple {
 pub struct Module {
     pub name: Arc<str>,
     pub functions: Vec<Function>,
+    root_scope: Option<ScopeId>, // Root scope ID for the module settable only at creation
     pub data_layout: DataLayout,
     pub target_triple: TargetTriple,
-    root_scope: Option<ScopeId>, // Root scope ID for the module settable only at creation
 }
 
 impl Module {
     /// Creates a new module with the specified name and default settings.
+    #[inline]
     pub fn new(name: impl Into<Arc<str>>, root_scope: Option<ScopeId>) -> Self {
         Self {
             name: name.into(),
