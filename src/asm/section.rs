@@ -19,7 +19,7 @@ impl fmt::Display for Section {
 #[allow(dead_code)]
 impl Section {
     /// Get the name of the section as a string
-    pub fn name(&self) -> &'static str {
+    pub const fn name(&self) -> &'static str {
         match self {
             Section::Text => ".text",
             Section::Data => ".data",

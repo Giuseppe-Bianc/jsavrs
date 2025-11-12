@@ -324,7 +324,7 @@ pub fn process_hashtag_error(
 /// # Returns
 /// Optional error message for recognized malformed patterns (b, o, x)
 #[inline(always)]
-pub fn get_error_message(s: &str) -> Option<&'static str> {
+pub const fn get_error_message(s: &str) -> Option<&'static str> {
     match s.as_bytes().first() {
         Some(b'b') if s.len() == 1 => Some("Malformed binary number: \"#b\""),
         Some(b'o') if s.len() == 1 => Some("Malformed octal number: \"#o\""),

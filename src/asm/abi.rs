@@ -456,7 +456,7 @@ impl Abi {
     /// # Returns
     ///
     /// A static string slice with the official name of the calling convention.
-    pub fn name(&self) -> &'static str {
+    pub const fn name(&self) -> &'static str {
         match self.kind {
             AbiKind::SystemV => "System V AMD64 ABI",
             AbiKind::Windows => "Microsoft x64 Calling Convention",

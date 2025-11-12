@@ -23,13 +23,13 @@ pub enum BranchType {
 }
 
 impl BranchType {
-    pub fn symbol(&self) -> &'static str {
+    pub const fn symbol(&self) -> &'static str {
         match self {
             BranchType::Last => "└── ",
             BranchType::Middle => "├── ",
         }
     }
-    pub fn indent_continuation(&self) -> &'static str {
+    pub const fn indent_continuation(&self) -> &'static str {
         match self {
             BranchType::Last => "    ",
             BranchType::Middle => "│   ",

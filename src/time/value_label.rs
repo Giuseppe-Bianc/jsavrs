@@ -19,7 +19,7 @@ enum TimeUnit {
 }
 
 impl TimeUnit {
-    fn as_str(&self) -> &'static str {
+    const fn as_str(&self) -> &'static str {
         match self {
             TimeUnit::Seconds => "s",
             TimeUnit::Milliseconds => "ms",
@@ -37,7 +37,7 @@ impl ValueLabel {
     }
 
     #[inline]
-    pub fn time_label(&self) -> &'static str {
+    pub const fn time_label(&self) -> &'static str {
         self.time_label.as_str()
     }
 
