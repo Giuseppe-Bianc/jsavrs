@@ -103,14 +103,12 @@ impl Module {
 
     /// Finds a function by name (immutable reference).
     pub fn get_function(&self, name: &str) -> Option<&Function> {
-        self.functions.iter().find(|f| f.name == name.into())
+        self.functions.iter().find(|f| f.name.as_ref() == name)
     }
-
     /// Finds a function by name (mutable reference).
     pub fn get_function_mut(&mut self, name: &str) -> Option<&mut Function> {
-        self.functions.iter_mut().find(|f| f.name == name.into())
+        self.functions.iter_mut().find(|f| f.name.as_ref() == name)
     }
-
     /// Returns all functions in the module.
     pub fn functions(&self) -> &[Function] {
         &self.functions
