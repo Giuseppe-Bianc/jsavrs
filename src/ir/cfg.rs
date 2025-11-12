@@ -10,11 +10,11 @@ use std::sync::Arc;
 #[derive(Debug, Clone)]
 pub struct ControlFlowGraph {
     graph: DiGraph<BasicBlock, ()>,
-    pub entry_label: String,
+    pub entry_label: Arc<str>,
     reverse_post_order: Vec<NodeIndex>,
 }
 impl ControlFlowGraph {
-    pub fn new(entry_label: String) -> Self {
+    pub fn new(entry_label: Arc<str>) -> Self {
         ControlFlowGraph { graph: DiGraph::new(), entry_label, reverse_post_order: Vec::new() }
     }
 

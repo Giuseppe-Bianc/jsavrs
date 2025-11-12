@@ -47,7 +47,7 @@ impl Function {
             name: name.to_string(),
             parameters: params,
             return_type,
-            cfg: ControlFlowGraph::new(format!("entry_{name}")),
+            cfg: ControlFlowGraph::new(Arc::from(format!("entry_{name}"))),
             local_vars: HashMap::new(),
             attributes: FunctionAttributes::default(),
             scope_manager: ScopeManager::new(),
