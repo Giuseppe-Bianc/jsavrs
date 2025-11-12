@@ -4,6 +4,7 @@
 //! conservative decisions that prevented code removal.
 
 use std::fmt;
+use std::fmt::Write;
 use std::sync::Arc;
 
 /// Statistics collected during Dead Code Elimination optimization.
@@ -43,8 +44,6 @@ impl OptimizationStats {
 
     /// Formats statistics for human-readable display.
     pub fn format_report(&self, function_name: &str) -> String {
-        use std::fmt::Write;
-
         let mut output = String::with_capacity(256);
 
         writeln!(output, "📊 DCE Statistics for '{}':", function_name).unwrap();
@@ -124,7 +123,8 @@ pub enum ConservativeReason {
 
 impl ConservativeReason {
     /// Returns a human-readable explanation of this reason.
-    pub fn explanation(&self) -> &'static str {
+    #[inline(always)]
+    pub const fn explanation(&self) -> &'static str {
         match self {
             Self::MayAlias => "instruction may alias with other memory locations",
             Self::UnknownCallPurity => "function call has unknown purity (may have side effects)",
