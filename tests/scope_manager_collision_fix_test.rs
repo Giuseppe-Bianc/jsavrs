@@ -1,3 +1,5 @@
+use std::sync::Arc;
+
 use jsavrs::ir::generator::IrGenerator;
 use jsavrs::parser::ast::{Stmt, Type};
 use jsavrs::utils::*;
@@ -30,6 +32,6 @@ fn test_ir_generator_multiple_functions_no_collision() {
 
     // Verify both functions were generated
     assert_eq!(module.functions.len(), 2);
-    assert_eq!(module.functions[0].name, "func1");
-    assert_eq!(module.functions[1].name, "func2");
+    assert_eq!(module.functions[0].name, Arc::from("func1"));
+    assert_eq!(module.functions[1].name, Arc::from("func2"));
 }

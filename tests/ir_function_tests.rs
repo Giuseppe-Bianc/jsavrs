@@ -15,7 +15,7 @@ fn test_function_creation() {
     let params = vec![IrParameter { name: "param1".into(), ty: IrType::I32, attributes: ParamAttributes::default() }];
     let func = Function::new("test", params.clone(), IrType::Void);
 
-    assert_eq!(func.name, "test");
+    assert_eq!(func.name, Arc::from("test"));
     assert_eq!(func.parameters, params);
     assert_eq!(func.return_type, IrType::Void);
     assert_eq!(func.cfg.entry_label, Arc::from("entry_test"));
@@ -93,11 +93,11 @@ fn test_function_attributes() {
     let mut attrs = FunctionAttributes::default();
     attrs.is_entry = true;
     attrs.is_varargs = true;
-    attrs.calling_convention = "fast".to_string();
+    attrs.calling_convention = Arc::from("fast");
 
     assert!(attrs.is_entry);
     assert!(attrs.is_varargs);
-    assert_eq!(attrs.calling_convention, "fast");
+    assert_eq!(attrs.calling_convention, Arc::from("fast"));
 }
 
 #[test]

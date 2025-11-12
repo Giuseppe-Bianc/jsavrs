@@ -12,7 +12,7 @@ use std::sync::Arc;
 pub struct FunctionAttributes {
     pub is_entry: bool,
     pub is_varargs: bool,
-    pub calling_convention: String,
+    pub calling_convention: Arc<str>,
     pub source_span: Option<SourceSpan>,
 }
 
@@ -32,11 +32,11 @@ pub struct ParamAttributes {
 
 #[derive(Debug, Clone)]
 pub struct Function {
-    pub name: String,
+    pub name: Arc<str>,
     pub parameters: Vec<IrParameter>,
     pub return_type: IrType,
     pub cfg: ControlFlowGraph,
-    pub local_vars: HashMap<String, IrType>,
+    pub local_vars: HashMap<Arc<str>, IrType>,
     pub attributes: FunctionAttributes,
     pub(crate) scope_manager: ScopeManager,
 }
@@ -44,7 +44,7 @@ pub struct Function {
 impl Function {
     pub fn new(name: &str, params: Vec<IrParameter>, return_type: IrType) -> Self {
         Self {
-            name: name.to_string(),
+            name: name.into(),
             parameters: params,
             return_type,
             cfg: ControlFlowGraph::new(Arc::from(format!("entry_{name}"))),

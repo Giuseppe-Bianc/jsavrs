@@ -157,7 +157,7 @@ fn test_generate_function_with_return() {
     assert_eq!(ir_errors.len(), 0);
     assert_eq!(functions.functions.len(), 1);
     let func = &functions.functions[0];
-    assert_eq!(func.name, "test");
+    assert_eq!(func.name, Arc::from("test"));
     assert_eq!(func.return_type, IrType::I32);
     assert_eq!(func.cfg.blocks().count(), 1);
     assert_eq!(func.cfg.entry_label, Arc::from("entry_test"));
@@ -181,7 +181,7 @@ fn test_generate_void_function() {
     assert_eq!(ir_errors.len(), 0);
     assert_eq!(functions.functions.len(), 1);
     let func = &functions.functions[0];
-    assert_eq!(func.name, "void_func");
+    assert_eq!(func.name, Arc::from("void_func"));
     assert_eq!(func.return_type, IrType::Void);
     assert_eq!(func.cfg.blocks().count(), 1);
     assert_eq!(func.cfg.entry_label, Arc::from("entry_void_func"));
@@ -200,7 +200,7 @@ fn test_generate_main_function() {
     assert_eq!(ir_errors.len(), 0);
     assert_eq!(functions.functions.len(), 1);
     let func = &functions.functions[0];
-    assert_eq!(func.name, "main");
+    assert_eq!(func.name, Arc::from("main"));
     assert_eq!(func.return_type, IrType::Void);
     assert_eq!(func.cfg.blocks().count(), 1);
     assert_eq!(func.cfg.entry_label, Arc::from("entry_main"));
@@ -231,7 +231,7 @@ fn test_generate_binary_expression() {
     // Verifica struttura funzione
     assert_eq!(functions.functions.len(), 1);
     let func = &functions.functions[0];
-    assert_eq!(func.name, "test");
+    assert_eq!(func.name, Arc::from("test"));
     assert_eq!(func.return_type, IrType::I32);
 
     // Verifica struttura CFG
@@ -274,7 +274,7 @@ fn test_generate_variable_assignment() {
     // Verifica struttura funzione
     assert_eq!(functions.functions.len(), 1);
     let func = &functions.functions[0];
-    assert_eq!(func.name, "test");
+    assert_eq!(func.name, Arc::from("test"));
     assert_eq!(func.return_type, IrType::Void);
 
     // Verifica struttura CFG
@@ -473,8 +473,8 @@ fn test_generate_multiple_functions() {
     let (functions, ir_errors) = generator.generate(ast, "test_file.vn");
     assert_eq!(ir_errors.len(), 0);
     assert_eq!(functions.functions.len(), 2);
-    assert_eq!(functions.functions[0].name, "func1");
-    assert_eq!(functions.functions[1].name, "func2");
+    assert_eq!(functions.functions[0].name, Arc::from("func1"));
+    assert_eq!(functions.functions[1].name, Arc::from("func2"));
 }
 
 #[test]
@@ -1206,7 +1206,7 @@ fn test_generate_array_access_assignment() {
     assert_eq!(functions.functions.len(), 1);
 
     let func = &functions.functions[0];
-    assert_eq!(func.name, "test");
+    assert_eq!(func.name, Arc::from("test"));
     assert_eq!(func.return_type, IrType::Void);
 
     // Verifica la struttura del CFG
@@ -1275,7 +1275,7 @@ fn test_generate_simple_function_call() {
     assert_eq!(functions.functions.len(), 2);
 
     // Check the main function
-    let main_func = functions.functions.iter().find(|f| f.name == "main").unwrap();
+    let main_func = functions.functions.iter().find(|f| f.name == Arc::from("main")).unwrap();
     assert_eq!(main_func.cfg.blocks().count(), 1);
     let entry_block = main_func.cfg.get_block("entry_main").unwrap();
     assert_eq!(entry_block.instructions.len(), 1);
@@ -1329,7 +1329,7 @@ fn test_generate_recursive_function_call() {
     assert_eq!(functions.functions.len(), 1);
 
     let func = &functions.functions[0];
-    assert_eq!(func.name, "factorial");
+    assert_eq!(func.name, Arc::from("factorial"));
 
     // Check that we have the right number of blocks (entry, then, else, merge)
     assert_eq!(func.cfg.blocks().count(), 4);

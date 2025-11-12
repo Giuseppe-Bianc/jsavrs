@@ -395,7 +395,7 @@ impl Phase for DeadCodeElimination {
     /// dead instructions. Statistics are collected if enabled and printed after
     /// optimization completes.
     fn run(&mut self, module: &mut Module) {
-        let function_names: Vec<String> = module.functions().iter().map(|f| f.name.clone()).collect();
+        let function_names: Vec<Arc<str>> = module.functions().iter().map(|f| f.name.clone()).collect();
         let mut aggregated_stats = OptimizationStats::default();
 
         for name in function_names {

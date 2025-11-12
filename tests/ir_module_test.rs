@@ -1,3 +1,5 @@
+use std::sync::Arc;
+
 use jsavrs::ir::{DataLayout, Function, IrParameter, IrType, Module, ParamAttributes, ScopeId, TargetTriple};
 use jsavrs::location::source_span::SourceSpan;
 use jsavrs::utils::module_redacted;
@@ -46,7 +48,7 @@ fn test_add_function() {
 
     // Verifica che la funzione sia stata aggiunta
     assert_eq!(module.functions().len(), 1);
-    assert_eq!(module.functions()[0].name, "test_func");
+    assert_eq!(module.functions()[0].name, Arc::from("test_func"));
 
     // Verifica della rappresentazione testuale
     let expected = r#"module test_module {
@@ -77,9 +79,9 @@ fn test_add_multiple_functions() {
 
     // Verifica che tutte le funzioni siano state aggiunte
     assert_eq!(module.functions().len(), 3);
-    assert_eq!(module.functions()[0].name, "func1");
-    assert_eq!(module.functions()[1].name, "func2");
-    assert_eq!(module.functions()[2].name, "func3");
+    assert_eq!(module.functions()[0].name, Arc::from("func1"));
+    assert_eq!(module.functions()[1].name, Arc::from("func2"));
+    assert_eq!(module.functions()[2].name, Arc::from("func3"));
 
     // Verifica della rappresentazione testuale
     let output = module.to_string();
@@ -151,7 +153,7 @@ fn test_get_function() {
     // Verifica recupero funzione esistente
     let retrieved = module.get_function("func1");
     assert!(retrieved.is_some());
-    assert_eq!(retrieved.unwrap().name, "func1");
+    assert_eq!(retrieved.unwrap().name, Arc::from("func1"));
 
     // Verifica recupero funzione inesistente
     let retrieved = module.get_function("nonexistent");
@@ -170,7 +172,7 @@ fn test_get_function_mut() {
 
     // Verifica recupero e modifica funzione esistente
     if let Some(func) = module.get_function_mut("func1") {
-        func.name = "modified_func".to_string();
+        func.name = Arc::from("modified_func");
     }
 
     // Verifica che la modifica sia stata applicata
@@ -295,7 +297,7 @@ fn test_module_with_special_characters_in_name() {
 
     // Verifica che il nome sia conservato correttamente
     assert_eq!(module.name(), "module_with_special_chars_!@#$%^&*()");
-    assert_eq!(module.functions()[0].name, "func_with_special_chars_!@#$%^&*()");
+    assert_eq!(module.functions()[0].name, Arc::from("func_with_special_chars_!@#$%^&*()"));
 
     // Verifica rappresentazione testuale
     let output = module.to_string();
@@ -315,13 +317,13 @@ fn test_module_with_duplicate_function_names() {
 
     // Verifica che entrambe le funzioni siano state aggiunte
     assert_eq!(module.functions().len(), 2);
-    assert_eq!(module.functions()[0].name, "duplicate_name");
-    assert_eq!(module.functions()[1].name, "duplicate_name");
+    assert_eq!(module.functions()[0].name, Arc::from("duplicate_name"));
+    assert_eq!(module.functions()[1].name, Arc::from("duplicate_name"));
 
     // Verifica che get_function restituisca la prima occorrenza
     let retrieved = module.get_function("duplicate_name");
     assert!(retrieved.is_some());
-    assert_eq!(retrieved.unwrap().name, "duplicate_name");
+    assert_eq!(retrieved.unwrap().name, Arc::from("duplicate_name"));
 }
 
 #[test]
@@ -338,7 +340,7 @@ fn test_module_getters() {
     // Verifica tutti i getter
     assert_eq!(module.name(), "getter_test");
     assert_eq!(module.functions().len(), 1);
-    assert_eq!(module.functions()[0].name, "getter_func");
+    assert_eq!(module.functions()[0].name, Arc::from("getter_func"));
     assert_eq!(*module.data_layout(), DataLayout::MacOSX86_64);
     assert_eq!(*module.target_triple(), TargetTriple::AArch64AppleDarwin);
 }
