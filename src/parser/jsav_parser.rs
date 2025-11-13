@@ -7,14 +7,14 @@ use crate::tokens::token::Token;
 use crate::tokens::token_kind::TokenKind;
 use std::sync::Arc;
 
-pub struct JsavParser {
-    tokens: Vec<Token>,
+pub struct JsavParser<'a> {
+    tokens: &'a [Token],
     current: usize,
     errors: Vec<CompileError>,
     recursion_depth: usize,
 }
 
-impl JsavParser {
+impl<'a> JsavParser<'a> {
     const MAX_RECURSION_DEPTH: usize = 1000;
 
     fn check_recursion_limit(&mut self) -> bool {
@@ -41,10 +41,8 @@ impl JsavParser {
             self.recursion_depth -= 1;
         }
     }
-}
 
-impl JsavParser {
-    pub fn new(tokens: Vec<Token>) -> Self {
+    pub fn new(tokens: &'a [Token]) -> Self {
         Self { tokens, current: 0, errors: Vec::with_capacity(8), recursion_depth: 0 }
     }
 

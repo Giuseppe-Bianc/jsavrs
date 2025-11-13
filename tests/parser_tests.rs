@@ -24,7 +24,7 @@ macro_rules! literal_test {
         #[test]
         fn $name() {
             let tokens = create_tokens(vec![$token, TokenKind::Eof]);
-            let parser = JsavParser::new(tokens);
+            let parser = JsavParser::new(&tokens);
             let (expr, errors) = parser.parse();
             assert!(errors.is_empty());
             assert_eq!(expr.len(), 1);
@@ -44,7 +44,7 @@ macro_rules! binary_op_test {
                 num_token(4.0),
                 Token { kind: TokenKind::Eof, span: dummy_span() },
             ];
-            let parser = JsavParser::new(tokens);
+            let parser = JsavParser::new(&tokens);
             let (expr, errors) = parser.parse();
             assert!(errors.is_empty(), "Failed for {:?}", $token_kind);
             assert_eq!(expr.len(), 1);
@@ -64,7 +64,7 @@ macro_rules! unary_op_test {
         #[test]
         fn $name() {
             let tokens = create_tokens(vec![$token_kind, $operand, TokenKind::Eof]);
-            let parser = JsavParser::new(tokens);
+            let parser = JsavParser::new(&tokens);
             let (expr, errors) = parser.parse();
             assert!(errors.is_empty());
             assert_eq!(expr.len(), 1);
@@ -122,7 +122,7 @@ macro_rules! test_binary_precedence {
                 TokenKind::Numeric(Number::Integer(2)),
                 TokenKind::Eof,
             ]);
-            let parser = JsavParser::new(tokens);
+            let parser = JsavParser::new(&tokens);
             let (expr, errors) = parser.parse();
             assert!(errors.is_empty());
             assert_eq!(expr.len(), 1);
@@ -155,7 +155,7 @@ fn test_grouping() {
         TokenKind::Numeric(Number::Integer(2)),
         TokenKind::Eof,
     ]);
-    let parser = JsavParser::new(tokens);
+    let parser = JsavParser::new(&tokens);
     let (expr, errors) = parser.parse();
     assert!(errors.is_empty());
     assert_eq!(expr.len(), 1);
@@ -182,7 +182,7 @@ macro_rules! assignment_test {
         #[test]
         fn $name() {
             let tokens = create_tokens(vec![$($tok),*]);
-            let parser = JsavParser::new(tokens);
+            let parser = JsavParser::new(&tokens);
             let (stmts, errors) = parser.parse();
 
             if $expect_err {
@@ -274,7 +274,7 @@ fn test_function_call() {
         TokenKind::CloseParen,
         TokenKind::Eof,
     ]);
-    let parser = JsavParser::new(tokens);
+    let parser = JsavParser::new(&tokens);
     let (expr, errors) = parser.parse();
     assert!(errors.is_empty());
     assert_eq!(expr.len(), 1);
@@ -300,7 +300,7 @@ fn test_array_access() {
         TokenKind::CloseBracket,
         TokenKind::Eof,
     ]);
-    let parser = JsavParser::new(tokens);
+    let parser = JsavParser::new(&tokens);
     let (expr, errors) = parser.parse();
     assert!(errors.is_empty());
     assert_eq!(expr.len(), 1);
@@ -320,7 +320,7 @@ fn test_array_access_empty_index() {
         TokenKind::CloseBracket,
         TokenKind::Eof,
     ]);
-    let parser = JsavParser::new(tokens);
+    let parser = JsavParser::new(&tokens);
     let (expr, errors) = parser.parse();
     assert!(!errors.is_empty());
     assert_eq!(expr.len(), 0);
@@ -330,7 +330,7 @@ fn test_array_access_empty_index() {
 #[test]
 fn test_unclosed_parenthesis() {
     let tokens = create_tokens(vec![TokenKind::OpenParen, TokenKind::Numeric(Number::Integer(5)), TokenKind::Eof]);
-    let parser = JsavParser::new(tokens);
+    let parser = JsavParser::new(&tokens);
     let (expr, errors) = parser.parse();
     assert!(!errors.is_empty());
     assert_eq!(errors[0].message().unwrap(), "Expected ')' in end of grouping, found end of file.");
@@ -341,7 +341,7 @@ fn test_unclosed_parenthesis() {
 #[test]
 fn test_unexpected_token() {
     let tokens = create_tokens(vec![TokenKind::Plus, TokenKind::Numeric(Number::Integer(5)), TokenKind::Eof]);
-    let parser = JsavParser::new(tokens);
+    let parser = JsavParser::new(&tokens);
     let (expr, errors) = parser.parse();
     assert!(!errors.is_empty());
     assert_eq!(errors[0].message().unwrap(), "Unexpected token: '+'");
@@ -351,7 +351,7 @@ fn test_unexpected_token() {
 #[test]
 fn test_empty_input() {
     let tokens = create_tokens(vec![TokenKind::Eof]);
-    let parser = JsavParser::new(tokens);
+    let parser = JsavParser::new(&tokens);
     let (expr, errors) = parser.parse();
     assert_eq!(errors.len(), 0);
     //assert_eq!(errors[0].message().unwrap(), "Unexpected token: Eof");
@@ -371,7 +371,7 @@ fn test_deep_nesting() {
         TokenKind::CloseParen,
         TokenKind::Eof,
     ]);
-    let parser = JsavParser::new(tokens);
+    let parser = JsavParser::new(&tokens);
     let (expr, errors) = parser.parse();
     assert!(errors.is_empty());
     assert_eq!(expr.len(), 1);
@@ -388,7 +388,7 @@ fn test_unary_operators_bp() {
 #[test]
 fn test_variable_unicode_identifier() {
     let tokens = create_tokens(vec![TokenKind::IdentifierUnicode("変数".into()), TokenKind::Eof]);
-    let parser = JsavParser::new(tokens);
+    let parser = JsavParser::new(&tokens);
     let (expr, errors) = parser.parse();
     assert!(errors.is_empty());
     assert_eq!(expr.len(), 1);
@@ -405,7 +405,7 @@ fn test_unary_precedence() {
         TokenKind::Numeric(Number::Integer(3)),
         TokenKind::Eof,
     ]);
-    let parser = JsavParser::new(tokens);
+    let parser = JsavParser::new(&tokens);
     let (expr, errors) = parser.parse();
     assert!(errors.is_empty());
     assert_eq!(expr.len(), 1);
@@ -428,7 +428,7 @@ fn test_assignment_invalid_target_function_call() {
         TokenKind::Numeric(Number::Integer(5)),
         TokenKind::Eof,
     ]);
-    let parser = JsavParser::new(tokens);
+    let parser = JsavParser::new(&tokens);
     let (expr, errors) = parser.parse();
     assert!(!errors.is_empty());
     assert_eq!(errors[0].message().unwrap(), "Invalid left-hand side in assignment");
@@ -444,7 +444,7 @@ fn test_function_call_zero_arguments() {
         TokenKind::CloseParen,
         TokenKind::Eof,
     ]);
-    let parser = JsavParser::new(tokens);
+    let parser = JsavParser::new(&tokens);
     let (expr, errors) = parser.parse();
     assert!(errors.is_empty());
     assert_eq!(expr.len(), 1);
@@ -460,7 +460,7 @@ fn test_function_call_unclosed_paren() {
         TokenKind::Numeric(Number::Integer(1)),
         TokenKind::Eof,
     ]);
-    let parser = JsavParser::new(tokens);
+    let parser = JsavParser::new(&tokens);
     let (expr, errors) = parser.parse();
     assert!(!errors.is_empty());
     assert_eq!(errors[0].message().unwrap(), "Expected ')' in end of function call arguments, found end of file.");
@@ -479,7 +479,7 @@ fn test_assignment_invalid_target_binary() {
         TokenKind::Numeric(Number::Integer(10)),
         TokenKind::Eof,
     ]);
-    let parser = JsavParser::new(tokens);
+    let parser = JsavParser::new(&tokens);
     let (expr, errors) = parser.parse();
     assert!(!errors.is_empty());
     assert_eq!(errors[0].message().unwrap(), "Invalid left-hand side in assignment");
@@ -530,7 +530,7 @@ fn test_assignment_unicode_variable() {
         TokenKind::Numeric(Number::Integer(5)),
         TokenKind::Eof,
     ]);
-    let parser = JsavParser::new(tokens);
+    let parser = JsavParser::new(&tokens);
     let (expr, errors) = parser.parse();
     assert!(errors.is_empty());
     assert_eq!(expr.len(), 1);
@@ -550,7 +550,7 @@ fn test_chained_array_access() {
         TokenKind::CloseBracket,
         TokenKind::Eof,
     ]);
-    let parser = JsavParser::new(tokens);
+    let parser = JsavParser::new(&tokens);
     let (expr, errors) = parser.parse();
     assert!(errors.is_empty());
     assert_eq!(expr.len(), 1);
@@ -565,7 +565,7 @@ fn test_chained_array_access() {
 #[test]
 fn test_invalid_unary_operator() {
     let tokens = create_tokens(vec![TokenKind::Star, TokenKind::Numeric(Number::Integer(5)), TokenKind::Eof]);
-    let parser = JsavParser::new(tokens);
+    let parser = JsavParser::new(&tokens);
     let (expr, errors) = parser.parse();
     assert!(!errors.is_empty());
     assert_eq!(errors[0].message().unwrap(), "Unexpected token: '*'");
@@ -583,7 +583,7 @@ fn test_nested_function_calls() {
         TokenKind::CloseParen,
         TokenKind::Eof,
     ]);
-    let parser = JsavParser::new(tokens);
+    let parser = JsavParser::new(&tokens);
     let (expr, errors) = parser.parse();
     assert!(errors.is_empty());
     assert_eq!(expr.len(), 1);
@@ -597,7 +597,7 @@ fn test_nested_function_calls() {
 fn test_multiple_errors_in_expression() {
     let tokens =
         create_tokens(vec![TokenKind::Plus, TokenKind::Equal, TokenKind::Numeric(Number::Integer(5)), TokenKind::Eof]);
-    let parser = JsavParser::new(tokens);
+    let parser = JsavParser::new(&tokens);
     let (_expr, errors) = parser.parse();
     assert_eq!(errors.len(), 1);
     assert_eq!(errors[0].message().unwrap(), "Unexpected token: '+'");
@@ -616,7 +616,7 @@ fn test_mixed_literals_function_call() {
         TokenKind::CloseParen,
         TokenKind::Eof,
     ]);
-    let parser = JsavParser::new(tokens);
+    let parser = JsavParser::new(&tokens);
     let (expr, errors) = parser.parse();
     assert!(errors.is_empty());
     assert_eq!(expr.len(), 1);
@@ -637,7 +637,7 @@ fn test_complex_nesting_errors() {
         TokenKind::CloseParen,
         TokenKind::Eof,
     ]);
-    let parser = JsavParser::new(tokens);
+    let parser = JsavParser::new(&tokens);
     let (_expr, errors) = parser.parse();
     assert!(!errors.is_empty());
     assert_eq!(errors[0].message().unwrap(), "Unexpected token: '['");
@@ -653,7 +653,7 @@ fn test_bitwise_operator_precedence() {
         TokenKind::Numeric(Number::Integer(3)),
         TokenKind::Eof,
     ]);
-    let parser = JsavParser::new(tokens);
+    let parser = JsavParser::new(&tokens);
     let (expr, errors) = parser.parse();
     assert!(errors.is_empty());
     assert_eq!(expr.len(), 1);
@@ -679,7 +679,7 @@ fn test_nested_parsing_errors() {
         TokenKind::CloseParen,
         TokenKind::Eof,
     ]);
-    let parser = JsavParser::new(tokens);
+    let parser = JsavParser::new(&tokens);
     let (_expr, errors) = parser.parse();
     assert!(!errors.is_empty());
     assert_eq!(errors[0].message().unwrap(), "Unexpected token: '*'");
@@ -693,7 +693,7 @@ fn test_nested_unknown_binding_power() {
         TokenKind::Numeric(Number::Integer(5)),
         TokenKind::Eof,
     ]);
-    let parser = JsavParser::new(tokens);
+    let parser = JsavParser::new(&tokens);
     let (_expr, errors) = parser.parse();
     assert!(!errors.is_empty());
     assert_eq!(errors[0].message().unwrap(), "Unexpected operator: '+='");
@@ -718,7 +718,7 @@ fn test_nested_if_statements() {
         TokenKind::CloseBrace,
         TokenKind::Eof,
     ]);
-    let parser = JsavParser::new(tokens);
+    let parser = JsavParser::new(&tokens);
     let (statements, errors) = parser.parse();
 
     assert!(!errors.is_empty());
@@ -758,7 +758,7 @@ fn test_error_recovery_after_invalid_statement() {
         TokenKind::Semicolon,
         TokenKind::Eof,
     ]);
-    let parser = JsavParser::new(tokens);
+    let parser = JsavParser::new(&tokens);
     let (statements, errors) = parser.parse();
 
     assert!(!errors.is_empty());
@@ -778,7 +778,7 @@ fn test_function_parameter_errors() {
         TokenKind::CloseBrace,
         TokenKind::Eof,
     ]);
-    let parser = JsavParser::new(tokens);
+    let parser = JsavParser::new(&tokens);
     let (_, errors) = parser.parse();
 
     assert!(!errors.is_empty());
@@ -797,7 +797,7 @@ fn test_unicode_function_name() {
         TokenKind::CloseBrace,
         TokenKind::Eof,
     ]);
-    let parser = JsavParser::new(tokens);
+    let parser = JsavParser::new(&tokens);
     let (statements, errors) = parser.parse();
     assert!(errors.is_empty());
     assert_eq!(statements.len(), 1);
@@ -816,7 +816,7 @@ fn test_unicode_function_name() {
 #[test]
 fn test_block_stmt() {
     let tokens = create_tokens(vec![TokenKind::OpenBrace, TokenKind::CloseBrace, TokenKind::Eof]);
-    let parser = JsavParser::new(tokens);
+    let parser = JsavParser::new(&tokens);
     let (statements, errors) = parser.parse();
     assert!(errors.is_empty());
     assert_eq!(statements.len(), 1);
@@ -836,7 +836,7 @@ fn test_break_statement_in_if() {
         TokenKind::CloseBrace,
         TokenKind::Eof,
     ]);
-    let parser = JsavParser::new(tokens);
+    let parser = JsavParser::new(&tokens);
     let (statements, errors) = parser.parse();
     assert!(errors.is_empty());
     assert_eq!(statements.len(), 1);
@@ -864,7 +864,7 @@ fn test_continue_statement_in_if() {
         TokenKind::CloseBrace,
         TokenKind::Eof,
     ]);
-    let parser = JsavParser::new(tokens);
+    let parser = JsavParser::new(&tokens);
     let (statements, errors) = parser.parse();
     assert!(errors.is_empty());
     assert_eq!(statements.len(), 1);
@@ -894,7 +894,7 @@ fn test_empty_for_loop() {
         TokenKind::CloseBrace,
         TokenKind::Eof,
     ]);
-    let parser = JsavParser::new(tokens);
+    let parser = JsavParser::new(&tokens);
     let (statements, errors) = parser.parse();
     assert!(errors.is_empty());
     assert_eq!(statements.len(), 1);
@@ -925,7 +925,7 @@ fn test_full_for_loop() {
         TokenKind::CloseBrace,
         TokenKind::Eof,
     ]);
-    let parser = JsavParser::new(tokens);
+    let parser = JsavParser::new(&tokens);
     let (statements, errors) = parser.parse();
     assert!(errors.is_empty());
     assert_eq!(statements.len(), 1);
@@ -946,7 +946,7 @@ fn test_if_with_else_branch() {
     let input = "if (true) { continue } else { break }";
     let mut lexer = Lexer::new("test.vn", input);
     let (tokens, _lerrors) = lexer_tokenize_with_errors(&mut lexer);
-    let parser = JsavParser::new(tokens);
+    let parser = JsavParser::new(&tokens);
     let (statements, errors) = parser.parse();
     assert!(errors.is_empty());
     assert_eq!(statements.len(), 1);
@@ -1008,7 +1008,7 @@ macro_rules! test_var_decl {
             assert!(lex_errors.is_empty(), "Errori di lexing in test `{}`: {:?}", stringify!($test_name), lex_errors);
 
             // 2) Parsing
-            let parser = JsavParser::new(tokens);
+            let parser = JsavParser::new(&tokens);
             let (statements, parse_errors) = parser.parse();
             assert!(
                 parse_errors.is_empty(),
@@ -1365,7 +1365,7 @@ fn array_declaration() {
     let input = "var arr: i8[5] = {1, 2, 3, 4, 5}";
     let mut lexer = Lexer::new("test.vn", input);
     let (tokens, _lex_errors) = lexer_tokenize_with_errors(&mut lexer);
-    let parser = JsavParser::new(tokens);
+    let parser = JsavParser::new(&tokens);
     let (expr, errors) = parser.parse();
     assert!(errors.is_empty());
     assert_eq!(expr.len(), 1);
@@ -1416,7 +1416,7 @@ fn vector_declaration() {
     let input = "var arr: vector<i8> = {1, 2, 3, 4, 5}";
     let mut lexer = Lexer::new("test.vn", input);
     let (tokens, _lex_errors) = lexer_tokenize_with_errors(&mut lexer);
-    let parser = JsavParser::new(tokens);
+    let parser = JsavParser::new(&tokens);
     let (expr, errors) = parser.parse();
     assert!(errors.is_empty());
     assert_eq!(expr.len(), 1);
@@ -1461,7 +1461,7 @@ fn test_function_inputs() {
     let input = "fun a(num1: i8, num2: i8): i8 { }";
     let mut lexer = Lexer::new("test.vn", input);
     let (tokens, _lex_errors) = lexer_tokenize_with_errors(&mut lexer);
-    let parser = JsavParser::new(tokens);
+    let parser = JsavParser::new(&tokens);
     let (expr, errors) = parser.parse();
     assert!(errors.is_empty());
     assert_eq!(expr.len(), 1);
@@ -1483,7 +1483,7 @@ fn test_function_inputs() {
 #[test]
 fn test_peek_in_parse_stmt() {
     let tokens = create_tokens(vec![TokenKind::Eof]);
-    let parser = JsavParser::new(tokens);
+    let parser = JsavParser::new(&tokens);
     let (stmts, errors) = parser.parse();
     assert!(errors.is_empty());
     assert!(stmts.is_empty());
@@ -1501,7 +1501,7 @@ fn test_var_declaration() {
         TokenKind::Numeric(Number::Integer(5)),
         TokenKind::Eof,
     ]);
-    let parser = JsavParser::new(tokens);
+    let parser = JsavParser::new(&tokens);
     let (stmts, errors) = parser.parse();
     assert!(errors.is_empty());
     assert_eq!(stmts.len(), 1);
@@ -1519,7 +1519,7 @@ fn test_const_declaration() {
         TokenKind::Numeric(Number::Integer(5)),
         TokenKind::Eof,
     ]);
-    let parser = JsavParser::new(tokens);
+    let parser = JsavParser::new(&tokens);
     let (stmts, errors) = parser.parse();
     assert!(errors.is_empty());
     assert_eq!(stmts.len(), 1);
@@ -1530,7 +1530,7 @@ fn test_const_declaration() {
 #[test]
 fn test_break_statement() {
     let tokens = create_tokens(vec![TokenKind::KeywordBreak, TokenKind::Eof]);
-    let parser = JsavParser::new(tokens);
+    let parser = JsavParser::new(&tokens);
     let (stmts, errors) = parser.parse();
     assert!(errors.is_empty());
     assert_eq!(stmts.len(), 1);
@@ -1541,7 +1541,7 @@ fn test_break_statement() {
 #[test]
 fn test_continue_statement() {
     let tokens = create_tokens(vec![TokenKind::KeywordContinue, TokenKind::Eof]);
-    let parser = JsavParser::new(tokens);
+    let parser = JsavParser::new(&tokens);
     let (stmts, errors) = parser.parse();
     assert!(errors.is_empty());
     assert_eq!(stmts.len(), 1);
@@ -1558,7 +1558,7 @@ fn test_block_statement() {
         TokenKind::CloseBrace,
         TokenKind::Eof,
     ]);
-    let parser = JsavParser::new(tokens);
+    let parser = JsavParser::new(&tokens);
     let (stmts, errors) = parser.parse();
     assert!(errors.is_empty());
     assert_eq!(stmts.len(), 1);
@@ -1576,7 +1576,7 @@ fn test_block_statement() {
 #[test]
 fn test_empty_block_statement() {
     let tokens = create_tokens(vec![TokenKind::OpenBrace, TokenKind::CloseBrace, TokenKind::Eof]);
-    let parser = JsavParser::new(tokens);
+    let parser = JsavParser::new(&tokens);
     let (stmts, errors) = parser.parse();
     assert!(errors.is_empty());
     assert_eq!(stmts.len(), 1);
@@ -1593,7 +1593,7 @@ fn test_var_no_name() {
     let input = "var ";
     let mut lexer = Lexer::new("test.vn", input);
     let (tokens, _lex_errors) = lexer_tokenize_with_errors(&mut lexer);
-    let parser = JsavParser::new(tokens);
+    let parser = JsavParser::new(&tokens);
     let (_expr, errors) = parser.parse();
     assert!(!errors.is_empty());
     assert_eq!(errors[0].message().unwrap(), "Expected identifier: end of file");
@@ -1604,7 +1604,7 @@ fn test_var_no_initializer() {
     let input = "var eee: i32";
     let mut lexer = Lexer::new("test.vn", input);
     let (tokens, _lex_errors) = lexer_tokenize_with_errors(&mut lexer);
-    let parser = JsavParser::new(tokens);
+    let parser = JsavParser::new(&tokens);
     let (_expr, errors) = parser.parse();
     assert!(!errors.is_empty());
     assert_eq!(errors[0].message().unwrap(), "Expected '=' in after type annotation, found end of file.");
@@ -1616,7 +1616,7 @@ fn test_unclosed_array_literal() {
     let input = "var eee: i32[2] = {1, 2, 3";
     let mut lexer = Lexer::new("test.vn", input);
     let (tokens, _lex_errors) = lexer_tokenize_with_errors(&mut lexer);
-    let parser = JsavParser::new(tokens);
+    let parser = JsavParser::new(&tokens);
     let (expr, errors) = parser.parse();
     assert!(!errors.is_empty());
     assert_eq!(errors[0].message().unwrap(), "Expected '}' in end of array literal, found end of file.");
@@ -1629,7 +1629,7 @@ fn test_var_invalid_type() {
     let input = "var eee: 5";
     let mut lexer = Lexer::new("test.vn", input);
     let (tokens, _lex_errors) = lexer_tokenize_with_errors(&mut lexer);
-    let parser = JsavParser::new(tokens);
+    let parser = JsavParser::new(&tokens);
     let (_expr, errors) = parser.parse();
     assert!(!errors.is_empty());
     assert_eq!(
@@ -1643,7 +1643,7 @@ fn test_main() {
     let input = "main { }";
     let mut lexer = Lexer::new("test.vn", input);
     let (tokens, _lex_errors) = lexer_tokenize_with_errors(&mut lexer);
-    let parser = JsavParser::new(tokens);
+    let parser = JsavParser::new(&tokens);
     let (expr, errors) = parser.parse();
     assert!(errors.is_empty());
     assert_eq!(expr.len(), 1);

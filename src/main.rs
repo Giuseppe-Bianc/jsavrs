@@ -4,6 +4,7 @@ use console::style;
 // use jsavrs::asm::{Abi, AssemblyFile, DataDirective, GPRegister64, Immediate, Instruction, Operand, X86Register};
 use jsavrs::cli::Args;
 use jsavrs::error::error_reporter::ErrorReporter;
+use jsavrs::ir::optimizer::constant_folding::optimizer::ConstantFoldingOptimizer;
 use jsavrs::ir::{Phase, generator::IrGenerator, optimizer::DeadCodeElimination, run_pipeline};
 use jsavrs::lexer::Lexer;
 use jsavrs::parser::jsav_parser::JsavParser;
@@ -79,7 +80,7 @@ fn main() -> Result<(), CompileError> {
     // Print tokens with color if verbose
     println!("{} tokens found", tokens.len());
 
-    let parse = JsavParser::new(tokens);
+    let parse = JsavParser::new(&tokens);
     let parse_timer = Timer::new("Parser");
     let (statements, parer_errors) = parse.parse();
     println!("{parse_timer}");
@@ -118,7 +119,10 @@ fn main() -> Result<(), CompileError> {
 
     println!("NIR generation done");
 
-    let pipeline: Vec<Box<dyn Phase>> = vec![Box::new(DeadCodeElimination::with_config(10, true, args.verbose, false))];
+    let pipeline: Vec<Box<dyn Phase>> = vec![
+        Box::new(ConstantFoldingOptimizer::new(args.verbose)),
+        Box::new(DeadCodeElimination::with_config(10, true, args.verbose, false))
+    ];
     if args.verbose {
         println!("Generated NIR Module:\n{}", irmodule);
     }

@@ -11,7 +11,7 @@ use jsavrs::utils::dummy_span;
 fn typecheck_with(ast: &str, mut checker: TypeChecker) -> Vec<CompileError> {
     let mut lexer = Lexer::new("test.vn", ast);
     let (tokens, _lex_errors) = lexer_tokenize_with_errors(&mut lexer);
-    let parser = JsavParser::new(tokens);
+    let parser = JsavParser::new(&tokens);
     let (expr, _errors) = parser.parse();
     checker.check(&expr)
 }
