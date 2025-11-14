@@ -77,7 +77,7 @@ pub fn benchmark_parser(c: &mut Criterion) {
             b.iter(|| {
                 let mut lexer = Lexer::new("bench.vn", black_box(input.as_str()));
                 let (tokens, _lex_errors) = lexer_tokenize_with_errors(&mut lexer);
-                let parser = JsavParser::new(tokens);
+                let parser = JsavParser::new(&tokens);
                 let ast_and_errors = parser.parse();
                 black_box(&ast_and_errors);
             })
@@ -105,7 +105,7 @@ pub fn benchmark_parser_nodes(c: &mut Criterion) {
             b.iter(|| {
                 let mut lexer = Lexer::new("bench.vn", black_box(input.as_str()));
                 let (tokens, _lex_errors) = lexer_tokenize_with_errors(&mut lexer);
-                let parser = JsavParser::new(tokens);
+                let parser = JsavParser::new(&tokens);
                 let ast_and_errors = parser.parse();
                 black_box(&ast_and_errors);
             })
@@ -136,7 +136,7 @@ pub fn benchmark_semantic_analysis(c: &mut Criterion) {
             b.iter(|| {
                 let mut lexer = Lexer::new("bench.vn", black_box(input.as_str()));
                 let (tokens, _lex_errors) = lexer_tokenize_with_errors(&mut lexer);
-                let parser = JsavParser::new(tokens);
+                let parser = JsavParser::new(&tokens);
                 let (ast, _parse_errors) = parser.parse();
                 let mut type_checker = TypeChecker::new();
                 let semantic_errors = type_checker.check(&ast);
@@ -170,7 +170,7 @@ pub fn benchmark_ir_generation(c: &mut Criterion) {
             b.iter(|| {
                 let mut lexer = Lexer::new("bench.vn", black_box(input.as_str()));
                 let (tokens, _lex_errors) = lexer_tokenize_with_errors(&mut lexer);
-                let parser = JsavParser::new(tokens);
+                let parser = JsavParser::new(&tokens);
                 let (ast, _parse_errors) = parser.parse();
                 let mut ir_generator = IrGenerator::new();
                 let (ir_module, _ir_errors) = ir_generator.generate(ast, "bench.vn");
@@ -203,7 +203,7 @@ pub fn benchmark_end_to_end(c: &mut Criterion) {
             b.iter(|| {
                 let mut lexer = Lexer::new("bench.vn", black_box(input.as_str()));
                 let (tokens, _lex_errors) = lexer_tokenize_with_errors(&mut lexer);
-                let parser = JsavParser::new(tokens);
+                let parser = JsavParser::new(&tokens);
                 let (ast, _parse_errors) = parser.parse();
                 let mut type_checker = TypeChecker::new();
                 let _semantic_errors = type_checker.check(&ast);
@@ -238,7 +238,7 @@ pub fn benchmark_dce_small(c: &mut Criterion) {
         b.iter(|| {
             let mut lexer = Lexer::new("bench.vn", black_box(small_func));
             let (tokens, _) = lexer_tokenize_with_errors(&mut lexer);
-            let parser = JsavParser::new(tokens);
+            let parser = JsavParser::new(&tokens);
             let (ast, _) = parser.parse();
             let mut type_checker = TypeChecker::new();
             let _ = type_checker.check(&ast);
@@ -273,7 +273,7 @@ pub fn benchmark_dce_medium(c: &mut Criterion) {
         b.iter(|| {
             let mut lexer = Lexer::new("bench.vn", black_box(medium_func.as_str()));
             let (tokens, _) = lexer_tokenize_with_errors(&mut lexer);
-            let parser = JsavParser::new(tokens);
+            let parser = JsavParser::new(&tokens);
             let (ast, _) = parser.parse();
             let mut type_checker = TypeChecker::new();
             let _ = type_checker.check(&ast);
@@ -307,7 +307,7 @@ pub fn benchmark_dce_large(c: &mut Criterion) {
         b.iter(|| {
             let mut lexer = Lexer::new("bench.vn", black_box(large_func.as_str()));
             let (tokens, _) = lexer_tokenize_with_errors(&mut lexer);
-            let parser = JsavParser::new(tokens);
+            let parser = JsavParser::new(&tokens);
             let (ast, _) = parser.parse();
             let mut type_checker = TypeChecker::new();
             let _ = type_checker.check(&ast);
@@ -344,7 +344,7 @@ pub fn benchmark_dce_module(c: &mut Criterion) {
         b.iter(|| {
             let mut lexer = Lexer::new("bench.vn", black_box(module_code.as_str()));
             let (tokens, _) = lexer_tokenize_with_errors(&mut lexer);
-            let parser = JsavParser::new(tokens);
+            let parser = JsavParser::new(&tokens);
             let (ast, _) = parser.parse();
             let mut type_checker = TypeChecker::new();
             let _ = type_checker.check(&ast);
@@ -379,7 +379,7 @@ pub fn benchmark_dce_worst_case(c: &mut Criterion) {
         b.iter(|| {
             let mut lexer = Lexer::new("bench.vn", black_box(worst_case.as_str()));
             let (tokens, _) = lexer_tokenize_with_errors(&mut lexer);
-            let parser = JsavParser::new(tokens);
+            let parser = JsavParser::new(&tokens);
             let (ast, _) = parser.parse();
             let mut type_checker = TypeChecker::new();
             let _ = type_checker.check(&ast);
