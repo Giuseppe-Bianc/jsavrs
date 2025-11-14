@@ -145,6 +145,40 @@ impl Module {
     pub fn name(&self) -> &str {
         &self.name
     }
+
+    /// Counts the total number of instructions across all functions in the module.
+    ///
+    /// This method iterates through all functions in the module, then through all basic blocks
+    /// in each function's control flow graph, and finally sums up the instruction counts from
+    /// each basic block.
+    ///
+    /// # Returns
+    ///
+    /// The total number of instructions in the module as a `usize`. Returns `0` for empty
+    /// modules or modules with no instructions.
+    ///
+    /// # Performance
+    ///
+    /// This operation has O(n) time complexity where n is the total number of instructions
+    /// in the module. It performs a single linear traversal with no allocations.
+    ///
+    /// # Examples
+    ///
+    /// ```
+    /// # use jsavrs::ir::Module;
+    /// let module = Module::new("test_module", None);
+    /// assert_eq!(module.count_instructions(), 0);
+    /// ```
+    ///
+    /// # Edge Cases
+    ///
+    /// - Empty module (no functions): returns `0`
+    /// - Functions with no basic blocks: contributes `0` to the count
+    /// - Basic blocks with no instructions: contributes `0` to the count
+    #[inline]
+    pub fn count_instructions(&self) -> usize {
+        self.functions.iter().flat_map(|function| function.cfg.blocks()).map(|block| block.instructions.len()).sum()
+    }
 }
 
 impl fmt::Display for Module {

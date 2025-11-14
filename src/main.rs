@@ -120,8 +120,8 @@ fn main() -> Result<(), CompileError> {
     println!("NIR generation done");
 
     let pipeline: Vec<Box<dyn Phase>> = vec![
-        Box::new(ConstantFoldingOptimizer::new(args.verbose)),
-        Box::new(DeadCodeElimination::with_config(10, true, args.verbose, false))
+        Box::new(ConstantFoldingOptimizer::new(args.verbose, true)),
+        Box::new(DeadCodeElimination::with_config(10, true, args.verbose, false)),
     ];
     if args.verbose {
         println!("Generated NIR Module:\n{}", irmodule);

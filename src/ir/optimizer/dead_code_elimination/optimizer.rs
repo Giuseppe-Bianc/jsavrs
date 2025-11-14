@@ -418,6 +418,7 @@ impl Phase for DeadCodeElimination {
         if self.verbose {
             self.print_statistics();
         }
+        println!("total number of instructions after DCE: {}", module.count_instructions());
     }
 }
 

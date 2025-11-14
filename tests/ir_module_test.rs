@@ -370,3 +370,225 @@ entry_format_func:
 }"#;
     assert_eq!(module_redacted(module), expected);
 }
+
+#[test]
+fn test_count_instructions_empty_module() {
+    // Test: Conteggio istruzioni in un modulo vuoto
+    let module = Module::new("empty_module", None);
+
+    // Un modulo senza funzioni dovrebbe avere 0 istruzioni
+    assert_eq!(module.count_instructions(), 0);
+}
+
+#[test]
+fn test_count_instructions_single_function_no_instructions() {
+    // Test: Conteggio istruzioni in una funzione senza istruzioni
+    let mut module = Module::new("test_module", None);
+    let mut function = create_test_function("empty_func");
+
+    // Aggiungi un blocco base ma senza istruzioni
+    function.add_block("entry_empty_func", SourceSpan::default());
+    module.add_function(function);
+
+    // Dovrebbe essere 0 perché il blocco non contiene istruzioni
+    assert_eq!(module.count_instructions(), 0);
+}
+
+#[test]
+fn test_count_instructions_single_function_with_instructions() {
+    use jsavrs::ir::{Instruction, InstructionKind, IrLiteralValue, Value};
+
+    // Test: Conteggio istruzioni in una funzione con istruzioni
+    let mut module = Module::new("test_module", None);
+    let mut function = create_test_function("test_func");
+
+    // Aggiungi un blocco e alcune istruzioni
+    function.add_block("entry_test_func", SourceSpan::default());
+
+    // Aggiungi 3 istruzioni
+    let inst1 = Instruction::new(InstructionKind::Alloca { ty: IrType::I32 }, SourceSpan::default())
+        .with_result(Value::new_temporary(0, IrType::Pointer(Box::new(IrType::I32))));
+
+    let inst2 = Instruction::new(InstructionKind::Alloca { ty: IrType::F32 }, SourceSpan::default())
+        .with_result(Value::new_temporary(1, IrType::Pointer(Box::new(IrType::F32))));
+
+    let inst3 = Instruction::new(
+        InstructionKind::Store {
+            value: Value::new_literal(IrLiteralValue::I32(42)),
+            dest: Value::new_temporary(0, IrType::Pointer(Box::new(IrType::I32))),
+        },
+        SourceSpan::default(),
+    );
+
+    function.add_instruction("entry_test_func", inst1);
+    function.add_instruction("entry_test_func", inst2);
+    function.add_instruction("entry_test_func", inst3);
+
+    module.add_function(function);
+
+    // Dovrebbe contare 3 istruzioni
+    assert_eq!(module.count_instructions(), 3);
+}
+#[test]
+fn test_count_instructions_multiple_functions() {
+    use jsavrs::ir::{Instruction, InstructionKind, Value};
+
+    // Test: Conteggio istruzioni attraverso più funzioni
+    let mut module = Module::new("test_module", None);
+
+    // Funzione 1 con 2 istruzioni
+    let mut func1 = create_test_function("func1");
+    func1.add_block("entry_func1", SourceSpan::default());
+    let inst1 = Instruction::new(InstructionKind::Alloca { ty: IrType::I32 }, SourceSpan::default())
+        .with_result(Value::new_temporary(0, IrType::Pointer(Box::new(IrType::I32))));
+    let inst2 = Instruction::new(InstructionKind::Alloca { ty: IrType::F32 }, SourceSpan::default())
+        .with_result(Value::new_temporary(1, IrType::Pointer(Box::new(IrType::F32))));
+    func1.add_instruction("entry_func1", inst1);
+    func1.add_instruction("entry_func1", inst2);
+
+    // Funzione 2 con 3 istruzioni
+    let mut func2 = create_test_function("func2");
+    func2.add_block("entry_func2", SourceSpan::default());
+    let inst3 = Instruction::new(InstructionKind::Alloca { ty: IrType::I64 }, SourceSpan::default())
+        .with_result(Value::new_temporary(2, IrType::Pointer(Box::new(IrType::I64))));
+    let inst4 = Instruction::new(InstructionKind::Alloca { ty: IrType::F64 }, SourceSpan::default())
+        .with_result(Value::new_temporary(3, IrType::Pointer(Box::new(IrType::F64))));
+    let inst5 = Instruction::new(InstructionKind::Alloca { ty: IrType::Bool }, SourceSpan::default())
+        .with_result(Value::new_temporary(4, IrType::Pointer(Box::new(IrType::Bool))));
+    func2.add_instruction("entry_func2", inst3);
+    func2.add_instruction("entry_func2", inst4);
+    func2.add_instruction("entry_func2", inst5);
+
+    module.add_function(func1);
+    module.add_function(func2);
+
+    // Totale: 2 + 3 = 5 istruzioni
+    assert_eq!(module.count_instructions(), 5);
+}
+#[test]
+fn test_count_instructions_multiple_blocks() {
+    use jsavrs::ir::{Instruction, InstructionKind, Value};
+
+    // Test: Conteggio istruzioni attraverso più blocchi in una funzione
+    let mut module = Module::new("test_module", None);
+    let mut function = create_test_function("multi_block_func");
+
+    // Blocco 1 con 2 istruzioni
+    function.add_block("entry_multi_block_func", SourceSpan::default());
+    let inst1 = Instruction::new(InstructionKind::Alloca { ty: IrType::I32 }, SourceSpan::default())
+        .with_result(Value::new_temporary(0, IrType::Pointer(Box::new(IrType::I32))));
+    let inst2 = Instruction::new(InstructionKind::Alloca { ty: IrType::F32 }, SourceSpan::default())
+        .with_result(Value::new_temporary(1, IrType::Pointer(Box::new(IrType::F32))));
+    function.add_instruction("entry_multi_block_func", inst1);
+    function.add_instruction("entry_multi_block_func", inst2);
+
+    // Blocco 2 con 1 istruzione
+    function.add_block("block2", SourceSpan::default());
+    let inst3 = Instruction::new(InstructionKind::Alloca { ty: IrType::I64 }, SourceSpan::default())
+        .with_result(Value::new_temporary(2, IrType::Pointer(Box::new(IrType::I64))));
+    function.add_instruction("block2", inst3);
+
+    module.add_function(function);
+
+    // Totale: 2 + 1 = 3 istruzioni
+    assert_eq!(module.count_instructions(), 3);
+}
+
+#[test]
+fn test_count_instructions_complex_scenario() {
+    use jsavrs::ir::{Instruction, InstructionKind, IrLiteralValue, Value};
+
+    // Test: Scenario complesso con più funzioni, blocchi e istruzioni
+    let mut module = Module::new("complex_module", None);
+
+    // Funzione 1: 2 blocchi con 3 istruzioni totali
+    let mut func1 = create_test_function("func1");
+    func1.add_block("entry_func1", SourceSpan::default());
+    func1.add_block("block1_a", SourceSpan::default());
+
+    func1.add_instruction(
+        "entry_func1",
+        Instruction::new(InstructionKind::Alloca { ty: IrType::I32 }, SourceSpan::default())
+            .with_result(Value::new_temporary(0, IrType::Pointer(Box::new(IrType::I32)))),
+    );
+    func1.add_instruction(
+        "block1_a",
+        Instruction::new(
+            InstructionKind::Store {
+                value: Value::new_literal(IrLiteralValue::I32(10)),
+                dest: Value::new_temporary(0, IrType::Pointer(Box::new(IrType::I32))),
+            },
+            SourceSpan::default(),
+        ),
+    );
+    func1.add_instruction(
+        "block1_a",
+        Instruction::new(
+            InstructionKind::Load {
+                src: Value::new_temporary(0, IrType::Pointer(Box::new(IrType::I32))),
+                ty: IrType::I32,
+            },
+            SourceSpan::default(),
+        )
+        .with_result(Value::new_temporary(1, IrType::I32)),
+    );
+
+    // Funzione 2: 1 blocco senza istruzioni
+    let mut func2 = create_test_function("func2");
+    func2.add_block("entry_func2", SourceSpan::default());
+
+    // Funzione 3: 3 blocchi con 5 istruzioni totali
+    let mut func3 = create_test_function("func3");
+    func3.add_block("entry_func3", SourceSpan::default());
+    func3.add_block("block3_a", SourceSpan::default());
+    func3.add_block("block3_b", SourceSpan::default());
+
+    func3.add_instruction(
+        "entry_func3",
+        Instruction::new(InstructionKind::Alloca { ty: IrType::F32 }, SourceSpan::default())
+            .with_result(Value::new_temporary(2, IrType::Pointer(Box::new(IrType::F32)))),
+    );
+    func3.add_instruction(
+        "entry_func3",
+        Instruction::new(InstructionKind::Alloca { ty: IrType::Bool }, SourceSpan::default())
+            .with_result(Value::new_temporary(3, IrType::Pointer(Box::new(IrType::Bool)))),
+    );
+    func3.add_instruction(
+        "block3_a",
+        Instruction::new(
+            InstructionKind::Store {
+                value: Value::new_literal(IrLiteralValue::F32(3.14)),
+                dest: Value::new_temporary(2, IrType::Pointer(Box::new(IrType::F32))),
+            },
+            SourceSpan::default(),
+        ),
+    );
+    func3.add_instruction(
+        "block3_a",
+        Instruction::new(
+            InstructionKind::Store {
+                value: Value::new_literal(IrLiteralValue::Bool(true)),
+                dest: Value::new_temporary(3, IrType::Pointer(Box::new(IrType::Bool))),
+            },
+            SourceSpan::default(),
+        ),
+    );
+    func3.add_instruction(
+        "block3_b",
+        Instruction::new(
+            InstructionKind::Load {
+                src: Value::new_temporary(2, IrType::Pointer(Box::new(IrType::F32))),
+                ty: IrType::F32,
+            },
+            SourceSpan::default(),
+        )
+        .with_result(Value::new_temporary(4, IrType::F32)),
+    );
+
+    module.add_function(func1);
+    module.add_function(func2);
+    module.add_function(func3);
+
+    // Totale: 3 (func1) + 0 (func2) + 5 (func3) = 8 istruzioni
+    assert_eq!(module.count_instructions(), 8);
+}
