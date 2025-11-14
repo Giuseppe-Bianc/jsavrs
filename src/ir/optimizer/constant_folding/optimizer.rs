@@ -16,7 +16,7 @@ impl Phase for ConstantFoldingOptimizer {
         "Constant Folding Optimizer"
     }
 
-    fn run(&mut self, ir: &mut Module) {
+    fn run(&mut self, _ir: &mut Module) {
         if self.verbose {
             //println!("{ir}");
         }
