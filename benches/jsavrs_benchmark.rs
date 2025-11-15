@@ -13,7 +13,7 @@ use std::time::Duration;
 fn configure_benchmark_group(group: &mut BenchmarkGroup<WallTime>, warm_up: u64, measurement: u64) {
     group
         .significance_level(0.005)
-        .sample_size(1000)
+        .sample_size(2000)
         .confidence_level(0.99)
         .warm_up_time(Duration::from_secs(warm_up))
         .measurement_time(Duration::from_secs(measurement))
