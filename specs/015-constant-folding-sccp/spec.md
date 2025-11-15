@@ -21,6 +21,13 @@
 - Q: When the optimizer encounters phi nodes with incoming values from unreachable predecessors during SCCP, should it remove those incoming edges from the phi node immediately during analysis or defer edge removal to the final CFG cleanup pass? → A: Defer edge removal to final CFG cleanup pass
 ## Core Functionality
 The optimizer analyzes IR functions to identify opportunities for constant folding (evaluating constant expressions at compile time) and constant propagation (replacing variable uses with their known constant values). It operates on an IR module containing multiple functions, each with a CFG of basic blocks containing instructions in SSA form.
+
+### Integration Requirements
+The optimizer must integrate seamlessly with the existing compiler infrastructure, meeting these measurable criteria:
+- **Compile-time compatibility**: The optimizer compiles without errors using the existing Phase trait interface and IR type definitions without requiring modifications to existing optimizer infrastructure
+- **No breaking changes**: Existing code using the Phase trait continues to function without modification when the constant folding optimizer is added to the optimizer pipeline
+- **Pipeline compatibility**: The optimizer executes successfully in the existing optimizer pass sequence, accepting IR output from preceding phases and producing valid IR for subsequent phases
+- **Type safety**: All IR transformations maintain type correctness as verified by Rust's type system at compile time
 ### Constant Folding Requirements
 The system must evaluate binary operations, unary operations, and cast operations when all operands are compile-time constants. This includes:
 - **Arithmetic operations**: Addition, subtraction, multiplication, division, modulo for integer and floating-point types
@@ -61,9 +68,14 @@ Specific safety requirements:
 - Maintain the validity of phi node incoming value lists
 - Ensure all value uses reference valid definitions after transformation
 - Preserve debug information and source span metadata when possible
-The optimizer should be conservative when uncertain about transformation safety. When the escape analysis or alias analysis cannot prove that a memory operation is safe to optimize, the original instruction should be preserved.
+The optimizer must apply conservative transformation rules when uncertain about transformation safety:
+- **Escape analysis uncertainty**: If escape analysis returns Unknown or cannot conclusively prove a variable is local-only, preserve all load/store instructions to that variable without optimization
+- **Missing CFG information**: If dominance information is unavailable or incomplete for a basic block, skip optimization of instructions in that block and preserve them unmodified
+- **Invalid SSA references**: If an SSA value reference cannot be resolved to a valid definition, preserve the instruction using that value without transformation
+- **Ambiguous alias analysis**: If alias analysis cannot prove two memory operations are independent, assume they may alias and preserve both operations in original order
+- **Uncertain control flow**: If reachability of a basic block cannot be definitively determined, assume the block is reachable and preserve all instructions within it
 ### Performance Considerations
-The implementation should favor linear or near-linear time complexity relative to the number of instructions. Avoid algorithms that require repeated traversal of the entire function for each instruction. Use efficient data structures like hash maps for constant value lookups and worklist-based algorithms to process only instructions that could be affected by changes.
+The implementation must achieve linear O(n) or near-linear time complexity relative to the number of instructions, where near-linear is defined as O(n log n) maximum. Algorithms with quadratic O(n²) or higher complexity are not acceptable. Avoid algorithms that require repeated traversal of the entire function for each instruction. Use efficient data structures like hash maps for constant value lookups and worklist-based algorithms to process only instructions that could be affected by changes.
 
 The SCCP implementation must use a hash map with SSA value ID keys to track lattice states, providing O(1) lookup performance for constant status checks during worklist processing.
 
@@ -155,7 +167,7 @@ A compiler developer compiles a program with conditional branches where the cond
 - **FR-005**: Optimizer MUST evaluate unary operations (negation, logical NOT) on constant values
 - **FR-006**: Optimizer MUST evaluate type conversion operations (casts) when the source value is constant
 - **FR-007**: Optimizer MUST use wrapping (two's complement) semantics for integer overflow during constant folding, matching the behavior of the target architecture
-- **FR-008**: Optimizer MUST preserve IEEE 754 semantics for floating-point operations including NaN, infinity, and signed zero; operations that produce NaN (such as `0.0 / 0.0` or `sqrt(-1.0)`) MUST be folded to NaN deterministically following IEEE 754 rules
+- **FR-008**: Optimizer MUST preserve IEEE 754 semantics for floating-point operations including NaN, infinity, and signed zero; operations that produce NaN (such as `0.0 / 0.0` or `sqrt(-1.0)`) MUST be folded to canonical quiet NaN deterministically following IEEE 754 rules without preserving NaN payloads
 - **FR-009**: Optimizer MUST NOT fold operations that would introduce undefined behavior such as division by zero
 - **FR-010**: Optimizer MUST track constant values assigned to local variables through store instructions
 - **FR-011**: Optimizer MUST replace load instructions with constant values when the loaded location is known to hold a constant
@@ -166,23 +178,26 @@ A compiler developer compiles a program with conditional branches where the cond
 - **FR-016**: When SCCP mode is enabled, optimizer MUST process phi nodes by merging incoming values only from reachable predecessors; removal of unreachable incoming edges MUST be deferred to the final CFG cleanup pass rather than performed during SCCP analysis
 - **FR-017**: When SCCP mode is enabled, optimizer MUST mark conditional branches as resolved when the condition becomes constant
 - **FR-018**: When SCCP mode is enabled, optimizer MUST remove blocks proven unreachable by constant branch resolution
+- **FR-018a**: In intraprocedural SCCP analysis, function parameters MUST initialize with Top lattice value to represent unknown incoming values; constants and operations initialize based on their operand lattice values
 - **FR-019**: Optimizer MUST implement the existing Phase trait with name() and run() methods
 - **FR-020**: Optimizer MUST preserve debug information and source span metadata when possible
-- **FR-021**: Optimizer MUST be conservative when escape analysis cannot prove a memory location is local
+- **FR-021**: Optimizer MUST be conservative when escape analysis cannot prove a memory location is local, where a value is considered to escape if: (1) its address is passed as a function parameter, (2) it is stored to a global variable or memory location, (3) it is returned from the function, (4) it is stored into another escaping variable, (5) it is stored to a trait object or closure capture that may outlive function scope, or (6) escape status cannot be conclusively determined; escape analysis traversal MUST limit depth to 100 instructions to prevent pathological performance, returning Unknown status if limit exceeded
 - **FR-022**: Optimizer MUST NOT reorder instructions that could affect externally visible memory
-- **FR-023**: Optimizer MUST ensure all value uses reference valid definitions after transformation
+- **FR-023**: Optimizer MUST ensure all value uses reference valid definitions after transformation, validated by verifying: (1) every SSA value ID used in an instruction has a corresponding definition in the IR module, (2) definitions dominate all uses in the CFG (if dominance information is unavailable or stale, optimizer MUST either recompute dominance tree or skip affected optimization with warning to stderr), (3) phi node incoming values correspond to valid definitions from predecessor blocks
 - **FR-024**: Optimizer MUST maintain validity of phi node incoming value lists after block removal
-- **FR-025**: Optimizer MUST emit diagnostic warning messages when encountering malformed IR (invalid SSA references, missing CFG information), skip the specific optimization for that instruction, and preserve the original instruction rather than panicking or aborting the entire pass
+- **FR-025**: Optimizer MUST emit diagnostic warning messages when encountering malformed IR, skip the specific optimization for that instruction, and preserve the original instruction rather than panicking or aborting the entire pass; malformed IR includes: (1) dangling SSA value references (ValueId with no corresponding definition in module), (2) type mismatches in operations (e.g., integer operation on float value), (3) missing CFG dominance information (dominator tree unavailable for block), (4) invalid phi node structure (incoming values count mismatch with predecessors)
 - **FR-026**: Optimizer MUST print total instruction count to stdout after optimization completes
-- **FR-027**: When verbose mode is enabled, optimizer MUST output detailed statistics per-function (folded instruction count, propagated value count, resolved branch count) to stderr in structured format to enable fine-grained profiling and diagnostics
+- **FR-027**: When verbose mode is enabled, optimizer MUST output detailed statistics per-function (folded instruction count, propagated value count, resolved branch count) to stderr in tab-separated values format (one line per function with fields: function_name, instructions_folded, values_propagated, branches_resolved, blocks_removed) to enable fine-grained profiling and diagnostics
 - **FR-028**: Optimizer MUST limit SCCP lattice value tracking memory to maximum 100KB per function, falling back to basic constant folding if limit would be exceeded
 - **FR-029**: Optimizer MUST always perform CFG cleanup pass after SCCP analysis completes, regardless of whether constant-foldable operations were found, to ensure CFG consistency for downstream compiler passes
+- **FR-030**: Implementation MUST include detailed `research.md` file documenting technical decisions, algorithm trade-offs, performance characteristics, and rationale for architectural choices per the Documentation Rigor constitutional principle
+- **FR-031**: Implementation MUST include comprehensive `data-model.md` file documenting the LatticeValue structure, SCCP state machine transitions, worklist algorithm data flows, and relationships between optimizer components per the Documentation Rigor constitutional principle
 
 ### Non-Functional Requirements
 
 - **NFR-001**: Optimizer MUST complete processing of functions with 1000+ instructions in under 1 second
-- **NFR-002**: Optimizer MUST use linear or near-linear time complexity algorithms relative to instruction count
-- **NFR-003**: Optimizer validation MUST rely on external test harness using standard Cargo test framework rather than built-in self-validation modes
+- **NFR-002**: Optimizer MUST use linear or near-linear time complexity algorithms relative to instruction count, where near-linear is defined as O(n log n) maximum; O(n) complexity is acceptable for single-pass operations (constant folding dispatch, basic block traversal), while O(n log n) is acceptable for operations requiring sorted data structures (dominance computation if recomputed); complexity measurement documented in research.md with worst-case analysis
+- **NFR-003**: Optimizer validation MUST rely on external test harness using standard Cargo test framework rather than built-in self-validation modes; implementation MUST include snapshot-based regression tests using the insta crate to prevent behavior regressions per the Snapshot Validation constitutional principle
 
 ### Key Entities
 
