@@ -1,0 +1,46 @@
+// Test SCCP Constant Propagation and Branch Elimination
+main {
+    // Test 1: Basic constant propagation
+    var x: i32 = 10i32
+    var y: i32 = 20i32
+    var z: i32 = x + y  // Should propagate to constant 30
+    
+    // Test 2: Constant conditional branch (always true)
+    if (true) {
+        var always: i32 = 1i32
+    }
+    
+    // Test 3: Constant conditional branch (always false)  
+    if (false) {
+        var never: i32 = 999i32  // This block should be eliminated
+    }
+    
+    // Test 4: Constant in nested conditions
+    var condition: bool = true
+    if (condition) {
+        var executed: i32 = 42i32
+    } else {
+        var not_executed: i32 = 0i32  // Should be removed
+    }
+    
+    // Test 5: Arithmetic with constants
+    var a: i32 = 5i32
+    var b: i32 = 3i32
+    var sum: i32 = a + b      // Should be 8
+    var product: i32 = a * b  // Should be 15
+    var diff: i32 = a - b     // Should be 2
+    
+    return
+}
+
+fun test_constants(): i32 {
+    var const1: i32 = 100i32
+    var const2: i32 = 200i32
+    var result: i32 = const1 + const2  // Should propagate to 300
+    
+    if (const1 == 100i32) {
+        return result  // Always taken
+    }
+    
+    return 0i32  // Never reached
+}
