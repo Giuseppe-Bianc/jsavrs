@@ -42,12 +42,12 @@ The optimizer must be conservative when uncertain:
 - Function calls always return Variable results (no interprocedural analysis)
 - Memory loads always return Variable (no alias analysis to prove values are constant)
 - Division by zero produces Variable (runtime behavior)
-- Overflow/underflow in arithmetic follows Rust's wrapping semantics
+- Overflow/underflow in arithmetic uses wrapping semantics (matching Rust's release mode behavior)
 ### Code Transformation
 After analysis completes:
-- Replace instructions that compute constants with the constant value
+- Mark instructions that compute constants as dead (actual replacement happens in subsequent optimization passes)
 - Replace conditional branches with constant conditions with unconditional jumps
-- Remove blocks that were never marked as executable
+- Mark blocks that were never marked as executable for removal (actual removal happens in DCE phase)
 - Update phi nodes to remove inputs from dead predecessors
 ## Operational Flow
 ### Initialization
@@ -64,11 +64,13 @@ The analysis terminates when:
 - No more values change their lattice state (Unknown → Constant or Unknown/Constant → Variable)
 - No more blocks become reachable
 - Both worklists are empty
-- Or a safety iteration limit is reached
+- Or a safety iteration limit of 10,000 iterations is reached
 ### Application of Results
 Walk through the optimized function:
-- Replace constant-valued SSA temporaries with their constant
-- Simplify branches with constant conditions
+- Replace all uses of constant-valued SSA values with constant operands directly in the IR
+- Mark the original constant-valued SSA instructions as dead for removal by DCE
+- Simplify branches with constant conditions to unconditional jumps
+- Physically remove dead predecessor entries from phi node operand lists
 - Mark unreachable blocks for removal (actual removal happens in DCE phase)
 ## Integration Points
 ### With Existing IR
@@ -205,15 +207,15 @@ As a compiler maintainer, when the optimizer encounters operations whose results
 3. **Given** a division operation with zero denominator, **When** SCCP evaluates it, **Then** the result is conservatively marked as variable
 4. **Given** operations on string, array, or pointer types, **When** SCCP encounters them, **Then** they are conservatively marked as variable
 5. **Given** a conditional branch with non-constant condition, **When** SCCP analyzes the branch, **Then** both branches are marked as potentially reachable
-6. **Given** integer overflow or underflow in constant arithmetic, **When** SCCP evaluates the operation, **Then** wrapping semantics are correctly applied according to Rust conventions
+6. **Given** integer overflow or underflow in constant arithmetic, **When** SCCP evaluates the operation, **Then** wrapping semantics are correctly applied (matching Rust's release mode behavior)
 
 ---
 
 ### Edge Cases
 
 - What happens when a function contains an infinite loop with no exit? (The loop header becomes reachable, but SCCP should still terminate via iteration limit or worklist exhaustion)
-- What happens when the entry block of a function is somehow marked unreachable? (This should not occur in valid IR, but if it does, the optimizer should conservatively mark it reachable)
-- What happens when a phi node has zero executable predecessors? (The phi result remains Unknown initially, then becomes Variable if no reachable path provides a value)
+- What happens when the entry block of a function is somehow marked unreachable? (Log a warning about invalid IR structure, conservatively mark entry block as reachable, and continue analysis to enable optimization of other parts)
+- What happens when a phi node has zero executable predecessors? (The phi result remains Unknown permanently since the containing block is unreachable and the phi value is never used)
 - What happens when constant folding produces a value that changes the control flow graph structure? (The new edges are added to the worklist and analysis continues until fixed point)
 - What happens when the worklist iterations exceed a safety limit? (Analysis terminates and all remaining Unknown values become Variable conservatively)
 - What happens with recursive functions or mutually recursive call chains? (Function calls conservatively return Variable, preventing unsound interprocedural constant propagation)
@@ -235,7 +237,7 @@ As a compiler maintainer, when the optimizer encounters operations whose results
 - **FR-011**: The optimizer MUST conservatively mark memory load results as Variable (no alias analysis)
 - **FR-012**: The optimizer MUST conservatively mark division by zero results as Variable
 - **FR-013**: The optimizer MUST conservatively mark string, array, and pointer values as Variable
-- **FR-014**: The optimizer MUST apply Rust wrapping semantics for integer overflow and underflow in constant arithmetic
+- **FR-014**: The optimizer MUST apply wrapping semantics for integer overflow and underflow in constant arithmetic (matching Rust's release mode behavior)
 - **FR-015**: The optimizer MUST analyze conditional branches and mark only executable successors as reachable
 - **FR-016**: The optimizer MUST recognize when a branch condition is constant true and mark only the true successor as reachable
 - **FR-017**: The optimizer MUST recognize when a branch condition is constant false and mark only the false successor as reachable
@@ -244,16 +246,17 @@ As a compiler maintainer, when the optimizer encounters operations whose results
 - **FR-020**: The optimizer MUST resolve a phi node to a constant when all executable predecessors provide the same constant value
 - **FR-021**: The optimizer MUST mark a phi node as Variable when executable predecessors provide different values (constant or variable)
 - **FR-022**: The optimizer MUST ignore phi inputs from non-executable predecessor edges
-- **FR-023**: The optimizer MUST continue analysis until both worklists are empty or iteration limit is reached
-- **FR-024**: The optimizer MUST transform the IR by replacing constant-valued SSA temporaries with their constant values
+- **FR-023**: The optimizer MUST continue analysis until both worklists are empty or iteration limit of 10,000 is reached
+- **FR-024**: The optimizer MUST replace all uses of constant-valued SSA values with constant operands in the IR and mark the original instructions as dead for DCE
 - **FR-025**: The optimizer MUST transform conditional branches with constant conditions into unconditional jumps
 - **FR-026**: The optimizer MUST mark unreachable blocks (not in the reachable set) for later removal by DCE
 - **FR-027**: The optimizer MUST update phi nodes to remove inputs from dead predecessors during transformation
-- **FR-028**: The optimizer MUST maintain correctness by never claiming a value is constant unless it is provably constant across all executions
-- **FR-029**: The optimizer MUST integrate with the existing Phase trait infrastructure
-- **FR-030**: The optimizer MUST process each function in the module independently
-- **FR-031**: The optimizer MUST respect verbose logging configuration to output optimization statistics
-- **FR-032**: The optimizer MUST respect enable/disable configuration flags
+- **FR-028**: The optimizer MUST physically remove dead predecessor entries from phi node operand lists during transformation
+- **FR-029**: The optimizer MUST maintain correctness by never claiming a value is constant unless it is provably constant across all executions
+- **FR-030**: The optimizer MUST integrate with the existing Phase trait infrastructure
+- **FR-031**: The optimizer MUST process each function in the module independently
+- **FR-032**: The optimizer MUST respect verbose logging configuration to output optimization statistics
+- **FR-033**: The optimizer MUST respect enable/disable configuration flags
 
 ### Key Entities *(include if feature involves data)*
 
@@ -285,6 +288,19 @@ As a compiler maintainer, when the optimizer encounters operations whose results
 - **SC-008**: The optimizer handles all supported numeric types (i8-u64, f32, f64), boolean, and char types correctly with zero type-related failures in test suite
 - **SC-009**: The optimizer conservatively marks uncertain operations (function calls, memory loads, division by zero) as variable with zero soundness violations
 - **SC-010**: Performance benchmarks show SCCP analysis completes in under 100ms for functions with 10,000 instructions on standard development hardware
+
+## Clarifications
+
+### Session 2025-11-19
+
+- Q: What is the safety iteration limit that terminates analysis to prevent infinite loops? → A: 10,000 iterations
+- Q: How should SCCP handle instructions that compute constant values - replace immediately or mark for DCE? → A: Mark original as dead, let DCE remove
+- Q: How should the optimizer handle invalid IR states (e.g., unreachable entry block)? → A: Fail gracefully with warning
+- Q: The spec mentions that SCCP should "mark instructions that compute constants as dead" and states "actual replacement happens in subsequent optimization passes." However, there's ambiguity about what gets written to the IR after SCCP runs. → A: Transform-in-place – SCCP directly replaces uses of constant-valued SSA values with constant operands in the IR, while marking the defining instruction as dead for DCE to remove later.
+- Q: The spec states that phi nodes with "zero executable predecessors" result in the phi remaining "Unknown initially, then becomes Variable if no reachable path provides a value." This creates ambiguity about when the transition happens. → A: Never transition – Phi with no executable predecessors stays Unknown permanently (the block is unreachable, so the phi value is never used).
+- Q: The spec says SCCP should "update phi nodes to remove inputs from dead predecessors during transformation." However, it's unclear whether this physical modification happens during SCCP or if it's just metadata for DCE. → A: Physical removal by SCCP – SCCP directly removes dead predecessor entries from phi node operand lists in the IR during the transformation phase.
+- Q: The spec mentions "Rust's wrapping semantics" for integer overflow/underflow but doesn't specify whether this applies only to debug vs release mode behavior or if SCCP should always use wrapping semantics during constant folding. → A: Always wrapping – SCCP uses wrapping semantics for all integer arithmetic during constant folding, matching Rust's release mode behavior.
+- Q: The spec mentions that SCCP runs "before DCE in the optimization pipeline" and that "these two phases should be run alternately until a fixed point is reached." However, it doesn't specify who orchestrates this alternation. → A: External orchestrator – A higher-level optimization pass manager alternates SCCP and DCE phases; SCCP itself runs once per invocation and returns completion status.
 
 ### Assumptions
 
