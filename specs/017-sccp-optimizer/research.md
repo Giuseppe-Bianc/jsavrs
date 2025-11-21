@@ -981,10 +981,334 @@ This research provides a comprehensive foundation for implementing SCCP in jsavr
 
 All technical unknowns from the planning phase have been resolved. The implementation can proceed with confidence in these architectural decisions.
 
+## Advanced Topics and Deep Dives
+
+### 12. Mathematical Foundations and Formal Proofs
+
+#### Theorem 1: Monotonicity of Lattice Updates
+
+**Statement**: For any SSA value `v`, if `lattice[v]` changes from state `s₁` to state `s₂`, then `s₁ ⊐ s₂` (s₁ is strictly less precise than s₂).
+
+**Proof**: By case analysis on the lattice update operation. Let `old = lattice[v]` and `new = meet(old, computed)` where `computed` is the newly computed lattice value for `v`.
+
+1. **Case old = Top**:
+   - For any `computed`, `meet(Top, computed) = computed`
+   - Since `computed ∈ {Top, Constant, Bottom}`, we have `Top ⊒ computed` (Top is greater than or equal)
+   - If `old ≠ new`, then `computed ∈ {Constant, Bottom}`, so `old ⊐ new` (strictly greater)
+
+2. **Case old = Constant(c)**:
+   - `meet(Constant(c), Top) = Constant(c)` → no change
+   - `meet(Constant(c), Constant(c)) = Constant(c)` → no change
+   - `meet(Constant(c), Constant(d)) = Bottom` where `c ≠ d` → `old ⊐ new`
+   - `meet(Constant(c), Bottom) = Bottom` → `old ⊐ new`
+   - In all cases where change occurs, we move to Bottom (strictly down)
+
+3. **Case old = Bottom**:
+   - For any `computed`, `meet(Bottom, computed) = Bottom`
+   - No change possible, Bottom is the fixed point
+
+Therefore, lattice[v] only moves down the lattice, never up. ∎
+
+#### Theorem 2: Termination of SCCP Analysis
+
+**Statement**: The SCCP analysis algorithm terminates after at most `O(V + E)` worklist operations, where `V` is the number of SSA values and `E` is the number of CFG edges.
+
+**Proof**:
+1. **Finite Lattice Height**: The lattice has height 2 (Top → Constant → Bottom). Each SSA value can change its lattice value at most twice.
+
+2. **Worklist Operations**:
+   - Each SSA value `v` can be added to the worklist at most 2 times (once per lattice change)
+   - Total SSA worklist operations: `O(V × 2) = O(V)`
+   
+3. **CFG Edge Operations**:
+   - Each CFG edge can become executable at most once
+   - Once an edge is executable, it's never re-added to the CFG worklist
+   - Total CFG worklist operations: `O(E)`
+
+4. **Total Operations**: `O(V) + O(E) = O(V + E)`
+
+5. **Work per Operation**: Processing one instruction or edge is O(1) amortized
+
+Therefore, the algorithm terminates in polynomial time. ∎
+
+#### Theorem 3: Soundness of Constant Propagation
+
+**Statement**: If SCCP concludes that `lattice[v] = Constant(c)`, then every execution path that reaches the definition of `v` produces the value `c`.
+
+**Proof** (by structural induction on IR instructions):
+
+**Base Cases**:
+1. `v = const k`: lattice[v] = Constant(k) by direct evaluation. Sound by definition.
+2. `v = param`: lattice[v] = Bottom (conservative). Cannot be proven constant without interprocedural analysis.
+
+**Inductive Cases**:
+1. `v = binary_op(x, y)` where `lattice[x] = Constant(c₁)` and `lattice[y] = Constant(c₂)`:
+   - By induction hypothesis, `x` always produces `c₁` and `y` always produces `c₂`
+   - If `fold_binary(op, c₁, c₂) = Some(c)`, then `lattice[v] = Constant(c)`
+   - Soundness: Constant folding uses exact same semantics as runtime evaluation
+   - Therefore, `v` always produces `c` ∎
+
+2. `v = phi [x₁, pred₁], [x₂, pred₂], ...`:
+   - lattice[v] = meet(lattice[x₁] if pred₁ executable, lattice[x₂] if pred₂ executable, ...)
+   - By induction, each `xᵢ` from executable predecessor produces its lattice value
+   - If all executable predecessors have `lattice[xᵢ] = Constant(c)` for the same `c`, then `lattice[v] = Constant(c)`
+   - Soundness: At runtime, phi selects one of the predecessor values. Since all possible runtime predecessors produce `c`, the phi produces `c` ∎
+
+Therefore, SCCP never claims a value is constant unless it provably always produces that constant. ∎
+
+### 13. Comprehensive Edge Case Catalog
+
+#### Category 1: Control Flow Anomalies (4 edge cases)
+
+**EC1.1: Unreachable Entry Block** (malformed IR)
+```
+fn invalid() {
+  // No entry block annotation
+  block0: return 0
+}
+```
+**Handling**: Detect during IR validation, force-mark block0 as entry and executable
+
+**EC1.2: Infinite Loop with No Exit**
+```
+fn infinite() {
+  block0: goto block1
+  block1: goto block1  // Infinite loop
+}
+```
+**Handling**: Analysis converges (no new lattice changes), marks loop as executable but produces no transformations
+
+**EC1.3: Multiple Entry Points** (malformed IR)
+```
+fn invalid() {
+  @entry block0: goto block1
+  @entry block1: return 0  // Two entry blocks!
+}
+```
+**Handling**: Validation error, reject IR before analysis
+
+**EC1.4: Dead Cycle in Unreachable Code**
+```
+fn dead_cycle() {
+  block0: return 0
+  block1: goto block2  // Unreachable
+  block2: goto block1  // Forms unreachable cycle
+}
+```
+**Handling**: Blocks never marked executable, cycle never processed, no wasted work
+
+#### Category 2: Lattice Value Interactions (3 edge cases)
+
+**EC2.1: Top Value Propagation**
+```
+block0:
+  v0 = phi [...]  // Not yet evaluated → Top
+  v1 = v0 + 1     // Top + Constant(1) → Top (propagates uncertainty)
+```
+
+**EC2.2: Bottom Value Absorption**
+```
+block0:
+  v0 = param0      // Bottom (runtime value)
+  v1 = v0 + 1      // Bottom + Constant(1) → Bottom (pessimistic)
+  v2 = v1 * 2      // Bottom * Constant(2) → Bottom (transitivity)
+```
+
+**EC2.3: Constant → Bottom → Constant Impossible Transition**
+```
+// This sequence is impossible due to monotonicity:
+lattice[v0] = Constant(5)
+// ... some analysis ...
+lattice[v0] = Bottom
+// ... some more analysis ...
+lattice[v0] = Constant(7)  // ❌ IMPOSSIBLE - violates monotonicity
+```
+
+#### Category 3: Phi Node Complexity (3 edge cases)
+
+See examples in data-model.md (self-referential phi, mutually recursive phis, all unreachable predecessors)
+
+#### Category 4: Constant Folding Limits (3 edge cases)
+
+**EC4.1: Division by Zero** → fold_binary returns None → Bottom
+**EC4.2: Integer Overflow in Wrapping Mode** → fold_binary returns wrapped value
+**EC4.3: Type Mismatch** → fold_binary returns None → Bottom
+
+#### Category 5: Transformation Challenges (3 edge cases)
+
+**EC5.1: Constant Branch with Multiple Successors** → Replace with unconditional branch
+**EC5.2: Constant Phi with Mixed Executable Predecessors** → Replace uses with constant
+**EC5.3: Dead Code in Executable Block** → SCCP marks dead, DCE removes
+
+#### Category 6: Performance Pathologies (2 edge cases)
+
+**EC6.1: Extremely Long Worklist Chains** (1000 sequential dependent instructions)
+**Impact**: Each instruction queued once, O(n) total work, acceptable
+
+**EC6.2: Exponential Phi Convergence** (deeply nested dependent phis)
+**Impact**: Finite lattice height ensures termination
+**Mitigation**: Iteration limit (1000) prevents infinite loops
+
+### 14. Detailed Complexity Analysis
+
+**Time Complexity: O(V + E)**
+
+**Analysis**:
+1. **Initialization Phase**: O(B) where B = basic blocks
+2. **CFG Worklist Processing**: O(E + I) where E = edges, I = instructions
+3. **SSA Worklist Processing**: O(V × avg_uses) ≈ O(V) amortized
+4. **Transformation Phase**: O(I)
+
+**Combined**: O(B + E + I + V) = O(V + E) since typically V ≈ I and B < V
+
+**Space Complexity: O(V + E)**
+
+**Memory Breakdown**:
+1. **lattice_values HashMap**: V × 28 bytes ≈ 28KB per 1000 values
+2. **executable_blocks HashSet**: B × 4 bytes ≈ 400 bytes per 100 blocks
+3. **worklist**: (E + V) × 12 bytes overhead
+
+**Total SCCP Memory**: O(V + E)
+
+### 15. Integration with Existing Optimizer Infrastructure
+
+**Detailed Phase Trait Implementation**:
+```rust
+impl Phase for SccpOptimizer {
+    fn name(&self) -> &str { "SCCP" }
+    
+    fn run(&mut self, module: &mut Module) -> Result<bool, String> {
+        self.validate_ir(module)?;
+        
+        let mut analyzer = SccpAnalyzer::new(self.max_iterations, function);
+        let result = analyzer.analyze()?;
+        
+        if result.constants_found > 0 || result.branches_simplified > 0 {
+            let mut transformer = SccpTransformer::new(result);
+            let stats = transformer.transform(function)?;
+            
+            log::info!("SCCP: {} constants, {} branches simplified",
+                stats.constants_replaced, stats.branches_simplified);
+            
+            Ok(true)  // IR modified
+        } else {
+            Ok(false)  // No changes
+        }
+    }
+}
+```
+
+**Alternating SCCP-DCE Pipeline**:
+```rust
+pub fn optimize_function(function: &mut Function) -> Result<(), String> {
+    let mut sccp = SccpOptimizer::new(1000);
+    let mut dce = DeadCodeEliminator::new();
+    let max_outer_iterations = 3;  // Typically 2-3 iterations sufficient
+    
+    for iteration in 1..=max_outer_iterations {
+        let sccp_changed = sccp.run(function)?;
+        if !sccp_changed { break; }
+        
+        let dce_changed = dce.run(function)?;
+        if !dce_changed { break; }
+    }
+    
+    Ok(())
+}
+```
+
+**Synergy Analysis**:
+- SCCP iteration 1: Finds constants, marks dead branches
+- DCE iteration 1: Removes dead code, eliminates unreachable blocks
+- SCCP iteration 2: Analyzes simplified CFG, finds more constants
+- DCE iteration 2: Removes newly exposed dead code
+- Convergence: Typically after 2-3 iterations
+
+### 16. Comprehensive Testing Strategy
+
+**Unit Test Categories**:
+
+```rust
+// Lattice Operations
+#[test]
+fn test_lattice_meet_commutativity() {
+    let top = LatticeValue::Top;
+    let const_42 = LatticeValue::Constant(IrLiteralValue::I32(42));
+    assert_eq!(top.meet(&const_42), const_42.meet(&top));
+}
+
+#[test]
+fn test_lattice_constant_conflict() {
+    let const_42 = LatticeValue::Constant(IrLiteralValue::I32(42));
+    let const_17 = LatticeValue::Constant(IrLiteralValue::I32(17));
+    assert_eq!(const_42.meet(&const_17), LatticeValue::Bottom);
+}
+
+// Constant Folding
+#[test]
+fn test_fold_add_overflow_wrapping() {
+    let result = fold_binary(
+        IrBinaryOp::Add,
+        IrLiteralValue::I8(127),
+        IrLiteralValue::I8(1)
+    );
+    assert_eq!(result, Some(IrLiteralValue::I8(-128)));  // Wrapping
+}
+
+#[test]
+fn test_fold_div_by_zero() {
+    let result = fold_binary(
+        IrBinaryOp::Div,
+        IrLiteralValue::I32(10),
+        IrLiteralValue::I32(0)
+    );
+    assert_eq!(result, None);  // Conservative
+}
+
+// Analysis Correctness
+#[test]
+fn test_simple_constant_propagation() {
+    let ir = parse_ir("
+        fn test() {
+            block0:
+                v0 = const 10
+                v1 = const 20
+                v2 = v0 + v1
+                return v2
+        }
+    ");
+    
+    let mut analyzer = SccpAnalyzer::new(100, &ir.functions[0]);
+    let result = analyzer.analyze().unwrap();
+    
+    assert_eq!(result.get_lattice(&v2), &LatticeValue::Constant(IrLiteralValue::I32(30)));
+}
+```
+
+**Snapshot Tests**:
+```rust
+#[test]
+fn test_sccp_branch_simplification_snapshot() {
+    let input_ir = include_str!("fixtures/sccp_branch_test.ir");
+    let expected_output = include_str!("fixtures/sccp_branch_test_expected.ir");
+    
+    let mut function = parse_ir(input_ir);
+    let mut optimizer = SccpOptimizer::new(100);
+    optimizer.run(&mut function).unwrap();
+    
+    let actual_output = function.to_string();
+    insta::assert_snapshot!(actual_output, @expected_output);
+}
+```
+
 ## References
 
-- Wegman, M. N., & Zadeck, F. K. (1991). "Constant propagation with conditional branches". ACM Transactions on Programming Languages and Systems.
-- Cytron, R., et al. (1991). "Efficiently computing static single assignment form and the control dependence graph". ACM TOPLAS.
-- Cooper, K. D., & Torczon, L. (2011). "Engineering a Compiler" (2nd ed.), Chapter 9: Data-Flow Analysis.
-- The Rust Programming Language Book - Release vs Debug mode semantics
-- jsavrs project documentation: QWEN.md, AGENTS.md
+- Wegman, M. N., & Zadeck, F. K. (1991). "Constant propagation with conditional branches". *ACM Transactions on Programming Languages and Systems*, 13(2), 181-210.
+- Cytron, R., Ferrante, J., Rosen, B. K., Wegman, M. N., & Zadeck, F. K. (1991). "Efficiently computing static single assignment form and the control dependence graph". *ACM Transactions on Programming Languages and Systems (TOPLAS)*, 13(4), 451-490.
+- Cooper, K. D., & Torczon, L. (2011). *Engineering a Compiler* (2nd ed.), Chapter 9: Data-Flow Analysis. Morgan Kaufmann.
+- Aho, A. V., Lam, M. S., Sethi, R., & Ullman, J. D. (2006). *Compilers: Principles, Techniques, and Tools* (2nd ed.), Chapter 9: Machine-Independent Optimizations. Pearson.
+- Muchnick, S. S. (1997). *Advanced Compiler Design and Implementation*, Chapter 12: Constant Propagation. Morgan Kaufmann.
+- The Rust Programming Language Book - Chapter 3.2: Data Types (Integer Overflow)
+- Rust Reference - Expressions - Arithmetic and Logical Binary Operators (Wrapping Semantics)
+- jsavrs project documentation: QWEN.md (IR specification), AGENTS.md (development framework)
+- petgraph documentation: Graph algorithms and data structures (https://docs.rs/petgraph/0.8.3/)
