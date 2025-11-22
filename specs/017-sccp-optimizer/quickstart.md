@@ -734,6 +734,9 @@ fn optimize_module(module: &mut Module) {
 - [ ] Documentation complete (rustdoc comments on public APIs)
 - [ ] Code review feedback addressed
 - [ ] Constitution compliance verified
+- [ ] Architectural patterns match existing optimizer phases (see dead_code_elimination/)
+- [ ] Public APIs follow crate conventions (visibility, re-exports, documentation)
+- [ ] Module structure follows src/ir/optimizer/ patterns
 
 ---
 
