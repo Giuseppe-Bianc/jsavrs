@@ -498,6 +498,7 @@ dependencies = [
  "petgraph",
  "predicates",
  "regex",
+ "serde",
  "thiserror",
  "tracing",
  "tracing-subscriber",

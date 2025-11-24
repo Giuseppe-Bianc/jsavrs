@@ -31,6 +31,7 @@ uuid = { version = "1.18.1", features = ["v4"] }
 petgraph = "0.8.3"
 tracing = "0.1.41"
 tracing-subscriber = { version = "0.3.20", features = ["env-filter", "json"] }
+serde = { version = "1.0.228", features = ["derive"] }
 
 
 [dev-dependencies]
