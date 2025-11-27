@@ -1,3 +1,5 @@
+use std::sync::Arc;
+
 // src/error/compile_error.rs
 use crate::location::source_span::SourceSpan;
 use thiserror::Error;
@@ -24,7 +26,7 @@ pub enum CompileError {
     #[error("{message} at {span}{}",
         .help.as_ref().map_or(String::new(), |h| format!("\nhelp: {h}"))
     )]
-    LexerError { message: String, span: SourceSpan, help: Option<String> },
+    LexerError { message: Arc<str>, span: SourceSpan, help: Option<String> },
 
     /// Syntax error indicating invalid program structure.
     ///
@@ -35,7 +37,7 @@ pub enum CompileError {
     #[error("Syntax error: {message} at {span}{}",
         .help.as_ref().map_or(String::new(), |h| format!("\nhelp: {h}"))
     )]
-    SyntaxError { message: String, span: SourceSpan, help: Option<String> },
+    SyntaxError { message: Arc<str>, span: SourceSpan, help: Option<String> },
 
     /// Type checking error indicating type mismatches or unsupported operations.
     ///
@@ -46,7 +48,7 @@ pub enum CompileError {
     #[error("Type error: {message} at {span}{}",
         .help.as_ref().map_or(String::new(), |h| format!("\nhelp: {h}"))
     )]
-    TypeError { message: String, span: SourceSpan, help: Option<String> },
+    TypeError { message: Arc<str>, span: SourceSpan, help: Option<String> },
 
     /// Error during intermediate representation (IR) generation.
     ///
@@ -57,14 +59,14 @@ pub enum CompileError {
     #[error("Ir generator error: {message} at {span}{}",
         .help.as_ref().map_or(String::new(), |h| format!("\nhelp: {h}"))
     )]
-    IrGeneratorError { message: String, span: SourceSpan, help: Option<String> },
+    IrGeneratorError { message: Arc<str>, span: SourceSpan, help: Option<String> },
 
     /// Error during assembly code generation.
     ///
     /// Contains:
     /// - `message`: Description of the assembly generation failure
     #[error("Assembly generation error: {message}")]
-    AsmGeneratorError { message: String },
+    AsmGeneratorError { message: Arc<str> },
 
     /// I/O operation failure during compilation (e.g., file access issues).
     ///
@@ -84,8 +86,9 @@ impl CompileError {
     /// ```
     /// use jsavrs::error::compile_error::CompileError;
     /// use jsavrs::location::source_span::SourceSpan;
+    /// use std::sync::Arc;
     /// let err = CompileError::LexerError {
-    ///     message: "Invalid token".to_string(),
+    ///     message: Arc::from("Invalid token"),
     ///     span: SourceSpan::default(),
     ///     help: None,
     /// };
@@ -116,7 +119,7 @@ impl CompileError {
     /// use jsavrs::location::source_span::SourceSpan;
     /// let span = SourceSpan::new(Arc::from("file"), SourceLocation::new(1,1,1), SourceLocation::new(1,1,1));
     /// let err = CompileError::SyntaxError {
-    ///     message: "Unexpected token".to_string(),
+    ///     message: Arc::from("Unexpected token"),
     ///     span: span.clone(),
     ///     help: None,
     /// };
@@ -142,8 +145,9 @@ impl CompileError {
     /// ```
     /// use jsavrs::error::compile_error::CompileError;
     /// use jsavrs::location::source_span::SourceSpan;
+    /// use std::sync::Arc;
     /// let err = CompileError::TypeError {
-    ///     message: "Type mismatch".to_string(),
+    ///     message: Arc::from("Type mismatch"),
     ///     span: SourceSpan::default(),
     ///     help: Some("Try adding a type annotation".to_string()),
     /// };
@@ -170,15 +174,16 @@ impl CompileError {
     /// ```
     /// use jsavrs::error::compile_error::CompileError;
     /// use jsavrs::location::source_span::SourceSpan;
+    /// use std::sync::Arc;
     /// let mut err = CompileError::LexerError {
-    ///     message: "Old message".to_string(),
+    ///     message: Arc::from("Old message"),
     ///     span: SourceSpan::default(),
     ///     help: None,
     /// };
-    /// err.set_message("New message".to_string());
+    /// err.set_message(Arc::from("New message"));
     /// assert_eq!(err.message(), Some("New message"));
     /// ```
-    pub fn set_message(&mut self, new_message: String) {
+    pub fn set_message(&mut self, new_message: Arc<str>) {
         match self {
             CompileError::LexerError { message, .. }
             | CompileError::SyntaxError { message, .. }
@@ -203,7 +208,7 @@ impl CompileError {
     /// use jsavrs::location::source_location::SourceLocation;
     /// use jsavrs::location::source_span::SourceSpan;
     /// let mut err = CompileError::SyntaxError {
-    ///     message: String::new(),
+    ///     message: Arc::from(""),
     ///     span: SourceSpan::new(Arc::from("file"), SourceLocation::new(1,1,1), SourceLocation::new(1,1,1)),
     ///     help: None,
     /// };
@@ -232,8 +237,9 @@ impl CompileError {
     /// ```
     /// use jsavrs::error::compile_error::CompileError;
     /// use jsavrs::location::source_span::SourceSpan;
+    /// use std::sync::Arc;
     /// let mut err = CompileError::TypeError {
-    ///     message: "Type mismatch".to_string(),
+    ///     message: Arc::from("Type mismatch"),
     ///     span: SourceSpan::default(),
     ///     help: None,
     /// };

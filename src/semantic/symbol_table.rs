@@ -222,7 +222,7 @@ impl SymbolTable {
 
         if current_scope.symbols.contains_key(name) {
             return Err(CompileError::TypeError {
-                message: format!("Identifier '{}' already declared in this {:?} scope", name, current_scope.kind),
+                message: Arc::from(format!("Identifier '{}' already declared in this {:?} scope", name, current_scope.kind)),
                 span: match current_scope.symbols.get(name) {
                     Some(Symbol::Variable(v)) => v.defined_at.clone(),
                     Some(Symbol::Function(f)) => f.defined_at.clone(),

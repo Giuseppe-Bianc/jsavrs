@@ -15,31 +15,31 @@ fn test_io_error_display() {
 
 #[test]
 fn test_asm_generator_error_display() {
-    let error = CompileError::AsmGeneratorError { message: "Invalid assembly code".to_string() };
+    let error = CompileError::AsmGeneratorError { message: "Invalid assembly code".into() };
     assert_snapshot!(error);
 }
 
 #[test]
 fn test_lexer_error_display_fmt_with_help() {
-    make_error!(error, LexerError, 1, Some("Check the syntax".to_string()));
+    make_error!(error, LexerError, 1, Some("Check the syntax".into()));
     assert_snapshot!(error);
 }
 
 #[test]
 fn test_parser_error_display_fmt_with_help() {
-    make_error!(error, SyntaxError, 2, Some("Ensure all brackets are closed".to_string()));
+    make_error!(error, SyntaxError, 2, Some("Ensure all brackets are closed".into()));
     assert_snapshot!(error);
 }
 
 #[test]
 fn test_type_error_display_with_fmt_help() {
-    make_error!(error, TypeError, 3, Some("Check variable types".to_string()));
+    make_error!(error, TypeError, 3, Some("Check variable types".into()));
     assert_snapshot!(error);
 }
 
 #[test]
 fn test_ir_error_display_with_fmt_help() {
-    make_error!(error, IrGeneratorError, 4, Some("Check the IR generation".to_string()));
+    make_error!(error, IrGeneratorError, 4, Some("Check the IR generation".into()));
     assert_snapshot!(error);
 }
 
@@ -121,7 +121,7 @@ macro_rules! generate_help_test {
     ($test_name:ident, $error_type:ident, $line:expr) => {
         #[test]
         fn $test_name() {
-            make_error!(error, $error_type, $line, Some("Check the syntax".to_string()));
+            make_error!(error, $error_type, $line, Some("Check the syntax".into()));
             assert_debug_snapshot!(error.help().unwrap());
         }
     };
@@ -137,7 +137,7 @@ macro_rules! generate_set_message_test {
         #[test]
         fn $test_name() {
             make_error!(mut error, $error_type, $line);
-            error.set_message("New message".to_string());
+            error.set_message("New message".into());
             assert_snapshot!(error.message().unwrap());
         }
     };
@@ -146,7 +146,7 @@ macro_rules! generate_set_message_test {
 #[test]
 fn test_set_message_asm_generator() {
     make_error_lineless!(mut error, AsmGeneratorError);
-    error.set_message("New message".to_string());
+    error.set_message("New message".into());
     assert_snapshot!(error.message().unwrap());
 }
 
@@ -184,8 +184,8 @@ macro_rules! generate_set_help_test {
     ($test_name:ident, $error_type:ident, $line:expr) => {
         #[test]
         fn $test_name() {
-            make_error!(mut error, $error_type, $line, Some("Check the syntax".to_string()));
-            error.set_help(Some("Check the syntax2".to_string()));
+            make_error!(mut error, $error_type, $line, Some("Check the syntax".into()));
+            error.set_help(Some("Check the syntax2".into()));
             assert_debug_snapshot!(error.help().unwrap());
         }
     };
@@ -200,7 +200,7 @@ generate_set_help_test!(test_ir_error_set_help, IrGeneratorError, 4);
 fn test_set_message_not_lexer_error() {
     let io_error = std::io::Error::new(std::io::ErrorKind::NotFound, "File not found");
     let mut error: CompileError = io_error.into();
-    error.set_message("New message".to_string());
+    error.set_message("New message".into());
     assert_debug_snapshot!(error.message());
 }
 

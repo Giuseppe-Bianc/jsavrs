@@ -21,7 +21,7 @@ impl<'a> JsavParser<'a> {
         if self.recursion_depth > Self::MAX_RECURSION_DEPTH {
             if let Some(token) = self.peek() {
                 self.errors.push(CompileError::SyntaxError {
-                    message: "Maximum recursion depth exceeded".to_string(),
+                    message: "Maximum recursion depth exceeded".into(),
                     span: token.span.clone(),
                     help: Some("Simplify the expression or break it into smaller parts".to_string()),
                 });
@@ -602,7 +602,7 @@ impl<'a> JsavParser<'a> {
             let help_msg = "Only variables and array elements can be assigned to. Consider using a variable name or an array access expression.";
 
             self.errors.push(CompileError::SyntaxError {
-                message: "Invalid left-hand side in assignment".to_string(),
+                message: "Invalid left-hand side in assignment".into(),
                 span: left.span().clone(),
                 help: Some(help_msg.to_string()),
             });
@@ -641,7 +641,7 @@ impl<'a> JsavParser<'a> {
     fn syntax_error(&mut self, message: impl Into<String>, token: &Token, help: Option<&str>) {
         let message_str = message.into();
         self.errors.push(CompileError::SyntaxError {
-            message: format!("{}: {}", message_str, &token.kind),
+            message: Arc::from(format!("{}: {}", message_str, &token.kind)),
             span: token.span.clone(),
             help: help.map(|s| s.to_string()),
         });
@@ -659,7 +659,7 @@ impl<'a> JsavParser<'a> {
 
             let span = current_token.as_ref().map(|t| t.span.clone()).unwrap_or_default();
 
-            let error_message = format!("Expected {expected} in {context}, found {found_str}.");
+            let error_message = Arc::from(format!("Expected {expected} in {context}, found {found_str}."));
             let help_message = format!("Try adding a {expected}");
             self.errors.push(CompileError::SyntaxError { message: error_message, span, help: Some(help_message) });
             false

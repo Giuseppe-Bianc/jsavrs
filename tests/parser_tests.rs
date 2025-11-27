@@ -511,7 +511,7 @@ fn test_invalid_binary_operator() {
             CompileError::SyntaxError { message, span, help: _ } => {
                 assert_eq!(
                     message,
-                    format!("Invalid binary operator: {:?}", kind),
+                    Arc::from(format!("Invalid binary operator: {:?}", kind)),
                     "Incorrect message for token: {:?}",
                     kind
                 );

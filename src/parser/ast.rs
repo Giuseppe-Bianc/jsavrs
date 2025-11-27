@@ -213,7 +213,7 @@ impl BinaryOp {
             TokenKind::ShiftRight => BinaryOp::ShiftRight,
             _ => {
                 return Err(CompileError::SyntaxError {
-                    message: format!("Invalid binary operator: {:?}", token.kind),
+                    message: Arc::from(format!("Invalid binary operator: {:?}", token.kind)),
                     span: token.clone().span,
                     help: None,
                 });

@@ -36,7 +36,7 @@ impl TypeChecker {
     }
 
     // Helper method for type errors
-    fn type_error(&mut self, message: impl Into<String>, span: &SourceSpan) {
+    fn type_error(&mut self, message: impl Into<Arc<str>>, span: &SourceSpan) {
         self.errors.push(CompileError::TypeError { message: message.into(), span: span.clone(), help: None });
     }
 

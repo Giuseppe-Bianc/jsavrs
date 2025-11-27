@@ -15,7 +15,12 @@ use crate::{
     tokens::{token::Token, token_kind::TokenKind},
 };
 use logos::Logos;
-use std::collections::{HashMap, HashSet};
+use std::{
+    collections::{HashMap, HashSet},
+    sync::Arc,
+};
+
+const INVALID_HASH: &'static str = "Invalid token: \"#\"";
 
 /// The Lexer struct handles the tokenization of source code.
 ///
@@ -111,7 +116,7 @@ impl<'a> Lexer<'a> {
         Some(match kind_result {
             Ok(kind) => Ok(Token { kind, span }),
             Err(_) => Err(CompileError::LexerError {
-                message: format!("Invalid token: {:?}", self.inner.slice()),
+                message: Arc::from(format!("Invalid token: {:?}", self.inner.slice())),
                 span,
                 help: None,
             }),
@@ -233,7 +238,7 @@ fn collect_error_updates(errors: &[CompileError], tokens: &[Token]) -> Updates {
     // Controlla prima se ci sono errori hashtag
     let has_hashtag_errors = errors
         .iter()
-        .any(|e| matches!(e, CompileError::LexerError { message, .. } if message == "Invalid token: \"#\""));
+        .any(|e| matches!(e, CompileError::LexerError { message, .. } if message.as_ref() == INVALID_HASH));
 
     // Se non ci sono errori hashtag, ritorna subito
     if !has_hashtag_errors {
@@ -245,7 +250,7 @@ fn collect_error_updates(errors: &[CompileError], tokens: &[Token]) -> Updates {
 
     for (eidx, error) in errors.iter().enumerate() {
         match error {
-            CompileError::LexerError { message, span, .. } if message == "Invalid token: \"#\"" => {
+            CompileError::LexerError { message, span, .. } if message.as_ref() == INVALID_HASH => {
                 process_hashtag_error(eidx, span, tokens, &token_map, &mut replacements, &mut to_remove);
             }
             _ => continue,
@@ -298,7 +303,7 @@ pub fn process_hashtag_error(
                     if let Some(merged) = span.merged(&token.span) {
                         replacements.insert(
                             eidx,
-                            CompileError::LexerError { message: msg.to_string(), span: merged, help: None },
+                            CompileError::LexerError { message: Arc::from(msg), span: merged, help: None },
                         );
                         to_remove.insert(tidx);
                     }
