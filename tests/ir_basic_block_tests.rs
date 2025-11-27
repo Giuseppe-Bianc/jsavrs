@@ -47,7 +47,7 @@ fn test_block_clear_scope() {
     assert_eq!(block.terminator().kind, TerminatorKind::Unreachable);
     assert_eq!(block.scope(), None);
     block.set_scope(ScopeId::new());
-     assert!(block.scope().is_some());
+    assert!(block.scope().is_some());
     block.clear_scope();
     assert_eq!(block.scope(), None);
 }

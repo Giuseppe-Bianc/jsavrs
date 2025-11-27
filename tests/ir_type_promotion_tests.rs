@@ -402,7 +402,7 @@ fn test_type_promotion_new() {
     assert_eq!(promotion.to_type, IrType::F32);
     assert_eq!(promotion.cast_kind, CastKind::IntToFloat);
     assert!(!promotion.may_lose_precision);
-   assert!(!promotion.may_overflow);
+    assert!(!promotion.may_overflow);
     assert_eq!(promotion.source_span, span);
 }
 

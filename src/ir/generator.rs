@@ -910,7 +910,7 @@ impl IrGenerator {
         let func_name = match &callee {
             Expr::Variable { name, .. } => name.clone(),
             _ => {
-                self.new_error( Arc::from("Unsupported callee expression type"), callee.span().clone());
+                self.new_error(Arc::from("Unsupported callee expression type"), callee.span().clone());
                 return Value::new_literal(IrLiteralValue::I32(0));
             }
         };
@@ -932,7 +932,7 @@ impl IrGenerator {
                 _ => {
                     // If we can't determine the return type, fall back to default
                     self.new_error(
-                         Arc::from(format!("Function '{}' does not have a valid function pointer type", func_name)),
+                        Arc::from(format!("Function '{}' does not have a valid function pointer type", func_name)),
                         span.clone(),
                     );
                     let return_type = IrType::I64; // Default assumption
@@ -944,7 +944,7 @@ impl IrGenerator {
             // If function is not in symbol table, we might be calling a function
             // that is defined later or externally. Use a default return type.
             self.new_error(
-            Arc::from(format!("Function '{}' not found in symbol table, using default return type", func_name)),
+                Arc::from(format!("Function '{}' not found in symbol table, using default return type", func_name)),
                 span.clone(),
             );
             let return_type = IrType::I64; // Default assumption

@@ -5,7 +5,6 @@ use jsavrs::ir::{
 };
 use jsavrs::utils::dummy_span;
 
-
 #[test]
 fn test_alloca_instruction() {
     let ty = IrType::I32;
@@ -105,7 +104,6 @@ fn test_gep_instruction() {
     assert_eq!(format!("{}", inst), "t6 =  getelementptr %arr, 5i32 : i32");
 }
 
-
 #[test]
 #[allow(clippy::approx_constant)]
 fn test_cast_instruction() {
@@ -178,7 +176,6 @@ fn test_instruction_without_result() {
 
     assert_eq!(format!("{}", inst), "store 42i32 to %x");
 }
-
 
 #[test]
 #[allow(clippy::approx_constant)]

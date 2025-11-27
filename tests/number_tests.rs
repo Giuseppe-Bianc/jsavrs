@@ -73,7 +73,6 @@ fn test_u32_display() {
     assert_eq!(Number::U32(u32::MAX).to_string(), format!("{}u32", u32::MAX));
 }
 
-
 #[test]
 #[allow(clippy::approx_constant)]
 fn test_float32_display() {
@@ -85,7 +84,6 @@ fn test_float32_display() {
     assert_eq!(Number::Float32(f32::NEG_INFINITY).to_string(), "-inf");
     assert!(Number::Float32(f32::NAN).to_string().contains("NaN")); // not equal to itself
 }
-
 
 #[test]
 #[allow(clippy::approx_constant)]
