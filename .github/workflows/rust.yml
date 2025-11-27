@@ -81,7 +81,8 @@ jobs:
         uses: actions-rs/cargo@v1
         with:
           command: clippy
-          args: --all-features --verbose -- -D warnings
+          args: --all-targets --all-features --verbose -- -D warnings
+
 
 #     - name: Build Release
 #       if: matrix.rust == 'stable'
