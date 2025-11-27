@@ -54,7 +54,7 @@ impl<'a> Lexer<'a> {
     /// ```
     /// # use jsavrs::lexer::Lexer;
     /// let source = "let x = 42;";
-    /// let mut lexer = Lexer::new("test.js", source);
+    /// let mut lexer = Lexer::new("test.vn", source);
     /// ```
     pub fn new(file_path: &str, source: &'a str) -> Self {
         let line_tracker = LineTracker::new(file_path, source.to_owned());
@@ -92,7 +92,7 @@ impl<'a> Lexer<'a> {
     /// # Examples
     /// ```
     /// # use jsavrs::lexer::Lexer;
-    /// let mut lexer = Lexer::new("test.js", "let x = 42;");
+    /// let mut lexer = Lexer::new("test.vn", "let x = 42;");
     /// if let Some(Ok(token)) = lexer.next_token() {
     ///     // Process the token
     /// }

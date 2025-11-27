@@ -8,36 +8,32 @@ pub const TILE_PADDING: usize = 10;
 // Rappresenta i valori temporali in diverse unità
 #[derive(Debug, Clone, Copy)]
 pub struct TimeValues {
-    seconds: f64,
-    millis: f64,
-    micro: f64,
-    nano: f64,
+    nano: f64,  // Only store base representation
 }
 
 impl TimeValues {
-    pub fn from_nanoseconds(nanoseconds: f64) -> Self {
-        TimeValues {
-            seconds: nanoseconds / SECONDS_FACTOR,
-            millis: nanoseconds / MILLISECONDS_FACTOR,
-            micro: nanoseconds / MICROSECONDS_FACTOR,
-            nano: nanoseconds,
-        }
+    #[inline(always)]
+    pub const fn from_nanoseconds(nanoseconds: f64) -> Self {
+        TimeValues { nano: nanoseconds }
     }
 
     #[inline(always)]
-    pub fn seconds(&self) -> f64 {
-        self.seconds
+    pub const fn seconds(&self) -> f64 {
+        self.nano / SECONDS_FACTOR
     }
+    
     #[inline(always)]
-    pub fn millis(&self) -> f64 {
-        self.millis
+    pub const fn millis(&self) -> f64 {
+        self.nano / MILLISECONDS_FACTOR
     }
+    
     #[inline(always)]
-    pub fn micro(&self) -> f64 {
-        self.micro
+    pub const fn micro(&self) -> f64 {
+        self.nano / MICROSECONDS_FACTOR
     }
+    
     #[inline(always)]
-    pub fn nano(&self) -> f64 {
+    pub const fn nano(&self) -> f64 {
         self.nano
     }
 }
