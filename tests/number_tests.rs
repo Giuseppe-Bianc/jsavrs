@@ -73,8 +73,9 @@ fn test_u32_display() {
     assert_eq!(Number::U32(u32::MAX).to_string(), format!("{}u32", u32::MAX));
 }
 
-#[allow(clippy::approx_constant)]
+
 #[test]
+#[allow(clippy::approx_constant)]
 fn test_float32_display() {
     assert_eq!(Number::Float32(0.0).to_string(), "0");
     assert_eq!(Number::Float32(-0.0).to_string(), "-0");
@@ -85,8 +86,9 @@ fn test_float32_display() {
     assert!(Number::Float32(f32::NAN).to_string().contains("NaN")); // not equal to itself
 }
 
-#[allow(clippy::approx_constant)]
+
 #[test]
+#[allow(clippy::approx_constant)]
 fn test_float64_display() {
     assert_eq!(Number::Float64(0.0).to_string(), "0");
     assert_eq!(Number::Float64(-0.0).to_string(), "-0");
@@ -152,8 +154,8 @@ fn test_display_trait_consistency() {
 }
 
 // PartialEq and Hash tests
-#[allow(clippy::approx_constant)]
 #[test]
+#[allow(clippy::approx_constant)]
 fn test_partial_eq_same_variants() {
     // Test equality for same variants with same values
     assert_eq!(Number::I8(42), Number::I8(42));
@@ -170,8 +172,8 @@ fn test_partial_eq_same_variants() {
     assert_eq!(Number::Scientific64(2.0, 20), Number::Scientific64(2.0, 20));
 }
 
-#[allow(clippy::approx_constant)]
 #[test]
+#[allow(clippy::approx_constant)]
 fn test_partial_eq_different_variants() {
     // Test inequality between different variants
     assert_ne!(Number::I8(42), Number::I16(42));
@@ -182,8 +184,8 @@ fn test_partial_eq_different_variants() {
     assert_ne!(Number::Scientific32(1.5, 10), Number::Scientific64(1.5, 10));
 }
 
-#[allow(clippy::approx_constant)]
 #[test]
+#[allow(clippy::approx_constant)]
 fn test_partial_eq_same_variant_different_values() {
     // Test inequality for same variants with different values
     assert_ne!(Number::I8(42), Number::I8(24));
@@ -220,8 +222,9 @@ fn test_partial_eq_float_bitwise() {
     let nan4 = f64::from_bits(f64::NAN.to_bits() ^ 1); // Flip one bit in the fraction
     assert_ne!(Number::Float64(nan3), Number::Float64(nan4));
 }
-#[allow(clippy::approx_constant)]
+
 #[test]
+#[allow(clippy::approx_constant)]
 fn test_hash_consistency() {
     // Test that equal values produce the same hash
     let numbers = [
@@ -244,8 +247,8 @@ fn test_hash_consistency() {
     }
 }
 
-#[allow(clippy::approx_constant)]
 #[test]
+#[allow(clippy::approx_constant)]
 fn test_hash_different_values() {
     // Test that different values produce different hashes
     let num1 = Number::I32(100);
@@ -261,8 +264,8 @@ fn test_hash_different_values() {
     assert_ne!(hash_number(&num5), hash_number(&num6));
 }
 
-#[allow(clippy::approx_constant)]
 #[test]
+#[allow(clippy::approx_constant)]
 fn test_hash_different_variants() {
     // Test that different variants produce different hashes even with same numeric value
     let num1 = Number::I32(100);

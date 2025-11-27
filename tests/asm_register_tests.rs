@@ -230,6 +230,7 @@ fn test_register_equality() {
 }
 
 #[test]
+#[allow(clippy::clone_on_copy)]
 fn test_register_clone() {
     let reg = GPRegister64::Rax;
     let cloned_reg = reg.clone();
@@ -277,6 +278,7 @@ fn test_all_gp_registers_display() {
 }
 
 #[test]
+#[allow(clippy::clone_on_copy)]
 fn test_register_variant_properties() {
     // All registers should support cloning
     let reg1 = GPRegister64::Rax;

@@ -5,6 +5,7 @@ use jsavrs::ir::{
 };
 use jsavrs::utils::dummy_span;
 
+
 #[test]
 fn test_alloca_instruction() {
     let ty = IrType::I32;
@@ -104,8 +105,9 @@ fn test_gep_instruction() {
     assert_eq!(format!("{}", inst), "t6 =  getelementptr %arr, 5i32 : i32");
 }
 
-#[allow(clippy::approx_constant)]
+
 #[test]
+#[allow(clippy::approx_constant)]
 fn test_cast_instruction() {
     let value = Value::new_literal(IrLiteralValue::F32(3.14));
     let from_ty = IrType::F32;
@@ -177,8 +179,9 @@ fn test_instruction_without_result() {
     assert_eq!(format!("{}", inst), "store 42i32 to %x");
 }
 
-#[allow(clippy::approx_constant)]
+
 #[test]
+#[allow(clippy::approx_constant)]
 fn test_float_literal_display() {
     let whole = Value::new_literal(IrLiteralValue::F32(5.0));
     let fractional = Value::new_literal(IrLiteralValue::F64(3.14159));
@@ -361,7 +364,7 @@ fn test_all_binary_ops() {
         let right = Value::new_literal(IrLiteralValue::I32(200 + idx as i32));
 
         let inst = Instruction::new(
-            InstructionKind::Binary { op: op.clone(), left: left.clone(), right: right.clone(), ty: ty.clone() },
+            InstructionKind::Binary { op: *op, left: left.clone(), right: right.clone(), ty: ty.clone() },
             dummy_span(),
         )
         .with_result(Value::new_temporary(1000 + idx as u64, ty.clone()));
@@ -380,7 +383,7 @@ fn test_all_unary_ops() {
         let res_idx = 5000 + idx as u64;
 
         let inst = Instruction::new(
-            InstructionKind::Unary { op: op.clone(), operand: operand.clone(), ty: ty.clone() },
+            InstructionKind::Unary { op: *op, operand: operand.clone(), ty: ty.clone() },
             dummy_span(),
         )
         .with_result(Value::new_temporary(res_idx, ty.clone()));

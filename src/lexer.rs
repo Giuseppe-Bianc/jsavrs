@@ -20,7 +20,7 @@ use std::{
     sync::Arc,
 };
 
-const INVALID_HASH: &'static str = "Invalid token: \"#\"";
+const INVALID_HASH: &str = "Invalid token: \"#\"";
 
 /// The Lexer struct handles the tokenization of source code.
 ///

@@ -19,6 +19,7 @@ fn test_platform_equality() {
 }
 
 #[test]
+#[allow(clippy::clone_on_copy)]
 fn test_platform_clone() {
     let platform = Platform::Linux;
     let cloned_platform = platform.clone();

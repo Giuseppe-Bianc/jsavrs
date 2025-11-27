@@ -17,8 +17,8 @@ fn test_with_flags() {
     assert_eq!(promotion.from_type, IrType::I32);
     assert_eq!(promotion.to_type, IrType::I64);
     assert_eq!(promotion.cast_kind, CastKind::IntSignExtend);
-    assert_eq!(promotion.may_lose_precision, true);
-    assert_eq!(promotion.may_overflow, false);
+    assert!(promotion.may_lose_precision);
+    assert!(!promotion.may_overflow);
     assert_eq!(promotion.source_span, span);
 }
 
@@ -37,8 +37,8 @@ fn test_with_flags_all_false() {
     assert_eq!(promotion.from_type, IrType::F32);
     assert_eq!(promotion.to_type, IrType::F64);
     assert_eq!(promotion.cast_kind, CastKind::FloatExtend);
-    assert_eq!(promotion.may_lose_precision, false);
-    assert_eq!(promotion.may_overflow, false);
+    assert!(!promotion.may_lose_precision);
+    assert!(!promotion.may_overflow);
     assert_eq!(promotion.source_span, span);
 }
 
@@ -57,8 +57,8 @@ fn test_with_flags_all_true() {
     assert_eq!(promotion.from_type, IrType::I64);
     assert_eq!(promotion.to_type, IrType::I32);
     assert_eq!(promotion.cast_kind, CastKind::IntTruncate);
-    assert_eq!(promotion.may_lose_precision, true);
-    assert_eq!(promotion.may_overflow, true);
+    assert!(promotion.may_lose_precision);
+    assert!(promotion.may_overflow);
     assert_eq!(promotion.source_span, span);
 }
 

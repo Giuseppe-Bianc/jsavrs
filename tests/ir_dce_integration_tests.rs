@@ -374,15 +374,15 @@ mod integration_tests {
         assert_eq!(entry_block_after.instructions.len(), 0, "All cascading dead instructions should be removed");
     }
 
+    /*
     /// T073 [US4]: Test empty block after instruction elimination (FR-010, FR-011, SC-003)
     /// TODO: Requires proper CFG API - currently commented out
     /// #[test]
     /// fn test_empty_block_after_elimination() { ... }
-
     /// T074 [US4]: Test dead phi node causes predecessor dead (FR-010, SC-003)
     /// TODO: Requires proper CFG API - currently commented out
     /// #[test]
-    /// fn test_dead_phi_causes_predecessor_dead() { ... }
+    /// fn test_dead_phi_causes_predecessor_dead() { ... } */
 
     /// T075 [US4]: Test single iteration when no dead code (FR-010, SC-008)
     #[test]
@@ -797,12 +797,13 @@ mod integration_tests {
         println!("✓ Entirely dead function handled: {} blocks removed", stats.blocks_removed);
     }
 
+    /*
     /// T103 [Phase 9]: Test and handling for circular phi node dependencies in unreachable blocks
     ///
     /// This test is DEFERRED because creating phi nodes requires CFG API improvements
     /// Current CFG API doesn't expose easy way to add phi nodes to blocks
     /// Future: Implement when CFG provides phi node management methods
-    /*#[test]
+    #[test]
     #[ignore = "Deferred - CFG API doesn't expose phi node creation"]
     fn test_circular_phi_dependencies_in_unreachable_blocks() {
         // TODO: Implement when CFG provides phi node API

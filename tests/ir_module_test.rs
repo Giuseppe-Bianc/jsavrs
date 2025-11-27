@@ -495,6 +495,7 @@ fn test_count_instructions_multiple_blocks() {
 }
 
 #[test]
+#[allow(clippy::approx_constant)]
 fn test_count_instructions_complex_scenario() {
     use jsavrs::ir::{Instruction, InstructionKind, IrLiteralValue, Value};
 

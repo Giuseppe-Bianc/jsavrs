@@ -333,8 +333,8 @@ fn test_identity_promotions_for_all_types() {
 
         if let Some(PromotionRule::Direct { cast_kind, may_lose_precision, may_overflow, .. }) = rule {
             assert_eq!(*cast_kind, CastKind::Bitcast, "Identity promotion for {:?} should use Bitcast", ty);
-            assert_eq!(*may_lose_precision, false, "Identity promotion for {:?} should not lose precision", ty);
-            assert_eq!(*may_overflow, false, "Identity promotion for {:?} should not overflow", ty);
+            assert!(!(*may_lose_precision), "Identity promotion for {:?} should not lose precision", ty);
+            assert!(!(*may_overflow), "Identity promotion for {:?} should not overflow", ty);
         } else {
             panic!("Identity promotion for {:?} should be a Direct rule with Bitcast", ty);
         }
@@ -355,8 +355,8 @@ fn test_promotion_rule_direct() {
     match rule {
         PromotionRule::Direct { cast_kind, may_lose_precision, may_overflow, .. } => {
             assert_eq!(cast_kind, CastKind::IntToFloat);
-            assert_eq!(may_lose_precision, false);
-            assert_eq!(may_overflow, false);
+            assert!(!may_lose_precision);
+            assert!(!may_overflow);
         }
         _ => panic!("Expected Direct promotion rule"),
     }
@@ -401,8 +401,8 @@ fn test_type_promotion_new() {
     assert_eq!(promotion.from_type, IrType::I32);
     assert_eq!(promotion.to_type, IrType::F32);
     assert_eq!(promotion.cast_kind, CastKind::IntToFloat);
-    assert_eq!(promotion.may_lose_precision, false);
-    assert_eq!(promotion.may_overflow, false);
+    assert!(!promotion.may_lose_precision);
+   assert!(!promotion.may_overflow);
     assert_eq!(promotion.source_span, span);
 }
 
@@ -479,9 +479,9 @@ fn test_promotion_warning_signedness_change() {
 
     match warning {
         PromotionWarning::SignednessChange { from_signed, to_signed, may_affect_comparisons } => {
-            assert_eq!(from_signed, true);
-            assert_eq!(to_signed, false);
-            assert_eq!(may_affect_comparisons, true);
+            assert!(from_signed);
+            assert!(!to_signed);
+            assert!(may_affect_comparisons);
         }
         _ => panic!("Expected SignednessChange warning"),
     }
@@ -730,7 +730,7 @@ fn test_promotion_result_with_casts() {
     assert_eq!(result.left_cast.unwrap(), cast);
     assert!(result.right_cast.is_none());
     assert!(result.warnings.is_empty());
-    assert_eq!(result.is_sound, true);
+    assert!(result.is_sound);
 }
 
 #[test]
@@ -751,7 +751,7 @@ fn test_promotion_result_with_warnings() {
     assert!(result.left_cast.is_none());
     assert!(result.right_cast.is_none());
     assert_eq!(result.warnings.len(), 1);
-    assert_eq!(result.is_sound, false);
+    assert!(!result.is_sound);
 }
 
 #[test]
@@ -882,8 +882,8 @@ fn test_symmetric_promotion_rules_same_type() {
     match rule.unwrap() {
         PromotionRule::Direct { cast_kind, may_lose_precision, may_overflow, .. } => {
             assert_eq!(cast_kind, &CastKind::Bitcast); // Should be Bitcast for same type
-            assert_eq!(*may_lose_precision, false);
-            assert_eq!(*may_overflow, false);
+            assert!(!(*may_lose_precision));
+            assert!(!(*may_overflow));
         }
         _ => panic!("Expected Direct promotion rule with Bitcast for same types"),
     }
@@ -931,8 +931,8 @@ fn test_symmetric_promotion_rules_int_float_existing() {
     match i32_to_f32.unwrap() {
         PromotionRule::Direct { may_lose_precision, may_overflow, .. } => {
             // I32 can be exactly represented in F32, so no precision loss expected
-            assert_eq!(*may_lose_precision, false); // Dereference here
-            assert_eq!(*may_overflow, false); // Dereference here
+            assert!(!(*may_lose_precision)); // Dereference here
+            assert!(!(*may_overflow)); // Dereference here
         }
         _ => panic!("Expected Direct promotion rule for I32 -> F32"),
     }
@@ -940,8 +940,8 @@ fn test_symmetric_promotion_rules_int_float_existing() {
     match f32_to_i32.unwrap() {
         PromotionRule::Direct { may_lose_precision, may_overflow, .. } => {
             // F32 to I32 may lose precision and may overflow
-            assert_eq!(*may_lose_precision, true); // Dereference here
-            assert_eq!(*may_overflow, true); // Dereference here
+            assert!(*may_lose_precision); // Dereference here
+            assert!(*may_overflow); // Dereference here
         }
         _ => panic!("Expected Direct promotion rule for F32 -> I32"),
     }
@@ -1290,8 +1290,8 @@ fn test_integer_widening_u8_to_u16() {
     let rule = matrix.get_promotion_rule(&IrType::U8, &IrType::U16).unwrap();
     if let PromotionRule::Direct { cast_kind, may_lose_precision, may_overflow, .. } = rule {
         assert_eq!(*cast_kind, CastKind::IntZeroExtend);
-        assert_eq!(*may_lose_precision, false);
-        assert_eq!(*may_overflow, false);
+        assert!(!(*may_lose_precision));
+        assert!(!(*may_overflow));
     } else {
         panic!("Expected Direct promotion rule");
     }
@@ -1378,8 +1378,8 @@ fn test_integer_narrowing_u64_to_u16() {
     assert!(rule.is_some(), "Missing rule for U64 → U16");
     if let Some(PromotionRule::Direct { cast_kind, may_lose_precision, may_overflow, .. }) = rule {
         assert_eq!(*cast_kind, CastKind::IntTruncate);
-        assert_eq!(*may_lose_precision, true);
-        assert_eq!(*may_overflow, true);
+        assert!(*may_lose_precision);
+        assert!(*may_overflow);
     } else {
         panic!("Expected Direct promotion rule with IntTruncate");
     }
@@ -1392,8 +1392,8 @@ fn test_integer_narrowing_i64_to_i16() {
     assert!(rule.is_some(), "Missing rule for I64 → I16");
     if let Some(PromotionRule::Direct { cast_kind, may_lose_precision, may_overflow, .. }) = rule {
         assert_eq!(*cast_kind, CastKind::IntTruncate);
-        assert_eq!(*may_lose_precision, true);
-        assert_eq!(*may_overflow, true);
+        assert!(*may_lose_precision);
+        assert!(*may_overflow);
     } else {
         panic!("Expected Direct promotion rule with IntTruncate");
     }
@@ -1417,8 +1417,8 @@ fn test_f64_to_i32_conversion_with_precision_loss() {
     let rule = matrix.get_promotion_rule(&IrType::F64, &IrType::I32).unwrap();
     if let PromotionRule::Direct { cast_kind, may_lose_precision, may_overflow, .. } = rule {
         assert_eq!(*cast_kind, CastKind::FloatToInt);
-        assert_eq!(*may_lose_precision, true);
-        assert_eq!(*may_overflow, true);
+        assert!(*may_lose_precision);
+        assert!(*may_overflow);
     } else {
         panic!("Expected Direct promotion rule");
     }
@@ -1469,7 +1469,7 @@ fn test_f32_to_f64_extension() {
     let rule = matrix.get_promotion_rule(&IrType::F32, &IrType::F64).unwrap();
     if let PromotionRule::Direct { cast_kind, may_lose_precision, .. } = rule {
         assert_eq!(*cast_kind, CastKind::FloatExtend);
-        assert_eq!(*may_lose_precision, false);
+        assert!(!(*may_lose_precision));
     } else {
         panic!("Expected Direct promotion rule");
     }
@@ -1481,7 +1481,7 @@ fn test_f64_to_f32_truncation() {
     let rule = matrix.get_promotion_rule(&IrType::F64, &IrType::F32).unwrap();
     if let PromotionRule::Direct { cast_kind, may_lose_precision, .. } = rule {
         assert_eq!(*cast_kind, CastKind::FloatTruncate);
-        assert_eq!(*may_lose_precision, true);
+        assert!(*may_lose_precision);
     } else {
         panic!("Expected Direct promotion rule");
     }

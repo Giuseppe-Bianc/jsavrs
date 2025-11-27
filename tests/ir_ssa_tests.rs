@@ -10,6 +10,7 @@ use jsavrs::location::source_span::SourceSpan;
 use std::sync::Arc;
 
 #[test]
+#[allow(clippy::assertions_on_constants)]
 fn test_ssa_transformer_new() {
     let _transformer = SsaTransformer::new(None);
     // Just check that we can create it

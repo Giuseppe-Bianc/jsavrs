@@ -252,6 +252,7 @@ mod tests {
     }
 
     #[test]
+    #[allow(clippy::mixed_case_hex_literals)]
     fn test_hex_mixed_case() {
         // Normal case: Hexadecimal with mixed case letters
         let result = test_parse_base("#xDeAdBeEf", 16);
