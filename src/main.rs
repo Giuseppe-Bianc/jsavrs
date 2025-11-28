@@ -20,6 +20,11 @@ use std::{
 };
 //use jsavrs::asm::generator::TargetOS;
 
+//#[cfg(feature = "dhat-heaps")]
+//#[global_allocator]
+//static ALLOC: dhat::Alloc = dhat::Alloc;
+
+
 // Helper function per gestire e stampare errori I/O
 fn handle_io_error<T: std::fmt::Display>(error_type: &str, e: T) {
     eprintln!("{} {}: {}\n", style("ERROR:").red().bold(), style(error_type).red(), style(e).yellow());
@@ -42,6 +47,9 @@ fn format_size(bytes: usize) -> (f64, &'static str) {
 
 #[allow(clippy::explicit_auto_deref, clippy::unused_unit)]
 fn main() -> Result<(), CompileError> {
+    //#[cfg(feature = "dhat-heaps")]
+    //let _dhat = dhat::Profiler::new_heap();
+
     let args = Args::parse();
     let file_path: &Path = args.input.as_path();
     let read_file_timer_name = format!("reading file {}", file_path.display());
