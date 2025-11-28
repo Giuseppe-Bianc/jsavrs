@@ -53,10 +53,9 @@ impl LivenessAnalyzer {
                     self.def_use_chains.add_definition(inst_idx, result.clone());
                 }
 
-                let used_values = extract_used_values(instruction);
-                for value in used_values {
-                    self.def_use_chains.add_use(inst_idx, value);
-                }
+                extract_used_values(instruction)
+                    .into_iter()
+                    .for_each(|value| self.def_use_chains.add_use(inst_idx, value));
             }
 
             // Process terminator uses
@@ -102,10 +101,13 @@ impl LivenessAnalyzer {
     pub fn analyze(&mut self, function: &Function) -> bool {
         const MAX_ITERATIONS: usize = 10;
 
+        let cfg = function.cfg.graph();
+
         // Initialize all live sets to empty
-        for block_idx in function.cfg.graph().node_indices() {
-            self.live_in.insert(block_idx, HashSet::new());
-            self.live_out.insert(block_idx, HashSet::new());
+        for block_idx in cfg.node_indices() {
+            let capacity = cfg.neighbors(block_idx).count() * 5; // estimate
+            self.live_in.entry(block_idx).or_insert_with(|| HashSet::with_capacity(capacity));
+            self.live_out.entry(block_idx).or_insert_with(|| HashSet::with_capacity(capacity));
         }
 
         let rpo = compute_reverse_post_order(function);
@@ -159,6 +161,7 @@ impl LivenessAnalyzer {
     }
 
     /// Checks if an instruction is dead (its result is never used).
+    #[inline]
     pub fn is_instruction_dead(&self, inst_idx: &InstructionIndex) -> bool {
         if let Some(defined_value) = self.def_use_chains.get_defined_value(inst_idx) {
             !self.def_use_chains.has_uses(defined_value)

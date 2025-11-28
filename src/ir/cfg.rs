@@ -45,6 +45,7 @@ impl ControlFlowGraph {
         self.recompute_reverse_post_order();
     }
 
+    #[inline]
     pub fn find_block_by_label(&self, label: &str) -> Option<NodeIndex> {
         self.graph.node_indices().find(|&idx| self.graph[idx].label.as_ref() == label)
     }
