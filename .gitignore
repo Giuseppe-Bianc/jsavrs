@@ -23,3 +23,5 @@ venv/
 dist/
 *.egg-info/
 .config/
+dhat-heap.json
+flamegraph.svg
