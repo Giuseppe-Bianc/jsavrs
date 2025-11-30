@@ -9,6 +9,8 @@ use crate::ir::{CastKind, IrType};
 
 use super::types::{OverflowBehavior, PromotionRule, PromotionWarning};
 
+const ESTIMATED_RULES: usize = 169;
+
 /// Defines the complete type promotion lattice and rules
 #[derive(Debug, Clone)]
 pub struct PromotionMatrix {
@@ -34,7 +36,8 @@ impl PromotionMatrix {
 
     /// Creates a new promotion matrix with specified overflow behavior
     pub fn with_overflow_behavior(overflow_behavior: OverflowBehavior) -> Self {
-        let mut matrix = PromotionMatrix { promotion_rules: HashMap::new(), overflow_behavior };
+        let mut matrix =
+            PromotionMatrix { promotion_rules: HashMap::with_capacity(ESTIMATED_RULES), overflow_behavior };
 
         // Initialize all promotion rules
         matrix.initialize_all_rules();
@@ -130,6 +133,7 @@ impl PromotionMatrix {
     }
 
     /// Adds a promotion rule to the matrix
+    #[inline]
     pub(crate) fn add_promotion_rule(&mut self, from: IrType, to: IrType, rule: PromotionRule) {
         self.promotion_rules.insert((from, to), rule);
     }

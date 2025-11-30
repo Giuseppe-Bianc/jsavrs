@@ -65,6 +65,7 @@ impl LivenessAnalyzer {
                 self.def_use_chains.add_use(term_idx, value);
             }
         }
+        
     }
 
     /// Computes gen and kill sets for each basic block.
