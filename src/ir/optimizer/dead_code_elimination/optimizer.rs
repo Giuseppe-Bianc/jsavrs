@@ -3,7 +3,7 @@
 use crate::ir::{Function, InstructionKind, Module, Phase};
 use console::style;
 use petgraph::Direction;
-use std::collections::HashSet;
+use std::collections::{HashMap, HashSet};
 use std::fmt::Write;
 use std::sync::Arc;
 
@@ -250,7 +250,7 @@ impl DeadCodeElimination {
         let mut total_removed = 0;
 
         // Group by block label
-        let mut by_block: std::collections::HashMap<Arc<str>, Vec<usize>> = std::collections::HashMap::new();
+        let mut by_block: HashMap<Arc<str>, Vec<usize>> = HashMap::new();
         for (label, offset) in dead_instructions {
             by_block.entry(label).or_default().push(offset);
         }

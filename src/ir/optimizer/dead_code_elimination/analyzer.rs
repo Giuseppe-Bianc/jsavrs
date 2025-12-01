@@ -50,22 +50,20 @@ impl LivenessAnalyzer {
                 let inst_idx = InstructionIndex { block_idx, inst_offset };
 
                 if let Some(ref result) = instruction.result {
-                    self.def_use_chains.add_definition(inst_idx, result.clone());
+                    self.def_use_chains.add_definition(inst_idx, result);
                 }
 
-                extract_used_values(instruction)
-                    .into_iter()
-                    .for_each(|value| self.def_use_chains.add_use(inst_idx, value));
+                extract_used_values_ref(instruction, &mut |value| {
+                    self.def_use_chains.add_use(inst_idx, value);
+                });
             }
 
             // Process terminator uses
-            let terminator_uses = extract_terminator_uses(&block.terminator);
             let term_idx = InstructionIndex { block_idx, inst_offset: block.instructions.len() };
-            for value in terminator_uses {
+            extract_terminator_uses_ref(&block.terminator, &mut |value| {
                 self.def_use_chains.add_use(term_idx, value);
-            }
+            });
         }
-        
     }
 
     /// Computes gen and kill sets for each basic block.
@@ -80,8 +78,9 @@ impl LivenessAnalyzer {
             for (inst_offset, _instruction) in block.instructions.iter().enumerate() {
                 let inst_idx = InstructionIndex { block_idx, inst_offset };
 
-                let used_values = self.def_use_chains.get_used_values(&inst_idx);
-                gen_set.extend(used_values.into_iter().filter(|v| !kill_set.contains(v)));
+                if let Some(used_values) = self.def_use_chains.instruction_to_used_values.get(&inst_idx) {
+                    gen_set.extend(used_values.iter().filter(|v| !kill_set.contains(*v)).cloned());
+                }
 
                 if let Some(defined_value) = self.def_use_chains.get_defined_value(&inst_idx) {
                     kill_set.insert(defined_value.clone());
@@ -90,8 +89,9 @@ impl LivenessAnalyzer {
 
             // Process terminator uses
             let term_idx = InstructionIndex { block_idx, inst_offset: block.instructions.len() };
-            let used_values = self.def_use_chains.get_used_values(&term_idx);
-            gen_set.extend(used_values.into_iter().filter(|v| !kill_set.contains(v)));
+            if let Some(used_values) = self.def_use_chains.instruction_to_used_values.get(&term_idx) {
+                gen_set.extend(used_values.iter().filter(|v| !kill_set.contains(*v)).cloned());
+            }
 
             self.gen_sets.insert(block_idx, gen_set);
             self.kill_sets.insert(block_idx, kill_set);
@@ -201,40 +201,65 @@ impl ReachabilityAnalyzer {
 // Helper Functions
 // ============================================================================
 
-/// Extracts all values used by an instruction.
-fn extract_used_values(instruction: &crate::ir::Instruction) -> Vec<Value> {
+/// Extracts all values used by an instruction using a callback to avoid allocations.
+#[inline]
+fn extract_used_values_ref<F>(instruction: &crate::ir::Instruction, callback: &mut F)
+where
+    F: FnMut(&Value),
+{
     match &instruction.kind {
-        InstructionKind::Binary { left, right, .. } => vec![left.clone(), right.clone()],
-        InstructionKind::Unary { operand, .. } => vec![operand.clone()],
-        InstructionKind::Load { src, .. } => vec![src.clone()],
-        InstructionKind::Store { value, dest } => vec![value.clone(), dest.clone()],
-        InstructionKind::Call { func, args, .. } => {
-            let mut values = Vec::with_capacity(args.len() + 1);
-            values.push(func.clone());
-            values.extend(args.iter().cloned());
-            values
+        InstructionKind::Binary { left, right, .. } => {
+            callback(left);
+            callback(right);
         }
-        InstructionKind::GetElementPtr { base, index, .. } => vec![base.clone(), index.clone()],
-        InstructionKind::Cast { value, .. } => vec![value.clone()],
-        InstructionKind::Phi { incoming, .. } => incoming.iter().map(|(v, _)| v.clone()).collect(),
-        InstructionKind::Vector { operands, .. } => operands.clone(),
-        InstructionKind::Alloca { .. } => Vec::new(),
+        InstructionKind::Unary { operand, .. } => callback(operand),
+        InstructionKind::Load { src, .. } => callback(src),
+        InstructionKind::Store { value, dest } => {
+            callback(value);
+            callback(dest);
+        }
+        InstructionKind::Call { func, args, .. } => {
+            callback(func);
+            for arg in args {
+                callback(arg);
+            }
+        }
+        InstructionKind::GetElementPtr { base, index, .. } => {
+            callback(base);
+            callback(index);
+        }
+        InstructionKind::Cast { value, .. } => callback(value),
+        InstructionKind::Phi { incoming, .. } => {
+            for (v, _) in incoming {
+                callback(v);
+            }
+        }
+        InstructionKind::Vector { operands, .. } => {
+            for operand in operands {
+                callback(operand);
+            }
+        }
+        InstructionKind::Alloca { .. } => {}
     }
 }
 
-/// Extracts all values used by a terminator.
-fn extract_terminator_uses(terminator: &Terminator) -> Vec<Value> {
+/// Extracts all values used by a terminator using a callback to avoid allocations.
+#[inline]
+fn extract_terminator_uses_ref<F>(terminator: &Terminator, callback: &mut F)
+where
+    F: FnMut(&Value),
+{
     match &terminator.kind {
-        TerminatorKind::Return { value, .. } => vec![value.clone()],
-        TerminatorKind::ConditionalBranch { condition, .. } => vec![condition.clone()],
-        TerminatorKind::IndirectBranch { address, .. } => vec![address.clone()],
+        TerminatorKind::Return { value, .. } => callback(value),
+        TerminatorKind::ConditionalBranch { condition, .. } => callback(condition),
+        TerminatorKind::IndirectBranch { address, .. } => callback(address),
         TerminatorKind::Switch { value, cases, .. } => {
-            let mut values = Vec::with_capacity(cases.len() + 1);
-            values.push(value.clone());
-            values.extend(cases.iter().map(|(v, _)| v.clone()));
-            values
+            callback(value);
+            for (v, _) in cases {
+                callback(v);
+            }
         }
-        TerminatorKind::Branch { .. } | TerminatorKind::Unreachable => Vec::new(),
+        TerminatorKind::Branch { .. } | TerminatorKind::Unreachable => {}
     }
 }
 

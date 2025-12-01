@@ -15,7 +15,7 @@ pub struct DefUseChains {
     value_to_uses: HashMap<Value, HashSet<InstructionIndex>>,
 
     /// Maps each instruction to the values it uses.
-    instruction_to_used_values: HashMap<InstructionIndex, HashSet<Value>>,
+    pub(super) instruction_to_used_values: HashMap<InstructionIndex, HashSet<Value>>,
 
     /// Maps each instruction to the value it defines (if any).
     instruction_to_defined_value: HashMap<InstructionIndex, Value>,
@@ -33,26 +33,21 @@ impl DefUseChains {
 
     /// Records that an instruction defines a value.
     #[inline]
-    pub fn add_definition(&mut self, inst_idx: InstructionIndex, value: Value) {
-        self.instruction_to_defined_value.insert(inst_idx, value);
+    pub fn add_definition(&mut self, inst_idx: InstructionIndex, value: &Value) {
+        self.instruction_to_defined_value.insert(inst_idx, value.clone());
     }
 
     /// Records that an instruction uses a value.
     #[inline]
-    pub fn add_use(&mut self, inst_idx: InstructionIndex, value: Value) {
+    pub fn add_use(&mut self, inst_idx: InstructionIndex, value: &Value) {
         self.instruction_to_used_values.entry(inst_idx).or_default().insert(value.clone());
-        self.value_to_uses.entry(value).or_default().insert(inst_idx);
+        self.value_to_uses.entry(value.clone()).or_default().insert(inst_idx);
     }
 
     /// Returns the set of instructions that use the given value.
     #[allow(dead_code)]
     pub fn get_uses(&self, value: &Value) -> HashSet<InstructionIndex> {
         self.value_to_uses.get(value).cloned().unwrap_or_default()
-    }
-
-    /// Returns the set of values used by the given instruction.
-    pub fn get_used_values(&self, inst_idx: &InstructionIndex) -> HashSet<Value> {
-        self.instruction_to_used_values.get(inst_idx).cloned().unwrap_or_default()
     }
 
     /// Returns the value defined by the given instruction, if any.
