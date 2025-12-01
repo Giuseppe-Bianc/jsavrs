@@ -8,7 +8,7 @@ pub const TILE_PADDING: usize = 10;
 // Rappresenta i valori temporali in diverse unità
 #[derive(Debug, Clone, Copy)]
 pub struct TimeValues {
-    nano: f64,  // Only store base representation
+    nano: f64, // Only store base representation
 }
 
 impl TimeValues {
@@ -21,17 +21,17 @@ impl TimeValues {
     pub const fn seconds(&self) -> f64 {
         self.nano / SECONDS_FACTOR
     }
-    
+
     #[inline(always)]
     pub const fn millis(&self) -> f64 {
         self.nano / MILLISECONDS_FACTOR
     }
-    
+
     #[inline(always)]
     pub const fn micro(&self) -> f64 {
         self.nano / MICROSECONDS_FACTOR
     }
-    
+
     #[inline(always)]
     pub const fn nano(&self) -> f64 {
         self.nano
