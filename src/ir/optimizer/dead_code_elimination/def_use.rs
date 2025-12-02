@@ -50,6 +50,15 @@ impl DefUseChains {
         self.value_to_uses.get(value).cloned().unwrap_or_default()
     }
 
+    /// Returns a reference to the mapping of instructions to the values they use.
+    ///
+    /// This provides read-only access to the instruction-to-used-values map,
+    /// which is essential for analyzing value dependencies during liveness analysis.
+    ///
+    /// # Returns
+    ///
+    /// A reference to the HashMap mapping each instruction index to the set of values it uses.
+    #[inline]
     pub fn get_instruction_to_used_values(&self) -> &HashMap<InstructionIndex, HashSet<Value>> {
         &self.instruction_to_used_values
     }

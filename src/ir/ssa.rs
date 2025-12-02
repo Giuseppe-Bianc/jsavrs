@@ -9,6 +9,7 @@ use super::types::IrType;
 use super::value::{Value, ValueKind};
 use petgraph::graph::NodeIndex;
 use std::collections::{HashMap, HashSet};
+use std::fmt::Write;
 use std::sync::Arc;
 
 /// Manages the SSA transformation process.
@@ -26,6 +27,8 @@ pub struct SsaTransformer {
     value_stack: HashMap<Arc<str>, Vec<Value>>,
     /// Map to store the type of each variable
     variable_types: HashMap<Arc<str>, IrType>,
+    /// Reusable buffer for string formatting to reduce allocations
+    format_buffer: String,
 }
 
 impl SsaTransformer {
@@ -38,6 +41,7 @@ impl SsaTransformer {
             phi_variables: HashSet::new(),
             value_stack: HashMap::new(),
             variable_types: HashMap::new(),
+            format_buffer: String::with_capacity(32),
         }
     }
 
@@ -102,12 +106,17 @@ impl SsaTransformer {
         // Don't reset temp_counter here - it should be unique across the entire module
     }
 
-    fn extract_variable_name(dest: &&Value, temp_id: &u64) -> Arc<str> {
+    fn extract_variable_name(&mut self, dest: &Value, temp_id: u64) -> Arc<str> {
         if let Some(debug_info) = &dest.debug_info {
-            if let Some(name) = &debug_info.name { name.clone() } else { Arc::from(format!("t{}", temp_id)) }
-        } else {
-            Arc::from(format!("t{}", temp_id))
+            if let Some(name) = &debug_info.name {
+                return name.clone();
+            }
         }
+        // Use reusable buffer for temporary names
+        self.format_buffer.clear();
+        self.format_buffer.push('t');
+        let _ = write!(&mut self.format_buffer, "{}", temp_id);
+        Arc::from(self.format_buffer.as_str())
     }
 
     /// Identifies variables that need phi-functions by analyzing definitions.
@@ -125,7 +134,7 @@ impl SsaTransformer {
                         InstructionKind::Store { value: _, dest } => {
                             if let ValueKind::Temporary(temp_id) = &dest.kind {
                                 // Get the variable name from debug info if available
-                                let var_name = Self::extract_variable_name(&dest, temp_id);
+                                let var_name = self.extract_variable_name(dest, *temp_id);
                                 // Store the variable type
                                 if let IrType::Pointer(inner_ty) = &dest.ty {
                                     self.variable_types.insert(var_name.clone(), (**inner_ty).clone());
@@ -146,7 +155,7 @@ impl SsaTransformer {
                                 && let ValueKind::Temporary(temp_id) = &result.kind
                             {
                                 // Get the variable name from debug info if available
-                                let var_name = Self::extract_variable_name(&result, temp_id);
+                                let var_name = self.extract_variable_name(result, *temp_id);
 
                                 // Store the variable type
                                 self.variable_types.insert(var_name.clone(), ty.clone());
@@ -252,11 +261,7 @@ impl SsaTransformer {
     fn replace_value_with_current_ssa(&mut self, value: &mut Value) {
         if let ValueKind::Temporary(temp_id) = &value.kind {
             // Get the variable name from debug info if available
-            let var_name: Arc<str> = if let Some(debug_info) = &value.debug_info {
-                if let Some(name) = &debug_info.name { name.clone() } else { Arc::from(format!("t{}", temp_id)) }
-            } else {
-                Arc::from(format!("t{}", temp_id))
-            };
+            let var_name = self.extract_variable_name(value, *temp_id);
 
             // Get the current value from the stack
             if let Some(stack) = self.value_stack.get(&var_name)
@@ -386,15 +391,7 @@ impl SsaTransformer {
                     // For store instructions, we need to replace the destination with a new SSA value
                     if let ValueKind::Temporary(temp_id) = &dest.kind {
                         // Get the variable name from debug info if available
-                        let var_name: Arc<str> = if let Some(debug_info) = &dest.debug_info {
-                            if let Some(name) = &debug_info.name {
-                                name.clone()
-                            } else {
-                                Arc::from(format!("t{}", temp_id))
-                            }
-                        } else {
-                            Arc::from(format!("t{}", temp_id))
-                        };
+                        let var_name = self.extract_variable_name(dest, *temp_id);
 
                         // Create a new unique name for this definition
                         let ty = dest.ty.clone();

@@ -6,6 +6,7 @@ use crate::location::source_span::{HasSpan, SourceSpan};
 use crate::parser::ast::*;
 use crate::tokens::number::Number;
 use std::collections::HashMap;
+use std::fmt::Write;
 use std::sync::Arc;
 
 /// Represents control flow operations within loops (break and continue statements)
@@ -46,6 +47,8 @@ pub struct IrGenerator {
     root_scope: Option<ScopeId>,
     /// Whether to apply SSA transformation to generated IR
     apply_ssa: bool,
+    /// Reusable string buffer for formatting to reduce allocations
+    format_buffer: String,
 }
 
 #[allow(dead_code)]
@@ -80,7 +83,8 @@ impl IrGenerator {
             //_access_controller: access_controller,
             type_context: TypeContext::default(),
             root_scope: scope_manager.root_scope(),
-            apply_ssa: true, // Enable SSA by default
+            apply_ssa: true,                          // Enable SSA by default
+            format_buffer: String::with_capacity(64), // Pre-allocate buffer for labels
         }
     }
 
@@ -326,7 +330,10 @@ impl IrGenerator {
         func.enter_scope();
 
         // Create the entry block using start_block
-        let entry_label = format!("entry_{}", func.name);
+        self.format_buffer.clear();
+        self.format_buffer.push_str("entry_");
+        self.format_buffer.push_str(&func.name);
+        let entry_label = self.format_buffer.clone();
         self.start_block(func, &entry_label, span.clone());
 
         // Add function parameters to symbol table
@@ -839,7 +846,11 @@ impl IrGenerator {
 
     fn new_block_label(&mut self, prefix: &str) -> String {
         self.block_counter += 1;
-        format!("{}_{}", prefix, self.block_counter)
+        self.format_buffer.clear();
+        self.format_buffer.push_str(prefix);
+        self.format_buffer.push('_');
+        let _ = write!(&mut self.format_buffer, "{}", self.block_counter);
+        self.format_buffer.clone()
     }
 
     fn start_block(&mut self, func: &mut Function, label: &str, span: SourceSpan) {
