@@ -78,7 +78,7 @@ impl LivenessAnalyzer {
             for (inst_offset, _instruction) in block.instructions.iter().enumerate() {
                 let inst_idx = InstructionIndex { block_idx, inst_offset };
 
-                if let Some(used_values) = self.def_use_chains.instruction_to_used_values.get(&inst_idx) {
+                if let Some(used_values) = self.def_use_chains.get_instruction_to_used_values().get(&inst_idx) {
                     gen_set.extend(used_values.iter().filter(|v| !kill_set.contains(*v)).cloned());
                 }
 
@@ -89,7 +89,7 @@ impl LivenessAnalyzer {
 
             // Process terminator uses
             let term_idx = InstructionIndex { block_idx, inst_offset: block.instructions.len() };
-            if let Some(used_values) = self.def_use_chains.instruction_to_used_values.get(&term_idx) {
+            if let Some(used_values) = self.def_use_chains.get_instruction_to_used_values().get(&term_idx) {
                 gen_set.extend(used_values.iter().filter(|v| !kill_set.contains(*v)).cloned());
             }
 

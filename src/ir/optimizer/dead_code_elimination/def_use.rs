@@ -15,7 +15,7 @@ pub struct DefUseChains {
     value_to_uses: HashMap<Value, HashSet<InstructionIndex>>,
 
     /// Maps each instruction to the values it uses.
-    pub(super) instruction_to_used_values: HashMap<InstructionIndex, HashSet<Value>>,
+    instruction_to_used_values: HashMap<InstructionIndex, HashSet<Value>>,
 
     /// Maps each instruction to the value it defines (if any).
     instruction_to_defined_value: HashMap<InstructionIndex, Value>,
@@ -48,6 +48,10 @@ impl DefUseChains {
     #[allow(dead_code)]
     pub fn get_uses(&self, value: &Value) -> HashSet<InstructionIndex> {
         self.value_to_uses.get(value).cloned().unwrap_or_default()
+    }
+
+    pub fn get_instruction_to_used_values(&self) -> &HashMap<InstructionIndex, HashSet<Value>> {
+        &self.instruction_to_used_values
     }
 
     /// Returns the value defined by the given instruction, if any.

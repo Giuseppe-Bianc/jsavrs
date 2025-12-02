@@ -252,14 +252,14 @@ impl SsaTransformer {
     fn replace_value_with_current_ssa(&mut self, value: &mut Value) {
         if let ValueKind::Temporary(temp_id) = &value.kind {
             // Get the variable name from debug info if available
-            let var_name = if let Some(debug_info) = &value.debug_info {
-                if let Some(name) = &debug_info.name { name.to_string() } else { format!("t{}", temp_id) }
+            let var_name: Arc<str> = if let Some(debug_info) = &value.debug_info {
+                if let Some(name) = &debug_info.name { name.clone() } else { Arc::from(format!("t{}", temp_id)) }
             } else {
-                format!("t{}", temp_id)
+                Arc::from(format!("t{}", temp_id))
             };
 
             // Get the current value from the stack
-            if let Some(stack) = self.value_stack.get(&Arc::from(var_name))
+            if let Some(stack) = self.value_stack.get(&var_name)
                 && let Some(current_value) = stack.last()
             {
                 *value = current_value.clone();
@@ -316,9 +316,8 @@ impl SsaTransformer {
                 if let Some(debug_info) = &result.debug_info
                     && let Some(var_name) = &debug_info.name
                 {
-                    // Pop the value from the stack - convert var_name to String
-                    let var_name_string = var_name.to_string();
-                    if let Some(stack) = self.value_stack.get_mut(&Arc::from(var_name_string)) {
+                    // Pop the value from the stack - use Arc<str> directly
+                    if let Some(stack) = self.value_stack.get_mut(var_name) {
                         stack.pop();
                     }
                 }
@@ -355,7 +354,7 @@ impl SsaTransformer {
                     && let Some(debug_info) = &result.debug_info
                     && let Some(var_name) = &debug_info.name
                 {
-                    phi_updates.push((i, ty.clone(), var_name.to_string()));
+                    phi_updates.push((i, ty.clone(), var_name.clone()));
                 }
             }
         }
@@ -367,14 +366,14 @@ impl SsaTransformer {
             let source_span =
                 block.instructions[i].result.as_ref().unwrap().debug_info.as_ref().unwrap().source_span.clone();
             let new_value =
-                Value::new_temporary(self.temp_counter, ty).with_debug_info(Some(var_name.clone().into()), source_span);
+                Value::new_temporary(self.temp_counter, ty).with_debug_info(Some(var_name.clone()), source_span);
             self.temp_counter += 1;
 
             // Update the phi-function result, preserving the debug info that identifies the variable
             block.instructions[i].result = Some(new_value.clone());
 
             // Push the new value onto the stack
-            self.value_stack.entry(Arc::from(var_name.clone())).or_default().push(new_value);
+            self.value_stack.entry(var_name).or_default().push(new_value);
         }
 
         // Process instructions in this block
@@ -387,16 +386,20 @@ impl SsaTransformer {
                     // For store instructions, we need to replace the destination with a new SSA value
                     if let ValueKind::Temporary(temp_id) = &dest.kind {
                         // Get the variable name from debug info if available
-                        let var_name = if let Some(debug_info) = &dest.debug_info {
-                            if let Some(name) = &debug_info.name { name.to_string() } else { format!("t{}", temp_id) }
+                        let var_name: Arc<str> = if let Some(debug_info) = &dest.debug_info {
+                            if let Some(name) = &debug_info.name {
+                                name.clone()
+                            } else {
+                                Arc::from(format!("t{}", temp_id))
+                            }
                         } else {
-                            format!("t{}", temp_id)
+                            Arc::from(format!("t{}", temp_id))
                         };
 
                         // Create a new unique name for this definition
                         let ty = dest.ty.clone();
                         let new_value = Value::new_temporary(self.temp_counter, ty).with_debug_info(
-                            Some(Arc::from(var_name.clone())),
+                            Some(var_name.clone()),
                             dest.debug_info.as_ref().map(|d| d.source_span.clone()).unwrap_or_default(),
                         );
                         self.temp_counter += 1;
@@ -405,7 +408,7 @@ impl SsaTransformer {
                         *dest = new_value.clone();
 
                         // Push the new value onto the stack
-                        self.value_stack.entry(Arc::from(var_name)).or_default().push(new_value);
+                        self.value_stack.entry(var_name).or_default().push(new_value);
                     }
                 }
                 InstructionKind::Load { src, .. } => {
