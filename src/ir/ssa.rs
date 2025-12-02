@@ -107,11 +107,12 @@ impl SsaTransformer {
     }
 
     fn extract_variable_name(&mut self, dest: &Value, temp_id: u64) -> Arc<str> {
-        if let Some(debug_info) = &dest.debug_info {
-            if let Some(name) = &debug_info.name {
-                return name.clone();
-            }
+        if let Some(debug_info) = &dest.debug_info
+            && let Some(name) = &debug_info.name
+        {
+            return name.clone();
         }
+
         // Use reusable buffer for temporary names
         self.format_buffer.clear();
         self.format_buffer.push('t');
