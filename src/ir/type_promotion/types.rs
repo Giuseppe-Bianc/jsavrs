@@ -11,10 +11,10 @@ use crate::location::source_span::SourceSpan;
 pub struct TypePromotion {
     pub from_type: IrType,
     pub to_type: IrType,
-    pub cast_kind: CastKind,
-    pub may_lose_precision: bool,
-    pub may_overflow: bool,
     pub source_span: SourceSpan,
+    pub cast_kind: CastKind,
+    pub may_overflow: bool,
+    pub may_lose_precision: bool,
 }
 
 impl TypePromotion {
@@ -73,16 +73,16 @@ pub enum TypeGroup {
 /// Contains the result of type promotion analysis
 #[derive(Debug, Clone, PartialEq)]
 pub struct PromotionResult {
+    /// Whether the promotion is mathematically sound
+    pub is_sound: bool,
     /// The target type for the operation result
     pub result_type: IrType,
+    /// Warnings generated during promotion analysis
+    pub warnings: Vec<PromotionWarning>,
     /// Cast required for left operand (if any)
     pub left_cast: Option<TypePromotion>,
     /// Cast required for right operand (if any)
     pub right_cast: Option<TypePromotion>,
-    /// Warnings generated during promotion analysis
-    pub warnings: Vec<PromotionWarning>,
-    /// Whether the promotion is mathematically sound
-    pub is_sound: bool,
 }
 
 /// Represents warnings generated during type promotion
@@ -134,6 +134,7 @@ pub enum FloatSpecialValueType {
 
 /// Configuration for runtime behavior on numeric overflow
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Hash)]
+#[repr(u8)]
 pub enum OverflowBehavior {
     Wrap,
     Saturate,
