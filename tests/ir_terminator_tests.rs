@@ -113,10 +113,7 @@ fn switch_terminator_edge_cases() {
             value: create_i32_value(i32::MIN),
             ty: IrType::I32,
             default_label: "default".into(),
-            cases: vec![
-                (create_i32_value(i32::MIN), "min".into()),
-                (create_i32_value(i32::MAX), "max".into()),
-            ],
+            cases: vec![(create_i32_value(i32::MIN), "min".into()), (create_i32_value(i32::MAX), "max".into())],
         },
         dummy_span(),
     );
