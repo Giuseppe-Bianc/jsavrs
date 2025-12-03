@@ -16,16 +16,17 @@ use std::sync::Arc;
 /// for accurate source location mapping.
 #[derive(Debug, Clone, PartialEq)]
 pub struct Terminator {
-    /// The specific kind of terminator (e.g., return, branch, switch, etc.).
-    pub kind: TerminatorKind,
-    /// Associated debug information, such as the originating source span.
+    /// Associated debug information, frequently accessed during compilation
     pub debug_info: DebugInfo,
+    /// The specific kind of terminator
+    pub kind: TerminatorKind,
 }
 
 /// Stores metadata about a terminator for debugging and diagnostics.
 ///
 /// This includes the source code span that corresponds to the IR instruction,
 /// enabling more accurate compiler error messages and source mapping.
+#[repr(transparent)]
 #[derive(Debug, Clone, PartialEq)]
 pub struct DebugInfo {
     /// The region in the source code where this terminator originated.
