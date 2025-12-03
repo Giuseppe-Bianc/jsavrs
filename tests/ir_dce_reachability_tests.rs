@@ -167,10 +167,10 @@ mod reachability_tests {
                 kind: TerminatorKind::Switch {
                     value: Value::new_literal(IrLiteralValue::I32(0)),
                     ty: IrType::I32,
-                    default_label: String::from("default_case"),
+                    default_label: "default_case".into(),
                     cases: vec![
-                        (Value::new_literal(IrLiteralValue::I32(0)), String::from("case_0")),
-                        (Value::new_literal(IrLiteralValue::I32(1)), String::from("case_1")),
+                        (Value::new_literal(IrLiteralValue::I32(0)), "case_0".into()),
+                        (Value::new_literal(IrLiteralValue::I32(1)), "case_1".into()),
                     ],
                 },
                 debug_info: dummy_debug_info(),
@@ -636,10 +636,10 @@ mod reachability_tests {
                 kind: TerminatorKind::Switch {
                     value: Value::new_literal(IrLiteralValue::I32(0)),
                     ty: IrType::I32,
-                    default_label: String::from("default"),
+                    default_label: "default".into(),
                     cases: vec![
-                        (Value::new_literal(IrLiteralValue::I32(0)), String::from("case_0")),
-                        (Value::new_literal(IrLiteralValue::I32(1)), String::from("case_1")),
+                        (Value::new_literal(IrLiteralValue::I32(0)), "case_0".into()),
+                        (Value::new_literal(IrLiteralValue::I32(1)), "case_1".into()),
                     ],
                 },
                 debug_info: dummy_debug_info(),
@@ -707,7 +707,7 @@ mod reachability_tests {
             Terminator {
                 kind: TerminatorKind::IndirectBranch {
                     address: Value::new_literal(IrLiteralValue::I32(0)), // Computed address
-                    possible_labels: vec![String::from("target_1"), String::from("target_2")],
+                    possible_labels: vec!["target_1".into(), "target_2".into()],
                 },
                 debug_info: dummy_debug_info(),
             },
@@ -832,7 +832,7 @@ mod reachability_tests {
             Terminator {
                 kind: TerminatorKind::IndirectBranch {
                     address: target_value,
-                    possible_labels: vec!["target_a".to_string(), "target_b".to_string(), "target_c".to_string()],
+                    possible_labels: vec!["target_a".into(), "target_b".into(), "target_c".into()],
                 },
                 debug_info: dummy_debug_info(),
             },

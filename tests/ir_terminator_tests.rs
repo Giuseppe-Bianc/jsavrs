@@ -38,7 +38,7 @@ fn branch_terminator_edge_cases() {
     let term = Terminator::new(TerminatorKind::Branch { label: "".into() }, dummy_span());
 
     assert!(term.is_terminator());
-    assert_eq!(term.get_targets(), vec![""]);
+    assert_eq!(term.get_targets(), vec!["".into()]);
     assert_eq!(format!("{}", term), "br ");
 
     // Caratteri speciali
@@ -60,7 +60,7 @@ fn conditional_branch_edge_cases() {
     );
 
     assert!(term.is_terminator());
-    assert_eq!(term.get_targets(), vec!["shared", "shared"]);
+    assert_eq!(term.get_targets(), vec!["shared".into(), "shared".into()]);
     assert_eq!(format!("{}", term), "br true ? shared : shared");
 
     // Label vuote
@@ -83,14 +83,14 @@ fn switch_terminator_edge_cases() {
         TerminatorKind::Switch {
             value: create_i32_value(0),
             ty: IrType::I32,
-            default_label: "default".to_string(),
+            default_label: "default".into(),
             cases: Vec::new(),
         },
         dummy_span(),
     );
 
     assert!(term.is_terminator());
-    assert_eq!(term.get_targets(), vec!["default"]);
+    assert_eq!(term.get_targets(), vec!["default".into()]);
     assert_eq!(format!("{}", term), "switch 0i32 i32: , default default");
 
     // Single case
@@ -98,13 +98,13 @@ fn switch_terminator_edge_cases() {
         TerminatorKind::Switch {
             value: create_i32_value(42),
             ty: IrType::I32,
-            default_label: "default".to_string(),
-            cases: vec![(create_i32_value(1), "case1".to_string())],
+            default_label: "default".into(),
+            cases: vec![(create_i32_value(1), "case1".into())],
         },
         dummy_span(),
     );
 
-    assert_eq!(term.get_targets(), vec!["case1", "default"]);
+    assert_eq!(term.get_targets(), vec!["case1".into(), "default".into()]);
     assert_eq!(format!("{}", term), "switch 42i32 i32: 1i32 => case1, default default");
 
     // Valori estremi nei cases
@@ -112,10 +112,10 @@ fn switch_terminator_edge_cases() {
         TerminatorKind::Switch {
             value: create_i32_value(i32::MIN),
             ty: IrType::I32,
-            default_label: "default".to_string(),
+            default_label: "default".into(),
             cases: vec![
-                (create_i32_value(i32::MIN), "min".to_string()),
-                (create_i32_value(i32::MAX), "max".to_string()),
+                (create_i32_value(i32::MIN), "min".into()),
+                (create_i32_value(i32::MAX), "max".into()),
             ],
         },
         dummy_span(),
@@ -143,12 +143,12 @@ fn indirect_branch_edge_cases() {
     let term = Terminator::new(
         TerminatorKind::IndirectBranch {
             address: create_i32_value(0),
-            possible_labels: vec!["".to_string(), "label".to_string()],
+            possible_labels: vec!["".into(), "label".into()],
         },
         dummy_span(),
     );
 
-    assert_eq!(term.get_targets(), vec!["", "label"]);
+    assert_eq!(term.get_targets(), vec!["".into(), "label".into()]);
     assert_eq!(format!("{}", term), "ibr 0i32 [, label]");
 }
 
@@ -168,13 +168,13 @@ fn get_targets_edge_cases() {
         TerminatorKind::Switch {
             value: create_i32_value(1),
             ty: IrType::I32,
-            default_label: "target".to_string(),
-            cases: vec![(create_i32_value(1), "target".to_string()), (create_i32_value(2), "target".to_string())],
+            default_label: "target".into(),
+            cases: vec![(create_i32_value(1), "target".into()), (create_i32_value(2), "target".into())],
         },
         dummy_span(),
     );
 
-    assert_eq!(switch_term.get_targets(), vec!["target", "target", "target"]);
+    assert_eq!(switch_term.get_targets(), vec!["target".into(), "target".into(), "target".into()]);
 
     // ConditionalBranch con target vuoti
     let cond_term = Terminator::new(
@@ -186,7 +186,7 @@ fn get_targets_edge_cases() {
         dummy_span(),
     );
 
-    assert_eq!(cond_term.get_targets(), vec!["", ""]);
+    assert_eq!(cond_term.get_targets(), vec!["".into(), "".into()]);
 }
 
 #[allow(clippy::approx_constant)]

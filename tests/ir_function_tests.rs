@@ -119,10 +119,10 @@ fn test_ir_parameter() {
 fn test_terminator_targets() {
     let return_term =
         Terminator::new(TerminatorKind::Return { value: create_dummy_value(), ty: IrType::Void }, dummy_span());
-    assert_eq!(return_term.get_targets(), Vec::<String>::new());
+    assert_eq!(return_term.get_targets(), Vec::<Arc<str>>::new());
 
     let branch_term = Terminator::new(TerminatorKind::Branch { label: "target".into() }, dummy_span());
-    assert_eq!(branch_term.get_targets(), vec!["target"]);
+    assert_eq!(branch_term.get_targets(), vec!["target".into()]);
 
     let cond_term = Terminator::new(
         TerminatorKind::ConditionalBranch {
@@ -132,29 +132,29 @@ fn test_terminator_targets() {
         },
         dummy_span(),
     );
-    assert_eq!(cond_term.get_targets(), vec!["true", "false"]);
+    assert_eq!(cond_term.get_targets(), vec!["true".into(), "false".into()]);
 
     let switch_term = Terminator::new(
         TerminatorKind::Switch {
             value: create_dummy_value(),
             ty: IrType::I32,
-            default_label: "default".to_string(),
-            cases: vec![(create_dummy_value(), "case1".to_string()), (create_dummy_value(), "case2".to_string())],
+            default_label: "default".into(),
+            cases: vec![(create_dummy_value(), "case1".into()), (create_dummy_value(), "case2".into())],
         },
         dummy_span(),
     );
     let mut targets = switch_term.get_targets();
     targets.sort();
-    assert_eq!(targets, vec!["case1", "case2", "default"]);
+    assert_eq!(targets, vec!["case1".into(), "case2".into(), "default".into()]);
 
     let indirect_term = Terminator::new(
         TerminatorKind::IndirectBranch {
             address: create_dummy_value(),
-            possible_labels: vec!["l1".to_string(), "l2".to_string()],
+            possible_labels: vec!["l1".into(), "l2".into()],
         },
         dummy_span(),
     );
-    assert_eq!(indirect_term.get_targets(), vec!["l1", "l2"]);
+    assert_eq!(indirect_term.get_targets(), vec!["l1".into(), "l2".into()]);
 }
 
 #[test]

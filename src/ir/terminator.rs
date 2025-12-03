@@ -70,7 +70,7 @@ pub enum TerminatorKind {
         /// The address determining the jump destination.
         address: Value,
         /// A list of all possible target labels (for analysis or validation).
-        possible_labels: Vec<String>,
+        possible_labels: Vec<Arc<str>>,
     },
 
     /// A multi-way conditional branch, similar to a `switch` statement.
@@ -82,9 +82,9 @@ pub enum TerminatorKind {
         /// The type of the value (usually an integer or enum).
         ty: IrType,
         /// The label of the default block (executed when no case matches).
-        default_label: String,
+        default_label: Arc<str>,
         /// A list of case-value and target-label pairs.
-        cases: Vec<(Value, String)>,
+        cases: Vec<(Value, Arc<str>)>,
     },
 
     /// Marks code that should never be reached during normal execution.
@@ -111,11 +111,11 @@ impl Terminator {
     ///
     /// # Returns
     /// A vector of label strings representing all possible jump destinations.
-    pub fn get_targets(&self) -> Vec<String> {
+    pub fn get_targets(&self) -> Vec<Arc<str>> {
         match &self.kind {
-            TerminatorKind::Branch { label } => vec![label.clone().to_string()],
+            TerminatorKind::Branch { label } => vec![label.clone()],
             TerminatorKind::ConditionalBranch { true_label, false_label, .. } => {
-                vec![true_label.clone().to_string(), false_label.clone().to_string()]
+                vec![true_label.clone(), false_label.clone()]
             }
             TerminatorKind::Switch { cases, default_label, .. } => {
                 let mut targets = cases.iter().map(|(_, label)| label.clone()).collect::<Vec<_>>();
