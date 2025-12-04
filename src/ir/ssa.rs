@@ -34,13 +34,17 @@ pub struct SsaTransformer {
 impl SsaTransformer {
     /// Creates a new SSA transformer.
     pub fn new(temp_counter: Option<u64>) -> Self {
+        // Pre-allocate capacity based on typical function complexity
+        // Average function has ~10-20 variables and ~20-50 basic blocks
+        const ESTIMATED_VARIABLES: usize = 32;
+
         Self {
             dominance_info: DominanceInfo::new(),
             temp_counter: temp_counter.unwrap_or(1000000),
-            var_defs: HashMap::new(),
-            phi_variables: HashSet::new(),
-            value_stack: HashMap::new(),
-            variable_types: HashMap::new(),
+            var_defs: HashMap::with_capacity(ESTIMATED_VARIABLES),
+            phi_variables: HashSet::with_capacity(ESTIMATED_VARIABLES),
+            value_stack: HashMap::with_capacity(ESTIMATED_VARIABLES),
+            variable_types: HashMap::with_capacity(ESTIMATED_VARIABLES),
             format_buffer: String::with_capacity(32),
         }
     }
@@ -203,7 +207,8 @@ impl SsaTransformer {
 
             // Worklist algorithm for placing phi-functions
             let mut worklist = def_blocks.clone();
-            let mut added_phis = HashSet::new();
+            // Pre-allocate capacity based on definition blocks count (dominance frontier typically ≤ 2x def blocks)
+            let mut added_phis = HashSet::with_capacity(def_blocks.len() << 1);
 
             while let Some(block) = worklist.iter().next().cloned() {
                 worklist.remove(&block);
@@ -490,7 +495,10 @@ impl SsaTransformer {
     /// Verifies that the function is in proper SSA form.
     /// In SSA form, each temporary ID should be unique across the entire function.
     pub fn verify_ssa_form(&self, func: &Function) -> Result<(), String> {
-        let mut temp_ids = HashSet::new();
+        // Estimate: typical function has 50-200 instructions, pre-allocate accordingly
+        let block_count = func.cfg.blocks().count();
+        let estimated_instructions = block_count.saturating_mul(10).max(64);
+        let mut temp_ids = HashSet::with_capacity(estimated_instructions);
 
         // Collect all temporary IDs in the function
         for block in func.cfg.blocks() {

@@ -34,24 +34,36 @@ use super::{
 };
 use crate::ir::generator::IrGenerator;
 use crate::location::source_span::SourceSpan;
+use once_cell::sync::Lazy;
+
+// Global singleton PromotionMatrix - initialized once and reused across all operations
+// This eliminates ~4.5MB of allocations for repeated matrix initialization
+static GLOBAL_PROMOTION_MATRIX: Lazy<PromotionMatrix> = Lazy::new(PromotionMatrix::new);
 
 #[derive(Debug, Clone, Default)]
-pub struct TypePromotionEngine {
-    pub promotion_matrix: PromotionMatrix,
-}
+pub struct TypePromotionEngine;
 
 impl TypePromotionEngine {
+    /// Creates a new TypePromotionEngine that uses the global singleton PromotionMatrix
     pub fn new() -> Self {
-        TypePromotionEngine { promotion_matrix: PromotionMatrix::new() }
+        TypePromotionEngine
+    }
+
+    /// Returns a reference to the global promotion matrix singleton
+    fn get_promotion_matrix(&self) -> &PromotionMatrix {
+        &GLOBAL_PROMOTION_MATRIX
     }
 
     /// Analyzes binary operation for proper type promotion
     pub fn analyze_binary_promotion(
         &self, left_type: &IrType, right_type: &IrType, operation: IrBinaryOp, span: SourceSpan,
     ) -> PromotionResult {
+        // Use global singleton promotion matrix
+        let promotion_matrix = self.get_promotion_matrix();
+
         // Compute the target result type based on the promotion matrix
         let result_type =
-            self.promotion_matrix.compute_common_type(left_type, right_type).unwrap_or_else(|| left_type.clone()); // fallback to left type if no promotion found
+            promotion_matrix.compute_common_type(left_type, right_type).unwrap_or_else(|| left_type.clone()); // fallback to left type if no promotion found
 
         let mut warnings = Vec::new();
         let mut left_cast = None;
@@ -59,7 +71,7 @@ impl TypePromotionEngine {
 
         // Check if left operand needs casting
         if left_type != &result_type
-            && let Some(rule) = self.promotion_matrix.get_promotion_rule(left_type, &result_type)
+            && let Some(rule) = promotion_matrix.get_promotion_rule(left_type, &result_type)
             && let PromotionRule::Direct { cast_kind, may_lose_precision, may_overflow, .. } = rule
         {
             left_cast = Some(TypePromotion {
@@ -90,7 +102,7 @@ impl TypePromotionEngine {
 
         // Check if right operand needs casting
         if right_type != &result_type
-            && let Some(rule) = self.promotion_matrix.get_promotion_rule(right_type, &result_type)
+            && let Some(rule) = promotion_matrix.get_promotion_rule(right_type, &result_type)
             && let PromotionRule::Direct { cast_kind, may_lose_precision, may_overflow, .. } = rule
         {
             right_cast = Some(TypePromotion {
