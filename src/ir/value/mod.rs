@@ -9,6 +9,7 @@ pub use self::{constant::IrConstantValue, debug_info::ValueDebugInfo, kind::Valu
 use super::types::{IrType, ScopeId};
 use crate::location::source_span::SourceSpan;
 use std::fmt;
+use std::hash::{Hash, Hasher};
 use std::sync::Arc;
 use uuid::Uuid;
 
@@ -34,13 +35,47 @@ impl fmt::Display for ValueId {
     }
 }
 
-#[derive(Debug, Clone, PartialEq, Eq, Hash)]
+/// IR value representation.
+///
+/// # Equality and Hash Implementation
+///
+/// Both equality and hash are based on semantic content (`kind` and `ty`) only.
+/// Non-semantic fields (`id`, `debug_info`, `scope`) are excluded to ensure
+/// that semantically identical values are considered equal and hash identically.
+///
+/// This means two `Value` instances with the same `kind` and `ty` will be equal
+/// and hash identically, even if they have different UUIDs or debug information.
+///
+/// This design is critical for correct behavior in hash-based collections
+/// (HashMap, HashSet) used throughout the compiler for def-use chains, SSA,
+/// and optimization passes.
+#[derive(Debug, Clone)]
 pub struct Value {
     pub id: ValueId,
     pub kind: ValueKind,
     pub ty: IrType,
     pub debug_info: Option<ValueDebugInfo>,
     pub scope: Option<ScopeId>,
+}
+
+impl PartialEq for Value {
+    #[inline]
+    fn eq(&self, other: &Self) -> bool {
+        // Compare only semantic fields
+        self.kind == other.kind && self.ty == other.ty
+    }
+}
+
+impl Eq for Value {}
+
+impl Hash for Value {
+    #[inline]
+    fn hash<H: Hasher>(&self, state: &mut H) {
+        // Hash only semantic fields for correctness with PartialEq/Eq
+        // Exclude id, debug_info, and scope as they don't affect value semantics
+        self.kind.hash(state);
+        self.ty.hash(state);
+    }
 }
 
 impl Value {

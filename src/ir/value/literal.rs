@@ -22,24 +22,75 @@ pub enum IrLiteralValue {
 // We use bitwise equality for floats to ensure Hash consistency
 impl Eq for IrLiteralValue {}
 
-// Manual Hash implementation to handle f32/f64
-// We hash the bit representation to be consistent with our Eq impl
+/// Optimized Hash implementation for IR literal values.
+///
+/// # Performance Optimizations
+///
+/// 1. Discriminant hashing is inlined for common integer cases
+/// 2. Uses `write_*` methods for primitive types (faster than generic `hash()`)
+/// 3. Float values use bit representation for consistency with Eq
+///
+/// # Correctness
+///
+/// This implementation ensures that if two literals are equal according to
+/// PartialEq/Eq, they produce identical hash values. For floats, we hash
+/// the bit representation rather than the numeric value, which means:
+/// - NaN values with different bit patterns hash differently
+/// - -0.0 and +0.0 hash differently (they also compare unequal in our Eq impl)
 impl std::hash::Hash for IrLiteralValue {
+    #[inline]
     fn hash<H: std::hash::Hasher>(&self, state: &mut H) {
-        core::mem::discriminant(self).hash(state);
+        // Hash discriminant first for type differentiation
+        // Using match allows compiler to optimize discriminant check
         match self {
-            IrLiteralValue::I8(v) => v.hash(state),
-            IrLiteralValue::I16(v) => v.hash(state),
-            IrLiteralValue::I32(v) => v.hash(state),
-            IrLiteralValue::I64(v) => v.hash(state),
-            IrLiteralValue::U8(v) => v.hash(state),
-            IrLiteralValue::U16(v) => v.hash(state),
-            IrLiteralValue::U32(v) => v.hash(state),
-            IrLiteralValue::U64(v) => v.hash(state),
-            IrLiteralValue::F32(v) => v.to_bits().hash(state),
-            IrLiteralValue::F64(v) => v.to_bits().hash(state),
-            IrLiteralValue::Bool(v) => v.hash(state),
-            IrLiteralValue::Char(v) => v.hash(state),
+            IrLiteralValue::I8(v) => {
+                state.write_u8(0); // discriminant
+                state.write_i8(*v);
+            }
+            IrLiteralValue::I16(v) => {
+                state.write_u8(1);
+                state.write_i16(*v);
+            }
+            IrLiteralValue::I32(v) => {
+                state.write_u8(2);
+                state.write_i32(*v);
+            }
+            IrLiteralValue::I64(v) => {
+                state.write_u8(3);
+                state.write_i64(*v);
+            }
+            IrLiteralValue::U8(v) => {
+                state.write_u8(4);
+                state.write_u8(*v);
+            }
+            IrLiteralValue::U16(v) => {
+                state.write_u8(5);
+                state.write_u16(*v);
+            }
+            IrLiteralValue::U32(v) => {
+                state.write_u8(6);
+                state.write_u32(*v);
+            }
+            IrLiteralValue::U64(v) => {
+                state.write_u8(7);
+                state.write_u64(*v);
+            }
+            IrLiteralValue::F32(v) => {
+                state.write_u8(8);
+                state.write_u32(v.to_bits());
+            }
+            IrLiteralValue::F64(v) => {
+                state.write_u8(9);
+                state.write_u64(v.to_bits());
+            }
+            IrLiteralValue::Bool(v) => {
+                state.write_u8(10);
+                state.write_u8(*v as u8);
+            }
+            IrLiteralValue::Char(v) => {
+                state.write_u8(11);
+                state.write_u32(*v as u32);
+            }
         }
     }
 }

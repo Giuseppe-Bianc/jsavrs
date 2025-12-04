@@ -1,13 +1,43 @@
 // src/ir/value/constant.rs
 use super::Value;
 use std::fmt;
+use std::hash::{Hash, Hasher};
 use std::sync::Arc;
 
-#[derive(Debug, Clone, PartialEq, Eq, Hash)]
+/// IR constant value (strings, arrays, structs)
+///
+/// # Hash Implementation
+///
+/// Manual implementation for better control:
+/// - Discriminant written explicitly for performance
+/// - Vec<Value> hashed element-by-element (already optimized)
+/// - Arc<str> hashed by content for correctness
+#[derive(Debug, Clone, PartialEq, Eq)]
 pub enum IrConstantValue {
     String { string: Arc<str> },
     Array { elements: Vec<Value> },
     Struct { name: Arc<str>, elements: Vec<Value> },
+}
+
+impl Hash for IrConstantValue {
+    #[inline]
+    fn hash<H: Hasher>(&self, state: &mut H) {
+        match self {
+            IrConstantValue::String { string } => {
+                state.write_u8(0);
+                string.as_ref().hash(state);
+            }
+            IrConstantValue::Array { elements } => {
+                state.write_u8(1);
+                elements.hash(state);
+            }
+            IrConstantValue::Struct { name, elements } => {
+                state.write_u8(2);
+                name.as_ref().hash(state);
+                elements.hash(state);
+            }
+        }
+    }
 }
 
 impl fmt::Display for IrConstantValue {
