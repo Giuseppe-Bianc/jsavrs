@@ -35,20 +35,6 @@ impl fmt::Display for ValueId {
     }
 }
 
-/// IR value representation.
-///
-/// # Equality and Hash Implementation
-///
-/// Both equality and hash are based on semantic content (`kind` and `ty`) only.
-/// Non-semantic fields (`id`, `debug_info`, `scope`) are excluded to ensure
-/// that semantically identical values are considered equal and hash identically.
-///
-/// This means two `Value` instances with the same `kind` and `ty` will be equal
-/// and hash identically, even if they have different UUIDs or debug information.
-///
-/// This design is critical for correct behavior in hash-based collections
-/// (HashMap, HashSet) used throughout the compiler for def-use chains, SSA,
-/// and optimization passes.
 #[derive(Debug, Clone)]
 pub struct Value {
     pub id: ValueId,

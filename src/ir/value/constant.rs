@@ -4,14 +4,6 @@ use std::fmt;
 use std::hash::{Hash, Hasher};
 use std::sync::Arc;
 
-/// IR constant value (strings, arrays, structs)
-///
-/// # Hash Implementation
-///
-/// Manual implementation for better control:
-/// - Discriminant written explicitly for performance
-/// - Vec<Value> hashed element-by-element (already optimized)
-/// - Arc<str> hashed by content for correctness
 #[derive(Debug, Clone, PartialEq, Eq)]
 pub enum IrConstantValue {
     String { string: Arc<str> },

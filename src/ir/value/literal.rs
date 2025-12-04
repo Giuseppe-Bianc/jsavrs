@@ -18,25 +18,8 @@ pub enum IrLiteralValue {
     Char(char),
 }
 
-// Manual Eq implementation to handle f32/f64 (which don't implement Eq)
-// We use bitwise equality for floats to ensure Hash consistency
 impl Eq for IrLiteralValue {}
 
-/// Optimized Hash implementation for IR literal values.
-///
-/// # Performance Optimizations
-///
-/// 1. Discriminant hashing is inlined for common integer cases
-/// 2. Uses `write_*` methods for primitive types (faster than generic `hash()`)
-/// 3. Float values use bit representation for consistency with Eq
-///
-/// # Correctness
-///
-/// This implementation ensures that if two literals are equal according to
-/// PartialEq/Eq, they produce identical hash values. For floats, we hash
-/// the bit representation rather than the numeric value, which means:
-/// - NaN values with different bit patterns hash differently
-/// - -0.0 and +0.0 hash differently (they also compare unequal in our Eq impl)
 impl std::hash::Hash for IrLiteralValue {
     #[inline]
     fn hash<H: std::hash::Hasher>(&self, state: &mut H) {
