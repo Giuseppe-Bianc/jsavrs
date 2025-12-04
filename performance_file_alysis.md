@@ -99,11 +99,63 @@ For each significant bottleneck identified:
 
 ### Bottleneck [N]: [Descriptive Name]
 - **Location**: Specify the exact component, function, or code path
+  - File path and line numbers
+  - Module or service name
+  - Specific function/method identifiers
+  - Related dependencies or libraries involved
+  - Stack trace context if applicable
+
 - **Type**: Categorize (CPU-bound, Memory-bound, I/O-bound, Concurrency, Algorithmic)
+  - Primary bottleneck classification
+  - Secondary contributing factors
+  - Resource contention details
+  - Blocking vs. non-blocking behavior
+  - Synchronous vs. asynchronous patterns
+
 - **Metrics**: Quantify the impact with specific measurements from the data
+  - Execution time (average, p50, p95, p99)
+  - CPU utilization percentage
+  - Memory consumption (allocated, peak, leaked)
+  - Throughput (requests/operations per second)
+  - Latency measurements (response time, wait time)
+  - Error rates or failure percentages
+  - Resource saturation levels
+  - Frequency of occurrence
+  - Percentage of total execution time consumed
+
 - **Root Cause**: Explain why this bottleneck exists, referencing specific evidence from the performance files
+  - Direct cause from profiling data
+  - Design or architectural issues
+  - Inefficient algorithm or data structure choice
+  - Missing optimizations (caching, indexing, batching)
+  - External dependencies or third-party limitations
+  - Configuration or tuning problems
+  - Code-level inefficiencies (loops, recursion, unnecessary operations)
+  - Scalability limitations
+  - Historical context or technical debt
+
 - **Effects**: Detail the downstream impacts on system performance and user experience
+  - User-facing latency increases
+  - Degraded throughput or capacity
+  - Cascading failures or timeouts
+  - Resource exhaustion in other components
+  - Increased infrastructure costs
+  - Reduced scalability headroom
+  - Impact on SLAs or performance targets
+  - User experience degradation (perceived slowness, errors)
+  - Effects under different load conditions
+
 - **Severity**: Rate as Critical, High, Medium, or Low with justification
+  - Severity rating with clear reasoning
+  - Business impact assessment
+  - Frequency vs. impact trade-off analysis
+  - Current vs. projected load considerations
+  - Comparison to performance budgets or SLOs
+  - Risk of system failure or outage
+  - User impact scope (% of users affected)
+  - Urgency for resolution
+  - Dependencies blocking other improvements
+
 
 ## Performance Insights
 - Patterns and trends observed across bottlenecks

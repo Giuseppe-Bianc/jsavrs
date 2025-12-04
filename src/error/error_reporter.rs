@@ -36,7 +36,7 @@ impl ErrorReporter {
                     self.format_error("IR GEN", &message, &span, help.as_deref())
                 }
                 CompileError::AsmGeneratorError { message } => format_simple_error("ASM GEN", &message),
-                CompileError::IoError(e) => format_simple_error("I/O", format!("{e}").as_str()),
+                CompileError::IoError(e) => format_simple_error("I/O", &e),
             })
             .collect()
     }
@@ -73,7 +73,7 @@ impl ErrorReporter {
             let underline = if start_line == end_line {
                 // Single line error
                 let length = (end_col - start_col).max(1);
-                format!("{space:>start$}{marker}", space = "", start = start_offset, marker = "^".repeat(length))
+                format!("{:>width$}{}", "", "^".repeat(length), width = start_offset)
             } else {
                 format!("{:>width$}^", "", width = start_offset)
             };

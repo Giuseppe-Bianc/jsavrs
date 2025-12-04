@@ -168,7 +168,7 @@ impl Iterator for Lexer<'_> {
 /// assert!(errors.is_empty());
 /// ```
 pub fn lexer_tokenize_with_errors(lexer: &mut Lexer) -> (Vec<Token>, Vec<CompileError>) {
-    let estimated_tokens = lexer.source_len / 18;
+    let estimated_tokens = lexer.source_len / 8;
     let mut tokens = Vec::with_capacity(estimated_tokens);
     let mut errors = Vec::new();
 
