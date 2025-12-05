@@ -89,6 +89,15 @@ Integration with the existing DCE phase creates a powerful optimization sequence
 - Profile-guided optimization or speculation
 - Generation of new LLVM-style intrinsics or target-specific instructions<>"
 
+## Clarifications
+
+### Session 2025-12-05
+
+- Q: When integer overflow is detected during constant evaluation (e.g., `I8::MAX + 1`), what should the optimizer do? → A: Mark result as overdefined (Bottom), no warning - Conservative and quiet for production compiler
+- Q: How should the optimizer coordinate with the Dead Code Elimination (DCE) phase when unreachable code is identified? → A: SCCP marks unreachable blocks; DCE removes them in subsequent pass - Clean separation, standard pipeline approach
+- Q: What information should the verbose diagnostic output include when enabled? → A: Lattice value transitions, worklist operations, block reachability changes - Comprehensive debugging information
+- Q: When the lattice meet operation is computed for phi nodes, how should the initial lattice value be set for SSA values at function entry (parameters and globals)? → A: Start parameters/globals at Top (overdefined), locals at Bottom - Conservative and sound
+
 ## User Scenarios & Testing *(mandatory)*
 
 ### User Story 1 - Basic Constant Propagation and Folding (Priority: P1)
@@ -152,7 +161,7 @@ A compiler developer compiles source code containing constant expressions with v
 
 **Acceptance Scenarios**:
 
-1. **Given** constant integer arithmetic that would overflow the type's range (e.g., `I8::MAX + 1`), **When** the optimizer runs, **Then** the result is marked as overdefined (Bottom in lattice) rather than producing an incorrect wrapped value, maintaining conservative soundness
+1. **Given** constant integer arithmetic that would overflow the type's range (e.g., `I8::MAX + 1`), **When** the optimizer runs, **Then** the result is marked as overdefined (Bottom in lattice) without emitting a warning, maintaining conservative soundness while avoiding diagnostic noise
 2. **Given** constant floating-point operations involving NaN operands, **When** the optimizer runs, **Then** the result correctly propagates NaN according to IEEE 754 semantics
 3. **Given** constant division by zero in integer arithmetic, **When** the optimizer runs, **Then** the result is marked as overdefined and a diagnostic warning is emitted
 4. **Given** constant boolean logic operations (AND, OR, NOT), **When** the optimizer runs, **Then** the operations are evaluated correctly following boolean algebra rules
@@ -180,13 +189,13 @@ A compiler developer compiles source code containing constant expressions with v
 
 ### Functional Requirements
 
-- **FR-001**: The optimizer MUST implement a three-level lattice system (Bottom ⊥, Constant, Top ⊤) to track the compile-time value state of every SSA value in the function, with Bottom representing unreachable/uninitialized values, Constant representing proven compile-time constants, and Top representing overdefined runtime-varying values.
+- **FR-001**: The optimizer MUST implement a three-level lattice system (Bottom ⊥, Constant, Top ⊤) to track the compile-time value state of every SSA value in the function, with Bottom representing unreachable/uninitialized values, Constant representing proven compile-time constants, and Top representing overdefined runtime-varying values. Function parameters and global values MUST be initialized to Top (overdefined) while local SSA temporaries MUST start at Bottom (uninitialized).
 
 - **FR-002**: The optimizer MUST maintain two distinct worklists during analysis: an SSA Edge Worklist tracking data flow dependencies when value states change, and a CFG Edge Worklist tracking control flow edges that become executable.
 
 - **FR-003**: The optimizer MUST correctly compute the lattice meet operation for phi nodes by considering only incoming values from executable predecessor blocks, where the meet of two equal constants is that constant, the meet of two different constants is Bottom (overdefined), and the meet with Top preserves the other operand.
 
-- **FR-004**: The optimizer MUST evaluate binary operations (addition, subtraction, multiplication, division, modulo, bitwise operations, comparisons) on constant operands at compile time, producing constant results when both operands are constant and properly handling error conditions (division by zero, overflow).
+- **FR-004**: The optimizer MUST evaluate binary operations (addition, subtraction, multiplication, division, modulo, bitwise operations, comparisons) on constant operands at compile time, producing constant results when both operands are constant and properly handling error conditions. Integer overflow MUST mark the result as overdefined (Bottom) without emitting warnings. Division by zero MUST mark the result as overdefined and emit a diagnostic warning.
 
 - **FR-005**: The optimizer MUST evaluate unary operations (negation, bitwise NOT, logical NOT, type casts) on constant operands at compile time, producing constant results when the operand is constant.
 
@@ -204,17 +213,17 @@ A compiler developer compiles source code containing constant expressions with v
 
 - **FR-012**: The optimizer MUST integrate with the existing Phase trait by implementing the `run()` method that accepts a module and performs the complete SCCP analysis and IR transformation.
 
-- **FR-013**: The optimizer MUST coordinate with the Dead Code Elimination (DCE) phase by either marking dead instructions for DCE to remove or directly removing them based on configuration.
+- **FR-013**: The optimizer MUST coordinate with the Dead Code Elimination (DCE) phase by marking unreachable basic blocks and dead instructions during SCCP analysis, then allowing DCE to remove them in a subsequent optimization pass. SCCP MUST NOT directly remove unreachable code; it only marks blocks as unreachable.
 
 - **FR-014**: The optimizer MUST use efficient sparse data structures (HashMap for lattice values, HashSet for executable edges) and process only reachable code and live values to achieve performance characteristics suitable for large functions.
 
 - **FR-015**: The optimizer MUST converge to a fixed point in a bounded number of iterations, with a configurable maximum iteration limit (default 100) to prevent infinite loops on pathological input.
 
-- **FR-016**: The optimizer MUST provide optional verbose diagnostic output controlled by configuration flags, including lattice state transitions and algorithm invariants for debugging purposes.
+- **FR-016**: The optimizer MUST provide optional verbose diagnostic output controlled by configuration flags. When enabled, verbose output MUST include: lattice value transitions for SSA values (Bottom→Constant→Top changes), worklist operations (additions and processing of SSA and CFG edges), and block reachability changes (blocks marked as executable or unreachable).
 
 - **FR-017**: The optimizer MUST track optimization statistics including the number of constants propagated, instructions simplified, branches resolved, and blocks marked unreachable.
 
-- **FR-018**: The optimizer MUST emit diagnostic warnings when detecting numerical edge cases such as overflow, division by zero, or NaN propagation during constant evaluation.
+- **FR-018**: The optimizer MUST emit diagnostic warnings when detecting division by zero during constant evaluation. Integer overflow MUST be handled conservatively by marking results as overdefined without warnings. NaN propagation in floating-point arithmetic MUST follow IEEE 754 semantics without emitting warnings.
 
 - **FR-019**: The optimizer MUST implement a modular architecture with clearly separated components for lattice value management, constant evaluation logic, propagation algorithm, IR rewriting, and orchestration, with no single component function exceeding 150 lines.
 
