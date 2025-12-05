@@ -47,7 +47,7 @@ fn test_value_hash_excludes_scope() {
 #[test]
 fn test_value_hash_consistency_with_eq() {
     // This is the fundamental requirement: if a == b, then hash(a) == hash(b)
-    let values = vec![
+    let values = [
         Value::new_literal(IrLiteralValue::I32(42)),
         Value::new_literal(IrLiteralValue::I32(42)),
         Value::new_local(Arc::from("x"), IrType::I32),
