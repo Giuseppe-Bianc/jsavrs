@@ -93,10 +93,15 @@ Integration with the existing DCE phase creates a powerful optimization sequence
 
 ### Session 2025-12-05
 
-- Q: When integer overflow is detected during constant evaluation (e.g., `I8::MAX + 1`), what should the optimizer do? → A: Mark result as overdefined (Bottom), no warning - Conservative and quiet for production compiler
+- Q: When integer overflow is detected during constant evaluation (e.g., `I8::MAX + 1`), what should the optimizer do? → A: Mark result as overdefined (Top), no warning - Conservative and quiet for production compiler
 - Q: How should the optimizer coordinate with the Dead Code Elimination (DCE) phase when unreachable code is identified? → A: SCCP marks unreachable blocks; DCE removes them in subsequent pass - Clean separation, standard pipeline approach
 - Q: What information should the verbose diagnostic output include when enabled? → A: Lattice value transitions, worklist operations, block reachability changes - Comprehensive debugging information
 - Q: When the lattice meet operation is computed for phi nodes, how should the initial lattice value be set for SSA values at function entry (parameters and globals)? → A: Start parameters/globals at Top (overdefined), locals at Bottom - Conservative and sound
+
+### Session 2025-12-06
+
+- Q: Lattice meet operation semantics - The specification contains a critical contradiction about the lattice meet operation. Should the meet of two different constants yield Bottom or Top? → A: Fix FR-003 and clarifications: meet(Constant(5), Constant(7)) = Top (overdefined), and overflow → Top
+- Q: Unreachable block marking mechanism - FR-013 states SCCP marks unreachable blocks for DCE but doesn't specify how. What mechanism should be used? → A: Maintain ExecutableEdgeSet (HashSet<CFGEdge>) - blocks with no executable incoming edges are implicitly unreachable (already designed in plan.md)
 
 ## User Scenarios & Testing *(mandatory)*
 
@@ -161,7 +166,7 @@ A compiler developer compiles source code containing constant expressions with v
 
 **Acceptance Scenarios**:
 
-1. **Given** constant integer arithmetic that would overflow the type's range (e.g., `I8::MAX + 1`), **When** the optimizer runs, **Then** the result is marked as overdefined (Bottom in lattice) without emitting a warning, maintaining conservative soundness while avoiding diagnostic noise
+1. **Given** constant integer arithmetic that would overflow the type's range (e.g., `I8::MAX + 1`), **When** the optimizer runs, **Then** the result is marked as overdefined (Top in lattice) without emitting a warning, maintaining conservative soundness while avoiding diagnostic noise
 2. **Given** constant floating-point operations involving NaN operands, **When** the optimizer runs, **Then** the result correctly propagates NaN according to IEEE 754 semantics
 3. **Given** constant division by zero in integer arithmetic, **When** the optimizer runs, **Then** the result is marked as overdefined and a diagnostic warning is emitted
 4. **Given** constant boolean logic operations (AND, OR, NOT), **When** the optimizer runs, **Then** the operations are evaluated correctly following boolean algebra rules
@@ -193,9 +198,9 @@ A compiler developer compiles source code containing constant expressions with v
 
 - **FR-002**: The optimizer MUST maintain two distinct worklists during analysis: an SSA Edge Worklist tracking data flow dependencies when value states change, and a CFG Edge Worklist tracking control flow edges that become executable.
 
-- **FR-003**: The optimizer MUST correctly compute the lattice meet operation for phi nodes by considering only incoming values from executable predecessor blocks, where the meet of two equal constants is that constant, the meet of two different constants is Bottom (overdefined), and the meet with Top preserves the other operand.
+- **FR-003**: The optimizer MUST correctly compute the lattice meet operation for phi nodes by considering only incoming values from executable predecessor blocks, where the meet of two equal constants is that constant, the meet of two different constants is Top (overdefined), and the meet with Top always yields Top.
 
-- **FR-004**: The optimizer MUST evaluate binary operations (addition, subtraction, multiplication, division, modulo, bitwise operations, comparisons) on constant operands at compile time, producing constant results when both operands are constant and properly handling error conditions. Integer overflow MUST mark the result as overdefined (Bottom) without emitting warnings. Division by zero MUST mark the result as overdefined and emit a diagnostic warning.
+- **FR-004**: The optimizer MUST evaluate binary operations (addition, subtraction, multiplication, division, modulo, bitwise operations, comparisons) on constant operands at compile time, producing constant results when both operands are constant and properly handling error conditions. Integer overflow MUST mark the result as overdefined (Top) without emitting warnings. Division by zero MUST mark the result as overdefined (Top) and emit a diagnostic warning.
 
 - **FR-005**: The optimizer MUST evaluate unary operations (negation, bitwise NOT, logical NOT, type casts) on constant operands at compile time, producing constant results when the operand is constant.
 
@@ -213,7 +218,7 @@ A compiler developer compiles source code containing constant expressions with v
 
 - **FR-012**: The optimizer MUST integrate with the existing Phase trait by implementing the `run()` method that accepts a module and performs the complete SCCP analysis and IR transformation.
 
-- **FR-013**: The optimizer MUST coordinate with the Dead Code Elimination (DCE) phase by marking unreachable basic blocks and dead instructions during SCCP analysis, then allowing DCE to remove them in a subsequent optimization pass. SCCP MUST NOT directly remove unreachable code; it only marks blocks as unreachable.
+- **FR-013**: The optimizer MUST coordinate with the Dead Code Elimination (DCE) phase by maintaining an ExecutableEdgeSet (HashSet<CFGEdge>) during SCCP analysis. Basic blocks with no executable incoming CFG edges are implicitly unreachable. DCE queries the ExecutableEdgeSet in a subsequent optimization pass to identify and remove unreachable blocks. SCCP MUST NOT directly remove unreachable code; it only marks blocks as unreachable through the absence of executable incoming edges.
 
 - **FR-014**: The optimizer MUST use efficient sparse data structures (HashMap for lattice values, HashSet for executable edges) and process only reachable code and live values to achieve performance characteristics suitable for large functions.
 
