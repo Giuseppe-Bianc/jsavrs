@@ -2,6 +2,7 @@
 use criterion::measurement::WallTime;
 use criterion::{BenchmarkGroup, BenchmarkId, Criterion, Throughput, criterion_group, criterion_main};
 use jsavrs::ir::generator::IrGenerator;
+use jsavrs::ir::optimizer::constant_folding::optimizer::{ConstantFoldingOptimizer, SCCPConfig};
 use jsavrs::ir::optimizer::{DeadCodeElimination, Phase};
 use jsavrs::lexer::{Lexer, lexer_tokenize_with_errors};
 use jsavrs::parser::jsav_parser::JsavParser;
@@ -395,6 +396,133 @@ pub fn benchmark_dce_worst_case(c: &mut Criterion) {
     dce_group.finish();
 }
 
+/// Helper to compile source code to IR module
+fn compile_to_ir(source: &str) -> jsavrs::ir::Module {
+    let mut lexer = Lexer::new("bench.vn", source);
+    let (tokens, _lex_errors) = jsavrs::lexer::lexer_tokenize_with_errors(&mut lexer);
+    let parser = JsavParser::new(&tokens);
+    let (ast, _parse_errors) = parser.parse();
+    let mut generator = IrGenerator::new();
+    let (module, _ir_errors) = generator.generate(ast, "bench.vn");
+    module
+}
+
+/// Generate source with constant arithmetic chain
+fn generate_constant_chain_source(num_ops: usize) -> String {
+    let mut source = String::from("fun test_func(): i32 {\n");
+    source.push_str("  var x: i32 = 1;\n");
+
+    for i in 0..num_ops {
+        source.push_str(&format!("  x = x + {};\n", i + 1));
+    }
+
+    source.push_str("  return x;\n}\n");
+    source
+}
+
+/// Generate source with constant conditions
+fn generate_constant_branch_source(num_branches: usize) -> String {
+    let mut source = String::from("fun test_branching(): i32 {\n");
+    source.push_str("  var result: i32 = 0;\n");
+
+    for i in 0..num_branches {
+        source.push_str(&format!("  if true {{\n    result = result + {};\n  }}\n", i + 1));
+    }
+
+    source.push_str("  return result;\n}\n");
+    source
+}
+
+/// Benchmark convergence speed on different function sizes (T112-T113)
+pub fn benchmark_convergence_speed(c: &mut Criterion) {
+    let mut group = c.benchmark_group("sccp-convergence");
+    configure_benchmark_group(&mut group, 3, 10);
+
+    // Test sizes: small (10 ops), medium (100 ops), large (500 ops) - T113
+    let sizes = vec![10, 100, 500];
+
+    for size in sizes {
+        let source = generate_constant_chain_source(size);
+        let module = compile_to_ir(&source);
+
+        group.throughput(Throughput::Elements(size as u64));
+        group.bench_with_input(BenchmarkId::new("constant_chain", size), &module, |b, module| {
+            b.iter(|| {
+                let mut optimizer =
+                    ConstantFoldingOptimizer::with_config(SCCPConfig { verbose: false, max_iterations: 100 });
+                let mut test_module = module.clone();
+                black_box(optimizer.optimize_function(&mut test_module.functions[0]))
+            });
+        });
+    }
+
+    group.finish();
+}
+
+/// Benchmark iterations to convergence (T114)
+pub fn benchmark_iterations_to_convergence(c: &mut Criterion) {
+    let mut group = c.benchmark_group("sccp-iterations");
+    configure_benchmark_group(&mut group, 2, 8);
+
+    let test_cases = vec![
+        ("simple_constants", generate_constant_chain_source(10)),
+        ("medium_constants", generate_constant_chain_source(50)),
+        ("simple_branches", generate_constant_branch_source(5)),
+        ("medium_branches", generate_constant_branch_source(20)),
+    ];
+
+    for (name, source) in test_cases {
+        let module = compile_to_ir(&source);
+
+        group.bench_function(name, |b| {
+            b.iter(|| {
+                let mut optimizer =
+                    ConstantFoldingOptimizer::with_config(SCCPConfig { verbose: false, max_iterations: 100 });
+                let mut test_module = module.clone();
+                black_box(optimizer.optimize_function(&mut test_module.functions[0]))
+            });
+        });
+    }
+
+    group.finish();
+}
+
+/// Benchmark SCCP with realistic code patterns (T112)
+pub fn benchmark_realistic_patterns(c: &mut Criterion) {
+    let mut group = c.benchmark_group("sccp-realistic");
+    configure_benchmark_group(&mut group, 2, 8);
+
+    // Constant folding opportunities
+    let constant_folding_source = r#"
+        fun compute(): i32 {
+            var a: i32 = 10 + 20;
+            var b: i32 = a * 2;
+            var c: i32 = b - 15;
+            if c > 30 {
+                return c + 10;
+            }
+            return c;
+        }
+    "#;
+
+    let test_cases = vec![("constant_folding", constant_folding_source)];
+
+    for (name, source) in test_cases {
+        let module = compile_to_ir(source);
+
+        group.bench_function(name, |b| {
+            b.iter(|| {
+                let mut optimizer =
+                    ConstantFoldingOptimizer::with_config(SCCPConfig { verbose: false, max_iterations: 100 });
+                let mut test_module = module.clone();
+                black_box(optimizer.optimize_function(&mut test_module.functions[0]))
+            });
+        });
+    }
+
+    group.finish();
+}
+
 criterion_group!(
     benches,
     benchmark_lexer,
@@ -407,6 +535,9 @@ criterion_group!(
     benchmark_dce_medium,
     benchmark_dce_large,
     benchmark_dce_module,
-    benchmark_dce_worst_case
+    benchmark_dce_worst_case,
+    benchmark_convergence_speed,
+    benchmark_iterations_to_convergence,
+    benchmark_realistic_patterns
 );
 criterion_main!(benches);
