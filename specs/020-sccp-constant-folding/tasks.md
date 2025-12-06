@@ -30,9 +30,9 @@
 
 **Purpose**: Establish module structure and foundational types
 
-- [ ] T001 Create module structure `src/ir/optimizer/constant_folding/` with mod.rs
-- [ ] T002 Update `src/ir/optimizer/mod.rs` to include `pub mod constant_folding;`
-- [ ] T003 [P] Create placeholder files: lattice.rs, evaluator.rs, propagator.rs, rewriter.rs, optimizer.rs
+- [X] T001 Create module structure `src/ir/optimizer/constant_folding/` with mod.rs
+- [X] T002 Update `src/ir/optimizer/mod.rs` to include `pub mod constant_folding;`
+- [X] T003 [P] Create placeholder files: lattice.rs, evaluator.rs, propagator.rs, rewriter.rs, optimizer.rs
 
 **Checkpoint**: Module structure ready for implementation
 
@@ -44,22 +44,22 @@
 
 **⚠️ CRITICAL**: These tasks MUST be complete before any user story implementation
 
-- [ ] T004 Implement `LatticeValue` enum (Bottom, Constant, Top) in src/ir/optimizer/constant_folding/lattice.rs
-- [ ] T005 Implement `ConstantValue` enum with all IR types in src/ir/optimizer/constant_folding/lattice.rs
-- [ ] T006 Implement `LatticeValue::meet()` operation in src/ir/optimizer/constant_folding/lattice.rs
-- [ ] T007 [P] Implement helper methods for LatticeValue (is_constant, as_constant, is_bottom, is_top) in src/ir/optimizer/constant_folding/lattice.rs
-- [ ] T008 [P] Implement `ConstantValue` helper methods (get_type, types_match, as_bool) in src/ir/optimizer/constant_folding/lattice.rs
-- [ ] T009 Implement `LatticeState` struct with HashMap storage in src/ir/optimizer/constant_folding/propagator.rs
-- [ ] T010 [P] Implement `LatticeState` methods (get, update, initialize) in src/ir/optimizer/constant_folding/propagator.rs
-- [ ] T011 Implement `CFGEdge` struct in src/ir/optimizer/constant_folding/propagator.rs
-- [ ] T012 Implement `ExecutableEdgeSet` struct with HashSet storage in src/ir/optimizer/constant_folding/propagator.rs
-- [ ] T013 [P] Implement `ExecutableEdgeSet` methods (mark_executable, is_executable, has_executable_predecessor, executable_predecessors) in src/ir/optimizer/constant_folding/propagator.rs
-- [ ] T014 Implement generic `Worklist<T>` with VecDeque and deduplication in src/ir/optimizer/constant_folding/propagator.rs
-- [ ] T015 [P] Implement `Worklist<T>` methods (push, pop, is_empty, len) in src/ir/optimizer/constant_folding/propagator.rs
-- [ ] T016 Define `SCCPConfig` struct (verbose, max_iterations) in src/ir/optimizer/constant_folding/optimizer.rs
-- [ ] T017 [P] Define `OptimizationStats` struct (constants_propagated, branches_resolved, phi_nodes_simplified, blocks_marked_unreachable, iterations) in src/ir/optimizer/constant_folding/optimizer.rs
-- [ ] T018 Define `SCCPError` enum with thiserror in src/ir/optimizer/constant_folding/propagator.rs
-- [ ] T019 [P] Define `RewriteError` enum with thiserror in src/ir/optimizer/constant_folding/rewriter.rs
+- [X] T004 Implement `LatticeValue` enum (Bottom, Constant, Top) in src/ir/optimizer/constant_folding/lattice.rs
+- [X] T005 Implement `ConstantValue` enum with all IR types in src/ir/optimizer/constant_folding/lattice.rs
+- [X] T006 Implement `LatticeValue::meet()` operation in src/ir/optimizer/constant_folding/lattice.rs
+- [X] T007 [P] Implement helper methods for LatticeValue (is_constant, as_constant, is_bottom, is_top) in src/ir/optimizer/constant_folding/lattice.rs
+- [X] T008 [P] Implement `ConstantValue` helper methods (get_type, types_match, as_bool) in src/ir/optimizer/constant_folding/lattice.rs
+- [X] T009 Implement `LatticeState` struct with HashMap storage in src/ir/optimizer/constant_folding/propagator.rs
+- [X] T010 [P] Implement `LatticeState` methods (get, update, initialize) in src/ir/optimizer/constant_folding/propagator.rs
+- [X] T011 Implement `CFGEdge` struct in src/ir/optimizer/constant_folding/propagator.rs
+- [X] T012 Implement `ExecutableEdgeSet` struct with HashSet storage in src/ir/optimizer/constant_folding/propagator.rs
+- [X] T013 [P] Implement `ExecutableEdgeSet` methods (mark_executable, is_executable, has_executable_predecessor, executable_predecessors) in src/ir/optimizer/constant_folding/propagator.rs
+- [X] T014 Implement generic `Worklist<T>` with VecDeque and deduplication in src/ir/optimizer/constant_folding/propagator.rs
+- [X] T015 [P] Implement `Worklist<T>` methods (push, pop, is_empty, len) in src/ir/optimizer/constant_folding/propagator.rs
+- [X] T016 Define `SCCPConfig` struct (verbose, max_iterations) in src/ir/optimizer/constant_folding/optimizer.rs
+- [X] T017 [P] Define `OptimizationStats` struct (constants_propagated, branches_resolved, phi_nodes_simplified, blocks_marked_unreachable, iterations) in src/ir/optimizer/constant_folding/optimizer.rs
+- [X] T018 Define `SCCPError` enum with thiserror in src/ir/optimizer/constant_folding/propagator.rs
+- [X] T019 [P] Define `RewriteError` enum with thiserror in src/ir/optimizer/constant_folding/rewriter.rs
 
 **Checkpoint**: Foundation complete - user story implementation can proceed in parallel
 
@@ -73,40 +73,40 @@
 
 ### Implementation for User Story 1
 
-- [ ] T020 [P] [US1] Implement `ConstantEvaluator` struct in src/ir/optimizer/constant_folding/evaluator.rs
-- [ ] T021 [US1] Implement I32 binary operations (Add, Sub, Mul, Div, Mod) in ConstantEvaluator in src/ir/optimizer/constant_folding/evaluator.rs
-- [ ] T022 [P] [US1] Implement I32 unary operations (Neg) in ConstantEvaluator in src/ir/optimizer/constant_folding/evaluator.rs
-- [ ] T023 [P] [US1] Implement overflow detection using checked_* methods in ConstantEvaluator in src/ir/optimizer/constant_folding/evaluator.rs
-- [ ] T024 [US1] Implement division by zero detection with warning emission in ConstantEvaluator in src/ir/optimizer/constant_folding/evaluator.rs
-- [ ] T025 [US1] Implement `SCCPropagator` struct with all fields in src/ir/optimizer/constant_folding/propagator.rs
-- [ ] T026 [US1] Implement `SCCPropagator::new_for_function()` with capacity preallocation in src/ir/optimizer/constant_folding/propagator.rs
-- [ ] T027 [US1] Implement initialization phase (parameters→Top, locals→Bottom, entry edges) in SCCPropagator in src/ir/optimizer/constant_folding/propagator.rs
-- [ ] T028 [US1] Implement main propagation loop (CFG + SSA worklist processing) in SCCPropagator::propagate() in src/ir/optimizer/constant_folding/propagator.rs
-- [ ] T029 [US1] Implement `visit_instruction()` for binary operations in SCCPropagator in src/ir/optimizer/constant_folding/propagator.rs
-- [ ] T030 [US1] Implement lattice value update and SSA worklist propagation in SCCPropagator in src/ir/optimizer/constant_folding/propagator.rs
-- [ ] T031 [US1] Implement iteration count tracking and max iteration limit in SCCPropagator in src/ir/optimizer/constant_folding/propagator.rs
-- [ ] T032 [US1] Implement `IRRewriter` struct in src/ir/optimizer/constant_folding/rewriter.rs
-- [ ] T033 [US1] Implement `IRRewriter::new()` constructor in src/ir/optimizer/constant_folding/rewriter.rs
-- [ ] T034 [US1] Implement constant instruction replacement in IRRewriter::rewrite_instruction() in src/ir/optimizer/constant_folding/rewriter.rs
-- [ ] T035 [US1] Implement statistics tracking in IRRewriter in src/ir/optimizer/constant_folding/rewriter.rs
-- [ ] T036 [US1] Implement `ConstantFoldingOptimizer` struct in src/ir/optimizer/constant_folding/optimizer.rs
-- [ ] T037 [US1] Implement Phase trait for ConstantFoldingOptimizer in src/ir/optimizer/constant_folding/optimizer.rs
-- [ ] T038 [US1] Implement `ConstantFoldingOptimizer::optimize_function()` orchestration in src/ir/optimizer/constant_folding/optimizer.rs
+- [X] T020 [P] [US1] Implement `ConstantEvaluator` struct in src/ir/optimizer/constant_folding/evaluator.rs
+- [X] T021 [US1] Implement I32 binary operations (Add, Sub, Mul, Div, Mod) in ConstantEvaluator in src/ir/optimizer/constant_folding/evaluator.rs
+- [X] T022 [P] [US1] Implement I32 unary operations (Neg) in ConstantEvaluator in src/ir/optimizer/constant_folding/evaluator.rs
+- [X] T023 [P] [US1] Implement overflow detection using checked_* methods in ConstantEvaluator in src/ir/optimizer/constant_folding/evaluator.rs
+- [X] T024 [US1] Implement division by zero detection with warning emission in ConstantEvaluator in src/ir/optimizer/constant_folding/evaluator.rs
+- [X] T025 [US1] Implement `SCCPropagator` struct with all fields in src/ir/optimizer/constant_folding/propagator.rs
+- [X] T026 [US1] Implement `SCCPropagator::new_for_function()` with capacity preallocation in src/ir/optimizer/constant_folding/propagator.rs
+- [X] T027 [US1] Implement initialization phase (parameters→Top, locals→Bottom, entry edges) in SCCPropagator in src/ir/optimizer/constant_folding/propagator.rs
+- [X] T028 [US1] Implement main propagation loop (CFG + SSA worklist processing) in SCCPropagator::propagate() in src/ir/optimizer/constant_folding/propagator.rs
+- [X] T029 [US1] Implement `visit_instruction()` for binary operations in SCCPropagator in src/ir/optimizer/constant_folding/propagator.rs
+- [X] T030 [US1] Implement lattice value update and SSA worklist propagation in SCCPropagator in src/ir/optimizer/constant_folding/propagator.rs
+- [X] T031 [US1] Implement iteration count tracking and max iteration limit in SCCPropagator in src/ir/optimizer/constant_folding/propagator.rs
+- [X] T032 [US1] Implement `IRRewriter` struct in src/ir/optimizer/constant_folding/rewriter.rs
+- [X] T033 [US1] Implement `IRRewriter::new()` constructor in src/ir/optimizer/constant_folding/rewriter.rs
+- [X] T034 [US1] Implement constant instruction replacement in IRRewriter::rewrite_instruction() in src/ir/optimizer/constant_folding/rewriter.rs
+- [X] T035 [US1] Implement statistics tracking in IRRewriter in src/ir/optimizer/constant_folding/rewriter.rs
+- [X] T036 [US1] Implement `ConstantFoldingOptimizer` struct in src/ir/optimizer/constant_folding/optimizer.rs
+- [X] T037 [US1] Implement Phase trait for ConstantFoldingOptimizer in src/ir/optimizer/constant_folding/optimizer.rs
+- [X] T038 [US1] Implement `ConstantFoldingOptimizer::optimize_function()` orchestration in src/ir/optimizer/constant_folding/optimizer.rs
 
 ### Tests for User Story 1
 
-- [ ] T039 [P] [US1] Unit tests for LatticeValue meet operation in tests/ir_sccp_lattice_tests.rs
-- [ ] T040 [P] [US1] Unit tests for ConstantValue type queries in tests/ir_sccp_lattice_tests.rs
-- [ ] T041 [P] [US1] Unit tests for I32 arithmetic evaluation in tests/ir_sccp_evaluator_tests.rs
-- [ ] T042 [P] [US1] Unit tests for overflow handling in tests/ir_sccp_evaluator_tests.rs
-- [ ] T043 [P] [US1] Unit tests for division by zero handling in tests/ir_sccp_evaluator_tests.rs
-- [ ] T044 [P] [US1] Unit tests for LatticeState operations in tests/ir_sccp_propagator_tests.rs
-- [ ] T045 [P] [US1] Unit tests for Worklist operations in tests/ir_sccp_propagator_tests.rs
-- [ ] T046 [US1] Integration test for simple constant propagation (x=5; y=10; z=x+y) in tests/ir_sccp_integration_tests.rs
-- [ ] T047 [US1] Integration test for chained constant expressions in tests/ir_sccp_integration_tests.rs
-- [ ] T048 [P] [US1] Snapshot test for constant propagation IR transformation in tests/ir_sccp_snapshot_tests.rs
+- [X] T039 [P] [US1] Unit tests for LatticeValue meet operation in tests/ir_sccp_lattice_tests.rs
+- [X] T040 [P] [US1] Unit tests for ConstantValue type queries in tests/ir_sccp_lattice_tests.rs
+- [X] T041 [P] [US1] Unit tests for I32 arithmetic evaluation in tests/ir_sccp_evaluator_tests.rs
+- [X] T042 [P] [US1] Unit tests for overflow handling in tests/ir_sccp_evaluator_tests.rs
+- [X] T043 [P] [US1] Unit tests for division by zero handling in tests/ir_sccp_evaluator_tests.rs
+- [X] T044 [P] [US1] Unit tests for LatticeState operations in tests/ir_sccp_propagator_tests.rs
+- [X] T045 [P] [US1] Unit tests for Worklist operations in tests/ir_sccp_propagator_tests.rs
+- [X] T046 [US1] Integration test for simple constant propagation (x=5; y=10; z=x+y) in tests/ir_sccp_integration_tests.rs
+- [X] T047 [US1] Integration test for chained constant expressions in tests/ir_sccp_integration_tests.rs
+- [X] T048 [P] [US1] Snapshot test for constant propagation IR transformation in tests/ir_sccp_snapshot_tests.rs
 
-**Checkpoint**: User Story 1 complete - basic constant propagation functional and independently testable
+**Checkpoint**: ✅ User Story 1 complete - basic constant propagation functional and independently testable
 
 ---
 
@@ -118,30 +118,30 @@
 
 ### Implementation for User Story 2
 
-- [ ] T049 [P] [US2] Implement Boolean constant evaluation (And, Or, Not) in ConstantEvaluator in src/ir/optimizer/constant_folding/evaluator.rs
-- [ ] T050 [P] [US2] Implement comparison operations for I32 (Eq, Lt, Gt, Le, Ge, Ne) in ConstantEvaluator in src/ir/optimizer/constant_folding/evaluator.rs
-- [ ] T051 [US2] Implement `visit_cfg_edge()` in SCCPropagator in src/ir/optimizer/constant_folding/propagator.rs
-- [ ] T052 [US2] Implement `visit_terminator()` for Branch in SCCPropagator in src/ir/optimizer/constant_folding/propagator.rs
-- [ ] T053 [US2] Implement `visit_terminator()` for ConditionalBranch with constant condition handling in SCCPropagator in src/ir/optimizer/constant_folding/propagator.rs
-- [ ] T054 [US2] Implement CFG edge marking (executable vs unreachable) in SCCPropagator in src/ir/optimizer/constant_folding/propagator.rs
-- [ ] T055 [US2] Implement unreachable block marking in IRRewriter::rewrite_block() in src/ir/optimizer/constant_folding/rewriter.rs
-- [ ] T056 [US2] Implement conditional branch to unconditional branch conversion in IRRewriter::rewrite_terminator() in src/ir/optimizer/constant_folding/rewriter.rs
-- [ ] T057 [US2] Implement Switch statement constant selector evaluation in SCCPropagator in src/ir/optimizer/constant_folding/propagator.rs
-- [ ] T058 [US2] Implement Switch statement edge marking (only matching case executable) in SCCPropagator in src/ir/optimizer/constant_folding/propagator.rs
+- [X] T049 [P] [US2] Implement Boolean constant evaluation (And, Or, Not) in ConstantEvaluator in src/ir/optimizer/constant_folding/evaluator.rs
+- [X] T050 [P] [US2] Implement comparison operations for I32 (Eq, Lt, Gt, Le, Ge, Ne) in ConstantEvaluator in src/ir/optimizer/constant_folding/evaluator.rs
+- [X] T051 [US2] Implement `visit_cfg_edge()` in SCCPropagator in src/ir/optimizer/constant_folding/propagator.rs
+- [X] T052 [US2] Implement `visit_terminator()` for Branch in SCCPropagator in src/ir/optimizer/constant_folding/propagator.rs
+- [X] T053 [US2] Implement `visit_terminator()` for ConditionalBranch with constant condition handling in SCCPropagator in src/ir/optimizer/constant_folding/propagator.rs
+- [X] T054 [US2] Implement CFG edge marking (executable vs unreachable) in SCCPropagator in src/ir/optimizer/constant_folding/propagator.rs
+- [X] T055 [US2] Implement unreachable block marking in IRRewriter::rewrite_block() in src/ir/optimizer/constant_folding/rewriter.rs
+- [X] T056 [US2] Implement conditional branch to unconditional branch conversion in IRRewriter::rewrite_terminator() in src/ir/optimizer/constant_folding/rewriter.rs
+- [X] T057 [US2] Implement Switch statement constant selector evaluation in SCCPropagator in src/ir/optimizer/constant_folding/propagator.rs
+- [X] T058 [US2] Implement Switch statement edge marking (only matching case executable) in SCCPropagator in src/ir/optimizer/constant_folding/propagator.rs
 
 ### Tests for User Story 2
 
-- [ ] T059 [P] [US2] Unit tests for Boolean operations in tests/ir_sccp_evaluator_tests.rs
-- [ ] T060 [P] [US2] Unit tests for comparison operations in tests/ir_sccp_evaluator_tests.rs
-- [ ] T061 [P] [US2] Unit tests for ExecutableEdgeSet operations in tests/ir_sccp_propagator_tests.rs
-- [ ] T062 [US2] Integration test for constant true branch resolution in tests/ir_sccp_integration_tests.rs
-- [ ] T063 [US2] Integration test for constant false branch resolution in tests/ir_sccp_integration_tests.rs
-- [ ] T064 [US2] Integration test for switch statement with constant selector in tests/ir_sccp_integration_tests.rs
-- [ ] T065 [US2] Integration test for nested conditional branches in tests/ir_sccp_integration_tests.rs
-- [ ] T066 [P] [US2] Snapshot test for branch resolution IR transformation in tests/ir_sccp_snapshot_tests.rs
-- [ ] T067 [P] [US2] Snapshot test for unreachable code marking in tests/ir_sccp_snapshot_tests.rs
+- [X] T059 [P] [US2] Unit tests for Boolean operations in tests/ir_sccp_boolean_tests.rs (33 tests)
+- [X] T060 [P] [US2] Unit tests for comparison operations in tests/ir_sccp_boolean_tests.rs (included in 33 tests)
+- [X] T061 [P] [US2] Unit tests for ExecutableEdgeSet operations in tests/ir_sccp_edge_tests.rs (21 tests)
+- [X] T062 [US2] Integration test for constant true branch resolution in tests/ir_sccp_integration_tests.rs
+- [X] T063 [US2] Integration test for constant false branch resolution in tests/ir_sccp_integration_tests.rs
+- [X] T064 [US2] Integration test for switch statement with constant selector in tests/ir_sccp_integration_tests.rs
+- [X] T065 [US2] Integration test for nested conditional branches in tests/ir_sccp_integration_tests.rs
+- [X] T066 [P] [US2] Snapshot test for branch resolution IR transformation in tests/ir_sccp_snapshot_tests.rs
+- [X] T067 [P] [US2] Snapshot test for unreachable code marking in tests/ir_sccp_snapshot_tests.rs
 
-**Checkpoint**: User Story 2 complete - control flow analysis and branch resolution functional
+**Checkpoint**: ✅ User Story 2 complete - control flow analysis and branch resolution fully functional (T049-T067 complete)
 
 ---
 
@@ -153,22 +153,22 @@
 
 ### Implementation for User Story 3
 
-- [ ] T068 [US3] Implement `visit_phi()` in SCCPropagator with executable edge filtering in src/ir/optimizer/constant_folding/propagator.rs
-- [ ] T069 [US3] Implement phi node lattice value computation (meet of executable predecessors) in SCCPropagator in src/ir/optimizer/constant_folding/propagator.rs
-- [ ] T070 [US3] Implement phi node simplification in IRRewriter::rewrite_phi() in src/ir/optimizer/constant_folding/rewriter.rs
-- [ ] T071 [US3] Implement phi node constant replacement when all executable values match in IRRewriter in src/ir/optimizer/constant_folding/rewriter.rs
-- [ ] T072 [US3] Implement phi node preservation for mixed constant/non-constant values in IRRewriter in src/ir/optimizer/constant_folding/rewriter.rs
+- [X] T068 [US3] Implement `visit_phi()` in SCCPropagator with executable edge filtering in src/ir/optimizer/constant_folding/propagator.rs (via eval_phi_node method)
+- [X] T069 [US3] Implement phi node lattice value computation (meet of executable predecessors) in SCCPropagator in src/ir/optimizer/constant_folding/propagator.rs (via eval_phi_node method)
+- [X] T070 [US3] Implement phi node simplification in IRRewriter::rewrite_phi() in src/ir/optimizer/constant_folding/rewriter.rs
+- [X] T071 [US3] Implement phi node constant replacement when all executable values match in IRRewriter in src/ir/optimizer/constant_folding/rewriter.rs (integrated into rewrite_phi)
+- [X] T072 [US3] Implement phi node preservation for mixed constant/non-constant values in IRRewriter in src/ir/optimizer/constant_folding/rewriter.rs (integrated into rewrite_phi)
 
 ### Tests for User Story 3
 
-- [ ] T073 [P] [US3] Unit tests for phi node evaluation with executable edges in tests/ir_sccp_propagator_tests.rs
-- [ ] T074 [US3] Integration test for phi with unreachable predecessors in tests/ir_sccp_integration_tests.rs
-- [ ] T075 [US3] Integration test for phi with all same constant values in tests/ir_sccp_integration_tests.rs
-- [ ] T076 [US3] Integration test for phi in unreachable block in tests/ir_sccp_integration_tests.rs
-- [ ] T077 [US3] Integration test for phi with mixed values (constant + non-constant) in tests/ir_sccp_integration_tests.rs
-- [ ] T078 [P] [US3] Snapshot test for phi node simplification in tests/ir_sccp_snapshot_tests.rs
+- [X] T073 [P] [US3] Unit tests for phi node evaluation with executable edges in tests/ir_sccp_propagator_tests.rs
+- [X] T074 [US3] Integration test for phi with unreachable predecessors in tests/ir_sccp_integration_tests.rs
+- [X] T075 [US3] Integration test for phi with all same constant values in tests/ir_sccp_integration_tests.rs
+- [X] T076 [US3] Integration test for phi in unreachable block in tests/ir_sccp_integration_tests.rs
+- [X] T077 [US3] Integration test for phi with mixed values (constant + non-constant) in tests/ir_sccp_integration_tests.rs
+- [X] T078 [P] [US3] Snapshot test for phi node simplification in tests/ir_sccp_snapshot_tests.rs
 
-**Checkpoint**: User Story 3 complete - phi node simplification functional
+**Checkpoint**: ✅ User Story 3 complete - phi node simplification fully functional and tested (T068-T078 complete)
 
 ---
 
@@ -180,37 +180,37 @@
 
 ### Implementation for User Story 4
 
-- [ ] T079 [P] [US4] Implement I8 arithmetic operations in ConstantEvaluator in src/ir/optimizer/constant_folding/evaluator.rs
-- [ ] T080 [P] [US4] Implement I16 arithmetic operations in ConstantEvaluator in src/ir/optimizer/constant_folding/evaluator.rs
-- [ ] T081 [P] [US4] Implement I64 arithmetic operations in ConstantEvaluator in src/ir/optimizer/constant_folding/evaluator.rs
-- [ ] T082 [P] [US4] Implement U8 arithmetic operations in ConstantEvaluator in src/ir/optimizer/constant_folding/evaluator.rs
-- [ ] T083 [P] [US4] Implement U16 arithmetic operations in ConstantEvaluator in src/ir/optimizer/constant_folding/evaluator.rs
-- [ ] T084 [P] [US4] Implement U32 arithmetic operations in ConstantEvaluator in src/ir/optimizer/constant_folding/evaluator.rs
-- [ ] T085 [P] [US4] Implement U64 arithmetic operations in ConstantEvaluator in src/ir/optimizer/constant_folding/evaluator.rs
-- [ ] T086 [P] [US4] Implement F32 arithmetic operations with IEEE 754 semantics in ConstantEvaluator in src/ir/optimizer/constant_folding/evaluator.rs
-- [ ] T087 [P] [US4] Implement F64 arithmetic operations with IEEE 754 semantics in ConstantEvaluator in src/ir/optimizer/constant_folding/evaluator.rs
-- [ ] T088 [P] [US4] Implement NaN propagation for floating-point in ConstantEvaluator in src/ir/optimizer/constant_folding/evaluator.rs
-- [ ] T089 [P] [US4] Implement Infinity handling for floating-point in ConstantEvaluator in src/ir/optimizer/constant_folding/evaluator.rs
-- [ ] T090 [P] [US4] Implement signed zero handling for floating-point in ConstantEvaluator in src/ir/optimizer/constant_folding/evaluator.rs
-- [ ] T091 [P] [US4] Implement Char operations in ConstantEvaluator in src/ir/optimizer/constant_folding/evaluator.rs
-- [ ] T092 [P] [US4] Implement bitwise operations (And, Or, Xor, Not, Shl, Shr) for all integer types in ConstantEvaluator in src/ir/optimizer/constant_folding/evaluator.rs
+- [X] T079 [P] [US4] Implement I8 arithmetic operations in ConstantEvaluator in src/ir/optimizer/constant_folding/evaluator.rs
+- [X] T080 [P] [US4] Implement I16 arithmetic operations in ConstantEvaluator in src/ir/optimizer/constant_folding/evaluator.rs
+- [X] T081 [P] [US4] Implement I64 arithmetic operations in ConstantEvaluator in src/ir/optimizer/constant_folding/evaluator.rs
+- [X] T082 [P] [US4] Implement U8 arithmetic operations in ConstantEvaluator in src/ir/optimizer/constant_folding/evaluator.rs
+- [X] T083 [P] [US4] Implement U16 arithmetic operations in ConstantEvaluator in src/ir/optimizer/constant_folding/evaluator.rs
+- [X] T084 [P] [US4] Implement U32 arithmetic operations in ConstantEvaluator in src/ir/optimizer/constant_folding/evaluator.rs
+- [X] T085 [P] [US4] Implement U64 arithmetic operations in ConstantEvaluator in src/ir/optimizer/constant_folding/evaluator.rs
+- [X] T086 [P] [US4] Implement F32 arithmetic operations with IEEE 754 semantics in ConstantEvaluator in src/ir/optimizer/constant_folding/evaluator.rs
+- [X] T087 [P] [US4] Implement F64 arithmetic operations with IEEE 754 semantics in ConstantEvaluator in src/ir/optimizer/constant_folding/evaluator.rs
+- [X] T088 [P] [US4] Implement NaN propagation for floating-point in ConstantEvaluator in src/ir/optimizer/constant_folding/evaluator.rs
+- [X] T089 [P] [US4] Implement Infinity handling for floating-point in ConstantEvaluator in src/ir/optimizer/constant_folding/evaluator.rs
+- [X] T090 [P] [US4] Implement signed zero handling for floating-point in ConstantEvaluator in src/ir/optimizer/constant_folding/evaluator.rs
+- [X] T091 [P] [US4] Implement Char operations in ConstantEvaluator in src/ir/optimizer/constant_folding/evaluator.rs
+- [X] T092 [P] [US4] Implement bitwise operations (And, Or, Xor, Not, Shl, Shr) for all integer types in ConstantEvaluator in src/ir/optimizer/constant_folding/evaluator.rs
 
 ### Tests for User Story 4
 
-- [ ] T093 [P] [US4] Unit tests for I8 overflow handling in tests/ir_sccp_evaluator_tests.rs
-- [ ] T094 [P] [US4] Unit tests for I16 overflow handling in tests/ir_sccp_evaluator_tests.rs
-- [ ] T095 [P] [US4] Unit tests for I64 overflow handling in tests/ir_sccp_evaluator_tests.rs
-- [ ] T096 [P] [US4] Unit tests for U8/U16/U32/U64 overflow handling in tests/ir_sccp_evaluator_tests.rs
-- [ ] T097 [P] [US4] Unit tests for F32 NaN propagation in tests/ir_sccp_evaluator_tests.rs
-- [ ] T098 [P] [US4] Unit tests for F64 NaN propagation in tests/ir_sccp_evaluator_tests.rs
-- [ ] T099 [P] [US4] Unit tests for floating-point Infinity handling in tests/ir_sccp_evaluator_tests.rs
-- [ ] T100 [P] [US4] Unit tests for floating-point signed zero in tests/ir_sccp_evaluator_tests.rs
-- [ ] T101 [P] [US4] Unit tests for Char Unicode validity in tests/ir_sccp_evaluator_tests.rs
-- [ ] T102 [P] [US4] Unit tests for bitwise operations in tests/ir_sccp_evaluator_tests.rs
-- [ ] T103 [US4] Integration test for mixed type constant expressions in tests/ir_sccp_integration_tests.rs
-- [ ] T104 [P] [US4] Snapshot tests for all type evaluations in tests/ir_sccp_snapshot_tests.rs
+- [X] T093 [P] [US4] Unit tests for I8 overflow handling in tests/ir_sccp_evaluator_tests.rs
+- [X] T094 [P] [US4] Unit tests for I16 overflow handling in tests/ir_sccp_evaluator_tests.rs
+- [X] T095 [P] [US4] Unit tests for I64 overflow handling in tests/ir_sccp_evaluator_tests.rs
+- [X] T096 [P] [US4] Unit tests for U8/U16/U32/U64 overflow handling in tests/ir_sccp_evaluator_tests.rs
+- [X] T097 [P] [US4] Unit tests for F32 NaN propagation in tests/ir_sccp_evaluator_tests.rs
+- [X] T098 [P] [US4] Unit tests for F64 NaN propagation in tests/ir_sccp_evaluator_tests.rs
+- [X] T099 [P] [US4] Unit tests for floating-point Infinity handling in tests/ir_sccp_evaluator_tests.rs
+- [X] T100 [P] [US4] Unit tests for floating-point signed zero in tests/ir_sccp_evaluator_tests.rs
+- [X] T101 [P] [US4] Unit tests for Char Unicode validity in tests/ir_sccp_evaluator_tests.rs
+- [X] T102 [P] [US4] Unit tests for bitwise operations in tests/ir_sccp_evaluator_tests.rs
+- [X] T103 [US4] Integration test for mixed type constant expressions in tests/ir_sccp_integration_tests.rs
+- [X] T104 [P] [US4] Snapshot tests for all type evaluations in tests/ir_sccp_snapshot_tests.rs
 
-**Checkpoint**: User Story 4 complete - type-safe evaluation for all IR types functional
+**Checkpoint**: ✅ User Story 4 complete - type-safe evaluation for all IR types functional and fully tested (T079-T104 complete)
 
 ---
 
@@ -218,21 +218,21 @@
 
 **Purpose**: Finalization, optimization, documentation, and production readiness
 
-- [ ] T105 [P] Implement verbose diagnostic output (lattice transitions, worklist ops, reachability) in src/ir/optimizer/constant_folding/propagator.rs
-- [ ] T106 [P] Implement OptimizationStats Display trait in src/ir/optimizer/constant_folding/optimizer.rs
-- [ ] T107 [P] Add comprehensive rustdoc comments for all public APIs in src/ir/optimizer/constant_folding/
-- [ ] T108 [P] Add inline documentation explaining lattice theory and algorithm invariants in src/ir/optimizer/constant_folding/
-- [ ] T109 Verify SSA form preservation after all transformations (add debug assertions) in src/ir/optimizer/constant_folding/rewriter.rs
-- [ ] T110 [P] Verify dominance relations after rewriting (debug assertions) in src/ir/optimizer/constant_folding/rewriter.rs
-- [ ] T111 Implement SCCP + DCE integration example in examples/ or documentation
-- [ ] T112 [P] Create criterion benchmarks for convergence speed in benches/sccp_benchmark.rs
-- [ ] T113 [P] Create criterion benchmarks for different function sizes (100, 1K, 10K instructions) in benches/sccp_benchmark.rs
-- [ ] T114 [P] Create benchmarks measuring iterations to convergence in benches/sccp_benchmark.rs
-- [ ] T115 Run cargo clippy and fix all warnings in src/ir/optimizer/constant_folding/
-- [ ] T116 Run cargo fmt on all files in src/ir/optimizer/constant_folding/
-- [ ] T117 [P] Verify all tests pass with cargo test
-- [ ] T118 [P] Run benchmarks to validate performance requirements (SC-003: ≤3 iterations for 95% of functions, SC-004: <1s for 10K instructions)
-- [ ] T119 Update QWEN.md with SCCP optimizer architecture documentation
+- [X] T105 [P] Implement verbose diagnostic output (lattice transitions, worklist ops, reachability) in src/ir/optimizer/constant_folding/propagator.rs
+- [X] T106 [P] Implement OptimizationStats Display trait in src/ir/optimizer/constant_folding/optimizer.rs
+- [X] T107 [P] Add comprehensive rustdoc comments for all public APIs in src/ir/optimizer/constant_folding/
+- [X] T108 [P] Add inline documentation explaining lattice theory and algorithm invariants in src/ir/optimizer/constant_folding/
+- [X] T109 Verify SSA form preservation after all transformations (add debug assertions) in src/ir/optimizer/constant_folding/rewriter.rs
+- [X] T110 [P] Verify dominance relations after rewriting (debug assertions) in src/ir/optimizer/constant_folding/rewriter.rs
+- [X] T111 Implement SCCP + DCE integration example in examples/ or documentation
+- [X] T112 [P] Create criterion benchmarks for convergence speed in benches/sccp_benchmark.rs
+- [X] T113 [P] Create criterion benchmarks for different function sizes (100, 1K, 10K instructions) in benches/sccp_benchmark.rs
+- [X] T114 [P] Create benchmarks measuring iterations to convergence in benches/sccp_benchmark.rs
+- [X] T115 Run cargo clippy and fix all warnings in src/ir/optimizer/constant_folding/
+- [X] T116 Run cargo fmt on all files in src/ir/optimizer/constant_folding/
+- [X] T117 [P] Verify all tests pass with cargo test
+- [X] T118 [P] Run benchmarks to validate performance requirements (SC-003: ≤3 iterations for 95% of functions, SC-004: <1s for 10K instructions)
+- [X] T119 Update QWEN.md with SCCP optimizer architecture documentation
 - [ ] T120 Update README.md with optimization pipeline documentation including SCCP
 
 **Final Checkpoint**: Feature complete and production-ready
