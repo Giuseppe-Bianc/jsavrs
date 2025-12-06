@@ -63,6 +63,7 @@ fn snapshot_optimization_stats_format() {
     assert_snapshot!(formatted);
 }
 
+#[allow(clippy::approx_constant)]
 #[test]
 fn snapshot_constant_value_types() {
     // Snapshot all constant value type representations
@@ -652,6 +653,7 @@ fn snapshot_phi_node_simplification() {
     assert_snapshot!(snapshot_output);
 }
 
+#[allow(clippy::approx_constant)]
 #[test]
 fn snapshot_all_type_evaluations() {
     // T104: Snapshot test for constant evaluation across all IR types
@@ -665,70 +667,73 @@ fn snapshot_all_type_evaluations() {
     output.push_str("=== I8 Type Evaluations ===\n");
     output.push_str(&format!("Add: {:?}\n", ConstantEvaluator::eval_binary_i8(BinaryOp::Add, 100, 20)));
     output.push_str(&format!("Overflow: {:?}\n", ConstantEvaluator::eval_binary_i8(BinaryOp::Add, i8::MAX, 1)));
-    output.push_str("\n");
+    output.push('\n');
 
     // I16 Type Evaluations
     output.push_str("=== I16 Type Evaluations ===\n");
     output.push_str(&format!("Mul: {:?}\n", ConstantEvaluator::eval_binary_i16(BinaryOp::Mul, 200, 3)));
     output.push_str(&format!("Overflow: {:?}\n", ConstantEvaluator::eval_binary_i16(BinaryOp::Mul, i16::MAX, 2)));
-    output.push_str("\n");
+    output.push('\n');
 
     // I32 Type Evaluations
     output.push_str("=== I32 Type Evaluations ===\n");
     output.push_str(&format!("Add: {:?}\n", ConstantEvaluator::eval_binary_i32(BinaryOp::Add, 1000, 2000)));
     output.push_str(&format!("Div: {:?}\n", ConstantEvaluator::eval_binary_i32(BinaryOp::Div, 100, 5)));
     output.push_str(&format!("DivByZero: {:?}\n", ConstantEvaluator::eval_binary_i32(BinaryOp::Div, 100, 0)));
-    output.push_str("\n");
+    output.push('\n');
 
     // I64 Type Evaluations
     output.push_str("=== I64 Type Evaluations ===\n");
     output.push_str(&format!("Sub: {:?}\n", ConstantEvaluator::eval_binary_i64(BinaryOp::Sub, 1_000_000, 500_000)));
     output.push_str(&format!("Overflow: {:?}\n", ConstantEvaluator::eval_binary_i64(BinaryOp::Sub, i64::MIN, 1)));
-    output.push_str("\n");
+    output.push('\n');
 
     // U8 Type Evaluations
     output.push_str("=== U8 Type Evaluations ===\n");
     output.push_str(&format!("Add: {:?}\n", ConstantEvaluator::eval_binary_u8(BinaryOp::Add, 200, 55)));
     output.push_str(&format!("Overflow: {:?}\n", ConstantEvaluator::eval_binary_u8(BinaryOp::Add, u8::MAX, 1)));
     output.push_str(&format!("Underflow: {:?}\n", ConstantEvaluator::eval_binary_u8(BinaryOp::Sub, 0, 1)));
-    output.push_str("\n");
+    output.push('\n');
 
     // U16 Type Evaluations
     output.push_str("=== U16 Type Evaluations ===\n");
     output.push_str(&format!("Div: {:?}\n", ConstantEvaluator::eval_binary_u16(BinaryOp::Div, 1000, 10)));
-    output.push_str("\n");
+    output.push('\n');
 
     // U32 Type Evaluations
     output.push_str("=== U32 Type Evaluations ===\n");
     output.push_str(&format!("Mod: {:?}\n", ConstantEvaluator::eval_binary_u32(BinaryOp::Mod, 100, 7)));
-    output.push_str("\n");
+    output.push('\n');
 
     // U64 Type Evaluations
     output.push_str("=== U64 Type Evaluations ===\n");
     output.push_str(&format!("Mul: {:?}\n", ConstantEvaluator::eval_binary_u64(BinaryOp::Mul, 1_000_000, 1_000)));
-    output.push_str("\n");
+    output.push('\n');
 
     // F32 Type Evaluations (with special values)
     output.push_str("=== F32 Type Evaluations ===\n");
-    output.push_str(&format!("Add: {:?}\n", ConstantEvaluator::eval_binary_f32(BinaryOp::Add, 3.14, 2.86)));
+    output.push_str(&format!(
+        "Add: {:?}\n",
+        ConstantEvaluator::eval_binary_f32(BinaryOp::Add, std::f32::consts::PI, 2.86)
+    ));
     output.push_str(&format!("NaN: is_nan = {}\n", ConstantEvaluator::is_nan_f32(f32::NAN)));
     output.push_str(&format!("Infinity: is_infinite = {}\n", ConstantEvaluator::is_infinite_f32(f32::INFINITY)));
     output.push_str(&format!("NegZero: is_neg_zero = {}\n", ConstantEvaluator::is_neg_zero_f32(-0.0)));
-    output.push_str("\n");
+    output.push('\n');
 
     // F64 Type Evaluations
     output.push_str("=== F64 Type Evaluations ===\n");
     output.push_str(&format!("Mul: {:?}\n", ConstantEvaluator::eval_binary_f64(BinaryOp::Mul, 2.5, 4.0)));
     output.push_str(&format!("NaN: is_nan = {}\n", ConstantEvaluator::is_nan_f64(f64::NAN)));
     output.push_str(&format!("Infinity: is_infinite = {}\n", ConstantEvaluator::is_infinite_f64(f64::NEG_INFINITY)));
-    output.push_str("\n");
+    output.push('\n');
 
     // Char Type Evaluations
     output.push_str("=== Char Type Evaluations ===\n");
     output.push_str(&format!("Eq('A', 'A'): {:?}\n", ConstantEvaluator::eval_char_eq('A', 'A')));
     output.push_str(&format!("Ne('X', 'Y'): {:?}\n", ConstantEvaluator::eval_char_ne('X', 'Y')));
     output.push_str(&format!("Unicode('😀', '😀'): {:?}\n", ConstantEvaluator::eval_char_eq('😀', '😀')));
-    output.push_str("\n");
+    output.push('\n');
 
     // Bitwise Operations (all integer types)
     output.push_str("=== Bitwise Operations ===\n");
@@ -739,14 +744,14 @@ fn snapshot_all_type_evaluations() {
     output.push_str(&format!("SHR u64: {:?}\n", ConstantEvaluator::eval_bitwise_u64(BitwiseOp::Shr, 128, 3)));
     output.push_str(&format!("NOT i8: {:?}\n", ConstantEvaluator::eval_bitwise_not_i8(0b00001111)));
     output.push_str(&format!("NOT u8: {:?}\n", ConstantEvaluator::eval_bitwise_not_u8(0b10101010)));
-    output.push_str("\n");
+    output.push('\n');
 
     // Boolean Operations
     output.push_str("=== Boolean Operations ===\n");
     output.push_str(&format!("AND: {:?}\n", ConstantEvaluator::eval_binary_bool(BinaryOp::And, true, false)));
     output.push_str(&format!("OR: {:?}\n", ConstantEvaluator::eval_binary_bool(BinaryOp::Or, true, false)));
     output.push_str(&format!("NOT: {:?}\n", ConstantEvaluator::eval_unary_bool(UnaryOp::Not, true)));
-    output.push_str("\n");
+    output.push('\n');
 
     // Comparison Operations
     output.push_str("=== Comparison Operations ===\n");
@@ -756,12 +761,3 @@ fn snapshot_all_type_evaluations() {
 
     assert_snapshot!(output);
 }
-
-// TODO: Add IR transformation snapshots when Function/BasicBlock APIs are complete
-// Planned snapshots:
-// - snapshot_simple_constant_propagation: Before/after for x=5+10
-// - snapshot_chained_arithmetic: Before/after for chained operations
-// - snapshot_division_operation: Before/after for division
-// - snapshot_modulo_operation: Before/after for modulo
-// - snapshot_multiple_blocks: Before/after for multi-block functions
-// - snapshot_module_level_optimization: Before/after for whole module

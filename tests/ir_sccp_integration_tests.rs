@@ -662,6 +662,7 @@ fn test_phi_with_mixed_values() {
     // 6. Rewriter would preserve phi node as-is
 }
 
+#[allow(clippy::approx_constant)]
 #[test]
 fn test_mixed_type_constant_expressions() {
     // Test T103: Integration test for multiple types in constant expressions

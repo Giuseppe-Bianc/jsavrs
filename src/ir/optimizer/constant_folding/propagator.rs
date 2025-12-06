@@ -167,55 +167,6 @@ pub enum SCCPError {
     #[error("Invalid SSA form: {0}")]
     InvalidSSA(String),
 }
-
-#[cfg(test)]
-mod tests {
-    use super::*;
-
-    #[test]
-    fn test_lattice_state() {
-        let mut state = LatticeState::new();
-
-        // Default is Bottom
-        assert_eq!(state.get(1), LatticeValue::Bottom);
-
-        // Update changes value
-        assert!(state.update(1, LatticeValue::Top));
-        assert_eq!(state.get(1), LatticeValue::Top);
-
-        // No-op update returns false
-        assert!(!state.update(1, LatticeValue::Top));
-    }
-
-    #[test]
-    fn test_executable_edge_set() {
-        let mut edges = ExecutableEdgeSet::new();
-        let edge = CFGEdge::new(0, 1);
-
-        assert!(!edges.is_executable(&edge));
-        assert!(edges.mark_executable(edge));
-        assert!(edges.is_executable(&edge));
-        assert!(!edges.mark_executable(edge)); // Already marked
-    }
-
-    #[test]
-    fn test_worklist() {
-        let mut worklist = Worklist::new();
-
-        assert!(worklist.is_empty());
-
-        worklist.push(1);
-        worklist.push(2);
-        worklist.push(1); // Duplicate, should not be added
-
-        assert_eq!(worklist.len(), 2);
-        assert_eq!(worklist.pop(), Some(1));
-        assert_eq!(worklist.pop(), Some(2));
-        assert_eq!(worklist.pop(), None);
-        assert!(worklist.is_empty());
-    }
-}
-
 /// SCCP worklist-based propagator
 ///
 /// Implements the Wegman-Zadeck algorithm for sparse conditional constant propagation.
@@ -754,5 +705,54 @@ impl SCCPropagator {
     /// Returns a reference to the executable edge set for use by the rewriter
     pub fn get_executable_edges(&self) -> &ExecutableEdgeSet {
         &self.executable_edges
+    }
+}
+
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    #[test]
+    fn test_lattice_state() {
+        let mut state = LatticeState::new();
+
+        // Default is Bottom
+        assert_eq!(state.get(1), LatticeValue::Bottom);
+
+        // Update changes value
+        assert!(state.update(1, LatticeValue::Top));
+        assert_eq!(state.get(1), LatticeValue::Top);
+
+        // No-op update returns false
+        assert!(!state.update(1, LatticeValue::Top));
+    }
+
+    #[test]
+    fn test_executable_edge_set() {
+        let mut edges = ExecutableEdgeSet::new();
+        let edge = CFGEdge::new(0, 1);
+
+        assert!(!edges.is_executable(&edge));
+        assert!(edges.mark_executable(edge));
+        assert!(edges.is_executable(&edge));
+        assert!(!edges.mark_executable(edge)); // Already marked
+    }
+
+    #[test]
+    fn test_worklist() {
+        let mut worklist = Worklist::new();
+
+        assert!(worklist.is_empty());
+
+        worklist.push(1);
+        worklist.push(2);
+        worklist.push(1); // Duplicate, should not be added
+
+        assert_eq!(worklist.len(), 2);
+        assert_eq!(worklist.pop(), Some(1));
+        assert_eq!(worklist.pop(), Some(2));
+        assert_eq!(worklist.pop(), None);
+        assert!(worklist.is_empty());
     }
 }
