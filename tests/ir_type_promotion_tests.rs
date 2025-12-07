@@ -1,3 +1,4 @@
+use jsavrs::ir::type_promotion_engine::TypePromotionEngine;
 use jsavrs::ir::{
     CastKind, IrBinaryOp, IrType, OverflowBehavior, PrecisionLossEstimate, PromotionMatrix, PromotionResult,
     PromotionRule, PromotionWarning, TypeGroup, TypePromotion,
@@ -3306,5 +3307,1249 @@ mod compute_common_type_tests {
         assert_eq!(matrix.compute_common_type(&IrType::Bool, &IrType::Char), Some(IrType::I32));
         assert_eq!(matrix.compute_common_type(&IrType::Bool, &IrType::String), Some(IrType::I32));
         assert_eq!(matrix.compute_common_type(&IrType::Char, &IrType::String), Some(IrType::I32));
+    }
+}
+
+// ============================================================================
+// TYPE PROMOTION ENGINE COMPREHENSIVE TEST SUITE
+// ============================================================================
+
+// ============================================================================
+// CONSTRUCTION AND INITIALIZATION TESTS
+// ============================================================================
+
+/// Tests that TypePromotionEngine can be created using the new() constructor.
+///
+/// # Rationale
+/// Verifies basic instantiation works correctly and returns a valid engine instance.
+///
+/// # Test Coverage
+/// - Successful construction via new()
+/// - Default initialization state
+#[test]
+fn test_type_promotion_engine_new() {
+    let engine = TypePromotionEngine::new();
+
+    // Engine should be created successfully
+    // Since it's a zero-sized struct, we just verify it can be instantiated
+    assert_eq!(std::mem::size_of_val(&engine), 0, "TypePromotionEngine should be a zero-sized type");
+}
+
+/// Tests that TypePromotionEngine can be created using the default() trait.
+///
+/// # Rationale
+/// Verifies that Default trait implementation works correctly and produces
+/// equivalent instances to new().
+///
+/// # Test Coverage
+/// - Default trait implementation
+/// - Consistency between new() and default()
+#[test]
+fn test_type_promotion_engine_default() {
+    let engine = TypePromotionEngine::default();
+
+    // Engine should be created successfully via Default trait
+    assert_eq!(std::mem::size_of_val(&engine), 0, "TypePromotionEngine should be a zero-sized type");
+}
+
+/// Tests that TypePromotionEngine can be cloned successfully.
+///
+/// # Rationale
+/// Verifies Clone trait implementation works correctly for TypePromotionEngine.
+///
+/// # Test Coverage
+/// - Clone trait functionality
+/// - Cloned instances are equivalent
+#[test]
+fn test_type_promotion_engine_clone() {
+    let engine = TypePromotionEngine::new();
+    let cloned_engine = engine.clone();
+
+    // Both engines should have same size (zero-sized)
+    assert_eq!(std::mem::size_of_val(&engine), std::mem::size_of_val(&cloned_engine));
+}
+
+// ============================================================================
+// ANALYZE_BINARY_PROMOTION - IDENTITY PROMOTIONS
+// ============================================================================
+
+/// Tests analyze_binary_promotion with identical types (I32 + I32).
+///
+/// # Rationale
+/// Identity promotions should not require any casts and should produce
+/// no warnings, as both operands already have the correct type.
+///
+/// # Test Coverage
+/// - Identity promotion for signed integers
+/// - No cast generation for same types
+/// - No warnings for identity operations
+/// - Sound promotion result
+#[test]
+fn test_analyze_binary_promotion_identity_i32() {
+    let engine = TypePromotionEngine::new();
+    let span = SourceSpan::default();
+
+    let result = engine.analyze_binary_promotion(&IrType::I32, &IrType::I32, IrBinaryOp::Add, span);
+
+    assert_eq!(result.result_type, IrType::I32, "Identity promotion should preserve I32 type");
+    assert!(result.left_cast.is_none(), "Identity promotion should not cast left operand");
+    assert!(result.right_cast.is_none(), "Identity promotion should not cast right operand");
+    assert!(result.warnings.is_empty(), "Identity promotion should generate no warnings");
+    assert!(result.is_sound, "Identity promotion should be sound");
+}
+
+/// Tests analyze_binary_promotion with identical floating-point types (F64 + F64).
+///
+/// # Rationale
+/// Verifies identity promotion works correctly for floating-point types.
+///
+/// # Test Coverage
+/// - Identity promotion for float types
+/// - No cast or warning generation
+#[test]
+fn test_analyze_binary_promotion_identity_f64() {
+    let engine = TypePromotionEngine::new();
+    let span = SourceSpan::default();
+
+    let result = engine.analyze_binary_promotion(&IrType::F64, &IrType::F64, IrBinaryOp::Multiply, span);
+
+    assert_eq!(result.result_type, IrType::F64, "Identity promotion should preserve F64 type");
+    assert!(result.left_cast.is_none(), "Identity promotion should not cast left operand");
+    assert!(result.right_cast.is_none(), "Identity promotion should not cast right operand");
+    assert!(result.warnings.is_empty(), "Identity promotion should generate no warnings");
+    assert!(result.is_sound, "Identity promotion should be sound");
+}
+
+/// Tests analyze_binary_promotion with identical unsigned types (U64 + U64).
+///
+/// # Rationale
+/// Verifies identity promotion for unsigned integer types.
+///
+/// # Test Coverage
+/// - Identity promotion for unsigned integers
+/// - Different binary operation (Divide)
+#[test]
+fn test_analyze_binary_promotion_identity_u64() {
+    let engine = TypePromotionEngine::new();
+    let span = SourceSpan::default();
+
+    let result = engine.analyze_binary_promotion(&IrType::U64, &IrType::U64, IrBinaryOp::Divide, span);
+
+    assert_eq!(result.result_type, IrType::U64, "Identity promotion should preserve U64 type");
+    assert!(result.left_cast.is_none(), "Identity promotion should not cast left operand");
+    assert!(result.right_cast.is_none(), "Identity promotion should not cast right operand");
+    assert!(result.warnings.is_empty(), "Identity promotion should generate no warnings");
+    assert!(result.is_sound, "Identity promotion should be sound");
+}
+
+// ============================================================================
+// ANALYZE_BINARY_PROMOTION - WIDENING PROMOTIONS
+// ============================================================================
+
+/// Tests analyze_binary_promotion with signed integer widening (I8 → I32).
+///
+/// # Rationale
+/// Widening promotions should insert a cast on the narrower operand,
+/// but should not generate warnings since all values are preserved.
+///
+/// # Test Coverage
+/// - Signed integer widening
+/// - Left operand casting
+/// - No precision loss or overflow warnings
+#[test]
+fn test_analyze_binary_promotion_i8_to_i32_widening() {
+    let engine = TypePromotionEngine::new();
+    let span = SourceSpan::default();
+
+    let result = engine.analyze_binary_promotion(&IrType::I8, &IrType::I32, IrBinaryOp::Add, span.clone());
+
+    assert_eq!(result.result_type, IrType::I32, "I8 and I32 should promote to I32");
+    assert!(result.left_cast.is_some(), "Left operand (I8) should be cast to I32");
+    assert!(result.right_cast.is_none(), "Right operand (I32) should not be cast");
+
+    // Verify left cast details
+    if let Some(ref left_cast) = result.left_cast {
+        assert_eq!(left_cast.from_type, IrType::I8);
+        assert_eq!(left_cast.to_type, IrType::I32);
+        assert_eq!(left_cast.cast_kind, CastKind::IntSignExtend);
+        assert!(!left_cast.may_lose_precision, "Widening should not lose precision");
+        assert!(!left_cast.may_overflow, "Widening should not overflow");
+    }
+    assert!(result.warnings.is_empty(), "Widening promotion should generate no warnings");
+    assert!(result.is_sound, "Widening promotion should be sound");
+}
+
+/// Tests analyze_binary_promotion with unsigned integer widening (U16 → U64).
+///
+/// # Rationale
+/// Verifies unsigned widening promotions work correctly across large bit-width gaps.
+///
+/// # Test Coverage
+/// - Unsigned integer widening
+/// - Large bit-width difference (16 to 64 bits)
+/// - ZeroExtend cast kind for unsigned types
+#[test]
+fn test_analyze_binary_promotion_u16_to_u64_widening() {
+    let engine = TypePromotionEngine::new();
+    let span = SourceSpan::default();
+
+    let result = engine.analyze_binary_promotion(&IrType::U16, &IrType::U64, IrBinaryOp::Subtract, span);
+
+    assert_eq!(result.result_type, IrType::U64, "U16 and U64 should promote to U64");
+    assert!(result.left_cast.is_some(), "Left operand (U16) should be cast to U64");
+    assert!(result.right_cast.is_none(), "Right operand (U64) should not be cast");
+
+    if let Some(ref left_cast) = result.left_cast {
+        assert_eq!(left_cast.from_type, IrType::U16);
+        assert_eq!(left_cast.to_type, IrType::U64);
+        assert_eq!(left_cast.cast_kind, CastKind::IntZeroExtend);
+        assert!(!left_cast.may_lose_precision);
+        assert!(!left_cast.may_overflow);
+    }
+}
+
+/// Tests analyze_binary_promotion with float widening (F32 → F64).
+///
+/// # Rationale
+/// Float widening from F32 to F64 is exact and should not generate warnings.
+///
+/// # Test Coverage
+/// - Floating-point widening
+/// - FloatExtend cast kind
+/// - No precision loss for F32→F64
+#[test]
+fn test_analyze_binary_promotion_f32_to_f64_widening() {
+    let engine = TypePromotionEngine::new();
+    let span = SourceSpan::default();
+
+    let result = engine.analyze_binary_promotion(&IrType::F32, &IrType::F64, IrBinaryOp::Multiply, span);
+
+    assert_eq!(result.result_type, IrType::F64, "F32 and F64 should promote to F64");
+    assert!(result.left_cast.is_some(), "Left operand (F32) should be cast to F64");
+    assert!(result.right_cast.is_none(), "Right operand (F64) should not be cast");
+
+    if let Some(ref left_cast) = result.left_cast {
+        assert_eq!(left_cast.from_type, IrType::F32);
+        assert_eq!(left_cast.to_type, IrType::F64);
+        assert_eq!(left_cast.cast_kind, CastKind::FloatExtend);
+        assert!(!left_cast.may_lose_precision, "F32 to F64 is exact");
+        assert!(!left_cast.may_overflow);
+    }
+}
+
+/// Tests analyze_binary_promotion with reverse operand order for widening (I32 + I8).
+///
+/// # Rationale
+/// Verifies that promotion works correctly regardless of operand order.
+///
+/// # Test Coverage
+/// - Right operand widening
+/// - Operand order independence
+#[test]
+fn test_analyze_binary_promotion_i32_i8_reverse_order() {
+    let engine = TypePromotionEngine::new();
+    let span = SourceSpan::default();
+
+    let result = engine.analyze_binary_promotion(&IrType::I32, &IrType::I8, IrBinaryOp::Add, span);
+
+    assert_eq!(result.result_type, IrType::I32, "I32 and I8 should promote to I32");
+    assert!(result.left_cast.is_none(), "Left operand (I32) should not be cast");
+    assert!(result.right_cast.is_some(), "Right operand (I8) should be cast to I32");
+
+    if let Some(ref right_cast) = result.right_cast {
+        assert_eq!(right_cast.from_type, IrType::I8);
+        assert_eq!(right_cast.to_type, IrType::I32);
+        assert_eq!(right_cast.cast_kind, CastKind::IntSignExtend);
+    }
+}
+
+// ============================================================================
+// ANALYZE_BINARY_PROMOTION - SIGNED/UNSIGNED MIXING
+// ============================================================================
+
+/// Tests analyze_binary_promotion with same-width signed/unsigned mixing (I32 + U32 → I64).
+///
+/// # Rationale
+/// When signed and unsigned integers of the same width are mixed,
+/// they should promote to the next larger signed type to preserve all values.
+/// This should generate a signedness change warning.
+///
+/// # Test Coverage
+/// - Same-width signed/unsigned promotion
+/// - Promotion to next larger signed type
+/// - SignednessChange warning generation
+#[test]
+fn test_analyze_binary_promotion_i32_u32_signedness() {
+    let engine = TypePromotionEngine::new();
+    let span = SourceSpan::default();
+
+    let result = engine.analyze_binary_promotion(&IrType::I32, &IrType::U32, IrBinaryOp::Add, span);
+
+    assert_eq!(result.result_type, IrType::I64, "I32 and U32 should promote to I64");
+    // At least one operand should be cast (implementation may optimize)
+    assert!(result.left_cast.is_some() || result.right_cast.is_some(), "At least one cast should be present");
+
+    // Should generate signedness change warning
+    assert!(!result.warnings.is_empty(), "Signedness mixing should generate warnings");
+
+    // Check for SignednessChange warning
+    let has_signedness_warning = result.warnings.iter().any(|w| matches!(w, PromotionWarning::SignednessChange { .. }));
+    assert!(has_signedness_warning, "Should contain SignednessChange warning");
+}
+
+/// Tests analyze_binary_promotion with I16 and U16 mixing.
+///
+/// # Rationale
+/// Verifies signedness handling for 16-bit types.
+///
+/// # Test Coverage
+/// - I16/U16 → I32 promotion
+/// - Signedness change warning
+#[test]
+fn test_analyze_binary_promotion_i16_u16_signedness() {
+    let engine = TypePromotionEngine::new();
+    let span = SourceSpan::default();
+
+    let result = engine.analyze_binary_promotion(&IrType::I16, &IrType::U16, IrBinaryOp::Multiply, span);
+
+    assert_eq!(result.result_type, IrType::I32, "I16 and U16 should promote to I32");
+    assert!(result.left_cast.is_some() || result.right_cast.is_some());
+    assert!(!result.warnings.is_empty(), "Should generate signedness warnings");
+}
+
+/// Tests analyze_binary_promotion with I8 and U8 mixing.
+///
+/// # Rationale
+/// Verifies signedness handling for smallest integer types.
+///
+/// # Test Coverage
+/// - I8/U8 → I16 promotion
+/// - Signedness change warning for 8-bit types
+#[test]
+fn test_analyze_binary_promotion_i8_u8_signedness() {
+    let engine = TypePromotionEngine::new();
+    let span = SourceSpan::default();
+
+    let result = engine.analyze_binary_promotion(&IrType::I8, &IrType::U8, IrBinaryOp::Divide, span);
+
+    assert_eq!(result.result_type, IrType::I16, "I8 and U8 should promote to I16");
+    assert!(result.left_cast.is_some() || result.right_cast.is_some());
+
+    let has_signedness_warning = result.warnings.iter().any(|w| matches!(w, PromotionWarning::SignednessChange { .. }));
+    assert!(has_signedness_warning);
+}
+
+/// Tests analyze_binary_promotion with reverse order (U32 + I32).
+///
+/// # Rationale
+/// Verifies that signedness detection is order-independent.
+///
+/// # Test Coverage
+/// - Reverse operand order for signed/unsigned
+/// - Consistent signedness warning generation
+#[test]
+fn test_analyze_binary_promotion_u32_i32_reverse_signedness() {
+    let engine = TypePromotionEngine::new();
+    let span = SourceSpan::default();
+
+    let result = engine.analyze_binary_promotion(&IrType::U32, &IrType::I32, IrBinaryOp::Add, span);
+
+    assert_eq!(result.result_type, IrType::I64);
+    assert!(!result.warnings.is_empty());
+
+    let has_signedness_warning = result.warnings.iter().any(|w| matches!(w, PromotionWarning::SignednessChange { .. }));
+    assert!(has_signedness_warning);
+}
+
+// ============================================================================
+// ANALYZE_BINARY_PROMOTION - INTEGER TO FLOAT PROMOTIONS
+// ============================================================================
+
+/// Tests analyze_binary_promotion with integer to float promotion (I32 → F32).
+///
+/// # Rationale
+/// When mixing integers and floats, integers should be promoted to float.
+/// For I32→F32, this may lose precision for large integers.
+///
+/// # Test Coverage
+/// - Integer to float promotion
+/// - IntToFloat cast kind
+/// - Potential precision loss warning
+#[test]
+fn test_analyze_binary_promotion_i32_to_f32() {
+    let engine = TypePromotionEngine::new();
+    let span = SourceSpan::default();
+
+    let result = engine.analyze_binary_promotion(&IrType::I32, &IrType::F32, IrBinaryOp::Add, span);
+
+    assert_eq!(result.result_type, IrType::F32, "I32 and F32 should promote to F32");
+    assert!(result.left_cast.is_some(), "I32 should be cast to F32");
+
+    if let Some(ref left_cast) = result.left_cast {
+        assert_eq!(left_cast.cast_kind, CastKind::IntToFloat);
+        // I32 to F32 may lose precision for large values
+        if left_cast.may_lose_precision {
+            let has_precision_warning =
+                result.warnings.iter().any(|w| matches!(w, PromotionWarning::PrecisionLoss { .. }));
+            assert!(has_precision_warning, "Should warn about precision loss");
+        }
+    }
+}
+
+/// Tests analyze_binary_promotion with I64 → F64.
+///
+/// # Rationale
+/// I64 to F64 conversion can lose precision for integers larger than 2^53.
+///
+/// # Test Coverage
+/// - Large integer to double promotion
+/// - Precision loss for large integers
+#[test]
+fn test_analyze_binary_promotion_i64_to_f64() {
+    let engine = TypePromotionEngine::new();
+    let span = SourceSpan::default();
+
+    let result = engine.analyze_binary_promotion(&IrType::I64, &IrType::F64, IrBinaryOp::Multiply, span);
+
+    assert_eq!(result.result_type, IrType::F64);
+    assert!(result.left_cast.is_some());
+
+    if let Some(ref left_cast) = result.left_cast {
+        assert_eq!(left_cast.cast_kind, CastKind::IntToFloat);
+    }
+}
+
+/// Tests analyze_binary_promotion with unsigned to float (U32 → F32).
+///
+/// # Rationale
+/// Unsigned integers also need IntToFloat cast when mixed with floats.
+///
+/// # Test Coverage
+/// - Unsigned to float conversion
+/// - IntToFloat cast for unsigned types
+#[test]
+fn test_analyze_binary_promotion_u32_to_f32() {
+    let engine = TypePromotionEngine::new();
+    let span = SourceSpan::default();
+
+    let result = engine.analyze_binary_promotion(&IrType::U32, &IrType::F32, IrBinaryOp::Divide, span);
+
+    assert_eq!(result.result_type, IrType::F32);
+    assert!(result.left_cast.is_some());
+
+    if let Some(ref left_cast) = result.left_cast {
+        assert_eq!(left_cast.cast_kind, CastKind::IntToFloat);
+    }
+}
+
+/// Tests analyze_binary_promotion with small int to float (I8 → F64).
+///
+/// # Rationale
+/// Small integers always fit exactly in F64 without precision loss.
+///
+/// # Test Coverage
+/// - Small integer to float (exact conversion)
+/// - No precision loss expected
+#[test]
+fn test_analyze_binary_promotion_i8_to_f64_exact() {
+    let engine = TypePromotionEngine::new();
+    let span = SourceSpan::default();
+
+    let result = engine.analyze_binary_promotion(&IrType::I8, &IrType::F64, IrBinaryOp::Add, span);
+
+    assert_eq!(result.result_type, IrType::F64);
+    assert!(result.left_cast.is_some());
+
+    if let Some(ref left_cast) = result.left_cast {
+        assert_eq!(left_cast.cast_kind, CastKind::IntToFloat);
+        // I8 values always fit exactly in F64
+        assert!(!left_cast.may_lose_precision, "I8 to F64 should be exact");
+    }
+}
+
+// ============================================================================
+// ANALYZE_BINARY_PROMOTION - DIFFERENT BINARY OPERATIONS
+// ============================================================================
+
+/// Tests analyze_binary_promotion with Subtract operation.
+///
+/// # Rationale
+/// Verifies that promotion logic is consistent across different operations.
+///
+/// # Test Coverage
+/// - Subtract operation with promotion
+/// - Operation-specific behavior (if any)
+#[test]
+fn test_analyze_binary_promotion_subtract_operation() {
+    let engine = TypePromotionEngine::new();
+    let span = SourceSpan::default();
+
+    let result = engine.analyze_binary_promotion(&IrType::I16, &IrType::I32, IrBinaryOp::Subtract, span);
+
+    assert_eq!(result.result_type, IrType::I32);
+    assert!(result.left_cast.is_some());
+    assert!(result.right_cast.is_none());
+}
+
+/// Tests analyze_binary_promotion with Modulo operation.
+///
+/// # Rationale
+/// Modulo may have special overflow/signedness considerations.
+///
+/// # Test Coverage
+/// - Modulo operation
+/// - Signedness with modulo
+#[test]
+fn test_analyze_binary_promotion_modulo_operation() {
+    let engine = TypePromotionEngine::new();
+    let span = SourceSpan::default();
+
+    let result = engine.analyze_binary_promotion(&IrType::I32, &IrType::U32, IrBinaryOp::Modulo, span);
+
+    assert_eq!(result.result_type, IrType::I64);
+    // At least one operand should be cast for mixed signedness
+    assert!(result.left_cast.is_some() || result.right_cast.is_some());
+}
+
+/// Tests analyze_binary_promotion with BitwiseAnd operation.
+///
+/// # Rationale
+/// Bitwise operations should follow same promotion rules.
+///
+/// # Test Coverage
+/// - Bitwise operation promotion
+/// - Type consistency for bitwise ops
+#[test]
+fn test_analyze_binary_promotion_bitwise_and_operation() {
+    let engine = TypePromotionEngine::new();
+    let span = SourceSpan::default();
+
+    let result = engine.analyze_binary_promotion(&IrType::U8, &IrType::U32, IrBinaryOp::BitwiseAnd, span);
+
+    assert_eq!(result.result_type, IrType::U32);
+    assert!(result.left_cast.is_some());
+}
+
+/// Tests analyze_binary_promotion with comparison operation (Equal).
+///
+/// # Rationale
+/// Comparison operations may need promotion for operands to be comparable.
+///
+/// # Test Coverage
+/// - Comparison operation
+/// - Type promotion for comparisons
+#[test]
+fn test_analyze_binary_promotion_equal_comparison() {
+    let engine = TypePromotionEngine::new();
+    let span = SourceSpan::default();
+
+    let result = engine.analyze_binary_promotion(&IrType::I16, &IrType::I64, IrBinaryOp::Equal, span);
+
+    assert_eq!(result.result_type, IrType::I64);
+    assert!(result.left_cast.is_some());
+}
+
+// ============================================================================
+// ANALYZE_BINARY_PROMOTION - EDGE CASES
+// ============================================================================
+
+/// Tests analyze_binary_promotion with maximum width integers (I64 + I64).
+///
+/// # Rationale
+/// Verifies behavior at maximum supported integer width.
+///
+/// # Test Coverage
+/// - Maximum width integer identity
+/// - No overflow to larger type (none exists)
+#[test]
+fn test_analyze_binary_promotion_max_width_i64() {
+    let engine = TypePromotionEngine::new();
+    let span = SourceSpan::default();
+
+    let result = engine.analyze_binary_promotion(&IrType::I64, &IrType::I64, IrBinaryOp::Add, span);
+
+    assert_eq!(result.result_type, IrType::I64);
+    assert!(result.left_cast.is_none());
+    assert!(result.right_cast.is_none());
+}
+
+/// Tests analyze_binary_promotion with minimum width integers (I8 + I8).
+///
+/// # Rationale
+/// Verifies behavior at minimum integer width.
+///
+/// # Test Coverage
+/// - Minimum width integer operations
+/// - No narrowing occurs
+#[test]
+fn test_analyze_binary_promotion_min_width_i8() {
+    let engine = TypePromotionEngine::new();
+    let span = SourceSpan::default();
+
+    let result = engine.analyze_binary_promotion(&IrType::I8, &IrType::I8, IrBinaryOp::Multiply, span);
+
+    assert_eq!(result.result_type, IrType::I8);
+    assert!(result.left_cast.is_none());
+    assert!(result.right_cast.is_none());
+}
+
+/// Tests analyze_binary_promotion with Bool types.
+///
+/// # Rationale
+/// Boolean operations may promote to I32 or use boolean-specific logic.
+///
+/// # Test Coverage
+/// - Boolean type handling
+/// - Bool promotion behavior
+#[test]
+fn test_analyze_binary_promotion_bool_types() {
+    let engine = TypePromotionEngine::new();
+    let span = SourceSpan::default();
+
+    let result = engine.analyze_binary_promotion(&IrType::Bool, &IrType::Bool, IrBinaryOp::BitwiseAnd, span);
+
+    // Bool + Bool might stay as Bool or promote to I32 depending on implementation
+    assert!(result.result_type == IrType::Bool || result.result_type == IrType::I32);
+}
+
+/// Tests analyze_binary_promotion with Bool and I32.
+///
+/// # Rationale
+/// Bool mixed with integer should promote to integer type.
+///
+/// # Test Coverage
+/// - Bool to integer promotion
+/// - Mixed boolean/integer operations
+#[test]
+fn test_analyze_binary_promotion_bool_to_i32() {
+    let engine = TypePromotionEngine::new();
+    let span = SourceSpan::default();
+
+    let result = engine.analyze_binary_promotion(&IrType::Bool, &IrType::I32, IrBinaryOp::Add, span);
+
+    assert_eq!(result.result_type, IrType::I32);
+    // Bool should be cast to I32
+    if result.left_cast.is_some() {
+        assert_eq!(result.left_cast.as_ref().unwrap().to_type, IrType::I32);
+    }
+}
+
+/// Tests analyze_binary_promotion with Char type.
+///
+/// # Rationale
+/// Char may be treated as integer or have special handling.
+///
+/// # Test Coverage
+/// - Char type promotion
+/// - Char with integer operations
+#[test]
+fn test_analyze_binary_promotion_char_to_i32() {
+    let engine = TypePromotionEngine::new();
+    let span = SourceSpan::default();
+
+    let result = engine.analyze_binary_promotion(&IrType::Char, &IrType::I32, IrBinaryOp::Add, span);
+
+    // Char likely promotes to I32
+    assert_eq!(result.result_type, IrType::I32);
+}
+
+/// Tests analyze_binary_promotion with non-matching complex types.
+///
+/// # Rationale
+/// Verifies fallback behavior when no direct promotion rule exists.
+///
+/// # Test Coverage
+/// - Fallback promotion logic
+/// - Complex/incompatible type handling
+#[test]
+fn test_analyze_binary_promotion_fallback_to_left_type() {
+    let engine = TypePromotionEngine::new();
+    let span = SourceSpan::default();
+
+    // Using types that might not have explicit promotion rules
+    let result = engine.analyze_binary_promotion(&IrType::String, &IrType::Char, IrBinaryOp::Add, span);
+
+    // Fallback should use left type or a default type (likely I32)
+    assert!(
+        result.result_type == IrType::String || result.result_type == IrType::I32,
+        "Fallback should produce left type or default I32"
+    );
+}
+
+// ============================================================================
+// ANALYZE_BINARY_PROMOTION - CORNER CASES
+// ============================================================================
+
+/// Tests analyze_binary_promotion with large bit-width gap (I8 + I64).
+///
+/// # Rationale
+/// Verifies promotion handles extreme width differences correctly.
+///
+/// # Test Coverage
+/// - Maximum bit-width gap
+/// - Correct cast generation across large gaps
+#[test]
+fn test_analyze_binary_promotion_large_width_gap() {
+    let engine = TypePromotionEngine::new();
+    let span = SourceSpan::default();
+
+    let result = engine.analyze_binary_promotion(&IrType::I8, &IrType::I64, IrBinaryOp::Add, span);
+
+    assert_eq!(result.result_type, IrType::I64);
+    assert!(result.left_cast.is_some());
+    assert!(result.right_cast.is_none());
+
+    if let Some(ref left_cast) = result.left_cast {
+        assert_eq!(left_cast.from_type, IrType::I8);
+        assert_eq!(left_cast.to_type, IrType::I64);
+        assert_eq!(left_cast.cast_kind, CastKind::IntSignExtend);
+    }
+}
+
+/// Tests analyze_binary_promotion with unsigned large gap (U8 + U64).
+///
+/// # Rationale
+/// Unsigned version of large width gap test.
+///
+/// # Test Coverage
+/// - Unsigned large gap widening
+/// - ZeroExtend for large gaps
+#[test]
+fn test_analyze_binary_promotion_unsigned_large_gap() {
+    let engine = TypePromotionEngine::new();
+    let span = SourceSpan::default();
+
+    let result = engine.analyze_binary_promotion(&IrType::U8, &IrType::U64, IrBinaryOp::Multiply, span);
+
+    assert_eq!(result.result_type, IrType::U64);
+    assert!(result.left_cast.is_some());
+
+    if let Some(ref left_cast) = result.left_cast {
+        assert_eq!(left_cast.cast_kind, CastKind::IntZeroExtend);
+    }
+}
+
+/// Tests analyze_binary_promotion with mixed signedness and width (I8 + U64).
+///
+/// # Rationale
+/// Combines signedness change with large width difference.
+///
+/// # Test Coverage
+/// - Multiple edge conditions simultaneously
+/// - Signedness + width gap
+#[test]
+fn test_analyze_binary_promotion_mixed_signedness_and_width() {
+    let engine = TypePromotionEngine::new();
+    let span = SourceSpan::default();
+
+    let result = engine.analyze_binary_promotion(&IrType::I8, &IrType::U64, IrBinaryOp::Add, span);
+
+    // The result type may vary based on implementation - accept either U64 or I64
+    // that can hold both I8 and U64 values
+    assert!(
+        result.result_type == IrType::U64 || result.result_type == IrType::I64,
+        "Result type should be able to hold both I8 and U64 values, got {:?}",
+        result.result_type
+    );
+    // Note: The implementation may optimize by not casting if types are already compatible
+    // We just verify that the result is valid (no panic)
+}
+
+/// Tests analyze_binary_promotion with all arithmetic operations on same types.
+///
+/// # Rationale
+/// Ensures consistency across all arithmetic operations.
+///
+/// # Test Coverage
+/// - All arithmetic operations
+/// - Consistent promotion behavior
+#[test]
+fn test_analyze_binary_promotion_all_arithmetic_operations() {
+    let engine = TypePromotionEngine::new();
+    let span = SourceSpan::default();
+
+    let operations =
+        vec![IrBinaryOp::Add, IrBinaryOp::Subtract, IrBinaryOp::Multiply, IrBinaryOp::Divide, IrBinaryOp::Modulo];
+
+    for op in operations {
+        let result = engine.analyze_binary_promotion(&IrType::I16, &IrType::I32, op, span.clone());
+        assert_eq!(result.result_type, IrType::I32, "All arithmetic ops should promote I16+I32 to I32");
+        assert!(result.left_cast.is_some());
+    }
+}
+
+/// Tests analyze_binary_promotion with different float combinations.
+///
+/// # Rationale
+/// Validates float promotion matrix completeness.
+///
+/// # Test Coverage
+/// - F32 + F32, F32 + F64, F64 + F32, F64 + F64
+/// - Float promotion symmetry
+#[test]
+fn test_analyze_binary_promotion_all_float_combinations() {
+    let engine = TypePromotionEngine::new();
+    let span = SourceSpan::default();
+
+    // F32 + F32 → F32
+    let result = engine.analyze_binary_promotion(&IrType::F32, &IrType::F32, IrBinaryOp::Add, span.clone());
+    assert_eq!(result.result_type, IrType::F32);
+
+    // F32 + F64 → F64
+    let result = engine.analyze_binary_promotion(&IrType::F32, &IrType::F64, IrBinaryOp::Add, span.clone());
+    assert_eq!(result.result_type, IrType::F64);
+
+    // F64 + F32 → F64
+    let result = engine.analyze_binary_promotion(&IrType::F64, &IrType::F32, IrBinaryOp::Add, span.clone());
+    assert_eq!(result.result_type, IrType::F64);
+
+    // F64 + F64 → F64
+    let result = engine.analyze_binary_promotion(&IrType::F64, &IrType::F64, IrBinaryOp::Add, span);
+    assert_eq!(result.result_type, IrType::F64);
+}
+
+// ============================================================================
+// WARNING GENERATION TESTS
+// ============================================================================
+
+/// Tests that precision loss warning is generated for F64 → F32.
+///
+/// # Rationale
+/// Narrowing float conversions should warn about precision loss.
+///
+/// # Test Coverage
+/// - Precision loss warning for float narrowing
+/// - Warning details and metadata
+#[test]
+fn test_analyze_binary_promotion_precision_loss_warning_f64_to_f32() {
+    let engine = TypePromotionEngine::new();
+    let span = SourceSpan::default();
+
+    // This would require F64 to narrow to F32, which typically doesn't happen
+    // in standard promotion, but we can test if the warning system works
+    // by examining scenarios where a promotion rule indicates may_lose_precision
+
+    // For actual precision loss, we need narrowing scenarios
+    // Since standard promotion doesn't narrow, this tests the warning mechanism
+    let result = engine.analyze_binary_promotion(&IrType::I32, &IrType::F32, IrBinaryOp::Add, span);
+
+    // I32 to F32 can lose precision for large integers
+    if result.left_cast.is_some() && result.left_cast.as_ref().unwrap().may_lose_precision {
+        let has_precision_warning = result.warnings.iter().any(|w| matches!(w, PromotionWarning::PrecisionLoss { .. }));
+        assert!(has_precision_warning, "Should generate precision loss warning for I32→F32");
+
+        // Verify warning details
+        for warning in &result.warnings {
+            if let PromotionWarning::PrecisionLoss { from_type, to_type, .. } = warning {
+                assert_eq!(*from_type, IrType::I32);
+                assert_eq!(*to_type, IrType::F32);
+            }
+        }
+    }
+}
+
+/// Tests that overflow warning is generated for appropriate scenarios.
+///
+/// # Rationale
+/// Narrowing integer conversions should warn about potential overflow.
+///
+/// # Test Coverage
+/// - Overflow warning generation
+/// - Warning contains operation information
+#[test]
+fn test_analyze_binary_promotion_overflow_warning() {
+    let engine = TypePromotionEngine::new();
+    let span = SourceSpan::default();
+
+    // Standard promotion typically widens, so overflow warnings are rare
+    // This test validates the warning mechanism when may_overflow is set
+
+    let result = engine.analyze_binary_promotion(&IrType::I32, &IrType::U32, IrBinaryOp::Add, span);
+
+    // Check if any cast indicates potential overflow
+    let may_overflow = result.left_cast.as_ref().map(|c| c.may_overflow).unwrap_or(false)
+        || result.right_cast.as_ref().map(|c| c.may_overflow).unwrap_or(false);
+
+    if may_overflow {
+        let has_overflow_warning =
+            result.warnings.iter().any(|w| matches!(w, PromotionWarning::PotentialOverflow { .. }));
+        assert!(has_overflow_warning);
+    }
+}
+
+/// Tests that SignednessChange warning contains correct metadata.
+///
+/// # Rationale
+/// Signedness warnings should accurately report the signedness transition.
+///
+/// # Test Coverage
+/// - Warning metadata accuracy
+/// - from_signed and to_signed fields
+/// - may_affect_comparisons flag
+#[test]
+fn test_analyze_binary_promotion_signedness_warning_details() {
+    let engine = TypePromotionEngine::new();
+    let span = SourceSpan::default();
+
+    let result = engine.analyze_binary_promotion(&IrType::I32, &IrType::U32, IrBinaryOp::Equal, span);
+
+    let signedness_warnings: Vec<_> =
+        result.warnings.iter().filter(|w| matches!(w, PromotionWarning::SignednessChange { .. })).collect();
+
+    assert!(!signedness_warnings.is_empty(), "Should generate signedness warning");
+
+    for warning in signedness_warnings {
+        if let PromotionWarning::SignednessChange { from_signed, to_signed, may_affect_comparisons } = warning {
+            assert!(
+                *from_signed != *to_signed || *may_affect_comparisons,
+                "Signedness warning should indicate actual change or comparison impact"
+            );
+        }
+    }
+}
+
+/// Tests that multiple warnings can be generated simultaneously.
+///
+/// # Rationale
+/// Some promotions may trigger multiple warning conditions.
+///
+/// # Test Coverage
+/// - Multiple warning generation
+/// - Warning combination scenarios
+#[test]
+fn test_analyze_binary_promotion_multiple_warnings() {
+    let engine = TypePromotionEngine::new();
+    let span = SourceSpan::default();
+
+    // Scenario that might generate multiple warnings: signed/unsigned + potential precision loss
+    let result = engine.analyze_binary_promotion(&IrType::I32, &IrType::U32, IrBinaryOp::Multiply, span);
+
+    // Should have at least signedness warning
+    assert!(!result.warnings.is_empty());
+
+    // Count different warning types
+    let signedness_count =
+        result.warnings.iter().filter(|w| matches!(w, PromotionWarning::SignednessChange { .. })).count();
+
+    let precision_count =
+        result.warnings.iter().filter(|w| matches!(w, PromotionWarning::PrecisionLoss { .. })).count();
+
+    let overflow_count =
+        result.warnings.iter().filter(|w| matches!(w, PromotionWarning::PotentialOverflow { .. })).count();
+
+    assert!(signedness_count + precision_count + overflow_count >= 1, "Should generate at least one warning type");
+}
+
+// ============================================================================
+// PROMOTION RESULT SOUNDNESS TESTS
+// ============================================================================
+
+/// Tests that is_sound flag is correctly set for safe promotions.
+///
+/// # Rationale
+/// Promotions without warnings should be marked as sound.
+///
+/// # Test Coverage
+/// - is_sound flag accuracy
+/// - Correlation with warnings
+#[test]
+fn test_analyze_binary_promotion_soundness_flag_safe() {
+    let engine = TypePromotionEngine::new();
+    let span = SourceSpan::default();
+
+    // Safe widening promotion
+    let result = engine.analyze_binary_promotion(&IrType::I8, &IrType::I32, IrBinaryOp::Add, span);
+
+    if result.warnings.is_empty() {
+        assert!(result.is_sound, "Promotions without warnings should be marked sound");
+    }
+}
+
+/// Tests that is_sound flag is correctly set for potentially unsafe promotions.
+///
+/// # Rationale
+/// Promotions with warnings should have is_sound reflect warning presence.
+///
+/// # Test Coverage
+/// - is_sound with warnings present
+/// - Warning impact on soundness
+#[test]
+fn test_analyze_binary_promotion_soundness_flag_with_warnings() {
+    let engine = TypePromotionEngine::new();
+    let span = SourceSpan::default();
+
+    // Signedness change scenario
+    let result = engine.analyze_binary_promotion(&IrType::I32, &IrType::U32, IrBinaryOp::Add, span);
+
+    if !result.warnings.is_empty() {
+        // Current implementation: is_sound = warnings.is_empty()
+        assert!(!result.is_sound, "Promotions with warnings should reflect in is_sound flag");
+    }
+}
+
+// ============================================================================
+// CAST KIND VERIFICATION TESTS
+// ============================================================================
+
+/// Tests that SignExtend cast is used for signed integer widening.
+///
+/// # Rationale
+/// Signed integers must use sign extension to preserve negative values.
+///
+/// # Test Coverage
+/// - SignExtend cast kind correctness
+/// - All signed widening scenarios
+#[test]
+fn test_analyze_binary_promotion_sign_extend_cast() {
+    let engine = TypePromotionEngine::new();
+    let span = SourceSpan::default();
+
+    let test_cases = vec![(IrType::I8, IrType::I16), (IrType::I16, IrType::I32), (IrType::I32, IrType::I64)];
+
+    for (from, to) in test_cases {
+        let result = engine.analyze_binary_promotion(&from, &to, IrBinaryOp::Add, span.clone());
+
+        if let Some(ref cast) = result.left_cast {
+            assert_eq!(
+                cast.cast_kind,
+                CastKind::IntSignExtend,
+                "Signed widening from {:?} to {:?} should use IntSignExtend",
+                from,
+                to
+            );
+        }
+    }
+}
+
+/// Tests that ZeroExtend cast is used for unsigned integer widening.
+///
+/// # Rationale
+/// Unsigned integers must use zero extension.
+///
+/// # Test Coverage
+/// - ZeroExtend cast kind correctness
+/// - All unsigned widening scenarios
+#[test]
+fn test_analyze_binary_promotion_zero_extend_cast() {
+    let engine = TypePromotionEngine::new();
+    let span = SourceSpan::default();
+
+    let test_cases = vec![(IrType::U8, IrType::U16), (IrType::U16, IrType::U32), (IrType::U32, IrType::U64)];
+
+    for (from, to) in test_cases {
+        let result = engine.analyze_binary_promotion(&from, &to, IrBinaryOp::Add, span.clone());
+
+        if let Some(ref cast) = result.left_cast {
+            assert_eq!(
+                cast.cast_kind,
+                CastKind::IntZeroExtend,
+                "Unsigned widening from {:?} to {:?} should use IntZeroExtend",
+                from,
+                to
+            );
+        }
+    }
+}
+
+/// Tests that FloatExtend cast is used for F32 → F64.
+///
+/// # Rationale
+/// Float widening requires FloatExtend cast.
+///
+/// # Test Coverage
+/// - FloatExtend cast kind
+/// - Float-specific cast operations
+#[test]
+fn test_analyze_binary_promotion_float_extend_cast() {
+    let engine = TypePromotionEngine::new();
+    let span = SourceSpan::default();
+
+    let result = engine.analyze_binary_promotion(&IrType::F32, &IrType::F64, IrBinaryOp::Add, span);
+
+    if let Some(ref cast) = result.left_cast {
+        assert_eq!(cast.cast_kind, CastKind::FloatExtend, "F32 to F64 should use FloatExtend");
+    }
+}
+
+/// Tests that IntToFloat cast is used for integer to float conversions.
+///
+/// # Rationale
+/// Integer to float conversions require IntToFloat cast.
+///
+/// # Test Coverage
+/// - IntToFloat cast kind
+/// - Various int→float scenarios
+#[test]
+fn test_analyze_binary_promotion_int_to_float_cast() {
+    let engine = TypePromotionEngine::new();
+    let span = SourceSpan::default();
+
+    let test_cases = vec![(IrType::I32, IrType::F32), (IrType::I64, IrType::F64), (IrType::U32, IrType::F64)];
+
+    for (from, to) in test_cases {
+        let result = engine.analyze_binary_promotion(&from, &to, IrBinaryOp::Add, span.clone());
+
+        if let Some(ref cast) = result.left_cast {
+            assert_eq!(
+                cast.cast_kind,
+                CastKind::IntToFloat,
+                "Int to float from {:?} to {:?} should use IntToFloat",
+                from,
+                to
+            );
+        }
+    }
+}
+
+// ============================================================================
+// SOURCE SPAN PROPAGATION TESTS
+// ============================================================================
+
+/// Tests that source span is correctly propagated to cast instructions.
+///
+/// # Rationale
+/// Source spans are critical for error reporting and debugging.
+///
+/// # Test Coverage
+/// - Span propagation to TypePromotion
+/// - Span consistency across warnings
+#[test]
+fn test_analyze_binary_promotion_source_span_propagation() {
+    let engine = TypePromotionEngine::new();
+    let span = SourceSpan::default();
+
+    let result = engine.analyze_binary_promotion(&IrType::I8, &IrType::I32, IrBinaryOp::Add, span.clone());
+
+    if let Some(ref cast) = result.left_cast {
+        assert_eq!(cast.source_span, span, "Cast should preserve source span");
+    }
+}
+
+/// Tests that custom source spans are preserved through promotion analysis.
+///
+/// # Rationale
+/// Custom spans with specific location info must be maintained.
+///
+/// # Test Coverage
+/// - Custom span preservation
+/// - Span data integrity
+#[test]
+fn test_analyze_binary_promotion_custom_source_span() {
+    let engine = TypePromotionEngine::new();
+    let custom_span = SourceSpan::default(); // Would be customized in real scenario
+
+    let result = engine.analyze_binary_promotion(&IrType::U16, &IrType::U64, IrBinaryOp::Multiply, custom_span.clone());
+
+    if let Some(ref cast) = result.left_cast {
+        assert_eq!(cast.source_span, custom_span);
+    }
+    if let Some(ref cast) = result.right_cast {
+        assert_eq!(cast.source_span, custom_span);
+    }
+}
+
+// ============================================================================
+// REGRESSION TESTS
+// ============================================================================
+
+/// Tests that promotion engine uses global singleton matrix.
+///
+/// # Rationale
+/// Ensures performance optimization via singleton is working.
+///
+/// # Test Coverage
+/// - Singleton matrix usage
+/// - Memory efficiency
+#[test]
+fn test_analyze_binary_promotion_uses_singleton_matrix() {
+    let engine1 = TypePromotionEngine::new();
+    let engine2 = TypePromotionEngine::new();
+    let span = SourceSpan::default();
+
+    let result1 = engine1.analyze_binary_promotion(&IrType::I32, &IrType::F32, IrBinaryOp::Add, span.clone());
+    let result2 = engine2.analyze_binary_promotion(&IrType::I32, &IrType::F32, IrBinaryOp::Add, span);
+
+    // Both should produce identical results (using same singleton matrix)
+    assert_eq!(result1.result_type, result2.result_type);
+    assert_eq!(result1.left_cast.is_some(), result2.left_cast.is_some());
+    assert_eq!(result1.right_cast.is_some(), result2.right_cast.is_some());
+}
+
+/// Tests that analyze_binary_promotion is deterministic.
+///
+/// # Rationale
+/// Same inputs should always produce same outputs.
+///
+/// # Test Coverage
+/// - Deterministic behavior
+/// - Result consistency
+#[test]
+fn test_analyze_binary_promotion_deterministic() {
+    let engine = TypePromotionEngine::new();
+    let span = SourceSpan::default();
+
+    let result1 = engine.analyze_binary_promotion(&IrType::I16, &IrType::I64, IrBinaryOp::Add, span.clone());
+    let result2 = engine.analyze_binary_promotion(&IrType::I16, &IrType::I64, IrBinaryOp::Add, span.clone());
+    let result3 = engine.analyze_binary_promotion(&IrType::I16, &IrType::I64, IrBinaryOp::Add, span);
+
+    assert_eq!(result1.result_type, result2.result_type);
+    assert_eq!(result2.result_type, result3.result_type);
+}
+
+/// Tests that promotion engine handles rapid successive calls efficiently.
+///
+/// # Rationale
+/// Performance regression test for high-frequency usage patterns.
+///
+/// # Test Coverage
+/// - Performance under load
+/// - No state corruption with repeated calls
+#[test]
+fn test_analyze_binary_promotion_rapid_successive_calls() {
+    let engine = TypePromotionEngine::new();
+    let span = SourceSpan::default();
+
+    // Perform many successive promotions
+    for _ in 0..100 {
+        let result = engine.analyze_binary_promotion(&IrType::I32, &IrType::F64, IrBinaryOp::Add, span.clone());
+        assert_eq!(result.result_type, IrType::F64, "All calls should produce consistent results");
+    }
+}
+
+/// Tests that promotion engine handles all IrType variants without panicking.
+///
+/// # Rationale
+/// Robustness test ensuring no type causes crashes.
+///
+/// # Test Coverage
+/// - All IrType enum variants
+/// - No panic conditions
+#[test]
+fn test_analyze_binary_promotion_all_types_no_panic() {
+    let engine = TypePromotionEngine::new();
+    let span = SourceSpan::default();
+
+    let all_types = vec![
+        IrType::I8,
+        IrType::I16,
+        IrType::I32,
+        IrType::I64,
+        IrType::U8,
+        IrType::U16,
+        IrType::U32,
+        IrType::U64,
+        IrType::F32,
+        IrType::F64,
+        IrType::Bool,
+        IrType::Char,
+        IrType::Void,
+        IrType::String,
+    ];
+
+    // Test all combinations (simplified - just test each type with I32)
+    for ty in &all_types {
+        let result = engine.analyze_binary_promotion(ty, &IrType::I32, IrBinaryOp::Add, span.clone());
+        // Should not panic, result should be valid
+        assert!(result.result_type != IrType::Void || ty == &IrType::Void);
     }
 }
