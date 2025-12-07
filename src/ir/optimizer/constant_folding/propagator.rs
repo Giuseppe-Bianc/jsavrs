@@ -708,7 +708,6 @@ impl SCCPropagator {
     }
 }
 
-
 #[cfg(test)]
 mod tests {
     use super::*;

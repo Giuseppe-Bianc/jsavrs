@@ -229,7 +229,7 @@ impl ScopeManager {
             }
 
             // Remap children.
-            let mut new_children = Vec::new();
+            let mut new_children = Vec::with_capacity(new_scope.children.len());
             for child_id in &new_scope.children {
                 if let Some(new_child_id) = id_mapping.get(child_id) {
                     new_children.push(*new_child_id);

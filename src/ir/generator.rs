@@ -78,9 +78,8 @@ impl IrGenerator {
             temp_counter: 0,
             block_counter: 0,
             errors: Vec::new(),
-            break_stack: Vec::new(),
-            continue_stack: Vec::new(),
-            //_access_controller: access_controller,
+            break_stack: Vec::with_capacity(64),
+            continue_stack: Vec::with_capacity(64),
             type_context: TypeContext::default(),
             root_scope: scope_manager.root_scope(),
             apply_ssa: true,                          // Enable SSA by default
@@ -119,7 +118,6 @@ impl IrGenerator {
     /// * The generated Module with all functions and global variables
     /// * A vector of compilation errors encountered during generation
     pub fn generate(&mut self, stmts: Vec<Stmt>, module_name: &str) -> (Module, Vec<CompileError>) {
-        //let mut functions = Vec::new();
         let mut module = Module::new(module_name, self.root_scope);
 
         // First pass: create all functions and add them to the symbol table

@@ -122,21 +122,6 @@ impl<'a> Lexer<'a> {
             }),
         })
     }
-
-    /*// OTTIMIZZAZIONE 7: Metodo per processing streaming (opzionale)
-    pub fn process_streaming<F>(&mut self, mut callback: F) -> Vec<CompileError>
-    where
-        F: FnMut(Token)
-    {
-        let mut errors = Vec::new();
-        while let Some(result) = self.next_token() {
-            match result {
-                Ok(token) => callback(token),
-                Err(e) => errors.push(e),
-            }
-        }
-        errors
-    }*/
 }
 
 impl Iterator for Lexer<'_> {

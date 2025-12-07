@@ -357,7 +357,7 @@ impl SsaTransformer {
 
         // Process phi-functions in this block
         // First, collect information about phi-functions that need to be updated
-        let mut phi_updates = Vec::new();
+        let mut phi_updates = Vec::with_capacity(block.instructions.len());
         for (i, instruction) in block.instructions.iter().enumerate() {
             if let InstructionKind::Phi { ty, .. } = &instruction.kind {
                 // Store the index, type, and variable name for updating later
@@ -460,7 +460,7 @@ impl SsaTransformer {
                     let succ_label = {
                         let graph = func.cfg.graph();
                         if let Some(block) = graph.node_weight(succ_idx) {
-                            block.label.to_string()
+                            block.label.clone()
                         } else {
                             continue;
                         }
