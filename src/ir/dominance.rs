@@ -45,7 +45,7 @@ impl DominanceInfo {
         }
 
         // Pre-compute predecessors for all nodes to avoid repeated computation
-        let mut predecessors: HashMap<NodeIndex, Vec<NodeIndex>> = HashMap::new();
+        let mut predecessors: HashMap<NodeIndex, Vec<NodeIndex>> = HashMap::with_capacity(post_order.len().min(1));
         for &node in &post_order {
             let preds: Vec<NodeIndex> = cfg.graph().neighbors_directed(node, petgraph::Direction::Incoming).collect();
             predecessors.insert(node, preds);

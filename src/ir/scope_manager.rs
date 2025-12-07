@@ -192,7 +192,7 @@ impl ScopeManager {
         let root_id = self.root_scope;
 
         // Create a mapping from old to new IDs to prevent collisions.
-        let mut id_mapping: HashMap<ScopeId, ScopeId> = HashMap::new();
+        let mut id_mapping: HashMap<ScopeId, ScopeId> = HashMap::with_capacity(other.scopes.len());
 
         // Allocate new IDs for all scopes except the other root.
         for (scope_id, _) in other.scopes.iter() {
