@@ -204,14 +204,16 @@ pub enum TokenKind {
     TypeBool,
 
     // Whitespace and comments (skipped by lexer)
-    #[regex(r"\p{White_Space}+", logos::skip)]
     #[regex(r";")]
     Semicolon,
+    #[regex(r"\p{White_Space}+", logos::skip)]
     Whitespace,
-    /// Matches both single-line and multi-line comments
-    #[regex(r"//[^\n\r]*", logos::skip)]
-    #[regex(r"/\*[^*]*\*+(?:[^*/][^*]*\*+)*/", logos::skip)]
+    /// Matches single-line comments
+    #[regex(r"//[^\n\r]*", logos::skip, allow_greedy = true)]
     Comment,
+    /// Matches multi-line comments
+    #[regex(r"/\*[^*]*\*+(?:[^*/][^*]*\*+)*/", logos::skip)]
+    MultilineComment,
 
     /// End-of-file marker
     Eof,
@@ -331,6 +333,7 @@ impl fmt::Display for TokenKind {
             // Special tokens
             TokenKind::Whitespace => f.write_str("whitespace"),
             TokenKind::Comment => f.write_str("comment"),
+            TokenKind::MultilineComment => f.write_str("multiline comment"),
             TokenKind::Eof => f.write_str("end of file"),
         }
     }
