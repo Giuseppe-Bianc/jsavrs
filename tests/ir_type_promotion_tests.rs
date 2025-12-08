@@ -3345,6 +3345,7 @@ fn test_type_promotion_engine_new() {
 /// - Default trait implementation
 /// - Consistency between new() and default()
 #[test]
+#[allow(clippy::default_constructed_unit_structs)]
 fn test_type_promotion_engine_default() {
     let engine = TypePromotionEngine::default();
 
