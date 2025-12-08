@@ -417,4 +417,3 @@ fn test_uppercase_input() {
     let result = get_error_message(input);
     assert!(result.is_none());
 }
-

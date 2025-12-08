@@ -161,6 +161,13 @@ pub fn lexer_tokenize_with_errors(lexer: &mut Lexer) -> (Vec<Token>, Vec<Compile
     post_process_tokens(tokens, errors)
 }
 
+#[inline]
+fn has_malformed_errors(errors: &[CompileError]) -> bool {
+    errors.iter().any(
+        |e| matches!(e, CompileError::LexerError { message, .. } if matches!(message.as_ref(), "Invalid token: \"#b\"" | "Invalid token: \"#o\"" | "Invalid token: \"#x\"")),
+    )
+}
+
 /// Post-processes tokens and errors after initial tokenization.
 ///
 /// # Optimization Strategy
@@ -182,16 +189,20 @@ pub fn lexer_tokenize_with_errors(lexer: &mut Lexer) -> (Vec<Token>, Vec<Compile
 /// Tuple of (filtered tokens, enhanced errors)
 #[inline]
 pub fn post_process_tokens(tokens: Vec<Token>, errors: Vec<CompileError>) -> (Vec<Token>, Vec<CompileError>) {
+    // Se non ci sono errori hashtag, ritorna subito
+    if !has_malformed_errors(&errors) {
+        return (tokens, errors);
+    }
+
     let mut replacements = HashMap::new();
 
     for (eidx, error) in errors.iter().enumerate() {
         match error {
-            CompileError::LexerError { message, span, .. } => {
+            CompileError::LexerError { message, span, help } => {
                 if let Some(msg) = extract_malformed_base_number_message(message.as_ref()) {
-                    // Nuovo comportamento logos 0.16: "#b"/"#o"/"#x" come token singolo
                     replacements.insert(
                         eidx,
-                        CompileError::LexerError { message: Arc::from(msg), span: span.clone(), help: None },
+                        CompileError::LexerError { message: Arc::from(msg), span: span.clone(), help: help.clone() },
                     );
                 }
             }
