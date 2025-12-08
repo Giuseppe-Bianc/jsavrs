@@ -3930,8 +3930,8 @@ fn test_analyze_binary_promotion_bool_to_i32() {
 
     assert_eq!(result.result_type, IrType::I32);
     // Bool should be cast to I32
-    if result.left_cast.is_some() {
-        assert_eq!(result.left_cast.as_ref().unwrap().to_type, IrType::I32);
+    if let Some(ref left_cast) = result.left_cast {
+        assert_eq!(left_cast.to_type, IrType::I32);
     }
 }
 
