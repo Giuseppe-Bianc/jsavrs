@@ -26,8 +26,8 @@ use std::{collections::HashMap, sync::Arc};
 pub struct Lexer<'a> {
     inner: logos::Lexer<'a, TokenKind>,
     line_tracker: LineTracker,
+    source_len: usize, // Move before bool
     eof_emitted: bool,
-    source_len: usize,
 }
 
 impl<'a> Lexer<'a> {
@@ -150,7 +150,7 @@ impl Iterator for Lexer<'_> {
 pub fn lexer_tokenize_with_errors(lexer: &mut Lexer) -> (Vec<Token>, Vec<CompileError>) {
     let estimated_tokens = lexer.source_len / 8;
     let mut tokens = Vec::with_capacity(estimated_tokens);
-    let mut errors = Vec::new();
+    let mut errors = Vec::with_capacity(4);
 
     while let Some(token_result) = lexer.next_token() {
         match token_result {
@@ -261,10 +261,10 @@ fn apply_error_replacements(
 /// Optional specific error message if the input matches a malformed base number pattern
 #[inline]
 fn extract_malformed_base_number_message(msg: &str) -> Option<&'static str> {
-    match msg {
-        "Invalid token: \"#b\"" => Some("Malformed binary number: \"#b\""),
-        "Invalid token: \"#o\"" => Some("Malformed octal number: \"#o\""),
-        "Invalid token: \"#x\"" => Some("Malformed hexadecimal number: \"#x\""),
+    match msg.as_bytes() {
+        b"Invalid token: \"#b\"" => Some("Malformed binary number: \"#b\""),
+        b"Invalid token: \"#o\"" => Some("Malformed octal number: \"#o\""),
+        b"Invalid token: \"#x\"" => Some("Malformed hexadecimal number: \"#x\""),
         _ => None,
     }
 }
