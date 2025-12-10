@@ -3,7 +3,29 @@ use super::{Function, ScopeId};
 use std::fmt;
 use std::sync::Arc;
 
-/// Describes the data layout for different targets.
+/// Describes the data layout specification for target platforms.
+///
+/// The data layout defines memory alignment, endianness, pointer sizes, and
+/// other architecture-specific data representation details. Each variant
+/// corresponds to a specific target architecture and operating system.
+///
+/// # Layout String Format
+///
+/// The layout string follows LLVM's data layout specification format:
+/// - `e` = little-endian
+/// - `m:` = mangling style (e=ELF, w=Windows, o=Mach-O)
+/// - `p270`, `p271`, `p272` = pointer address spaces
+/// - `i64:64` = 64-bit integers are 64-bit aligned
+/// - `f80:128` = 80-bit floats are 128-bit aligned
+/// - `n8:16:32:64` = native integer widths
+/// - `S128` = stack alignment is 128 bits
+///
+/// # Examples
+///
+/// ```ignore
+/// let layout = DataLayout::LinuxX86_64;
+/// assert_eq!(layout.as_str(), "e-m:e-p270:32:32-p271:32:32-p272:64:64-i64:64-f80:128-n8:16:32:64-S128");
+/// ```
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Hash)]
 pub enum DataLayout {
     LinuxX86_64,
@@ -41,7 +63,32 @@ impl fmt::Display for DataLayout {
         f.write_str(self.as_str())
     }
 }
-/// Identifies the target triple (arch-os-environment).
+/// Identifies the target triple specifying architecture, OS, and environment.
+///
+/// Target triples follow the format `<arch>-<vendor>-<os>-<environment>`
+/// and are used throughout the compilation pipeline to enable cross-compilation
+/// and platform-specific code generation.
+///
+/// # Supported Targets
+///
+/// - **x86_64**: 64-bit x86 architecture (Intel/AMD)
+/// - **aarch64**: 64-bit ARM architecture (ARM64)
+/// - **i686**: 32-bit x86 architecture
+/// - **wasm32**: WebAssembly 32-bit
+///
+/// # Operating Systems
+///
+/// - **Linux**: GNU/Linux systems
+/// - **Windows**: Windows with GNU toolchain
+/// - **Darwin**: macOS/iOS (Apple platforms)
+/// - **Emscripten**: WebAssembly with Emscripten runtime
+///
+/// # Examples
+///
+/// ```ignore
+/// let triple = TargetTriple::X86_64UnknownLinuxGnu;
+/// assert_eq!(triple.as_str(), "x86_64-unknown-linux-gnu");
+/// ```
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Hash)]
 pub enum TargetTriple {
     X86_64UnknownLinuxGnu,
@@ -80,6 +127,32 @@ impl fmt::Display for TargetTriple {
 }
 
 /// Represents an IR (Intermediate Representation) module.
+///
+/// A module is the top-level container for all IR constructs including functions,
+/// global variables, and metadata. It corresponds to a single compilation unit
+/// and carries target-specific information for code generation.
+///
+/// # Fields
+///
+/// * `name` - Module identifier, typically the source file name
+/// * `functions` - All function definitions in this module
+/// * `root_scope` - Optional root scope ID for symbol resolution
+/// * `data_layout` - Target-specific data layout specification
+/// * `target_triple` - Target platform triple for code generation
+///
+/// # Design
+///
+/// Modules are immutable once the root scope is set during construction.
+/// This ensures consistent scoping throughout the compilation pipeline.
+///
+/// # Examples
+///
+/// ```ignore
+/// use jsavrs::ir::Module;
+///
+/// let module = Module::new("my_program", None);
+/// assert_eq!(module.name.as_ref(), "my_program");
+/// ```
 #[derive(Debug, Clone)]
 #[allow(dead_code)]
 pub struct Module {

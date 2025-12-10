@@ -24,12 +24,47 @@ use std::fmt::Write;
 use std::sync::Arc;
 use std::sync::Mutex;
 
-// Helper to create a dummy SourceSpan
+/// Creates a dummy source span for testing purposes.
+///
+/// Returns a default-initialized `SourceSpan` suitable for use in unit tests
+/// where actual source location information is not needed.
+///
+/// # Returns
+///
+/// A default `SourceSpan` with no meaningful location data.
+///
+/// # Examples
+///
+/// ```ignore
+/// let expr = Expr::Literal {
+///     value: LiteralValue::Bool(true),
+///     span: dummy_span(),
+/// };
+/// ```
 pub fn dummy_span() -> SourceSpan {
     SourceSpan::default()
 }
 
-// Strips ANSI escape codes for easier comparison
+/// Strips ANSI escape codes from a string for easier comparison in tests.
+///
+/// Removes all ANSI color and formatting codes, leaving only the plain text.
+/// Useful for testing terminal output without dealing with formatting codes.
+///
+/// # Arguments
+///
+/// * `s` - String containing ANSI escape sequences
+///
+/// # Returns
+///
+/// A new string with all ANSI codes removed.
+///
+/// # Examples
+///
+/// ```ignore
+/// let colored = "\x1B[31mError\x1B[0m";
+/// let plain = strip_ansi_codes(colored);
+/// assert_eq!(plain, "Error");
+/// ```
 pub fn strip_ansi_codes(s: &str) -> String {
     let re = Regex::new(r"\x1B\[[0-?]*[ -/]*[@-~]").unwrap();
     re.replace_all(s, "").to_string()
@@ -43,19 +78,54 @@ macro_rules! create_num_lit {
     };
 }
 
-// Generic function to create number literals with macro
+/// Creates an i8 numeric literal expression.
+///
+/// # Arguments
+///
+/// * `n` - The 8-bit signed integer value
+///
+/// # Returns
+///
+/// An `Expr::Literal` containing the i8 value with a dummy span.
 pub fn num_lit_i8(n: i8) -> Expr {
     create_num_lit!(I8, n)
 }
 
+/// Creates an i16 numeric literal expression.
+///
+/// # Arguments
+///
+/// * `n` - The 16-bit signed integer value
+///
+/// # Returns
+///
+/// An `Expr::Literal` containing the i16 value with a dummy span.
 pub fn num_lit_i16(n: i16) -> Expr {
     create_num_lit!(I16, n)
 }
 
+/// Creates an i32 numeric literal expression.
+///
+/// # Arguments
+///
+/// * `n` - The 32-bit signed integer value
+///
+/// # Returns
+///
+/// An `Expr::Literal` containing the i32 value with a dummy span.
 pub fn num_lit_i32(n: i32) -> Expr {
     create_num_lit!(I32, n)
 }
 
+/// Creates an i64 numeric literal expression.
+///
+/// # Arguments
+///
+/// * `n` - The 64-bit signed integer value
+///
+/// # Returns
+///
+/// An `Expr::Literal` containing the i64 value with a dummy span.
 pub fn num_lit_i64(n: i64) -> Expr {
     create_num_lit!(Integer, n)
 }
@@ -100,17 +170,73 @@ pub fn char_lit(c: &str) -> Expr {
     create_literal_expr(LiteralValue::CharLit(c.into()))
 }
 
-// Generic helper function to create binary expressions
+/// Creates a binary operation expression.
+///
+/// # Arguments
+///
+/// * `left` - Left-hand side expression
+/// * `op` - Binary operator (Add, Subtract, Multiply, etc.)
+/// * `right` - Right-hand side expression
+///
+/// # Returns
+///
+/// An `Expr::Binary` with the given operands and operator.
+///
+/// # Examples
+///
+/// ```ignore
+/// let expr = binary_expr(
+///     num_lit_i32(2),
+///     BinaryOp::Add,
+///     num_lit_i32(3)
+/// );
+/// // Represents: 2 + 3
+/// ```
 pub fn binary_expr(left: Expr, op: BinaryOp, right: Expr) -> Expr {
     Expr::Binary { left: Box::new(left), op, right: Box::new(right), span: dummy_span() }
 }
 
-// Generic helper function to create unary expressions
+/// Creates a unary operation expression.
+///
+/// # Arguments
+///
+/// * `op` - Unary operator (Negate, Not)
+/// * `expr` - The expression to apply the operator to
+///
+/// # Returns
+///
+/// An `Expr::Unary` with the given operator and operand.
+///
+/// # Examples
+///
+/// ```ignore
+/// let expr = unary_expr(UnaryOp::Negate, num_lit_i32(5));
+/// // Represents: -5
+/// ```
 pub fn unary_expr(op: UnaryOp, expr: Expr) -> Expr {
     Expr::Unary { op, expr: Box::new(expr), span: dummy_span() }
 }
 
-// Generic helper function to create grouping expressions
+/// Creates a grouping (parenthesized) expression.
+///
+/// # Arguments
+///
+/// * `expr` - The expression to group
+///
+/// # Returns
+///
+/// An `Expr::Grouping` containing the given expression.
+///
+/// # Examples
+///
+/// ```ignore
+/// let expr = grouping_expr(binary_expr(
+///     num_lit_i32(2),
+///     BinaryOp::Add,
+///     num_lit_i32(3)
+/// ));
+/// // Represents: (2 + 3)
+/// ```
 pub fn grouping_expr(expr: Expr) -> Expr {
     Expr::Grouping { expr: Box::new(expr), span: dummy_span() }
 }

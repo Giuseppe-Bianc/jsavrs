@@ -1,3 +1,22 @@
+//! IR instruction definitions and operations.
+//!
+//! This module defines all instruction types in the intermediate representation,
+//! including arithmetic operations, memory operations, control flow, and type
+//! conversions. Instructions are the fundamental building blocks of IR functions.
+//!
+//! # Instruction Categories
+//!
+//! - **Arithmetic**: Binary and unary operations on numeric types
+//! - **Memory**: Load, store, and allocation operations
+//! - **Control Flow**: Branches, calls, and returns
+//! - **Type Conversions**: Casts between different types
+//! - **Vector Operations**: SIMD operations on vector types
+//!
+//! # Design
+//!
+//! Each instruction carries optional result value, debug information for source
+//! tracking, and scope information for symbol resolution.
+
 // src/ir/instruction.rs
 use super::{IrType, ScopeId, Value};
 use crate::{
@@ -6,6 +25,43 @@ use crate::{
 };
 use std::fmt;
 
+/// Type casting operations for value conversions in IR.
+///
+/// Cast operations convert values between different types, handling sign extension,
+/// truncation, and reinterpretation as needed. Each cast kind represents a specific
+/// conversion strategy with well-defined semantics.
+///
+/// # Integer Conversions
+///
+/// - **Zero Extension**: Unsigned widening preserving value (u8 → u32)
+/// - **Sign Extension**: Signed widening preserving value (i8 → i32)
+/// - **Truncation**: Narrowing losing high bits (u64 → u16)
+/// - **Bitcast**: Same-width reinterpretation (i32 ↔ u32)
+///
+/// # Float Conversions
+///
+/// - **Truncation**: Precision loss (f64 → f32)
+/// - **Extension**: Precision gain (f32 → f64)
+/// - **To/From Int**: Float ↔ integer conversion
+///
+/// # String Conversions
+///
+/// Support parsing and formatting between strings and primitive types.
+///
+/// # Safety
+///
+/// Most casts are safe, but some (like `IntToChar`) may fail at runtime if
+/// the value is invalid for the target type.
+///
+/// # Examples
+///
+/// ```ignore
+/// // Sign extension: -1_i8 (0xFF) becomes -1_i32 (0xFFFFFFFF)
+/// let cast = CastKind::IntSignExtend;
+///
+/// // Zero extension: 255_u8 (0xFF) becomes 255_u32 (0x000000FF)
+/// let cast = CastKind::IntZeroExtend;
+/// ```
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Hash, Default)]
 pub enum CastKind {
     /// Default (safe) integer widening cast
@@ -57,6 +113,30 @@ pub enum CastKind {
     Bitcast, // f32 <-> u32, f64 <-> u64, pointer <-> pointer
 }
 
+/// Vector (SIMD) operations for parallel computation.
+///
+/// These operations work on vector types, performing the same operation on
+/// multiple data elements simultaneously. Vector operations enable efficient
+/// use of modern CPU SIMD instruction sets (SSE, AVX, NEON).
+///
+/// # Operations
+///
+/// * `Add` - Element-wise addition
+/// * `Sub` - Element-wise subtraction
+/// * `Mul` - Element-wise multiplication
+/// * `Div` - Element-wise division
+/// * `DotProduct` - Vector dot product (sum of element-wise products)
+/// * `Shuffle` - Reorder vector elements according to a mask
+///
+/// # Examples
+///
+/// ```ignore
+/// // Vector addition: [1, 2, 3] + [4, 5, 6] = [5, 7, 9]
+/// let op = VectorOp::Add;
+///
+/// // Dot product: [1, 2, 3] · [4, 5, 6] = 1*4 + 2*5 + 3*6 = 32
+/// let op = VectorOp::DotProduct;
+/// ```
 #[repr(u8)]
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Hash)]
 pub enum VectorOp {
@@ -82,6 +162,29 @@ impl fmt::Display for VectorOp {
     }
 }
 
+/// An IR instruction with metadata.
+///
+/// Instructions represent individual operations in the IR. Each instruction
+/// has a kind (the operation to perform), an optional result value, debug
+/// information for source tracking, and scope information for symbol resolution.
+///
+/// # Fields
+///
+/// * `kind` - The specific operation this instruction performs
+/// * `result` - Optional value produced by this instruction
+/// * `debug_info` - Source location information for debugging
+/// * `scope` - Optional scope for variable/symbol resolution
+///
+/// # Examples
+///
+/// ```ignore
+/// let instruction = Instruction {
+///     kind: InstructionKind::BinaryOp { op: IrBinaryOp::Add, lhs, rhs },
+///     result: Some(result_value),
+///     debug_info: DebugInfo { source_span },
+///     scope: Some(scope_id),
+/// };
+/// ```
 #[derive(Debug, Clone, PartialEq)]
 pub struct Instruction {
     pub kind: InstructionKind,
@@ -90,6 +193,14 @@ pub struct Instruction {
     pub scope: Option<ScopeId>,
 }
 
+/// Debug information attached to instructions.
+///
+/// Tracks the source code location that generated this instruction,
+/// enabling accurate error messages and debugger integration.
+///
+/// # Fields
+///
+/// * `source_span` - The span in source code this instruction originated from
 #[derive(Debug, Clone, PartialEq)]
 pub struct DebugInfo {
     pub source_span: SourceSpan,

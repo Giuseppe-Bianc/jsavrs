@@ -1,3 +1,36 @@
+//! Type checking and semantic analysis for the jsavrs language.
+//!
+//! This module performs semantic analysis on the AST, validating type correctness,
+//! variable scoping, and control flow constraints. It implements type inference,
+//! type promotion rules, and comprehensive error detection.
+//!
+//! # Type System Features
+//!
+//! - **Type Inference**: Automatic type deduction from literals and expressions
+//! - **Type Promotion**: Implicit conversion between compatible numeric types
+//! - **Scope Management**: Lexical scoping with symbol table management
+//! - **Control Flow Analysis**: Validation of break/continue/return statements
+//!
+//! # Type Hierarchy
+//!
+//! The type checker implements a numeric type hierarchy for promotion:
+//! `F64 > F32 > U64 > I64 > U32 > I32 > U16 > I16 > U8 > I8`
+//!
+//! # Examples
+//!
+//! ```ignore
+//! use jsavrs::semantic::type_checker::TypeChecker;
+//!
+//! let mut checker = TypeChecker::new();
+//! let errors = checker.check(&statements);
+//!
+//! if errors.is_empty() {
+//!     // Type checking succeeded
+//! } else {
+//!     // Report type errors
+//! }
+//! ```
+
 // src/semantic/type_checker.rs
 use crate::error::compile_error::CompileError;
 use crate::location::source_span::{HasSpan, SourceSpan};
@@ -7,6 +40,34 @@ use crate::tokens::number::Number;
 use std::collections::HashMap;
 use std::sync::{Arc, OnceLock};
 
+/// Type checker for semantic analysis of jsavrs programs.
+///
+/// The type checker validates that all operations are type-safe, variables are
+/// properly declared and used, and control flow constructs are valid. It maintains
+/// a symbol table for scoping and tracks context for validation (loop depth,
+/// function return types).
+///
+/// # Fields
+///
+/// * `in_loop` - Tracks whether currently inside a loop (for break/continue validation)
+/// * `return_type_stack` - Stack of expected return types for nested functions
+/// * `errors` - Accumulated type errors found during checking
+/// * `symbol_table` - Symbol table for variable and function declarations
+///
+/// # Type Checking Process
+///
+/// 1. Traverse the AST depth-first
+/// 2. For each node, validate types and scoping rules
+/// 3. Apply type promotion where necessary
+/// 4. Accumulate errors without stopping (to report multiple issues)
+/// 5. Return all errors found
+///
+/// # Examples
+///
+/// ```ignore
+/// let mut checker = TypeChecker::new();
+/// let errors = checker.check(&statements);
+/// ```
 pub struct TypeChecker {
     in_loop: bool,
     return_type_stack: Vec<Type>,
@@ -26,6 +87,20 @@ static TYPE_PROMOTION_TABLE: std::sync::OnceLock<[u8; 100]> = std::sync::OnceLoc
 
 #[allow(clippy::collapsible_if)]
 impl TypeChecker {
+    /// Creates a new type checker with empty state.
+    ///
+    /// Initializes a fresh symbol table and error collection for a new
+    /// type checking pass.
+    ///
+    /// # Returns
+    ///
+    /// A new `TypeChecker` instance ready to check statements.
+    ///
+    /// # Examples
+    ///
+    /// ```ignore
+    /// let mut checker = TypeChecker::new();
+    /// ```
     pub fn new() -> Self {
         TypeChecker {
             symbol_table: SymbolTable::new(),
@@ -35,11 +110,43 @@ impl TypeChecker {
         }
     }
 
-    // Helper method for type errors
+    /// Records a type error with the given message and source location.
+    ///
+    /// # Arguments
+    ///
+    /// * `message` - Error message describing the type violation
+    /// * `span` - Source location where the error occurred
     fn type_error(&mut self, message: impl Into<Arc<str>>, span: &SourceSpan) {
         self.errors.push(CompileError::TypeError { message: message.into(), span: span.clone(), help: None });
     }
 
+    /// Performs type checking on a list of statements.
+    ///
+    /// This is the main entry point for type checking. It traverses the entire
+    /// AST, validating types and collecting errors. The checker continues after
+    /// encountering errors to report as many issues as possible in one pass.
+    ///
+    /// # Arguments
+    ///
+    /// * `statements` - The AST statements to type check
+    ///
+    /// # Returns
+    ///
+    /// A vector of all type errors found. An empty vector indicates successful
+    /// type checking with no errors.
+    ///
+    /// # Examples
+    ///
+    /// ```ignore
+    /// let mut checker = TypeChecker::new();
+    /// let errors = checker.check(&statements);
+    ///
+    /// if !errors.is_empty() {
+    ///     for error in errors {
+    ///         eprintln!("{}", error);
+    ///     }
+    /// }
+    /// ```
     pub fn check(&mut self, statements: &[Stmt]) -> Vec<CompileError> {
         self.visit_statements(statements);
         std::mem::take(&mut self.errors)
