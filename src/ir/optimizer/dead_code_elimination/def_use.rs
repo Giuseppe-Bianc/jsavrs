@@ -21,6 +21,15 @@ pub struct DefUseChains {
     instruction_to_defined_value: HashMap<InstructionIndex, Value>,
 }
 
+impl Drop for DefUseChains {
+    fn drop(&mut self) {
+        // Explicitly clear all HashMaps to release memory eagerly
+        self.value_to_uses.clear();
+        self.instruction_to_used_values.clear();
+        self.instruction_to_defined_value.clear();
+    }
+}
+
 impl DefUseChains {
     /// Creates an empty DefUseChains structure.
     pub fn new() -> Self {

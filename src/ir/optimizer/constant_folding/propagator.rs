@@ -116,6 +116,14 @@ pub struct Worklist<T: Eq + Hash + Clone> {
     seen: HashSet<T>,
 }
 
+impl<T: Eq + Hash + Clone> Drop for Worklist<T> {
+    fn drop(&mut self) {
+        // Explicitly clear collections to release memory eagerly
+        self.queue.clear();
+        self.seen.clear();
+    }
+}
+
 impl<T: Eq + Hash + Clone> Default for Worklist<T> {
     fn default() -> Self {
         Self::new()
@@ -182,6 +190,15 @@ pub struct SCCPropagator {
     ssa_worklist: Worklist<usize>,
     /// Verbose diagnostic output
     verbose: bool,
+}
+
+impl Drop for SCCPropagator {
+    fn drop(&mut self) {
+        // Explicitly clear all internal state to release memory eagerly
+        // The worklists and other structures will be cleared by their own Drop impls
+        self.lattice = LatticeState::new();
+        self.executable_edges = ExecutableEdgeSet::new();
+    }
 }
 
 impl SCCPropagator {

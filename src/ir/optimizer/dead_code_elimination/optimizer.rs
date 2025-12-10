@@ -34,6 +34,13 @@ pub struct DeadCodeElimination {
     last_stats: OptimizationStats,
 }
 
+impl Drop for DeadCodeElimination {
+    fn drop(&mut self) {
+        // Clear statistics to release any held memory
+        self.last_stats = OptimizationStats::default();
+    }
+}
+
 impl DeadCodeElimination {
     /// Creates a new DCE optimizer with default settings.
     pub fn new() -> Self {

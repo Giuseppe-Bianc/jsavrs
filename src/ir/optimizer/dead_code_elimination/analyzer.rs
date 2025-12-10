@@ -29,6 +29,16 @@ pub struct LivenessAnalyzer {
     live_out: HashMap<NodeIndex, HashSet<Value>>,
 }
 
+impl Drop for LivenessAnalyzer {
+    fn drop(&mut self) {
+        // Explicitly clear all HashMaps to release memory eagerly
+        self.gen_sets.clear();
+        self.kill_sets.clear();
+        self.live_in.clear();
+        self.live_out.clear();
+    }
+}
+
 impl LivenessAnalyzer {
     /// Creates a new liveness analyzer.
     pub fn new() -> Self {

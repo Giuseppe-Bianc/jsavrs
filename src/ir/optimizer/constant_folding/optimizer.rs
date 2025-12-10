@@ -76,6 +76,13 @@ pub struct ConstantFoldingOptimizer {
     stats: OptimizationStats,
 }
 
+impl Drop for ConstantFoldingOptimizer {
+    fn drop(&mut self) {
+        // Clear statistics to release any held memory
+        self.stats = OptimizationStats::default();
+    }
+}
+
 impl ConstantFoldingOptimizer {
     pub fn new(verbose: bool, sccp_enabled: bool) -> Self {
         let _ = sccp_enabled; // For backwards compatibility

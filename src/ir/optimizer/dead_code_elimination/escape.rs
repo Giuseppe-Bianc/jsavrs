@@ -61,6 +61,13 @@ pub struct EscapeAnalyzer {
     escape_map: HashMap<Value, EscapeStatus>,
 }
 
+impl Drop for EscapeAnalyzer {
+    fn drop(&mut self) {
+        // Explicitly clear HashMap to release memory eagerly
+        self.escape_map.clear();
+    }
+}
+
 impl EscapeAnalyzer {
     /// Creates a new escape analyzer.
     pub fn new() -> Self {
