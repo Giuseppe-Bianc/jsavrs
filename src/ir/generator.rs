@@ -9,16 +9,48 @@ use std::collections::HashMap;
 use std::fmt::Write;
 use std::sync::Arc;
 
+/// Error message displayed when a break statement is encountered outside of a loop context.
 const BREAK_OUTSIDE_LOOP: &str = "Break outside loop";
+
+/// Error message displayed when a continue statement is encountered outside of a loop context.
 const CONTINUE_OUTSIDE_LOOP: &str = "Continue outside loop";
 
-/// Represents control flow operations within loops (break and continue statements)
+/// Represents control flow operations within loops (break and continue statements).
+///
+/// This enum is used internally to distinguish between break and continue operations
+/// when handling loop control flow during IR generation.
+///
+/// # Variants
+///
+/// * `Break` - Represents a break statement that exits the current loop
+/// * `Continue` - Represents a continue statement that skips to the next iteration
 #[repr(u8)]
 enum LoopControl {
+    /// Exit the current loop immediately
     Break,
+    /// Skip to the next iteration of the current loop
     Continue,
 }
 
+/// Manages control flow labels for nested loops during IR generation.
+///
+/// This structure maintains separate stacks for break and continue target labels,
+/// allowing proper handling of nested loop constructs. When entering a loop,
+/// the appropriate labels are pushed onto the stacks. When exiting a loop,
+/// they are popped.
+///
+/// # Fields
+///
+/// * `break_stack` - Stack of block labels where break statements should jump
+/// * `continue_stack` - Stack of block labels where continue statements should jump
+///
+/// # Examples
+///
+/// ```ignore
+/// let mut stack = ControlFlowStack::new();
+/// stack.break_stack.push("loop_end_1".to_string());
+/// stack.continue_stack.push("loop_start_1".to_string());
+/// ```
 #[derive(Default)]
 pub struct ControlFlowStack {
     /// Stack of block labels for break operations in nested loops
@@ -28,10 +60,38 @@ pub struct ControlFlowStack {
 }
 
 impl ControlFlowStack {
+    /// Creates a new empty control flow stack with pre-allocated capacity.
+    ///
+    /// Pre-allocates space for 64 nested loops to reduce allocations during
+    /// typical IR generation.
+    ///
+    /// # Returns
+    ///
+    /// A new `ControlFlowStack` instance with empty stacks.
+    ///
+    /// # Examples
+    ///
+    /// ```ignore
+    /// let stack = ControlFlowStack::new();
+    /// assert_eq!(stack.break_stack.len(), 0);
+    /// ```
     pub fn new() -> Self {
         Self { break_stack: Vec::with_capacity(64), continue_stack: Vec::with_capacity(64) }
     }
 
+    /// Clears all control flow labels from both stacks.
+    ///
+    /// This should be called when beginning IR generation for a new function
+    /// to ensure no state leaks between functions.
+    ///
+    /// # Examples
+    ///
+    /// ```ignore
+    /// let mut stack = ControlFlowStack::new();
+    /// stack.break_stack.push("label".to_string());
+    /// stack.clear();
+    /// assert_eq!(stack.break_stack.len(), 0);
+    /// ```
     pub fn clear(&mut self) {
         self.break_stack.clear();
         self.continue_stack.clear();
@@ -72,10 +132,32 @@ pub struct IrGenerator {
     format_buffer: String,
 }
 
+/// Context for managing type information during IR generation.
+///
+/// Maintains mappings of struct definitions and type aliases that are referenced
+/// during the IR generation process. This allows the generator to resolve custom
+/// types and struct field information.
+///
+/// # Fields
+///
+/// * `structs` - Map of struct names to their field lists and source locations
+/// * `aliases` - Map of type alias names to their underlying IR types
+///
+/// # Examples
+///
+/// ```ignore
+/// let mut context = TypeContext::default();
+/// context.structs.insert(
+///     "Point".to_string(),
+///     (vec![("x".to_string(), IrType::I32), ("y".to_string(), IrType::I32)], span)
+/// );
+/// ```
 #[allow(dead_code)]
 #[derive(Debug, Default)]
 struct TypeContext {
+    /// Map of struct names to field definitions and source spans
     structs: HashMap<String, (Vec<(String, IrType)>, SourceSpan)>,
+    /// Map of type alias names to their underlying IR types
     aliases: HashMap<String, IrType>,
 }
 
@@ -119,6 +201,22 @@ impl IrGenerator {
         generator
     }
 
+    /// Checks if the current basic block needs a terminator instruction.
+    ///
+    /// A block needs a terminator if it exists and doesn't already have a valid
+    /// terminator (branch, conditional branch, or return).
+    ///
+    /// # Returns
+    ///
+    /// `true` if the current block exists and lacks a terminator, `false` otherwise.
+    ///
+    /// # Examples
+    ///
+    /// ```ignore
+    /// if generator.block_needs_terminator() {
+    ///     generator.add_terminator(func, Terminator::new(/* ... */));
+    /// }
+    /// ```
     fn block_needs_terminator(&self) -> bool {
         self.current_block.as_ref().is_some_and(|b| !b.terminator.is_terminator())
     }
@@ -216,30 +314,52 @@ impl IrGenerator {
         self.errors.push(CompileError::IrGeneratorError { message, span, help: None });
     }
 
-    /// Adds a branch terminator to the current block if it doesn't already have one
+    /// Adds a branch terminator to the current block if it doesn't already have one.
     ///
     /// This ensures that control flow is properly maintained when exiting blocks.
+    /// If the current block already has a terminator, this method does nothing.
     ///
-    /// # Parameters
+    /// # Arguments
+    ///
     /// * `func` - The function containing the block
     /// * `target_label` - The label of the target block to branch to
-    /// * `span` - Source location information for error reporting
+    /// * `span` - Source location information for debugging and error reporting
+    ///
+    /// # Examples
+    ///
+    /// ```ignore
+    /// // Ensure the current block branches to the merge point
+    /// generator.add_branch_if_needed(func, "merge_1", span);
+    /// ```
     fn add_branch_if_needed(&mut self, func: &mut Function, target_label: &str, span: SourceSpan) {
         if self.block_needs_terminator() {
             self.add_terminator(func, Terminator::new(TerminatorKind::Branch { label: target_label.into() }, span));
         }
     }
 
-    /// Creates a new function with mapped parameter and return types
+    /// Creates a new function with mapped parameter and return types.
     ///
-    /// # Parameters
-    /// * `name` - The name of the function
-    /// * `params` - Vector of AST parameters to map to IR parameters
+    /// Converts AST-level function parameters and return type to IR types,
+    /// creating a fully initialized [`Function`] instance with proper attributes
+    /// and source span information.
+    ///
+    /// # Arguments
+    ///
+    /// * `name` - The name of the function being created
+    /// * `params` - Slice of AST parameters to map to IR parameters
     /// * `return_type` - The AST return type to map to an IR type
-    /// * `span` - Source location of the function declaration
+    /// * `span` - Source location of the function declaration for debugging
     ///
     /// # Returns
-    /// A new Function instance with properly mapped types and attributes
+    ///
+    /// A new [`Function`] instance with properly mapped types and attributes.
+    ///
+    /// # Examples
+    ///
+    /// ```ignore
+    /// let params = vec![Parameter { name: "x".into(), type_annotation: Type::I32, span }];
+    /// let func = generator.create_function("add_one", &params, Type::I32, span);
+    /// ```
     fn create_function(&mut self, name: &str, params: &[Parameter], return_type: Type, span: SourceSpan) -> Function {
         let ir_params = params
             .iter()
@@ -260,16 +380,27 @@ impl IrGenerator {
         func
     }
 
-    /// Maps an AST type to its corresponding IR type representation
+    /// Maps an AST type to its corresponding IR type representation.
     ///
     /// This function converts high-level language types to their IR equivalents,
-    /// handling complex types like arrays and custom types appropriately.
+    /// handling primitive types, arrays, vectors, custom types, and structs.
+    /// Custom types are resolved using the type context if available.
     ///
-    /// # Parameters
-    /// * `ty` - The AST Type to map to an IR type
+    /// # Arguments
+    ///
+    /// * `ty` - The AST [`Type`] to map to an IR type
     ///
     /// # Returns
-    /// The corresponding IrType for the given AST type
+    ///
+    /// The corresponding [`IrType`] for the given AST type.
+    ///
+    /// # Examples
+    ///
+    /// ```ignore
+    /// let ast_type = Type::I32;
+    /// let ir_type = generator.map_type(&ast_type);
+    /// assert!(matches!(ir_type, IrType::I32));
+    /// ```
     fn map_type(&self, ty: &Type) -> IrType {
         match ty {
             Type::I8 => IrType::I8,
@@ -306,6 +437,22 @@ impl IrGenerator {
         }
     }
 
+    /// Finalizes the current basic block and transfers it to the function's CFG.
+    ///
+    /// Takes the current block being constructed, transfers its instructions and
+    /// terminator to the corresponding block in the function's control flow graph,
+    /// and updates the current block label.
+    ///
+    /// # Arguments
+    ///
+    /// * `func` - The function containing the control flow graph
+    ///
+    /// # Examples
+    ///
+    /// ```ignore
+    /// generator.finalize_current_block(func);
+    /// // Current block is now committed to the CFG
+    /// ```
     fn finalize_current_block(&mut self, func: &mut Function) {
         if let Some(mut current_block) = self.current_block.take() {
             let label = current_block.label.clone();
@@ -322,7 +469,22 @@ impl IrGenerator {
         }
     }
 
-    // Handle block connections at the end
+    /// Establishes all control flow edges between basic blocks in the CFG.
+    ///
+    /// After all blocks have been finalized, this method connects them based on
+    /// their terminator instructions. It collects all necessary connections first
+    /// to avoid borrow checker issues, then applies them to the function's CFG.
+    ///
+    /// # Arguments
+    ///
+    /// * `func` - The function whose blocks need to be connected
+    ///
+    /// # Examples
+    ///
+    /// ```ignore
+    /// generator.finalize_block_connections(func);
+    /// // All blocks are now properly connected in the CFG
+    /// ```
     fn finalize_block_connections(&mut self, func: &mut Function) {
         // First, collect all the connections we need to make
         let mut connections = Vec::new();
@@ -338,6 +500,24 @@ impl IrGenerator {
             func.connect_blocks(&from_label, &to_label);
         }
     }
+    /// Generates IR code for a complete function body.
+    ///
+    /// Creates the function's entry block, processes all function parameters,
+    /// generates code for each statement in the body, ensures proper termination,
+    /// and finalizes all blocks and their connections.
+    ///
+    /// # Arguments
+    ///
+    /// * `func` - The function being generated
+    /// * `body` - Vector of statements comprising the function body
+    /// * `span` - Source span of the function for debugging
+    ///
+    /// # Examples
+    ///
+    /// ```ignore
+    /// let statements = vec![/* AST statements */];
+    /// generator.generate_function_body(&mut func, statements, span);
+    /// ```
     fn generate_function_body(&mut self, func: &mut Function, body: Vec<Stmt>, span: SourceSpan) {
         self.control_flow_stack.clear();
 
@@ -399,6 +579,24 @@ impl IrGenerator {
         self.scope_manager.append_manager(&func.scope_manager);
     }
 
+    /// Generates IR code for a single statement.
+    ///
+    /// Dispatches to specialized generation methods based on the statement type.
+    /// Handles expressions, variable declarations, returns, blocks, control flow
+    /// (if/while/for), and loop control statements (break/continue).
+    ///
+    /// # Arguments
+    ///
+    /// * `func` - The function containing this statement
+    /// * `stmt` - The AST statement to generate IR for
+    ///
+    /// # Examples
+    ///
+    /// ```ignore
+    /// for stmt in body_statements {
+    ///     generator.generate_stmt(&mut func, stmt);
+    /// }
+    /// ```
     fn generate_stmt(&mut self, func: &mut Function, stmt: Stmt) {
         match stmt {
             Stmt::Expression { expr } => {
@@ -438,6 +636,39 @@ impl IrGenerator {
         }
     }
 
+    /// Generates IR code for variable declarations.
+    ///
+    /// Handles both mutable and immutable variable declarations. Mutable variables
+    /// are allocated on the stack using alloca, while immutable variables are stored
+    /// directly in the symbol table. Supports multiple variable declarations with
+    /// optional initializers.
+    ///
+    /// # Arguments
+    ///
+    /// * `func` - The function containing the declaration
+    /// * `variables` - Names of the variables being declared
+    /// * `type_annotation` - The declared type for all variables
+    /// * `initializers` - Optional initial values for each variable
+    /// * `is_mutable` - Whether the variables are mutable
+    /// * `span` - Source location for error reporting
+    ///
+    /// # Errors
+    ///
+    /// Generates an error if an immutable variable lacks an initializer.
+    ///
+    /// # Examples
+    ///
+    /// ```ignore
+    /// // let mut x: i32 = 42;
+    /// generator.generate_var_declaration(
+    ///     func,
+    ///     vec!["x".into()],
+    ///     Type::I32,
+    ///     vec![expr_42],
+    ///     true,
+    ///     span
+    /// );
+    /// ```
     fn generate_var_declaration(
         &mut self, func: &mut Function, variables: Vec<Arc<str>>, type_annotation: Type, initializers: Vec<Expr>,
         is_mutable: bool, span: SourceSpan,
@@ -476,6 +707,25 @@ impl IrGenerator {
         }
     }
 
+    /// Generates IR code for a return statement.
+    ///
+    /// Creates a return terminator with the specified value (or a default value
+    /// if none provided) and adds it to the current basic block.
+    ///
+    /// # Arguments
+    ///
+    /// * `func` - The function containing the return statement
+    /// * `value` - Optional expression to return
+    /// * `span` - Source location for debugging
+    ///
+    /// # Examples
+    ///
+    /// ```ignore
+    /// // return 42;
+    /// generator.generate_return(func, Some(expr_42), span);
+    /// // return;
+    /// generator.generate_return(func, None, span);
+    /// ```
     fn generate_return(&mut self, func: &mut Function, value: Option<Expr>, span: SourceSpan) {
         let return_value =
             value.map_or_else(|| Value::new_literal(IrLiteralValue::I32(0)), |expr| self.generate_expr(func, expr));
@@ -486,6 +736,26 @@ impl IrGenerator {
         );
     }
 
+    /// Generates IR code for an if-else conditional statement.
+    ///
+    /// Creates a control flow graph with separate blocks for the condition,
+    /// then branch, else branch, and merge point. Ensures all paths properly
+    /// converge at the merge block.
+    ///
+    /// # Arguments
+    ///
+    /// * `func` - The function containing the if statement
+    /// * `condition` - The boolean condition expression
+    /// * `then_branch` - Statements to execute if condition is true
+    /// * `else_branch` - Optional statements to execute if condition is false
+    /// * `span` - Source location for debugging
+    ///
+    /// # Examples
+    ///
+    /// ```ignore
+    /// // if (x > 0) { ... } else { ... }
+    /// generator.generate_if(func, condition, then_stmts, Some(else_stmts), span);
+    /// ```
     fn generate_if(
         &mut self, func: &mut Function, condition: Expr, then_branch: Vec<Stmt>, else_branch: Option<Vec<Stmt>>,
         span: SourceSpan,
@@ -530,6 +800,25 @@ impl IrGenerator {
         self.start_block(func, &merge_label, span);
     }
 
+    /// Generates IR code for a while loop.
+    ///
+    /// Creates a control flow graph with separate blocks for the loop condition,
+    /// loop body, and exit point. Manages break/continue labels on the control
+    /// flow stack for nested loop support.
+    ///
+    /// # Arguments
+    ///
+    /// * `func` - The function containing the while loop
+    /// * `condition` - The loop condition expression
+    /// * `body` - Statements comprising the loop body
+    /// * `span` - Source location for debugging
+    ///
+    /// # Examples
+    ///
+    /// ```ignore
+    /// // while (i < 10) { ... }
+    /// generator.generate_while(func, condition, body_stmts, span);
+    /// ```
     fn generate_while(&mut self, func: &mut Function, condition: Expr, body: Vec<Stmt>, span: SourceSpan) {
         let loop_start_label = self.new_block_label("loop_start");
         let loop_body_label = self.new_block_label("loop_body");
@@ -571,6 +860,27 @@ impl IrGenerator {
         self.start_block(func, &loop_end_label, span);
     }
 
+    /// Generates IR code for a for loop.
+    ///
+    /// Creates a control flow graph with blocks for the loop start (condition check),
+    /// loop body, increment, and exit. Handles optional initializer, condition, and
+    /// increment expressions. Manages break/continue labels for nested loop support.
+    ///
+    /// # Arguments
+    ///
+    /// * `func` - The function containing the for loop
+    /// * `initializer` - Optional initialization statement
+    /// * `condition` - Optional loop condition (defaults to true if absent)
+    /// * `increment` - Optional increment expression
+    /// * `body` - Statements comprising the loop body
+    /// * `span` - Source location for debugging
+    ///
+    /// # Examples
+    ///
+    /// ```ignore
+    /// // for (let i = 0; i < 10; i++) { ... }
+    /// generator.generate_for(func, Some(init), Some(cond), Some(inc), body, span);
+    /// ```
     fn generate_for(
         &mut self, func: &mut Function, initializer: Option<Box<Stmt>>, condition: Option<Expr>,
         increment: Option<Expr>, body: Vec<Stmt>, span: SourceSpan,
@@ -632,6 +942,26 @@ impl IrGenerator {
         self.start_block(func, &loop_end_label, span);
     }
 
+    /// Handles break and continue statements within loops.
+    ///
+    /// Generates a branch to the appropriate target label based on the control
+    /// flow stack. Generates an error if the statement appears outside a loop.
+    ///
+    /// # Arguments
+    ///
+    /// * `func` - The function containing the control statement
+    /// * `span` - Source location for error reporting
+    /// * `control` - Whether this is a break or continue statement
+    ///
+    /// # Errors
+    ///
+    /// Generates an error if break/continue appears outside a loop context.
+    ///
+    /// # Examples
+    ///
+    /// ```ignore
+    /// generator.handle_loop_control(func, span, LoopControl::Break);
+    /// ```
     fn handle_loop_control(&mut self, func: &mut Function, span: SourceSpan, control: LoopControl) {
         let (stack, message) = match control {
             LoopControl::Break => (&self.control_flow_stack.break_stack, BREAK_OUTSIDE_LOOP),
@@ -645,6 +975,27 @@ impl IrGenerator {
         }
     }
 
+    /// Generates IR code for an expression.
+    ///
+    /// Dispatches to specialized generation methods based on the expression type.
+    /// Handles literals, binary operations, unary operations, variables, assignments,
+    /// array operations, and function calls.
+    ///
+    /// # Arguments
+    ///
+    /// * `func` - The function containing the expression
+    /// * `expr` - The AST expression to generate IR for
+    ///
+    /// # Returns
+    ///
+    /// A [`Value`] representing the result of evaluating the expression.
+    ///
+    /// # Examples
+    ///
+    /// ```ignore
+    /// let value = generator.generate_expr(func, expr);
+    /// // Use value in subsequent IR instructions
+    /// ```
     #[allow(unreachable_patterns)] // To handle any unexpected Expr variants 
     fn generate_expr(&mut self, func: &mut Function, expr: Expr) -> Value {
         match expr {
@@ -664,7 +1015,33 @@ impl IrGenerator {
         }
     }
 
-    /// Generates array access: calculates the element address with GEP and returns a pointer to the element.
+    /// Generates IR code for array element access.
+    ///
+    /// Calculates the element address using GetElementPtr (GEP) instruction,
+    /// then loads the value from that address. Handles both direct arrays and
+    /// pointers to arrays.
+    ///
+    /// # Arguments
+    ///
+    /// * `func` - The function containing the array access
+    /// * `array` - Expression evaluating to the array base
+    /// * `index` - Expression evaluating to the array index
+    /// * `span` - Source location for error reporting
+    ///
+    /// # Returns
+    ///
+    /// A [`Value`] containing the loaded element value.
+    ///
+    /// # Errors
+    ///
+    /// Generates an error if the array expression is not an array type.
+    ///
+    /// # Examples
+    ///
+    /// ```ignore
+    /// // arr[5]
+    /// let value = generator.generate_array_access(func, arr_expr, index_expr, span);
+    /// ```
     fn generate_array_access(&mut self, func: &mut Function, array: Expr, index: Expr, span: SourceSpan) -> Value {
         let base_val = self.generate_expr(func, array);
         let index_val = self.generate_expr(func, index);
@@ -703,6 +1080,28 @@ impl IrGenerator {
         load_inst.result.unwrap()
     }
 
+    /// Generates IR code for an array literal.
+    ///
+    /// Allocates space for the array on the stack, generates code for each element,
+    /// and stores the elements at the appropriate indices using GetElementPtr and
+    /// Store instructions.
+    ///
+    /// # Arguments
+    ///
+    /// * `func` - The function containing the array literal
+    /// * `elements` - Vector of expressions for each array element
+    /// * `span` - Source location for debugging
+    ///
+    /// # Returns
+    ///
+    /// A [`Value`] representing a pointer to the allocated array.
+    ///
+    /// # Examples
+    ///
+    /// ```ignore
+    /// // [1, 2, 3, 4, 5]
+    /// let array_ptr = generator.generate_array_literal(func, elements, span);
+    /// ```
     fn generate_array_literal(&mut self, func: &mut Function, elements: Vec<Expr>, span: SourceSpan) -> Value {
         if elements.is_empty() {
             return Value::new_literal(IrLiteralValue::I64(0)); // Null pointer
@@ -749,6 +1148,26 @@ impl IrGenerator {
         array_ptr
     }
 
+    /// Generates IR code for a literal value.
+    ///
+    /// Converts AST literal values to IR literal values, handling all numeric types,
+    /// booleans, strings, characters, and null pointers. Scientific notation is
+    /// evaluated to standard floating point values.
+    ///
+    /// # Arguments
+    ///
+    /// * `value` - The AST literal value
+    /// * `span` - Source location for debugging
+    ///
+    /// # Returns
+    ///
+    /// A [`Value`] containing the IR representation of the literal.
+    ///
+    /// # Examples
+    ///
+    /// ```ignore
+    /// let value = generator.generate_literal(LiteralValue::Number(Number::I32(42)), span);
+    /// ```
     fn generate_literal(&mut self, value: LiteralValue, span: SourceSpan) -> Value {
         match value {
             LiteralValue::Number(num) => match num {
@@ -782,6 +1201,30 @@ impl IrGenerator {
         }
     }
 
+    /// Generates IR code for a binary operation.
+    ///
+    /// Evaluates both operands, applies type promotion if necessary, and creates
+    /// a binary instruction with the promoted operands. The type promotion engine
+    /// ensures operands have compatible types for the operation.
+    ///
+    /// # Arguments
+    ///
+    /// * `func` - The function containing the binary operation
+    /// * `left` - The left-hand operand expression
+    /// * `op` - The binary operator
+    /// * `right` - The right-hand operand expression
+    /// * `span` - Source location for debugging
+    ///
+    /// # Returns
+    ///
+    /// A [`Value`] containing the result of the binary operation.
+    ///
+    /// # Examples
+    ///
+    /// ```ignore
+    /// // x + y
+    /// let result = generator.generate_binary(func, x_expr, BinaryOp::Add, y_expr, span);
+    /// ```
     fn generate_binary(
         &mut self, func: &mut Function, left: Expr, op: BinaryOp, right: Expr, span: SourceSpan,
     ) -> Value {
@@ -819,6 +1262,28 @@ impl IrGenerator {
         bin_inst.result.unwrap()
     }
 
+    /// Generates IR code for a unary operation.
+    ///
+    /// Evaluates the operand expression and creates a unary instruction with
+    /// the appropriate operator (negation, logical not, etc.).
+    ///
+    /// # Arguments
+    ///
+    /// * `func` - The function containing the unary operation
+    /// * `op` - The unary operator
+    /// * `expr` - The operand expression
+    /// * `span` - Source location for debugging
+    ///
+    /// # Returns
+    ///
+    /// A [`Value`] containing the result of the unary operation.
+    ///
+    /// # Examples
+    ///
+    /// ```ignore
+    /// // -x
+    /// let result = generator.generate_unary(func, UnaryOp::Neg, x_expr, span);
+    /// ```
     fn generate_unary(&mut self, func: &mut Function, op: UnaryOp, expr: Expr, span: SourceSpan) -> Value {
         let ir_op: IrUnaryOp = op.into();
         let operand = self.generate_expr(func, expr);
@@ -832,6 +1297,29 @@ impl IrGenerator {
         unary_inst.result.unwrap()
     }
 
+    /// Generates IR code for a variable reference.
+    ///
+    /// Looks up the variable in the current scope and returns its value.
+    /// Generates an error if the variable is not found.
+    ///
+    /// # Arguments
+    ///
+    /// * `name` - The name of the variable to look up
+    /// * `span` - Source location for error reporting
+    ///
+    /// # Returns
+    ///
+    /// A [`Value`] representing the variable's current value.
+    ///
+    /// # Errors
+    ///
+    /// Generates an error if the variable is undefined in the current scope.
+    ///
+    /// # Examples
+    ///
+    /// ```ignore
+    /// let var_value = generator.generate_variable("x".into(), span);
+    /// ```
     fn generate_variable(&mut self, name: Arc<str>, span: SourceSpan) -> Value {
         self.scope_manager.lookup(&name).cloned().unwrap_or_else(|| {
             self.new_error(Arc::from(format!("Undefined variable '{name}'")), span.clone());
@@ -839,6 +1327,29 @@ impl IrGenerator {
         })
     }
 
+    /// Generates IR code for an assignment expression.
+    ///
+    /// Evaluates the target expression (variable or array element), evaluates
+    /// the value expression, and creates a store instruction. Handles both
+    /// simple variable assignments and array element assignments.
+    ///
+    /// # Arguments
+    ///
+    /// * `func` - The function containing the assignment
+    /// * `target` - The assignment target (variable or array access)
+    /// * `value` - The value expression to assign
+    /// * `span` - Source location for debugging
+    ///
+    /// # Returns
+    ///
+    /// A [`Value`] containing the assigned value.
+    ///
+    /// # Examples
+    ///
+    /// ```ignore
+    /// // x = 42
+    /// let value = generator.generate_assign(func, x_expr, value_expr, span);
+    /// ```
     fn generate_assign(&mut self, func: &mut Function, target: Expr, value: Expr, span: SourceSpan) -> Value {
         let target_val = match target {
             Expr::ArrayAccess { array, index, span: access_span } => {
@@ -856,12 +1367,46 @@ impl IrGenerator {
         value_val
     }
 
+    /// Generates a unique temporary variable ID.
+    ///
+    /// Increments the internal counter and returns a unique identifier for
+    /// creating temporary values in IR code.
+    ///
+    /// # Returns
+    ///
+    /// A unique `u64` identifier for a temporary variable.
+    ///
+    /// # Examples
+    ///
+    /// ```ignore
+    /// let temp_id = generator.new_temp();
+    /// let temp_value = Value::new_temporary(temp_id, IrType::I32);
+    /// ```
     pub fn new_temp(&mut self) -> u64 {
         let id = self.temp_counter;
         self.temp_counter += 1;
         id
     }
 
+    /// Generates a unique basic block label.
+    ///
+    /// Creates a unique label for a basic block by combining the provided prefix
+    /// with an incremented counter. Uses an internal buffer to avoid allocations.
+    ///
+    /// # Arguments
+    ///
+    /// * `prefix` - The prefix for the block label (e.g., "loop_start", "then")
+    ///
+    /// # Returns
+    ///
+    /// A unique string label for the basic block.
+    ///
+    /// # Examples
+    ///
+    /// ```ignore
+    /// let label = generator.new_block_label("loop_body");
+    /// // Returns something like "loop_body_1"
+    /// ```
     fn new_block_label(&mut self, prefix: &str) -> String {
         self.block_counter += 1;
         self.format_buffer.clear();
@@ -871,6 +1416,23 @@ impl IrGenerator {
         self.format_buffer.clone()
     }
 
+    /// Starts a new basic block for IR generation.
+    ///
+    /// Finalizes the current block (if any), creates a new block with the given
+    /// label, adds it to the function's CFG, and sets it as the current block.
+    ///
+    /// # Arguments
+    ///
+    /// * `func` - The function to add the block to
+    /// * `label` - The unique label for the new block
+    /// * `span` - Source location for debugging
+    ///
+    /// # Examples
+    ///
+    /// ```ignore
+    /// generator.start_block(func, "then_1", span);
+    /// // Now generating code in the "then_1" block
+    /// ```
     fn start_block(&mut self, func: &mut Function, label: &str, span: SourceSpan) {
         // Finalize the current block first
         self.finalize_current_block(func);
@@ -886,13 +1448,44 @@ impl IrGenerator {
         self.current_block_label = Some(label.to_string());
     }
 
+    /// Adds an instruction to the current basic block.
+    ///
+    /// Appends the instruction to the current block's instruction list.
+    /// Does nothing if there is no current block.
+    ///
+    /// # Arguments
+    ///
+    /// * `inst` - The instruction to add
+    ///
+    /// # Examples
+    ///
+    /// ```ignore
+    /// let add_inst = Instruction::new(InstructionKind::Binary { /* ... */ }, span);
+    /// generator.add_instruction(add_inst);
+    /// ```
     pub fn add_instruction(&mut self, inst: Instruction) {
         if let Some(block) = &mut self.current_block {
             block.instructions.push(inst);
         }
     }
 
-    // Add a terminator to the current block
+    /// Adds a terminator instruction to the current basic block.
+    ///
+    /// Sets the terminator for the current block. Terminators control the flow
+    /// of execution between blocks (branches, returns, etc.). Block connections
+    /// are established later during finalization.
+    ///
+    /// # Arguments
+    ///
+    /// * `_func` - The function (unused, kept for consistency)
+    /// * `term` - The terminator instruction to add
+    ///
+    /// # Examples
+    ///
+    /// ```ignore
+    /// let ret = Terminator::new(TerminatorKind::Return { value, ty }, span);
+    /// generator.add_terminator(func, ret);
+    /// ```
     fn add_terminator(&mut self, _func: &mut Function, term: Terminator) {
         if let Some(block) = &mut self.current_block {
             block.terminator = term.clone();
@@ -900,8 +1493,33 @@ impl IrGenerator {
         }
     }
 
-    /// Generate array access for assignment target: calculate the address of the element with GEP
-    /// and return the pointer (without loading the value).
+    /// Generates array access for assignment targets.
+    ///
+    /// Calculates the address of an array element using GetElementPtr (GEP)
+    /// and returns the pointer without loading the value. This allows the
+    /// pointer to be used as the target of a store instruction.
+    ///
+    /// # Arguments
+    ///
+    /// * `func` - The function containing the array access
+    /// * `array` - Expression evaluating to the array base
+    /// * `index` - Expression evaluating to the array index
+    /// * `span` - Source location for error reporting
+    ///
+    /// # Returns
+    ///
+    /// A [`Value`] representing a pointer to the array element.
+    ///
+    /// # Errors
+    ///
+    /// Generates an error if the array expression is not an array type.
+    ///
+    /// # Examples
+    ///
+    /// ```ignore
+    /// // arr[5] = 42; (target generation)
+    /// let ptr = generator.generate_array_access_target(func, arr_expr, index_expr, span);
+    /// ```
     fn generate_array_access_target(
         &mut self, func: &mut Function, array: Expr, index: Expr, span: SourceSpan,
     ) -> Value {
@@ -933,7 +1551,36 @@ impl IrGenerator {
         gep.result.unwrap()
     }
 
-    /// Generate a function call instruction
+    /// Generates IR code for a function call.
+    ///
+    /// Extracts the function name from the callee expression, generates values
+    /// for all arguments, looks up the function signature in the symbol table,
+    /// and creates a call instruction with the appropriate return type.
+    ///
+    /// # Arguments
+    ///
+    /// * `func` - The function containing the call
+    /// * `callee` - Expression identifying the function to call
+    /// * `arguments` - Vector of argument expressions
+    /// * `span` - Source location for error reporting
+    ///
+    /// # Returns
+    ///
+    /// A [`Value`] containing the result of the function call.
+    ///
+    /// # Errors
+    ///
+    /// Generates an error if:
+    /// - The callee is not a variable expression
+    /// - The function is not found in the symbol table (uses default return type)
+    /// - The function type is invalid
+    ///
+    /// # Examples
+    ///
+    /// ```ignore
+    /// // result = add(x, y)
+    /// let result = generator.generate_call(func, callee_expr, arg_exprs, span);
+    /// ```
     fn generate_call(&mut self, func: &mut Function, callee: Expr, arguments: Vec<Expr>, span: SourceSpan) -> Value {
         // Get the function name from the callee expression
         let func_name = match &callee {
