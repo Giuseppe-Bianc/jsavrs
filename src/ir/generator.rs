@@ -9,11 +9,33 @@ use std::collections::HashMap;
 use std::fmt::Write;
 use std::sync::Arc;
 
+const BREAK_OUTSIDE_LOOP: &str = "Break outside loop";
+const CONTINUE_OUTSIDE_LOOP: &str = "Continue outside loop";
+
 /// Represents control flow operations within loops (break and continue statements)
 #[repr(u8)]
 enum LoopControl {
     Break,
     Continue,
+}
+
+#[derive(Default)]
+pub struct ControlFlowStack {
+    /// Stack of block labels for break operations in nested loops
+    break_stack: Vec<String>,
+    /// Stack of block labels for continue operations in nested loops
+    continue_stack: Vec<String>,
+}
+
+impl ControlFlowStack {
+    pub fn new() -> Self {
+        Self { break_stack: Vec::with_capacity(64), continue_stack: Vec::with_capacity(64) }
+    }
+
+    pub fn clear(&mut self) {
+        self.break_stack.clear();
+        self.continue_stack.clear();
+    }
 }
 
 /// The IR (Intermediate Representation) Generator transforms Abstract Syntax Tree (AST) nodes
@@ -35,10 +57,9 @@ pub struct IrGenerator {
     block_counter: usize,
     /// Collection of errors encountered during IR generation
     errors: Vec<CompileError>,
-    /// Stack of block labels for break operations in nested loops
-    break_stack: Vec<String>,
-    /// Stack of block labels for continue operations in nested loops
-    continue_stack: Vec<String>,
+
+    control_flow_stack: ControlFlowStack,
+
     /// Context for type information including struct definitions and type aliases
     type_context: TypeContext,
     /// Access controller for enforcing access rules during IR generation
@@ -78,8 +99,7 @@ impl IrGenerator {
             temp_counter: 0,
             block_counter: 0,
             errors: Vec::new(),
-            break_stack: Vec::with_capacity(64),
-            continue_stack: Vec::with_capacity(64),
+            control_flow_stack: ControlFlowStack::new(),
             type_context: TypeContext::default(),
             root_scope: scope_manager.root_scope(),
             apply_ssa: true,                          // Enable SSA by default
@@ -273,10 +293,11 @@ impl IrGenerator {
                 }
             }
             Type::Array(element_type, size_expr) => {
+                let mapped_element = self.map_type(element_type);
                 if let Expr::Literal { value: LiteralValue::Number(Number::Integer(size)), .. } = **size_expr {
-                    IrType::Array(Box::new(self.map_type(element_type)), size as usize)
+                    IrType::Array(Box::new(mapped_element), size as usize)
                 } else {
-                    IrType::Pointer(Box::new(self.map_type(element_type)))
+                    IrType::Pointer(Box::new(mapped_element))
                 }
             }
             Type::Vector(element_type) => IrType::Pointer(Box::new(self.map_type(element_type))),
@@ -318,8 +339,7 @@ impl IrGenerator {
         }
     }
     fn generate_function_body(&mut self, func: &mut Function, body: Vec<Stmt>, span: SourceSpan) {
-        self.break_stack.clear();
-        self.continue_stack.clear();
+        self.control_flow_stack.clear();
 
         // Save the current generator scope manager
         let saved_scope_manager = self.scope_manager.clone();
@@ -534,8 +554,8 @@ impl IrGenerator {
             ),
         );
 
-        self.break_stack.push(loop_end_label.clone());
-        self.continue_stack.push(loop_start_label.clone());
+        self.control_flow_stack.break_stack.push(loop_end_label.clone());
+        self.control_flow_stack.continue_stack.push(loop_start_label.clone());
 
         self.start_block(func, &loop_body_label, span.clone());
         self.scope_manager.enter_scope();
@@ -544,8 +564,8 @@ impl IrGenerator {
         }
         self.scope_manager.exit_scope();
 
-        self.break_stack.pop();
-        self.continue_stack.pop();
+        self.control_flow_stack.break_stack.pop();
+        self.control_flow_stack.continue_stack.pop();
 
         self.add_branch_if_needed(func, &loop_start_label, span.clone());
         self.start_block(func, &loop_end_label, span);
@@ -589,8 +609,8 @@ impl IrGenerator {
             ),
         );
 
-        self.break_stack.push(loop_end_label.clone());
-        self.continue_stack.push(loop_inc_label.clone());
+        self.control_flow_stack.break_stack.push(loop_end_label.clone());
+        self.control_flow_stack.continue_stack.push(loop_inc_label.clone());
 
         self.start_block(func, &loop_bd_label, span.clone());
         self.scope_manager.enter_scope();
@@ -598,8 +618,8 @@ impl IrGenerator {
             self.generate_stmt(func, stmt);
         }
         self.scope_manager.exit_scope();
-        self.break_stack.pop();
-        self.continue_stack.pop();
+        self.control_flow_stack.break_stack.pop();
+        self.control_flow_stack.continue_stack.pop();
 
         self.add_branch_if_needed(func, &loop_inc_label, span.clone());
 
@@ -614,8 +634,8 @@ impl IrGenerator {
 
     fn handle_loop_control(&mut self, func: &mut Function, span: SourceSpan, control: LoopControl) {
         let (stack, message) = match control {
-            LoopControl::Break => (&self.break_stack, "Break outside loop"),
-            LoopControl::Continue => (&self.continue_stack, "Continue outside loop"),
+            LoopControl::Break => (&self.control_flow_stack.break_stack, BREAK_OUTSIDE_LOOP),
+            LoopControl::Continue => (&self.control_flow_stack.continue_stack, CONTINUE_OUTSIDE_LOOP),
         };
 
         if let Some(label) = stack.last() {
