@@ -319,6 +319,9 @@ impl IrGenerator {
     /// This ensures that control flow is properly maintained when exiting blocks.
     /// If the current block already has a terminator, this method does nothing.
     ///
+    /// This method uses [`block_needs_terminator`] to check if a terminator is needed
+    /// and [`add_terminator`] to add the branch instruction.
+    ///
     /// # Arguments
     ///
     /// * `func` - The function containing the block
