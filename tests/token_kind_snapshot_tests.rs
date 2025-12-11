@@ -104,6 +104,7 @@ fn test_comments_and_whitespace() {
 fn test_eof_and_ignored() {
     assert_debug_snapshot!("eof", TokenKind::Eof.to_string());
     assert_debug_snapshot!("comment", TokenKind::Comment.to_string());
+    assert_debug_snapshot!("multiline_comment", TokenKind::MultilineComment.to_string());
     assert_debug_snapshot!("whitespace", TokenKind::Whitespace.to_string());
 }
 

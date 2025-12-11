@@ -1009,6 +1009,7 @@ fn returns_false_for_structurally_similar_tokens() {
 fn test_eof_and_ignored() {
     assert_eq!(Eof.to_string(), "end of file");
     assert_eq!(Comment.to_string(), "comment");
+    assert_eq!(MultilineComment.to_string(), "multiline comment");
     assert_eq!(Whitespace.to_string(), "whitespace");
 }
 
