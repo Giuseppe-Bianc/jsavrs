@@ -105,7 +105,7 @@ impl PromotionMatrix {
     /// Determines type precedence based on the type lattice
     fn determine_type_precedence(left: &IrType, right: &IrType) -> IrType {
         match (left, right) {
-            // Float types take highest precedence
+            // Float types take the highest precedence
             (IrType::F64, _) | (_, IrType::F64) => IrType::F64,
             (IrType::F32, _) | (_, IrType::F32) => IrType::F32,
 

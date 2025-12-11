@@ -33,7 +33,7 @@ The repository is written in Rust. Follow these guidelines to keep the codebase 
 
 - Style
   - Aim for idiomatic Rust: prefer safe code, explicit error handling using `Result`/`Option`, and avoid unnecessary `unsafe` blocks. If `unsafe` is required, document why and keep it minimal.
-  - Keep functions small and focused. Prefer composition over duplication.
+  - Keep functions small and focused. Prefer composition to duplication.
   - Use descriptive names for functions, structs, enums, and variables. Add `///` rustdoc comments for public types and functions.
 
 - Modules and organization

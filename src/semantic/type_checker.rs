@@ -38,7 +38,7 @@ use crate::parser::ast::*;
 use crate::semantic::symbol_table::*;
 use crate::tokens::number::Number;
 use std::collections::HashMap;
-use std::sync::{Arc, OnceLock};
+use std::sync::{Arc, Mutex, OnceLock};
 
 /// Type checker for semantic analysis of jsavrs programs.
 ///
@@ -80,10 +80,10 @@ const HIERARCHY: [Type; 10] =
     [Type::F64, Type::F32, Type::U64, Type::I64, Type::U32, Type::I32, Type::U16, Type::I16, Type::U8, Type::I8];
 
 // Global cache for type promotion results
-static TYPE_PROMOTION_CACHE: OnceLock<std::sync::Mutex<HashMap<(Type, Type), Type>>> = OnceLock::new();
+static TYPE_PROMOTION_CACHE: OnceLock<Mutex<HashMap<(Type, Type), Type>>> = OnceLock::new();
 
 // Precomputed type promotion lookup table for better performance
-static TYPE_PROMOTION_TABLE: std::sync::OnceLock<[u8; 100]> = std::sync::OnceLock::new();
+static TYPE_PROMOTION_TABLE: OnceLock<[u8; 100]> = OnceLock::new();
 
 #[allow(clippy::collapsible_if)]
 impl TypeChecker {
@@ -756,7 +756,7 @@ impl TypeChecker {
         }
 
         // For non-numeric types or edge cases, use the existing cache
-        let cache = TYPE_PROMOTION_CACHE.get_or_init(|| std::sync::Mutex::new(HashMap::new()));
+        let cache = TYPE_PROMOTION_CACHE.get_or_init(|| Mutex::new(HashMap::new()));
 
         // Create key for cache lookup
         let key = (t1.clone(), t2.clone());

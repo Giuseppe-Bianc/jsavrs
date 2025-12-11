@@ -71,8 +71,8 @@ impl MemoryOperand {
 impl fmt::Display for MemoryOperand {
     /// Format the memory operand using Intel-style syntax.
     ///
-    /// The formatted output contains an optional size prefix (e.g. "DWORD
-    /// PTR ") followed by a bracketed addressing expression. Examples:
+    /// The formatted output contains an optional size prefix (e.g. "DWORD PTR ") 
+    /// followed by a bracketed addressing expression. Examples:
     /// - `DWORD PTR [rax + rcx*4 + 16]`
     /// - `BYTE PTR [rbx - 8]`
     /// - `[rcx]` (when size is unknown/unspecified)

@@ -6,7 +6,7 @@
 /// K0 is special: cannot be used as write mask (always all-ones).
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Hash)]
 pub enum MaskRegister {
-    /// K0 - Cannot be used as write mask, treated as all-ones when source.
+    /// K0 - Cannot be used as write mask, treated as all-ones when sourced.
     K0,
     K1,
     K2,

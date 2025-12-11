@@ -9,10 +9,10 @@ use std::collections::HashMap;
 use std::fmt::Write;
 use std::sync::Arc;
 
-/// Error message displayed when a break statement is encountered outside of a loop context.
+/// Error message displayed when a break statement is encountered outside a loop context.
 const BREAK_OUTSIDE_LOOP: &str = "Break outside loop";
 
-/// Error message displayed when a continue statement is encountered outside of a loop context.
+/// Error message displayed when a continue statement is encountered outside a loop context.
 const CONTINUE_OUTSIDE_LOOP: &str = "Continue outside loop";
 
 /// Represents control flow operations within loops (break and continue statements).

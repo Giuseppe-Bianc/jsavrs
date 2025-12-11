@@ -197,7 +197,7 @@ pub fn pretty_print_stmt(stmt: &Stmt) -> String {
 ///
 /// # Performance
 ///
-/// Runs in O(n) time where n is the number of statement and expression nodes.
+/// Runs in O(n) time when n is the number of statement and expression nodes.
 /// This upfront traversal cost is amortized by avoiding reallocations
 /// during string building.
 fn count_stmt_nodes(stmt: &Stmt) -> usize {
