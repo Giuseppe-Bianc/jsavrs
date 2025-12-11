@@ -24,6 +24,7 @@ use crate::{
     parser::ast::{BinaryOp, UnaryOp},
 };
 use std::fmt;
+use crate::fmtlike::write_comma_separated;
 
 /// Type casting operations for value conversions in IR.
 ///
@@ -344,12 +345,7 @@ impl fmt::Display for Instruction {
                 f.write_str(" call ")?;
                 func.fmt(f)?;
                 f.write_str("(")?;
-                for (i, arg) in args.iter().enumerate() {
-                    if i > 0 {
-                        f.write_str(", ")?;
-                    }
-                    arg.fmt(f)?;
-                }
+                write_comma_separated(f, args)?;
                 f.write_str(") : ")?;
                 ty.fmt(f)
             }
@@ -389,12 +385,7 @@ impl fmt::Display for Instruction {
                 f.write_str(" vector.")?;
                 op.fmt(f)?;
                 f.write_str(" ")?;
-                for (i, operand) in operands.iter().enumerate() {
-                    if i > 0 {
-                        f.write_str(", ")?;
-                    }
-                    operand.fmt(f)?;
-                }
+                write_comma_separated(f, operands)?;
                 f.write_str(" : ")?;
                 ty.fmt(f)
             }
