@@ -104,7 +104,29 @@ impl LivenessAnalyzer {
         }
     }
 
-    fn process_instruction_uses(&mut self, gen_set: &mut HashSet<Value>, kill_set: &mut HashSet<Value>, idx: &InstructionIndex) {
+    /// Processes the uses of a single instruction for gen-kill dataflow analysis.
+    ///
+    /// Retrieves all values used by the instruction at `idx` and adds them to `gen_set`
+    /// if they are not already present in `kill_set`. This implements the standard
+    /// dataflow equation: gen[B] = use[B] ∪ (in[B] - def[B]).
+    ///
+    /// # Parameters
+    ///
+    /// - `gen_set`: Accumulates values that are used before being defined in the block.
+    ///   Values are only added if they are not present in the kill set.
+    /// - `kill_set`: Contains values that have been defined earlier in the block.
+    ///   Used to filter out values that don't belong in the gen set.
+    /// - `idx`: The instruction index identifying which instruction's uses to process.
+    ///   If the instruction has no recorded uses, this method performs no operation.
+    ///
+    /// # Behavior
+    ///
+    /// This method silently succeeds if no uses are recorded for the given instruction,
+    /// which is expected behavior for instructions that define values without using any
+    /// (e.g., `Alloca` instructions).
+    fn process_instruction_uses(
+        &mut self, gen_set: &mut HashSet<Value>, kill_set: &mut HashSet<Value>, idx: &InstructionIndex,
+    ) {
         if let Some(used_values) = self.def_use_chains.get_instruction_to_used_values().get(idx) {
             gen_set.extend(used_values.iter().filter(|v| !kill_set.contains(*v)).cloned());
         }
