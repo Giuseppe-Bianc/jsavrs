@@ -32,6 +32,19 @@ impl Hash for IrConstantValue {
     }
 }
 
+fn write_comma_separated<T: fmt::Display>(
+    f: &mut fmt::Formatter<'_>,
+    items: &[T],
+) -> fmt::Result {
+    for (i, item) in items.iter().enumerate() {
+        if i > 0 {
+            f.write_str(", ")?;
+        }
+        item.fmt(f)?;
+    }
+    Ok(())
+}
+
 impl fmt::Display for IrConstantValue {
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
         match self {
@@ -42,23 +55,13 @@ impl fmt::Display for IrConstantValue {
             }
             IrConstantValue::Array { elements } => {
                 f.write_str("[")?;
-                for (i, elem) in elements.iter().enumerate() {
-                    if i > 0 {
-                        f.write_str(", ")?;
-                    }
-                    elem.fmt(f)?;
-                }
+                write_comma_separated(f, elements)?;
                 f.write_str("]")
             }
             IrConstantValue::Struct { name, elements } => {
                 name.fmt(f)?;
                 f.write_str("<")?;
-                for (i, field) in elements.iter().enumerate() {
-                    if i > 0 {
-                        f.write_str(", ")?;
-                    }
-                    field.fmt(f)?;
-                }
+                write_comma_separated(f, elements)?;
                 f.write_str(">")
             }
         }
