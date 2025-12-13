@@ -16,13 +16,24 @@ use crate::semantic::symbol_table::{FunctionSymbol, Symbol, VariableSymbol};
 use crate::tokens::number::Number;
 use crate::tokens::token::Token;
 use crate::tokens::token_kind::TokenKind;
-use lazy_static::lazy_static;
+//use lazy_static::lazy_static;
 use regex::Regex;
 use std::collections::HashMap;
 use std::fmt::Display;
 use std::fmt::Write;
 use std::sync::Arc;
+use std::sync::LazyLock;
 use std::sync::Mutex;
+
+static ANSI_REGEX: LazyLock<Regex> = LazyLock::new(|| {
+    #[allow(clippy::expect_used)]
+    Regex::new(r"\x1B\[[0-?]*[ -/]*[@-~]").expect("ANSI regex pattern is valid")
+});
+static UUID_REGEX: LazyLock<Regex> = LazyLock::new(|| {
+    #[allow(clippy::expect_used)]
+    Regex::new(r"[0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{12}")
+        .expect("UUID regex pattern is valid")
+});
 
 /// Creates a dummy source span for testing purposes.
 ///
@@ -41,6 +52,7 @@ use std::sync::Mutex;
 ///     span: dummy_span(),
 /// };
 /// ```
+#[must_use]
 pub fn dummy_span() -> SourceSpan {
     SourceSpan::default()
 }
@@ -65,9 +77,9 @@ pub fn dummy_span() -> SourceSpan {
 /// let plain = strip_ansi_codes(colored);
 /// assert_eq!(plain, "Error");
 /// ```
+#[must_use]
 pub fn strip_ansi_codes(s: &str) -> String {
-    let re = Regex::new(r"\x1B\[[0-?]*[ -/]*[@-~]").unwrap();
-    re.replace_all(s, "").to_string()
+    ANSI_REGEX.replace_all(s, "").to_string()
 }
 
 #[macro_export]
@@ -87,6 +99,7 @@ macro_rules! create_num_lit {
 /// # Returns
 ///
 /// An `Expr::Literal` containing the i8 value with a dummy span.
+#[must_use]
 pub fn num_lit_i8(n: i8) -> Expr {
     create_num_lit!(I8, n)
 }
@@ -100,6 +113,7 @@ pub fn num_lit_i8(n: i8) -> Expr {
 /// # Returns
 ///
 /// An `Expr::Literal` containing the i16 value with a dummy span.
+#[must_use]
 pub fn num_lit_i16(n: i16) -> Expr {
     create_num_lit!(I16, n)
 }
@@ -113,6 +127,7 @@ pub fn num_lit_i16(n: i16) -> Expr {
 /// # Returns
 ///
 /// An `Expr::Literal` containing the i32 value with a dummy span.
+#[must_use]
 pub fn num_lit_i32(n: i32) -> Expr {
     create_num_lit!(I32, n)
 }
@@ -126,26 +141,32 @@ pub fn num_lit_i32(n: i32) -> Expr {
 /// # Returns
 ///
 /// An `Expr::Literal` containing the i64 value with a dummy span.
+#[must_use]
 pub fn num_lit_i64(n: i64) -> Expr {
     create_num_lit!(Integer, n)
 }
 
+#[must_use]
 pub fn num_lit_u8(n: u8) -> Expr {
     create_num_lit!(U8, n)
 }
 
+#[must_use]
 pub fn num_lit_u16(n: u16) -> Expr {
     create_num_lit!(U16, n)
 }
 
+#[must_use]
 pub fn num_lit_u32(n: u32) -> Expr {
     create_num_lit!(U32, n)
 }
 
+#[must_use]
 pub fn num_lit_unsigned(n: u64) -> Expr {
     create_num_lit!(UnsignedInteger, n)
 }
 
+#[must_use]
 pub fn float_lit(n: f64) -> Expr {
     create_num_lit!(Float64, n)
 }
@@ -153,19 +174,22 @@ pub fn float_lit(n: f64) -> Expr {
 fn create_literal_expr(value: LiteralValue) -> Expr {
     Expr::Literal { value, span: dummy_span() }
 }
-
+#[must_use]
 pub fn bool_lit(b: bool) -> Expr {
     create_literal_expr(LiteralValue::Bool(b))
 }
 
+#[must_use]
 pub fn nullptr_lit() -> Expr {
     create_literal_expr(LiteralValue::Nullptr)
 }
 
+#[must_use]
 pub fn string_lit(s: &str) -> Expr {
     create_literal_expr(LiteralValue::StringLit(s.into()))
 }
 
+#[must_use]
 pub fn char_lit(c: &str) -> Expr {
     create_literal_expr(LiteralValue::CharLit(c.into()))
 }
@@ -192,6 +216,7 @@ pub fn char_lit(c: &str) -> Expr {
 /// );
 /// // Represents: 2 + 3
 /// ```
+#[must_use]
 pub fn binary_expr(left: Expr, op: BinaryOp, right: Expr) -> Expr {
     Expr::Binary { left: Box::new(left), op, right: Box::new(right), span: dummy_span() }
 }
@@ -213,6 +238,7 @@ pub fn binary_expr(left: Expr, op: BinaryOp, right: Expr) -> Expr {
 /// let expr = unary_expr(UnaryOp::Negate, num_lit_i32(5));
 /// // Represents: -5
 /// ```
+#[must_use]
 pub fn unary_expr(op: UnaryOp, expr: Expr) -> Expr {
     Expr::Unary { op, expr: Box::new(expr), span: dummy_span() }
 }
@@ -237,25 +263,30 @@ pub fn unary_expr(op: UnaryOp, expr: Expr) -> Expr {
 /// ));
 /// // Represents: (2 + 3)
 /// ```
+#[must_use]
 pub fn grouping_expr(expr: Expr) -> Expr {
     Expr::Grouping { expr: Box::new(expr), span: dummy_span() }
 }
 
 // Generic helper function to create assignment expressions
+#[must_use]
 pub fn assign_expr(target: Expr, value: Expr) -> Expr {
     Expr::Assign { target: Box::new(target), value: Box::new(value), span: dummy_span() }
 }
 
+#[must_use]
 pub fn variable_expr(name: &str) -> Expr {
     Expr::Variable { name: name.into(), span: dummy_span() }
 }
 
 // Generic helper function to create call expressions
+#[must_use]
 pub fn call_expr(callee: Expr, arguments: Vec<Expr>) -> Expr {
     Expr::Call { callee: Box::new(callee), arguments, span: dummy_span() }
 }
 
 // Generic helper function to create variable declarations
+#[must_use]
 pub fn var_declaration(
     variables: Vec<Arc<str>>, type_annotation: Type, is_mutable: bool, initializers: Vec<Expr>,
 ) -> Stmt {
@@ -263,26 +294,31 @@ pub fn var_declaration(
 }
 
 // Generic helper function to create function declarations
+#[must_use]
 pub fn function_declaration(name: Arc<str>, parameters: Vec<Parameter>, return_type: Type, body: Vec<Stmt>) -> Stmt {
     Stmt::Function { name, parameters, return_type, body, span: dummy_span() }
 }
 
 // Generic helper function to create array access expressions
+#[must_use]
 pub fn array_access_expr(array: Expr, index: Expr) -> Expr {
     Expr::ArrayAccess { array: Box::new(array), index: Box::new(index), span: dummy_span() }
 }
 
 // Generic helper function to create tokens from token kinds
+#[must_use]
 pub fn create_tokens(kinds: Vec<TokenKind>) -> Vec<Token> {
     kinds.into_iter().map(|k| Token { kind: k, span: dummy_span() }).collect()
 }
 
 // Generic helper function to create numeric tokens
+#[must_use]
 pub fn num_token(n: f64) -> Token {
     Token { kind: TokenKind::Numeric(Number::Float64(n)), span: dummy_span() }
 }
 
 // Test di merging
+#[must_use]
 pub fn create_span(
     file_path: &str, start_line: usize, start_col: usize, end_line: usize, end_col: usize,
 ) -> SourceSpan {
@@ -294,6 +330,7 @@ pub fn create_span(
 }
 
 /// Helper function to create a `SourceSpan` for a given line.
+#[must_use]
 pub fn t_span(line: usize) -> SourceSpan {
     create_span("test_file", line, 1, line, 2)
 }
@@ -334,11 +371,13 @@ macro_rules! make_error_lineless {
     };
 }
 
-pub fn int_type() -> Type {
+#[must_use]
+pub const fn int_type() -> Type {
     Type::I32
 }
 
 // Generic helper function to create variable symbols
+#[must_use]
 pub fn create_var_symbol(name: &str, mutable: bool) -> Symbol {
     Symbol::Variable(VariableSymbol {
         name: name.into(),
@@ -350,11 +389,13 @@ pub fn create_var_symbol(name: &str, mutable: bool) -> Symbol {
 }
 
 // Generic helper function to create function symbols
+#[must_use]
 pub fn create_function_symbol(name: &str) -> FunctionSymbol {
     FunctionSymbol { name: name.into(), parameters: Vec::new(), return_type: Type::Void, defined_at: dummy_span() }
 }
 
 // Generic helper function to create function symbols wrapped in Symbol enum
+#[must_use]
 pub fn create_func_symbol(name: &str) -> Symbol {
     Symbol::Function(create_function_symbol(name))
 }
@@ -370,48 +411,52 @@ macro_rules! from_symbol {
 }
 
 // Helper to extract inner symbol values for comparison
+#[must_use]
 pub fn var_from_symbol(sym: Symbol) -> Option<VariableSymbol> {
     from_symbol!(sym, Variable)
 }
 
+#[must_use]
 pub fn func_from_symbol(sym: Symbol) -> Option<FunctionSymbol> {
     from_symbol!(sym, Function)
 }
 
-lazy_static! {
-    static ref UUID_REGEX: Regex =
-        Regex::new(r"[0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{12}").unwrap();
-}
-
+#[must_use]
 pub fn sanitize_uuids(input: &str) -> String {
     sanitize_uuids_with_prefix(input, "SCOPE_")
 }
 
+#[must_use]
 pub fn sanitize_mdata_uuids(input: &str) -> String {
     sanitize_uuids_with_prefix(input, "UUID_")
 }
 
+#[must_use]
 fn sanitize_uuids_with_prefix(input: &str, prefix: &str) -> String {
     let mut counter = 0;
     let mut mapping = HashMap::new();
 
     UUID_REGEX
         .replace_all(input, |captures: &regex::Captures| {
+            #[allow(clippy::unwrap_used)]
             let uuid = captures.get(0).unwrap().as_str();
             let id = *mapping.entry(uuid.to_string()).or_insert_with(|| {
                 let id = counter;
                 counter += 1;
                 id
             });
-            format!("{}{}", prefix, id)
+            format!("{prefix}{id}")
         })
         .to_string()
 }
 
+#[must_use]
 pub fn vec_to_string<T: Display>(vec: Vec<T>) -> String {
     sanitize_uuids(vec.into_iter().map(|x| x.to_string()).collect::<Vec<_>>().join(" ").as_str())
 }
 
+#[allow(clippy::unwrap_used)]
+#[must_use]
 pub fn module_redacted(module: Module) -> String {
     let mut redacted: String = String::new();
     writeln!(redacted, "module {} {{", module.name).unwrap();
@@ -437,7 +482,8 @@ pub struct ObjectPool<T> {
 }
 
 impl<T> ObjectPool<T> {
-    pub fn new() -> Self {
+    #[must_use]
+    pub const fn new() -> Self {
         Self { pool: Mutex::new(Vec::new()) }
     }
 
@@ -460,6 +506,7 @@ impl<T> ObjectPool<T> {
         }
     }
 
+    #[must_use]
     pub fn with_capacity(capacity: usize) -> Self {
         Self { pool: Mutex::new(Vec::with_capacity(capacity)) }
     }

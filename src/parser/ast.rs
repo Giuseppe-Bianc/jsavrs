@@ -63,11 +63,11 @@ pub enum LiteralValue {
 impl std::fmt::Display for LiteralValue {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
         match self {
-            LiteralValue::Number(num) => write!(f, "{num}"),
-            LiteralValue::StringLit(s) => write!(f, "\"{s}\""),
-            LiteralValue::CharLit(c) => write!(f, "'{c}'"),
-            LiteralValue::Bool(b) => write!(f, "{b}"),
-            LiteralValue::Nullptr => f.write_str("nullptr"),
+            Self::Number(num) => write!(f, "{num}"),
+            Self::StringLit(s) => write!(f, "\"{s}\""),
+            Self::CharLit(c) => write!(f, "'{c}'"),
+            Self::Bool(b) => write!(f, "{b}"),
+            Self::Nullptr => f.write_str("nullptr"),
         }
     }
 }
@@ -130,44 +130,50 @@ pub enum Stmt {
 }
 
 impl Expr {
-    pub fn null_expr(span: SourceSpan) -> Expr {
-        Expr::Literal { value: LiteralValue::Nullptr, span }
+    #[must_use]
+    pub const fn null_expr(span: SourceSpan) -> Self {
+        Self::Literal { value: LiteralValue::Nullptr, span }
     }
 
     // Helper methods for literals
-    pub fn new_number_literal(value: Number, span: SourceSpan) -> Option<Expr> {
-        Some(Expr::Literal { value: LiteralValue::Number(value), span })
+    #[must_use]
+    pub const fn new_number_literal(value: Number, span: SourceSpan) -> Option<Self> {
+        Some(Self::Literal { value: LiteralValue::Number(value), span })
     }
 
-    pub fn new_bool_literal(value: bool, span: SourceSpan) -> Option<Expr> {
-        Some(Expr::Literal { value: LiteralValue::Bool(value), span })
+    #[must_use]
+    pub const fn new_bool_literal(value: bool, span: SourceSpan) -> Option<Self> {
+        Some(Self::Literal { value: LiteralValue::Bool(value), span })
     }
 
-    pub fn new_nullptr_literal(span: SourceSpan) -> Option<Expr> {
-        Some(Expr::null_expr(span))
+    #[must_use]
+    pub const fn new_nullptr_literal(span: SourceSpan) -> Option<Self> {
+        Some(Self::null_expr(span))
     }
 
-    pub fn new_string_literal(value: Arc<str>, span: SourceSpan) -> Option<Expr> {
-        Some(Expr::Literal { value: LiteralValue::StringLit(value), span })
+    #[must_use]
+    pub const fn new_string_literal(value: Arc<str>, span: SourceSpan) -> Option<Self> {
+        Some(Self::Literal { value: LiteralValue::StringLit(value), span })
     }
 
-    pub fn new_char_literal(value: Arc<str>, span: SourceSpan) -> Option<Expr> {
-        Some(Expr::Literal { value: LiteralValue::CharLit(value), span })
+    #[must_use]
+    pub const fn new_char_literal(value: Arc<str>, span: SourceSpan) -> Option<Self> {
+        Some(Self::Literal { value: LiteralValue::CharLit(value), span })
     }
 }
 
 impl HasSpan for Expr {
     fn span(&self) -> &SourceSpan {
         match self {
-            Expr::Binary { span, .. } => span,
-            Expr::Unary { span, .. } => span,
-            Expr::Grouping { span, .. } => span,
-            Expr::Literal { span, .. } => span,
-            Expr::ArrayLiteral { span, .. } => span,
-            Expr::Variable { span, .. } => span,
-            Expr::Assign { span, .. } => span,
-            Expr::Call { span, .. } => span,
-            Expr::ArrayAccess { span, .. } => span,
+            Self::Binary { span, .. }
+            | Self::Unary { span, .. }
+            | Self::Grouping { span, .. }
+            | Self::Literal { span, .. }
+            | Self::ArrayLiteral { span, .. }
+            | Self::Variable { span, .. }
+            | Self::Assign { span, .. }
+            | Self::Call { span, .. }
+            | Self::ArrayAccess { span, .. } => span,
         }
     }
 }
@@ -175,42 +181,47 @@ impl HasSpan for Expr {
 impl HasSpan for Stmt {
     fn span(&self) -> &SourceSpan {
         match self {
-            Stmt::Expression { expr } => expr.span(),
-            Stmt::VarDeclaration { span, .. } => span,
-            Stmt::While { span, .. } => span,
-            Stmt::For { span, .. } => span,
-            Stmt::Function { span, .. } => span,
-            Stmt::If { span, .. } => span,
-            Stmt::Block { span, .. } => span,
-            Stmt::Return { span, .. } => span,
-            Stmt::Break { span, .. } => span,
-            Stmt::Continue { span, .. } => span,
-            Stmt::MainFunction { span, .. } => span,
+            Self::Expression { expr } => expr.span(),
+            Self::VarDeclaration { span, .. }
+            | Self::While { span, .. }
+            | Self::For { span, .. }
+            | Self::Function { span, .. }
+            | Self::If { span, .. }
+            | Self::Block { span, .. }
+            | Self::Return { span, .. }
+            | Self::Break { span, .. }
+            | Self::Continue { span, .. }
+            | Self::MainFunction { span, .. } => span,
         }
     }
 }
 
 impl BinaryOp {
-    pub fn get_op(token: &Token) -> Result<BinaryOp, CompileError> {
+    /// Converts a token into its corresponding binary operator.
+    ///
+    /// # Errors
+    ///
+    /// Returns a `CompileError::SyntaxError` if the token kind is not a valid binary operator.
+    pub fn get_op(token: &Token) -> Result<Self, CompileError> {
         let op = match token.kind {
-            TokenKind::Plus => BinaryOp::Add,
-            TokenKind::Minus => BinaryOp::Subtract,
-            TokenKind::Star => BinaryOp::Multiply,
-            TokenKind::Slash => BinaryOp::Divide,
-            TokenKind::Percent => BinaryOp::Modulo,
-            TokenKind::EqualEqual => BinaryOp::Equal,
-            TokenKind::NotEqual => BinaryOp::NotEqual,
-            TokenKind::Less => BinaryOp::Less,
-            TokenKind::LessEqual => BinaryOp::LessEqual,
-            TokenKind::Greater => BinaryOp::Greater,
-            TokenKind::GreaterEqual => BinaryOp::GreaterEqual,
-            TokenKind::AndAnd => BinaryOp::And,
-            TokenKind::OrOr => BinaryOp::Or,
-            TokenKind::And => BinaryOp::BitwiseAnd,
-            TokenKind::Or => BinaryOp::BitwiseOr,
-            TokenKind::Xor => BinaryOp::BitwiseXor,
-            TokenKind::ShiftLeft => BinaryOp::ShiftLeft,
-            TokenKind::ShiftRight => BinaryOp::ShiftRight,
+            TokenKind::Plus => Self::Add,
+            TokenKind::Minus => Self::Subtract,
+            TokenKind::Star => Self::Multiply,
+            TokenKind::Slash => Self::Divide,
+            TokenKind::Percent => Self::Modulo,
+            TokenKind::EqualEqual => Self::Equal,
+            TokenKind::NotEqual => Self::NotEqual,
+            TokenKind::Less => Self::Less,
+            TokenKind::LessEqual => Self::LessEqual,
+            TokenKind::Greater => Self::Greater,
+            TokenKind::GreaterEqual => Self::GreaterEqual,
+            TokenKind::AndAnd => Self::And,
+            TokenKind::OrOr => Self::Or,
+            TokenKind::And => Self::BitwiseAnd,
+            TokenKind::Or => Self::BitwiseOr,
+            TokenKind::Xor => Self::BitwiseXor,
+            TokenKind::ShiftLeft => Self::ShiftLeft,
+            TokenKind::ShiftRight => Self::ShiftRight,
             _ => {
                 return Err(CompileError::SyntaxError {
                     message: Arc::from(format!("Invalid binary operator: {:?}", token.kind)),
@@ -256,21 +267,21 @@ pub enum Type {
 impl std::fmt::Display for Type {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
         match self {
-            Type::I8 => f.write_str("i8"),
-            Type::I16 => f.write_str("i16"),
-            Type::I32 => f.write_str("i32"),
-            Type::I64 => f.write_str("i64"),
-            Type::U8 => f.write_str("u8"),
-            Type::U16 => f.write_str("u16"),
-            Type::U32 => f.write_str("u32"),
-            Type::U64 => f.write_str("u64"),
-            Type::F32 => f.write_str("f32"),
-            Type::F64 => f.write_str("f64"),
-            Type::Char => f.write_str("char"),
-            Type::String => f.write_str("string"),
-            Type::Bool => f.write_str("bool"),
-            Type::Custom(name) => f.write_str(name),
-            Type::Array(element_type, size_expr) => {
+            Self::I8 => f.write_str("i8"),
+            Self::I16 => f.write_str("i16"),
+            Self::I32 => f.write_str("i32"),
+            Self::I64 => f.write_str("i64"),
+            Self::U8 => f.write_str("u8"),
+            Self::U16 => f.write_str("u16"),
+            Self::U32 => f.write_str("u32"),
+            Self::U64 => f.write_str("u64"),
+            Self::F32 => f.write_str("f32"),
+            Self::F64 => f.write_str("f64"),
+            Self::Char => f.write_str("char"),
+            Self::String => f.write_str("string"),
+            Self::Bool => f.write_str("bool"),
+            Self::Custom(name) => f.write_str(name),
+            Self::Array(element_type, size_expr) => {
                 // Simplified representation since we can't evaluate expressions here
                 if let Expr::Literal { value: LiteralValue::Number(Number::Integer(size)), .. } = size_expr.as_ref() {
                     write!(f, "[{element_type}; {size}]")
@@ -278,9 +289,9 @@ impl std::fmt::Display for Type {
                     write!(f, "[{element_type}; <expr>]")
                 }
             }
-            Type::Vector(element_type) => write!(f, "Vector<{element_type}>"),
-            Type::Void => f.write_str("void"),
-            Type::NullPtr => f.write_str("nullptr"),
+            Self::Vector(element_type) => write!(f, "Vector<{element_type}>"),
+            Self::Void => f.write_str("void"),
+            Self::NullPtr => f.write_str("nullptr"),
         }
     }
 }

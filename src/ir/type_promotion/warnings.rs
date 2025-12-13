@@ -72,6 +72,7 @@ fn is_valid_unicode_scalar(value: u32) -> bool {
 }
 
 #[cfg(test)]
+#[allow(clippy::unreadable_literal)]
 mod tests {
     use super::*;
 

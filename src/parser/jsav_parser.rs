@@ -1,8 +1,8 @@
 // src/parser/jsav_parser.rs
 use crate::error::compile_error::CompileError;
 use crate::location::source_span::{HasSpan, SourceSpan};
-use crate::parser::ast::*;
-use crate::parser::precedence::*;
+use crate::parser::ast::{BinaryOp, Expr, Parameter, Stmt, Type, UnaryOp};
+use crate::parser::precedence::{binding_power, unary_binding_power};
 use crate::tokens::token::Token;
 use crate::tokens::token_kind::TokenKind;
 use std::sync::Arc;
@@ -32,20 +32,22 @@ impl<'a> JsavParser<'a> {
         }
     }
 
-    fn enter_recursion(&mut self) {
+    const fn enter_recursion(&mut self) {
         self.recursion_depth += 1;
     }
 
-    fn exit_recursion(&mut self) {
+    const fn exit_recursion(&mut self) {
         if self.recursion_depth > 0 {
             self.recursion_depth -= 1;
         }
     }
 
+    #[must_use]
     pub fn new(tokens: &'a [Token]) -> Self {
         Self { tokens, current: 0, errors: Vec::with_capacity(8), recursion_depth: 0 }
     }
 
+    #[must_use]
     pub fn parse(mut self) -> (Vec<Stmt>, Vec<CompileError>) {
         let mut statements = Vec::with_capacity(self.tokens.len() / 4);
         while !self.is_at_end() {
@@ -124,7 +126,7 @@ impl<'a> JsavParser<'a> {
 
     fn parse_return(&mut self) -> Option<Stmt> {
         let start_token = self.advance()?.clone(); // 'return'
-        let return_value = if !self.is_end_of_statement() { Some(self.parse_expr(0)?) } else { None };
+        let return_value = if self.is_end_of_statement() { None } else { Some(self.parse_expr(0)?) };
 
         Some(Stmt::Return {
             value: return_value.clone(),
@@ -135,14 +137,12 @@ impl<'a> JsavParser<'a> {
     /// Checks if the current token indicates the end of a statement.
     #[inline]
     fn is_end_of_statement(&self) -> bool {
-        matches!(
-            self.peek().map(|t| &t.kind),
-            Some(&TokenKind::CloseBrace) | Some(&TokenKind::Eof) | Some(&TokenKind::Semicolon)
-        )
+        matches!(self.peek().map(|t| &t.kind), Some(&TokenKind::CloseBrace | &TokenKind::Eof | &TokenKind::Semicolon))
     }
 
     /// Calculates the span for a return statement.
     #[inline]
+    #[allow(clippy::ref_option, clippy::unused_self)]
     fn calculate_return_span(&self, start: &Token, value: &Option<Expr>) -> SourceSpan {
         value.as_ref().and_then(|v| start.span.merged(v.span())).unwrap_or_else(|| start.span.clone())
     }
@@ -272,9 +272,9 @@ impl<'a> JsavParser<'a> {
         // Calcola lo span totale (dal token 'for' alla fine del body)
         let end_span = body
             .last()
-            .map(|s| s.span())
+            .map(super::super::location::source_span::HasSpan::span)
             .cloned()
-            .unwrap_or_else(|| self.previous().map(|t| t.span.clone()).unwrap_or_else(|| start_token.span.clone()));
+            .unwrap_or_else(|| self.previous().map_or_else(|| start_token.span.clone(), |t| t.span.clone()));
 
         let span = start_token.span.merged(&end_span).unwrap_or(start_token.span);
 
@@ -362,29 +362,28 @@ impl<'a> JsavParser<'a> {
         }
 
         self.expect(&TokenKind::Colon, "after variable name(s)");
-        let type_ann = match self.parse_type() {
-            Some(t) => t,
-            None => {
+        let type_ann = self.parse_type().map_or_else(
+            || {
                 self.report_peek_error(
                     "Invalid type specification",
                     Some("Try using a primitive type or a custom type identifier"),
                 );
                 Type::Void
-            }
-        };
+            },
+            |t| t,
+        );
 
         self.expect(&TokenKind::Equal, "after type annotation");
         let mut initializers = Vec::with_capacity(variables.len());
         loop {
-            match self.parse_expr(0) {
-                Some(expr) => initializers.push(expr),
-                None => {
-                    self.report_peek_error(
-                        "Expected initializer expression",
-                        Some("Provide an expression to initialize the variable (e.g., 42, \"text\", variable_name)"),
-                    );
-                    break;
-                }
+            if let Some(expr) = self.parse_expr(0) {
+                initializers.push(expr);
+            } else {
+                self.report_peek_error(
+                    "Expected initializer expression",
+                    Some("Provide an expression to initialize the variable (e.g., 42, \"text\", variable_name)"),
+                );
+                break;
             }
             if !self.match_token(&TokenKind::Comma) {
                 break;
@@ -480,8 +479,8 @@ impl<'a> JsavParser<'a> {
             TokenKind::Minus => Some(self.parse_unary(UnaryOp::Negate, token)),
             TokenKind::Not => Some(self.parse_unary(UnaryOp::Not, token)),
             // Grouping
-            TokenKind::OpenBrace => self.parse_array_literal(token),
-            TokenKind::OpenParen => self.parse_grouping(token),
+            TokenKind::OpenBrace => self.parse_array_literal(&token),
+            TokenKind::OpenParen => self.parse_grouping(&token),
             // Variables
             TokenKind::IdentifierAscii(name) | TokenKind::IdentifierUnicode(name) => {
                 Some(Expr::Variable { name, span: token.span })
@@ -527,9 +526,9 @@ impl<'a> JsavParser<'a> {
             // Assignment
             TokenKind::Equal => self.parse_assignment(left, token),
             // Function call
-            TokenKind::OpenParen => self.parse_call(left, token),
+            TokenKind::OpenParen => self.parse_call(left, &token),
             // Array access
-            TokenKind::OpenBracket => self.parse_array_access(left, token),
+            TokenKind::OpenBracket => self.parse_array_access(left, &token),
             _ => {
                 self.syntax_error(
                     "Unexpected operator",
@@ -548,17 +547,18 @@ impl<'a> JsavParser<'a> {
         Expr::Unary { op, expr: Box::new(expr), span: token.span }
     }
 
-    fn parse_array_literal(&mut self, start_token: Token) -> Option<Expr> {
+    fn parse_array_literal(&mut self, start_token: &Token) -> Option<Expr> {
         let mut elements = Vec::new();
-        self.extract_elements(TokenKind::CloseBrace, &mut elements);
-        if !self.expect(&TokenKind::CloseBrace, "end of array literal") {
+        let cbr = &TokenKind::CloseBrace;
+        self.extract_elements(cbr, &mut elements);
+        if !self.expect(cbr, "end of array literal") {
             return None;
         }
         elements.shrink_to_fit();
-        Some(Expr::ArrayLiteral { elements, span: self.merged_span(&start_token) })
+        Some(Expr::ArrayLiteral { elements, span: self.merged_span(start_token) })
     }
 
-    fn extract_elements(&mut self, kind: TokenKind, elements: &mut Vec<Expr>) {
+    fn extract_elements(&mut self, kind: &TokenKind, elements: &mut Vec<Expr>) {
         while !self.check(&kind.clone()) && !self.is_at_end() {
             if let Some(expr) = self.parse_expr(0) {
                 elements.push(expr);
@@ -582,18 +582,18 @@ impl<'a> JsavParser<'a> {
         Some(Expr::Binary { left: Box::new(left), op, right: Box::new(right), span: token.span })
     }
 
-    fn parse_grouping(&mut self, start_token: Token) -> Option<Expr> {
+    fn parse_grouping(&mut self, start_token: &Token) -> Option<Expr> {
         let expr = self.parse_expr(0);
         if !self.expect(&TokenKind::CloseParen, "end of grouping") {
             return None;
         }
-        Some(Expr::Grouping { expr: Box::new(expr?), span: self.merged_span(&start_token) })
+        Some(Expr::Grouping { expr: Box::new(expr?), span: self.merged_span(start_token) })
     }
 
     fn parse_assignment(&mut self, left: Expr, token: Token) -> Option<Expr> {
         let value = self.parse_expr(1).unwrap_or_else(|| Expr::null_expr(token.span.clone()));
 
-        let span = left.span().merged(value.span()).unwrap_or(token.span.clone());
+        let span = left.span().merged(value.span()).unwrap_or(token.span);
 
         // Check if left is valid l-value (variable or array access)
         let valid = matches!(&left, Expr::Variable { .. } | Expr::ArrayAccess { .. });
@@ -612,25 +612,26 @@ impl<'a> JsavParser<'a> {
         Some(Expr::Assign { target: Box::new(left), value: Box::new(value), span })
     }
 
-    fn parse_call(&mut self, callee: Expr, start_token: Token) -> Option<Expr> {
+    fn parse_call(&mut self, callee: Expr, start_token: &Token) -> Option<Expr> {
         let mut arguments = Vec::new();
-        self.extract_elements(TokenKind::CloseParen, &mut arguments);
+        let cpr = &TokenKind::CloseParen;
+        self.extract_elements(cpr, &mut arguments);
 
         // Check if we successfully found the closing parenthesis
-        if !self.expect(&TokenKind::CloseParen, "end of function call arguments") {
+        if !self.expect(cpr, "end of function call arguments") {
             return None;
         }
         arguments.shrink_to_fit();
 
-        Some(Expr::Call { callee: Box::new(callee), arguments, span: self.merged_span(&start_token) })
+        Some(Expr::Call { callee: Box::new(callee), arguments, span: self.merged_span(start_token) })
     }
 
-    fn parse_array_access(&mut self, array: Expr, start_token: Token) -> Option<Expr> {
+    fn parse_array_access(&mut self, array: Expr, start_token: &Token) -> Option<Expr> {
         let index = self.parse_expr(0).unwrap_or_else(|| Expr::null_expr(start_token.span.clone()));
         if !self.expect(&TokenKind::CloseBracket, "end of array access") {
             return None;
         }
-        Some(Expr::ArrayAccess { array: Box::new(array), index: Box::new(index), span: self.merged_span(&start_token) })
+        Some(Expr::ArrayAccess { array: Box::new(array), index: Box::new(index), span: self.merged_span(start_token) })
     }
 
     #[inline]
@@ -643,7 +644,7 @@ impl<'a> JsavParser<'a> {
         self.errors.push(CompileError::SyntaxError {
             message: Arc::from(format!("{}: {}", message_str, &token.kind)),
             span: token.span.clone(),
-            help: help.map(|s| s.to_string()),
+            help: help.map(std::string::ToString::to_string),
         });
     }
 
@@ -654,8 +655,7 @@ impl<'a> JsavParser<'a> {
         } else {
             let current_token = self.peek().cloned();
             let expected = &kind.clone();
-            let found_str =
-                current_token.as_ref().map(|t| t.kind.to_string()).unwrap_or_else(|| "end of input".to_string());
+            let found_str = current_token.as_ref().map_or_else(|| "end of input".to_string(), |t| t.kind.to_string());
 
             let span = current_token.as_ref().map(|t| t.span.clone()).unwrap_or_default();
 
@@ -697,12 +697,12 @@ impl<'a> JsavParser<'a> {
     /// Checks if the current token matches the given kind.
     #[inline]
     fn check(&self, kind: &TokenKind) -> bool {
-        self.peek().map(|t| &t.kind == kind).unwrap_or(false)
+        self.peek().is_some_and(|t| &t.kind == kind)
     }
 
     /// Checks if we've reached the end of the token stream.
     #[inline]
     fn is_at_end(&self) -> bool {
-        self.peek().map(|t| t.kind == TokenKind::Eof).unwrap_or(true)
+        self.peek().is_none_or(|t| t.kind == TokenKind::Eof)
     }
 }

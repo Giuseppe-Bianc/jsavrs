@@ -34,8 +34,8 @@
 // src/semantic/type_checker.rs
 use crate::error::compile_error::CompileError;
 use crate::location::source_span::{HasSpan, SourceSpan};
-use crate::parser::ast::*;
-use crate::semantic::symbol_table::*;
+use crate::parser::ast::{BinaryOp, Expr, LiteralValue, Parameter, Stmt, Type, UnaryOp};
+use crate::semantic::symbol_table::{FunctionSymbol, ScopeKind, Symbol, SymbolTable, VariableSymbol};
 use crate::tokens::number::Number;
 use std::collections::HashMap;
 use std::sync::{Arc, Mutex, OnceLock};
@@ -101,13 +101,9 @@ impl TypeChecker {
     /// ```ignore
     /// let mut checker = TypeChecker::new();
     /// ```
+    #[must_use]
     pub fn new() -> Self {
-        TypeChecker {
-            symbol_table: SymbolTable::new(),
-            errors: Vec::new(),
-            in_loop: false,
-            return_type_stack: Vec::new(),
-        }
+        Self { symbol_table: SymbolTable::new(), errors: Vec::new(), in_loop: false, return_type_stack: Vec::new() }
     }
 
     /// Records a type error with the given message and source location.
@@ -171,17 +167,17 @@ impl TypeChecker {
                 self.visit_expr(expr);
             }
             Stmt::VarDeclaration { variables, type_annotation, is_mutable, initializers, span } => {
-                self.visit_var_declaration(variables.to_vec(), type_annotation, *is_mutable, initializers, span)
+                self.visit_var_declaration(variables, type_annotation, *is_mutable, initializers, span);
             }
             Stmt::Function { name, parameters, return_type, body, span } => {
-                self.visit_function(name, parameters, return_type, body, span)
+                self.visit_function(name, parameters, return_type, body, span);
             }
             Stmt::If { condition, then_branch, else_branch, span } => {
-                self.visit_if(condition, then_branch, else_branch.as_deref(), span)
+                self.visit_if(condition, then_branch, else_branch.as_deref(), span);
             }
             Stmt::While { condition, body, span } => self.visit_while(condition, body, span),
             Stmt::For { initializer, condition, increment, body, span } => {
-                self.visit_for(initializer, condition, increment, body, span)
+                self.visit_for(initializer, condition, increment, body, span);
             }
             Stmt::Block { statements, span } => self.visit_block(statements, span),
             Stmt::Return { value, span } => self.visit_return(value.as_ref(), span),
@@ -192,7 +188,7 @@ impl TypeChecker {
     }
 
     fn visit_var_declaration(
-        &mut self, variables: Vec<Arc<str>>, type_annotation: &Type, is_mutable: bool, initializers: &[Expr],
+        &mut self, variables: &[Arc<str>], type_annotation: &Type, is_mutable: bool, initializers: &[Expr],
         span: &SourceSpan,
     ) {
         if variables.len() != initializers.len() {
@@ -241,7 +237,7 @@ impl TypeChecker {
             return_type: return_type.clone(),
             defined_at: span.clone(),
         };
-        self.declare_symbol(name, Symbol::Function(func_symbol.clone()));
+        self.declare_symbol(name, Symbol::Function(func_symbol));
         self.symbol_table.push_scope(ScopeKind::Function, Some(span.clone()));
         self.return_type_stack.push(return_type.clone());
         for param in parameters {
@@ -306,6 +302,7 @@ impl TypeChecker {
         self.in_loop = was_in_loop;
     }
 
+    #[allow(clippy::ref_option)]
     fn visit_for(
         &mut self, initializer: &Option<Box<Stmt>>, condition: &Option<Expr>, increment: &Option<Expr>, body: &[Stmt],
         span: &SourceSpan,
@@ -399,7 +396,7 @@ impl TypeChecker {
                 | BinaryOp::ShiftRight
         ) {
             // Solo tipi interi sono ammessi per operatori bitwise
-            if self.is_integer_type(&left_type) && self.is_integer_type(&right_type) {
+            if Self::is_integer_type(&left_type) && Self::is_integer_type(&right_type) {
                 let common_type = self.promote_numeric_types(&left_type, &right_type);
                 left_type = common_type.clone();
                 right_type = common_type;
@@ -425,8 +422,8 @@ impl TypeChecker {
                 | BinaryOp::LessEqual
                 | BinaryOp::Greater
                 | BinaryOp::GreaterEqual
-        ) && self.is_numeric(&left_type)
-            && self.is_numeric(&right_type)
+        ) && Self::is_numeric(&left_type)
+            && Self::is_numeric(&right_type)
         {
             // Promozione numerica standard per operatori aritmetici e di confronto
             let common_type = self.promote_numeric_types(&left_type, &right_type);
@@ -460,7 +457,7 @@ impl TypeChecker {
         }
         Some(match op {
             BinaryOp::Add | BinaryOp::Subtract | BinaryOp::Multiply | BinaryOp::Divide | BinaryOp::Modulo => {
-                if !self.is_numeric(&left_type) {
+                if !Self::is_numeric(&left_type) {
                     self.type_error(format!("Arithmetic operation not supported for {left_type}"), left.span());
                 }
                 left_type
@@ -489,7 +486,7 @@ impl TypeChecker {
         let expr_type = self.visit_expr(expr)?;
         match op {
             UnaryOp::Negate => {
-                if !self.is_numeric(&expr_type) {
+                if !Self::is_numeric(&expr_type) {
                     self.type_error(format!("Negation requires numeric type operand, found {expr_type}"), expr.span());
                     return None;
                 }
@@ -508,7 +505,8 @@ impl TypeChecker {
         }
     }
 
-    fn visit_literal(&mut self, value: &LiteralValue, _span: &SourceSpan) -> Option<Type> {
+    #[allow(clippy::unnecessary_wraps)]
+    const fn visit_literal(&self, value: &LiteralValue, _span: &SourceSpan) -> Option<Type> {
         Some(match value {
             LiteralValue::Number(n) => self.type_of_number(n),
             LiteralValue::StringLit(_) => Type::String,
@@ -518,7 +516,8 @@ impl TypeChecker {
         })
     }
 
-    pub fn type_of_number(&self, n: &Number) -> Type {
+    #[must_use]
+    pub const fn type_of_number(&self, n: &Number) -> Type {
         match n {
             Number::I8(_) => Type::I8,
             Number::I16(_) => Type::I16,
@@ -533,6 +532,7 @@ impl TypeChecker {
         }
     }
 
+    #[allow(clippy::cast_possible_wrap)]
     fn visit_array_literal(&mut self, elements: &[Expr], span: &SourceSpan) -> Option<Type> {
         if elements.is_empty() {
             self.type_error("Array literals must have at least one element for type inference", span);
@@ -547,7 +547,7 @@ impl TypeChecker {
                         self.type_error(
                             format!("All array elements must be same type, found mixed types: {prev} and {ty}"),
                             element.span(),
-                        )
+                        );
                     }
                 } else {
                     element_type = Some(ty);
@@ -563,6 +563,7 @@ impl TypeChecker {
     }
 
     /// Checks if two types are the same, handling array types properly.
+    #[must_use]
     pub fn is_same_type(&self, t1: &Type, t2: &Type) -> bool {
         match (t1, t2) {
             (Type::Array(elem1, size1), Type::Array(elem2, size2)) => {
@@ -583,11 +584,13 @@ impl TypeChecker {
     }
 
     /// Converts a signed integer to u64 if possible.
+    #[allow(clippy::unused_self)]
     fn signed_to_size<T: Into<i64> + Copy>(&self, n: T) -> Option<u64> {
         n.into().try_into().ok()
     }
 
     /// Gets the size from an expression, handling all integer types and returning u64.
+    #[must_use]
     pub fn get_size(&self, expr: &Expr) -> Option<u64> {
         if let Expr::Literal { value, .. } = expr {
             match value {
@@ -596,9 +599,9 @@ impl TypeChecker {
                 LiteralValue::Number(Number::I32(n)) => self.signed_to_size(*n),
                 LiteralValue::Number(Number::Integer(n)) => self.signed_to_size(*n),
                 // Unsigned types (already efficient)
-                LiteralValue::Number(Number::U8(n)) => Some(*n as u64),
-                LiteralValue::Number(Number::U16(n)) => Some(*n as u64),
-                LiteralValue::Number(Number::U32(n)) => Some(*n as u64),
+                LiteralValue::Number(Number::U8(n)) => Some(u64::from(*n)),
+                LiteralValue::Number(Number::U16(n)) => Some(u64::from(*n)),
+                LiteralValue::Number(Number::U32(n)) => Some(u64::from(*n)),
                 LiteralValue::Number(Number::UnsignedInteger(n)) => Some(*n),
                 _ => None,
             }
@@ -608,34 +611,32 @@ impl TypeChecker {
     }
 
     fn visit_variable(&mut self, name: &str, span: &SourceSpan) -> Option<Type> {
-        match self.symbol_table.lookup_variable(name) {
-            Some(var) => Some(var.ty.clone()),
-            None => {
-                if self.symbol_table.lookup_function(name).is_some() {
-                    self.type_error(format!("'{name}' is a function and cannot be used as variable"), span);
-                } else {
-                    self.type_error(format!("Undefined variable '{name}'"), span);
-                }
-                None
+        if let Some(var) = self.symbol_table.lookup_variable(name) {
+            Some(var.ty)
+        } else {
+            if self.symbol_table.lookup_function(name).is_some() {
+                self.type_error(format!("'{name}' is a function and cannot be used as variable"), span);
+            } else {
+                self.type_error(format!("Undefined variable '{name}'"), span);
             }
+            None
         }
     }
 
     fn visit_assign(&mut self, target: &Expr, value: &Expr, _span: &SourceSpan) -> Option<Type> {
         let target_type = match target {
-            Expr::Variable { name, span } => match self.symbol_table.lookup_variable(name) {
-                Some(var) => {
+            Expr::Variable { name, span } => {
+                if let Some(var) = self.symbol_table.lookup_variable(name) {
                     if !var.mutable {
                         self.type_error(format!("Cannot assign to immutable variable '{name}'"), span);
                         return None;
                     }
-                    var.ty.clone()
-                }
-                None => {
+                    var.ty
+                } else {
                     self.type_error(format!("Undefined variable '{name}'"), span);
                     return None;
                 }
-            },
+            }
             Expr::ArrayAccess { array, index, span } => {
                 // Delegate to visit_array_access to check both array and index
                 self.visit_array_access(array, index, span)?
@@ -658,6 +659,7 @@ impl TypeChecker {
         Some(target_type)
     }
 
+    #[allow(clippy::manual_let_else)]
     fn visit_call(&mut self, callee: &Expr, arguments: &[Expr], span: &SourceSpan) -> Option<Type> {
         let callee_name = if let Expr::Variable { name, .. } = callee {
             name
@@ -668,15 +670,12 @@ impl TypeChecker {
             }
             return None;
         };
-        let func = match self.symbol_table.lookup_function(callee_name) {
-            Some(func) => func,
-            None => {
-                self.type_error(format!("Undefined function: '{callee_name}'"), callee.span());
-                for arg in arguments {
-                    self.visit_expr(arg);
-                }
-                return None;
+        let Some(func) = self.symbol_table.lookup_function(callee_name) else {
+            self.type_error(format!("Undefined function: '{callee_name}'"), callee.span());
+            for arg in arguments {
+                self.visit_expr(arg);
             }
+            return None;
         };
         if arguments.len() != func.parameters.len() {
             self.type_error(
@@ -710,7 +709,7 @@ impl TypeChecker {
     fn visit_array_access(&mut self, array: &Expr, index: &Expr, _span: &SourceSpan) -> Option<Type> {
         let array_type = self.visit_expr(array)?;
         let index_type = self.visit_expr(index)?;
-        if !self.is_integer_type(&index_type) {
+        if !Self::is_integer_type(&index_type) {
             self.type_error(format!("Array index must be integer type, found {index_type}"), index.span());
             return None;
         }
@@ -724,6 +723,7 @@ impl TypeChecker {
 
     // Funzione per la promozione automatica dei tipi numerici
     #[inline]
+    #[allow(clippy::missing_panics_doc)]
     pub fn promote_numeric_types(&self, t1: &Type, t2: &Type) -> Type {
         // For numeric types, use the optimized lookup table
         if let (Some(id1), Some(id2)) = (Self::type_to_id(t1), Self::type_to_id(t2)) {
@@ -761,13 +761,14 @@ impl TypeChecker {
         // Create key for cache lookup
         let key = (t1.clone(), t2.clone());
 
-        let mut cache_guard = cache.lock().unwrap();
+        #[allow(clippy::expect_used)]
+        let mut cache_guard = cache.lock().expect("TYPE_PROMOTION_CACHE mutex poisoned");
         cache_guard.entry(key).or_insert_with(|| self.compute_promotion(t1, t2)).clone()
     }
 
     // Convert Type to numeric ID for fast lookup
     #[inline]
-    fn type_to_id(ty: &Type) -> Option<u8> {
+    const fn type_to_id(ty: &Type) -> Option<u8> {
         match ty {
             Type::I8 => Some(0),
             Type::I16 => Some(1),
@@ -785,7 +786,8 @@ impl TypeChecker {
 
     // Convert numeric ID back to Type
     #[inline]
-    fn id_to_type(id: u8) -> Type {
+    #[allow(clippy::match_same_arms)]
+    const fn id_to_type(id: u8) -> Type {
         match id {
             0 => Type::I8,
             1 => Type::I16,
@@ -797,10 +799,11 @@ impl TypeChecker {
             7 => Type::U64,
             8 => Type::F32,
             9 => Type::F64,
-            _ => Type::I32, // fallback
+            _ => Type::I32, // fallback for invalid IDs
         }
     }
     // Extract the original promotion logic into a separate function
+    #[allow(clippy::unused_self)]
     fn compute_promotion(&self, t1: &Type, t2: &Type) -> Type {
         // Trova il tipo con rango più alto nella gerarchia
         for ty in &HIERARCHY {
@@ -814,46 +817,49 @@ impl TypeChecker {
     }
 
     #[inline]
+    #[must_use]
+    #[allow(clippy::unnested_or_patterns)]
     pub fn is_assignable(&self, source: &Type, target: &Type) -> bool {
         match (source, target) {
-            // Numeric promotions
-            (Type::I8, Type::I16 | Type::I32 | Type::I64 | Type::F32 | Type::F64) => true,
-            (Type::I16, Type::I32 | Type::I64 | Type::F32 | Type::F64) => true,
-            (Type::I32, Type::I64 | Type::F32 | Type::F64) => true,
-            (Type::I64, Type::F64) => true,
-            (Type::U8, Type::U16 | Type::U32 | Type::U64 | Type::F32 | Type::F64) => true,
-            (Type::U16, Type::U32 | Type::U64 | Type::F32 | Type::F64) => true,
-            (Type::U32, Type::U64 | Type::F32 | Type::F64) => true,
-            (Type::U64, Type::F64) => true,
-            (Type::F32, Type::F64) => true,
-            // Nullptr assignable to pointer types
-            (Type::NullPtr, Type::Array(_, _) | Type::Vector(_) | Type::Custom(_)) => true,
-            // Char assignable to String
-            (Type::Char, Type::String) => true,
-            // Array: requires compatible types and equal sizes
-            (Type::Array(source_elem, source_size), Type::Array(target_elem, target_size)) => {
-                // Convert &Box<Type> to &Type via dereferencing
-                if !self.is_assignable(source_elem, target_elem) {
-                    return false;
-                }
-                // Use the updated helper function
-                match (self.get_size(source_size), self.get_size(target_size)) {
-                    (Some(source_val), Some(target_val)) => source_val == target_val,
-                    _ => false,
-                }
+        // Numeric promotions
+        (Type::I8, Type::I16 | Type::I32 | Type::I64 | Type::F32 | Type::F64)
+        | (Type::I16, Type::I32 | Type::I64 | Type::F32 | Type::F64)
+        | (Type::I32, Type::I64 | Type::F32 | Type::F64)
+        | (Type::I64, Type::F64)
+        | (Type::U8, Type::U16 | Type::U32 | Type::U64 | Type::F32 | Type::F64)
+        | (Type::U16, Type::U32 | Type::U64 | Type::F32 | Type::F64)
+        | (Type::U32, Type::U64 | Type::F32 | Type::F64)
+        | (Type::U64, Type::F64)
+        | (Type::F32, Type::F64)
+        // Nullptr assignable to pointer types
+        | (Type::NullPtr, Type::Array(_, _) | Type::Vector(_) | Type::Custom(_))
+        // Char assignable to String
+        | (Type::Char, Type::String) => true,
+        // Array: requires compatible types and equal sizes
+        (Type::Array(source_elem, source_size), Type::Array(target_elem, target_size)) => {
+            // Convert &Box<Type> to &Type via dereferencing
+            if !self.is_assignable(source_elem, target_elem) {
+                return false;
             }
-            // Vector: requires compatible element types
-            (Type::Vector(source_elem), Type::Vector(target_elem)) => {
-                // Convert &Box<Type> to &Type
-                self.is_assignable(source_elem, target_elem)
+            // Use the updated helper function
+            match (self.get_size(source_size), self.get_size(target_size)) {
+                (Some(source_val), Some(target_val)) => source_val == target_val,
+                _ => false,
             }
-            // Identical types
-            _ => source == target,
         }
+        // Vector: requires compatible element types
+        (Type::Vector(source_elem), Type::Vector(target_elem)) => {
+            // Convert &Box<Type> to &Type
+            self.is_assignable(source_elem, target_elem)
+        }
+
+        // Identical types
+        _ => source == target,
+    }
     }
 
     /// Checks if a type is an integer type.
-    fn is_integer_type(&self, ty: &Type) -> bool {
+    const fn is_integer_type(ty: &Type) -> bool {
         matches!(ty, Type::I8 | Type::I16 | Type::I32 | Type::I64 | Type::U8 | Type::U16 | Type::U32 | Type::U64)
     }
 
@@ -863,8 +869,8 @@ impl TypeChecker {
     }
 
     /// Checks if a type is numeric (integer or floating point).
-    fn is_numeric(&self, ty: &Type) -> bool {
-        self.is_integer_type(ty) || matches!(ty, Type::F32 | Type::F64)
+    const fn is_numeric(ty: &Type) -> bool {
+        Self::is_integer_type(ty) || matches!(ty, Type::F32 | Type::F64)
     }
 
     #[allow(clippy::only_used_in_recursion)]
@@ -875,7 +881,7 @@ impl TypeChecker {
                 Stmt::Return { .. } => return true,
                 Stmt::If { then_branch, else_branch, .. } => {
                     let then_has_return = self.function_has_return(then_branch);
-                    let else_has_return = else_branch.as_ref().map(|b| self.function_has_return(b)).unwrap_or(false);
+                    let else_has_return = else_branch.as_ref().is_some_and(|b| self.function_has_return(b));
                     if then_has_return && else_has_return {
                         return true;
                     }

@@ -54,9 +54,9 @@ enum LoopControl {
 #[derive(Default)]
 pub struct ControlFlowStack {
     /// Stack of block labels for break operations in nested loops
-    break_stack: Vec<String>,
+    break_stack: Vec<Arc<str>>,
     /// Stack of block labels for continue operations in nested loops
-    continue_stack: Vec<String>,
+    continue_stack: Vec<Arc<str>>,
 }
 
 impl ControlFlowStack {
@@ -88,7 +88,7 @@ impl ControlFlowStack {
     ///
     /// ```ignore
     /// let mut stack = ControlFlowStack::new();
-    /// stack.break_stack.push("label".to_string());
+    /// stack.break_stack.push("label".into());
     /// stack.clear();
     /// assert_eq!(stack.break_stack.len(), 0);
     /// ```
@@ -363,7 +363,7 @@ impl IrGenerator {
     /// let params = vec![Parameter { name: "x".into(), type_annotation: Type::I32, span }];
     /// let func = generator.create_function("add_one", &params, Type::I32, span);
     /// ```
-    fn create_function(&mut self, name: &str, params: &[Parameter], return_type: Type, span: SourceSpan) -> Function {
+    fn create_function(&self, name: &str, params: &[Parameter], return_type: Type, span: SourceSpan) -> Function {
         let ir_params = params
             .iter()
             .map(|param| {
@@ -488,7 +488,7 @@ impl IrGenerator {
     /// generator.finalize_block_connections(func);
     /// // All blocks are now properly connected in the CFG
     /// ```
-    fn finalize_block_connections(&mut self, func: &mut Function) {
+    fn finalize_block_connections(&self, func: &mut Function) {
         // First, collect all the connections we need to make
         let mut connections = Vec::new();
         for block in func.cfg.blocks() {
@@ -823,9 +823,9 @@ impl IrGenerator {
     /// generator.generate_while(func, condition, body_stmts, span);
     /// ```
     fn generate_while(&mut self, func: &mut Function, condition: Expr, body: Vec<Stmt>, span: SourceSpan) {
-        let loop_start_label = self.new_block_label("loop_start");
-        let loop_body_label = self.new_block_label("loop_body");
-        let loop_end_label = self.new_block_label("loop_end");
+        let loop_start_label: Arc<str> = Arc::from(self.new_block_label("loop_start"));
+        let loop_body_label: Arc<str> = Arc::from(self.new_block_label("loop_body"));
+        let loop_end_label: Arc<str> = Arc::from(self.new_block_label("loop_end"));
 
         self.add_terminator(
             func,
@@ -888,10 +888,10 @@ impl IrGenerator {
         &mut self, func: &mut Function, initializer: Option<Box<Stmt>>, condition: Option<Expr>,
         increment: Option<Expr>, body: Vec<Stmt>, span: SourceSpan,
     ) {
-        let loop_st_label = self.new_block_label("for_start");
-        let loop_bd_label = self.new_block_label("for_body");
-        let loop_inc_label = self.new_block_label("for_inc");
-        let loop_end_label = self.new_block_label("for_end");
+        let loop_st_label: Arc<str> = Arc::from(self.new_block_label("for_start"));
+        let loop_bd_label: Arc<str> = Arc::from(self.new_block_label("for_body"));
+        let loop_inc_label: Arc<str> = Arc::from(self.new_block_label("for_inc"));
+        let loop_end_label: Arc<str> = Arc::from(self.new_block_label("for_end"));
 
         if let Some(init) = initializer {
             self.generate_stmt(func, *init);
@@ -1171,7 +1171,7 @@ impl IrGenerator {
     /// ```ignore
     /// let value = generator.generate_literal(LiteralValue::Number(Number::I32(42)), span);
     /// ```
-    fn generate_literal(&mut self, value: LiteralValue, span: SourceSpan) -> Value {
+    fn generate_literal(&self, value: LiteralValue, span: SourceSpan) -> Value {
         match value {
             LiteralValue::Number(num) => match num {
                 Number::I8(i) => Value::new_literal(IrLiteralValue::I8(i)).with_debug_info(None, span),
@@ -1385,6 +1385,7 @@ impl IrGenerator {
     /// let temp_id = generator.new_temp();
     /// let temp_value = Value::new_temporary(temp_id, IrType::I32);
     /// ```
+    #[inline]
     pub fn new_temp(&mut self) -> u64 {
         let id = self.temp_counter;
         self.temp_counter += 1;

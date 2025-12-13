@@ -12,27 +12,32 @@ pub struct TimeValues {
 }
 
 impl TimeValues {
-    #[inline(always)]
+    #[inline]
+    #[must_use]
     pub const fn from_nanoseconds(nanoseconds: f64) -> Self {
-        TimeValues { nano: nanoseconds }
+        Self { nano: nanoseconds }
     }
 
-    #[inline(always)]
+    #[inline]
+    #[must_use]
     pub const fn seconds(&self) -> f64 {
         self.nano / SECONDS_FACTOR
     }
 
-    #[inline(always)]
+    #[inline]
+    #[must_use]
     pub const fn millis(&self) -> f64 {
         self.nano / MILLISECONDS_FACTOR
     }
 
-    #[inline(always)]
+    #[inline]
+    #[must_use]
     pub const fn micro(&self) -> f64 {
         self.nano / MICROSECONDS_FACTOR
     }
 
-    #[inline(always)]
+    #[inline]
+    #[must_use]
     pub const fn nano(&self) -> f64 {
         self.nano
     }

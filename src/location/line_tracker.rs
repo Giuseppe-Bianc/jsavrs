@@ -39,6 +39,7 @@ impl LineTracker {
     /// use jsavrs::location::line_tracker::LineTracker;
     /// let tracker = LineTracker::new("example.lang", "print(1);\nprint(2);".to_string());
     /// ```
+    #[must_use]
     pub fn new(file_path: &str, source: String) -> Self {
         let line_starts = std::iter::once(0)
             .chain(
@@ -76,11 +77,14 @@ impl LineTracker {
     /// assert_eq!(loc.line, 2);
     /// assert_eq!(loc.column, 2);
     /// ```
+    #[must_use]
     pub fn location_for(&self, offset: usize) -> SourceLocation {
         // Validate offset is within source bounds
-        if offset > self.source.len() {
-            panic!("Offset {} out of bounds for source of length {}", offset, self.source.len());
-        }
+        assert!(
+            offset <= self.source.len(),
+            "Offset {offset} out of bounds for source of length {}",
+            self.source.len()
+        );
 
         match self.line_starts.binary_search(&offset) {
             // Exact match: offset is at line start
@@ -117,17 +121,19 @@ impl LineTracker {
     /// let span = tracker.span_for(3..8);
     /// ```
     #[inline]
+    #[must_use]
     pub fn span_for(&self, range: std::ops::Range<usize>) -> SourceSpan {
         SourceSpan::new(self.file_path.clone(), self.location_for(range.start), self.location_for(range.end))
     }
 
     /// Gets a specific line from the source (1-indexed)
+    #[must_use]
     pub fn get_line(&self, line_number: usize) -> Option<&str> {
         // Convert to 0-indexed and get line start offset
         let start_index = *self.line_starts.get(line_number.checked_sub(1)?)?;
 
         // Find line end (next newline or EOF)
-        let end_index = self.source[start_index..].find('\n').map(|rel| start_index + rel).unwrap_or(self.source.len());
+        let end_index = self.source[start_index..].find('\n').map_or(self.source.len(), |rel| start_index + rel);
 
         Some(&self.source[start_index..end_index])
     }

@@ -125,7 +125,7 @@ impl LivenessAnalyzer {
     /// which is expected behavior for instructions that define values without using any
     /// (e.g., `Alloca` instructions).
     fn process_instruction_uses(
-        &mut self, gen_set: &mut HashSet<Value>, kill_set: &mut HashSet<Value>, idx: &InstructionIndex,
+        &self, gen_set: &mut HashSet<Value>, kill_set: &HashSet<Value>, idx: &InstructionIndex,
     ) {
         if let Some(used_values) = self.def_use_chains.get_instruction_to_used_values().get(idx) {
             gen_set.extend(used_values.iter().filter(|v| !kill_set.contains(*v)).cloned());

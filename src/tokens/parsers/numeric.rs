@@ -83,6 +83,7 @@ where
 /// assert!(!is_valid_integer_literal("6.022e23"));  // Has exponent
 /// assert!(!is_valid_integer_literal("-42"));       // Has sign
 /// ```
+#[must_use]
 pub fn is_valid_integer_literal(numeric_part: &str) -> bool {
     if numeric_part.is_empty() {
         return false;
@@ -107,6 +108,7 @@ pub fn is_valid_integer_literal(numeric_part: &str) -> bool {
 /// * `Some(Number::Float32)` - For regular float literals
 /// * `Some(Number::Scientific32)` - For scientific notation
 /// * `None` - If parsing fails
+#[must_use]
 pub fn handle_float_suffix(numeric_part: &str) -> Option<Number> {
     parse_scientific(numeric_part, true).or_else(|| numeric_part.parse::<f32>().ok().map(Number::Float32))
 }
@@ -128,6 +130,7 @@ pub fn handle_float_suffix(numeric_part: &str) -> Option<Number> {
 /// * `Some(Number::Float64)` - For floating-point literals
 /// * `Some(Number::Scientific64)` - For scientific notation
 /// * `None` - If parsing fails
+#[must_use]
 pub fn handle_default_suffix(numeric_part: &str) -> Option<Number> {
     parse_scientific(numeric_part, false).or_else(|| handle_non_scientific(numeric_part))
 }
@@ -166,6 +169,7 @@ pub fn handle_default_suffix(numeric_part: &str) -> Option<Number> {
 /// # Panics
 ///
 /// This function does not panic.
+#[must_use]
 pub fn handle_non_scientific(numeric_part: &str) -> Option<Number> {
     if numeric_part.contains('.') {
         numeric_part.parse::<f64>().ok().map(Number::Float64)
@@ -196,6 +200,7 @@ pub fn handle_non_scientific(numeric_part: &str) -> Option<Number> {
 /// - Optional sign: `+` or `-` before exponent
 /// - Base: can be integer or floating-point
 /// - Exponent: must be valid i32 integer
+#[must_use]
 pub fn parse_scientific(s: &str, is_f32: bool) -> Option<Number> {
     let pos = s.find(['e', 'E'])?;
     let (base_str, exp_str) = s.split_at(pos);

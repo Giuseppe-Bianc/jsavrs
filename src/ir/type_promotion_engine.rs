@@ -34,19 +34,20 @@ use super::{
 };
 use crate::ir::generator::IrGenerator;
 use crate::location::source_span::SourceSpan;
-use once_cell::sync::Lazy;
+//use once_cell::sync::Lazy;
+use std::sync::LazyLock;
 
 // Global singleton PromotionMatrix - initialized once and reused across all operations
 // This eliminates ~4.5MB of allocations for repeated matrix initialization
-static GLOBAL_PROMOTION_MATRIX: Lazy<PromotionMatrix> = Lazy::new(PromotionMatrix::new);
+static GLOBAL_PROMOTION_MATRIX: LazyLock<PromotionMatrix> = LazyLock::new(PromotionMatrix::new);
 
 #[derive(Debug, Clone, Default)]
 pub struct TypePromotionEngine;
 
 impl TypePromotionEngine {
     /// Creates a new TypePromotionEngine that uses the global singleton PromotionMatrix
-    pub fn new() -> Self {
-        TypePromotionEngine
+    pub const fn new() -> Self {
+        Self
     }
 
     /// Returns a reference to the global promotion matrix singleton
@@ -55,6 +56,7 @@ impl TypePromotionEngine {
     }
 
     /// Analyzes binary operation for proper type promotion
+    #[must_use]
     pub fn analyze_binary_promotion(
         &self, left_type: &IrType, right_type: &IrType, operation: IrBinaryOp, span: SourceSpan,
     ) -> PromotionResult {
@@ -111,7 +113,7 @@ impl TypePromotionEngine {
                 cast_kind: *cast_kind,
                 may_lose_precision: *may_lose_precision,
                 may_overflow: *may_overflow,
-                source_span: span.clone(),
+                source_span: span,
             });
 
             // Add warnings if applicable
@@ -189,7 +191,7 @@ impl TypePromotionEngine {
                 new_right_value,
                 &right_cast_info.to_type,
                 right_cast_info.cast_kind,
-                span.clone(),
+                span,
             );
         }
 
@@ -210,12 +212,7 @@ impl TypePromotionEngine {
         let result_value = Value::new_temporary(temp_id, to_type.clone()).with_debug_info(None, span.clone());
 
         let cast_inst = Instruction::new(
-            InstructionKind::Cast {
-                kind: cast_kind,
-                value: value.clone(),
-                from_ty: value.ty.clone(),
-                to_ty: to_type.clone(),
-            },
+            InstructionKind::Cast { kind: cast_kind, value: value.clone(), from_ty: value.ty, to_ty: to_type.clone() },
             span,
         )
         .with_result(result_value.clone());

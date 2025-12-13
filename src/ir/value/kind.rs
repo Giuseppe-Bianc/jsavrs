@@ -24,23 +24,23 @@ impl Hash for ValueKind {
     #[inline]
     fn hash<H: Hasher>(&self, state: &mut H) {
         match self {
-            ValueKind::Literal(lit) => {
+            Self::Literal(lit) => {
                 state.write_u8(0);
                 lit.hash(state);
             }
-            ValueKind::Constant(cnst) => {
+            Self::Constant(cnst) => {
                 state.write_u8(1);
                 cnst.hash(state);
             }
-            ValueKind::Local(name) => {
+            Self::Local(name) => {
                 state.write_u8(2);
                 name.as_ref().hash(state);
             }
-            ValueKind::Global(name) => {
+            Self::Global(name) => {
                 state.write_u8(3);
                 name.as_ref().hash(state);
             }
-            ValueKind::Temporary(id) => {
+            Self::Temporary(id) => {
                 state.write_u8(4);
                 state.write_u64(*id);
             }

@@ -16,23 +16,26 @@ use console::Style;
 use std::fmt::Write;
 
 #[repr(u8)]
-#[derive(Debug, Clone, Copy, PartialEq)]
+#[derive(Debug, Clone, Copy, PartialEq, Eq)]
 pub enum BranchType {
     Last,
     Middle,
 }
 
 impl BranchType {
+    #[must_use]
     pub const fn symbol(&self) -> &'static str {
         match self {
-            BranchType::Last => "└── ",
-            BranchType::Middle => "├── ",
+            Self::Last => "└── ",
+            Self::Middle => "├── ",
         }
     }
+
+    #[must_use]
     pub const fn indent_continuation(&self) -> &'static str {
         match self {
-            BranchType::Last => "    ",
-            BranchType::Middle => "│   ",
+            Self::Last => "    ",
+            Self::Middle => "│   ",
         }
     }
 }
@@ -44,12 +47,13 @@ pub struct BranchConfig {
 }
 
 impl BranchConfig {
-    pub fn new(parent_type: BranchType, current_type: BranchType, child_type: BranchType) -> Self {
+    #[must_use]
+    pub const fn new(parent_type: BranchType, current_type: BranchType, child_type: BranchType) -> Self {
         Self { parent_type, current_type, child_type }
     }
 }
 
-#[derive(Debug, Clone, PartialEq, Default)]
+#[derive(Debug, Clone, PartialEq, Eq, Default)]
 pub struct StyleManager {
     pub operator: Style,
     pub literal: Style,
@@ -62,7 +66,8 @@ pub struct StyleManager {
 }
 
 impl StyleManager {
-    pub fn new() -> Self {
+    #[must_use]
+    pub const fn new() -> Self {
         Self {
             operator: Style::new().blue(),
             literal: Style::new().green(),
@@ -107,6 +112,7 @@ where
 }
 
 // Keep existing helper functions
+#[must_use]
 pub fn get_indent(indent: &str, branch_type: &BranchType) -> String {
     let continuation = branch_type.indent_continuation();
     let mut result = String::with_capacity(indent.len() + continuation.len());
@@ -115,8 +121,9 @@ pub fn get_indent(indent: &str, branch_type: &BranchType) -> String {
     result
 }
 
-pub fn append_line(output: &mut String, indent: &str, branch_type: BranchType, style: Style, text: &str) {
+#[allow(clippy::unwrap_used)]
+pub fn append_line(output: &mut String, indent: &str, branch_type: BranchType, style: &Style, text: &str) {
     let branch = branch_type.symbol();
     let styled_text = style.apply_to(text);
-    writeln!(output, "{}{}{}", indent, branch, styled_text).unwrap();
+    writeln!(output, "{indent}{branch}{styled_text}").unwrap();
 }

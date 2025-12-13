@@ -65,15 +65,16 @@ impl ScopeId {
     ///
     /// # Returns
     /// A new `ScopeId` instance with a randomly generated UUID.
+    #[must_use]
     pub fn new() -> Self {
-        ScopeId(Uuid::new_v4())
+        Self(Uuid::new_v4())
     }
 }
 
 impl Default for ScopeId {
     /// Provides a default implementation that generates a new unique `ScopeId`.
     fn default() -> Self {
-        ScopeId::new()
+        Self::new()
     }
 }
 
@@ -89,15 +90,16 @@ impl ResourceId {
     ///
     /// # Returns
     /// A new `ResourceId` instance with a unique identifier.
+    #[must_use]
     pub fn new() -> Self {
-        ResourceId(Uuid::new_v4())
+        Self(Uuid::new_v4())
     }
 }
 
 impl Default for ResourceId {
     /// Provides a default implementation that generates a new unique `ResourceId`.
     fn default() -> Self {
-        ResourceId::new()
+        Self::new()
     }
 }
 
@@ -130,16 +132,18 @@ impl IrType {
     ///
     /// # Returns
     /// `true` if the type is a signed integer; otherwise, `false`.
-    pub fn is_signed_integer(&self) -> bool {
-        matches!(self, IrType::I8 | IrType::I16 | IrType::I32 | IrType::I64)
+    #[must_use]
+    pub const fn is_signed_integer(&self) -> bool {
+        matches!(self, Self::I8 | Self::I16 | Self::I32 | Self::I64)
     }
 
     /// Determines whether the IR type represents an unsigned integer (`u8`, `u16`, `u32`, `u64`).
     ///
     /// # Returns
     /// `true` if the type is an unsigned integer; otherwise, `false`.
-    pub fn is_unsigned_integer(&self) -> bool {
-        matches!(self, IrType::U8 | IrType::U16 | IrType::U32 | IrType::U64)
+    #[must_use]
+    pub const fn is_unsigned_integer(&self) -> bool {
+        matches!(self, Self::U8 | Self::U16 | Self::U32 | Self::U64)
     }
 
     /// Returns the bit-width associated with this IR type.
@@ -149,14 +153,14 @@ impl IrType {
     ///
     /// # Returns
     /// A `u32` representing the bit-width of the type.
-    pub fn get_bit_width(&self) -> u32 {
+    #[must_use]
+    #[allow(clippy::match_same_arms)]
+    pub const fn get_bit_width(&self) -> u32 {
         match self {
-            IrType::I8 | IrType::U8 => 8,
-            IrType::I16 | IrType::U16 => 16,
-            IrType::I32 | IrType::U32 => 32,
-            IrType::I64 | IrType::U64 => 64,
-            IrType::F32 => 32,
-            IrType::F64 => 64,
+            Self::I8 | Self::U8 => 8,
+            Self::I16 | Self::U16 => 16,
+            Self::I32 | Self::U32 | Self::F32 => 32,
+            Self::I64 | Self::U64 | Self::F64 => 64,
             _ => 32, // Default width for other types (heuristic)
         }
     }
@@ -171,24 +175,24 @@ impl IrType {
 impl fmt::Display for IrType {
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
         match self {
-            IrType::I8 => write!(f, "i8"),
-            IrType::I16 => write!(f, "i16"),
-            IrType::I32 => write!(f, "i32"),
-            IrType::I64 => write!(f, "i64"),
-            IrType::U8 => write!(f, "u8"),
-            IrType::U16 => write!(f, "u16"),
-            IrType::U32 => write!(f, "u32"),
-            IrType::U64 => write!(f, "u64"),
-            IrType::F32 => write!(f, "f32"),
-            IrType::F64 => write!(f, "f64"),
-            IrType::Bool => write!(f, "bool"),
-            IrType::Char => write!(f, "char"),
-            IrType::String => write!(f, "string"),
-            IrType::Void => write!(f, "void"),
-            IrType::Pointer(inner) => write!(f, "*{inner}"),
-            IrType::Array(element_type, size) => write!(f, "[{element_type}; {size}]"),
-            IrType::Custom(name, _) => write!(f, "{name}"),
-            IrType::Struct(name, fields, _) => {
+            Self::I8 => write!(f, "i8"),
+            Self::I16 => write!(f, "i16"),
+            Self::I32 => write!(f, "i32"),
+            Self::I64 => write!(f, "i64"),
+            Self::U8 => write!(f, "u8"),
+            Self::U16 => write!(f, "u16"),
+            Self::U32 => write!(f, "u32"),
+            Self::U64 => write!(f, "u64"),
+            Self::F32 => write!(f, "f32"),
+            Self::F64 => write!(f, "f64"),
+            Self::Bool => write!(f, "bool"),
+            Self::Char => write!(f, "char"),
+            Self::String => write!(f, "string"),
+            Self::Void => write!(f, "void"),
+            Self::Pointer(inner) => write!(f, "*{inner}"),
+            Self::Array(element_type, size) => write!(f, "[{element_type}; {size}]"),
+            Self::Custom(name, _) => write!(f, "{name}"),
+            Self::Struct(name, fields, _) => {
                 let fields_str =
                     fields.iter().map(|(field_name, ty)| format!("{field_name}: {ty}")).collect::<Vec<_>>().join(", ");
                 write!(f, "struct {name} {{ {fields_str} }}")

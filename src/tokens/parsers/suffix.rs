@@ -28,9 +28,9 @@ impl SuffixPattern {
     #[inline]
     const fn len(self) -> usize {
         match self {
-            SuffixPattern::SingleChar => 1,
-            SuffixPattern::TwoChar => 2,
-            SuffixPattern::ThreeChar => 3,
+            Self::SingleChar => 1,
+            Self::TwoChar => 2,
+            Self::ThreeChar => 3,
         }
     }
 }
@@ -58,6 +58,7 @@ impl SuffixPattern {
 /// assert!(check_single_char_suffix(b"42x").is_none());
 /// ```
 #[inline]
+#[must_use]
 pub fn check_single_char_suffix(bytes: &[u8]) -> Option<SuffixPattern> {
     if bytes.is_empty() {
         return None;
@@ -92,6 +93,7 @@ pub fn check_single_char_suffix(bytes: &[u8]) -> Option<SuffixPattern> {
 /// assert!(check_three_char_suffix(b"100abc").is_none());
 /// ```
 #[inline]
+#[must_use]
 pub fn check_three_char_suffix(bytes: &[u8]) -> Option<SuffixPattern> {
     if bytes.len() < 3 {
         return None;
@@ -101,9 +103,7 @@ pub fn check_three_char_suffix(bytes: &[u8]) -> Option<SuffixPattern> {
     let suffix_lower = [last_three[0].to_ascii_lowercase(), last_three[1], last_three[2]];
 
     match suffix_lower {
-        [b'i', b'1', b'6'] | [b'i', b'3', b'2'] | [b'u', b'1', b'6'] | [b'u', b'3', b'2'] => {
-            Some(SuffixPattern::ThreeChar)
-        }
+        [b'i' | b'u', b'1', b'6'] | [b'i' | b'u', b'3', b'2'] => Some(SuffixPattern::ThreeChar),
         _ => None,
     }
 }
@@ -130,6 +130,7 @@ pub fn check_three_char_suffix(bytes: &[u8]) -> Option<SuffixPattern> {
 /// assert!(check_two_char_suffix(b"42xy").is_none());
 /// ```
 #[inline]
+#[must_use]
 pub fn check_two_char_suffix(bytes: &[u8]) -> Option<SuffixPattern> {
     if bytes.len() < 2 {
         return None;
@@ -139,7 +140,7 @@ pub fn check_two_char_suffix(bytes: &[u8]) -> Option<SuffixPattern> {
     let suffix_lower = [last_two[0].to_ascii_lowercase(), last_two[1]];
 
     match suffix_lower {
-        [b'i', b'8'] | [b'u', b'8'] => Some(SuffixPattern::TwoChar),
+        [b'i' | b'u', b'8'] => Some(SuffixPattern::TwoChar),
         _ => None,
     }
 }
@@ -188,7 +189,7 @@ fn detect_suffix_pattern(bytes: &[u8]) -> Option<SuffixPattern> {
 ///
 /// # Returns
 ///
-/// A tuple of (numeric_part, Some(suffix))
+/// A tuple of (`numeric_part`, Some(suffix))
 ///
 /// # Safety
 ///
@@ -237,6 +238,7 @@ fn split_at_position(slice: &str, split_pos: usize) -> (&str, Option<&str>) {
 /// assert_eq!(split_numeric_and_suffix("6.022e23u32"), ("6.022e23", Some("u32")));
 /// assert_eq!(split_numeric_and_suffix("100"), ("100", None));
 /// ```
+#[must_use]
 pub fn split_numeric_and_suffix(slice: &str) -> (&str, Option<&str>) {
     if slice.is_empty() {
         return (slice, None);
@@ -244,14 +246,11 @@ pub fn split_numeric_and_suffix(slice: &str) -> (&str, Option<&str>) {
 
     let bytes = slice.as_bytes();
 
-    match detect_suffix_pattern(bytes) {
-        Some(pattern) => {
-            let suffix_len = pattern.len();
-            let split_pos = bytes.len() - suffix_len;
-            split_at_position(slice, split_pos)
-        }
-        None => (slice, None),
-    }
+    detect_suffix_pattern(bytes).map_or((slice, None), |pattern| {
+        let suffix_len = pattern.len();
+        let split_pos = bytes.len() - suffix_len;
+        split_at_position(slice, split_pos)
+    })
 }
 
 /// Routes numeric literal parsing based on type suffix.
@@ -312,7 +311,7 @@ pub fn split_numeric_and_suffix(slice: &str) -> (&str, Option<&str>) {
 /// assert_eq!(result, None);
 /// ```
 pub fn handle_suffix(numeric_part: &str, suffix: Option<&str>) -> Option<Number> {
-    match suffix.map(|s| s.to_ascii_lowercase()).as_deref() {
+    match suffix.map(str::to_ascii_lowercase).as_deref() {
         Some("u") => parse_integer::<u64>(numeric_part, Number::UnsignedInteger),
         Some("u8") => parse_integer::<u8>(numeric_part, Number::U8),
         Some("u16") => parse_integer::<u16>(numeric_part, Number::U16),

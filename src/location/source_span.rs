@@ -48,7 +48,8 @@ impl SourceSpan {
     /// let end = SourceLocation::new(1, 5, 4);
     /// let span = SourceSpan::new(Arc::from("test.lang"), start, end);
     /// ```
-    pub fn new(file_path: Arc<str>, start: SourceLocation, end: SourceLocation) -> Self {
+    #[must_use]
+    pub const fn new(file_path: Arc<str>, start: SourceLocation, end: SourceLocation) -> Self {
         // In production code, should validate:
         // assert!(start <= end, "Span start must come before end");
         // assert!(file_path == other.file_path, "Cannot merge spans from different files");
@@ -74,7 +75,7 @@ impl SourceSpan {
     /// assert_eq!(span1.start, SourceLocation::new(1, 1, 0));
     /// assert_eq!(span1.end, SourceLocation::new(1,8, 7));
     /// ```
-    pub fn merge(&mut self, other: &SourceSpan) {
+    pub fn merge(&mut self, other: &Self) {
         if self.file_path == other.file_path {
             self.start = self.start.min(other.start);
             self.end = self.end.max(other.end);
@@ -100,7 +101,8 @@ impl SourceSpan {
     /// assert_eq!(merged.start, SourceLocation::new(1, 1, 0));
     /// assert_eq!(merged.end, SourceLocation::new(2,5,8));
     /// ```
-    pub fn merged(&self, other: &SourceSpan) -> Option<Self> {
+    #[must_use]
+    pub fn merged(&self, other: &Self) -> Option<Self> {
         (self.file_path == other.file_path).then(|| Self {
             file_path: self.file_path.clone(),
             start: self.clone().start.min(other.start),
@@ -115,7 +117,7 @@ impl Default for SourceSpan {
     /// Primarily useful for placeholder values. Should not be used for
     /// actual source references.
     fn default() -> Self {
-        SourceSpan { file_path: Arc::from(""), start: SourceLocation::default(), end: SourceLocation::default() }
+        Self { file_path: Arc::from(""), start: SourceLocation::default(), end: SourceLocation::default() }
     }
 }
 
@@ -161,6 +163,7 @@ impl std::fmt::Display for SourceSpan {
 /// let expected = if cfg!(unix) { "../module/file.lang" } else { "..\\module\\file.lang" };
 /// assert_eq!(truncate_path(path, 2), expected);
 /// ```
+#[must_use]
 pub fn truncate_path(path: &Path, depth: usize) -> String {
     let components: Vec<_> = path.components().collect();
     let len = components.len();

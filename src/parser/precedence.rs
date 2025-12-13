@@ -1,7 +1,8 @@
 use crate::tokens::token::Token;
 use crate::tokens::token_kind::TokenKind;
 
-pub fn binding_power(token: &Token) -> (u8, u8) {
+#[must_use]
+pub const fn binding_power(token: &Token) -> (u8, u8) {
     match token.kind {
         // Assignment operators (right-associative)
         TokenKind::Equal
@@ -46,7 +47,9 @@ pub fn binding_power(token: &Token) -> (u8, u8) {
         _ => (0, 0),
     }
 }
-pub fn unary_binding_power(token: &Token) -> (u8, u8) {
+
+#[must_use]
+pub const fn unary_binding_power(token: &Token) -> (u8, u8) {
     match token.kind {
         TokenKind::Not | TokenKind::Minus => (24, 23),
         _ => (0, 0),

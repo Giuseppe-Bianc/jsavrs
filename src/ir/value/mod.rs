@@ -18,8 +18,9 @@ pub struct ValueId(Uuid);
 
 impl ValueId {
     #[inline]
+    #[must_use]
     pub fn new() -> Self {
-        ValueId(Uuid::new_v4())
+        Self(Uuid::new_v4())
     }
 }
 
@@ -67,47 +68,55 @@ impl Hash for Value {
 impl Value {
     // Helper function to create a new Value with common fields
     fn new_value(kind: ValueKind, ty: IrType) -> Self {
-        Value { id: ValueId::new(), kind, ty, debug_info: None, scope: None }
+        Self { id: ValueId::new(), kind, ty, debug_info: None, scope: None }
     }
 
     /// Creates a new literal value.
+    #[must_use]
     pub fn new_literal(imm: IrLiteralValue) -> Self {
         let ty: IrType = (&imm).into();
         Self::new_value(ValueKind::Literal(imm), ty)
     }
 
     /// Creates a new constant value.
+    #[must_use]
     pub fn new_constant(imm: IrConstantValue, ty: IrType) -> Self {
         Self::new_value(ValueKind::Constant(imm), ty)
     }
 
     /// Creates a new local value.
+    #[must_use]
     pub fn new_local(name: Arc<str>, ty: IrType) -> Self {
         Self::new_value(ValueKind::Local(name), ty)
     }
 
     /// Creates a new global value.
+    #[must_use]
     pub fn new_global(name: Arc<str>, ty: IrType) -> Self {
         Self::new_value(ValueKind::Global(name), ty)
     }
 
     /// Creates a new temporary value.
+    #[must_use]
     pub fn new_temporary(tmp_id: u64, ty: IrType) -> Self {
         Self::new_value(ValueKind::Temporary(tmp_id), ty)
     }
 
     /// Creates a new temporary value (alias for `new_temporary`).
     /// Convenient for test code.
+    #[must_use]
     pub fn new_temp(tmp_id: u64, ty: IrType) -> Self {
         Self::new_temporary(tmp_id, ty)
     }
 
+    #[must_use]
     pub fn with_debug_info(mut self, name: Option<Arc<str>>, span: SourceSpan) -> Self {
         self.debug_info = Some(ValueDebugInfo { name, source_span: span });
         self
     }
 
-    pub fn with_scope(mut self, scope: ScopeId) -> Self {
+    #[must_use]
+    pub const fn with_scope(mut self, scope: ScopeId) -> Self {
         self.scope = Some(scope);
         self
     }

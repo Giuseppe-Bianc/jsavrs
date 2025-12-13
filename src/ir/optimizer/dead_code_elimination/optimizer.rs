@@ -98,7 +98,7 @@ impl DeadCodeElimination {
     }
 
     /// Removes unreachable blocks from the function.
-    fn remove_unreachable_blocks(&mut self, function: &mut Function, stats: &mut OptimizationStats) -> bool {
+    fn remove_unreachable_blocks(&self, function: &mut Function, stats: &mut OptimizationStats) -> bool {
         let reachable_blocks = ReachabilityAnalyzer::analyze(&function.cfg);
 
         let blocks_to_remove: Vec<Arc<str>> = function
@@ -130,7 +130,7 @@ impl DeadCodeElimination {
     }
 
     /// Removes dead instructions using liveness and escape analysis.
-    fn remove_dead_instructions(&mut self, function: &mut Function) -> usize {
+    fn remove_dead_instructions(&self, function: &mut Function) -> usize {
         let mut total_removed = 0;
 
         loop {

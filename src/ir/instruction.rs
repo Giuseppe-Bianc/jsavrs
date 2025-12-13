@@ -19,12 +19,12 @@
 
 // src/ir/instruction.rs
 use super::{IrType, ScopeId, Value};
+use crate::fmtlike::write_comma_separated;
 use crate::{
     location::source_span::SourceSpan,
     parser::ast::{BinaryOp, UnaryOp},
 };
 use std::fmt;
-use crate::fmtlike::write_comma_separated;
 
 /// Type casting operations for value conversions in IR.
 ///

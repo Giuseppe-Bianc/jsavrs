@@ -23,10 +23,12 @@ pub struct Times {
 }
 
 impl Times {
+    #[must_use]
     pub fn from_nanoseconds(nanoseconds: f64) -> Self {
         Self { values: TimeValues::from_nanoseconds(nanoseconds), labels: TimeLabels::default() }
     }
 
+    #[must_use]
     pub fn get_relevant_timeframe(&self) -> ValueLabel {
         let s = self.values.seconds();
         let ms = self.values.millis();
@@ -47,10 +49,12 @@ impl Times {
 
 pub type TimePrintFn = fn(&str, usize, &ValueLabel) -> String;
 
+#[must_use]
 pub fn simple_format(title: &str, _: usize, time: &ValueLabel) -> String {
     format!("{title}: Time = {time}")
 }
 
+#[must_use]
 pub fn big_format(title: &str, title_len: usize, time: &ValueLabel) -> String {
     let time_str = format!("Time = {time}");
     let total_len = title_len + time_str.len() + 3; // +3 for separators

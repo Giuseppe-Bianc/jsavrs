@@ -47,7 +47,8 @@ impl SourceLocation {
     /// assert_eq!(loc.column, 5);
     /// assert_eq!(loc.absolute_pos, 20);
     /// ```
-    pub fn new(line: usize, column: usize, absolute_pos: usize) -> Self {
+    #[must_use]
+    pub const fn new(line: usize, column: usize, absolute_pos: usize) -> Self {
         Self { line, column, absolute_pos }
     }
 }

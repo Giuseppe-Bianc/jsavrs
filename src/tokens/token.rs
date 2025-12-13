@@ -11,7 +11,7 @@ use crate::tokens::token_kind::TokenKind;
 ///
 /// This combination allows for precise error reporting and enables the parser
 /// to maintain source location information throughout the compilation pipeline.
-#[derive(Debug, PartialEq, Clone)]
+#[derive(Debug, PartialEq, Eq, Clone)]
 pub struct Token {
     /// The semantic type of the token.
     ///

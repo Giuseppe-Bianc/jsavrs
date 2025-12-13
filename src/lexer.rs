@@ -21,7 +21,7 @@ use std::{collections::HashMap, sync::Arc};
 ///
 /// # Behavior in Phases
 /// * Initialization: Sets up the internal logos lexer and line tracking for the source
-/// * Runtime: Provides next_token functionality to process the source character by character
+/// * Runtime: Provides `next_token` functionality to process the source character by character
 /// * Termination: Manages EOF token emission and resource cleanup
 pub struct Lexer<'a> {
     inner: logos::Lexer<'a, TokenKind>,
@@ -51,6 +51,7 @@ impl<'a> Lexer<'a> {
     /// let source = "let x = 42;";
     /// let mut lexer = Lexer::new("test.vn", source);
     /// ```
+    #[must_use]
     pub fn new(file_path: &str, source: &'a str) -> Self {
         let line_tracker = LineTracker::new(file_path, source.to_owned());
         let inner = TokenKind::lexer(source);
@@ -66,9 +67,10 @@ impl<'a> Lexer<'a> {
     /// * Termination: Provides final position information when processing completes
     ///
     /// # Returns
-    /// A reference to the LineTracker instance used by this lexer
+    /// A reference to the `LineTracker` instance used by this lexer
     // OTTIMIZZAZIONE 1: Restituisce riferimento invece di clone
-    pub fn get_line_tracker(&self) -> &LineTracker {
+    #[must_use]
+    pub const fn get_line_tracker(&self) -> &LineTracker {
         &self.line_tracker
     }
 
@@ -98,19 +100,18 @@ impl<'a> Lexer<'a> {
             return None;
         }
 
-        let (kind_result, range) = match self.inner.next() {
-            Some(kind_result) => (kind_result, self.inner.span()),
-            None => {
-                self.eof_emitted = true;
-                let eof_range = self.source_len..self.source_len;
-                (Ok(TokenKind::Eof), eof_range)
-            }
+        let (kind_result, range) = if let Some(kind_result) = self.inner.next() {
+            (kind_result, self.inner.span())
+        } else {
+            self.eof_emitted = true;
+            let eof_range = self.source_len..self.source_len;
+            (Ok(TokenKind::Eof), eof_range)
         };
 
         let span = self.line_tracker.span_for(range);
         Some(match kind_result {
             Ok(kind) => Ok(Token { kind, span }),
-            Err(_) => Err(CompileError::LexerError {
+            Err(()) => Err(CompileError::LexerError {
                 message: Arc::from(format!("Invalid token: {:?}", self.inner.slice())),
                 span,
                 help: None,
@@ -173,7 +174,7 @@ fn has_malformed_errors(errors: &[CompileError]) -> bool {
 /// # Optimization Strategy
 ///
 /// This function applies three key optimizations:
-/// 1. **Lazy HashMap initialization**: Only builds position index when hashtag errors exist
+/// 1. **Lazy `HashMap` initialization**: Only builds position index when hashtag errors exist
 /// 2. **In-place token filtering**: Uses `retain()` instead of `filter().collect()`
 /// 3. **Early-exit pattern**: Skips expensive operations when not needed
 ///
@@ -188,6 +189,7 @@ fn has_malformed_errors(errors: &[CompileError]) -> bool {
 /// # Returns
 /// Tuple of (filtered tokens, enhanced errors)
 #[inline]
+#[must_use]
 pub fn post_process_tokens(tokens: Vec<Token>, errors: Vec<CompileError>) -> (Vec<Token>, Vec<CompileError>) {
     // Se non ci sono errori hashtag, ritorna subito
     if !has_malformed_errors(&errors) {
@@ -197,46 +199,18 @@ pub fn post_process_tokens(tokens: Vec<Token>, errors: Vec<CompileError>) -> (Ve
     let mut replacements = HashMap::new();
 
     for (eidx, error) in errors.iter().enumerate() {
-        match error {
-            CompileError::LexerError { message, span, help } => {
-                if let Some(msg) = extract_malformed_base_number_message(message.as_ref()) {
-                    replacements.insert(
-                        eidx,
-                        CompileError::LexerError { message: Arc::from(msg), span: span.clone(), help: help.clone() },
-                    );
-                }
-            }
-            _ => continue,
+        if let CompileError::LexerError { message, span, help } = error
+            && let Some(msg) = extract_malformed_base_number_message(message.as_ref())
+        {
+            replacements.insert(
+                eidx,
+                CompileError::LexerError { message: Arc::from(msg), span: span.clone(), help: help.clone() },
+            );
         }
     }
     let errors = apply_error_replacements(errors, replacements);
     //let tokens = filter_removed_tokens(tokens, tokens_to_remove);
     (tokens, errors)
-}
-
-/// Returns error message for malformed number literals.
-///
-/// # Optimization Strategy (US2 Optimization 4)
-///
-/// Tiny hot function - always inline for branch prediction and elimination of call overhead.
-/// The function consists of simple pattern matching with static string returns, making it
-/// an ideal candidate for aggressive inlining. The `#[inline(always)]` attribute ensures
-/// this function is inlined at all call sites, eliminating function call overhead and
-/// enabling further optimizations by the compiler.
-///
-/// # Parameters
-/// * `s` - String slice to analyze for error pattern
-///
-/// # Returns
-/// Optional error message for recognized malformed patterns (b, o, x)
-#[inline(always)]
-pub const fn get_error_message(s: &str) -> Option<&'static str> {
-    match s.as_bytes().first() {
-        Some(b'b') if s.len() == 1 => Some("Malformed binary number: \"#b\""),
-        Some(b'o') if s.len() == 1 => Some("Malformed octal number: \"#o\""),
-        Some(b'x') if s.len() == 1 => Some("Malformed hexadecimal number: \"#x\""),
-        _ => None,
-    }
 }
 
 fn apply_error_replacements(
@@ -252,7 +226,7 @@ fn apply_error_replacements(
 
 /// Extracts the appropriate error message for malformed base numbers.
 ///
-/// Converts logos 0.16.0 generic error messages into specific, user-friendly messages.
+/// Converts generic error messages into specific, user-friendly messages.
 ///
 /// # Parameters
 /// * `msg` - The error message from logos
@@ -260,7 +234,7 @@ fn apply_error_replacements(
 /// # Returns
 /// Optional specific error message if the input matches a malformed base number pattern
 #[inline]
-fn extract_malformed_base_number_message(msg: &str) -> Option<&'static str> {
+const fn extract_malformed_base_number_message(msg: &str) -> Option<&'static str> {
     match msg.as_bytes() {
         b"Invalid token: \"#b\"" => Some("Malformed binary number: \"#b\""),
         b"Invalid token: \"#o\"" => Some("Malformed octal number: \"#o\""),

@@ -51,7 +51,7 @@ pub fn parse_base_number(radix: u32, lex: &mut logos::Lexer<TokenKind>) -> Optio
     }
     let (_, num_part) = slice.split_at(2); // Remove prefix ("#b", "#o", or "#x")
     let (num_str, suffix_u) = match num_part.chars().last() {
-        Some('u') | Some('U') => (&num_part[..num_part.len() - 1], true),
+        Some('u' | 'U') => (&num_part[..num_part.len() - 1], true),
         _ => (num_part, false),
     };
 
@@ -144,6 +144,7 @@ pub fn parse_hex(lex: &mut logos::Lexer<TokenKind>) -> Option<Number> {
 }
 
 #[cfg(test)]
+#[allow(clippy::unreadable_literal)]
 mod tests {
     use super::*;
     use logos::Logos;

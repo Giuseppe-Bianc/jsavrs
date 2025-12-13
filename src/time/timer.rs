@@ -15,11 +15,11 @@ pub struct Timer {
 
 impl Timer {
     pub fn new(title: &str) -> Self {
-        Timer::with_formatter(title, simple_format)
+        Self::with_formatter(title, simple_format)
     }
 
     pub fn with_formatter(title: &str, time_print: TimePrintFn) -> Self {
-        Timer {
+        Self {
             title: title.to_string(),
             title_padding: title.len() + TILE_PADDING,
             time_print,
@@ -29,19 +29,24 @@ impl Timer {
     }
 
     #[inline]
+    #[must_use]
     pub fn elapsed(&self) -> Duration {
         self.start.elapsed()
     }
 
     #[inline]
+    #[must_use]
+    #[allow(clippy::cast_precision_loss)]
     pub fn make_time(&self) -> f64 {
         self.elapsed().as_nanos() as f64 / self.cycles as f64
     }
 
+    #[must_use]
     pub fn make_time_str(&self) -> ValueLabel {
         Times::from_nanoseconds(self.make_time()).get_relevant_timeframe()
     }
 
+    #[allow(clippy::cast_precision_loss)]
     pub fn time_it<F>(&mut self, f: F, target_time: f64) -> String
     where
         F: Fn(),
@@ -69,6 +74,7 @@ impl Timer {
     }
 
     // Renamed to avoid shadowing Display::to_string
+    #[must_use]
     pub fn as_string(&self) -> String {
         let time_str = self.make_time_str();
         (self.time_print)(&self.title, self.title_padding, &time_str)
@@ -79,9 +85,7 @@ impl Div<usize> for Timer {
     type Output = Self;
 
     fn div(mut self, rhs: usize) -> Self {
-        if rhs == 0 {
-            panic!("Cannot divide timer by zero");
-        }
+        assert!(rhs != 0, "Cannot divide timer by zero");
         self.cycles = rhs;
         self
     }
@@ -89,9 +93,7 @@ impl Div<usize> for Timer {
 
 impl DivAssign<usize> for Timer {
     fn div_assign(&mut self, rhs: usize) {
-        if rhs == 0 {
-            panic!("Cannot divide timer by zero");
-        }
+        assert!(rhs != 0, "Cannot divide timer by zero");
         self.cycles = rhs;
     }
 }
@@ -109,12 +111,13 @@ pub struct AutoTimer {
 }
 
 impl AutoTimer {
+    #[must_use]
     pub fn new(title: &str) -> Self {
-        AutoTimer { timer: Timer::new(title) }
+        Self { timer: Timer::new(title) }
     }
 
     pub fn with_formatter(title: &str, time_print: TimePrintFn) -> Self {
-        AutoTimer { timer: Timer::with_formatter(title, time_print) }
+        Self { timer: Timer::with_formatter(title, time_print) }
     }
 }
 

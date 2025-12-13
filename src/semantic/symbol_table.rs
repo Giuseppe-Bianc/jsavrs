@@ -9,7 +9,7 @@ use std::sync::Arc;
 ///
 /// Symbols can be variables, functions, or type aliases. Each symbol type
 /// carries specific metadata relevant to semantic analysis and code generation.
-#[derive(Debug, Clone, PartialEq)]
+#[derive(Debug, Clone, PartialEq, Eq)]
 pub enum Symbol {
     /// A variable symbol with associated metadata
     Variable(VariableSymbol),
@@ -24,7 +24,7 @@ pub enum Symbol {
 /// Tracks all information necessary for type checking and mutability analysis,
 /// including the variable's type, mutability status, and location information
 /// for error reporting.
-#[derive(Debug, Clone, PartialEq)]
+#[derive(Debug, Clone, PartialEq, Eq)]
 pub struct VariableSymbol {
     /// The name of the variable
     pub name: Arc<str>,
@@ -42,7 +42,7 @@ pub struct VariableSymbol {
 ///
 /// Contains the function signature including parameters and return type,
 /// along with location information for error reporting.
-#[derive(Debug, Clone, PartialEq)]
+#[derive(Debug, Clone, PartialEq, Eq)]
 pub struct FunctionSymbol {
     /// The name of the function
     pub name: Arc<str>,
@@ -75,7 +75,7 @@ pub enum ScopeKind {
 ///
 /// Each scope maintains its own symbol mappings and can be nested within
 /// other scopes to implement lexical scoping rules.
-#[derive(Debug, Clone, PartialEq)]
+#[derive(Debug, Clone, PartialEq, Eq)]
 pub struct Scope {
     /// The kind of scope (global, function, block)
     pub kind: ScopeKind,
@@ -90,7 +90,7 @@ pub struct Scope {
 /// Implements a stack of scopes to support nested lexical scoping, with
 /// symbols resolved by searching from the innermost scope outward. Also
 /// tracks the current function context for return type checking.
-#[derive(Debug, Default, Clone, PartialEq)]
+#[derive(Debug, Default, Clone, PartialEq, Eq)]
 pub struct SymbolTable {
     /// Stack of scopes, with the current scope at the end
     scopes: Vec<Scope>,
@@ -112,6 +112,7 @@ impl SymbolTable {
     /// let symbol_table = SymbolTable::new();
     /// assert_eq!(symbol_table.scope_count(), 1);
     /// ```
+    #[must_use]
     pub fn new() -> Self {
         Self {
             scopes: vec![Scope { kind: ScopeKind::Global, symbols: HashMap::new(), defined_at: None }],
@@ -165,8 +166,9 @@ impl SymbolTable {
     /// # Returns
     ///
     /// The count of scopes in the stack (always at least 1 for global scope).
-    #[inline(always)]
-    pub fn scope_count(&self) -> usize {
+    #[inline]
+    #[must_use]
+    pub const fn scope_count(&self) -> usize {
         self.scopes.len()
     }
 
@@ -177,6 +179,7 @@ impl SymbolTable {
     /// An optional reference to the current scope, or `None` if no scopes exist
     /// (which should never happen in practice due to the global scope invariant).
     #[inline]
+    #[must_use]
     pub fn current_scope(&self) -> Option<&Scope> {
         self.scopes.last()
     }
@@ -197,6 +200,7 @@ impl SymbolTable {
     ///
     /// An optional `ScopeKind` indicating the type of the current scope.
     #[inline]
+    #[must_use]
     pub fn current_scope_kind(&self) -> Option<ScopeKind> {
         self.current_scope().map(|s| s.kind)
     }
@@ -213,10 +217,16 @@ impl SymbolTable {
     /// * `Ok(())` if the symbol was successfully declared
     /// * `Err(CompileError)` if a symbol with the same name already exists in the current scope
     ///
+    /// # Panics
+    ///
+    /// Panics if the scope stack is empty. This should never occur in practice as the
+    /// symbol table maintains the invariant that at least the global scope always exists.
+    ///
     /// # Errors
     ///
     /// Returns a `TypeError` if the identifier is already declared in the current scope,
     /// including the location of the previous declaration for error reporting.
+    #[allow(clippy::expect_used)]
     pub fn declare(&mut self, name: &str, symbol: Symbol) -> Result<(), CompileError> {
         let current_scope = self.current_scope_mut().expect("At least one scope");
 
@@ -282,6 +292,7 @@ impl SymbolTable {
     /// # Returns
     ///
     /// An optional clone of the symbol if found, or `None` if not found.
+    #[must_use]
     pub fn lookup(&self, name: &str) -> Option<Symbol> {
         self.find_symbol(name, |sym| Some(sym.clone()))
     }
@@ -296,6 +307,7 @@ impl SymbolTable {
     ///
     /// An optional clone of the function symbol if found and is a function,
     /// or `None` if not found or not a function.
+    #[must_use]
     pub fn lookup_function(&self, name: &str) -> Option<FunctionSymbol> {
         self.find_symbol(name, |sym| match sym {
             Symbol::Function(f) => Some(f.clone()),
@@ -313,6 +325,7 @@ impl SymbolTable {
     ///
     /// An optional clone of the variable symbol if found and is a variable,
     /// or `None` if not found or not a variable.
+    #[must_use]
     pub fn lookup_variable(&self, name: &str) -> Option<VariableSymbol> {
         self.find_symbol(name, |sym| match sym {
             Symbol::Variable(v) => Some(v.clone()),
@@ -345,7 +358,8 @@ impl SymbolTable {
     ///
     /// An optional reference to the current function symbol, or `None` if
     /// not currently inside a function.
-    pub fn current_function(&self) -> Option<&FunctionSymbol> {
+    #[must_use]
+    pub const fn current_function(&self) -> Option<&FunctionSymbol> {
         self.current_function.as_ref()
     }
 
@@ -355,6 +369,7 @@ impl SymbolTable {
     ///
     /// An optional clone of the current function's return type, or `None` if
     /// not currently inside a function.
+    #[must_use]
     pub fn current_function_return_type(&self) -> Option<Type> {
         self.current_function().map(|f| f.return_type.clone())
     }
