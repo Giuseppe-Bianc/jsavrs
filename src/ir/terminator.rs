@@ -14,7 +14,7 @@ use std::sync::Arc;
 ///
 /// Each terminator includes debugging metadata (`DebugInfo`)
 /// for accurate source location mapping.
-#[derive(Debug, Clone, PartialEq)]
+#[derive(Debug, Clone, PartialEq, Eq)]
 pub struct Terminator {
     /// Associated debug information, frequently accessed during compilation
     pub debug_info: DebugInfo,
@@ -27,7 +27,7 @@ pub struct Terminator {
 /// This includes the source code span that corresponds to the IR instruction,
 /// enabling more accurate compiler error messages and source mapping.
 #[repr(transparent)]
-#[derive(Debug, Clone, PartialEq)]
+#[derive(Debug, Clone, PartialEq, Eq)]
 pub struct DebugInfo {
     /// The region in the source code where this terminator originated.
     pub source_span: SourceSpan,
@@ -38,7 +38,7 @@ pub struct DebugInfo {
 /// Each variant represents a distinct way to transfer control or signal termination.
 /// For instance, a `Return` exits the function, a `Branch` moves control to a new block,
 /// and `Unreachable` marks code paths that cannot be executed.
-#[derive(Debug, Clone, PartialEq)]
+#[derive(Debug, Clone, PartialEq, Eq)]
 pub enum TerminatorKind {
     /// Returns control from the current function with a specified value and type.
     Return {
@@ -102,7 +102,8 @@ impl Terminator {
     /// - `true` if the terminator affects control flow (e.g., branch, return, switch).
     /// - `false` if it is `Unreachable`.
     #[inline]
-    pub fn is_terminator(&self) -> bool {
+    #[must_use]
+    pub const fn is_terminator(&self) -> bool {
         !matches!(self.kind, TerminatorKind::Unreachable)
     }
 
@@ -112,6 +113,7 @@ impl Terminator {
     ///
     /// # Returns
     /// A vector of label strings representing all possible jump destinations.
+    #[must_use]
     pub fn get_targets(&self) -> Vec<Arc<str>> {
         match &self.kind {
             TerminatorKind::Branch { label } => vec![label.clone()],
@@ -135,11 +137,11 @@ impl Terminator {
     ///
     /// # Returns
     /// A vector of references to values used by this terminator.
+    #[must_use]
     pub fn get_used_values(&self) -> Vec<&Value> {
         match &self.kind {
-            TerminatorKind::Return { value, .. } => vec![value],
+            TerminatorKind::Return { value, .. } | TerminatorKind::Switch { value, .. } => vec![value],
             TerminatorKind::ConditionalBranch { condition, .. } => vec![condition],
-            TerminatorKind::Switch { value, .. } => vec![value],
             TerminatorKind::IndirectBranch { address, .. } => vec![address],
             _ => Vec::new(),
         }
@@ -153,8 +155,9 @@ impl Terminator {
     ///
     /// # Returns
     /// A new [`Terminator`] instance containing the given parameters.
-    pub fn new(kind: TerminatorKind, span: SourceSpan) -> Self {
-        Terminator { kind, debug_info: DebugInfo { source_span: span } }
+    #[must_use]
+    pub const fn new(kind: TerminatorKind, span: SourceSpan) -> Self {
+        Self { kind, debug_info: DebugInfo { source_span: span } }
     }
 }
 

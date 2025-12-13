@@ -364,10 +364,8 @@ impl X86Register {
             Platform::Windows | Platform::Linux | Platform::MacOS => {
                 matches!(
                     self,
-                    X86Register::GP64(GPRegister64::Rax) |
-                    X86Register::GP64(GPRegister64::Rdx) | // Per valori a 128-bit
-                    X86Register::Xmm(XMMRegister::Xmm0) |
-                    X86Register::Xmm(XMMRegister::Xmm1) // System V per struct
+                    X86Register::GP64(GPRegister64::Rax | GPRegister64::Rdx)
+                        | X86Register::Xmm(XMMRegister::Xmm0 | XMMRegister::Xmm1) // System V per struct
                 )
             }
         }

@@ -33,6 +33,8 @@ pub struct SsaTransformer {
 
 impl SsaTransformer {
     /// Creates a new SSA transformer.
+    #[must_use]
+    #[allow(clippy::unreadable_literal)]
     pub fn new(temp_counter: Option<u64>) -> Self {
         // Pre-allocate capacity based on typical function complexity
         // Average function has ~10-20 variables and ~20-50 basic blocks
@@ -71,12 +73,10 @@ impl SsaTransformer {
         self.clear_transformation_data();
 
         // Compute dominance information
-        self.dominance_info
-            .compute_dominators(&func.cfg)
-            .map_err(|e| format!("Failed to compute dominators: {}", e))?;
+        self.dominance_info.compute_dominators(&func.cfg).map_err(|e| format!("Failed to compute dominators: {e}"))?;
         self.dominance_info
             .compute_dominance_frontiers(&func.cfg)
-            .map_err(|e| format!("Failed to compute dominance frontiers: {}", e))?;
+            .map_err(|e| format!("Failed to compute dominance frontiers: {e}"))?;
 
         // Identify variables that need phi-functions
         self.identify_phi_variables(&func.cfg);
@@ -96,7 +96,7 @@ impl SsaTransformer {
         self.rename_variables_recursive(func, entry_idx);
 
         // Verify the transformation produced valid SSA form
-        self.verify_ssa_form(func).map_err(|e| format!("SSA verification failed: {}", e))?;
+        self.verify_ssa_form(func).map_err(|e| format!("SSA verification failed: {e}"))?;
 
         Ok(())
     }
@@ -120,7 +120,7 @@ impl SsaTransformer {
         // Use reusable buffer for temporary names
         self.format_buffer.clear();
         self.format_buffer.push('t');
-        let _ = write!(&mut self.format_buffer, "{}", temp_id);
+        let _ = write!(&mut self.format_buffer, "{temp_id}");
         Arc::from(self.format_buffer.as_str())
     }
 
@@ -197,7 +197,7 @@ impl SsaTransformer {
         for var_name in &phi_vars {
             // Get the set of blocks where this variable is defined
             let def_blocks = if let Some(defs) = self.var_defs.get(var_name) {
-                defs.keys().cloned().collect::<HashSet<_>>()
+                defs.keys().copied().collect::<HashSet<_>>()
             } else {
                 continue;
             };
@@ -210,16 +210,16 @@ impl SsaTransformer {
             // Pre-allocate capacity based on definition blocks count (dominance frontier typically ≤ 2x def blocks)
             let mut added_phis = HashSet::with_capacity(def_blocks.len() << 1);
 
-            while let Some(block) = worklist.iter().next().cloned() {
+            while let Some(block) = worklist.iter().next().copied() {
                 worklist.remove(&block);
 
                 // For each node in the dominance frontier of this block
                 if let Some(frontier) = self.dominance_info.dominance_frontier(block) {
                     for &frontier_node in frontier {
                         // If we haven't added a phi-function here yet
-                        if !added_phis.contains(&frontier_node) {
+                        // insert returns true if the value was newly inserted
+                        if added_phis.insert(frontier_node) {
                             nodes_needing_phi.push((frontier_node, var_name.clone()));
-                            added_phis.insert(frontier_node);
 
                             // If this node doesn't define the variable, add it to worklist
                             if !def_blocks.contains(&frontier_node) {
@@ -252,7 +252,7 @@ impl SsaTransformer {
                 block.source_span.clone(),
             )
             .with_result(
-                Value::new_temporary(self.temp_counter, ty.clone())
+                Value::new_temporary(self.temp_counter, ty)
                     .with_debug_info(Some(var_name.into()), block.source_span.clone()),
             );
 
@@ -284,11 +284,8 @@ impl SsaTransformer {
         self.process_block(func, block_idx);
 
         // Get children in dominator tree and collect them to avoid borrowing issues
-        let children = if let Some(children) = self.dominance_info.dominator_tree_children(block_idx) {
-            children.to_vec() // Convert to owned Vec to avoid borrowing conflicts
-        } else {
-            Vec::new()
-        };
+        let children =
+            self.dominance_info.dominator_tree_children(block_idx).map_or_else(Vec::new, std::clone::Clone::clone);
 
         // Recursively process children in dominator tree
         for child_idx in children {
@@ -312,9 +309,7 @@ impl SsaTransformer {
         };
 
         // Get block
-        let block = if let Some(block) = func.cfg.get_block(&block_label) {
-            block
-        } else {
+        let Some(block) = func.cfg.get_block(&block_label) else {
             return;
         };
 
@@ -337,6 +332,7 @@ impl SsaTransformer {
     }
 
     /// Process a single block during renaming
+    #[allow(clippy::too_many_lines)]
     fn process_block(&mut self, func: &mut Function, block_idx: NodeIndex) {
         // Get block label
         let block_label = {
@@ -349,9 +345,7 @@ impl SsaTransformer {
         };
 
         // Get mutable reference to block
-        let block = if let Some(block) = func.cfg.get_block_mut(&block_label) {
-            block
-        } else {
+        let Some(block) = func.cfg.get_block_mut(&block_label) else {
             return;
         };
 
@@ -371,6 +365,7 @@ impl SsaTransformer {
         }
 
         // Update phi-functions
+        #[allow(clippy::unwrap_used)]
         for (i, ty, var_name) in phi_updates {
             // The phi-function already has a result value with debug info, but we need to update it
             // with a new unique SSA name
@@ -427,9 +422,6 @@ impl SsaTransformer {
                     // For unary operations, replace operand with current SSA value
                     self.replace_value_with_current_ssa(operand);
                 }
-                InstructionKind::Phi { .. } => {
-                    // Phi-functions are already processed
-                }
                 InstructionKind::Call { func: callee, args, .. } => {
                     // For call instructions, we need to replace the function and arguments with current SSA values
                     self.replace_value_with_current_ssa(callee);
@@ -472,7 +464,7 @@ impl SsaTransformer {
                         let pred_label = block_label.clone();
 
                         // Find the phi-function for this variable and add the incoming value
-                        for instruction in succ_block.instructions.iter_mut() {
+                        for instruction in &mut succ_block.instructions {
                             if let InstructionKind::Phi { ref mut incoming, .. } = instruction.kind {
                                 // Check if this phi-function is for the current variable by looking at the result's debug info
                                 if let Some(result) = &instruction.result
@@ -494,6 +486,12 @@ impl SsaTransformer {
 
     /// Verifies that the function is in proper SSA form.
     /// In SSA form, each temporary ID should be unique across the entire function.
+    ///
+    /// # Errors
+    ///
+    /// Returns an error if the function is not in valid SSA form, specifically if:
+    /// - A temporary ID is assigned more than once (duplicate temporary ID found)
+    /// - The error message includes the variable name if available in debug info
     pub fn verify_ssa_form(&self, func: &Function) -> Result<(), String> {
         // Estimate: typical function has 50-200 instructions, pre-allocate accordingly
         let block_count = func.cfg.blocks().count();
@@ -512,9 +510,9 @@ impl SsaTransformer {
                         if let Some(debug_info) = &result.debug_info
                             && let Some(var_name) = &debug_info.name
                         {
-                            return Err(format!("Variable '{}' has duplicate temporary ID {}", var_name, temp_id));
+                            return Err(format!("Variable '{var_name}' has duplicate temporary ID {temp_id}"));
                         }
-                        return Err(format!("Duplicate temporary ID {}", temp_id));
+                        return Err(format!("Duplicate temporary ID {temp_id}"));
                     }
                     temp_ids.insert(*temp_id);
                 }
@@ -525,6 +523,12 @@ impl SsaTransformer {
     }
 
     /// Verifies semantic preservation by comparing control flow structures.
+    ///
+    /// # Errors
+    ///
+    /// Returns an error if the control flow structure has changed during transformation,
+    /// specifically if the number of basic blocks differs between the original and
+    /// transformed functions.
     pub fn verify_semantic_preservation(
         &self, original_func: &Function, transformed_func: &Function,
     ) -> Result<(), String> {

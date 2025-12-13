@@ -16,7 +16,7 @@ use std::sync::Arc;
 /// * `parent` - The optional `ScopeId` of the parent scope (if any).
 /// * `children` - A list of `ScopeId`s representing nested child scopes.
 /// * `depth` - The depth level of this scope in the hierarchy (root scope = 0).
-#[derive(Debug, Clone, PartialEq)]
+#[derive(Debug, Clone, PartialEq, Eq)]
 pub struct Scope {
     /// An optional reference to the parent scope, if this is not the root scope.
     pub parent: Option<ScopeId>,
@@ -37,8 +37,9 @@ impl Scope {
     ///
     /// # Returns
     /// A newly initialized `Scope` with an empty symbol table and no children.
+    #[must_use]
     pub fn new(parent: Option<ScopeId>, depth: usize) -> Self {
-        Scope { symbols: HashMap::new(), parent, children: Vec::new(), depth }
+        Self { symbols: HashMap::new(), parent, children: Vec::new(), depth }
     }
 
     /// Inserts a new symbol and its corresponding value into the scope.
@@ -64,6 +65,7 @@ impl Scope {
     ///
     /// # Returns
     /// An `Option` containing a reference to the `Value` if found, or `None` if not present.
+    #[must_use]
     pub fn get(&self, name: &str) -> Option<&Value> {
         self.symbols.get(name)
     }

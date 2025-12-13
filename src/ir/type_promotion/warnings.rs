@@ -8,6 +8,7 @@ use crate::ir::{CastKind, IrType};
 use super::types::{PromotionRule, PromotionWarning};
 
 /// Generate precision loss warning for a type conversion (T019)
+#[must_use]
 pub fn generate_precision_loss_warning(
     from_type: &IrType, to_type: &IrType, rule: &PromotionRule,
 ) -> Option<PromotionWarning> {
@@ -25,6 +26,7 @@ pub fn generate_precision_loss_warning(
 }
 
 /// Generate signedness change warning for a type conversion (T020)
+#[must_use]
 pub fn generate_signedness_change_warning(
     from_type: &IrType, to_type: &IrType, rule: &PromotionRule,
 ) -> Option<PromotionWarning> {
@@ -42,6 +44,8 @@ pub fn generate_signedness_change_warning(
 }
 
 /// Generate Unicode validation warning for integer→char conversions (T030)
+#[must_use]
+#[allow(clippy::unreadable_literal)]
 pub fn generate_unicode_validation_warning(value: u32, to_type: &IrType) -> Option<PromotionWarning> {
     // Only generate warnings for char target type
     if *to_type != IrType::Char {
@@ -67,6 +71,7 @@ pub fn generate_unicode_validation_warning(value: u32, to_type: &IrType) -> Opti
 /// Check if a u32 value is a valid Unicode scalar value
 ///
 /// Valid range: U+0000 to U+10FFFF, excluding surrogate pairs U+D800 to U+DFFF
+#[allow(clippy::unreadable_literal)]
 fn is_valid_unicode_scalar(value: u32) -> bool {
     value <= 0x10FFFF && !(0xD800..=0xDFFF).contains(&value)
 }

@@ -88,7 +88,7 @@ impl LivenessAnalyzer {
             for (inst_offset, _instruction) in block.instructions.iter().enumerate() {
                 let inst_idx = InstructionIndex { block_idx, inst_offset };
 
-                self.process_instruction_uses(&mut gen_set, &mut kill_set, &inst_idx);
+                self.process_instruction_uses(&mut gen_set, &kill_set, &inst_idx);
 
                 if let Some(defined_value) = self.def_use_chains.get_defined_value(&inst_idx) {
                     kill_set.insert(defined_value.clone());
@@ -97,7 +97,7 @@ impl LivenessAnalyzer {
 
             // Process terminator uses
             let term_idx = InstructionIndex { block_idx, inst_offset: block.instructions.len() };
-            self.process_instruction_uses(&mut gen_set, &mut kill_set, &term_idx);
+            self.process_instruction_uses(&mut gen_set, &kill_set, &term_idx);
 
             self.gen_sets.insert(block_idx, gen_set);
             self.kill_sets.insert(block_idx, kill_set);
@@ -198,11 +198,9 @@ impl LivenessAnalyzer {
     /// Checks if an instruction is dead (its result is never used).
     #[inline]
     pub fn is_instruction_dead(&self, inst_idx: &InstructionIndex) -> bool {
-        if let Some(defined_value) = self.def_use_chains.get_defined_value(inst_idx) {
-            !self.def_use_chains.has_uses(defined_value)
-        } else {
-            false
-        }
+        self.def_use_chains
+            .get_defined_value(inst_idx)
+            .is_some_and(|defined_value| !self.def_use_chains.has_uses(defined_value))
     }
 }
 
@@ -298,6 +296,7 @@ where
 }
 
 /// Computes reverse post-order traversal of the CFG.
+#[allow(clippy::expect_used)]
 fn compute_reverse_post_order(function: &Function) -> Vec<NodeIndex> {
     use petgraph::visit::{DfsEvent, depth_first_search};
 

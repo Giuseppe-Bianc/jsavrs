@@ -210,11 +210,13 @@ impl Module {
     }
 
     /// Returns the target triple.
-    pub fn target_triple(&self) -> &TargetTriple {
+    #[must_use]
+    pub const fn target_triple(&self) -> &TargetTriple {
         &self.target_triple
     }
 
     /// Returns the module name.
+    #[must_use]
     pub fn name(&self) -> &str {
         &self.name
     }
@@ -249,6 +251,7 @@ impl Module {
     /// - Functions with no basic blocks: contributes `0` to the count
     /// - Basic blocks with no instructions: contributes `0` to the count
     #[inline]
+    #[must_use]
     pub fn count_instructions(&self) -> usize {
         self.functions.iter().flat_map(|function| function.cfg.blocks()).map(|block| block.instructions.len()).sum()
     }

@@ -7,7 +7,7 @@ use crate::ir::{CastKind, IrBinaryOp, IrType};
 use crate::location::source_span::SourceSpan;
 
 /// Represents a single type promotion operation
-#[derive(Debug, Clone, PartialEq)]
+#[derive(Debug, Clone, PartialEq, Eq)]
 pub struct TypePromotion {
     pub from_type: IrType,
     pub to_type: IrType,
@@ -19,31 +19,35 @@ pub struct TypePromotion {
 
 impl TypePromotion {
     /// Creates a new type promotion
-    pub fn new(from_type: IrType, to_type: IrType, cast_kind: CastKind, source_span: SourceSpan) -> Self {
+    #[must_use]
+    pub const fn new(from_type: IrType, to_type: IrType, cast_kind: CastKind, source_span: SourceSpan) -> Self {
         Self { from_type, to_type, cast_kind, may_lose_precision: false, may_overflow: false, source_span }
     }
 
     /// Creates a new type promotion with all parameters
-    pub fn with_flags(
+    #[must_use]
+    pub const fn with_flags(
         from_type: IrType, to_type: IrType, cast_kind: CastKind, may_lose_precision: bool, may_overflow: bool,
         source_span: SourceSpan,
     ) -> Self {
-        Self { from_type, to_type, cast_kind, may_lose_precision, may_overflow, source_span }
+        Self { from_type, to_type, source_span, cast_kind, may_overflow, may_lose_precision }
     }
 
     /// Returns true if this is a widening conversion (lossless)
-    pub fn is_widening(&self) -> bool {
+    #[must_use]
+    pub const fn is_widening(&self) -> bool {
         matches!(self.cast_kind, CastKind::IntZeroExtend | CastKind::IntSignExtend | CastKind::FloatExtend)
     }
 
     /// Returns true if this is a narrowing conversion (may lose precision)
-    pub fn is_narrowing(&self) -> bool {
+    #[must_use]
+    pub const fn is_narrowing(&self) -> bool {
         matches!(self.cast_kind, CastKind::IntTruncate | CastKind::FloatTruncate)
     }
 }
 
 /// Defines specific promotion behavior between two types
-#[derive(Debug, Clone, PartialEq)]
+#[derive(Debug, Clone, PartialEq, Eq)]
 pub enum PromotionRule {
     /// Direct promotion without intermediate steps
     Direct {

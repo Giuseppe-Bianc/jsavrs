@@ -84,16 +84,19 @@ impl Drop for ConstantFoldingOptimizer {
 }
 
 impl ConstantFoldingOptimizer {
+    #[must_use]
     pub fn new(verbose: bool, sccp_enabled: bool) -> Self {
         let _ = sccp_enabled; // For backwards compatibility
         Self { config: SCCPConfig { verbose, ..Default::default() }, stats: OptimizationStats::default() }
     }
 
+    #[must_use]
     pub fn with_config(config: SCCPConfig) -> Self {
         Self { config, stats: OptimizationStats::default() }
     }
 
-    pub fn stats(&self) -> &OptimizationStats {
+    #[must_use]
+    pub const fn stats(&self) -> &OptimizationStats {
         &self.stats
     }
 
@@ -105,13 +108,19 @@ impl ConstantFoldingOptimizer {
     /// # Returns
     /// `Ok(stats)` with optimization statistics on success,
     /// `Err` if optimization fails
+    ///
+    /// # Errors
+    /// Returns an error string if:
+    /// - SCCP propagation fails during constant analysis
+    /// - The propagation algorithm encounters an invalid IR state
+    /// - Maximum iteration limit is exceeded without convergence
     pub fn optimize_function(&mut self, function: &mut Function) -> Result<OptimizationStats, String> {
         // Phase 1: Run SCCP propagation
         let mut propagator = SCCPropagator::new_for_function(function);
         propagator.set_verbose(self.config.verbose);
         let iterations = propagator
             .propagate(function, self.config.max_iterations)
-            .map_err(|e| format!("SCCP propagation failed: {}", e))?;
+            .map_err(|e| format!("SCCP propagation failed: {e}"))?;
 
         // Phase 2: Rewrite IR based on SCCP results
         let rewriter = IRRewriter::new();

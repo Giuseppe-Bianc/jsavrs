@@ -43,7 +43,7 @@
 //! # Architecture
 //!
 //! The module is organized into logical sub-modules:
-//! - `types`: Core data structures (PromotionRule, TypePromotion, warnings)
+//! - `types`: Core data structures (`PromotionRule`, `TypePromotion`, warnings)
 //! - `matrix`: Promotion matrix with O(1) lookup
 //! - `rules`: Numeric promotion rules (integers, floats)
 //! - `special_rules`: Non-numeric rules (bool, char, string)

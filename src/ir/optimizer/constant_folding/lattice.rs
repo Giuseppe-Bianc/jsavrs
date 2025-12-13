@@ -48,86 +48,96 @@ impl LatticeValue {
     /// - meet(Top, _) = Top
     /// - meet(Bottom, x) = x
     /// - meet(x, Bottom) = x
+    #[must_use]
+    #[allow(clippy::unused_self)]
     pub fn meet(&self, other: &Self) -> Self {
         match (self, other) {
             // meet(Bottom, x) = x
-            (LatticeValue::Bottom, x) | (x, LatticeValue::Bottom) => x.clone(),
+            (Self::Bottom, x) | (x, Self::Bottom) => x.clone(),
 
             // meet(_, Top) = Top
-            (LatticeValue::Top, _) | (_, LatticeValue::Top) => LatticeValue::Top,
+            (Self::Top, _) | (_, Self::Top) => Self::Top,
 
             // meet(Constant(a), Constant(b))
-            (LatticeValue::Constant(a), LatticeValue::Constant(b)) => {
+            (Self::Constant(a), Self::Constant(b)) => {
                 if a == b {
-                    LatticeValue::Constant(a.clone())
+                    Self::Constant(a.clone())
                 } else {
                     // Different constants → Top (overdefined)
-                    LatticeValue::Top
+                    Self::Top
                 }
             }
         }
     }
 
     /// Returns true if this value is a constant
-    pub fn is_constant(&self) -> bool {
-        matches!(self, LatticeValue::Constant(_))
+    #[must_use]
+    pub const fn is_constant(&self) -> bool {
+        matches!(self, Self::Constant(_))
     }
 
     /// Returns the constant value if this is a Constant, otherwise None
-    pub fn as_constant(&self) -> Option<&ConstantValue> {
+    #[must_use]
+    pub const fn as_constant(&self) -> Option<&ConstantValue> {
         match self {
-            LatticeValue::Constant(val) => Some(val),
+            Self::Constant(val) => Some(val),
             _ => None,
         }
     }
 
     /// Returns true if this value is Bottom (unreachable/uninitialized)
-    pub fn is_bottom(&self) -> bool {
-        matches!(self, LatticeValue::Bottom)
+    #[must_use]
+    pub const fn is_bottom(&self) -> bool {
+        matches!(self, Self::Bottom)
     }
 
     /// Returns true if this value is Top (overdefined/runtime-varying)
-    pub fn is_top(&self) -> bool {
-        matches!(self, LatticeValue::Top)
+    #[must_use]
+    pub const fn is_top(&self) -> bool {
+        matches!(self, Self::Top)
     }
 }
 
 impl ConstantValue {
     /// Gets the IR type of this constant value
-    pub fn get_type(&self) -> IrType {
+    #[must_use]
+    pub const fn get_type(&self) -> IrType {
         match self {
-            ConstantValue::I8(_) => IrType::I8,
-            ConstantValue::I16(_) => IrType::I16,
-            ConstantValue::I32(_) => IrType::I32,
-            ConstantValue::I64(_) => IrType::I64,
-            ConstantValue::U8(_) => IrType::U8,
-            ConstantValue::U16(_) => IrType::U16,
-            ConstantValue::U32(_) => IrType::U32,
-            ConstantValue::U64(_) => IrType::U64,
-            ConstantValue::F32(_) => IrType::F32,
-            ConstantValue::F64(_) => IrType::F64,
-            ConstantValue::Bool(_) => IrType::Bool,
-            ConstantValue::Char(_) => IrType::Char,
+            Self::I8(_) => IrType::I8,
+            Self::I16(_) => IrType::I16,
+            Self::I32(_) => IrType::I32,
+            Self::I64(_) => IrType::I64,
+            Self::U8(_) => IrType::U8,
+            Self::U16(_) => IrType::U16,
+            Self::U32(_) => IrType::U32,
+            Self::U64(_) => IrType::U64,
+            Self::F32(_) => IrType::F32,
+            Self::F64(_) => IrType::F64,
+            Self::Bool(_) => IrType::Bool,
+            Self::Char(_) => IrType::Char,
         }
     }
 
     /// Checks if two constant values have matching types
+    #[must_use]
     pub fn types_match(&self, other: &Self) -> bool {
         std::mem::discriminant(self) == std::mem::discriminant(other)
     }
 
     /// Attempts to extract a boolean value
-    pub fn as_bool(&self) -> Option<bool> {
+    #[must_use]
+    pub const fn as_bool(&self) -> Option<bool> {
         match self {
-            ConstantValue::Bool(b) => Some(*b),
+            Self::Bool(b) => Some(*b),
             _ => None,
         }
     }
 
     /// Attempts to extract an i32 value
-    pub fn as_i32(&self) -> Option<i32> {
+    #[must_use]
+    pub const fn as_i32(&self) -> Option<i32> {
         match self {
-            ConstantValue::I32(v) => Some(*v),
+            Self::I32(v) => Some(*v),
             _ => None,
         }
     }

@@ -31,7 +31,7 @@ impl Drop for DefUseChains {
 }
 
 impl DefUseChains {
-    /// Creates an empty DefUseChains structure.
+    /// Creates an empty `DefUseChains` structure.
     pub fn new() -> Self {
         Self {
             value_to_uses: HashMap::new(),
@@ -66,9 +66,9 @@ impl DefUseChains {
     ///
     /// # Returns
     ///
-    /// A reference to the HashMap mapping each instruction index to the set of values it uses.
+    /// A reference to the `HashMap` mapping each instruction index to the set of values it uses.
     #[inline]
-    pub fn get_instruction_to_used_values(&self) -> &HashMap<InstructionIndex, HashSet<Value>> {
+    pub const fn get_instruction_to_used_values(&self) -> &HashMap<InstructionIndex, HashSet<Value>> {
         &self.instruction_to_used_values
     }
 
@@ -118,13 +118,13 @@ pub struct LivenessInfo {
 
 #[allow(dead_code)]
 impl LivenessInfo {
-    /// Creates a new LivenessInfo for a dead value (never used).
+    /// Creates a new `LivenessInfo` for a dead value (never used).
     pub fn dead() -> Self {
         Self { first_use: None, last_use: None, used_in_blocks: HashSet::new() }
     }
 
-    /// Creates a new LivenessInfo with the given use information.
-    pub fn with_uses(
+    /// Creates a new `LivenessInfo` with the given use information.
+    pub const fn with_uses(
         first_use: Option<InstructionIndex>, last_use: Option<InstructionIndex>,
         used_in_blocks: HashSet<petgraph::graph::NodeIndex>,
     ) -> Self {
@@ -132,7 +132,7 @@ impl LivenessInfo {
     }
 
     /// Returns whether this value is live (has at least one use).
-    pub fn is_live(&self) -> bool {
+    pub const fn is_live(&self) -> bool {
         self.last_use.is_some()
     }
 }

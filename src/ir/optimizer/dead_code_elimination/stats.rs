@@ -33,20 +33,24 @@ pub struct OptimizationStats {
 
 impl OptimizationStats {
     /// Creates empty statistics (no removals).
+    #[must_use]
     pub fn new() -> Self {
         Self::default()
     }
 
     /// Checks if any code was removed.
-    pub fn had_effect(&self) -> bool {
+    #[must_use]
+    pub const fn had_effect(&self) -> bool {
         self.instructions_removed > 0 || self.blocks_removed > 0
     }
 
     /// Formats statistics for human-readable display.
+    #[allow(clippy::unwrap_used)]
+    #[must_use]
     pub fn format_report(&self, function_name: &str) -> String {
         let mut output = String::with_capacity(256);
 
-        writeln!(output, "📊 DCE Statistics for '{}':", function_name).unwrap();
+        writeln!(output, "📊 DCE Statistics for '{function_name}':").unwrap();
         writeln!(output, "✂️  Instructions removed: {}", self.instructions_removed).unwrap();
         writeln!(output, "🗑️  Blocks removed: {}", self.blocks_removed).unwrap();
         writeln!(output, "🔄 Iterations: {}", self.iterations).unwrap();
@@ -87,7 +91,8 @@ pub struct ConservativeWarning {
 
 impl ConservativeWarning {
     /// Creates a new warning.
-    pub fn new(instruction_debug: Arc<str>, reason: ConservativeReason, block_label: Option<Arc<str>>) -> Self {
+    #[must_use]
+    pub const fn new(instruction_debug: Arc<str>, reason: ConservativeReason, block_label: Option<Arc<str>>) -> Self {
         Self { instruction_debug, reason, block_label }
     }
 }
@@ -123,7 +128,8 @@ pub enum ConservativeReason {
 
 impl ConservativeReason {
     /// Returns a human-readable explanation of this reason.
-    #[inline(always)]
+    #[inline]
+    #[must_use]
     pub const fn explanation(&self) -> &'static str {
         match self {
             Self::MayAlias => "instruction may alias with other memory locations",

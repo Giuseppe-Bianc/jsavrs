@@ -34,13 +34,13 @@ use std::path::PathBuf;
 ///
 /// Defines the layout and formatting of the help message displayed
 /// when users run `jsavrs --help`.
-const HELP_STR: &str = r#"
+const HELP_STR: &str = r"
 {before-help}{name} {version}
 {author-with-newline}
 {about-with-newline}
 {usage-heading} {usage}
 
-{all-args}{after-help}"#;
+{all-args}{after-help}";
 
 /// Creates custom ANSI color styles for CLI help output.
 ///

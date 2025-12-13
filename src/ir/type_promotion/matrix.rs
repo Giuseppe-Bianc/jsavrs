@@ -14,7 +14,7 @@ const ESTIMATED_RULES: usize = 169;
 /// Defines the complete type promotion lattice and rules
 #[derive(Debug, Clone)]
 pub struct PromotionMatrix {
-    /// Hashmap for O(1) promotion rule lookups: (from_type, to_type) → rule
+    /// Hashmap for O(1) promotion rule lookups: (`from_type`, `to_type`) → rule
     pub(crate) promotion_rules: HashMap<(IrType, IrType), PromotionRule>,
     /// Type precedence ordering for promotion analysis
     //pub(crate) type_precedence: Vec<TypeGroup>,
@@ -30,14 +30,15 @@ impl Default for PromotionMatrix {
 
 impl PromotionMatrix {
     /// Creates a new promotion matrix with default Saturate overflow behavior
+    #[must_use]
     pub fn new() -> Self {
         Self::with_overflow_behavior(OverflowBehavior::Saturate)
     }
 
     /// Creates a new promotion matrix with specified overflow behavior
+    #[must_use]
     pub fn with_overflow_behavior(overflow_behavior: OverflowBehavior) -> Self {
-        let mut matrix =
-            PromotionMatrix { promotion_rules: HashMap::with_capacity(ESTIMATED_RULES), overflow_behavior };
+        let mut matrix = Self { promotion_rules: HashMap::with_capacity(ESTIMATED_RULES), overflow_behavior };
 
         // Initialize all promotion rules
         matrix.initialize_all_rules();
@@ -45,21 +46,25 @@ impl PromotionMatrix {
     }
 
     /// Gets the current overflow behavior
-    pub fn get_overflow_behavior(&self) -> OverflowBehavior {
+    #[must_use]
+    pub const fn get_overflow_behavior(&self) -> OverflowBehavior {
         self.overflow_behavior
     }
 
     /// Sets the overflow behavior
-    pub fn set_overflow_behavior(&mut self, behavior: OverflowBehavior) {
+    pub const fn set_overflow_behavior(&mut self, behavior: OverflowBehavior) {
         self.overflow_behavior = behavior;
     }
 
     /// Looks up a promotion rule for converting from one type to another
+    #[must_use]
     pub fn get_promotion_rule(&self, from: &IrType, to: &IrType) -> Option<&PromotionRule> {
         self.promotion_rules.get(&(from.clone(), to.clone()))
     }
 
     /// Computes the common type for two types in a binary operation
+    #[must_use]
+    #[allow(clippy::match_same_arms)]
     pub fn compute_common_type(&self, left: &IrType, right: &IrType) -> Option<IrType> {
         if left == right {
             return Some(left.clone());
@@ -98,11 +103,13 @@ impl PromotionMatrix {
         }
     }
 
+    #[allow(clippy::unused_self)]
     fn get_higher_type(&self, left: &IrType, right: &IrType) -> IrType {
         Self::determine_type_precedence(left, right)
     }
 
     /// Determines type precedence based on the type lattice
+    #[allow(clippy::match_same_arms, clippy::unused_self)]
     fn determine_type_precedence(left: &IrType, right: &IrType) -> IrType {
         match (left, right) {
             // Float types take the highest precedence
@@ -157,6 +164,7 @@ impl PromotionMatrix {
     }
 
     /// Generate precision loss warning for a type conversion (T019)
+    #[must_use]
     pub fn generate_precision_loss_warning(
         &self, from_type: &IrType, to_type: &IrType, rule: &PromotionRule,
     ) -> Option<PromotionWarning> {
@@ -164,6 +172,7 @@ impl PromotionMatrix {
     }
 
     /// Generate signedness change warning for a type conversion (T020)
+    #[must_use]
     pub fn generate_signedness_change_warning(
         &self, from_type: &IrType, to_type: &IrType, rule: &PromotionRule,
     ) -> Option<PromotionWarning> {
@@ -171,6 +180,7 @@ impl PromotionMatrix {
     }
 
     /// Generate Unicode validation warning for integer→char conversions (T030)
+    #[must_use]
     pub fn generate_unicode_validation_warning(&self, value: u32, to_type: &IrType) -> Option<PromotionWarning> {
         super::warnings::generate_unicode_validation_warning(value, to_type)
     }

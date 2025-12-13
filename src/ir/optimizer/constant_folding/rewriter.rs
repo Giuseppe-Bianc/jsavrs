@@ -24,15 +24,18 @@ pub struct IRRewriter {
 }
 
 impl IRRewriter {
+    #[must_use]
     pub fn new() -> Self {
         Self::default()
     }
 
-    pub fn stats(&self) -> &OptimizationStats {
+    #[must_use]
+    pub const fn stats(&self) -> &OptimizationStats {
         &self.stats
     }
 
-    pub fn into_stats(self) -> OptimizationStats {
+    #[must_use]
+    pub const fn into_stats(self) -> OptimizationStats {
         self.stats
     }
 
@@ -51,12 +54,17 @@ impl IRRewriter {
     /// # Arguments
     /// * `instruction` - The instruction to potentially rewrite
     /// * `lattice` - The lattice state containing constant analysis results
-    /// * `value_id_to_key` - Function to convert ValueId to usize key
+    /// * `value_id_to_key` - Function to convert `ValueId` to usize key
     ///
     /// # Returns
     /// `Ok(Some(constant_value))` if replacement should occur,
     /// `Ok(None)` if instruction should remain,
     /// `Err(RewriteError)` if transformation would violate SSA form
+    ///
+    /// # Errors
+    /// Returns `RewriteError` if:
+    /// - Constant value creation fails (e.g., type mismatch or invalid constant)
+    /// - The transformation would violate SSA form constraints
     pub fn rewrite_instruction<F>(
         &mut self, instruction: &Instruction, lattice: &LatticeState, value_id_to_key: F,
     ) -> Result<Option<Value>, RewriteError>
@@ -64,10 +72,7 @@ impl IRRewriter {
         F: Fn(&crate::ir::value::ValueId) -> usize,
     {
         // Only process instructions with results
-        let result_value = match &instruction.result {
-            Some(val) => val,
-            None => return Ok(None), // No result to replace
-        };
+        let Some(result_value) = &instruction.result else { return Ok(None) };
 
         // SSA Form Debug Assertion (T109): Verify instruction has exactly one definition
         debug_assert!(
@@ -120,12 +125,18 @@ impl IRRewriter {
     /// * `lattice` - Lattice state with constant values
     /// * `executable_edges` - Set of executable CFG edges
     /// * `block_id` - ID of the block containing the phi
-    /// * `value_id_to_key` - Function to convert ValueId to usize key
+    /// * `value_id_to_key` - Function to convert `ValueId` to usize key
     ///
     /// # Returns
     /// - `Ok(Some(value))` if phi should be replaced with a single value
     /// - `Ok(None)` if phi should be preserved as-is
     /// - `Err(RewriteError)` on invalid transformation
+    ///
+    /// # Errors
+    /// Returns `RewriteError` if:
+    /// - The instruction is not a phi instruction (`InvalidTransformation`)
+    /// - The phi instruction lacks a result value (`SSAViolation`)
+    /// - Constant value creation fails during simplification
     pub fn rewrite_phi<F>(
         &mut self, instruction: &Instruction, lattice: &LatticeState,
         executable_edges: &super::propagator::ExecutableEdgeSet, block_id: usize, value_id_to_key: F,
@@ -136,29 +147,25 @@ impl IRRewriter {
         use crate::ir::instruction::InstructionKind;
 
         // Verify this is a phi instruction
-        let (ty, incoming) = match &instruction.kind {
-            InstructionKind::Phi { ty, incoming } => (ty, incoming),
-            _ => return Err(RewriteError::InvalidTransformation("Not a phi instruction".to_string())),
+        let InstructionKind::Phi { ty, incoming } = &instruction.kind else {
+            return Err(RewriteError::InvalidTransformation("Not a phi instruction".to_string()));
         };
 
         // Get result value
-        let result_value = match &instruction.result {
-            Some(val) => val,
-            None => return Err(RewriteError::SSAViolation("Phi instruction must have a result".to_string())),
+        let Some(result_value) = &instruction.result else {
+            return Err(RewriteError::SSAViolation("Phi instruction must have a result".to_string()));
         };
 
         // SSA Debug Assertion (T109): Phi must have at least one incoming value
         debug_assert!(
             !incoming.is_empty(),
-            "SSA Violation: Phi instruction has no incoming values in block {}",
-            block_id
+            "SSA Violation: Phi instruction has no incoming values in block {block_id}",
         );
 
         // Dominance Debug Assertion (T110): All incoming edges must be from valid predecessors
         debug_assert!(
             executable_edges.has_executable_predecessor(block_id) || incoming.is_empty(),
-            "Dominance Violation: Phi in block {} has no executable predecessors but has incoming values",
-            block_id
+            "Dominance Violation: Phi in block {block_id} has no executable predecessors but has incoming values",
         );
 
         // If phi is in unreachable block (no executable predecessors), return None
@@ -230,7 +237,8 @@ impl IRRewriter {
         }
     }
 
-    /// Creates a constant Value from a ConstantValue.
+    /// Creates a constant Value from a `ConstantValue`.
+    #[allow(clippy::unused_self)]
     fn create_constant_value(&self, const_val: &ConstantValue, ty: &crate::ir::IrType) -> Result<Value, RewriteError> {
         use crate::ir::value::IrLiteralValue;
 
@@ -264,23 +272,23 @@ impl IRRewriter {
 
     /// Increments the constants propagated counter.
     ///
-    /// Used when manually tracking replacements outside of rewrite_instruction.
-    pub fn increment_constants_propagated(&mut self) {
+    /// Used when manually tracking replacements outside of `rewrite_instruction`.
+    pub const fn increment_constants_propagated(&mut self) {
         self.stats.constants_propagated += 1;
     }
 
     /// Increments the branches resolved counter.
-    pub fn increment_branches_resolved(&mut self) {
+    pub const fn increment_branches_resolved(&mut self) {
         self.stats.branches_resolved += 1;
     }
 
     /// Increments the phi nodes simplified counter.
-    pub fn increment_phi_simplified(&mut self) {
+    pub const fn increment_phi_simplified(&mut self) {
         self.stats.phi_nodes_simplified += 1;
     }
 
     /// Increments the unreachable blocks counter.
-    pub fn increment_unreachable_blocks(&mut self) {
+    pub const fn increment_unreachable_blocks(&mut self) {
         self.stats.blocks_marked_unreachable += 1;
     }
 }

@@ -53,7 +53,8 @@ pub struct InstructionIndex {
 
 impl InstructionIndex {
     /// Creates a new instruction index.
-    pub fn new(block_idx: NodeIndex, inst_offset: usize) -> Self {
+    #[must_use]
+    pub const fn new(block_idx: NodeIndex, inst_offset: usize) -> Self {
         Self { block_idx, inst_offset }
     }
 }

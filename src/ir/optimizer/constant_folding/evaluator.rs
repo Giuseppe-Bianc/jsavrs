@@ -20,6 +20,8 @@
 //! Floating-point operations preserve NaN propagation, signed zero, and infinity semantics.
 
 use super::lattice::{ConstantValue, LatticeValue};
+use BinaryOp::*;
+use UnaryOp::*;
 
 /// Evaluates constant expressions during SCCP analysis
 ///
@@ -155,34 +157,24 @@ impl ConstantEvaluator {
 
     /// Evaluates binary operations on I16 values
     pub fn eval_binary_i16(op: BinaryOp, lhs: i16, rhs: i16) -> LatticeValue {
-        use BinaryOp::*;
+        use BinaryOp::{Add, And, Div, Eq, Ge, Gt, Le, Lt, Mod, Mul, Ne, Or, Sub};
 
         match op {
-            Add => {
-                lhs.checked_add(rhs).map(|r| LatticeValue::Constant(ConstantValue::I16(r))).unwrap_or(LatticeValue::Top)
-            }
-            Sub => {
-                lhs.checked_sub(rhs).map(|r| LatticeValue::Constant(ConstantValue::I16(r))).unwrap_or(LatticeValue::Top)
-            }
-            Mul => {
-                lhs.checked_mul(rhs).map(|r| LatticeValue::Constant(ConstantValue::I16(r))).unwrap_or(LatticeValue::Top)
-            }
+            Add => lhs.checked_add(rhs).map_or(LatticeValue::Top, |r| LatticeValue::Constant(ConstantValue::I16(r))),
+            Sub => lhs.checked_sub(rhs).map_or(LatticeValue::Top, |r| LatticeValue::Constant(ConstantValue::I16(r))),
+            Mul => lhs.checked_mul(rhs).map_or(LatticeValue::Top, |r| LatticeValue::Constant(ConstantValue::I16(r))),
             Div => {
                 if rhs == 0 {
                     LatticeValue::Top
                 } else {
-                    lhs.checked_div(rhs)
-                        .map(|r| LatticeValue::Constant(ConstantValue::I16(r)))
-                        .unwrap_or(LatticeValue::Top)
+                    lhs.checked_div(rhs).map_or(LatticeValue::Top, |r| LatticeValue::Constant(ConstantValue::I16(r)))
                 }
             }
             Mod => {
                 if rhs == 0 {
                     LatticeValue::Top
                 } else {
-                    lhs.checked_rem(rhs)
-                        .map(|r| LatticeValue::Constant(ConstantValue::I16(r)))
-                        .unwrap_or(LatticeValue::Top)
+                    lhs.checked_rem(rhs).map_or(LatticeValue::Top, |r| LatticeValue::Constant(ConstantValue::I16(r)))
                 }
             }
             Eq | Ne | Lt | Le | Gt | Ge | And | Or => LatticeValue::Top,
@@ -191,12 +183,9 @@ impl ConstantEvaluator {
 
     /// Evaluates unary operations on I16 values
     pub fn eval_unary_i16(op: UnaryOp, operand: i16) -> LatticeValue {
-        use UnaryOp::*;
+        use UnaryOp::{Neg, Not};
         match op {
-            Neg => operand
-                .checked_neg()
-                .map(|r| LatticeValue::Constant(ConstantValue::I16(r)))
-                .unwrap_or(LatticeValue::Top),
+            Neg => operand.checked_neg().map_or(LatticeValue::Top, |r| LatticeValue::Constant(ConstantValue::I16(r))),
             Not => LatticeValue::Top,
         }
     }
@@ -206,35 +195,26 @@ impl ConstantEvaluator {
     // ========================================================================
 
     /// Evaluates binary operations on I64 values
+    #[must_use]
     pub fn eval_binary_i64(op: BinaryOp, lhs: i64, rhs: i64) -> LatticeValue {
-        use BinaryOp::*;
+        use BinaryOp::{Add, And, Div, Eq, Ge, Gt, Le, Lt, Mod, Mul, Ne, Or, Sub};
 
         match op {
-            Add => {
-                lhs.checked_add(rhs).map(|r| LatticeValue::Constant(ConstantValue::I64(r))).unwrap_or(LatticeValue::Top)
-            }
-            Sub => {
-                lhs.checked_sub(rhs).map(|r| LatticeValue::Constant(ConstantValue::I64(r))).unwrap_or(LatticeValue::Top)
-            }
-            Mul => {
-                lhs.checked_mul(rhs).map(|r| LatticeValue::Constant(ConstantValue::I64(r))).unwrap_or(LatticeValue::Top)
-            }
+            Add => lhs.checked_add(rhs).map_or(LatticeValue::Top, |r| LatticeValue::Constant(ConstantValue::I64(r))),
+            Sub => lhs.checked_sub(rhs).map_or(LatticeValue::Top, |r| LatticeValue::Constant(ConstantValue::I64(r))),
+            Mul => lhs.checked_mul(rhs).map_or(LatticeValue::Top, |r| LatticeValue::Constant(ConstantValue::I64(r))),
             Div => {
                 if rhs == 0 {
                     LatticeValue::Top
                 } else {
-                    lhs.checked_div(rhs)
-                        .map(|r| LatticeValue::Constant(ConstantValue::I64(r)))
-                        .unwrap_or(LatticeValue::Top)
+                    lhs.checked_div(rhs).map_or(LatticeValue::Top, |r| LatticeValue::Constant(ConstantValue::I64(r)))
                 }
             }
             Mod => {
                 if rhs == 0 {
                     LatticeValue::Top
                 } else {
-                    lhs.checked_rem(rhs)
-                        .map(|r| LatticeValue::Constant(ConstantValue::I64(r)))
-                        .unwrap_or(LatticeValue::Top)
+                    lhs.checked_rem(rhs).map_or(LatticeValue::Top, |r| LatticeValue::Constant(ConstantValue::I64(r)))
                 }
             }
             Eq | Ne | Lt | Le | Gt | Ge | And | Or => LatticeValue::Top,
@@ -242,13 +222,11 @@ impl ConstantEvaluator {
     }
 
     /// Evaluates unary operations on I64 values
+    #[must_use]
     pub fn eval_unary_i64(op: UnaryOp, operand: i64) -> LatticeValue {
-        use UnaryOp::*;
+        use UnaryOp::{Neg, Not};
         match op {
-            Neg => operand
-                .checked_neg()
-                .map(|r| LatticeValue::Constant(ConstantValue::I64(r)))
-                .unwrap_or(LatticeValue::Top),
+            Neg => operand.checked_neg().map_or(LatticeValue::Top, |r| LatticeValue::Constant(ConstantValue::I64(r))),
             Not => LatticeValue::Top,
         }
     }
@@ -258,35 +236,26 @@ impl ConstantEvaluator {
     // ========================================================================
 
     /// Evaluates binary operations on U8 values
+    #[must_use]
     pub fn eval_binary_u8(op: BinaryOp, lhs: u8, rhs: u8) -> LatticeValue {
-        use BinaryOp::*;
+        use BinaryOp::{Add, And, Div, Eq, Ge, Gt, Le, Lt, Mod, Mul, Ne, Or, Sub};
 
         match op {
-            Add => {
-                lhs.checked_add(rhs).map(|r| LatticeValue::Constant(ConstantValue::U8(r))).unwrap_or(LatticeValue::Top)
-            }
-            Sub => {
-                lhs.checked_sub(rhs).map(|r| LatticeValue::Constant(ConstantValue::U8(r))).unwrap_or(LatticeValue::Top)
-            }
-            Mul => {
-                lhs.checked_mul(rhs).map(|r| LatticeValue::Constant(ConstantValue::U8(r))).unwrap_or(LatticeValue::Top)
-            }
+            Add => lhs.checked_add(rhs).map_or(LatticeValue::Top, |r| LatticeValue::Constant(ConstantValue::U8(r))),
+            Sub => lhs.checked_sub(rhs).map_or(LatticeValue::Top, |r| LatticeValue::Constant(ConstantValue::U8(r))),
+            Mul => lhs.checked_mul(rhs).map_or(LatticeValue::Top, |r| LatticeValue::Constant(ConstantValue::U8(r))),
             Div => {
                 if rhs == 0 {
                     LatticeValue::Top
                 } else {
-                    lhs.checked_div(rhs)
-                        .map(|r| LatticeValue::Constant(ConstantValue::U8(r)))
-                        .unwrap_or(LatticeValue::Top)
+                    lhs.checked_div(rhs).map_or(LatticeValue::Top, |r| LatticeValue::Constant(ConstantValue::U8(r)))
                 }
             }
             Mod => {
                 if rhs == 0 {
                     LatticeValue::Top
                 } else {
-                    lhs.checked_rem(rhs)
-                        .map(|r| LatticeValue::Constant(ConstantValue::U8(r)))
-                        .unwrap_or(LatticeValue::Top)
+                    lhs.checked_rem(rhs).map_or(LatticeValue::Top, |r| LatticeValue::Constant(ConstantValue::U8(r)))
                 }
             }
             Eq | Ne | Lt | Le | Gt | Ge | And | Or => LatticeValue::Top,
@@ -298,35 +267,26 @@ impl ConstantEvaluator {
     // ========================================================================
 
     /// Evaluates binary operations on U16 values
+    #[must_use]
     pub fn eval_binary_u16(op: BinaryOp, lhs: u16, rhs: u16) -> LatticeValue {
-        use BinaryOp::*;
+        use BinaryOp::{Add, And, Div, Eq, Ge, Gt, Le, Lt, Mod, Mul, Ne, Or, Sub};
 
         match op {
-            Add => {
-                lhs.checked_add(rhs).map(|r| LatticeValue::Constant(ConstantValue::U16(r))).unwrap_or(LatticeValue::Top)
-            }
-            Sub => {
-                lhs.checked_sub(rhs).map(|r| LatticeValue::Constant(ConstantValue::U16(r))).unwrap_or(LatticeValue::Top)
-            }
-            Mul => {
-                lhs.checked_mul(rhs).map(|r| LatticeValue::Constant(ConstantValue::U16(r))).unwrap_or(LatticeValue::Top)
-            }
+            Add => lhs.checked_add(rhs).map_or(LatticeValue::Top, |r| LatticeValue::Constant(ConstantValue::U16(r))),
+            Sub => lhs.checked_sub(rhs).map_or(LatticeValue::Top, |r| LatticeValue::Constant(ConstantValue::U16(r))),
+            Mul => lhs.checked_mul(rhs).map_or(LatticeValue::Top, |r| LatticeValue::Constant(ConstantValue::U16(r))),
             Div => {
                 if rhs == 0 {
                     LatticeValue::Top
                 } else {
-                    lhs.checked_div(rhs)
-                        .map(|r| LatticeValue::Constant(ConstantValue::U16(r)))
-                        .unwrap_or(LatticeValue::Top)
+                    lhs.checked_div(rhs).map_or(LatticeValue::Top, |r| LatticeValue::Constant(ConstantValue::U16(r)))
                 }
             }
             Mod => {
                 if rhs == 0 {
                     LatticeValue::Top
                 } else {
-                    lhs.checked_rem(rhs)
-                        .map(|r| LatticeValue::Constant(ConstantValue::U16(r)))
-                        .unwrap_or(LatticeValue::Top)
+                    lhs.checked_rem(rhs).map_or(LatticeValue::Top, |r| LatticeValue::Constant(ConstantValue::U16(r)))
                 }
             }
             Eq | Ne | Lt | Le | Gt | Ge | And | Or => LatticeValue::Top,
@@ -338,35 +298,26 @@ impl ConstantEvaluator {
     // ========================================================================
 
     /// Evaluates binary operations on U32 values
+    #[must_use]
     pub fn eval_binary_u32(op: BinaryOp, lhs: u32, rhs: u32) -> LatticeValue {
-        use BinaryOp::*;
+        use BinaryOp::{Add, And, Div, Eq, Ge, Gt, Le, Lt, Mod, Mul, Ne, Or, Sub};
 
         match op {
-            Add => {
-                lhs.checked_add(rhs).map(|r| LatticeValue::Constant(ConstantValue::U32(r))).unwrap_or(LatticeValue::Top)
-            }
-            Sub => {
-                lhs.checked_sub(rhs).map(|r| LatticeValue::Constant(ConstantValue::U32(r))).unwrap_or(LatticeValue::Top)
-            }
-            Mul => {
-                lhs.checked_mul(rhs).map(|r| LatticeValue::Constant(ConstantValue::U32(r))).unwrap_or(LatticeValue::Top)
-            }
+            Add => lhs.checked_add(rhs).map_or(LatticeValue::Top, |r| LatticeValue::Constant(ConstantValue::U32(r))),
+            Sub => lhs.checked_sub(rhs).map_or(LatticeValue::Top, |r| LatticeValue::Constant(ConstantValue::U32(r))),
+            Mul => lhs.checked_mul(rhs).map_or(LatticeValue::Top, |r| LatticeValue::Constant(ConstantValue::U32(r))),
             Div => {
                 if rhs == 0 {
                     LatticeValue::Top
                 } else {
-                    lhs.checked_div(rhs)
-                        .map(|r| LatticeValue::Constant(ConstantValue::U32(r)))
-                        .unwrap_or(LatticeValue::Top)
+                    lhs.checked_div(rhs).map_or(LatticeValue::Top, |r| LatticeValue::Constant(ConstantValue::U32(r)))
                 }
             }
             Mod => {
                 if rhs == 0 {
                     LatticeValue::Top
                 } else {
-                    lhs.checked_rem(rhs)
-                        .map(|r| LatticeValue::Constant(ConstantValue::U32(r)))
-                        .unwrap_or(LatticeValue::Top)
+                    lhs.checked_rem(rhs).map_or(LatticeValue::Top, |r| LatticeValue::Constant(ConstantValue::U32(r)))
                 }
             }
             Eq | Ne | Lt | Le | Gt | Ge | And | Or => LatticeValue::Top,
@@ -378,35 +329,26 @@ impl ConstantEvaluator {
     // ========================================================================
 
     /// Evaluates binary operations on U64 values
+    #[must_use]
     pub fn eval_binary_u64(op: BinaryOp, lhs: u64, rhs: u64) -> LatticeValue {
-        use BinaryOp::*;
+        use BinaryOp::{Add, And, Div, Eq, Ge, Gt, Le, Lt, Mod, Mul, Ne, Or, Sub};
 
         match op {
-            Add => {
-                lhs.checked_add(rhs).map(|r| LatticeValue::Constant(ConstantValue::U64(r))).unwrap_or(LatticeValue::Top)
-            }
-            Sub => {
-                lhs.checked_sub(rhs).map(|r| LatticeValue::Constant(ConstantValue::U64(r))).unwrap_or(LatticeValue::Top)
-            }
-            Mul => {
-                lhs.checked_mul(rhs).map(|r| LatticeValue::Constant(ConstantValue::U64(r))).unwrap_or(LatticeValue::Top)
-            }
+            Add => lhs.checked_add(rhs).map_or(LatticeValue::Top, |r| LatticeValue::Constant(ConstantValue::U64(r))),
+            Sub => lhs.checked_sub(rhs).map_or(LatticeValue::Top, |r| LatticeValue::Constant(ConstantValue::U64(r))),
+            Mul => lhs.checked_mul(rhs).map_or(LatticeValue::Top, |r| LatticeValue::Constant(ConstantValue::U64(r))),
             Div => {
                 if rhs == 0 {
                     LatticeValue::Top
                 } else {
-                    lhs.checked_div(rhs)
-                        .map(|r| LatticeValue::Constant(ConstantValue::U64(r)))
-                        .unwrap_or(LatticeValue::Top)
+                    lhs.checked_div(rhs).map_or(LatticeValue::Top, |r| LatticeValue::Constant(ConstantValue::U64(r)))
                 }
             }
             Mod => {
                 if rhs == 0 {
                     LatticeValue::Top
                 } else {
-                    lhs.checked_rem(rhs)
-                        .map(|r| LatticeValue::Constant(ConstantValue::U64(r)))
-                        .unwrap_or(LatticeValue::Top)
+                    lhs.checked_rem(rhs).map_or(LatticeValue::Top, |r| LatticeValue::Constant(ConstantValue::U64(r)))
                 }
             }
             Eq | Ne | Lt | Le | Gt | Ge | And | Or => LatticeValue::Top,
@@ -418,8 +360,9 @@ impl ConstantEvaluator {
     // ========================================================================
 
     /// Evaluates binary operations on F32 values with IEEE 754 semantics
+    #[must_use]
     pub fn eval_binary_f32(op: BinaryOp, lhs: f32, rhs: f32) -> LatticeValue {
-        use BinaryOp::*;
+        use BinaryOp::{Add, And, Div, Eq, Ge, Gt, Le, Lt, Mod, Mul, Ne, Or, Sub};
 
         match op {
             Add => {
@@ -447,8 +390,9 @@ impl ConstantEvaluator {
     }
 
     /// Evaluates unary operations on F32 values
+    #[must_use]
     pub fn eval_unary_f32(op: UnaryOp, operand: f32) -> LatticeValue {
-        use UnaryOp::*;
+        use UnaryOp::{Neg, Not};
         match op {
             Neg => LatticeValue::Constant(ConstantValue::F32(-operand)),
             Not => LatticeValue::Top,
@@ -460,8 +404,9 @@ impl ConstantEvaluator {
     // ========================================================================
 
     /// Evaluates binary operations on F64 values with IEEE 754 semantics
+    #[must_use]
     pub fn eval_binary_f64(op: BinaryOp, lhs: f64, rhs: f64) -> LatticeValue {
-        use BinaryOp::*;
+        use BinaryOp::{Add, And, Div, Eq, Ge, Gt, Le, Lt, Mod, Mul, Ne, Or, Sub};
 
         match op {
             Add => {
@@ -489,8 +434,9 @@ impl ConstantEvaluator {
     }
 
     /// Evaluates unary operations on F64 values
+    #[must_use]
     pub fn eval_unary_f64(op: UnaryOp, operand: f64) -> LatticeValue {
-        use UnaryOp::*;
+        use UnaryOp::{Neg, Not};
         match op {
             Neg => LatticeValue::Constant(ConstantValue::F64(-operand)),
             Not => LatticeValue::Top,
@@ -502,31 +448,37 @@ impl ConstantEvaluator {
     // ========================================================================
 
     /// Checks if a floating-point value is NaN (T088)
-    pub fn is_nan_f32(value: f32) -> bool {
+    #[must_use]
+    pub const fn is_nan_f32(value: f32) -> bool {
         value.is_nan()
     }
 
     /// Checks if a floating-point value is NaN (T088)
-    pub fn is_nan_f64(value: f64) -> bool {
+    #[must_use]
+    pub const fn is_nan_f64(value: f64) -> bool {
         value.is_nan()
     }
 
     /// Checks if a floating-point value is infinite (T089)
-    pub fn is_infinite_f32(value: f32) -> bool {
+    #[must_use]
+    pub const fn is_infinite_f32(value: f32) -> bool {
         value.is_infinite()
     }
 
     /// Checks if a floating-point value is infinite (T089)
-    pub fn is_infinite_f64(value: f64) -> bool {
+    #[must_use]
+    pub const fn is_infinite_f64(value: f64) -> bool {
         value.is_infinite()
     }
 
     /// Checks if a floating-point value is negative zero (T090)
+    #[must_use]
     pub fn is_neg_zero_f32(value: f32) -> bool {
         value == 0.0 && value.is_sign_negative()
     }
 
     /// Checks if a floating-point value is negative zero (T090)
+    #[must_use]
     pub fn is_neg_zero_f64(value: f64) -> bool {
         value == 0.0 && value.is_sign_negative()
     }
@@ -537,11 +489,13 @@ impl ConstantEvaluator {
 
     /// Evaluates operations on Char values
     /// Most operations on chars are not meaningful, return Top
-    pub fn eval_char_eq(lhs: char, rhs: char) -> LatticeValue {
+    #[must_use]
+    pub const fn eval_char_eq(lhs: char, rhs: char) -> LatticeValue {
         LatticeValue::Constant(ConstantValue::Bool(lhs == rhs))
     }
 
-    pub fn eval_char_ne(lhs: char, rhs: char) -> LatticeValue {
+    #[must_use]
+    pub const fn eval_char_ne(lhs: char, rhs: char) -> LatticeValue {
         LatticeValue::Constant(ConstantValue::Bool(lhs != rhs))
     }
 
@@ -550,8 +504,11 @@ impl ConstantEvaluator {
     // ========================================================================
 
     /// Evaluates bitwise operations on I8 values
-    pub fn eval_bitwise_i8(op: BitwiseOp, lhs: i8, rhs: i8) -> LatticeValue {
-        use BitwiseOp::*;
+    /// Evaluates bitwise operations on I8 values
+    #[must_use]
+    #[allow(clippy::cast_sign_loss)]
+    pub const fn eval_bitwise_i8(op: BitwiseOp, lhs: i8, rhs: i8) -> LatticeValue {
+        use BitwiseOp::{And, Or, Shl, Shr, Xor};
         let result = match op {
             And => lhs & rhs,
             Or => lhs | rhs,
@@ -563,8 +520,10 @@ impl ConstantEvaluator {
     }
 
     /// Evaluates bitwise operations on I16 values
-    pub fn eval_bitwise_i16(op: BitwiseOp, lhs: i16, rhs: i16) -> LatticeValue {
-        use BitwiseOp::*;
+    #[must_use]
+    #[allow(clippy::cast_sign_loss)]
+    pub const fn eval_bitwise_i16(op: BitwiseOp, lhs: i16, rhs: i16) -> LatticeValue {
+        use BitwiseOp::{And, Or, Shl, Shr, Xor};
         let result = match op {
             And => lhs & rhs,
             Or => lhs | rhs,
@@ -576,8 +535,10 @@ impl ConstantEvaluator {
     }
 
     /// Evaluates bitwise operations on I32 values
-    pub fn eval_bitwise_i32(op: BitwiseOp, lhs: i32, rhs: i32) -> LatticeValue {
-        use BitwiseOp::*;
+    #[must_use]
+    #[allow(clippy::cast_sign_loss)]
+    pub const fn eval_bitwise_i32(op: BitwiseOp, lhs: i32, rhs: i32) -> LatticeValue {
+        use BitwiseOp::{And, Or, Shl, Shr, Xor};
         let result = match op {
             And => lhs & rhs,
             Or => lhs | rhs,
@@ -589,8 +550,10 @@ impl ConstantEvaluator {
     }
 
     /// Evaluates bitwise operations on I64 values
-    pub fn eval_bitwise_i64(op: BitwiseOp, lhs: i64, rhs: i64) -> LatticeValue {
-        use BitwiseOp::*;
+    #[must_use]
+    #[allow(clippy::cast_sign_loss, clippy::cast_possible_truncation)]
+    pub const fn eval_bitwise_i64(op: BitwiseOp, lhs: i64, rhs: i64) -> LatticeValue {
+        use BitwiseOp::{And, Or, Shl, Shr, Xor};
         let result = match op {
             And => lhs & rhs,
             Or => lhs | rhs,
@@ -602,8 +565,9 @@ impl ConstantEvaluator {
     }
 
     /// Evaluates bitwise operations on U8 values
-    pub fn eval_bitwise_u8(op: BitwiseOp, lhs: u8, rhs: u8) -> LatticeValue {
-        use BitwiseOp::*;
+    #[must_use]
+    pub const fn eval_bitwise_u8(op: BitwiseOp, lhs: u8, rhs: u8) -> LatticeValue {
+        use BitwiseOp::{And, Or, Shl, Shr, Xor};
         let result = match op {
             And => lhs & rhs,
             Or => lhs | rhs,
@@ -615,8 +579,9 @@ impl ConstantEvaluator {
     }
 
     /// Evaluates bitwise operations on U16 values
-    pub fn eval_bitwise_u16(op: BitwiseOp, lhs: u16, rhs: u16) -> LatticeValue {
-        use BitwiseOp::*;
+    #[must_use]
+    pub const fn eval_bitwise_u16(op: BitwiseOp, lhs: u16, rhs: u16) -> LatticeValue {
+        use BitwiseOp::{And, Or, Shl, Shr, Xor};
         let result = match op {
             And => lhs & rhs,
             Or => lhs | rhs,
@@ -628,8 +593,9 @@ impl ConstantEvaluator {
     }
 
     /// Evaluates bitwise operations on U32 values
-    pub fn eval_bitwise_u32(op: BitwiseOp, lhs: u32, rhs: u32) -> LatticeValue {
-        use BitwiseOp::*;
+    #[must_use]
+    pub const fn eval_bitwise_u32(op: BitwiseOp, lhs: u32, rhs: u32) -> LatticeValue {
+        use BitwiseOp::{And, Or, Shl, Shr, Xor};
         let result = match op {
             And => lhs & rhs,
             Or => lhs | rhs,
@@ -641,8 +607,10 @@ impl ConstantEvaluator {
     }
 
     /// Evaluates bitwise operations on U64 values
-    pub fn eval_bitwise_u64(op: BitwiseOp, lhs: u64, rhs: u64) -> LatticeValue {
-        use BitwiseOp::*;
+    #[must_use]
+    #[allow(clippy::cast_possible_truncation)]
+    pub const fn eval_bitwise_u64(op: BitwiseOp, lhs: u64, rhs: u64) -> LatticeValue {
+        use BitwiseOp::{And, Or, Shl, Shr, Xor};
         let result = match op {
             And => lhs & rhs,
             Or => lhs | rhs,
@@ -654,40 +622,49 @@ impl ConstantEvaluator {
     }
 
     /// Evaluates bitwise NOT on integer values
-    pub fn eval_bitwise_not_i8(operand: i8) -> LatticeValue {
+    #[must_use]
+    pub const fn eval_bitwise_not_i8(operand: i8) -> LatticeValue {
         LatticeValue::Constant(ConstantValue::I8(!operand))
     }
 
-    pub fn eval_bitwise_not_i16(operand: i16) -> LatticeValue {
+    #[must_use]
+    pub const fn eval_bitwise_not_i16(operand: i16) -> LatticeValue {
         LatticeValue::Constant(ConstantValue::I16(!operand))
     }
 
-    pub fn eval_bitwise_not_i32(operand: i32) -> LatticeValue {
+    #[must_use]
+    pub const fn eval_bitwise_not_i32(operand: i32) -> LatticeValue {
         LatticeValue::Constant(ConstantValue::I32(!operand))
     }
 
-    pub fn eval_bitwise_not_i64(operand: i64) -> LatticeValue {
+    #[must_use]
+    pub const fn eval_bitwise_not_i64(operand: i64) -> LatticeValue {
         LatticeValue::Constant(ConstantValue::I64(!operand))
     }
 
-    pub fn eval_bitwise_not_u8(operand: u8) -> LatticeValue {
+    #[must_use]
+    pub const fn eval_bitwise_not_u8(operand: u8) -> LatticeValue {
         LatticeValue::Constant(ConstantValue::U8(!operand))
     }
 
-    pub fn eval_bitwise_not_u16(operand: u16) -> LatticeValue {
+    #[must_use]
+    pub const fn eval_bitwise_not_u16(operand: u16) -> LatticeValue {
         LatticeValue::Constant(ConstantValue::U16(!operand))
     }
 
-    pub fn eval_bitwise_not_u32(operand: u32) -> LatticeValue {
+    #[must_use]
+    pub const fn eval_bitwise_not_u32(operand: u32) -> LatticeValue {
         LatticeValue::Constant(ConstantValue::U32(!operand))
     }
 
-    pub fn eval_bitwise_not_u64(operand: u64) -> LatticeValue {
+    #[must_use]
+    pub const fn eval_bitwise_not_u64(operand: u64) -> LatticeValue {
         LatticeValue::Constant(ConstantValue::U64(!operand))
     }
 
     /// Checks if a division by zero occurred
-    pub fn is_division_by_zero(op: BinaryOp, rhs: &ConstantValue) -> bool {
+    #[must_use]
+    pub const fn is_division_by_zero(op: BinaryOp, rhs: &ConstantValue) -> bool {
         matches!(op, BinaryOp::Div | BinaryOp::Mod)
             && matches!(
                 rhs,
@@ -704,9 +681,8 @@ impl ConstantEvaluator {
 
     /// Evaluates comparison operations on I32 values
     /// Returns Bool constant for valid comparisons
-    pub fn eval_compare_i32(op: BinaryOp, lhs: i32, rhs: i32) -> LatticeValue {
-        use BinaryOp::*;
-
+    #[must_use]
+    pub const fn eval_compare_i32(op: BinaryOp, lhs: i32, rhs: i32) -> LatticeValue {
         let result = match op {
             Eq => lhs == rhs,
             Ne => lhs != rhs,
@@ -721,9 +697,8 @@ impl ConstantEvaluator {
     }
 
     /// Evaluates boolean operations (And, Or, Not)
-    pub fn eval_binary_bool(op: BinaryOp, lhs: bool, rhs: bool) -> LatticeValue {
-        use BinaryOp::*;
-
+    #[must_use]
+    pub const fn eval_binary_bool(op: BinaryOp, lhs: bool, rhs: bool) -> LatticeValue {
         let result = match op {
             And => lhs && rhs,
             Or => lhs || rhs,
@@ -734,12 +709,11 @@ impl ConstantEvaluator {
     }
 
     /// Evaluates unary Not operation on boolean
-    pub fn eval_unary_bool(op: UnaryOp, operand: bool) -> LatticeValue {
-        use UnaryOp::*;
-
+    #[must_use]
+    pub const fn eval_unary_bool(op: UnaryOp, operand: bool) -> LatticeValue {
         match op {
             Not => LatticeValue::Constant(ConstantValue::Bool(!operand)),
-            _ => LatticeValue::Top, // Not a boolean unary op
+            Neg => LatticeValue::Top, // Not a boolean unary op
         }
     }
 }

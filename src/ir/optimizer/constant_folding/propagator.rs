@@ -4,6 +4,8 @@
 //! with SSA and CFG edge worklists.
 
 use super::lattice::LatticeValue;
+use crate::ir::Function;
+use crate::ir::Terminator;
 use petgraph::graph::NodeIndex;
 use std::collections::{HashMap, HashSet, VecDeque};
 use std::hash::Hash;
@@ -16,10 +18,12 @@ pub struct CFGEdge {
 }
 
 impl CFGEdge {
-    pub fn new(from: usize, to: usize) -> Self {
+    #[must_use]
+    pub const fn new(from: usize, to: usize) -> Self {
         Self { from, to }
     }
 
+    #[must_use]
     pub fn from_node_index(from: NodeIndex, to: NodeIndex) -> Self {
         Self { from: from.index(), to: to.index() }
     }
@@ -37,15 +41,18 @@ impl Default for LatticeState {
 }
 
 impl LatticeState {
+    #[must_use]
     pub fn new() -> Self {
         Self { values: HashMap::new() }
     }
 
+    #[must_use]
     pub fn with_capacity(capacity: usize) -> Self {
         Self { values: HashMap::with_capacity(capacity) }
     }
 
     /// Gets the lattice value for an SSA value (defaults to Bottom if not set)
+    #[must_use]
     pub fn get(&self, value_id: usize) -> LatticeValue {
         self.values.get(&value_id).cloned().unwrap_or(LatticeValue::Bottom)
     }
@@ -54,11 +61,11 @@ impl LatticeState {
     /// Returns true if the value changed
     pub fn update(&mut self, value_id: usize, new_value: LatticeValue) -> bool {
         let old_value = self.get(value_id);
-        if old_value != new_value {
+        if old_value == new_value {
+            false
+        } else {
             self.values.insert(value_id, new_value);
             true
-        } else {
-            false
         }
     }
 
@@ -80,10 +87,12 @@ impl Default for ExecutableEdgeSet {
 }
 
 impl ExecutableEdgeSet {
+    #[must_use]
     pub fn new() -> Self {
         Self { edges: HashSet::new() }
     }
 
+    #[must_use]
     pub fn with_capacity(capacity: usize) -> Self {
         Self { edges: HashSet::with_capacity(capacity) }
     }
@@ -95,11 +104,13 @@ impl ExecutableEdgeSet {
     }
 
     /// Checks if a CFG edge is executable
+    #[must_use]
     pub fn is_executable(&self, edge: &CFGEdge) -> bool {
         self.edges.contains(edge)
     }
 
     /// Checks if a block has any executable predecessor edges
+    #[must_use]
     pub fn has_executable_predecessor(&self, block_id: usize) -> bool {
         self.edges.iter().any(|e| e.to == block_id)
     }
@@ -131,10 +142,12 @@ impl<T: Eq + Hash + Clone> Default for Worklist<T> {
 }
 
 impl<T: Eq + Hash + Clone> Worklist<T> {
+    #[must_use]
     pub fn new() -> Self {
         Self { queue: VecDeque::new(), seen: HashSet::new() }
     }
 
+    #[must_use]
     pub fn with_capacity(capacity: usize) -> Self {
         Self { queue: VecDeque::with_capacity(capacity), seen: HashSet::with_capacity(capacity) }
     }
@@ -157,11 +170,13 @@ impl<T: Eq + Hash + Clone> Worklist<T> {
     }
 
     /// Checks if the worklist is empty
+    #[must_use]
     pub fn is_empty(&self) -> bool {
         self.queue.is_empty()
     }
 
     /// Returns the number of items in the worklist
+    #[must_use]
     pub fn len(&self) -> usize {
         self.queue.len()
     }
@@ -202,18 +217,19 @@ impl Drop for SCCPropagator {
 }
 
 impl SCCPropagator {
-    /// Creates a new SCCPropagator for the given function with capacity preallocation.
+    /// Creates a new `SCCPropagator` for the given function with capacity preallocation.
     ///
     /// Preallocates internal data structures based on function size estimates:
-    /// - LatticeState: capacity = num_blocks * avg_instructions_per_block
-    /// - ExecutableEdgeSet: capacity = num_blocks * 2 (average 2 edges per block)
-    /// - Worklists: capacity = num_blocks
+    /// - `LatticeState`: capacity = `num_blocks * avg_instructions_per_block`
+    /// - `ExecutableEdgeSet`: capacity = `num_blocks * 2` (average 2 edges per block)
+    /// - `Worklists`: capacity = `num_blocks`
     ///
     /// # Arguments
     /// * `function` - The IR function to analyze
     ///
     /// # Returns
-    /// A new SCCPropagator instance with preallocated capacity
+    /// A new `SCCPropagator` instance with preallocated capacity
+    #[must_use]
     pub fn new_for_function(function: &crate::ir::Function) -> Self {
         let num_blocks = function.cfg.graph().node_count();
         let estimated_values = num_blocks * 10; // Estimate ~10 instructions per block
@@ -229,7 +245,7 @@ impl SCCPropagator {
     }
 
     /// Sets verbose diagnostic output
-    pub fn set_verbose(&mut self, verbose: bool) {
+    pub const fn set_verbose(&mut self, verbose: bool) {
         self.verbose = verbose;
     }
 
@@ -244,7 +260,7 @@ impl SCCPropagator {
     ///
     /// # Note
     /// This is a simplified initialization. Full implementation will need
-    /// to properly map parameter/variable names to ValueIds.
+    /// to properly map parameter/variable names to `ValueIds`.
     fn initialize(&mut self, function: &crate::ir::Function) {
         // Mark entry block edge as executable (FR-001)
         if let Some(entry_idx) = function.cfg.get_entry_block_index() {
@@ -272,7 +288,7 @@ impl SCCPropagator {
     /// `Ok(iterations_count)` on successful completion, `Err(SCCPError)` if iteration limit exceeded
     ///
     /// # Errors
-    /// - `MaxIterationsExceeded`: If the algorithm does not converge within max_iterations
+    /// - `MaxIterationsExceeded`: If the algorithm does not converge within `max_iterations`
     pub fn propagate(&mut self, function: &crate::ir::Function, max_iterations: usize) -> Result<usize, SCCPError> {
         self.initialize(function);
 
@@ -339,10 +355,7 @@ impl SCCPropagator {
         use crate::ir::instruction::InstructionKind;
 
         // Only process instructions with results
-        let result_value = match &instruction.result {
-            Some(val) => val,
-            None => return Ok(()), // Instructions without results don't propagate
-        };
+        let Some(result_value) = &instruction.result else { return Ok(()) };
 
         let result_id = result_value.id;
 
@@ -472,11 +485,12 @@ impl SCCPropagator {
     ///
     /// Analyzes terminator instructions to determine which CFG edges are executable:
     /// - Branch: Unconditional, always marks the edge executable
-    /// - ConditionalBranch: Evaluates condition, marks appropriate edge(s)
+    /// - `ConditionalBranch`: Evaluates condition, marks appropriate edge(s)
     /// - Switch: Evaluates selector, marks matching case edge
     /// - Return/Unreachable: No CFG edges to mark
+    #[allow(clippy::unnecessary_wraps)]
     fn visit_terminator(
-        &mut self, function: &crate::ir::Function, block_id: usize, terminator: &crate::ir::Terminator,
+        &mut self, function: &Function, block_id: usize, terminator: &Terminator,
     ) -> Result<(), SCCPError> {
         use crate::ir::terminator::TerminatorKind;
 
@@ -615,10 +629,11 @@ impl SCCPropagator {
     ///
     /// # Arguments
     /// * `block_id` - ID of the block containing this phi node
-    /// * `incoming` - Vector of (value, predecessor_label) pairs
+    /// * `incoming` - Vector of (value, `predecessor_label`) pairs
     ///
     /// # Returns
     /// The computed lattice value for this phi node
+    #[allow(clippy::unnecessary_wraps)]
     fn eval_phi_node(
         &self, block_id: usize, incoming: &[(crate::ir::Value, String)],
     ) -> Result<LatticeValue, SCCPError> {
@@ -666,7 +681,8 @@ impl SCCPropagator {
     }
 
     /// Helper to find a basic block by its label
-    fn find_block_by_label(&self, function: &crate::ir::Function, label: &str) -> Option<usize> {
+    #[allow(clippy::unused_self)]
+    fn find_block_by_label(&self, function: &Function, label: &str) -> Option<usize> {
         use petgraph::visit::IntoNodeReferences;
 
         for (idx, block) in function.cfg.graph().node_references() {
@@ -681,13 +697,14 @@ impl SCCPropagator {
     ///
     /// Implements FR-002 monotonic updates.
     fn update_lattice_value(&mut self, value_id: usize, new_value: LatticeValue) {
-        if self.lattice.update(value_id, new_value.clone()) {
+        if self.lattice.update(value_id, new_value) {
             // Value changed, add to SSA worklist for propagation
             self.ssa_worklist.push(value_id);
         }
     }
 
     /// Helper to check if an instruction uses a specific value.
+    #[allow(clippy::unused_self)]
     fn instruction_uses_value(&self, instruction: &crate::ir::Instruction, value_id: usize) -> bool {
         use crate::ir::instruction::InstructionKind;
 
@@ -704,23 +721,26 @@ impl SCCPropagator {
         }
     }
 
-    /// Converts a ValueId to a usize key for HashMap lookup.
+    /// Converts a `ValueId` to a usize key for `HashMap` lookup.
+    #[allow(clippy::unwrap_used)]
     fn value_id_to_key(value_id: &crate::ir::value::ValueId) -> usize {
         use std::collections::hash_map::DefaultHasher;
         use std::hash::{Hash, Hasher};
 
         let mut hasher = DefaultHasher::new();
         value_id.hash(&mut hasher);
-        hasher.finish() as usize
+        usize::try_from(hasher.finish()).unwrap()
     }
 
     /// Returns a reference to the lattice state for use by the rewriter
-    pub fn get_lattice_state(&self) -> &LatticeState {
+    #[must_use]
+    pub const fn get_lattice_state(&self) -> &LatticeState {
         &self.lattice
     }
 
     /// Returns a reference to the executable edge set for use by the rewriter
-    pub fn get_executable_edges(&self) -> &ExecutableEdgeSet {
+    #[must_use]
+    pub const fn get_executable_edges(&self) -> &ExecutableEdgeSet {
         &self.executable_edges
     }
 }

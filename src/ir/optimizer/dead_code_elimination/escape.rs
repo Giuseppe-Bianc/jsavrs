@@ -38,7 +38,7 @@ pub enum SideEffectClass {
 impl SideEffectClass {
     /// Classifies an instruction based on its side effects.
     #[allow(dead_code)]
-    pub fn classify(instruction: &crate::ir::Instruction, _escape_analyzer: &EscapeAnalyzer) -> Self {
+    pub const fn classify(instruction: &crate::ir::Instruction, _escape_analyzer: &EscapeAnalyzer) -> Self {
         match &instruction.kind {
             InstructionKind::Binary { .. }
             | InstructionKind::Unary { .. }

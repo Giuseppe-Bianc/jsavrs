@@ -45,18 +45,21 @@ static GLOBAL_PROMOTION_MATRIX: LazyLock<PromotionMatrix> = LazyLock::new(Promot
 pub struct TypePromotionEngine;
 
 impl TypePromotionEngine {
-    /// Creates a new TypePromotionEngine that uses the global singleton PromotionMatrix
+    /// Creates a new `TypePromotionEngine` that uses the global singleton `PromotionMatrix`
+    #[must_use]
     pub const fn new() -> Self {
         Self
     }
 
     /// Returns a reference to the global promotion matrix singleton
+    #[allow(clippy::unused_self)]
     fn get_promotion_matrix(&self) -> &PromotionMatrix {
         &GLOBAL_PROMOTION_MATRIX
     }
 
     /// Analyzes binary operation for proper type promotion
     #[must_use]
+    #[allow(clippy::suspicious_operation_groupings)]
     pub fn analyze_binary_promotion(
         &self, left_type: &IrType, right_type: &IrType, operation: IrBinaryOp, span: SourceSpan,
     ) -> PromotionResult {
@@ -199,6 +202,7 @@ impl TypePromotionEngine {
     }
 
     /// Helper function to insert a cast instruction
+    #[allow(clippy::unused_self)]
     fn insert_cast_instruction(
         &self,
         generator: &mut IrGenerator,

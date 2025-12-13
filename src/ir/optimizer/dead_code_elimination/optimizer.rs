@@ -43,6 +43,7 @@ impl Drop for DeadCodeElimination {
 
 impl DeadCodeElimination {
     /// Creates a new DCE optimizer with default settings.
+    #[must_use]
     pub fn new() -> Self {
         Self::default()
     }
@@ -52,13 +53,15 @@ impl DeadCodeElimination {
     /// # Panics
     ///
     /// Panics if `max_iterations` is 0.
+    #[must_use]
     pub fn with_config(max_iterations: usize, enable_statistics: bool, verbose: bool, verbose_warnings: bool) -> Self {
         assert!(max_iterations > 0, "max_iterations must be > 0");
         Self { max_iterations, enable_statistics, verbose, verbose_warnings, last_stats: OptimizationStats::default() }
     }
 
     /// Returns a reference to the statistics from the last optimization run.
-    pub fn get_statistics(&self) -> &OptimizationStats {
+    #[must_use]
+    pub const fn get_statistics(&self) -> &OptimizationStats {
         &self.last_stats
     }
 
@@ -194,11 +197,7 @@ impl DeadCodeElimination {
             InstructionKind::Load { src, .. } => is_dead && self.can_remove_load(src, escape_analyzer, inst_idx),
 
             InstructionKind::Alloca { .. } => {
-                if let Some(result) = &instruction.result {
-                    !analyzer.def_use_chains.has_uses(result)
-                } else {
-                    false
-                }
+                instruction.result.as_ref().is_some_and(|result| !analyzer.def_use_chains.has_uses(result))
             }
 
             InstructionKind::Call { .. } => {
@@ -253,6 +252,7 @@ impl DeadCodeElimination {
     }
 
     /// Removes a list of instructions from the function.
+    #[allow(clippy::unused_self)]
     fn remove_instructions(&self, function: &mut Function, dead_instructions: Vec<(Arc<str>, usize)>) -> usize {
         let mut total_removed = 0;
 
@@ -280,6 +280,7 @@ impl DeadCodeElimination {
     }
 
     /// Checks if there are any Load instructions from the given pointer.
+    #[allow(clippy::unused_self)]
     fn has_loads_from(&self, function: &Function, ptr: &crate::ir::Value) -> bool {
         for block in function.cfg.blocks() {
             for instruction in &block.instructions {
@@ -307,7 +308,8 @@ impl DeadCodeElimination {
 
     /// Checks if an instruction is pure (has no side effects).
     #[inline]
-    fn is_pure_instruction(&self, instruction: &crate::ir::Instruction) -> bool {
+    #[allow(clippy::unused_self)]
+    const fn is_pure_instruction(&self, instruction: &crate::ir::Instruction) -> bool {
         matches!(
             instruction.kind,
             InstructionKind::Binary { .. }
@@ -319,6 +321,7 @@ impl DeadCodeElimination {
     }
 
     /// Updates phi node incoming lists to remove references to deleted blocks.
+    #[allow(clippy::unused_self)]
     fn update_phi_nodes_for_removed_blocks(
         &self, cfg: &mut crate::ir::cfg::ControlFlowGraph, removed_labels: &[Arc<str>],
     ) {
@@ -334,20 +337,19 @@ impl DeadCodeElimination {
     }
 
     /// Verifies that SSA form is preserved after block removal.
+    #[allow(clippy::unused_self)]
     fn verify_ssa_form_preservation(&self, cfg: &crate::ir::cfg::ControlFlowGraph) {
         let all_labels: HashSet<&str> = cfg.blocks().map(|b| b.label.as_ref()).collect();
 
         for block in cfg.blocks() {
             let block_idx = cfg.find_block_by_label(&block.label);
 
-            let predecessors: HashSet<Arc<str>> = if let Some(idx) = block_idx {
+            let predecessors: HashSet<Arc<str>> = block_idx.map_or_else(HashSet::new, |idx| {
                 cfg.graph()
                     .neighbors_directed(idx, Direction::Incoming)
                     .map(|pred_idx| cfg.graph()[pred_idx].label.clone())
                     .collect()
-            } else {
-                HashSet::new()
-            };
+            });
 
             for instruction in &block.instructions {
                 if let InstructionKind::Phi { incoming, .. } = &instruction.kind {
@@ -431,6 +433,7 @@ impl Phase for DeadCodeElimination {
 
 impl DeadCodeElimination {
     /// Prints optimization statistics.
+    #[allow(clippy::unwrap_used)]
     fn print_statistics(&self) {
         let dce_stats = self.get_statistics();
 
@@ -450,7 +453,7 @@ impl DeadCodeElimination {
                 }
             }
 
-            print!("{}", output);
+            print!("{output}");
         } else {
             println!("{}", style("No dead code found - module already optimal").green());
         }

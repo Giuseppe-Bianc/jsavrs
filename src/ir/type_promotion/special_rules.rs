@@ -7,6 +7,7 @@ use crate::ir::{CastKind, IrType};
 
 use super::matrix::PromotionMatrix;
 use super::types::PromotionRule;
+use std::cmp::Ordering;
 
 impl PromotionMatrix {
     /// Add all boolean conversion rules (24 rules total)
@@ -122,6 +123,7 @@ impl PromotionMatrix {
     /// - Char ↔ Other integers: Indirect via U32 (12 rules)
     /// - Char ↔ Floats: Indirect via U32 (4 rules)
     /// - Char ↔ Bool: Indirect via U32 (2 rules)
+    #[allow(clippy::too_many_lines)]
     pub(super) fn add_character_promotions(&mut self) {
         // Char ↔ U32: Direct Unicode scalar value conversion (2 rules)
         self.add_promotion_rule(
@@ -376,9 +378,11 @@ impl PromotionMatrix {
         );
     }
 
-    /// Helper method to infer CastKind for integer-to-integer conversions
+    /// Helper method to infer `CastKind` for integer-to-integer conversions
+    #[allow(clippy::unused_self)]
     pub(super) fn infer_cast_kind_for_conversion(&self, from: &IrType, to: &IrType) -> CastKind {
-        use IrType::*;
+        use IrType::{I8, I16, I32, I64, U8, U16, U32, U64};
+
         match (from, to) {
             // Same type → Bitcast
             (I8, I8) | (I16, I16) | (I32, I32) | (I64, I64) | (U8, U8) | (U16, U16) | (U32, U32) | (U64, U64) => {
@@ -386,16 +390,19 @@ impl PromotionMatrix {
             }
 
             // Widening signed
-            (I8, I16) | (I8, I32) | (I8, I64) | (I16, I32) | (I16, I64) | (I32, I64) => CastKind::IntSignExtend,
+            (I8, I16 | I32 | I64) | (I16, I32 | I64) | (I32, I64) => CastKind::IntSignExtend,
 
             // Widening unsigned
-            (U8, U16) | (U8, U32) | (U8, U64) | (U16, U32) | (U16, U64) | (U32, U64) => CastKind::IntZeroExtend,
+            (U8, U16 | U32 | U64) | (U16, U32 | U64) | (U32, U64) => CastKind::IntZeroExtend,
 
             // Narrowing signed
-            (I64, I32) | (I64, I16) | (I64, I8) | (I32, I16) | (I32, I8) | (I16, I8) => CastKind::IntTruncate,
-
             // Narrowing unsigned
-            (U64, U32) | (U64, U16) | (U64, U8) | (U32, U16) | (U32, U8) | (U16, U8) => CastKind::IntTruncate,
+            (I64, I32 | I16 | I8)
+            | (I32, I16 | I8)
+            | (I16, I8)
+            | (U64, U32 | U16 | U8)
+            | (U32, U16 | U8)
+            | (U16, U8) => CastKind::IntTruncate,
 
             // Cross-signedness same width
             (I8, U8) | (U8, I8) | (I16, U16) | (U16, I16) | (I32, U32) | (U32, I32) | (I64, U64) | (U64, I64) => {
@@ -406,12 +413,10 @@ impl PromotionMatrix {
             (I8 | I16 | I32 | I64, U8 | U16 | U32 | U64) | (U8 | U16 | U32 | U64, I8 | I16 | I32 | I64) => {
                 let from_bits = Self::get_int_bit_width(from);
                 let to_bits = Self::get_int_bit_width(to);
-                if from_bits > to_bits {
-                    CastKind::IntTruncate
-                } else if from_bits < to_bits {
-                    CastKind::IntZeroExtend
-                } else {
-                    CastKind::IntBitcast
+                match from_bits.cmp(&to_bits) {
+                    Ordering::Greater => CastKind::IntTruncate,
+                    Ordering::Less => CastKind::IntZeroExtend,
+                    Ordering::Equal => CastKind::IntBitcast,
                 }
             }
 
@@ -420,7 +425,7 @@ impl PromotionMatrix {
     }
 
     /// Helper to get integer bit width
-    fn get_int_bit_width(ty: &IrType) -> u32 {
+    const fn get_int_bit_width(ty: &IrType) -> u32 {
         match ty {
             IrType::I8 | IrType::U8 => 8,
             IrType::I16 | IrType::U16 => 16,
