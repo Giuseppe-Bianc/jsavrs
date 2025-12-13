@@ -75,7 +75,7 @@ pub enum TypeGroup {
 }
 
 /// Contains the result of type promotion analysis
-#[derive(Debug, Clone, PartialEq)]
+#[derive(Debug, Clone, PartialEq, Eq)]
 pub struct PromotionResult {
     /// Whether the promotion is mathematically sound
     pub is_sound: bool,
@@ -90,7 +90,7 @@ pub struct PromotionResult {
 }
 
 /// Represents warnings generated during type promotion
-#[derive(Debug, Clone, PartialEq)]
+#[derive(Debug, Clone, PartialEq, Eq)]
 pub enum PromotionWarning {
     PrecisionLoss {
         from_type: IrType,
@@ -156,7 +156,7 @@ pub enum PrecisionLossEstimate {
 }
 
 /// Binary operation promotion information
-#[derive(Debug, Clone, PartialEq)]
+#[derive(Debug, Clone, PartialEq, Eq)]
 pub struct BinaryOperationPromotion {
     pub operation: IrBinaryOp,
     pub left_type: IrType,

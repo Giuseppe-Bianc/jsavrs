@@ -13,15 +13,15 @@
 //!
 //! # Overflow Handling
 //!
-//! Integer operations use `checked_*` methods. Overflow → LatticeValue::Top (per FR-004).
+//! Integer operations use `checked_*` methods. Overflow → `LatticeValue::Top` (per FR-004).
 //!
 //! # IEEE 754 Compliance
 //!
 //! Floating-point operations preserve NaN propagation, signed zero, and infinity semantics.
 
 use super::lattice::{ConstantValue, LatticeValue};
-use BinaryOp::*;
-use UnaryOp::*;
+use BinaryOp::{And, Eq, Ge, Gt, Le, Lt, Ne, Or};
+use UnaryOp::{Neg, Not};
 
 /// Evaluates constant expressions during SCCP analysis
 ///
@@ -32,33 +32,21 @@ pub struct ConstantEvaluator;
 impl ConstantEvaluator {
     /// Evaluates a binary operation on two constant values
     /// Returns Top if overflow occurs or operands are incompatible
+    #[must_use]
     pub fn eval_binary_i32(op: BinaryOp, lhs: i32, rhs: i32) -> LatticeValue {
-        use BinaryOp::*;
+        use BinaryOp::{Add, And, Div, Eq, Ge, Gt, Le, Lt, Mod, Mul, Ne, Or, Sub};
 
         match op {
             // Arithmetic operations
-            Add => {
-                if let Some(result) = lhs.checked_add(rhs) {
-                    LatticeValue::Constant(ConstantValue::I32(result))
-                } else {
-                    // Overflow → Top (per FR-004)
-                    LatticeValue::Top
-                }
-            }
-            Sub => {
-                if let Some(result) = lhs.checked_sub(rhs) {
-                    LatticeValue::Constant(ConstantValue::I32(result))
-                } else {
-                    LatticeValue::Top
-                }
-            }
-            Mul => {
-                if let Some(result) = lhs.checked_mul(rhs) {
-                    LatticeValue::Constant(ConstantValue::I32(result))
-                } else {
-                    LatticeValue::Top
-                }
-            }
+            Add => lhs
+                .checked_add(rhs)
+                .map_or(LatticeValue::Top, |result| LatticeValue::Constant(ConstantValue::I32(result))),
+            Sub => lhs
+                .checked_sub(rhs)
+                .map_or(LatticeValue::Top, |result| LatticeValue::Constant(ConstantValue::I32(result))),
+            Mul => lhs
+                .checked_mul(rhs)
+                .map_or(LatticeValue::Top, |result| LatticeValue::Constant(ConstantValue::I32(result))),
             Div => {
                 if rhs == 0 {
                     // Division by zero → Top + warning (handled by caller)
@@ -84,18 +72,14 @@ impl ConstantEvaluator {
     }
 
     /// Evaluates a unary operation on a constant value
+    #[must_use]
     pub fn eval_unary_i32(op: UnaryOp, operand: i32) -> LatticeValue {
-        use UnaryOp::*;
+        use UnaryOp::{Neg, Not};
 
         match op {
-            Neg => {
-                if let Some(result) = operand.checked_neg() {
-                    LatticeValue::Constant(ConstantValue::I32(result))
-                } else {
-                    // Overflow (e.g., -i32::MIN) → Top
-                    LatticeValue::Top
-                }
-            }
+            Neg => operand
+                .checked_neg()
+                .map_or(LatticeValue::Top, |result| LatticeValue::Constant(ConstantValue::I32(result))),
             Not => LatticeValue::Top, // Not is for booleans, not i32
         }
     }
@@ -105,35 +89,26 @@ impl ConstantEvaluator {
     // ========================================================================
 
     /// Evaluates binary operations on I8 values
+    #[must_use]
     pub fn eval_binary_i8(op: BinaryOp, lhs: i8, rhs: i8) -> LatticeValue {
-        use BinaryOp::*;
+        use BinaryOp::{Add, And, Div, Eq, Ge, Gt, Le, Lt, Mod, Mul, Ne, Or, Sub};
 
         match op {
-            Add => {
-                lhs.checked_add(rhs).map(|r| LatticeValue::Constant(ConstantValue::I8(r))).unwrap_or(LatticeValue::Top)
-            }
-            Sub => {
-                lhs.checked_sub(rhs).map(|r| LatticeValue::Constant(ConstantValue::I8(r))).unwrap_or(LatticeValue::Top)
-            }
-            Mul => {
-                lhs.checked_mul(rhs).map(|r| LatticeValue::Constant(ConstantValue::I8(r))).unwrap_or(LatticeValue::Top)
-            }
+            Add => lhs.checked_add(rhs).map_or(LatticeValue::Top, |r| LatticeValue::Constant(ConstantValue::I8(r))),
+            Sub => lhs.checked_sub(rhs).map_or(LatticeValue::Top, |r| LatticeValue::Constant(ConstantValue::I8(r))),
+            Mul => lhs.checked_mul(rhs).map_or(LatticeValue::Top, |r| LatticeValue::Constant(ConstantValue::I8(r))),
             Div => {
                 if rhs == 0 {
                     LatticeValue::Top
                 } else {
-                    lhs.checked_div(rhs)
-                        .map(|r| LatticeValue::Constant(ConstantValue::I8(r)))
-                        .unwrap_or(LatticeValue::Top)
+                    lhs.checked_div(rhs).map_or(LatticeValue::Top, |r| LatticeValue::Constant(ConstantValue::I8(r)))
                 }
             }
             Mod => {
                 if rhs == 0 {
                     LatticeValue::Top
                 } else {
-                    lhs.checked_rem(rhs)
-                        .map(|r| LatticeValue::Constant(ConstantValue::I8(r)))
-                        .unwrap_or(LatticeValue::Top)
+                    lhs.checked_rem(rhs).map_or(LatticeValue::Top, |r| LatticeValue::Constant(ConstantValue::I8(r)))
                 }
             }
             Eq | Ne | Lt | Le | Gt | Ge | And | Or => LatticeValue::Top,
@@ -141,12 +116,11 @@ impl ConstantEvaluator {
     }
 
     /// Evaluates unary operations on I8 values
+    #[must_use]
     pub fn eval_unary_i8(op: UnaryOp, operand: i8) -> LatticeValue {
-        use UnaryOp::*;
+        use UnaryOp::{Neg, Not};
         match op {
-            Neg => {
-                operand.checked_neg().map(|r| LatticeValue::Constant(ConstantValue::I8(r))).unwrap_or(LatticeValue::Top)
-            }
+            Neg => operand.checked_neg().map_or(LatticeValue::Top, |r| LatticeValue::Constant(ConstantValue::I8(r))),
             Not => LatticeValue::Top,
         }
     }
@@ -156,6 +130,7 @@ impl ConstantEvaluator {
     // ========================================================================
 
     /// Evaluates binary operations on I16 values
+    #[must_use]
     pub fn eval_binary_i16(op: BinaryOp, lhs: i16, rhs: i16) -> LatticeValue {
         use BinaryOp::{Add, And, Div, Eq, Ge, Gt, Le, Lt, Mod, Mul, Ne, Or, Sub};
 
@@ -182,6 +157,7 @@ impl ConstantEvaluator {
     }
 
     /// Evaluates unary operations on I16 values
+    #[must_use]
     pub fn eval_unary_i16(op: UnaryOp, operand: i16) -> LatticeValue {
         use UnaryOp::{Neg, Not};
         match op {
@@ -719,7 +695,8 @@ impl ConstantEvaluator {
 }
 
 /// Binary operations
-#[derive(Debug, Clone, Copy, PartialEq, Eq)]
+#[derive(Debug, Clone, Copy, PartialEq)]
+#[allow(clippy::derive_partial_eq_without_eq)]
 pub enum BinaryOp {
     // Arithmetic
     Add,

@@ -41,17 +41,18 @@ pub enum DataLayout {
 impl DataLayout {
     /// Returns the data layout string without allocation.
     /// This can be used in const contexts unlike Display.
-    #[inline(always)]
+    #[inline]
+    #[must_use]
     pub const fn as_str(&self) -> &'static str {
         match self {
-            DataLayout::LinuxX86_64 => "e-m:e-p270:32:32-p271:32:32-p272:64:64-i64:64-f80:128-n8:16:32:64-S128",
-            DataLayout::LinuxAArch64 => "e-m:e-i8:8:32-i16:16:32-i64:64-i128:128-n32:64-S128",
-            DataLayout::WindowsX86_64 => "e-m:w-p270:32:32-p271:32:32-p272:64:64-i64:64-f80:128-n8:16:32:64-S128",
-            DataLayout::MacOSX86_64 => "e-m:o-p270:32:32-p271:32:32-p272:64:64-i64:64-f80:128-n8:16:32:64-S128",
-            DataLayout::FreeBSDX86_64 => "e-m:e-p270:32:32-p271:32:32-p272:64:64-i64:64-f80:128-n8:16:32:64-S128",
-            DataLayout::NetBSDX86_64 => "e-m:e-p270:32:32-p271:32:32-p272:64:64-i64:64-f80:128-n8:16:32:64-S128",
-            DataLayout::OpenBSDX86_64 => "e-m:e-p270:32:32-p271:32:32-p272:64:64-i64:64-f80:128-n8:16:32:64-S128",
-            DataLayout::DragonFlyX86_64 => "e-m:e-p270:32:32-p271:32:32-p272:64:64-i64:64-f80:128-n8:16:32:64-S128",
+            Self::LinuxAArch64 => "e-m:e-i8:8:32-i16:16:32-i64:64-i128:128-n32:64-S128",
+            Self::WindowsX86_64 => "e-m:w-p270:32:32-p271:32:32-p272:64:64-i64:64-f80:128-n8:16:32:64-S128",
+            Self::LinuxX86_64
+            | Self::FreeBSDX86_64
+            | Self::NetBSDX86_64
+            | Self::OpenBSDX86_64
+            | Self::DragonFlyX86_64 => "e-m:e-p270:32:32-p271:32:32-p272:64:64-i64:64-f80:128-n8:16:32:64-S128",
+            Self::MacOSX86_64 => "e-m:o-p270:32:32-p271:32:32-p272:64:64-i64:64-f80:128-n8:16:32:64-S128",
         }
     }
 }
@@ -71,10 +72,10 @@ impl fmt::Display for DataLayout {
 ///
 /// # Supported Targets
 ///
-/// - **x86_64**: 64-bit x86 architecture (Intel/AMD)
-/// - **aarch64**: 64-bit ARM architecture (ARM64)
-/// - **i686**: 32-bit x86 architecture
-/// - **wasm32**: WebAssembly 32-bit
+/// - **`x86_64`**: 64-bit x86 architecture (Intel/AMD)
+/// - **`aarch64`**: 64-bit ARM architecture (ARM64)
+/// - **`i686`**: 32-bit x86 architecture
+/// - **`wasm32`**: WebAssembly 32-bit
 ///
 /// # Operating Systems
 ///
@@ -103,18 +104,19 @@ pub enum TargetTriple {
 }
 
 impl TargetTriple {
-    #[inline(always)]
+    #[inline]
+    #[must_use]
     pub const fn as_str(&self) -> &'static str {
         match self {
-            TargetTriple::X86_64UnknownLinuxGnu => "x86_64-unknown-linux-gnu",
-            TargetTriple::X86_64PcWindowsGnu => "x86_64-pc-windows-gnu",
-            TargetTriple::X86_64AppleDarwin => "x86_64-apple-darwin",
-            TargetTriple::AArch64UnknownLinuxGnu => "aarch64-unknown-linux-gnu",
-            TargetTriple::AArch64AppleDarwin => "aarch64-apple-darwin",
-            TargetTriple::AArch64PcWindowsGnu => "aarch64-pc-windows-gnu",
-            TargetTriple::I686PcWindowsGnu => "i686-pc-windows-gnu",
-            TargetTriple::I686UnknownLinuxGnu => "i686-unknown-linux-gnu",
-            TargetTriple::Wasm32UnknownEmscripten => "wasm32-unknown-emscripten",
+            Self::X86_64UnknownLinuxGnu => "x86_64-unknown-linux-gnu",
+            Self::X86_64PcWindowsGnu => "x86_64-pc-windows-gnu",
+            Self::X86_64AppleDarwin => "x86_64-apple-darwin",
+            Self::AArch64UnknownLinuxGnu => "aarch64-unknown-linux-gnu",
+            Self::AArch64AppleDarwin => "aarch64-apple-darwin",
+            Self::AArch64PcWindowsGnu => "aarch64-pc-windows-gnu",
+            Self::I686PcWindowsGnu => "i686-pc-windows-gnu",
+            Self::I686UnknownLinuxGnu => "i686-unknown-linux-gnu",
+            Self::Wasm32UnknownEmscripten => "wasm32-unknown-emscripten",
         }
     }
 }
@@ -182,16 +184,17 @@ impl Module {
     }
 
     /// Sets the data layout.
-    pub fn set_data_layout(&mut self, layout: DataLayout) {
+    pub const fn set_data_layout(&mut self, layout: DataLayout) {
         self.data_layout = layout;
     }
 
     /// Sets the target triple.
-    pub fn set_target_triple(&mut self, triple: TargetTriple) {
+    pub const fn set_target_triple(&mut self, triple: TargetTriple) {
         self.target_triple = triple;
     }
 
     /// Finds a function by name (immutable reference).
+    #[must_use]
     pub fn get_function(&self, name: &str) -> Option<&Function> {
         self.functions.iter().find(|f| f.name.as_ref() == name)
     }
@@ -200,12 +203,14 @@ impl Module {
         self.functions.iter_mut().find(|f| f.name.as_ref() == name)
     }
     /// Returns all functions in the module.
+    #[must_use]
     pub fn functions(&self) -> &[Function] {
         &self.functions
     }
 
     /// Returns the data layout.
-    pub fn data_layout(&self) -> &DataLayout {
+    #[must_use]
+    pub const fn data_layout(&self) -> &DataLayout {
         &self.data_layout
     }
 

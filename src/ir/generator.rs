@@ -1171,6 +1171,7 @@ impl IrGenerator {
     /// ```ignore
     /// let value = generator.generate_literal(LiteralValue::Number(Number::I32(42)), span);
     /// ```
+    #[allow(clippy::unused_self)]
     fn generate_literal(&self, value: LiteralValue, span: SourceSpan) -> Value {
         match value {
             LiteralValue::Number(num) => match num {
@@ -1228,6 +1229,7 @@ impl IrGenerator {
     /// // x + y
     /// let result = generator.generate_binary(func, x_expr, BinaryOp::Add, y_expr, span);
     /// ```
+    #[allow(clippy::unwrap_used, clippy::needless_pass_by_value)]
     fn generate_binary(
         &mut self, func: &mut Function, left: Expr, op: BinaryOp, right: Expr, span: SourceSpan,
     ) -> Value {
@@ -1257,9 +1259,9 @@ impl IrGenerator {
                 right: promoted_right_val,
                 ty: result_ty.clone(),
             },
-            span.clone(),
+            span,
         )
-        .with_result(Value::new_temporary(dest_id, result_ty.clone()));
+        .with_result(Value::new_temporary(dest_id, result_ty));
 
         self.add_instruction(bin_inst.clone());
         bin_inst.result.unwrap()
@@ -1287,14 +1289,15 @@ impl IrGenerator {
     /// // -x
     /// let result = generator.generate_unary(func, UnaryOp::Neg, x_expr, span);
     /// ```
+    #[allow(clippy::unwrap_used, clippy::needless_pass_by_value)]
     fn generate_unary(&mut self, func: &mut Function, op: UnaryOp, expr: Expr, span: SourceSpan) -> Value {
         let ir_op: IrUnaryOp = op.into();
         let operand = self.generate_expr(func, expr);
         let ty = operand.ty.clone();
         let dest_id = self.new_temp();
 
-        let unary_inst = Instruction::new(InstructionKind::Unary { op: ir_op, operand, ty: ty.clone() }, span.clone())
-            .with_result(Value::new_temporary(dest_id, ty.clone()));
+        let unary_inst = Instruction::new(InstructionKind::Unary { op: ir_op, operand, ty: ty.clone() }, span)
+            .with_result(Value::new_temporary(dest_id, ty));
 
         self.add_instruction(unary_inst.clone());
         unary_inst.result.unwrap()
@@ -1323,6 +1326,7 @@ impl IrGenerator {
     /// ```ignore
     /// let var_value = generator.generate_variable("x".into(), span);
     /// ```
+    #[allow(clippy::needless_pass_by_value)]
     fn generate_variable(&mut self, name: Arc<str>, span: SourceSpan) -> Value {
         self.scope_manager.lookup(&name).cloned().unwrap_or_else(|| {
             self.new_error(Arc::from(format!("Undefined variable '{name}'")), span.clone());
@@ -1363,8 +1367,7 @@ impl IrGenerator {
 
         let value_val = self.generate_expr(func, value);
 
-        let store_inst =
-            Instruction::new(InstructionKind::Store { value: value_val.clone(), dest: target_val }, span.clone());
+        let store_inst = Instruction::new(InstructionKind::Store { value: value_val.clone(), dest: target_val }, span);
         self.add_instruction(store_inst);
 
         value_val
@@ -1386,7 +1389,7 @@ impl IrGenerator {
     /// let temp_value = Value::new_temporary(temp_id, IrType::I32);
     /// ```
     #[inline]
-    pub fn new_temp(&mut self) -> u64 {
+    pub const fn new_temp(&mut self) -> u64 {
         let id = self.temp_counter;
         self.temp_counter += 1;
         id
@@ -1399,7 +1402,7 @@ impl IrGenerator {
     ///
     /// # Arguments
     ///
-    /// * `prefix` - The prefix for the block label (e.g., "loop_start", "then")
+    /// * `prefix` - The prefix for the block label (e.g., "`loop_start`", "then")
     ///
     /// # Returns
     ///
@@ -1492,14 +1495,14 @@ impl IrGenerator {
     /// ```
     fn add_terminator(&mut self, _func: &mut Function, term: Terminator) {
         if let Some(block) = &mut self.current_block {
-            block.terminator = term.clone();
+            block.terminator = term;
             // Don't connect blocks here - they'll be connected when the block is finalized
         }
     }
 
     /// Generates array access for assignment targets.
     ///
-    /// Calculates the address of an array element using GetElementPtr (GEP)
+    /// Calculates the address of an array element using `GetElementPtr (GEP)`
     /// and returns the pointer without loading the value. This allows the
     /// pointer to be used as the target of a store instruction.
     ///
@@ -1524,6 +1527,7 @@ impl IrGenerator {
     /// // arr[5] = 42; (target generation)
     /// let ptr = generator.generate_array_access_target(func, arr_expr, index_expr, span);
     /// ```
+    #[allow(clippy::unwrap_used)]
     fn generate_array_access_target(
         &mut self, func: &mut Function, array: Expr, index: Expr, span: SourceSpan,
     ) -> Value {
@@ -1547,7 +1551,7 @@ impl IrGenerator {
         let tmp = self.new_temp();
         let gep = Instruction::new(
             InstructionKind::GetElementPtr { base: base_val, index: index_val, element_ty: element_ty.clone() },
-            span.clone(),
+            span,
         )
         .with_result(Value::new_temporary(tmp, IrType::Pointer(Box::new(element_ty))));
 
@@ -1585,14 +1589,14 @@ impl IrGenerator {
     /// // result = add(x, y)
     /// let result = generator.generate_call(func, callee_expr, arg_exprs, span);
     /// ```
+    #[allow(clippy::unwrap_used, clippy::needless_pass_by_value)] // Due to detailed error handling
     fn generate_call(&mut self, func: &mut Function, callee: Expr, arguments: Vec<Expr>, span: SourceSpan) -> Value {
         // Get the function name from the callee expression
-        let func_name = match &callee {
-            Expr::Variable { name, .. } => name.clone(),
-            _ => {
-                self.new_error(Arc::from("Unsupported callee expression type"), callee.span().clone());
-                return Value::new_literal(IrLiteralValue::I32(0));
-            }
+        let func_name = if let Expr::Variable { name, .. } = &callee {
+            name.clone()
+        } else {
+            self.new_error(Arc::from("Unsupported callee expression type"), callee.span().clone());
+            return Value::new_literal(IrLiteralValue::I32(0));
         };
 
         // Generate values for all arguments
@@ -1603,28 +1607,25 @@ impl IrGenerator {
 
         // Look up the function signature in the symbol table
         let (return_type, func_value) = if let Some(func_decl) = self.scope_manager.lookup(&func_name) {
-            match &func_decl.ty {
-                IrType::Pointer(inner) => {
-                    // For function pointers, the return type is the pointed-to type
-                    let return_type = inner.as_ref().clone();
-                    (return_type, func_decl.clone())
-                }
-                _ => {
-                    // If we can't determine the return type, fall back to default
-                    self.new_error(
-                        Arc::from(format!("Function '{}' does not have a valid function pointer type", func_name)),
-                        span.clone(),
-                    );
-                    let return_type = IrType::I64; // Default assumption
-                    let func_value = Value::new_global(func_name, IrType::Pointer(Box::new(return_type.clone())));
-                    (return_type, func_value)
-                }
+            if let IrType::Pointer(inner) = &func_decl.ty {
+                // For function pointers, the return type is the pointed-to type
+                let return_type = inner.as_ref().clone();
+                (return_type, func_decl.clone())
+            } else {
+                // If we can't determine the return type, fall back to default
+                self.new_error(
+                    Arc::from(format!("Function '{func_name}' does not have a valid function pointer type")),
+                    span.clone(),
+                );
+                let return_type = IrType::I64; // Default assumption
+                let func_value = Value::new_global(func_name, IrType::Pointer(Box::new(return_type.clone())));
+                (return_type, func_value)
             }
         } else {
             // If function is not in symbol table, we might be calling a function
             // that is defined later or externally. Use a default return type.
             self.new_error(
-                Arc::from(format!("Function '{}' not found in symbol table, using default return type", func_name)),
+                Arc::from(format!("Function '{func_name}' not found in symbol table, using default return type")),
                 span.clone(),
             );
             let return_type = IrType::I64; // Default assumption
@@ -1637,11 +1638,9 @@ impl IrGenerator {
         let result_value = Value::new_temporary(dest_id, return_type.clone());
 
         // Create the call instruction
-        let call_inst = Instruction::new(
-            InstructionKind::Call { func: func_value, args: arg_values, ty: return_type },
-            span.clone(),
-        )
-        .with_result(result_value);
+        let call_inst =
+            Instruction::new(InstructionKind::Call { func: func_value, args: arg_values, ty: return_type }, span)
+                .with_result(result_value);
 
         self.add_instruction(call_inst.clone());
         call_inst.result.unwrap()

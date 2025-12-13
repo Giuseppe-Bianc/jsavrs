@@ -24,7 +24,7 @@
 //! 1. **Monotonicity**: Lattice values can only move upward (Bottom → Constant → Top), never downward
 //! 2. **SSA Preservation**: All transformations maintain SSA form - never modify LHS of assignments
 //! 3. **Dominance**: Definitions dominate uses before and after transformation
-//! 4. **Convergence**: Fixed-point iteration must terminate within max_iterations
+//! 4. **Convergence**: Fixed-point iteration must terminate within `max_iterations`
 //!
 //! # Phases
 //!

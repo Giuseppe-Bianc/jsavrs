@@ -153,12 +153,12 @@ impl fmt::Display for VectorOp {
     #[inline]
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
         match self {
-            VectorOp::Add => f.write_str("vadd"),
-            VectorOp::Sub => f.write_str("vsub"),
-            VectorOp::Mul => f.write_str("vmul"),
-            VectorOp::Div => f.write_str("vdiv"),
-            VectorOp::DotProduct => f.write_str("vdot"),
-            VectorOp::Shuffle => f.write_str("vshuffle"),
+            Self::Add => f.write_str("vadd"),
+            Self::Sub => f.write_str("vsub"),
+            Self::Mul => f.write_str("vmul"),
+            Self::Div => f.write_str("vdiv"),
+            Self::DotProduct => f.write_str("vdot"),
+            Self::Shuffle => f.write_str("vshuffle"),
         }
     }
 }
@@ -186,7 +186,7 @@ impl fmt::Display for VectorOp {
 ///     scope: Some(scope_id),
 /// };
 /// ```
-#[derive(Debug, Clone, PartialEq)]
+#[derive(Debug, Clone, PartialEq, Eq)]
 pub struct Instruction {
     pub kind: InstructionKind,
     pub result: Option<Value>,
@@ -202,12 +202,12 @@ pub struct Instruction {
 /// # Fields
 ///
 /// * `source_span` - The span in source code this instruction originated from
-#[derive(Debug, Clone, PartialEq)]
+#[derive(Debug, Clone, PartialEq, Eq)]
 pub struct DebugInfo {
     pub source_span: SourceSpan,
 }
 
-#[derive(Debug, Clone, PartialEq)]
+#[derive(Debug, Clone, PartialEq, Eq)]
 pub enum InstructionKind {
     Alloca { ty: IrType },
     Store { value: Value, dest: Value },
@@ -221,7 +221,7 @@ pub enum InstructionKind {
     Vector { op: VectorOp, operands: Vec<Value>, ty: IrType },
 }
 
-#[derive(Debug, Clone, Copy, PartialEq)]
+#[derive(Debug, Clone, Copy, PartialEq, Eq)]
 pub enum IrBinaryOp {
     Add,
     Subtract,
@@ -246,30 +246,30 @@ pub enum IrBinaryOp {
 impl From<BinaryOp> for IrBinaryOp {
     fn from(op: BinaryOp) -> Self {
         match op {
-            BinaryOp::Add => IrBinaryOp::Add,
-            BinaryOp::Subtract => IrBinaryOp::Subtract,
-            BinaryOp::Multiply => IrBinaryOp::Multiply,
-            BinaryOp::Divide => IrBinaryOp::Divide,
-            BinaryOp::Modulo => IrBinaryOp::Modulo,
-            BinaryOp::Equal => IrBinaryOp::Equal,
-            BinaryOp::NotEqual => IrBinaryOp::NotEqual,
-            BinaryOp::Less => IrBinaryOp::Less,
-            BinaryOp::LessEqual => IrBinaryOp::LessEqual,
-            BinaryOp::Greater => IrBinaryOp::Greater,
-            BinaryOp::GreaterEqual => IrBinaryOp::GreaterEqual,
-            BinaryOp::And => IrBinaryOp::And,
-            BinaryOp::Or => IrBinaryOp::Or,
-            BinaryOp::BitwiseAnd => IrBinaryOp::BitwiseAnd,
-            BinaryOp::BitwiseOr => IrBinaryOp::BitwiseOr,
-            BinaryOp::BitwiseXor => IrBinaryOp::BitwiseXor,
-            BinaryOp::ShiftLeft => IrBinaryOp::ShiftLeft,
-            BinaryOp::ShiftRight => IrBinaryOp::ShiftRight,
+            BinaryOp::Add => Self::Add,
+            BinaryOp::Subtract => Self::Subtract,
+            BinaryOp::Multiply => Self::Multiply,
+            BinaryOp::Divide => Self::Divide,
+            BinaryOp::Modulo => Self::Modulo,
+            BinaryOp::Equal => Self::Equal,
+            BinaryOp::NotEqual => Self::NotEqual,
+            BinaryOp::Less => Self::Less,
+            BinaryOp::LessEqual => Self::LessEqual,
+            BinaryOp::Greater => Self::Greater,
+            BinaryOp::GreaterEqual => Self::GreaterEqual,
+            BinaryOp::And => Self::And,
+            BinaryOp::Or => Self::Or,
+            BinaryOp::BitwiseAnd => Self::BitwiseAnd,
+            BinaryOp::BitwiseOr => Self::BitwiseOr,
+            BinaryOp::BitwiseXor => Self::BitwiseXor,
+            BinaryOp::ShiftLeft => Self::ShiftLeft,
+            BinaryOp::ShiftRight => Self::ShiftRight,
         }
     }
 }
 
 #[repr(u8)]
-#[derive(Debug, Clone, Copy, PartialEq)]
+#[derive(Debug, Clone, Copy, PartialEq, Eq)]
 pub enum IrUnaryOp {
     Negate,
     Not,
@@ -278,23 +278,26 @@ pub enum IrUnaryOp {
 impl From<UnaryOp> for IrUnaryOp {
     fn from(op: UnaryOp) -> Self {
         match op {
-            UnaryOp::Negate => IrUnaryOp::Negate,
-            UnaryOp::Not => IrUnaryOp::Not,
+            UnaryOp::Negate => Self::Negate,
+            UnaryOp::Not => Self::Not,
         }
     }
 }
 
 impl Instruction {
-    pub fn new(kind: InstructionKind, span: SourceSpan) -> Self {
-        Instruction { kind, result: None, debug_info: DebugInfo { source_span: span }, scope: None }
+    #[must_use]
+    pub const fn new(kind: InstructionKind, span: SourceSpan) -> Self {
+        Self { kind, result: None, debug_info: DebugInfo { source_span: span }, scope: None }
     }
 
+    #[must_use]
     pub fn with_result(mut self, result: Value) -> Self {
         self.result = Some(result);
         self
     }
 
-    pub fn with_scope(mut self, scope: ScopeId) -> Self {
+    #[must_use]
+    pub const fn with_scope(mut self, scope: ScopeId) -> Self {
         self.scope = Some(scope);
         self
     }
@@ -397,24 +400,24 @@ impl fmt::Display for IrBinaryOp {
     #[inline]
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
         match self {
-            IrBinaryOp::Add => f.write_str("add"),
-            IrBinaryOp::Subtract => f.write_str("sub"),
-            IrBinaryOp::Multiply => f.write_str("mul"),
-            IrBinaryOp::Divide => f.write_str("div"),
-            IrBinaryOp::Modulo => f.write_str("mod"),
-            IrBinaryOp::Equal => f.write_str("eq"),
-            IrBinaryOp::NotEqual => f.write_str("ne"),
-            IrBinaryOp::Less => f.write_str("lt"),
-            IrBinaryOp::LessEqual => f.write_str("le"),
-            IrBinaryOp::Greater => f.write_str("gt"),
-            IrBinaryOp::GreaterEqual => f.write_str("ge"),
-            IrBinaryOp::And => f.write_str("and"),
-            IrBinaryOp::Or => f.write_str("or"),
-            IrBinaryOp::BitwiseAnd => f.write_str("bitand"),
-            IrBinaryOp::BitwiseOr => f.write_str("bitor"),
-            IrBinaryOp::BitwiseXor => f.write_str("bitxor"),
-            IrBinaryOp::ShiftLeft => f.write_str("shl"),
-            IrBinaryOp::ShiftRight => f.write_str("shr"),
+            Self::Add => f.write_str("add"),
+            Self::Subtract => f.write_str("sub"),
+            Self::Multiply => f.write_str("mul"),
+            Self::Divide => f.write_str("div"),
+            Self::Modulo => f.write_str("mod"),
+            Self::Equal => f.write_str("eq"),
+            Self::NotEqual => f.write_str("ne"),
+            Self::Less => f.write_str("lt"),
+            Self::LessEqual => f.write_str("le"),
+            Self::Greater => f.write_str("gt"),
+            Self::GreaterEqual => f.write_str("ge"),
+            Self::And => f.write_str("and"),
+            Self::Or => f.write_str("or"),
+            Self::BitwiseAnd => f.write_str("bitand"),
+            Self::BitwiseOr => f.write_str("bitor"),
+            Self::BitwiseXor => f.write_str("bitxor"),
+            Self::ShiftLeft => f.write_str("shl"),
+            Self::ShiftRight => f.write_str("shr"),
         }
     }
 }
@@ -423,8 +426,8 @@ impl fmt::Display for IrUnaryOp {
     #[inline]
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
         match self {
-            IrUnaryOp::Negate => f.write_str("neg"),
-            IrUnaryOp::Not => f.write_str("not"),
+            Self::Negate => f.write_str("neg"),
+            Self::Not => f.write_str("not"),
         }
     }
 }
