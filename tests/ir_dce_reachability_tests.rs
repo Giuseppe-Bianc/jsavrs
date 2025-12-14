@@ -25,7 +25,7 @@ mod reachability_tests {
     fn create_test_function(name: &str) -> Function {
         let mut func = Function::new(name, vec![], IrType::Void);
         // Create the entry block explicitly
-        let entry_label = format!("entry_{}", name);
+        let entry_label = format!("entry_{name}");
         func.add_block(&entry_label, dummy_span());
         func
     }

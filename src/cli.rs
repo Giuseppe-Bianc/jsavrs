@@ -67,6 +67,7 @@ const HELP_STR: &str = r"
 /// let styles = custom_styles();
 /// // Use with clap Parser derive macro
 /// ```
+#[must_use]
 pub fn custom_styles() -> Styles {
     Styles::styled()
         .header(AnsiColor::BrightCyan.on_default() | Effects::BOLD)
@@ -101,7 +102,7 @@ pub fn custom_styles() -> Styles {
 /// ```
 fn parse_vn_file(s: &str) -> Result<PathBuf, String> {
     let p = PathBuf::from(s);
-    let is_vn = p.extension().and_then(|e| e.to_str()).map(|e| e.eq_ignore_ascii_case("vn")).unwrap_or(false);
+    let is_vn = p.extension().and_then(|e| e.to_str()).is_some_and(|e| e.eq_ignore_ascii_case("vn"));
     if is_vn { Ok(p) } else { Err("expected a path to a .vn file".into()) }
 }
 

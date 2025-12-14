@@ -135,6 +135,7 @@ generate_help_test!(test_ir_error_help, IrGeneratorError, 4);
 macro_rules! generate_set_message_test {
     ($test_name:ident, $error_type:ident, $line:expr) => {
         #[test]
+
         fn $test_name() {
             make_error!(mut error, $error_type, $line);
             error.set_message("New message".into());
@@ -144,6 +145,7 @@ macro_rules! generate_set_message_test {
 }
 
 #[test]
+
 fn test_set_message_asm_generator() {
     make_error_lineless!(mut error, AsmGeneratorError);
     error.set_message("New message".into());

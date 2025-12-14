@@ -176,6 +176,7 @@ fn test_signedness_warning_some_when_valid() {
 // ============================================================================
 
 #[test]
+#[allow(clippy::unreadable_literal)]
 fn test_unicode_warning_none_for_non_char_target() {
     // Target type is not Char
     let result = generate_unicode_validation_warning(0xD800, &IrType::U32);
@@ -189,6 +190,7 @@ fn test_unicode_warning_none_for_non_char_target() {
 }
 
 #[test]
+#[allow(clippy::unreadable_literal)]
 fn test_unicode_warning_none_for_valid_scalars() {
     // Valid Unicode scalar values should not generate warnings
     let result = generate_unicode_validation_warning(0x0041, &IrType::Char); // 'A'
@@ -221,6 +223,7 @@ fn test_unicode_warning_some_for_surrogates() {
 }
 
 #[test]
+#[allow(clippy::unreadable_literal)]
 fn test_unicode_warning_some_for_out_of_range() {
     // Values beyond U+10FFFF should generate warnings
     let result = generate_unicode_validation_warning(0x110000, &IrType::Char);

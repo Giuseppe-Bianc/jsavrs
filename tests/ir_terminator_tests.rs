@@ -19,7 +19,7 @@ fn return_terminator_edge_cases() {
 
     assert!(term.is_terminator());
     assert!(term.get_targets().is_empty());
-    assert_eq!(format!("{}", term), "ret \"\\n\\t\\\\\\\"\" string");
+    assert_eq!(format!("{term}"), "ret \"\\n\\t\\\\\\\"\" string");
 
     // Valori numerici edge
     let edge_cases = [(i32::MIN, "ret -2147483648i32 i32"), (i32::MAX, "ret 2147483647i32 i32"), (0, "ret 0i32 i32")];
@@ -28,7 +28,7 @@ fn return_terminator_edge_cases() {
         let value = create_i32_value(val);
         let term = Terminator::new(TerminatorKind::Return { value: value.clone(), ty: IrType::I32 }, dummy_span());
 
-        assert_eq!(format!("{}", term), expected);
+        assert_eq!(format!("{term}"), expected);
     }
 }
 
@@ -39,12 +39,12 @@ fn branch_terminator_edge_cases() {
 
     assert!(term.is_terminator());
     assert_eq!(term.get_targets(), vec!["".into()]);
-    assert_eq!(format!("{}", term), "br ");
+    assert_eq!(format!("{term}"), "br ");
 
     // Caratteri speciali
     let term = Terminator::new(TerminatorKind::Branch { label: "label$@1".into() }, dummy_span());
 
-    assert_eq!(format!("{}", term), "br label$@1");
+    assert_eq!(format!("{term}"), "br label$@1");
 }
 
 #[test]
@@ -61,7 +61,7 @@ fn conditional_branch_edge_cases() {
 
     assert!(term.is_terminator());
     assert_eq!(term.get_targets(), vec!["shared".into(), "shared".into()]);
-    assert_eq!(format!("{}", term), "br true ? shared : shared");
+    assert_eq!(format!("{term}"), "br true ? shared : shared");
 
     // Label vuote
     let term = Terminator::new(
@@ -73,7 +73,7 @@ fn conditional_branch_edge_cases() {
         dummy_span(),
     );
 
-    assert_eq!(format!("{}", term), "br false ?  : ");
+    assert_eq!(format!("{term}"), "br false ?  : ");
 }
 
 #[test]
@@ -91,7 +91,7 @@ fn switch_terminator_edge_cases() {
 
     assert!(term.is_terminator());
     assert_eq!(term.get_targets(), vec!["default".into()]);
-    assert_eq!(format!("{}", term), "switch 0i32 i32: , default default");
+    assert_eq!(format!("{term}"), "switch 0i32 i32: , default default");
 
     // Single case
     let term = Terminator::new(
@@ -105,7 +105,7 @@ fn switch_terminator_edge_cases() {
     );
 
     assert_eq!(term.get_targets(), vec!["case1".into(), "default".into()]);
-    assert_eq!(format!("{}", term), "switch 42i32 i32: 1i32 => case1, default default");
+    assert_eq!(format!("{term}"), "switch 42i32 i32: 1i32 => case1, default default");
 
     // Valori estremi nei cases
     let term = Terminator::new(
@@ -119,7 +119,7 @@ fn switch_terminator_edge_cases() {
     );
 
     assert_eq!(
-        format!("{}", term),
+        format!("{term}"),
         "switch -2147483648i32 i32: -2147483648i32 => min, 2147483647i32 => max, default default"
     );
 }
@@ -134,7 +134,7 @@ fn indirect_branch_edge_cases() {
 
     assert!(term.is_terminator());
     assert!(term.get_targets().is_empty());
-    assert_eq!(format!("{}", term), "ibr 43981i32 []");
+    assert_eq!(format!("{term}"), "ibr 43981i32 []");
 
     // Label vuote
     let term = Terminator::new(
@@ -146,7 +146,7 @@ fn indirect_branch_edge_cases() {
     );
 
     assert_eq!(term.get_targets(), vec!["".into(), "label".into()]);
-    assert_eq!(format!("{}", term), "ibr 0i32 [, label]");
+    assert_eq!(format!("{term}"), "ibr 0i32 [, label]");
 }
 
 #[test]
@@ -155,7 +155,7 @@ fn unreachable_terminator() {
 
     assert!(!term.is_terminator());
     assert!(term.get_targets().is_empty());
-    assert_eq!(format!("{}", term), "unreachable");
+    assert_eq!(format!("{term}"), "unreachable");
 }
 
 #[test]
@@ -193,11 +193,11 @@ fn display_floating_point_edge_cases() {
     let float_val = Value::new_literal(IrLiteralValue::F32(42.0));
     let term = Terminator::new(TerminatorKind::Return { value: float_val, ty: IrType::F32 }, dummy_span());
 
-    assert_eq!(format!("{}", term), "ret 42.0f32 f32");
+    assert_eq!(format!("{term}"), "ret 42.0f32 f32");
 
     // Valori float non interi
     let float_val = Value::new_literal(IrLiteralValue::F64(3.14159));
     let term = Terminator::new(TerminatorKind::Return { value: float_val, ty: IrType::F64 }, dummy_span());
 
-    assert_eq!(format!("{}", term), "ret 3.14159f64 f64");
+    assert_eq!(format!("{term}"), "ret 3.14159f64 f64");
 }

@@ -178,8 +178,7 @@ fn test_simple_if_else_transformation() {
     func.add_instruction("then", store_then);
 
     let const_20 = Value::new_literal(IrLiteralValue::I32(20));
-    let store_else =
-        Instruction::new(InstructionKind::Store { value: const_20, dest: x_var.clone() }, SourceSpan::default());
+    let store_else = Instruction::new(InstructionKind::Store { value: const_20, dest: x_var }, SourceSpan::default());
     func.add_instruction("else", store_else);
 
     // Transform to SSA
@@ -188,7 +187,7 @@ fn test_simple_if_else_transformation() {
 
     // The transformation should succeed
     if let Err(e) = &result {
-        eprintln!("SSA transformation error in test_simple_if_else_transformation: {}", e);
+        eprintln!("SSA transformation error in test_simple_if_else_transformation: {e}");
     }
     assert!(result.is_ok());
 }
@@ -233,8 +232,7 @@ fn test_loop_transformation() {
     let _load_i =
         Instruction::new(InstructionKind::Load { src: i_var.clone(), ty: IrType::I32 }, SourceSpan::default());
     // For simplicity, we'll just add a store that overwrites i in the loop body
-    let store_inc =
-        Instruction::new(InstructionKind::Store { value: const_1, dest: i_var.clone() }, SourceSpan::default());
+    let store_inc = Instruction::new(InstructionKind::Store { value: const_1, dest: i_var }, SourceSpan::default());
     func.add_instruction("loop_body", store_inc);
 
     // Transform to SSA
@@ -243,7 +241,7 @@ fn test_loop_transformation() {
 
     // The transformation should succeed
     if let Err(e) = &result {
-        eprintln!("SSA transformation error in test_loop_transformation: {}", e);
+        eprintln!("SSA transformation error in test_loop_transformation: {e}");
     }
     assert!(result.is_ok());
 }

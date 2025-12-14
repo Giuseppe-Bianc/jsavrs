@@ -11,6 +11,7 @@ mod integration_tests {
         ConservativeReason, ConservativeWarning, InstructionIndex, OptimizationStats,
     };
     use petgraph::graph::NodeIndex;
+    const INSTRUCTION_COUNT: usize = 1_000;
 
     // ========================================================================
     // Unit Tests for OptimizationStats (T014)
@@ -89,9 +90,9 @@ mod integration_tests {
         let report = stats.format_report("test_function");
         assert!(report.contains("test_function"));
         assert!(report.contains("42"));
-        assert!(report.contains("7"));
-        assert!(report.contains("3"));
-        assert!(report.contains("1")); // warning count
+        assert!(report.contains('7'));
+        assert!(report.contains('3'));
+        assert!(report.contains('1')); // warning count
     }
 
     #[test]
@@ -103,11 +104,11 @@ mod integration_tests {
             conservative_warnings: vec![],
         };
 
-        let display = format!("{}", stats);
+        let display = format!("{stats}");
         assert!(display.contains("15"));
-        assert!(display.contains("4"));
-        assert!(display.contains("2"));
-        assert!(display.contains("0")); // warnings count
+        assert!(display.contains('4'));
+        assert!(display.contains('2'));
+        assert!(display.contains('0')); // warnings count
     }
 
     // ========================================================================
@@ -140,7 +141,7 @@ mod integration_tests {
     fn test_conservative_warning_display_with_block() {
         let warning = ConservativeWarning::new("test_inst".into(), ConservativeReason::MayAlias, Some("bb1".into()));
 
-        let display = format!("{}", warning);
+        let display = format!("{warning}");
         assert!(display.contains("test_inst"));
         assert!(display.contains("bb1"));
         assert!(display.contains("alias"));
@@ -150,7 +151,7 @@ mod integration_tests {
     fn test_conservative_warning_display_without_block() {
         let warning = ConservativeWarning::new("volatile_load".into(), ConservativeReason::PotentialSideEffect, None);
 
-        let display = format!("{}", warning);
+        let display = format!("{warning}");
         assert!(display.contains("volatile_load"));
         assert!(display.contains("side effect"));
         assert!(!display.contains("in block"));
@@ -198,7 +199,7 @@ mod integration_tests {
         ];
 
         for reason in &reasons {
-            let display = format!("{}", reason);
+            let display = format!("{reason}");
             assert!(!display.is_empty());
             assert_eq!(display, reason.explanation());
         }
@@ -250,12 +251,12 @@ mod integration_tests {
     #[test]
     fn test_instruction_index_display() {
         let idx = InstructionIndex::new(NodeIndex::new(3), 7);
-        let display = format!("{}", idx);
+        let display = format!("{idx}");
 
         assert!(display.contains("block"));
-        assert!(display.contains("3"));
+        assert!(display.contains('3'));
         assert!(display.contains("inst"));
-        assert!(display.contains("7"));
+        assert!(display.contains('7'));
     }
 
     #[test]
@@ -288,7 +289,7 @@ mod integration_tests {
 
     fn create_test_function(name: &str) -> Function {
         let mut func = Function::new(name, vec![], IrType::I32);
-        let entry_label = format!("entry_{}", name);
+        let entry_label = format!("entry_{name}");
         func.add_block(&entry_label, dummy_span());
         func
     }
@@ -327,7 +328,7 @@ mod integration_tests {
         let mul_instr = Instruction {
             kind: InstructionKind::Binary {
                 op: IrBinaryOp::Multiply,
-                left: t1.clone(),
+                left: t1,
                 right: Value::new_literal(IrLiteralValue::I32(3)),
                 ty: IrType::I32,
             },
@@ -341,7 +342,7 @@ mod integration_tests {
         let sub_instr = Instruction {
             kind: InstructionKind::Binary {
                 op: IrBinaryOp::Subtract,
-                left: t2.clone(),
+                left: t2,
                 right: Value::new_literal(IrLiteralValue::I32(4)),
                 ty: IrType::I32,
             },
@@ -431,6 +432,7 @@ mod integration_tests {
     /// - Current liveness analysis is O(n²) in worst case
     /// - Future optimization: use worklist algorithm with def-use chains
     #[test]
+    #[allow(clippy::cast_possible_wrap, clippy::cast_possible_truncation)]
     fn test_performance_large_function() {
         use std::time::Instant;
 
@@ -440,7 +442,6 @@ mod integration_tests {
         // Generate 1,000 INDEPENDENT dead instructions (not cascading)
         // Each instruction is independently dead, allowing removal in single iteration
         // Note: 10k instructions would require algorithmic optimization (current O(n²) complexity)
-        const INSTRUCTION_COUNT: usize = 1_000;
 
         for i in 0..INSTRUCTION_COUNT {
             let temp = Value::new_temporary((i + 1) as u64, IrType::I32);
@@ -483,17 +484,15 @@ mod integration_tests {
         let optimized_func = &module.functions()[0];
         let entry_block = optimized_func.cfg.get_block(entry_label).expect("entry block");
 
-        assert_eq!(entry_block.instructions.len(), 0, "All {} dead instructions should be removed", INSTRUCTION_COUNT);
+        assert_eq!(entry_block.instructions.len(), 0, "All {INSTRUCTION_COUNT} dead instructions should be removed");
 
         // Performance assertion: must complete in <1 second
         assert!(
             duration.as_secs() < 1,
-            "DCE optimization took {:?}, expected <1s for {} instructions (current: ~200ms for 1k)",
-            duration,
-            INSTRUCTION_COUNT
+            "DCE optimization took {duration:?}, expected <1s for {INSTRUCTION_COUNT} instructions (current: ~200ms for 1k)"
         );
 
-        println!("✓ Performance: {} instructions optimized in {:?}", INSTRUCTION_COUNT, duration);
+        println!("✓ Performance: {INSTRUCTION_COUNT} instructions optimized in {duration:?}");
     }
 
     // ========================================================================
@@ -863,7 +862,7 @@ mod integration_tests {
                 ty: IrType::I32,
             },
             result: Some(live_temp.clone()),
-            debug_info: DebugInfo { source_span: line1_span.clone() },
+            debug_info: DebugInfo { source_span: line1_span },
             scope: None,
         };
 
@@ -877,7 +876,7 @@ mod integration_tests {
                 ty: IrType::I32,
             },
             result: Some(dead_temp),
-            debug_info: DebugInfo { source_span: line2_span.clone() },
+            debug_info: DebugInfo { source_span: line2_span },
             scope: None,
         };
 
@@ -888,8 +887,8 @@ mod integration_tests {
         func.set_terminator(
             entry,
             Terminator {
-                kind: TerminatorKind::Return { value: live_temp.clone(), ty: IrType::I32 },
-                debug_info: jsavrs::ir::terminator::DebugInfo { source_span: line3_span.clone() },
+                kind: TerminatorKind::Return { value: live_temp, ty: IrType::I32 },
+                debug_info: jsavrs::ir::terminator::DebugInfo { source_span: line3_span },
             },
         );
 
@@ -933,7 +932,7 @@ mod integration_tests {
         assert_eq!(terminator.debug_info.source_span.start.line, 3, "Terminator line number should be preserved");
 
         println!("✓ Debug information preserved after DCE optimization:");
-        println!("  - Source file: {}", source_file);
+        println!("  - Source file: {source_file}");
         println!(
             "  - Live instruction: line {}, col {}-{}",
             live_debug_after.source_span.start.line,
@@ -1006,7 +1005,7 @@ mod integration_tests {
         let outer_instr2 = Instruction {
             kind: InstructionKind::Binary {
                 op: IrBinaryOp::Add,
-                left: outer_live.clone(),
+                left: outer_live,
                 right: Value::new_literal(IrLiteralValue::I32(1)),
                 ty: IrType::I32,
             },
@@ -1023,7 +1022,7 @@ mod integration_tests {
         func.set_terminator(
             entry,
             Terminator {
-                kind: TerminatorKind::Return { value: outer_live2.clone(), ty: IrType::I32 },
+                kind: TerminatorKind::Return { value: outer_live2, ty: IrType::I32 },
                 debug_info: jsavrs::ir::terminator::DebugInfo { source_span: dummy_span() },
             },
         );

@@ -159,7 +159,7 @@ fn test_constant_value_hash_arrays() {
 
     let arr1 = IrConstantValue::Array { elements: vec![elem1.clone(), elem2.clone()] };
     let arr2 = IrConstantValue::Array { elements: vec![elem1.clone(), elem2.clone()] };
-    let arr3 = IrConstantValue::Array { elements: vec![elem2.clone(), elem1.clone()] };
+    let arr3 = IrConstantValue::Array { elements: vec![elem2, elem1] };
 
     assert_eq!(compute_hash(&arr1), compute_hash(&arr2), "Same arrays should hash identically");
     assert_ne!(compute_hash(&arr1), compute_hash(&arr3), "Different arrays should hash differently");
@@ -180,7 +180,7 @@ fn test_value_in_hashmap() {
     assert_eq!(map.len(), 1);
 
     // Inserting with key2 should replace the value
-    map.insert(key2.clone(), "second".to_string());
+    map.insert(key2, "second".to_string());
     assert_eq!(map.len(), 1);
     assert_eq!(map.get(&key1), Some(&"second".to_string()));
 }
@@ -228,7 +228,7 @@ fn test_complex_constant_hash() {
 
     let struct2 = IrConstantValue::Struct { name: Arc::from("Point"), elements: vec![field1.clone(), field2.clone()] };
 
-    let struct3 = IrConstantValue::Struct { name: Arc::from("Vector"), elements: vec![field1.clone(), field2.clone()] };
+    let struct3 = IrConstantValue::Struct { name: Arc::from("Vector"), elements: vec![field1, field2] };
 
     assert_eq!(compute_hash(&struct1), compute_hash(&struct2), "Same structs should hash identically");
     assert_ne!(compute_hash(&struct1), compute_hash(&struct3), "Structs with different names should hash differently");

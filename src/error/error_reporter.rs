@@ -14,11 +14,13 @@ fn format_simple_error(error_type: &str, message: impl std::fmt::Display) -> Str
 }
 
 impl ErrorReporter {
-    pub fn new(line_tracker: LineTracker) -> Self {
+    #[must_use]
+    pub const fn new(line_tracker: LineTracker) -> Self {
         Self { line_tracker }
     }
 
     /// Returns a formatted string containing all compile errors with source context
+    #[must_use]
     pub fn report_errors(&self, errors: Vec<CompileError>) -> String {
         errors
             .into_iter()

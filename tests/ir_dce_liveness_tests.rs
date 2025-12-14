@@ -25,7 +25,7 @@ mod liveness_tests {
 
     fn create_test_function(name: &str) -> Function {
         let mut func = Function::new(name, vec![], IrType::Void);
-        let entry_label = format!("entry_{}", name);
+        let entry_label = format!("entry_{name}");
         func.add_block(&entry_label, dummy_span());
         func
     }
@@ -96,7 +96,7 @@ mod liveness_tests {
         let instr2 = Instruction {
             kind: InstructionKind::Binary {
                 op: IrBinaryOp::Multiply,
-                left: t1.clone(), // Reuse same t1 Value
+                left: t1, // Reuse same t1 Value
                 right: Value::new_literal(IrLiteralValue::I32(2)),
                 ty: IrType::I32,
             },
@@ -109,7 +109,7 @@ mod liveness_tests {
         let instr3 = Instruction {
             kind: InstructionKind::Binary {
                 op: IrBinaryOp::Add,
-                left: t2.clone(), // Reuse same t2 Value
+                left: t2, // Reuse same t2 Value
                 right: Value::new_literal(IrLiteralValue::I32(1)),
                 ty: IrType::I32,
             },
@@ -126,7 +126,7 @@ mod liveness_tests {
         func.set_terminator(
             "entry_test_chain",
             Terminator {
-                kind: TerminatorKind::Return { value: t3.clone(), ty: IrType::I32 },
+                kind: TerminatorKind::Return { value: t3, ty: IrType::I32 },
                 debug_info: jsavrs::ir::terminator::DebugInfo { source_span: dummy_span() },
             },
         );
@@ -266,7 +266,7 @@ mod liveness_tests {
                 args: vec![Value::new_literal(IrLiteralValue::I32(42))],
                 ty: IrType::I32,
             },
-            result: Some(call_result.clone()),
+            result: Some(call_result),
             debug_info: dummy_debug_info(),
             scope: None,
         };

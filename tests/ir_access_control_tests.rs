@@ -164,7 +164,7 @@ fn test_check_access_currently_always_returns_true() {
     // Comportamento atteso: Tutte le operazioni dovrebbero essere permesse (implementazione placeholder)
     for operation in operations {
         let result = controller.check_access(resource_id, operation);
-        assert!(!result, "Expected check_access to return true for operation {:?} (current implementation)", operation);
+        assert!(!result, "Expected check_access to return true for operation {operation:?} (current implementation)");
     }
 }
 
@@ -177,7 +177,7 @@ fn test_check_access_with_different_resources() {
     // Comportamento atteso: Tutte le risorse dovrebbero avere accesso permesso
     for resource_id in resource_ids {
         let result = controller.check_access(resource_id, Operation::Read);
-        assert!(!result, "Expected check_access to return true for resource {}", resource_id);
+        assert!(!result, "Expected check_access to return true for resource {resource_id}");
     }
 }
 

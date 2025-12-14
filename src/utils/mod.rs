@@ -438,7 +438,6 @@ fn sanitize_uuids_with_prefix(input: &str, prefix: &str) -> String {
 
     UUID_REGEX
         .replace_all(input, |captures: &regex::Captures| {
-            #[allow(clippy::unwrap_used)]
             let uuid = captures.get(0).unwrap().as_str();
             let id = *mapping.entry(uuid.to_string()).or_insert_with(|| {
                 let id = counter;
@@ -455,7 +454,6 @@ pub fn vec_to_string<T: Display>(vec: Vec<T>) -> String {
     sanitize_uuids(vec.into_iter().map(|x| x.to_string()).collect::<Vec<_>>().join(" ").as_str())
 }
 
-#[allow(clippy::unwrap_used)]
 #[must_use]
 pub fn module_redacted(module: Module) -> String {
     let mut redacted: String = String::new();

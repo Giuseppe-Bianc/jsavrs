@@ -54,10 +54,10 @@ fn test_promotion_matrix_set_overflow_behavior() {
     assert_eq!(matrix.get_overflow_behavior(), OverflowBehavior::CompileError);
 }
 
-/// Tests that PromotionMatrix::new() initializes default promotion rules as required by the type promotion system.
+/// Tests that `PromotionMatrix::new()` initializes default promotion rules as required by the type promotion system.
 ///
 /// # Rationale
-/// The PromotionMatrix must initialize with default rules to ensure type promotion functionality.
+/// The `PromotionMatrix` must initialize with default rules to ensure type promotion functionality.
 /// This validates that the matrix contains appropriate default promotion mappings for core types.
 #[test]
 fn test_promotion_matrix_new_initializes_default_rules() {
@@ -99,7 +99,7 @@ fn test_promotion_matrix_new_initializes_default_rules() {
     );
 }
 
-/// Tests the PromotionMatrix::with_overflow_behavior() method with Wrap behavior.
+/// Tests the `PromotionMatrix::with_overflow_behavior()` method with Wrap behavior.
 ///
 /// # Rationale
 /// Verifies that the constructor properly sets the overflow behavior to Wrap.
@@ -110,7 +110,7 @@ fn test_promotion_matrix_with_overflow_behavior_wrap() {
     assert_eq!(matrix.get_overflow_behavior(), OverflowBehavior::Wrap);
 }
 
-/// Tests the PromotionMatrix::with_overflow_behavior() method with Trap behavior.
+/// Tests the `PromotionMatrix::with_overflow_behavior()` method with Trap behavior.
 ///
 /// # Rationale
 /// Verifies that the constructor properly sets the overflow behavior to Trap.
@@ -121,7 +121,7 @@ fn test_promotion_matrix_with_overflow_behavior_trap() {
     assert_eq!(matrix.get_overflow_behavior(), OverflowBehavior::Trap);
 }
 
-/// Tests signed integer widening from I8 to I16 through compute_common_type without precision loss.
+/// Tests signed integer widening from I8 to I16 through `compute_common_type` without precision loss.
 ///
 /// # Rationale
 /// Widening conversions from smaller signed integers to larger ones should result in the larger type
@@ -136,7 +136,7 @@ fn test_i8_to_i16_widening_no_loss() {
     assert_eq!(result_type, Some(IrType::I16), "I8 and I16 should promote to I16");
 }
 
-/// Tests signed integer widening from I16 to I32 through compute_common_type without precision loss.
+/// Tests signed integer widening from I16 to I32 through `compute_common_type` without precision loss.
 ///
 /// # Rationale
 /// Widening conversions from smaller signed integers to larger ones should result in the larger type
@@ -151,7 +151,7 @@ fn test_i16_to_i32_widening_no_loss() {
     assert_eq!(result_type, Some(IrType::I32), "I16 and I32 should promote to I32");
 }
 
-/// Tests signed integer widening from I32 to I64 through compute_common_type without precision loss.
+/// Tests signed integer widening from I32 to I64 through `compute_common_type` without precision loss.
 ///
 /// # Rationale
 /// Widening conversions from smaller signed integers to larger ones should result in the larger type
@@ -166,7 +166,7 @@ fn test_i32_to_i64_widening_no_loss() {
     assert_eq!(result_type, Some(IrType::I64), "I32 and I64 should promote to I64");
 }
 
-/// Tests unsigned integer widening from U8 to U16 through compute_common_type without precision loss.
+/// Tests unsigned integer widening from U8 to U16 through `compute_common_type` without precision loss.
 ///
 /// # Rationale
 /// Widening conversions from smaller unsigned integers to larger ones should result in the larger type
@@ -181,7 +181,7 @@ fn test_u8_to_u16_widening_no_loss() {
     assert_eq!(result_type, Some(IrType::U16), "U8 and U16 should promote to U16");
 }
 
-/// Tests unsigned integer widening from U16 to U32 through compute_common_type without precision loss.
+/// Tests unsigned integer widening from U16 to U32 through `compute_common_type` without precision loss.
 ///
 /// # Rationale
 /// Widening conversions from smaller unsigned integers to larger ones should result in the larger type
@@ -196,7 +196,7 @@ fn test_u16_to_u32_widening_no_loss() {
     assert_eq!(result_type, Some(IrType::U32), "U16 and U32 should promote to U32");
 }
 
-/// Tests unsigned integer widening from U32 to U64 through compute_common_type without precision loss.
+/// Tests unsigned integer widening from U32 to U64 through `compute_common_type` without precision loss.
 ///
 /// # Rationale
 /// Widening conversions from smaller unsigned integers to larger ones should result in the larger type
@@ -211,7 +211,7 @@ fn test_u32_to_u64_widening_no_loss() {
     assert_eq!(result_type, Some(IrType::U64), "U32 and U64 should promote to U64");
 }
 
-/// Tests float widening from F32 to F64 through compute_common_type without precision loss.
+/// Tests float widening from F32 to F64 through `compute_common_type` without precision loss.
 ///
 /// # Rationale
 /// Float widening conversions from F32 to F64 should result in F64 type
@@ -330,14 +330,14 @@ fn test_identity_promotions_for_all_types() {
     // Test identity promotions for all basic types
     for ty in ALL_BASIC_TYPES {
         let rule = matrix.get_promotion_rule(ty, ty);
-        assert!(rule.is_some(), "Identity promotion rule should exist for {:?}", ty);
+        assert!(rule.is_some(), "Identity promotion rule should exist for {ty:?}");
 
         if let Some(PromotionRule::Direct { cast_kind, may_lose_precision, may_overflow, .. }) = rule {
-            assert_eq!(*cast_kind, CastKind::Bitcast, "Identity promotion for {:?} should use Bitcast", ty);
-            assert!(!(*may_lose_precision), "Identity promotion for {:?} should not lose precision", ty);
-            assert!(!(*may_overflow), "Identity promotion for {:?} should not overflow", ty);
+            assert_eq!(*cast_kind, CastKind::Bitcast, "Identity promotion for {ty:?} should use Bitcast");
+            assert!(!(*may_lose_precision), "Identity promotion for {ty:?} should not lose precision");
+            assert!(!(*may_overflow), "Identity promotion for {ty:?} should not overflow");
         } else {
-            panic!("Identity promotion for {:?} should be a Direct rule with Bitcast", ty);
+            panic!("Identity promotion for {ty:?} should be a Direct rule with Bitcast");
         }
     }
 }
@@ -716,7 +716,7 @@ fn test_promotion_rule_symmetry() {
 #[test]
 fn test_promotion_result_with_casts() {
     let span = SourceSpan::default();
-    let cast = TypePromotion::new(IrType::I32, IrType::F32, CastKind::IntToFloat, span.clone());
+    let cast = TypePromotion::new(IrType::I32, IrType::F32, CastKind::IntToFloat, span);
 
     let result = PromotionResult {
         result_type: IrType::F32,
@@ -1264,7 +1264,7 @@ fn test_complex_promotion_scenarios() {
     assert_eq!(matrix.compute_common_type(&IrType::U16, &IrType::I16), Some(IrType::I32));
 }
 
-/// Constant array of all basic IrType variants
+/// Constant array of all basic `IrType` variants
 const ALL_BASIC_TYPES: &[IrType] = &[
     IrType::I8,
     IrType::I16,
@@ -1343,7 +1343,7 @@ fn test_all_unsigned_widening_conversions() {
     for (i, from_type) in unsigned_types.iter().enumerate() {
         for to_type in unsigned_types.iter().skip(i + 1) {
             let rule = matrix.get_promotion_rule(from_type, to_type);
-            assert!(rule.is_some(), "Missing rule for {:?} → {:?}", from_type, to_type);
+            assert!(rule.is_some(), "Missing rule for {from_type:?} → {to_type:?}");
             if let Some(PromotionRule::Direct { cast_kind, may_lose_precision, may_overflow, .. }) = rule {
                 assert_eq!(*cast_kind, CastKind::IntZeroExtend);
                 assert!(!may_lose_precision);
@@ -1361,7 +1361,7 @@ fn test_all_signed_widening_conversions() {
     for (i, from_type) in signed_types.iter().enumerate() {
         for to_type in signed_types.iter().skip(i + 1) {
             let rule = matrix.get_promotion_rule(from_type, to_type);
-            assert!(rule.is_some(), "Missing rule for {:?} → {:?}", from_type, to_type);
+            assert!(rule.is_some(), "Missing rule for {from_type:?} → {to_type:?}");
             if let Some(PromotionRule::Direct { cast_kind, may_lose_precision, may_overflow, .. }) = rule {
                 assert_eq!(*cast_kind, CastKind::IntSignExtend);
                 assert!(!may_lose_precision);
@@ -1435,7 +1435,7 @@ fn test_all_int_to_float_conversions() {
     for int_ty in &int_types {
         for float_ty in &float_types {
             let rule = matrix.get_promotion_rule(int_ty, float_ty);
-            assert!(rule.is_some(), "Missing rule for {:?} → {:?}", int_ty, float_ty);
+            assert!(rule.is_some(), "Missing rule for {int_ty:?} → {float_ty:?}");
             if let Some(PromotionRule::Direct { cast_kind, .. }) = rule {
                 assert_eq!(*cast_kind, CastKind::IntToFloat);
             }
@@ -1453,7 +1453,7 @@ fn test_all_float_to_int_conversions() {
     for float_ty in &float_types {
         for int_ty in &int_types {
             let rule = matrix.get_promotion_rule(float_ty, int_ty);
-            assert!(rule.is_some(), "Missing rule for {:?} → {:?}", float_ty, int_ty);
+            assert!(rule.is_some(), "Missing rule for {float_ty:?} → {int_ty:?}");
             if let Some(PromotionRule::Direct { cast_kind, may_lose_precision, may_overflow, .. }) = rule {
                 assert_eq!(*cast_kind, CastKind::FloatToInt);
                 assert!(may_lose_precision);
@@ -1508,6 +1508,7 @@ fn test_integer_narrowing_warnings() {
 }
 
 #[test]
+#[allow(clippy::similar_names)]
 fn test_float_conversion_warnings() {
     use insta::assert_debug_snapshot;
     let matrix = PromotionMatrix::new();
@@ -1565,9 +1566,9 @@ fn test_all_same_width_cross_signedness_conversions() {
 
     for (from_type, to_type) in pairs {
         let rule = matrix.get_promotion_rule(&from_type, &to_type);
-        assert!(rule.is_some(), "Missing rule for {:?} -> {:?}", from_type, to_type);
+        assert!(rule.is_some(), "Missing rule for {from_type:?} -> {to_type:?}");
         if let Some(PromotionRule::Direct { cast_kind, .. }) = rule {
-            assert_eq!(*cast_kind, CastKind::IntBitcast, "Expected IntBitcast for {:?} -> {:?}", from_type, to_type);
+            assert_eq!(*cast_kind, CastKind::IntBitcast, "Expected IntBitcast for {from_type:?} -> {to_type:?}");
         }
     }
 }
@@ -1586,9 +1587,7 @@ fn test_large_integer_conversions_exist() {
             if from_type != to_type {
                 assert!(
                     matrix.get_promotion_rule(from_type, to_type).is_some(),
-                    "Missing rule for {:?} -> {:?}",
-                    from_type,
-                    to_type
+                    "Missing rule for {from_type:?} -> {to_type:?}"
                 );
             }
         }
@@ -1600,9 +1599,7 @@ fn test_large_integer_conversions_exist() {
             if from_type != to_type {
                 assert!(
                     matrix.get_promotion_rule(from_type, to_type).is_some(),
-                    "Missing rule for {:?} -> {:?}",
-                    from_type,
-                    to_type
+                    "Missing rule for {from_type:?} -> {to_type:?}"
                 );
             }
         }
@@ -1633,7 +1630,7 @@ fn test_float_special_values_conversions_exist() {
     for float_type in &float_types {
         for int_type in &int_types {
             let rule = matrix.get_promotion_rule(float_type, int_type);
-            assert!(rule.is_some(), "Missing float->int rule for {:?} -> {:?}", float_type, int_type);
+            assert!(rule.is_some(), "Missing float->int rule for {float_type:?} -> {int_type:?}");
 
             if let Some(PromotionRule::Direct { cast_kind, may_overflow, .. }) = rule {
                 assert_eq!(*cast_kind, CastKind::FloatToInt);
@@ -1706,16 +1703,16 @@ fn test_count_implemented_numeric_rules() {
     let total = int_int_count + int_to_float_count + float_to_int_count + float_float_count;
 
     println!("\n=== Numeric Type Conversion Rules Count ===");
-    println!("int×int:     {}/64 rules", int_int_count);
-    println!("int→float:   {}/16 rules", int_to_float_count);
-    println!("float→int:   {}/16 rules", float_to_int_count);
-    println!("float×float: {}/4 rules", float_float_count);
-    println!("TOTAL:       {}/100 numeric rules\n", total);
+    println!("int×int:     {int_int_count}/64 rules");
+    println!("int→float:   {int_to_float_count}/16 rules");
+    println!("float→int:   {float_to_int_count}/16 rules");
+    println!("float×float: {float_float_count}/4 rules");
+    println!("TOTAL:       {total}/100 numeric rules\n");
 
     if !missing_int_int.is_empty() {
         println!("Missing int×int rules ({}):", missing_int_int.len());
         for (from, to) in missing_int_int.iter().take(10) {
-            println!("  {:?} → {:?}", from, to);
+            println!("  {from:?} → {to:?}");
         }
         if missing_int_int.len() > 10 {
             println!("  ... and {} more", missing_int_int.len() - 10);
@@ -1725,14 +1722,14 @@ fn test_count_implemented_numeric_rules() {
     if !missing_int_float.is_empty() {
         println!("\nMissing int→float rules ({}):", missing_int_float.len());
         for (from, to) in &missing_int_float {
-            println!("  {:?} → {:?}", from, to);
+            println!("  {from:?} → {to:?}");
         }
     }
 
     if !missing_float_int.is_empty() {
         println!("\nMissing float→int rules ({}):", missing_float_int.len());
         for (from, to) in &missing_float_int {
-            println!("  {:?} → {:?}", from, to);
+            println!("  {from:?} → {to:?}");
         }
     }
 }
@@ -1748,7 +1745,7 @@ fn test_all_numeric_type_pairs_defined() {
     let mut int_int_count = 0;
     for from in &int_types {
         for to in &int_types {
-            assert!(matrix.get_promotion_rule(from, to).is_some(), "Missing rule for {:?} → {:?}", from, to);
+            assert!(matrix.get_promotion_rule(from, to).is_some(), "Missing rule for {from:?} → {to:?}");
             int_int_count += 1;
         }
     }
@@ -1760,9 +1757,7 @@ fn test_all_numeric_type_pairs_defined() {
         for float_ty in &float_types {
             assert!(
                 matrix.get_promotion_rule(int_ty, float_ty).is_some(),
-                "Missing rule for {:?} → {:?}",
-                int_ty,
-                float_ty
+                "Missing rule for {int_ty:?} → {float_ty:?}"
             );
             int_to_float_count += 1;
         }
@@ -1775,9 +1770,7 @@ fn test_all_numeric_type_pairs_defined() {
         for int_ty in &int_types {
             assert!(
                 matrix.get_promotion_rule(float_ty, int_ty).is_some(),
-                "Missing rule for {:?} → {:?}",
-                float_ty,
-                int_ty
+                "Missing rule for {float_ty:?} → {int_ty:?}"
             );
             float_to_int_count += 1;
         }
@@ -1790,9 +1783,7 @@ fn test_all_numeric_type_pairs_defined() {
         for to_float in &float_types {
             assert!(
                 matrix.get_promotion_rule(from_float, to_float).is_some(),
-                "Missing rule for {:?} → {:?}",
-                from_float,
-                to_float
+                "Missing rule for {from_float:?} → {to_float:?}"
             );
             float_float_count += 1;
         }
@@ -2142,6 +2133,7 @@ fn test_char_to_char_identity() {
 
 // T029: Snapshot tests for boolean conversions
 #[test]
+#[allow(clippy::similar_names)]
 fn test_boolean_to_numeric_snapshots() {
     use insta::assert_debug_snapshot;
     let matrix = PromotionMatrix::new();
@@ -2160,6 +2152,7 @@ fn test_boolean_to_numeric_snapshots() {
 }
 
 #[test]
+#[allow(clippy::similar_names)]
 fn test_numeric_to_boolean_snapshots() {
     use insta::assert_debug_snapshot;
     let matrix = PromotionMatrix::new();
@@ -2280,6 +2273,7 @@ fn test_unicode_warning_generation_for_surrogate() {
 }
 
 #[test]
+#[allow(clippy::unreadable_literal)]
 fn test_unicode_warning_generation_for_out_of_range() {
     let matrix = PromotionMatrix::new();
 
@@ -2297,6 +2291,7 @@ fn test_unicode_warning_generation_for_out_of_range() {
 }
 
 #[test]
+#[allow(clippy::unreadable_literal)]
 fn test_unicode_warning_no_warning_for_valid_values() {
     let matrix = PromotionMatrix::new();
 
@@ -2311,11 +2306,12 @@ fn test_unicode_warning_no_warning_for_valid_values() {
 
     for &value in &test_values {
         let warning = matrix.generate_unicode_validation_warning(value, &IrType::Char);
-        assert!(warning.is_none(), "Expected no warning for valid Unicode value 0x{:X}", value);
+        assert!(warning.is_none(), "Expected no warning for valid Unicode value 0x{value:X}");
     }
 }
 
 #[test]
+#[allow(clippy::similar_names)]
 fn test_unicode_warning_only_for_char_target() {
     let matrix = PromotionMatrix::new();
 
@@ -2329,6 +2325,7 @@ fn test_unicode_warning_only_for_char_target() {
 
 // T031: Snapshot Tests for Boolean/Character Warnings
 #[test]
+#[allow(clippy::unreadable_literal)]
 fn test_invalid_unicode_warning_snapshot() {
     use insta::assert_debug_snapshot;
 
@@ -2902,17 +2899,20 @@ mod comprehensive_validation_tests {
                         defined_count += 1;
                     }
                     None => {
-                        missing_rules.push(format!("{:?} → {:?}", from, to));
+                        missing_rules.push(format!("{from:?} → {to:?}"));
                     }
                 }
             }
         }
 
-        if !missing_rules.is_empty() {
-            panic!("Missing {} promotion rules:\n{}", missing_rules.len(), missing_rules.join("\n"));
-        }
+        assert!(
+            missing_rules.is_empty(),
+            "Missing {} promotion rules:\n{}",
+            missing_rules.len(),
+            missing_rules.join("\n")
+        );
 
-        assert_eq!(defined_count, 169, "Expected 169 promotion rules (13×13), found {}", defined_count);
+        assert_eq!(defined_count, 169, "Expected 169 promotion rules (13×13), found {defined_count}");
     }
 
     #[test]
@@ -2934,7 +2934,7 @@ mod comprehensive_validation_tests {
                 }
             }
         }
-        assert_eq!(int_count, 64, "Expected 64 integer×integer rules, found {}", int_count);
+        assert_eq!(int_count, 64, "Expected 64 integer×integer rules, found {int_count}");
 
         // Validate integer-float coverage (8 int × 2 float × 2 directions = 32 rules)
         let mut int_float_count = 0;
@@ -2948,7 +2948,7 @@ mod comprehensive_validation_tests {
                 }
             }
         }
-        assert_eq!(int_float_count, 32, "Expected 32 int↔float rules, found {}", int_float_count);
+        assert_eq!(int_float_count, 32, "Expected 32 int↔float rules, found {int_float_count}");
 
         // Validate float coverage (2×2 = 4 rules)
         let mut float_count = 0;
@@ -2959,10 +2959,10 @@ mod comprehensive_validation_tests {
                 }
             }
         }
-        assert_eq!(float_count, 4, "Expected 4 float×float rules, found {}", float_count);
+        assert_eq!(float_count, 4, "Expected 4 float×float rules, found {float_count}");
 
         // Validate special type interactions (3×13 = 39 rules to/from Bool, Char, String)
-        let all_types = [integers.clone(), floats.clone(), special_types.clone()].concat();
+        let all_types = [integers, floats, special_types.clone()].concat();
         let mut special_count = 0;
         for special_ty in &special_types {
             for ty in &all_types {
@@ -2972,7 +2972,7 @@ mod comprehensive_validation_tests {
             }
         }
         // Bool: 13, Char: 13, String: 13 = 39 total
-        assert_eq!(special_count, 39, "Expected 39 special→all rules, found {}", special_count);
+        assert_eq!(special_count, 39, "Expected 39 special→all rules, found {special_count}");
 
         // All types to special types
         let mut to_special_count = 0;
@@ -2983,12 +2983,11 @@ mod comprehensive_validation_tests {
                 }
             }
         }
-        assert_eq!(to_special_count, 39, "Expected 39 all→special rules, found {}", to_special_count);
+        assert_eq!(to_special_count, 39, "Expected 39 all→special rules, found {to_special_count}");
 
         // Coverage breakdown for diagnostics
         println!(
-            "Coverage breakdown: {} int, {} int-float, {} float, {} special",
-            int_count, int_float_count, float_count, special_count
+            "Coverage breakdown: {int_count} int, {int_float_count} int-float, {float_count} float, {special_count} special"
         );
     }
 
@@ -3048,11 +3047,11 @@ mod comprehensive_validation_tests {
                 if let Some(rule) = matrix.get_promotion_rule(from, to) {
                     match rule {
                         PromotionRule::Direct { cast_kind, .. } => {
-                            found_cast_kinds.insert(format!("{:?}", cast_kind));
+                            found_cast_kinds.insert(format!("{cast_kind:?}"));
                         }
                         PromotionRule::Indirect { first_cast, second_cast, .. } => {
-                            found_cast_kinds.insert(format!("{:?}", first_cast));
-                            found_cast_kinds.insert(format!("{:?}", second_cast));
+                            found_cast_kinds.insert(format!("{first_cast:?}"));
+                            found_cast_kinds.insert(format!("{second_cast:?}"));
                         }
                         PromotionRule::Forbidden { .. } => {}
                     }
@@ -3068,16 +3067,19 @@ mod comprehensive_validation_tests {
             }
         }
 
-        if !missing_cast_kinds.is_empty() {
-            panic!("Missing {} CastKind variants:\n{}", missing_cast_kinds.len(), missing_cast_kinds.join("\n"));
-        }
+        assert!(
+            missing_cast_kinds.is_empty(),
+            "Missing {} CastKind variants:\n{}",
+            missing_cast_kinds.len(),
+            missing_cast_kinds.join("\n")
+        );
 
         // Also report what we found
         let mut found_vec: Vec<_> = found_cast_kinds.iter().collect();
         found_vec.sort();
         println!("Found {} unique CastKind variants:", found_vec.len());
         for cast_kind in found_vec {
-            println!("  - {}", cast_kind);
+            println!("  - {cast_kind}");
         }
 
         assert!(
@@ -3318,13 +3320,13 @@ mod compute_common_type_tests {
 // CONSTRUCTION AND INITIALIZATION TESTS
 // ============================================================================
 
-/// Tests that TypePromotionEngine can be created using the new() constructor.
+/// Tests that `TypePromotionEngine` can be created using the `new()` constructor.
 ///
 /// # Rationale
 /// Verifies basic instantiation works correctly and returns a valid engine instance.
 ///
 /// # Test Coverage
-/// - Successful construction via new()
+/// - Successful construction via `new()`
 /// - Default initialization state
 #[test]
 fn test_type_promotion_engine_new() {
@@ -3335,15 +3337,15 @@ fn test_type_promotion_engine_new() {
     assert_eq!(std::mem::size_of_val(&engine), 0, "TypePromotionEngine should be a zero-sized type");
 }
 
-/// Tests that TypePromotionEngine can be created using the default() trait.
+/// Tests that `TypePromotionEngine` can be created using the `default()` trait.
 ///
 /// # Rationale
 /// Verifies that Default trait implementation works correctly and produces
-/// equivalent instances to new().
+/// equivalent instances to `new()`.
 ///
 /// # Test Coverage
 /// - Default trait implementation
-/// - Consistency between new() and default()
+/// - Consistency between `new()` and `default()`
 #[test]
 #[allow(clippy::default_constructed_unit_structs)]
 fn test_type_promotion_engine_default() {
@@ -3353,10 +3355,10 @@ fn test_type_promotion_engine_default() {
     assert_eq!(std::mem::size_of_val(&engine), 0, "TypePromotionEngine should be a zero-sized type");
 }
 
-/// Tests that TypePromotionEngine can be cloned successfully.
+/// Tests that `TypePromotionEngine` can be cloned successfully.
 ///
 /// # Rationale
-/// Verifies Clone trait implementation works correctly for TypePromotionEngine.
+/// Verifies Clone trait implementation works correctly for `TypePromotionEngine`
 ///
 /// # Test Coverage
 /// - Clone trait functionality
@@ -3374,7 +3376,7 @@ fn test_type_promotion_engine_clone() {
 // ANALYZE_BINARY_PROMOTION - IDENTITY PROMOTIONS
 // ============================================================================
 
-/// Tests analyze_binary_promotion with identical types (I32 + I32).
+/// Tests `analyze_binary_promotion` with identical types (I32 + I32).
 ///
 /// # Rationale
 /// Identity promotions should not require any casts and should produce
@@ -3399,7 +3401,7 @@ fn test_analyze_binary_promotion_identity_i32() {
     assert!(result.is_sound, "Identity promotion should be sound");
 }
 
-/// Tests analyze_binary_promotion with identical floating-point types (F64 + F64).
+/// Tests `analyze_binary_promotion` with identical floating-point types (F64 + F64).
 ///
 /// # Rationale
 /// Verifies identity promotion works correctly for floating-point types.
@@ -3421,7 +3423,7 @@ fn test_analyze_binary_promotion_identity_f64() {
     assert!(result.is_sound, "Identity promotion should be sound");
 }
 
-/// Tests analyze_binary_promotion with identical unsigned types (U64 + U64).
+/// Tests `analyze_binary_promotion` with identical unsigned types (U64 + U64).
 ///
 /// # Rationale
 /// Verifies identity promotion for unsigned integer types.
@@ -3447,7 +3449,7 @@ fn test_analyze_binary_promotion_identity_u64() {
 // ANALYZE_BINARY_PROMOTION - WIDENING PROMOTIONS
 // ============================================================================
 
-/// Tests analyze_binary_promotion with signed integer widening (I8 → I32).
+/// Tests `analyze_binary_promotion` with signed integer widening (I8 → I32).
 ///
 /// # Rationale
 /// Widening promotions should insert a cast on the narrower operand,
@@ -3462,7 +3464,7 @@ fn test_analyze_binary_promotion_i8_to_i32_widening() {
     let engine = TypePromotionEngine::new();
     let span = SourceSpan::default();
 
-    let result = engine.analyze_binary_promotion(&IrType::I8, &IrType::I32, IrBinaryOp::Add, span.clone());
+    let result = engine.analyze_binary_promotion(&IrType::I8, &IrType::I32, IrBinaryOp::Add, span);
 
     assert_eq!(result.result_type, IrType::I32, "I8 and I32 should promote to I32");
     assert!(result.left_cast.is_some(), "Left operand (I8) should be cast to I32");
@@ -3480,7 +3482,7 @@ fn test_analyze_binary_promotion_i8_to_i32_widening() {
     assert!(result.is_sound, "Widening promotion should be sound");
 }
 
-/// Tests analyze_binary_promotion with unsigned integer widening (U16 → U64).
+/// Tests `analyze_binary_promotion` with unsigned integer widening (U16 → U64).
 ///
 /// # Rationale
 /// Verifies unsigned widening promotions work correctly across large bit-width gaps.
@@ -3488,7 +3490,7 @@ fn test_analyze_binary_promotion_i8_to_i32_widening() {
 /// # Test Coverage
 /// - Unsigned integer widening
 /// - Large bit-width difference (16 to 64 bits)
-/// - ZeroExtend cast kind for unsigned types
+/// - `ZeroExtend` cast kind for unsigned types
 #[test]
 fn test_analyze_binary_promotion_u16_to_u64_widening() {
     let engine = TypePromotionEngine::new();
@@ -3509,14 +3511,14 @@ fn test_analyze_binary_promotion_u16_to_u64_widening() {
     }
 }
 
-/// Tests analyze_binary_promotion with float widening (F32 → F64).
+/// Tests `analyze_binary_promotion` with float widening (F32 → F64).
 ///
 /// # Rationale
 /// Float widening from F32 to F64 is exact and should not generate warnings.
 ///
 /// # Test Coverage
 /// - Floating-point widening
-/// - FloatExtend cast kind
+/// - `FloatExtend` cast kind
 /// - No precision loss for F32→F64
 #[test]
 fn test_analyze_binary_promotion_f32_to_f64_widening() {
@@ -3538,7 +3540,7 @@ fn test_analyze_binary_promotion_f32_to_f64_widening() {
     }
 }
 
-/// Tests analyze_binary_promotion with reverse operand order for widening (I32 + I8).
+/// Tests `analyze_binary_promotion` with reverse operand order for widening (I32 + I8).
 ///
 /// # Rationale
 /// Verifies that promotion works correctly regardless of operand order.
@@ -3568,7 +3570,7 @@ fn test_analyze_binary_promotion_i32_i8_reverse_order() {
 // ANALYZE_BINARY_PROMOTION - SIGNED/UNSIGNED MIXING
 // ============================================================================
 
-/// Tests analyze_binary_promotion with same-width signed/unsigned mixing (I32 + U32 → I64).
+/// Tests `analyze_binary_promotion` with same-width signed/unsigned mixing (I32 + U32 → I64).
 ///
 /// # Rationale
 /// When signed and unsigned integers of the same width are mixed,
@@ -3578,7 +3580,7 @@ fn test_analyze_binary_promotion_i32_i8_reverse_order() {
 /// # Test Coverage
 /// - Same-width signed/unsigned promotion
 /// - Promotion to next larger signed type
-/// - SignednessChange warning generation
+/// - `SignednessChange` warning generation
 #[test]
 fn test_analyze_binary_promotion_i32_u32_signedness() {
     let engine = TypePromotionEngine::new();
@@ -3598,7 +3600,7 @@ fn test_analyze_binary_promotion_i32_u32_signedness() {
     assert!(has_signedness_warning, "Should contain SignednessChange warning");
 }
 
-/// Tests analyze_binary_promotion with I16 and U16 mixing.
+/// Tests `analyze_binary_promotion` with I16 and U16 mixing.
 ///
 /// # Rationale
 /// Verifies signedness handling for 16-bit types.
@@ -3618,7 +3620,7 @@ fn test_analyze_binary_promotion_i16_u16_signedness() {
     assert!(!result.warnings.is_empty(), "Should generate signedness warnings");
 }
 
-/// Tests analyze_binary_promotion with I8 and U8 mixing.
+/// Tests `analyze_binary_promotion` with I8 and U8 mixing.
 ///
 /// # Rationale
 /// Verifies signedness handling for smallest integer types.
@@ -3640,7 +3642,7 @@ fn test_analyze_binary_promotion_i8_u8_signedness() {
     assert!(has_signedness_warning);
 }
 
-/// Tests analyze_binary_promotion with reverse order (U32 + I32).
+/// Tests `analyze_binary_promotion` with reverse order (U32 + I32).
 ///
 /// # Rationale
 /// Verifies that signedness detection is order-independent.
@@ -3666,7 +3668,7 @@ fn test_analyze_binary_promotion_u32_i32_reverse_signedness() {
 // ANALYZE_BINARY_PROMOTION - INTEGER TO FLOAT PROMOTIONS
 // ============================================================================
 
-/// Tests analyze_binary_promotion with integer to float promotion (I32 → F32).
+/// Tests `analyze_binary_promotion` with integer to float promotion (I32 → F32).
 ///
 /// # Rationale
 /// When mixing integers and floats, integers should be promoted to float.
@@ -3674,7 +3676,7 @@ fn test_analyze_binary_promotion_u32_i32_reverse_signedness() {
 ///
 /// # Test Coverage
 /// - Integer to float promotion
-/// - IntToFloat cast kind
+/// - `IntToFloat` cast kind
 /// - Potential precision loss warning
 #[test]
 fn test_analyze_binary_promotion_i32_to_f32() {
@@ -3697,7 +3699,7 @@ fn test_analyze_binary_promotion_i32_to_f32() {
     }
 }
 
-/// Tests analyze_binary_promotion with I64 → F64.
+/// Tests `analyze_binary_promotion` with I64 → F64.
 ///
 /// # Rationale
 /// I64 to F64 conversion can lose precision for integers larger than 2^53.
@@ -3720,14 +3722,14 @@ fn test_analyze_binary_promotion_i64_to_f64() {
     }
 }
 
-/// Tests analyze_binary_promotion with unsigned to float (U32 → F32).
+/// Tests `analyze_binary_promotion` with unsigned to float (U32 → F32).
 ///
 /// # Rationale
-/// Unsigned integers also need IntToFloat cast when mixed with floats.
+/// Unsigned integers also need `IntToFloat` cast when mixed with floats.
 ///
 /// # Test Coverage
 /// - Unsigned to float conversion
-/// - IntToFloat cast for unsigned types
+/// - `IntToFloat` cast for unsigned types
 #[test]
 fn test_analyze_binary_promotion_u32_to_f32() {
     let engine = TypePromotionEngine::new();
@@ -3743,7 +3745,7 @@ fn test_analyze_binary_promotion_u32_to_f32() {
     }
 }
 
-/// Tests analyze_binary_promotion with small int to float (I8 → F64).
+/// Tests `analyze_binary_promotion` with small int to float (I8 → F64).
 ///
 /// # Rationale
 /// Small integers always fit exactly in F64 without precision loss.
@@ -3772,7 +3774,7 @@ fn test_analyze_binary_promotion_i8_to_f64_exact() {
 // ANALYZE_BINARY_PROMOTION - DIFFERENT BINARY OPERATIONS
 // ============================================================================
 
-/// Tests analyze_binary_promotion with Subtract operation.
+/// Tests `analyze_binary_promotion` with Subtract operation.
 ///
 /// # Rationale
 /// Verifies that promotion logic is consistent across different operations.
@@ -3792,7 +3794,7 @@ fn test_analyze_binary_promotion_subtract_operation() {
     assert!(result.right_cast.is_none());
 }
 
-/// Tests analyze_binary_promotion with Modulo operation.
+/// Tests `analyze_binary_promotion` with Modulo operation.
 ///
 /// # Rationale
 /// Modulo may have special overflow/signedness considerations.
@@ -3812,7 +3814,7 @@ fn test_analyze_binary_promotion_modulo_operation() {
     assert!(result.left_cast.is_some() || result.right_cast.is_some());
 }
 
-/// Tests analyze_binary_promotion with BitwiseAnd operation.
+/// Tests `analyze_binary_promotion` with `BitwiseAnd` operation.
 ///
 /// # Rationale
 /// Bitwise operations should follow same promotion rules.
@@ -3831,7 +3833,7 @@ fn test_analyze_binary_promotion_bitwise_and_operation() {
     assert!(result.left_cast.is_some());
 }
 
-/// Tests analyze_binary_promotion with comparison operation (Equal).
+/// Tests `analyze_binary_promotion` with comparison operation (Equal).
 ///
 /// # Rationale
 /// Comparison operations may need promotion for operands to be comparable.
@@ -3854,7 +3856,7 @@ fn test_analyze_binary_promotion_equal_comparison() {
 // ANALYZE_BINARY_PROMOTION - EDGE CASES
 // ============================================================================
 
-/// Tests analyze_binary_promotion with maximum width integers (I64 + I64).
+/// Tests `analyze_binary_promotion` with maximum width integers (I64 + I64).
 ///
 /// # Rationale
 /// Verifies behavior at maximum supported integer width.
@@ -3874,7 +3876,7 @@ fn test_analyze_binary_promotion_max_width_i64() {
     assert!(result.right_cast.is_none());
 }
 
-/// Tests analyze_binary_promotion with minimum width integers (I8 + I8).
+/// Tests `analyze_binary_promotion` with minimum width integers (I8 + I8).
 ///
 /// # Rationale
 /// Verifies behavior at minimum integer width.
@@ -3894,7 +3896,7 @@ fn test_analyze_binary_promotion_min_width_i8() {
     assert!(result.right_cast.is_none());
 }
 
-/// Tests analyze_binary_promotion with Bool types.
+/// Tests `analyze_binary_promotion` with Bool types.
 ///
 /// # Rationale
 /// Boolean operations may promote to I32 or use boolean-specific logic.
@@ -3913,7 +3915,7 @@ fn test_analyze_binary_promotion_bool_types() {
     assert!(result.result_type == IrType::Bool || result.result_type == IrType::I32);
 }
 
-/// Tests analyze_binary_promotion with Bool and I32.
+/// Tests `analyze_binary_promotion` with Bool and I32.
 ///
 /// # Rationale
 /// Bool mixed with integer should promote to integer type.
@@ -3935,7 +3937,7 @@ fn test_analyze_binary_promotion_bool_to_i32() {
     }
 }
 
-/// Tests analyze_binary_promotion with Char type.
+/// Tests `analyze_binary_promotion` with Char type.
 ///
 /// # Rationale
 /// Char may be treated as integer or have special handling.
@@ -3954,7 +3956,7 @@ fn test_analyze_binary_promotion_char_to_i32() {
     assert_eq!(result.result_type, IrType::I32);
 }
 
-/// Tests analyze_binary_promotion with non-matching complex types.
+/// Tests `analyze_binary_promotion` with non-matching complex types.
 ///
 /// # Rationale
 /// Verifies fallback behavior when no direct promotion rule exists.
@@ -3981,7 +3983,7 @@ fn test_analyze_binary_promotion_fallback_to_left_type() {
 // ANALYZE_BINARY_PROMOTION - CORNER CASES
 // ============================================================================
 
-/// Tests analyze_binary_promotion with large bit-width gap (I8 + I64).
+/// Tests `analyze_binary_promotion` with large bit-width gap (I8 + I64).
 ///
 /// # Rationale
 /// Verifies promotion handles extreme width differences correctly.
@@ -4007,14 +4009,14 @@ fn test_analyze_binary_promotion_large_width_gap() {
     }
 }
 
-/// Tests analyze_binary_promotion with unsigned large gap (U8 + U64).
+/// Tests `analyze_binary_promotion` with unsigned large gap (U8 + U64).
 ///
 /// # Rationale
 /// Unsigned version of large width gap test.
 ///
 /// # Test Coverage
 /// - Unsigned large gap widening
-/// - ZeroExtend for large gaps
+/// - `ZeroExtend` for large gaps
 #[test]
 fn test_analyze_binary_promotion_unsigned_large_gap() {
     let engine = TypePromotionEngine::new();
@@ -4030,7 +4032,7 @@ fn test_analyze_binary_promotion_unsigned_large_gap() {
     }
 }
 
-/// Tests analyze_binary_promotion with mixed signedness and width (I8 + U64).
+/// Tests `analyze_binary_promotion` with mixed signedness and width (I8 + U64).
 ///
 /// # Rationale
 /// Combines signedness change with large width difference.
@@ -4056,7 +4058,7 @@ fn test_analyze_binary_promotion_mixed_signedness_and_width() {
     // We just verify that the result is valid (no panic)
 }
 
-/// Tests analyze_binary_promotion with all arithmetic operations on same types.
+/// Tests `analyze_binary_promotion` with all arithmetic operations on same types.
 ///
 /// # Rationale
 /// Ensures consistency across all arithmetic operations.
@@ -4079,7 +4081,7 @@ fn test_analyze_binary_promotion_all_arithmetic_operations() {
     }
 }
 
-/// Tests analyze_binary_promotion with different float combinations.
+/// Tests `analyze_binary_promotion` with different float combinations.
 ///
 /// # Rationale
 /// Validates float promotion matrix completeness.
@@ -4168,8 +4170,8 @@ fn test_analyze_binary_promotion_overflow_warning() {
     let result = engine.analyze_binary_promotion(&IrType::I32, &IrType::U32, IrBinaryOp::Add, span);
 
     // Check if any cast indicates potential overflow
-    let may_overflow = result.left_cast.as_ref().map(|c| c.may_overflow).unwrap_or(false)
-        || result.right_cast.as_ref().map(|c| c.may_overflow).unwrap_or(false);
+    let may_overflow = result.left_cast.as_ref().is_some_and(|c| c.may_overflow)
+        || result.right_cast.as_ref().is_some_and(|c| c.may_overflow);
 
     if may_overflow {
         let has_overflow_warning =
@@ -4178,15 +4180,15 @@ fn test_analyze_binary_promotion_overflow_warning() {
     }
 }
 
-/// Tests that SignednessChange warning contains correct metadata.
+/// Tests that `SignednessChange` warning contains correct metadata.
 ///
 /// # Rationale
 /// Signedness warnings should accurately report the signedness transition.
 ///
 /// # Test Coverage
 /// - Warning metadata accuracy
-/// - from_signed and to_signed fields
-/// - may_affect_comparisons flag
+/// - `from_signed` and `to_signed` fields
+/// - `may_affect_comparisons` flag
 #[test]
 fn test_analyze_binary_promotion_signedness_warning_details() {
     let engine = TypePromotionEngine::new();
@@ -4245,13 +4247,13 @@ fn test_analyze_binary_promotion_multiple_warnings() {
 // PROMOTION RESULT SOUNDNESS TESTS
 // ============================================================================
 
-/// Tests that is_sound flag is correctly set for safe promotions.
+/// Tests that `is_sound` flag is correctly set for safe promotions.
 ///
 /// # Rationale
 /// Promotions without warnings should be marked as sound.
 ///
 /// # Test Coverage
-/// - is_sound flag accuracy
+/// - `is_sound` flag accuracy
 /// - Correlation with warnings
 #[test]
 fn test_analyze_binary_promotion_soundness_flag_safe() {
@@ -4266,13 +4268,13 @@ fn test_analyze_binary_promotion_soundness_flag_safe() {
     }
 }
 
-/// Tests that is_sound flag is correctly set for potentially unsafe promotions.
+/// Tests that `is_sound` flag is correctly set for potentially unsafe promotions.
 ///
 /// # Rationale
-/// Promotions with warnings should have is_sound reflect warning presence.
+/// Promotions with warnings should have `is_sound` reflect warning presence.
 ///
 /// # Test Coverage
-/// - is_sound with warnings present
+/// - `is_sound` with warnings present
 /// - Warning impact on soundness
 #[test]
 fn test_analyze_binary_promotion_soundness_flag_with_warnings() {
@@ -4292,13 +4294,13 @@ fn test_analyze_binary_promotion_soundness_flag_with_warnings() {
 // CAST KIND VERIFICATION TESTS
 // ============================================================================
 
-/// Tests that SignExtend cast is used for signed integer widening.
+/// Tests that `SignExtend` cast is used for signed integer widening.
 ///
 /// # Rationale
 /// Signed integers must use sign extension to preserve negative values.
 ///
 /// # Test Coverage
-/// - SignExtend cast kind correctness
+/// - `SignExtend` cast kind correctness
 /// - All signed widening scenarios
 #[test]
 fn test_analyze_binary_promotion_sign_extend_cast() {
@@ -4314,21 +4316,19 @@ fn test_analyze_binary_promotion_sign_extend_cast() {
             assert_eq!(
                 cast.cast_kind,
                 CastKind::IntSignExtend,
-                "Signed widening from {:?} to {:?} should use IntSignExtend",
-                from,
-                to
+                "Signed widening from {from:?} to {to:?} should use IntSignExtend",
             );
         }
     }
 }
 
-/// Tests that ZeroExtend cast is used for unsigned integer widening.
+/// Tests that `ZeroExtend` cast is used for unsigned integer widening.
 ///
 /// # Rationale
 /// Unsigned integers must use zero extension.
 ///
 /// # Test Coverage
-/// - ZeroExtend cast kind correctness
+/// - `ZeroExtend` cast kind correctness
 /// - All unsigned widening scenarios
 #[test]
 fn test_analyze_binary_promotion_zero_extend_cast() {
@@ -4344,21 +4344,19 @@ fn test_analyze_binary_promotion_zero_extend_cast() {
             assert_eq!(
                 cast.cast_kind,
                 CastKind::IntZeroExtend,
-                "Unsigned widening from {:?} to {:?} should use IntZeroExtend",
-                from,
-                to
+                "Unsigned widening from {from:?} to {to:?} should use IntZeroExtend",
             );
         }
     }
 }
 
-/// Tests that FloatExtend cast is used for F32 → F64.
+/// Tests that `FloatExtend` cast is used for F32 → F64.
 ///
 /// # Rationale
-/// Float widening requires FloatExtend cast.
+/// Float widening requires `FloatExtend` cast.
 ///
 /// # Test Coverage
-/// - FloatExtend cast kind
+/// - `FloatExtend` cast kind
 /// - Float-specific cast operations
 #[test]
 fn test_analyze_binary_promotion_float_extend_cast() {
@@ -4372,13 +4370,13 @@ fn test_analyze_binary_promotion_float_extend_cast() {
     }
 }
 
-/// Tests that IntToFloat cast is used for integer to float conversions.
+/// Tests that `IntToFloat` cast is used for integer to float conversions.
 ///
 /// # Rationale
-/// Integer to float conversions require IntToFloat cast.
+/// Integer to float conversions require `IntToFloat` cast.
 ///
 /// # Test Coverage
-/// - IntToFloat cast kind
+/// - `IntToFloat` cast kind
 /// - Various int→float scenarios
 #[test]
 fn test_analyze_binary_promotion_int_to_float_cast() {
@@ -4394,9 +4392,7 @@ fn test_analyze_binary_promotion_int_to_float_cast() {
             assert_eq!(
                 cast.cast_kind,
                 CastKind::IntToFloat,
-                "Int to float from {:?} to {:?} should use IntToFloat",
-                from,
-                to
+                "Int to float from {from:?} to {to:?} should use IntToFloat",
             );
         }
     }
@@ -4412,7 +4408,7 @@ fn test_analyze_binary_promotion_int_to_float_cast() {
 /// Source spans are critical for error reporting and debugging.
 ///
 /// # Test Coverage
-/// - Span propagation to TypePromotion
+/// - Span propagation to `TypePromotion`
 /// - Span consistency across warnings
 #[test]
 fn test_analyze_binary_promotion_source_span_propagation() {
@@ -4476,7 +4472,7 @@ fn test_analyze_binary_promotion_uses_singleton_matrix() {
     assert_eq!(result1.right_cast.is_some(), result2.right_cast.is_some());
 }
 
-/// Tests that analyze_binary_promotion is deterministic.
+/// Tests that `analyze_binary_promotion` is deterministic.
 ///
 /// # Rationale
 /// Same inputs should always produce same outputs.
@@ -4517,13 +4513,13 @@ fn test_analyze_binary_promotion_rapid_successive_calls() {
     }
 }
 
-/// Tests that promotion engine handles all IrType variants without panicking.
+/// Tests that promotion engine handles all `IrType` variants without panicking.
 ///
 /// # Rationale
 /// Robustness test ensuring no type causes crashes.
 ///
 /// # Test Coverage
-/// - All IrType enum variants
+/// - All `IrType` enum variants
 /// - No panic conditions
 #[test]
 fn test_analyze_binary_promotion_all_types_no_panic() {

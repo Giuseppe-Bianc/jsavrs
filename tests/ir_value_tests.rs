@@ -52,7 +52,7 @@ fn value_display_formatting() {
         },
         IrType::Array(Box::new(IrType::I32), 2),
     );
-    assert_eq!(format!("{}", array_val), "[1i32, 2i32]");
+    assert_eq!(format!("{array_val}"), "[1i32, 2i32]");
 
     let struct_val = Value::new_constant(
         IrConstantValue::Struct {
@@ -65,7 +65,7 @@ fn value_display_formatting() {
             dummy_span(),
         ),
     );
-    assert_eq!(format!("{}", struct_val), "Point<10i32, 20i32>");
+    assert_eq!(format!("{struct_val}"), "Point<10i32, 20i32>");
 
     // Local/Global/Temporary
     assert_eq!(format!("{}", Value::new_local("foo".into(), IrType::I32)), "%foo");
@@ -108,25 +108,25 @@ fn literal_value_display_edge_cases() {
 fn constant_value_display_edge_cases() {
     // Empty array
     let empty_array = IrConstantValue::Array { elements: Vec::new() };
-    assert_eq!(format!("{}", empty_array), "[]");
+    assert_eq!(format!("{empty_array}"), "[]");
 
     // Array with different types
     let mixed_array = IrConstantValue::Array {
         elements: vec![Value::new_literal(IrLiteralValue::I32(1)), Value::new_literal(IrLiteralValue::Bool(true))],
     };
-    assert_eq!(format!("{}", mixed_array), "[1i32, true]");
+    assert_eq!(format!("{mixed_array}"), "[1i32, true]");
 
     // String with escapes
     let string_val = IrConstantValue::String { string: "line1\nline2\"tab\t".into() };
-    assert_eq!(format!("{}", string_val), "\"line1\\nline2\\\"tab\\t\"");
+    assert_eq!(format!("{string_val}"), "\"line1\\nline2\\\"tab\\t\"");
 
     // Empty struct
     let empty_struct = IrConstantValue::Struct { name: "Empty".into(), elements: Vec::new() };
-    assert_eq!(format!("{}", empty_struct), "Empty<>");
+    assert_eq!(format!("{empty_struct}"), "Empty<>");
 
     // Struct with special characters in name
     let struct_val = IrConstantValue::Struct { name: "My$Struct".into(), elements: Vec::new() };
-    assert_eq!(format!("{}", struct_val), "My$Struct<>");
+    assert_eq!(format!("{struct_val}"), "My$Struct<>");
 }
 
 // Tests for ValueKind
@@ -180,6 +180,7 @@ fn literal_to_type_conversion() {
 }
 
 #[test]
+#[allow(clippy::unreadable_literal)]
 fn integer_display_formatting() {
     // Limiti degli interi con segno
     assert_eq!(format!("{}", IrLiteralValue::I8(-128)), "-128i8");
@@ -202,7 +203,7 @@ fn integer_display_formatting() {
     assert_eq!(format!("{}", IrLiteralValue::U64(18446744073709551615)), "18446744073709551615u64");
 }
 
-#[allow(clippy::approx_constant)]
+#[allow(clippy::approx_constant, clippy::unreadable_literal)]
 #[test]
 fn float_display_formatting() {
     // Numeri interi rappresentati come float
@@ -269,6 +270,7 @@ fn char_display_formatting() {
 }
 
 #[test]
+#[allow(clippy::unreadable_literal)]
 fn display_precision_edge_cases() {
     // Numeri che sono esattamente interi
     assert_eq!(format!("{}", IrLiteralValue::F32(5.0)), "5.0f32");
@@ -309,7 +311,7 @@ fn test_binary_op_conversion() {
 
     for (input, expected) in test_cases {
         let result: IrBinaryOp = input.clone().into();
-        assert_eq!(result, expected, "Failed conversion for {:?}: expected {:?}, got {:?}", input, expected, result);
+        assert_eq!(result, expected, "Failed conversion for {input:?}: expected {expected:?}, got {result:?}");
     }
 }
 
@@ -320,6 +322,6 @@ fn test_unary_op_conversion() {
 
     for (input, expected) in test_cases {
         let result: IrUnaryOp = input.clone().into();
-        assert_eq!(result, expected, "Failed conversion for {:?}: expected {:?}, got {:?}", input, expected, result);
+        assert_eq!(result, expected, "Failed conversion for {input:?}: expected {expected:?}, got {result:?}");
     }
 }

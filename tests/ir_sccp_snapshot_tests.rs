@@ -7,6 +7,7 @@
 use insta::assert_snapshot;
 use jsavrs::ir::optimizer::constant_folding::evaluator::UnaryOp;
 use jsavrs::ir::optimizer::constant_folding::*;
+use std::fmt::Write;
 
 #[test]
 fn snapshot_lattice_value_representations() {
@@ -17,8 +18,7 @@ fn snapshot_lattice_value_representations() {
     let top = LatticeValue::Top;
 
     let lattice_repr = format!(
-        "Bottom: {:#?}\nConstant(I32(42)): {:#?}\nConstant(Char('A')): {:#?}\nTop: {:#?}",
-        bottom, const_42, const_char, top
+        "Bottom: {bottom:#?}\nConstant(I32(42)): {const_42:#?}\nConstant(Char('A')): {const_char:#?}\nTop: {top:#?}"
     );
 
     assert_snapshot!(lattice_repr);
@@ -59,12 +59,13 @@ fn snapshot_optimization_stats_format() {
         iterations: 2,
     };
 
-    let formatted = format!("{}", stats);
+    let formatted = format!("{stats}");
     assert_snapshot!(formatted);
 }
 
-#[allow(clippy::approx_constant)]
+
 #[test]
+#[allow(clippy::approx_constant, clippy::unreadable_literal)]
 fn snapshot_constant_value_types() {
     // Snapshot all constant value type representations
     let values = vec![
@@ -83,7 +84,7 @@ fn snapshot_constant_value_types() {
         ConstantValue::Char('A'),
     ];
 
-    let repr = values.iter().map(|v| format!("{:#?}", v)).collect::<Vec<_>>().join("\n");
+    let repr = values.iter().map(|v| format!("{v:#?}")).collect::<Vec<_>>().join("\n");
 
     assert_snapshot!(repr);
 }
@@ -94,7 +95,7 @@ fn snapshot_sccp_config() {
     let default_config = SCCPConfig::default();
     let custom_config = SCCPConfig { verbose: true, max_iterations: 50 };
 
-    let repr = format!("Default Config:\n{:#?}\n\nCustom Config:\n{:#?}", default_config, custom_config);
+    let repr = format!("Default Config:\n{default_config:#?}\n\nCustom Config:\n{custom_config:#?}");
 
     assert_snapshot!(repr);
 }
@@ -170,7 +171,7 @@ fn snapshot_constant_true_branch_transformation() {
     let true_val = Value::new_literal(IrLiteralValue::Bool(true));
     let cond_branch = Terminator::new(
         TerminatorKind::ConditionalBranch {
-            condition: true_val.clone(),
+            condition: true_val,
             true_label: Arc::from("then_block"),
             false_label: Arc::from("else_block"),
         },
@@ -180,26 +181,23 @@ fn snapshot_constant_true_branch_transformation() {
 
     // Then block: return 1
     let ret_1 = Value::new_literal(IrLiteralValue::I32(1));
-    let then_term =
-        Terminator::new(TerminatorKind::Return { value: ret_1.clone(), ty: IrType::I32 }, SourceSpan::default());
+    let then_term = Terminator::new(TerminatorKind::Return { value: ret_1, ty: IrType::I32 }, SourceSpan::default());
     func.set_terminator("then_block", then_term);
 
     // Else block: return 2
     let ret_2 = Value::new_literal(IrLiteralValue::I32(2));
-    let else_term =
-        Terminator::new(TerminatorKind::Return { value: ret_2.clone(), ty: IrType::I32 }, SourceSpan::default());
+    let else_term = Terminator::new(TerminatorKind::Return { value: ret_2, ty: IrType::I32 }, SourceSpan::default());
     func.set_terminator("else_block", else_term);
 
     // Capture before state
     let block_labels: Vec<&str> = func.cfg.blocks().map(|b| b.label.as_ref()).collect();
     let before_state = format!(
         "Function: {}\n\
-         Blocks: {:?}\n\
+         Blocks: {block_labels:?}\n\
          Entry terminator: ConditionalBranch on Bool(true)\n\
          Then terminator: Return I32(1)\n\
          Else terminator: Return I32(2)",
-        func.name.as_ref(),
-        block_labels
+        func.name.as_ref()
     );
 
     // Run SCCP
@@ -209,15 +207,14 @@ fn snapshot_constant_true_branch_transformation() {
     // Capture after state
     let after_state = format!(
         "SCCP Analysis Complete:\n\
-         Iterations: {}\n\
+         Iterations: {iterations}\n\
          Expected transformation: ConditionalBranch(true) → Branch(then_block)\n\
          Expected unreachable: else_block\n\
          \n\
          Note: Full IR rewriting requires IRRewriter integration",
-        iterations
     );
 
-    let snapshot_output = format!("BEFORE:\n{}\n\nAFTER:\n{}", before_state, after_state);
+    let snapshot_output = format!("BEFORE:\n{before_state}\n\nafter:\n{after_state}");
     assert_snapshot!(snapshot_output);
 }
 
@@ -241,7 +238,7 @@ fn snapshot_constant_false_branch_transformation() {
     let false_val = Value::new_literal(IrLiteralValue::Bool(false));
     let cond_branch = Terminator::new(
         TerminatorKind::ConditionalBranch {
-            condition: false_val.clone(),
+            condition: false_val,
             true_label: Arc::from("then_block"),
             false_label: Arc::from("else_block"),
         },
@@ -251,14 +248,12 @@ fn snapshot_constant_false_branch_transformation() {
 
     // Then block: return 1
     let ret_1 = Value::new_literal(IrLiteralValue::I32(1));
-    let then_term =
-        Terminator::new(TerminatorKind::Return { value: ret_1.clone(), ty: IrType::I32 }, SourceSpan::default());
+    let then_term = Terminator::new(TerminatorKind::Return { value: ret_1, ty: IrType::I32 }, SourceSpan::default());
     func.set_terminator("then_block", then_term);
 
     // Else block: return 2
     let ret_2 = Value::new_literal(IrLiteralValue::I32(2));
-    let else_term =
-        Terminator::new(TerminatorKind::Return { value: ret_2.clone(), ty: IrType::I32 }, SourceSpan::default());
+    let else_term = Terminator::new(TerminatorKind::Return { value: ret_2, ty: IrType::I32 }, SourceSpan::default());
     func.set_terminator("else_block", else_term);
 
     // Capture before state
@@ -280,15 +275,14 @@ fn snapshot_constant_false_branch_transformation() {
     // Capture after state
     let after_state = format!(
         "SCCP Analysis Complete:\n\
-         Iterations: {}\n\
+         Iterations: {iterations}\n\
          Expected transformation: ConditionalBranch(false) → Branch(else_block)\n\
          Expected unreachable: then_block\n\
          \n\
          Note: Full IR rewriting requires IRRewriter integration",
-        iterations
     );
 
-    let snapshot_output = format!("BEFORE:\n{}\n\nAFTER:\n{}", before_state, after_state);
+    let snapshot_output = format!("BEFORE:\n{before_state}\n\nafter:\n{after_state}");
     assert_snapshot!(snapshot_output);
 }
 
@@ -314,7 +308,7 @@ fn snapshot_switch_constant_selector_transformation() {
     let selector = Value::new_literal(IrLiteralValue::I32(2));
     let switch_term = Terminator::new(
         TerminatorKind::Switch {
-            value: selector.clone(),
+            value: selector,
             ty: IrType::I32,
             default_label: Arc::from("default"),
             cases: vec![
@@ -352,15 +346,14 @@ fn snapshot_switch_constant_selector_transformation() {
     // Capture after state
     let after_state = format!(
         "SCCP Analysis Complete:\n\
-         Iterations: {}\n\
+         Iterations: {iterations}\n\
          Expected transformation: Switch(2) → Branch(case_2)\n\
          Expected unreachable: case_1, case_3, default\n\
          \n\
-         Note: Full IR rewriting requires IRRewriter integration",
-        iterations
+         Note: Full IR rewriting requires IRRewriter integration"
     );
 
-    let snapshot_output = format!("BEFORE:\n{}\n\nAFTER:\n{}", before_state, after_state);
+    let snapshot_output = format!("BEFORE:\n{before_state}\n\nAFTER:\n{after_state}");
     assert_snapshot!(snapshot_output);
 }
 
@@ -449,7 +442,7 @@ fn snapshot_unreachable_code_marking() {
     // Capture after state
     let after_state = format!(
         "SCCP Analysis Complete:\n\
-         Iterations: {}\n\
+         Iterations: {iterations}\n\
          \n\
          Reachable blocks:\n\
          - entry (always reachable)\n\
@@ -466,15 +459,15 @@ fn snapshot_unreachable_code_marking() {
          - outer_else: UNREACHABLE\n\
          - inner_then: UNREACHABLE\n\
          \n\
-         Note: Full IR rewriting and unreachable marking requires IRRewriter integration",
-        iterations
+         Note: Full IR rewriting and unreachable marking requires IRRewriter integration"
     );
 
-    let snapshot_output = format!("BEFORE:\n{}\n\nAFTER:\n{}", before_state, after_state);
+    let snapshot_output = format!("BEFORE:\n{before_state}\n\nAFTER:\n{after_state}");
     assert_snapshot!(snapshot_output);
 }
 
 #[test]
+#[allow(clippy::too_many_lines)]
 fn snapshot_phi_node_simplification() {
     // T078: Snapshot test for phi node simplification
     // Tests three scenarios:
@@ -547,7 +540,7 @@ fn snapshot_phi_node_simplification() {
 
     let scenario1_after = format!(
         "SCCP Analysis:\n\
-         Iterations: {}\n\
+         Iterations: {iterations1}\n\
          \n\
          Executable edges:\n\
          - entry → right (false condition)\n\
@@ -560,8 +553,7 @@ fn snapshot_phi_node_simplification() {
          Phi evaluation:\n\
          - Only right predecessor is executable\n\
          - Phi should evaluate to constant 20\n\
-         - Expected transformation: phi(10, 20) → constant 20",
-        iterations1
+         - Expected transformation: phi(10, 20) → constant 20"
     );
 
     // === Scenario 2: Phi with all same constants ===
@@ -599,13 +591,12 @@ fn snapshot_phi_node_simplification() {
 
     let scenario2_after = format!(
         "SCCP Analysis:\n\
-         Iterations: {}\n\
+         Iterations: {iterations2}\n\
          \n\
          Phi evaluation:\n\
          - meet(Constant(42), Constant(42)) = Constant(42)\n\
          - All executable predecessors provide same constant\n\
-         - Expected transformation: phi(42, 42) → constant 42",
-        iterations2
+         - Expected transformation: phi(42, 42) → constant 42"
     );
 
     // === Scenario 3: Phi with mixed values ===
@@ -630,30 +621,29 @@ fn snapshot_phi_node_simplification() {
         "=== PHI NODE SIMPLIFICATION SCENARIOS ===\n\
          \n\
          SCENARIO 1 - UNREACHABLE PREDECESSOR\n\
-         BEFORE:\n{}\n\
+         BEFORE:\n{scenario1_before}\n\
          \n\
-         AFTER:\n{}\n\
+         AFTER:\n{scenario1_after}\n\
          \n\
          =====================================\n\
          \n\
          SCENARIO 2 - ALL SAME CONSTANTS\n\
-         BEFORE:\n{}\n\
+         BEFORE:\n{scenario2_before}\n\
          \n\
-         AFTER:\n{}\n\
+         AFTER:\n{scenario2_after}\n\
          \n\
          =====================================\n\
          \n\
          SCENARIO 3 - MIXED VALUES\n\
-         BEFORE:\n{}\n\
+         BEFORE:\n{scenario3_before}\n\
          \n\
-         AFTER:\n{}",
-        scenario1_before, scenario1_after, scenario2_before, scenario2_after, scenario3_before, scenario3_after
+         AFTER:\n{scenario3_after}"
     );
 
     assert_snapshot!(snapshot_output);
 }
 
-#[allow(clippy::approx_constant)]
+#[allow(clippy::approx_constant, clippy::unreadable_literal)]
 #[test]
 fn snapshot_all_type_evaluations() {
     // T104: Snapshot test for constant evaluation across all IR types
@@ -665,99 +655,97 @@ fn snapshot_all_type_evaluations() {
 
     // I8 Type Evaluations
     output.push_str("=== I8 Type Evaluations ===\n");
-    output.push_str(&format!("Add: {:?}\n", ConstantEvaluator::eval_binary_i8(BinaryOp::Add, 100, 20)));
-    output.push_str(&format!("Overflow: {:?}\n", ConstantEvaluator::eval_binary_i8(BinaryOp::Add, i8::MAX, 1)));
+    writeln!(output, "Add: {:?}", ConstantEvaluator::eval_binary_i8(BinaryOp::Add, 100, 20)).unwrap();
+    writeln!(output, "Overflow: {:?}", ConstantEvaluator::eval_binary_i8(BinaryOp::Add, i8::MAX, 1)).unwrap();
     output.push('\n');
 
     // I16 Type Evaluations
     output.push_str("=== I16 Type Evaluations ===\n");
-    output.push_str(&format!("Mul: {:?}\n", ConstantEvaluator::eval_binary_i16(BinaryOp::Mul, 200, 3)));
-    output.push_str(&format!("Overflow: {:?}\n", ConstantEvaluator::eval_binary_i16(BinaryOp::Mul, i16::MAX, 2)));
+    writeln!(output, "Mul: {:?}", ConstantEvaluator::eval_binary_i16(BinaryOp::Mul, 200, 3)).unwrap();
+    writeln!(output, "Overflow: {:?}", ConstantEvaluator::eval_binary_i16(BinaryOp::Mul, i16::MAX, 2)).unwrap();
     output.push('\n');
 
     // I32 Type Evaluations
     output.push_str("=== I32 Type Evaluations ===\n");
-    output.push_str(&format!("Add: {:?}\n", ConstantEvaluator::eval_binary_i32(BinaryOp::Add, 1000, 2000)));
-    output.push_str(&format!("Div: {:?}\n", ConstantEvaluator::eval_binary_i32(BinaryOp::Div, 100, 5)));
-    output.push_str(&format!("DivByZero: {:?}\n", ConstantEvaluator::eval_binary_i32(BinaryOp::Div, 100, 0)));
+    writeln!(output, "Add: {:?}", ConstantEvaluator::eval_binary_i32(BinaryOp::Add, 1000, 2000)).unwrap();
+    writeln!(output, "Div: {:?}", ConstantEvaluator::eval_binary_i32(BinaryOp::Div, 100, 5)).unwrap();
+    writeln!(output, "DivByZero: {:?}", ConstantEvaluator::eval_binary_i32(BinaryOp::Div, 100, 0)).unwrap();
     output.push('\n');
 
     // I64 Type Evaluations
     output.push_str("=== I64 Type Evaluations ===\n");
-    output.push_str(&format!("Sub: {:?}\n", ConstantEvaluator::eval_binary_i64(BinaryOp::Sub, 1_000_000, 500_000)));
-    output.push_str(&format!("Overflow: {:?}\n", ConstantEvaluator::eval_binary_i64(BinaryOp::Sub, i64::MIN, 1)));
+    writeln!(output, "Sub: {:?}", ConstantEvaluator::eval_binary_i64(BinaryOp::Sub, 1_000_000, 500_000)).unwrap();
+    writeln!(output, "Overflow: {:?}", ConstantEvaluator::eval_binary_i64(BinaryOp::Sub, i64::MIN, 1)).unwrap();
     output.push('\n');
 
     // U8 Type Evaluations
     output.push_str("=== U8 Type Evaluations ===\n");
-    output.push_str(&format!("Add: {:?}\n", ConstantEvaluator::eval_binary_u8(BinaryOp::Add, 200, 55)));
-    output.push_str(&format!("Overflow: {:?}\n", ConstantEvaluator::eval_binary_u8(BinaryOp::Add, u8::MAX, 1)));
-    output.push_str(&format!("Underflow: {:?}\n", ConstantEvaluator::eval_binary_u8(BinaryOp::Sub, 0, 1)));
+    writeln!(output, "Add: {:?}", ConstantEvaluator::eval_binary_u8(BinaryOp::Add, 200, 55)).unwrap();
+    writeln!(output, "Overflow: {:?}", ConstantEvaluator::eval_binary_u8(BinaryOp::Add, u8::MAX, 1)).unwrap();
+    writeln!(output, "Underflow: {:?}", ConstantEvaluator::eval_binary_u8(BinaryOp::Sub, 0, 1)).unwrap();
     output.push('\n');
 
     // U16 Type Evaluations
     output.push_str("=== U16 Type Evaluations ===\n");
-    output.push_str(&format!("Div: {:?}\n", ConstantEvaluator::eval_binary_u16(BinaryOp::Div, 1000, 10)));
+    writeln!(output, "Div: {:?}", ConstantEvaluator::eval_binary_u16(BinaryOp::Div, 1000, 10)).unwrap();
     output.push('\n');
 
     // U32 Type Evaluations
     output.push_str("=== U32 Type Evaluations ===\n");
-    output.push_str(&format!("Mod: {:?}\n", ConstantEvaluator::eval_binary_u32(BinaryOp::Mod, 100, 7)));
+    writeln!(output, "Mod: {:?}", ConstantEvaluator::eval_binary_u32(BinaryOp::Mod, 100, 7)).unwrap();
     output.push('\n');
 
     // U64 Type Evaluations
     output.push_str("=== U64 Type Evaluations ===\n");
-    output.push_str(&format!("Mul: {:?}\n", ConstantEvaluator::eval_binary_u64(BinaryOp::Mul, 1_000_000, 1_000)));
+    writeln!(output, "Mul: {:?}", ConstantEvaluator::eval_binary_u64(BinaryOp::Mul, 1_000_000, 1_000)).unwrap();
     output.push('\n');
 
     // F32 Type Evaluations (with special values)
     output.push_str("=== F32 Type Evaluations ===\n");
-    output.push_str(&format!(
-        "Add: {:?}\n",
-        ConstantEvaluator::eval_binary_f32(BinaryOp::Add, std::f32::consts::PI, 2.86)
-    ));
-    output.push_str(&format!("NaN: is_nan = {}\n", ConstantEvaluator::is_nan_f32(f32::NAN)));
-    output.push_str(&format!("Infinity: is_infinite = {}\n", ConstantEvaluator::is_infinite_f32(f32::INFINITY)));
-    output.push_str(&format!("NegZero: is_neg_zero = {}\n", ConstantEvaluator::is_neg_zero_f32(-0.0)));
+    writeln!(output, "Add: {:?}", ConstantEvaluator::eval_binary_f32(BinaryOp::Add, std::f32::consts::PI, 2.86))
+        .unwrap();
+    writeln!(output, "NaN: is_nan = {}", ConstantEvaluator::is_nan_f32(f32::NAN)).unwrap();
+    writeln!(output, "Infinity: is_infinite = {}", ConstantEvaluator::is_infinite_f32(f32::INFINITY)).unwrap();
+    writeln!(output, "NegZero: is_neg_zero = {}", ConstantEvaluator::is_neg_zero_f32(-0.0)).unwrap();
     output.push('\n');
 
     // F64 Type Evaluations
     output.push_str("=== F64 Type Evaluations ===\n");
-    output.push_str(&format!("Mul: {:?}\n", ConstantEvaluator::eval_binary_f64(BinaryOp::Mul, 2.5, 4.0)));
-    output.push_str(&format!("NaN: is_nan = {}\n", ConstantEvaluator::is_nan_f64(f64::NAN)));
-    output.push_str(&format!("Infinity: is_infinite = {}\n", ConstantEvaluator::is_infinite_f64(f64::NEG_INFINITY)));
+    writeln!(output, "Mul: {:?}", ConstantEvaluator::eval_binary_f64(BinaryOp::Mul, 2.5, 4.0)).unwrap();
+    writeln!(output, "NaN: is_nan = {}", ConstantEvaluator::is_nan_f64(f64::NAN)).unwrap();
+    writeln!(output, "Infinity: is_infinite = {}", ConstantEvaluator::is_infinite_f64(f64::NEG_INFINITY)).unwrap();
     output.push('\n');
 
     // Char Type Evaluations
     output.push_str("=== Char Type Evaluations ===\n");
-    output.push_str(&format!("Eq('A', 'A'): {:?}\n", ConstantEvaluator::eval_char_eq('A', 'A')));
-    output.push_str(&format!("Ne('X', 'Y'): {:?}\n", ConstantEvaluator::eval_char_ne('X', 'Y')));
-    output.push_str(&format!("Unicode('😀', '😀'): {:?}\n", ConstantEvaluator::eval_char_eq('😀', '😀')));
+    writeln!(output, "Eq('A', 'A'): {:?}", ConstantEvaluator::eval_char_eq('A', 'A')).unwrap();
+    writeln!(output, "Ne('X', 'Y'): {:?}", ConstantEvaluator::eval_char_ne('X', 'Y')).unwrap();
+    writeln!(output, "Unicode('😀', '😀'): {:?}", ConstantEvaluator::eval_char_eq('😀', '😀')).unwrap();
     output.push('\n');
 
     // Bitwise Operations (all integer types)
     output.push_str("=== Bitwise Operations ===\n");
-    output.push_str(&format!("AND i32: {:?}\n", ConstantEvaluator::eval_bitwise_i32(BitwiseOp::And, 0xFF, 0x0F)));
-    output.push_str(&format!("OR u32: {:?}\n", ConstantEvaluator::eval_bitwise_u32(BitwiseOp::Or, 0xF0, 0x0F)));
-    output.push_str(&format!("XOR i64: {:?}\n", ConstantEvaluator::eval_bitwise_i64(BitwiseOp::Xor, 0xAAAA, 0x5555)));
-    output.push_str(&format!("SHL i32: {:?}\n", ConstantEvaluator::eval_bitwise_i32(BitwiseOp::Shl, 1, 4)));
-    output.push_str(&format!("SHR u64: {:?}\n", ConstantEvaluator::eval_bitwise_u64(BitwiseOp::Shr, 128, 3)));
-    output.push_str(&format!("NOT i8: {:?}\n", ConstantEvaluator::eval_bitwise_not_i8(0b00001111)));
-    output.push_str(&format!("NOT u8: {:?}\n", ConstantEvaluator::eval_bitwise_not_u8(0b10101010)));
+    writeln!(output, "AND i32: {:?}", ConstantEvaluator::eval_bitwise_i32(BitwiseOp::And, 0xFF, 0x0F)).unwrap();
+    writeln!(output, "OR u32: {:?}", ConstantEvaluator::eval_bitwise_u32(BitwiseOp::Or, 0xF0, 0x0F)).unwrap();
+    writeln!(output, "XOR i64: {:?}", ConstantEvaluator::eval_bitwise_i64(BitwiseOp::Xor, 0xAAAA, 0x5555)).unwrap();
+    writeln!(output, "SHL i32: {:?}", ConstantEvaluator::eval_bitwise_i32(BitwiseOp::Shl, 1, 4)).unwrap();
+    writeln!(output, "SHR u64: {:?}", ConstantEvaluator::eval_bitwise_u64(BitwiseOp::Shr, 128, 3)).unwrap();
+    writeln!(output, "NOT i8: {:?}", ConstantEvaluator::eval_bitwise_not_i8(0b00001111)).unwrap();
+    writeln!(output, "NOT u8: {:?}", ConstantEvaluator::eval_bitwise_not_u8(0b10101010)).unwrap();
     output.push('\n');
 
     // Boolean Operations
     output.push_str("=== Boolean Operations ===\n");
-    output.push_str(&format!("AND: {:?}\n", ConstantEvaluator::eval_binary_bool(BinaryOp::And, true, false)));
-    output.push_str(&format!("OR: {:?}\n", ConstantEvaluator::eval_binary_bool(BinaryOp::Or, true, false)));
-    output.push_str(&format!("NOT: {:?}\n", ConstantEvaluator::eval_unary_bool(UnaryOp::Not, true)));
+    writeln!(output, "AND: {:?}", ConstantEvaluator::eval_binary_bool(BinaryOp::And, true, false)).unwrap();
+    writeln!(output, "OR: {:?}", ConstantEvaluator::eval_binary_bool(BinaryOp::Or, true, false)).unwrap();
+    writeln!(output, "NOT: {:?}", ConstantEvaluator::eval_unary_bool(UnaryOp::Not, true)).unwrap();
     output.push('\n');
 
     // Comparison Operations
     output.push_str("=== Comparison Operations ===\n");
-    output.push_str(&format!("EQ: {:?}\n", ConstantEvaluator::eval_compare_i32(BinaryOp::Eq, 42, 42)));
-    output.push_str(&format!("LT: {:?}\n", ConstantEvaluator::eval_compare_i32(BinaryOp::Lt, 5, 10)));
-    output.push_str(&format!("GT: {:?}\n", ConstantEvaluator::eval_compare_i32(BinaryOp::Gt, 10, 5)));
+    writeln!(output, "EQ: {:?}", ConstantEvaluator::eval_compare_i32(BinaryOp::Eq, 42, 42)).unwrap();
+    writeln!(output, "LT: {:?}", ConstantEvaluator::eval_compare_i32(BinaryOp::Lt, 5, 10)).unwrap();
+    writeln!(output, "GT: {:?}", ConstantEvaluator::eval_compare_i32(BinaryOp::Gt, 10, 5)).unwrap();
 
     assert_snapshot!(output);
 }

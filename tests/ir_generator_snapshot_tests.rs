@@ -456,6 +456,7 @@ fn test_generate_unary_expression() {
 }
 
 #[test]
+#[allow(clippy::match_same_arms)]
 fn test_generate_integer_literals() {
     let test_cases = vec![
         Number::I8(42),
@@ -495,8 +496,8 @@ fn test_generate_integer_literals() {
     }
 }
 
-#[allow(clippy::approx_constant)]
 #[test]
+#[allow(clippy::approx_constant, clippy::match_same_arms)]
 fn test_generate_float_literals() {
     let test_cases = vec![
         Number::Float32(3.14),
@@ -510,10 +511,8 @@ fn test_generate_float_literals() {
             "test".into(),
             vec![],
             match num {
-                Number::Float32(_) => Type::F32,
-                Number::Float64(_) => Type::F64,
-                Number::Scientific32(_, _) => Type::F32,
-                Number::Scientific64(_, _) => Type::F64,
+                Number::Float32(_) | Number::Scientific32(_, _) => Type::F32,
+                Number::Float64(_) | Number::Scientific64(_, _) => Type::F64,
                 _ => Type::F32,
             },
             vec![Stmt::Return {

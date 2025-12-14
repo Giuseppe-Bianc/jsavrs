@@ -135,7 +135,7 @@ impl DataDirective {
     /// // Results in: db "Hello, World!", 0
     /// ```
     pub fn new_asciz(s: impl Into<String>) -> Self {
-        DataDirective::Asciz(s.into(), 0)
+        Self::Asciz(s.into(), 0)
     }
 
     /// Creates a new string directive with a custom terminator byte.
@@ -157,7 +157,7 @@ impl DataDirective {
     /// // Results in: db "data", 10  (terminated with newline)
     /// ```
     pub fn new_asciiz_with_terminator(s: impl Into<String>, terminator: u8) -> Self {
-        DataDirective::Asciz(s.into(), terminator)
+        Self::Asciz(s.into(), terminator)
     }
 
     /// Creates a new EQU directive with a constant value.
@@ -177,8 +177,9 @@ impl DataDirective {
     /// let directive = DataDirective::new_equ_constant(42);
     /// // Results in: equ 42
     /// ```
-    pub fn new_equ_constant(value: i64) -> Self {
-        DataDirective::Equ(EquExpression::Constant(value))
+    #[must_use]
+    pub const fn new_equ_constant(value: i64) -> Self {
+        Self::Equ(EquExpression::Constant(value))
     }
 
     /// Creates a new EQU directive that calculates length from a label.
@@ -200,7 +201,7 @@ impl DataDirective {
     /// // Results in: equ $ - msg
     /// ```
     pub fn new_equ_length_of(label: impl Into<String>) -> Self {
-        DataDirective::Equ(EquExpression::LengthOf(label.into()))
+        Self::Equ(EquExpression::LengthOf(label.into()))
     }
 
     /// Creates a new EQU directive with a generic expression.
@@ -222,7 +223,7 @@ impl DataDirective {
     /// // Results in: equ BUFFER_SIZE * 2
     /// ```
     pub fn new_equ_generic(expr: impl Into<String>) -> Self {
-        DataDirective::Equ(EquExpression::Generic(expr.into()))
+        Self::Equ(EquExpression::Generic(expr.into()))
     }
 }
 
@@ -244,9 +245,9 @@ impl fmt::Display for EquExpression {
     /// * `Generic(expr)` outputs the expression as-is
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
         match self {
-            EquExpression::Constant(value) => write!(f, "{}", value),
-            EquExpression::LengthOf(label) => write!(f, "$ - {}", label),
-            EquExpression::Generic(expr) => write!(f, "{}", expr),
+            Self::Constant(value) => write!(f, "{value}"),
+            Self::LengthOf(label) => write!(f, "$ - {label}"),
+            Self::Generic(expr) => write!(f, "{expr}"),
         }
     }
 }
@@ -268,60 +269,60 @@ impl fmt::Display for DataDirective {
     /// * Numeric directives output values in hexadecimal with appropriate padding
     /// * String directives properly escape special characters
     /// * Reserve directives output the size to reserve
-    /// * EQU directives delegate to the EquExpression formatter
+    /// * EQU directives delegate to the `EquExpression` formatter
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
         match self {
-            DataDirective::Db(bytes) => {
+            Self::Db(bytes) => {
                 write!(f, "db ")?;
                 for (i, byte) in bytes.iter().enumerate() {
                     if i > 0 {
                         write!(f, ", ")?;
                     }
-                    write!(f, "0x{:02x}", byte)?;
+                    write!(f, "0x{byte:02x}")?;
                 }
                 Ok(())
             }
-            DataDirective::Dw(words) => {
+            Self::Dw(words) => {
                 write!(f, "dw ")?;
                 for (i, word) in words.iter().enumerate() {
                     if i > 0 {
                         write!(f, ", ")?;
                     }
-                    write!(f, "0x{:04x}", word)?;
+                    write!(f, "0x{word:04x}")?;
                 }
                 Ok(())
             }
-            DataDirective::Dd(dwords) => {
+            Self::Dd(dwords) => {
                 write!(f, "dd ")?;
                 for (i, dword) in dwords.iter().enumerate() {
                     if i > 0 {
                         write!(f, ", ")?;
                     }
-                    write!(f, "0x{:08x}", dword)?;
+                    write!(f, "0x{dword:08x}")?;
                 }
                 Ok(())
             }
-            DataDirective::Dq(qwords) => {
+            Self::Dq(qwords) => {
                 write!(f, "dq ")?;
                 for (i, qword) in qwords.iter().enumerate() {
                     if i > 0 {
                         write!(f, ", ")?;
                     }
-                    write!(f, "0x{:016x}", qword)?;
+                    write!(f, "0x{qword:016x}")?;
                 }
                 Ok(())
             }
-            DataDirective::Asciz(s, terminator) => {
-                write!(f, "db \"{}\", {}", escape_string(s), terminator)
+            Self::Asciz(s, terminator) => {
+                write!(f, "db \"{}\", {terminator}", escape_string(s))
             }
-            DataDirective::Ascii(s) => {
+            Self::Ascii(s) => {
                 write!(f, "db \"{}\"", escape_string(s))
             }
-            DataDirective::Resb(size) => write!(f, "resb {}", size),
-            DataDirective::Resw(size) => write!(f, "resw {}", size),
-            DataDirective::Resd(size) => write!(f, "resd {}", size),
-            DataDirective::Resq(size) => write!(f, "resq {}", size),
-            DataDirective::Equ(expr) => write!(f, "equ {}", expr),
+            Self::Resb(size) => write!(f, "resb {size}"),
+            Self::Resw(size) => write!(f, "resw {size}"),
+            Self::Resd(size) => write!(f, "resd {size}"),
+            Self::Resq(size) => write!(f, "resq {size}"),
+            Self::Equ(expr) => write!(f, "equ {expr}"),
         }
     }
 }
@@ -392,12 +393,12 @@ impl fmt::Display for AssemblyElement {
     /// * Data directives combine label and directive on one line
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
         match self {
-            AssemblyElement::Label(name) => write!(f, "{}:", name),
-            AssemblyElement::Instruction(instr) => write!(f, "    {}", instr),
-            AssemblyElement::InstructionWithComment(instr, comment) => write!(f, "    {}    ; {}", instr, comment),
-            AssemblyElement::Data(label, directive) => write!(f, "{} {}", label, directive),
-            AssemblyElement::Comment(comment) => write!(f, "; {}", comment),
-            AssemblyElement::EmptyLine => write!(f, ""),
+            Self::Label(name) => write!(f, "{name}:"),
+            Self::Instruction(instr) => write!(f, "    {instr}"),
+            Self::InstructionWithComment(instr, comment) => write!(f, "    {instr}    ; {comment}"),
+            Self::Data(label, directive) => write!(f, "{label} {directive}"),
+            Self::Comment(comment) => write!(f, "; {comment}"),
+            Self::EmptyLine => write!(f, ""),
         }
     }
 }
@@ -439,7 +440,7 @@ impl fmt::Display for AssemblySection {
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
         writeln!(f, "{}", self.section)?;
         for element in &self.elements {
-            writeln!(f, "{}", element)?;
+            writeln!(f, "{element}")?;
         }
         Ok(())
     }
@@ -456,7 +457,8 @@ impl AssemblySection {
     /// # Returns
     ///
     /// A new `AssemblySection` with no elements.
-    pub fn new(section: Section) -> Self {
+    #[must_use]
+    pub const fn new(section: Section) -> Self {
         Self { section, elements: Vec::new() }
     }
 
@@ -549,7 +551,8 @@ impl AssemblySection {
     ///
     /// The .text section typically contains executable instructions and is
     /// marked as read-only and executable in the final binary.
-    pub fn text_section() -> Self {
+    #[must_use]
+    pub const fn text_section() -> Self {
         Self::new(Section::Text)
     }
 
@@ -563,7 +566,8 @@ impl AssemblySection {
     ///
     /// The .data section contains initialized data that can be read and written
     /// at runtime.
-    pub fn data_section() -> Self {
+    #[must_use]
+    pub const fn data_section() -> Self {
         Self::new(Section::Data)
     }
 
@@ -577,7 +581,8 @@ impl AssemblySection {
     ///
     /// The .bss section reserves space for uninitialized data. It doesn't take
     /// space in the binary file but is allocated at runtime.
-    pub fn bss_section() -> Self {
+    #[must_use]
+    pub const fn bss_section() -> Self {
         Self::new(Section::Bss)
     }
 
@@ -591,7 +596,8 @@ impl AssemblySection {
     ///
     /// The .rodata section contains constant data that cannot be modified at
     /// runtime. It's typically placed in read-only memory pages.
-    pub fn rodata_section() -> Self {
+    #[must_use]
+    pub const fn rodata_section() -> Self {
         Self::new(Section::Rodata)
     }
 }
@@ -614,5 +620,5 @@ impl AssemblySection {
 /// * `\n` becomes `\\n` (newline)
 /// * `\t` becomes `\\t` (tab)
 fn escape_string(s: &str) -> String {
-    s.replace("\\", "\\\\").replace("\"", "\\\"").replace("\n", "\\\\n").replace("\t", "\\\\t")
+    s.replace('\\', "\\\\").replace('"', "\\\"").replace('\n', "\\\\n").replace('\t', "\\\\t")
 }

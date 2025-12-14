@@ -223,7 +223,7 @@ help: Check your brackets
 
 #[test]
 fn io_error() {
-    let line_tracker = LineTracker::new("test", "".to_string());
+    let line_tracker = LineTracker::new("test", String::new());
     let reporter = ErrorReporter::new(line_tracker);
 
     let errors = vec![CompileError::IoError(io::Error::new(io::ErrorKind::NotFound, "File not found"))];

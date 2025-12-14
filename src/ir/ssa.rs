@@ -365,7 +365,7 @@ impl SsaTransformer {
         }
 
         // Update phi-functions
-        #[allow(clippy::unwrap_used)]
+
         for (i, ty, var_name) in phi_updates {
             // The phi-function already has a result value with debug info, but we need to update it
             // with a new unique SSA name

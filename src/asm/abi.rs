@@ -9,7 +9,7 @@ use std::fmt;
 ///
 /// # ABI Differences
 ///
-/// - **SystemV**: Used on Unix-like systems (Linux, macOS, BSD). Passes first 6 integer
+/// - **`SystemV`**: Used on Unix-like systems (Linux, macOS, BSD). Passes first 6 integer
 ///   arguments in registers (RDI, RSI, RDX, RCX, R8, R9), has a 128-byte red zone,
 ///   and treats all XMM registers as caller-saved.
 /// - **Windows**: Used on Windows x64. Passes first 4 arguments in registers
@@ -31,8 +31,8 @@ impl fmt::Display for AbiKind {
     /// A formatted string representation of the ABI convention name.
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
         match self {
-            AbiKind::SystemV => write!(f, "System V AMD64 ABI"),
-            AbiKind::Windows => write!(f, "Microsoft x64 Calling Convention"),
+            Self::SystemV => write!(f, "System V AMD64 ABI"),
+            Self::Windows => write!(f, "Microsoft x64 Calling Convention"),
         }
     }
 }
@@ -86,28 +86,29 @@ impl Abi {
     /// # Returns
     ///
     /// A new `Abi` instance with the appropriate calling convention for the platform.
-    pub fn from_platform(platform: Platform) -> Self {
+    #[must_use]
+    pub const fn from_platform(platform: Platform) -> Self {
         let kind = match platform {
             Platform::Windows => AbiKind::Windows,
             _ => AbiKind::SystemV,
         };
-        Abi { kind, platform }
+        Self { kind, platform }
     }
 
     /// System V ABI for Linux x86-64 platform.
     ///
     /// Pre-configured constant for the most common Unix-like platform.
-    pub const SYSTEM_V_LINUX: Abi = Abi { kind: AbiKind::SystemV, platform: Platform::Linux };
+    pub const SYSTEM_V_LINUX: Self = Self { kind: AbiKind::SystemV, platform: Platform::Linux };
 
     /// System V ABI for macOS x86-64 platform.
     ///
     /// Pre-configured constant for Apple's desktop operating system.
-    pub const SYSTEM_V_MACOS: Abi = Abi { kind: AbiKind::SystemV, platform: Platform::MacOS };
+    pub const SYSTEM_V_MACOS: Self = Self { kind: AbiKind::SystemV, platform: Platform::MacOS };
 
     /// Microsoft x64 calling convention for Windows platform.
     ///
     /// Pre-configured constant for the Windows operating system.
-    pub const WINDOWS: Abi = Abi { kind: AbiKind::Windows, platform: Platform::Windows };
+    pub const WINDOWS: Self = Self { kind: AbiKind::Windows, platform: Platform::Windows };
 
     /// Returns the required stack alignment in bytes.
     ///
@@ -117,7 +118,8 @@ impl Abi {
     /// # Returns
     ///
     /// The stack alignment requirement in bytes (always 16 for x86-64).
-    pub fn alignment(&self) -> u32 {
+    #[must_use]
+    pub const fn alignment(&self) -> u32 {
         16
     }
 
@@ -132,7 +134,8 @@ impl Abi {
     ///
     /// - System V: 128 bytes (allowing efficient leaf function optimization)
     /// - Windows: 0 bytes (no red zone available)
-    pub fn red_zone(&self) -> u32 {
+    #[must_use]
+    pub const fn red_zone(&self) -> u32 {
         match self.kind {
             AbiKind::SystemV => 128,
             AbiKind::Windows => 0,
@@ -149,7 +152,8 @@ impl Abi {
     ///
     /// - System V: 0 bytes (no shadow space required)
     /// - Windows: 32 bytes (4 registers × 8 bytes each)
-    pub fn shadow_space(&self) -> u32 {
+    #[must_use]
+    pub const fn shadow_space(&self) -> u32 {
         match self.kind {
             AbiKind::SystemV => 0,
             AbiKind::Windows => 32, // 4 registers × 8 bytes
@@ -165,7 +169,8 @@ impl Abi {
     ///
     /// - System V: `[RDI, RSI, RDX, RCX, R8, R9]` (6 registers)
     /// - Windows: `[RCX, RDX, R8, R9]` (4 registers)
-    pub fn int_param_registers(&self) -> &'static [GPRegister64] {
+    #[must_use]
+    pub const fn int_param_registers(&self) -> &'static [GPRegister64] {
         match self.kind {
             AbiKind::SystemV => super::register::INT_PARAM_REGS_SYSTEMV,
             AbiKind::Windows => super::register::INT_PARAM_REGS_WINDOWS,
@@ -180,7 +185,8 @@ impl Abi {
     ///
     /// - System V: `[XMM0-XMM7]` (8 registers)
     /// - Windows: `[XMM0-XMM3]` (4 registers, interleaved with integer parameters)
-    pub fn float_param_registers(&self) -> &'static [XMMRegister] {
+    #[must_use]
+    pub const fn float_param_registers(&self) -> &'static [XMMRegister] {
         match self.kind {
             AbiKind::SystemV => super::register::FLOAT_PARAM_REGS_SYSTEMV,
             AbiKind::Windows => super::register::FLOAT_PARAM_REGS_WINDOWS,
@@ -195,7 +201,8 @@ impl Abi {
     /// # Returns
     ///
     /// A slice containing `[RAX, RDX]` for integer return values.
-    pub fn int_return_registers(&self) -> &'static [GPRegister64] {
+    #[must_use]
+    pub const fn int_return_registers(&self) -> &'static [GPRegister64] {
         super::register::INT_RETURN_REGS
     }
 
@@ -207,7 +214,8 @@ impl Abi {
     ///
     /// - System V: `[XMM0, XMM1]` (can return up to 128 bits)
     /// - Windows: `[XMM0]` (single register only)
-    pub fn float_return_registers(&self) -> &'static [XMMRegister] {
+    #[must_use]
+    pub const fn float_return_registers(&self) -> &'static [XMMRegister] {
         match self.kind {
             AbiKind::SystemV => super::register::FLOAT_RETURN_REGS_SYSTEMV,
             AbiKind::Windows => super::register::FLOAT_RETURN_REGS_WINDOWS,
@@ -224,7 +232,8 @@ impl Abi {
     ///
     /// - System V: `[RBX, RBP, R12, R13, R14, R15]`
     /// - Windows: `[RBX, RBP, RDI, RSI, R12, R13, R14, R15]`
-    pub fn callee_saved_gp_registers(&self) -> &'static [GPRegister64] {
+    #[must_use]
+    pub const fn callee_saved_gp_registers(&self) -> &'static [GPRegister64] {
         match self.kind {
             AbiKind::SystemV => super::register::CALLEE_SAVED_GP_SYSTEMV,
             AbiKind::Windows => super::register::CALLEE_SAVED_GP_WINDOWS,
@@ -239,7 +248,8 @@ impl Abi {
     ///
     /// - System V: Empty slice (all XMM registers are caller-saved)
     /// - Windows: `[XMM6-XMM15]` (10 registers that must be preserved)
-    pub fn callee_saved_xmm_registers(&self) -> &'static [XMMRegister] {
+    #[must_use]
+    pub const fn callee_saved_xmm_registers(&self) -> &'static [XMMRegister] {
         match self.kind {
             AbiKind::SystemV => &[], // All XMM registers are caller-saved
             AbiKind::Windows => super::register::CALLEE_SAVED_XMM_WINDOWS,
@@ -255,7 +265,8 @@ impl Abi {
     /// # Returns
     ///
     /// A slice of general purpose registers that are volatile for this ABI.
-    pub fn caller_saved_gp_registers(&self) -> &'static [GPRegister64] {
+    #[must_use]
+    pub const fn caller_saved_gp_registers(&self) -> &'static [GPRegister64] {
         match self.kind {
             AbiKind::SystemV => super::register::CALLER_SAVED_GP_SYSTEMV,
             AbiKind::Windows => super::register::CALLER_SAVED_GP_WINDOWS,
@@ -270,7 +281,8 @@ impl Abi {
     ///
     /// - System V: All XMM registers `[XMM0-XMM15]`
     /// - Windows: `[XMM0-XMM5]` (XMM6-XMM15 are callee-saved)
-    pub fn caller_saved_xmm_registers(&self) -> &'static [XMMRegister] {
+    #[must_use]
+    pub const fn caller_saved_xmm_registers(&self) -> &'static [XMMRegister] {
         match self.kind {
             AbiKind::SystemV => super::register::CALLER_SAVED_XMM_SYSTEMV,
             AbiKind::Windows => super::register::CALLER_SAVED_XMM_WINDOWS,
@@ -288,7 +300,8 @@ impl Abi {
     /// # Returns
     ///
     /// `true` if the register must be preserved across function calls, `false` otherwise.
-    pub fn is_callee_saved(&self, reg: X86Register) -> bool {
+    #[must_use]
+    pub const fn is_callee_saved(&self, reg: X86Register) -> bool {
         // Delegate to X86Register logic using the stored platform.
         reg.is_callee_saved(self.platform)
     }
@@ -304,7 +317,8 @@ impl Abi {
     /// # Returns
     ///
     /// `true` if the register can be freely modified by callees, `false` otherwise.
-    pub fn is_caller_saved(&self, reg: X86Register) -> bool {
+    #[must_use]
+    pub const fn is_caller_saved(&self, reg: X86Register) -> bool {
         reg.is_volatile(self.platform)
     }
 
@@ -321,7 +335,8 @@ impl Abi {
     /// # Returns
     ///
     /// `true` if the register is used for the specified parameter position, `false` otherwise.
-    pub fn is_parameter_register(&self, reg: X86Register, param_index: usize) -> bool {
+    #[must_use]
+    pub const fn is_parameter_register(&self, reg: X86Register, param_index: usize) -> bool {
         reg.is_parameter_register(self.platform, param_index)
     }
 
@@ -336,7 +351,8 @@ impl Abi {
     /// # Returns
     ///
     /// `true` if the register is used for return values (e.g., RAX, RDX, XMM0), `false` otherwise.
-    pub fn is_return_register(&self, reg: X86Register) -> bool {
+    #[must_use]
+    pub const fn is_return_register(&self, reg: X86Register) -> bool {
         reg.is_return_register(self.platform)
     }
 
@@ -350,7 +366,9 @@ impl Abi {
     ///
     /// - System V: `false` (optional, can use RBP as general purpose)
     /// - Windows: `false` (optional, but recommended for debugging)
-    pub fn requires_frame_pointer(&self) -> bool {
+    #[must_use]
+    #[allow(clippy::match_same_arms)]
+    pub const fn requires_frame_pointer(&self) -> bool {
         match self.kind {
             AbiKind::SystemV => false, // Optional, can use RBP as general purpose
             AbiKind::Windows => false, // Optional, but recommended for debugging
@@ -367,7 +385,8 @@ impl Abi {
     ///
     /// - System V: `RDI` (first integer parameter position)
     /// - Windows: `RCX` (first integer parameter position)
-    pub fn struct_return_pointer_register(&self) -> GPRegister64 {
+    #[must_use]
+    pub const fn struct_return_pointer_register(&self) -> GPRegister64 {
         match self.kind {
             AbiKind::SystemV => GPRegister64::Rdi, // First parameter position
             AbiKind::Windows => GPRegister64::Rcx, // First parameter position
@@ -383,7 +402,8 @@ impl Abi {
     ///
     /// - System V: 16 bytes (can return up to 128 bits in RAX:RDX or XMM0:XMM1)
     /// - Windows: 8 bytes (only 64-bit structs returned in RAX)
-    pub fn max_struct_return_size(&self) -> usize {
+    #[must_use]
+    pub const fn max_struct_return_size(&self) -> usize {
         match self.kind {
             AbiKind::SystemV => 16, // Can return up to 128 bits in RAX:RDX or XMM0:XMM1
             AbiKind::Windows => 8,  // Only 64-bit structs returned in RAX
@@ -398,7 +418,8 @@ impl Abi {
     /// # Returns
     ///
     /// `true` for both ABIs (parameters are pushed left-to-right after register params).
-    pub fn stack_param_order_is_left_to_right(&self) -> bool {
+    #[must_use]
+    pub const fn stack_param_order_is_left_to_right(&self) -> bool {
         true // Both ABIs push remaining parameters left-to-right after register params
     }
 
@@ -411,7 +432,8 @@ impl Abi {
     ///
     /// - System V: 8 bytes (just the return address)
     /// - Windows: 40 bytes (8-byte return address + 32 bytes shadow space)
-    pub fn first_stack_param_offset(&self) -> u32 {
+    #[must_use]
+    pub const fn first_stack_param_offset(&self) -> u32 {
         match self.kind {
             AbiKind::SystemV => 8,                       // Just the return address
             AbiKind::Windows => 8 + self.shadow_space(), // Return address + shadow space
@@ -425,7 +447,8 @@ impl Abi {
     /// # Returns
     ///
     /// A `VariadicInfo` struct describing variadic function handling for this ABI.
-    pub fn variadic_info(&self) -> VariadicInfo {
+    #[must_use]
+    pub const fn variadic_info(&self) -> VariadicInfo {
         match self.kind {
             AbiKind::SystemV => VariadicInfo {
                 supported: true,
@@ -447,7 +470,8 @@ impl Abi {
     /// # Returns
     ///
     /// `R11`, which is caller-saved in both System V and Windows ABIs.
-    pub fn scratch_register(&self) -> GPRegister64 {
+    #[must_use]
+    pub const fn scratch_register() -> GPRegister64 {
         GPRegister64::R11 // Commonly used as scratch in both ABIs
     }
 
@@ -456,6 +480,7 @@ impl Abi {
     /// # Returns
     ///
     /// A static string slice with the official name of the calling convention.
+    #[must_use]
     pub const fn name(&self) -> &'static str {
         match self.kind {
             AbiKind::SystemV => "System V AMD64 ABI",

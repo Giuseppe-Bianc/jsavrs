@@ -29,7 +29,7 @@ fn typecheckd(ast: &str) -> Vec<CompileError> {
 fn test_var_declaration_in_main() {
     let input = "main { var x: i32 = 42i32 }";
     let errors = typecheck(input);
-    assert!(errors.is_empty(), "Unexpected errors: {:?}", errors);
+    assert!(errors.is_empty(), "Unexpected errors: {errors:?}");
 }
 
 #[test]
@@ -44,21 +44,21 @@ fn test_var_declaration_mismatched_num_of_inic() {
 fn test_var_declaration_in_main_using_typecheck_default() {
     let input = "main { var x: i32 = 42i32 }";
     let errors = typecheckd(input);
-    assert!(errors.is_empty(), "Unexpected errors: {:?}", errors);
+    assert!(errors.is_empty(), "Unexpected errors: {errors:?}");
 }
 
 #[test]
 fn test_variable_declaration_valid() {
     let input = "var x: i32 = 42i32";
     let errors = typecheck(input);
-    assert!(errors.is_empty(), "Unexpected errors: {:?}", errors);
+    assert!(errors.is_empty(), "Unexpected errors: {errors:?}");
 }
 
 #[test]
 fn test_variable_declaration_in_block_valid() {
     let ast = "{ var x: i32 = 42i32 }";
     let errors = typecheck(ast);
-    assert!(errors.is_empty(), "Unexpected errors: {:?}", errors);
+    assert!(errors.is_empty(), "Unexpected errors: {errors:?}");
 }
 
 #[test]
@@ -77,7 +77,7 @@ fn test_function_call_valid() {
 add(1i32, 2i32)";
 
     let errors = typecheck(ast);
-    assert!(errors.is_empty(), "Unexpected errors: {:?}", errors);
+    assert!(errors.is_empty(), "Unexpected errors: {errors:?}");
 }
 
 #[test]
@@ -138,7 +138,7 @@ fn test_array_operations_valid() {
     arr[0]";
 
     let errors = typecheck(ast);
-    assert!(errors.is_empty(), "Unexpected errors: {:?}", errors);
+    assert!(errors.is_empty(), "Unexpected errors: {errors:?}");
 }
 
 #[test]
@@ -176,7 +176,7 @@ fn test_numeric_promotion() {
     let ast = "42i32 + 3.14f64";
 
     let errors = typecheck(ast);
-    assert!(errors.is_empty(), "Unexpected errors: {:?}", errors);
+    assert!(errors.is_empty(), "Unexpected errors: {errors:?}");
 }
 
 #[test]
@@ -250,7 +250,7 @@ fn test_main_function_signature() {
     let ast = "main {}";
 
     let errors = typecheck(ast);
-    assert!(errors.is_empty(), "Unexpected errors: {:?}", errors);
+    assert!(errors.is_empty(), "Unexpected errors: {errors:?}");
 }
 
 /*
@@ -268,7 +268,7 @@ fn test_double_main_function_signature() {
     ];
 
     let errors = typecheck(ast);
-    assert!(errors.is_empty(), "Unexpected errors: {:?}", errors);
+   assert!(errors.is_empty(), "Unexpected errors: {errors:?}");
 }*/
 
 #[test]
@@ -276,7 +276,7 @@ fn test_binary_arithmetic_valid() {
     let ast = "10i32 + 20i32";
 
     let errors = typecheck(ast);
-    assert!(errors.is_empty(), "Unexpected errors: {:?}", errors);
+    assert!(errors.is_empty(), "Unexpected errors: {errors:?}");
 }
 
 #[test]
@@ -284,7 +284,7 @@ fn test_binary_arithmetic_in_grouping_valid() {
     let ast = "(10i32 + 20i32)";
 
     let errors = typecheck(ast);
-    assert!(errors.is_empty(), "Unexpected errors: {:?}", errors);
+    assert!(errors.is_empty(), "Unexpected errors: {errors:?}");
 }
 
 #[test]
@@ -301,7 +301,7 @@ fn test_binary_comparison_valid() {
     let ast = "10i32 < 20i32";
 
     let errors = typecheck(ast);
-    assert!(errors.is_empty(), "Unexpected errors: {:?}", errors);
+    assert!(errors.is_empty(), "Unexpected errors: {errors:?}");
 }
 
 #[test]
@@ -321,7 +321,7 @@ fn test_logical_operations_valid() {
     let ast = "true && false";
 
     let errors = typecheck(ast);
-    assert!(errors.is_empty(), "Unexpected errors: {:?}", errors);
+    assert!(errors.is_empty(), "Unexpected errors: {errors:?}");
 }
 
 #[test]
@@ -338,7 +338,7 @@ fn test_bitwise_operations_valid() {
     let ast = "10i32 & 20i32";
 
     let errors = typecheck(ast);
-    assert!(errors.is_empty(), "Unexpected errors: {:?}", errors);
+    assert!(errors.is_empty(), "Unexpected errors: {errors:?}");
 }
 
 #[test]
@@ -358,7 +358,7 @@ fn test_unary_negate_valid() {
     let ast = "-10i32";
 
     let errors = typecheck(ast);
-    assert!(errors.is_empty(), "Unexpected errors: {:?}", errors);
+    assert!(errors.is_empty(), "Unexpected errors: {errors:?}");
 }
 
 #[test]
@@ -375,7 +375,7 @@ fn test_unary_not_valid() {
     let ast = "!true";
 
     let errors = typecheck(ast);
-    assert!(errors.is_empty(), "Unexpected errors: {:?}", errors);
+    assert!(errors.is_empty(), "Unexpected errors: {errors:?}");
 }
 
 #[test]
@@ -501,7 +501,7 @@ fn test_undefined_function_call() {
 fn test_while_loop_valid() {
     let ast = "while (true) { 42i32 }";
     let errors = typecheck(ast);
-    assert!(errors.is_empty(), "Unexpected errors: {:?}", errors);
+    assert!(errors.is_empty(), "Unexpected errors: {errors:?}");
 }
 
 #[test]
@@ -516,21 +516,21 @@ fn test_while_loop_invalid_condition() {
 fn test_break_inside_while() {
     let ast = "while (true) { break }";
     let errors = typecheck(ast);
-    assert!(errors.is_empty(), "Unexpected errors: {:?}", errors);
+    assert!(errors.is_empty(), "Unexpected errors: {errors:?}");
 }
 
 #[test]
 fn test_continue_inside_while() {
     let ast = "while (true) { continue }";
     let errors = typecheck(ast);
-    assert!(errors.is_empty(), "Unexpected errors: {:?}", errors);
+    assert!(errors.is_empty(), "Unexpected errors: {errors:?}");
 }
 
 #[test]
 fn test_for_loop_valid() {
     let ast = "for (var i: i32 = 0i32; i < 10i32; i = i + 1i32) { }";
     let errors = typecheck(ast);
-    assert!(errors.is_empty(), "Unexpected errors: {:?}", errors);
+    assert!(errors.is_empty(), "Unexpected errors: {errors:?}");
 }
 
 #[test]
@@ -545,14 +545,14 @@ fn test_for_loop_invalid_condition() {
 fn test_break_inside_for() {
     let ast = "for (;;) { break }";
     let errors = typecheck(ast);
-    assert!(errors.is_empty(), "Unexpected errors: {:?}", errors);
+    assert!(errors.is_empty(), "Unexpected errors: {errors:?}");
 }
 
 #[test]
 fn test_continue_inside_for() {
     let ast = "for (;;) { continue }";
     let errors = typecheck(ast);
-    assert!(errors.is_empty(), "Unexpected errors: {:?}", errors);
+    assert!(errors.is_empty(), "Unexpected errors: {errors:?}");
 }
 
 #[test]
@@ -569,7 +569,7 @@ fn test_nested_loops_with_break_continue() {
         continue
     }";
     let errors = typecheck(ast);
-    assert!(errors.is_empty(), "Unexpected errors: {:?}", errors);
+    assert!(errors.is_empty(), "Unexpected errors: {errors:?}");
 }
 
 #[test]
@@ -655,7 +655,7 @@ fn test_is_assignable_nullptr() {
     // NullPtr assignable to Array and Vector
     let array_ty = Type::Array(
         Box::new(Type::I32),
-        Box::new(Expr::Literal { value: LiteralValue::Number(Number::Integer(0)), span: span.clone() }),
+        Box::new(Expr::Literal { value: LiteralValue::Number(Number::Integer(0)), span }),
     );
     let vector_ty = Type::Vector(Box::new(Type::I8));
     assert!(tc.is_assignable(&Type::NullPtr, &array_ty));
@@ -667,6 +667,7 @@ fn test_is_assignable_nullptr() {
 }
 
 #[test]
+#[allow(clippy::similar_names)]
 fn test_is_assignable_arrays_and_vectors() {
     let tc = TypeChecker::new();
     let span = dummy_span();
@@ -694,7 +695,7 @@ fn test_is_assignable_arrays_and_vectors() {
     );
     let array_u8_5 = Type::Array(
         Box::new(Type::U8),
-        Box::new(Expr::Literal { value: LiteralValue::Number(Number::Integer(5)), span: span.clone() }),
+        Box::new(Expr::Literal { value: LiteralValue::Number(Number::Integer(5)), span }),
     );
 
     // Same array type and size -> allowed
@@ -740,7 +741,7 @@ fn test_return_in_void_function_without_value() {
     }";
 
     let errors = typecheck(ast);
-    assert!(errors.is_empty(), "Unexpected errors: {:?}", errors);
+    assert!(errors.is_empty(), "Unexpected errors: {errors:?}");
 }
 
 #[test]
@@ -752,7 +753,7 @@ fn test_return_in_void_function_in_inf() {
     }";
 
     let errors = typecheck(ast);
-    assert!(errors.is_empty(), "Unexpected errors: {:?}", errors);
+    assert!(errors.is_empty(), "Unexpected errors: {errors:?}");
 }
 
 #[test]
@@ -765,14 +766,14 @@ fn test_return_in_void_function_in_else() {
     }";
 
     let errors = typecheck(ast);
-    assert!(errors.is_empty(), "Unexpected errors: {:?}", errors);
+    assert!(errors.is_empty(), "Unexpected errors: {errors:?}");
 }
 
 #[test]
 fn test_function_has_return_simple_return() {
     let input = "fun test(): i32 { return 42i32 }";
     let errors = typecheck(input);
-    assert!(errors.is_empty(), "Unexpected errors: {:?}", errors);
+    assert!(errors.is_empty(), "Unexpected errors: {errors:?}");
 }
 
 #[test]
@@ -810,7 +811,7 @@ fn test_function_has_return_if_both_branches() {
         }
     }";
     let errors = typecheck(input);
-    assert!(errors.is_empty(), "Unexpected errors: {:?}", errors);
+    assert!(errors.is_empty(), "Unexpected errors: {errors:?}");
 }
 
 #[test]
@@ -823,7 +824,7 @@ fn test_function_has_return_after_if() {
         return 42i32
     }";
     let errors = typecheck(input);
-    assert!(errors.is_empty(), "Unexpected errors: {:?}", errors);
+    assert!(errors.is_empty(), "Unexpected errors: {errors:?}");
 }
 
 #[test]
@@ -841,7 +842,7 @@ fn test_function_has_return_nested_if() {
         }
     }";
     let errors = typecheck(input);
-    assert!(errors.is_empty(), "Unexpected errors: {:?}", errors);
+    assert!(errors.is_empty(), "Unexpected errors: {errors:?}");
 }
 
 #[test]
@@ -853,7 +854,7 @@ fn test_function_has_return_block_with_return() {
         }
     }";
     let errors = typecheck(input);
-    assert!(errors.is_empty(), "Unexpected errors: {:?}", errors);
+    assert!(errors.is_empty(), "Unexpected errors: {errors:?}");
 }
 
 #[test]
@@ -896,7 +897,7 @@ fn test_function_has_return_loop_with_return_and_after() {
         return 24i32
     }";
     let errors = typecheck(input);
-    assert!(errors.is_empty(), "Unexpected errors: {:#?}", errors);
+    assert!(errors.is_empty(), "Unexpected errors: {errors:#?}");
 }
 
 #[test]
@@ -919,7 +920,7 @@ fn test_function_has_return_complex_nested() {
         }
     }";
     let errors = typecheck(input);
-    assert!(errors.is_empty(), "Unexpected errors: {:?}", errors);
+    assert!(errors.is_empty(), "Unexpected errors: {errors:?}");
 }
 
 #[test]
@@ -951,7 +952,7 @@ fn test_function_has_return_else_if_complete() {
         }
     }";
     let errors = typecheck(input);
-    assert!(errors.is_empty(), "Unexpected errors: {:?}", errors);
+    assert!(errors.is_empty(), "Unexpected errors: {errors:?}");
 }
 
 #[test]
@@ -975,14 +976,14 @@ fn test_function_has_return_multiple_paths() {
 fn test_function_has_return_void_function() {
     let input = "fun test() { }";
     let errors = typecheck(input);
-    assert!(errors.is_empty(), "Unexpected errors: {:?}", errors);
+    assert!(errors.is_empty(), "Unexpected errors: {errors:?}");
 }
 
 #[test]
 fn test_function_has_return_void_with_return() {
     let input = "fun test() { return }";
     let errors = typecheck(input);
-    assert!(errors.is_empty(), "Unexpected errors: {:?}", errors);
+    assert!(errors.is_empty(), "Unexpected errors: {errors:?}");
 }
 
 #[test]
@@ -1009,7 +1010,7 @@ fn test_function_has_return_deeply_nested() {
         return 0i32
     }";
     let errors = typecheck(input);
-    assert!(errors.is_empty(), "Unexpected errors: {:#?}", errors);
+    assert!(errors.is_empty(), "Unexpected errors: {errors:#?}");
 }
 
 #[test]
@@ -1035,7 +1036,7 @@ fn test_function_has_return_in_infinite_loop_with_return() {
     }";
     let errors = typecheck(input);
     // Considerato safe perché l'loop è infinito
-    assert!(errors.is_empty(), "Unexpected errors: {:#?}", errors);
+    assert!(errors.is_empty(), "Unexpected errors: {errors:#?}");
 }
 
 #[test]
@@ -1048,35 +1049,35 @@ fn test_function_has_return_with_break() {
         return 42i32
     }";
     let errors = typecheck(input);
-    assert!(errors.is_empty(), "Unexpected errors: {:?}", errors);
+    assert!(errors.is_empty(), "Unexpected errors: {errors:?}");
 }
 
 #[test]
 fn test_bitwise_and_valid() {
     let ast = "10i32 & 20i32";
     let errors = typecheck(ast);
-    assert!(errors.is_empty(), "Unexpected errors: {:?}", errors);
+    assert!(errors.is_empty(), "Unexpected errors: {errors:?}");
 }
 
 #[test]
 fn test_bitwise_or_valid() {
     let ast = "10i32 | 20i32";
     let errors = typecheck(ast);
-    assert!(errors.is_empty(), "Unexpected errors: {:?}", errors);
+    assert!(errors.is_empty(), "Unexpected errors: {errors:?}");
 }
 
 #[test]
 fn test_bitwise_xor_valid() {
     let ast = "10i32 ^ 20i32";
     let errors = typecheck(ast);
-    assert!(errors.is_empty(), "Unexpected errors: {:?}", errors);
+    assert!(errors.is_empty(), "Unexpected errors: {errors:?}");
 }
 
 #[test]
 fn test_shift_left_valid() {
     let ast = "10i32 << 2i32";
     let errors = typecheck(ast);
-    assert!(errors.is_empty(), "Unexpected errors: {:?}", errors);
+    assert!(errors.is_empty(), "Unexpected errors: {errors:?}");
 }
 
 #[test]
@@ -1177,15 +1178,15 @@ fn test_mixed_signed_unsigned_promotions() {
     // Test mixed signed/unsigned promotions in expressions
     let ast = "10i32 + 20u64";
     let errors = typecheck(ast);
-    assert!(errors.is_empty(), "Unexpected errors: {:?}", errors);
+    assert!(errors.is_empty(), "Unexpected errors: {errors:?}");
 
     let ast = "5i16 * 3u32";
     let errors = typecheck(ast);
-    assert!(errors.is_empty(), "Unexpected errors: {:?}", errors);
+    assert!(errors.is_empty(), "Unexpected errors: {errors:?}");
 
     let ast = "100u8 - 50i16";
     let errors = typecheck(ast);
-    assert!(errors.is_empty(), "Unexpected errors: {:?}", errors);
+    assert!(errors.is_empty(), "Unexpected errors: {errors:?}");
 }
 
 #[test]
@@ -1193,15 +1194,15 @@ fn test_same_rank_different_sign_promotions() {
     // Test same-rank different-sign promotions
     let ast = "10i64 + 20u64";
     let errors = typecheck(ast);
-    assert!(errors.is_empty(), "Unexpected errors: {:?}", errors);
+    assert!(errors.is_empty(), "Unexpected errors: {errors:?}");
 
     let ast = "5i32 * 3u32";
     let errors = typecheck(ast);
-    assert!(errors.is_empty(), "Unexpected errors: {:?}", errors);
+    assert!(errors.is_empty(), "Unexpected errors: {errors:?}");
 
     let ast = "100u16 - 50i16";
     let errors = typecheck(ast);
-    assert!(errors.is_empty(), "Unexpected errors: {:?}", errors);
+    assert!(errors.is_empty(), "Unexpected errors: {errors:?}");
 }
 
 #[test]
@@ -1229,12 +1230,12 @@ fn test_chained_assignments() {
     // Test valid chained assignment
     let ast = "var x: i32 = 0i32\n    var y: i32 = 0i32\n    x = y = 42i32";
     let errors = typecheck(ast);
-    assert!(errors.is_empty(), "Unexpected errors: {:?}", errors);
+    assert!(errors.is_empty(), "Unexpected errors: {errors:?}");
 
     // Test chained assignment with type promotion
     let ast = "var x: f64 = 0.0f64\n    var y: i32 = 0i32\n    x = y = 42i32";
     let errors = typecheck(ast);
-    assert!(errors.is_empty(), "Unexpected errors: {:?}", errors);
+    assert!(errors.is_empty(), "Unexpected errors: {errors:?}");
 
     // Test chained assignment with type mismatch
     let ast = "var x: i32 = 0i32\n    var y: f64 = 0.0f64\n    x = y = 42i32";
@@ -1248,23 +1249,23 @@ fn test_complex_for_loop_initialization_statements() {
     // Test for loop with multiple variable declarations
     let ast = "for (var i: i32 = 0i32, j: i32 = 10i32; i < j; i = i + 1i32, j = j - 1i32) { }";
     let errors = typecheck(ast);
-    assert!(errors.is_empty(), "Unexpected errors: {:?}", errors);
+    assert!(errors.is_empty(), "Unexpected errors: {errors:?}");
 
     // Test for loop with assignment in initialization
     let ast = "var x: i32 = 0i32\n    for (x = 5i32; x < 10i32; x = x + 1i32) { }";
     let errors = typecheck(ast);
-    assert!(errors.is_empty(), "Unexpected errors: {:?}", errors);
+    assert!(errors.is_empty(), "Unexpected errors: {errors:?}");
 
     // Test for loop with function call in initialization
     let ast = "fun getInitialValue(): i32 { return 5i32 }\n    for (var i: i32 = getInitialValue(); i < 10i32; i = i + 1i32) { }";
     let errors = typecheck(ast);
-    assert!(errors.is_empty(), "Unexpected errors: {:?}", errors);
+    assert!(errors.is_empty(), "Unexpected errors: {errors:?}");
 
     // Test for loop with complex expression in initialization
     let ast =
         "var a: i32 = 2i32\n    var b: i32 = 3i32\n    for (var i: i32 = (a + b) * 2i32; i < 10i32; i = i + 1i32) { }";
     let errors = typecheck(ast);
-    assert!(errors.is_empty(), "Unexpected errors: {:?}", errors);
+    assert!(errors.is_empty(), "Unexpected errors: {errors:?}");
 }
 
 #[test]
@@ -1315,14 +1316,12 @@ fn test_is_same_type_array() {
     assert!(checker.is_same_type(&nested1, &nested2));
 
     // Nested arrays with different inner size
-    let nested3 = Type::Array(
-        Box::new(Type::Array(Box::new(Type::I32), Box::new(size_expr_10.clone()))),
-        Box::new(size_expr_5.clone()),
-    );
+    let nested3 =
+        Type::Array(Box::new(Type::Array(Box::new(Type::I32), Box::new(size_expr_10))), Box::new(size_expr_5));
     assert!(!checker.is_same_type(&nested1, &nested3));
 }
 
-#[allow(clippy::approx_constant)]
+#[allow(clippy::approx_constant, clippy::similar_names)]
 #[test]
 fn test_get_size() {
     let checker = TypeChecker::new();

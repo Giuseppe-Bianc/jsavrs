@@ -8,27 +8,27 @@ use std::sync::Arc;
 fn test_io_error_display() {
     let io_error = std::io::Error::new(std::io::ErrorKind::NotFound, "File not found");
     let error: CompileError = io_error.into();
-    assert_eq!(format!("{}", error), "I/O error: File not found");
+    assert_eq!(format!("{error}"), "I/O error: File not found");
 }
 
 #[test]
 fn test_asm_generator_error_display() {
     let error = CompileError::AsmGeneratorError { message: "Invalid assembly code".into() };
-    assert_eq!(format!("{}", error), "Assembly generation error: Invalid assembly code");
+    assert_eq!(format!("{error}"), "Assembly generation error: Invalid assembly code");
 }
 
 #[test]
 fn test_lexer_error_display_with_help() {
     make_error!(error, LexerError, 1, Some("Check the syntax".into()));
     let expected = "Unexpected token \"@\" at test_file:line 1:column 1 - line 1:column 2\nhelp: Check the syntax";
-    assert_eq!(format!("{}", error), expected);
+    assert_eq!(format!("{error}"), expected);
 }
 
 #[test]
 fn test_parser_error_display_with_help() {
     make_error!(error, SyntaxError, 2, Some("Ensure all brackets are closed".into()));
     let expected = "Syntax error: Unexpected token \"@\" at test_file:line 2:column 1 - line 2:column 2\nhelp: Ensure all brackets are closed";
-    assert_eq!(format!("{}", error), expected);
+    assert_eq!(format!("{error}"), expected);
 }
 
 #[test]
@@ -36,14 +36,14 @@ fn test_type_error_display_with_help() {
     make_error!(error, TypeError, 3, Some("Check variable types".into()));
     let expected =
         "Type error: Unexpected token \"@\" at test_file:line 3:column 1 - line 3:column 2\nhelp: Check variable types";
-    assert_eq!(format!("{}", error), expected);
+    assert_eq!(format!("{error}"), expected);
 }
 
 #[test]
 fn test_ir_error_display_with_help() {
     make_error!(error, IrGeneratorError, 4, Some("Check the IR generation".into()));
     let expected = "Ir generator error: Unexpected token \"@\" at test_file:line 4:column 1 - line 4:column 2\nhelp: Check the IR generation";
-    assert_eq!(format!("{}", error), expected);
+    assert_eq!(format!("{error}"), expected);
 }
 
 macro_rules! generate_display_test {

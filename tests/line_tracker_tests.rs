@@ -4,9 +4,9 @@ use std::sync::Arc;
 // Helper function for location assertions
 fn assert_location(tracker: &LineTracker, offset: usize, line: usize, column: usize) {
     let loc = tracker.location_for(offset);
-    assert_eq!(loc.line, line, "Failed at line {}", line);
-    assert_eq!(loc.column, column, "Failed at column {}", column);
-    assert_eq!(loc.absolute_pos, offset, "Failed at offset {}", offset);
+    assert_eq!(loc.line, line, "Failed at line {line}");
+    assert_eq!(loc.column, column, "Failed at column {column}");
+    assert_eq!(loc.absolute_pos, offset, "Failed at offset {offset}");
 }
 
 // Macro for multiple location tests
@@ -139,6 +139,7 @@ fn multi_line_span_with_multi_byte() {
 
 #[test]
 #[should_panic(expected = "Offset 4 out of bounds for source of length 3")]
+#[allow(unused_must_use)]
 fn offset_out_of_bounds() {
     let tracker = LineTracker::new("test.txt", "abc".to_string());
     tracker.location_for(4);

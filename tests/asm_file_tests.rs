@@ -108,7 +108,7 @@ fn test_assembly_file_display() {
     let abi = Abi::from_platform(Platform::Linux);
     let asm_file = AssemblyFile::new(abi);
 
-    let display_str = format!("{}", asm_file);
+    let display_str = format!("{asm_file}");
     assert!(display_str.contains("Assembly File"));
     assert!(display_str.contains("System V AMD64 ABI"));
 }
@@ -119,7 +119,7 @@ fn test_assembly_file_clone() {
     let asm_file = AssemblyFile::new(abi);
     let cloned_file = asm_file.clone();
 
-    assert_eq!(format!("{}", asm_file), format!("{}", cloned_file));
+    assert_eq!(format!("{asm_file}"), format!("{cloned_file}"));
 }
 
 #[test]
@@ -127,7 +127,7 @@ fn test_assembly_file_debug() {
     let abi = Abi::from_platform(Platform::Linux);
     let asm_file = AssemblyFile::new(abi);
 
-    let debug_str = format!("{:?}", asm_file);
+    let debug_str = format!("{asm_file:?}");
     assert!(debug_str.contains("AssemblyFile"));
 }
 
@@ -137,7 +137,7 @@ fn test_assembly_file_with_empty_elements() {
     let asm_file = AssemblyFile::new(abi);
 
     // Test display for file with no elements in sections
-    let display_str = format!("{}", asm_file);
+    let display_str = format!("{asm_file}");
     assert!(!display_str.is_empty());
 }
 

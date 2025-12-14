@@ -11,6 +11,7 @@ fn timed_task(duration_ms: u64) {
 }
 
 #[test]
+#[allow(clippy::float_cmp)]
 fn test_time_values_from_nanoseconds() {
     // Valore normale
     let tv = TimeValues::from_nanoseconds(1_500_000_000.0);
@@ -52,7 +53,7 @@ fn test_value_label_formatting() {
 
     for (value, unit, expected) in test_cases {
         let vl = ValueLabel::new(value, unit);
-        assert_eq!(vl.format_time(), expected, "Failed for {} {}", value, unit);
+        assert_eq!(vl.format_time(), expected, "Failed for {value} {unit}");
     }
 
     // Edge case: unità sconosciuta
@@ -82,9 +83,7 @@ fn test_times_relevant_timeframe() {
         assert_eq!(
             vl.time_label(),
             expected_unit,
-            "Failed for {} ns: expected {}, got {}",
-            nanos,
-            expected_unit,
+            "Failed for {nanos} ns: expected {expected_unit}, got {}",
             vl.time_label()
         );
     }
@@ -186,12 +185,12 @@ fn test_time_it() {
     let tries = tries_str.parse::<u32>().expect("Failed to parse tries as u32");
 
     // Verifica che abbia eseguito molte iterazioni
-    assert!(tries >= 1, "Expected >=1 tries, got {}", tries);
+    assert!(tries >= 1, "Expected >=1 tries, got {tries}");
 }
 
 #[test]
 fn test_formatters() {
-    let timer = Timer::with_formatter("Custom Formatter", |title, _, time| format!("CUSTOM: {} - {}", title, time));
+    let timer = Timer::with_formatter("Custom Formatter", |title, _, time| format!("CUSTOM: {time} - {title}"));
     timed_task(20);
 
     let output = timer.to_string();
@@ -212,6 +211,7 @@ fn test_big_format() {
 }
 
 #[test]
+#[allow(clippy::similar_names)]
 fn test_edge_cases() {
     // Tempo molto piccolo (<1ns)
     let vl = ValueLabel::new(0.4, "ns");
@@ -236,7 +236,7 @@ fn test_concurrent_timers() {
     let handles: Vec<_> = (0..5)
         .map(|i| {
             thread::spawn(move || {
-                let timer = Timer::new(&format!("Thread {}", i));
+                let timer = Timer::new(&format!("Thread {i}"));
                 timed_task(10 + i * 5);
                 timer.to_string()
             })
@@ -298,7 +298,7 @@ fn test_time_it_short_operations() {
     let tries = tries_str.parse::<u32>().expect("Failed to parse tries as u32");
 
     // Verifica che abbia eseguito molte iterazioni
-    assert!(tries >= 100, "Expected >=100 tries, got {}", tries);
+    assert!(tries >= 100, "Expected >=100 tries, got {tries}");
 }
 
 // Custom formatter that panics
@@ -307,7 +307,7 @@ fn panic_formatter(_title: &str, _padding: usize, _time: &ValueLabel) -> String 
 }
 
 #[test]
-#[should_panic]
+#[should_panic(expected = "test panic in formatter")]
 fn test_auto_timer_drop_panic() {
     // Create and immediately drop the AutoTimer
     {

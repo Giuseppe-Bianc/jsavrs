@@ -59,7 +59,7 @@ fn test_optimization_stats_display() {
         iterations: 2,
     };
 
-    let display_str = format!("{}", stats);
+    let display_str = format!("{stats}");
     assert!(display_str.contains("10 constants"));
     assert!(display_str.contains("2 branches"));
     assert!(display_str.contains("1 phis"));
@@ -155,7 +155,7 @@ fn test_constant_true_branch_resolution() {
     let iterations = propagator.propagate(&func, 10).expect("SCCP should converge");
 
     // Verify analysis results
-    assert!(iterations <= 3, "Should converge in ≤3 iterations for simple branch, got {}", iterations);
+    assert!(iterations <= 3, "Should converge in ≤3 iterations for simple branch, got {iterations}");
 
     // Verify propagator completed successfully
     // Note: Full edge validation would require:
@@ -218,7 +218,7 @@ fn test_constant_false_branch_resolution() {
     let iterations = propagator.propagate(&func, 10).expect("SCCP should converge");
 
     // Verify analysis results
-    assert!(iterations <= 3, "Should converge in ≤3 iterations for simple branch, got {}", iterations);
+    assert!(iterations <= 3, "Should converge in ≤3 iterations for simple branch, got {iterations}");
 
     // Verify propagator completed successfully
     // Note: Full edge validation would require:
@@ -306,7 +306,7 @@ fn test_switch_constant_selector() {
     let iterations = propagator.propagate(&func, 10).expect("SCCP should converge");
 
     // Verify analysis results
-    assert!(iterations <= 3, "Should converge in ≤3 iterations for switch with constant selector, got {}", iterations);
+    assert!(iterations <= 3, "Should converge in ≤3 iterations for switch with constant selector, got {iterations}");
 
     // Verify propagator completed successfully
     // Note: Full validation would require:
@@ -395,7 +395,7 @@ fn test_nested_conditional_branches() {
     let iterations = propagator.propagate(&func, 10).expect("SCCP should converge");
 
     // Verify analysis results
-    assert!(iterations <= 5, "Should converge in ≤5 iterations for nested branches, got {}", iterations);
+    assert!(iterations <= 5, "Should converge in ≤5 iterations for nested branches, got {iterations}");
 
     // Verify propagator completed successfully
     // Note: Full validation would require:
@@ -462,7 +462,7 @@ fn test_phi_with_unreachable_predecessors() {
     let iterations = propagator.propagate(&func, 10).expect("SCCP should converge");
 
     // Verify analysis results
-    assert!(iterations <= 3, "Should converge in ≤3 iterations, got {}", iterations);
+    assert!(iterations <= 3, "Should converge in ≤3 iterations, got {iterations}");
 
     // Verification notes:
     // 1. Entry→left edge should NOT be executable (constant false condition)
@@ -525,7 +525,7 @@ fn test_phi_with_all_same_constants() {
     let iterations = propagator.propagate(&func, 10).expect("SCCP should converge");
 
     // Verify analysis results
-    assert!(iterations <= 3, "Should converge in ≤3 iterations, got {}", iterations);
+    assert!(iterations <= 3, "Should converge in ≤3 iterations, got {iterations}");
 
     // Verification notes:
     // In a full test with phi instructions:
@@ -584,7 +584,7 @@ fn test_phi_in_unreachable_block() {
     let iterations = propagator.propagate(&func, 10).expect("SCCP should converge");
 
     // Verify analysis results
-    assert!(iterations <= 3, "Should converge in ≤3 iterations, got {}", iterations);
+    assert!(iterations <= 3, "Should converge in ≤3 iterations, got {iterations}");
 
     // Verification notes:
     // 1. Entry→unreachable_block edge should NOT be executable
@@ -650,7 +650,7 @@ fn test_phi_with_mixed_values() {
     let iterations = propagator.propagate(&func, 10).expect("SCCP should converge");
 
     // Verify analysis results
-    assert!(iterations <= 4, "Should converge in ≤4 iterations, got {}", iterations);
+    assert!(iterations <= 4, "Should converge in ≤4 iterations, got {iterations}");
 
     // Verification notes:
     // In a full test with phi instructions and parameters:

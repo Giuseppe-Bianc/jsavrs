@@ -1,4 +1,4 @@
-use crate::asm::register::*;
+use crate::asm::register::GPRegister64;
 use std::fmt;
 
 /// A memory addressing operand.
@@ -32,7 +32,8 @@ impl MemoryOperand {
     /// Outputs: `MemoryOperand` with `index = None`, `scale = 1`,
     /// `displacement = 0`, and default `size = 8`.
     /// Side effects: none.
-    pub fn new(base: Option<GPRegister64>) -> Self {
+    #[must_use]
+    pub const fn new(base: Option<GPRegister64>) -> Self {
         Self { base, index: None, scale: 1, displacement: 0, size: 8 }
     }
 
@@ -41,7 +42,8 @@ impl MemoryOperand {
     /// Inputs: `self` (by value), `disp: i32` — new displacement.
     /// Outputs: modified `MemoryOperand` (builder-style).
     /// Side effects: none.
-    pub fn with_displacement(mut self, disp: i32) -> Self {
+    #[must_use]
+    pub const fn with_displacement(mut self, disp: i32) -> Self {
         self.displacement = disp;
         self
     }
@@ -51,7 +53,8 @@ impl MemoryOperand {
     /// Inputs: `self` (by value), `index: GPRegister64`, `scale: u8`.
     /// Outputs: modified `MemoryOperand` with the index and scale updated.
     /// Side effects: none. Caller is expected to supply a valid scale (1,2,4,8).
-    pub fn with_index(mut self, index: GPRegister64, scale: u8) -> Self {
+    #[must_use]
+    pub const fn with_index(mut self, index: GPRegister64, scale: u8) -> Self {
         self.index = Some(index);
         self.scale = scale;
         self
@@ -62,7 +65,8 @@ impl MemoryOperand {
     /// Inputs: `self` (by value), `size: usize` — new size in bytes.
     /// Outputs: modified `MemoryOperand`.
     /// Side effects: none.
-    pub fn with_size(mut self, size: usize) -> Self {
+    #[must_use]
+    pub const fn with_size(mut self, size: usize) -> Self {
         self.size = size;
         self
     }
@@ -92,23 +96,23 @@ impl fmt::Display for MemoryOperand {
             _ => "",
         };
 
-        write!(f, "{}", size_prefix)?;
+        write!(f, "{size_prefix}")?;
         write!(f, "[")?;
 
-        let mut has_component = false;
-
         // Base register
-        if let Some(base) = &self.base {
-            write!(f, "{}", base)?;
-            has_component = true;
-        }
+        let mut has_component = if let Some(base) = &self.base {
+            write!(f, "{base}")?;
+            true
+        } else {
+            false
+        };
 
         // Index register with scale
         if let Some(index) = &self.index {
             if has_component {
                 write!(f, " + ")?;
             }
-            write!(f, "{}", index)?;
+            write!(f, "{index}")?;
             if self.scale != 1 {
                 write!(f, "*{}", self.scale)?;
             }

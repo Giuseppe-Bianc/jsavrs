@@ -24,40 +24,40 @@ fn tokenize(input: &str) -> Vec<Result<TokenKind, ()>> {
 
 #[test]
 fn test_operators() {
-    let input = r#"
+    let input = r"
 		+= -= == = != <= >= ++ -- || && << >> %= ^= 
 		+ - * / < > ! ^ % | & = : , .
-	"#;
+	";
     let tokens = tokenize(input);
     assert_debug_snapshot!(tokens);
 }
 
 #[test]
 fn test_keywords() {
-    let input = r#"
+    let input = r"
 		fun if else return while for main var const nullptr 
 		break continue true false
-	"#;
+	";
     let tokens = tokenize(input);
     assert_debug_snapshot!(tokens);
 }
 
 #[test]
 fn test_identifiers() {
-    let input = r#"
+    let input = r"
 		ascii_ident _under_score unicode_ñññ var123 
 		\u{9876}_unicode
-	"#;
+	";
     let tokens = tokenize(input);
     assert_debug_snapshot!(tokens);
 }
 
 #[test]
 fn test_numeric_literals() {
-    let input = r#"
+    let input = r"
 		123 45u 6.7f 8.9e10 3.0d 1e3f 123.456 
 		#b1010u #o777 #x1AFU #xdeadbeef
-	"#;
+	";
     let tokens = tokenize(input);
     assert_debug_snapshot!(tokens);
 }
@@ -80,22 +80,22 @@ fn test_brackets_and_punctuation() {
 
 #[test]
 fn test_types() {
-    let input = r#"
+    let input = r"
 		i8 i16 i32 i64 u8 u16 u32 u64 
 		f32 f64 char string bool
-	"#;
+	";
     let tokens = tokenize(input);
     assert_debug_snapshot!(tokens);
 }
 
 #[test]
 fn test_comments_and_whitespace() {
-    let input = r#"
+    let input = r"
 		// This is a comment
 		/* Multi-line
 		   comment */
 		valid_after_comment
-	"#;
+	";
     let tokens = tokenize(input);
     assert_debug_snapshot!(tokens);
 }
@@ -111,19 +111,19 @@ fn test_eof_and_ignored() {
 #[test]
 fn test_identifier_ascii_normal() {
     let ident: Arc<str> = "foo".into();
-    assert_debug_snapshot!(TokenKind::IdentifierAscii(ident.clone()).to_string());
+    assert_debug_snapshot!(TokenKind::IdentifierAscii(ident).to_string());
 }
 
 #[test]
 fn test_identifier_ascii_empty() {
     let ident: Arc<str> = "".into();
-    assert_debug_snapshot!(TokenKind::IdentifierAscii(ident.clone()).to_string());
+    assert_debug_snapshot!(TokenKind::IdentifierAscii(ident).to_string());
 }
 
 #[test]
 fn test_identifier_unicode() {
     let ident: Arc<str> = "προεδομή".into(); // qualche stringa Unicode
-    assert_debug_snapshot!(TokenKind::IdentifierUnicode(ident.clone()).to_string());
+    assert_debug_snapshot!(TokenKind::IdentifierUnicode(ident).to_string());
 }
 
 #[test]
@@ -133,31 +133,31 @@ fn test_numeric_integer() {
     assert_debug_snapshot!("numeric", TokenKind::Numeric(num.clone()).to_string());
     assert_debug_snapshot!("hexadecimal", TokenKind::Hexadecimal(num.clone()).to_string());
     assert_debug_snapshot!("octal", TokenKind::Octal(num.clone()).to_string());
-    assert_debug_snapshot!("binary", TokenKind::Binary(num.clone()).to_string());
+    assert_debug_snapshot!("binary", TokenKind::Binary(num).to_string());
 }
 
 #[test]
 fn test_string_literal_simple() {
     let s: Arc<str> = "hello".into();
-    assert_debug_snapshot!(TokenKind::StringLiteral(s.clone()).to_string());
+    assert_debug_snapshot!(TokenKind::StringLiteral(s).to_string());
 }
 
 #[test]
 fn test_string_literal_with_quotes_inside() {
     let s: Arc<str> = "he said \"ciao\"".into();
-    assert_debug_snapshot!(TokenKind::StringLiteral(s.clone()).to_string());
+    assert_debug_snapshot!(TokenKind::StringLiteral(s).to_string());
 }
 
 #[test]
 fn test_char_literal_simple() {
     let c: Arc<str> = "x".into();
-    assert_debug_snapshot!(TokenKind::CharLiteral(c.clone()).to_string());
+    assert_debug_snapshot!(TokenKind::CharLiteral(c).to_string());
 }
 
 #[test]
 fn test_char_literal_unicode() {
     let c: Arc<str> = "ψ".into();
-    assert_debug_snapshot!(TokenKind::CharLiteral(c.clone()).to_string());
+    assert_debug_snapshot!(TokenKind::CharLiteral(c).to_string());
 }
 
 #[test]

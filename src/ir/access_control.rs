@@ -26,6 +26,7 @@ pub enum Operation {
 /// are allowed. It uses boolean flags for each operation type, making it
 /// efficient to check permissions at runtime.
 #[derive(Debug, Clone, Copy, Default, PartialEq, Eq)]
+#[allow(clippy::struct_excessive_bools)]
 pub struct AccessRules {
     /// Whether read operations are permitted.
     read: bool,
@@ -40,10 +41,13 @@ pub struct AccessRules {
 }
 impl AccessRules {
     // Add a public constructor
+    #[must_use]
+    #[allow(clippy::fn_params_excessive_bools)]
     pub const fn new(read: bool, write: bool, execute: bool, allocate: bool, deallocate: bool) -> Self {
-        AccessRules { read, write, execute, allocate, deallocate }
+        Self { read, write, execute, allocate, deallocate }
     }
 
+    #[must_use]
     pub const fn allows(&self, operation: Operation) -> bool {
         match operation {
             Operation::Read => self.read,
@@ -63,10 +67,13 @@ pub struct AccessController {
 }
 
 impl AccessController {
+    #[must_use]
     pub fn new(scope_manager: &super::scope_manager::ScopeManager) -> Self {
-        AccessController { scopes: scope_manager.get_scopes().clone(), current_scope: scope_manager.current_scope() }
+        Self { scopes: scope_manager.get_scopes().clone(), current_scope: scope_manager.current_scope() }
     }
-    pub fn check_access(&self, _resource: ResourceId, _operation: Operation) -> bool {
+
+    #[must_use]
+    pub const fn check_access(&self, _resource: ResourceId, _operation: Operation) -> bool {
         // TODO: implement real access evaluation.
         // For safety, deny by default (e.g., require explicit allow in the current or ancestor scope).
         false

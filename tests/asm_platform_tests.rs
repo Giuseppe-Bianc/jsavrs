@@ -29,7 +29,7 @@ fn test_platform_clone() {
 #[test]
 fn test_platform_debug() {
     let platform = Platform::Windows;
-    let debug_str = format!("{:?}", platform);
+    let debug_str = format!("{platform:?}");
     assert!(debug_str.contains("Windows"));
 }
 
@@ -39,8 +39,8 @@ fn test_all_platform_variants() {
     assert_eq!(platforms.len(), 3);
 
     // Ensure all platforms can be formatted
-    for platform in platforms.iter() {
-        let formatted = format!("{}", platform);
+    for platform in &platforms {
+        let formatted = format!("{platform}");
         assert!(!formatted.is_empty());
     }
 }

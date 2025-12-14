@@ -19,32 +19,37 @@ impl fmt::Display for Section {
 #[allow(dead_code)]
 impl Section {
     /// Get the name of the section as a string
+    #[must_use]
     pub const fn name(&self) -> &'static str {
         match self {
-            Section::Text => ".text",
-            Section::Data => ".data",
-            Section::Bss => ".bss",
-            Section::Rodata => ".rodata",
+            Self::Text => ".text",
+            Self::Data => ".data",
+            Self::Bss => ".bss",
+            Self::Rodata => ".rodata",
         }
     }
 
     /// Check if this is the text section
-    pub fn is_text(&self) -> bool {
-        matches!(self, Section::Text)
+    #[must_use]
+    pub const fn is_text(&self) -> bool {
+        matches!(self, Self::Text)
     }
 
     /// Check if this is the data section
-    pub fn is_data(&self) -> bool {
-        matches!(self, Section::Data)
+    #[must_use]
+    pub const fn is_data(&self) -> bool {
+        matches!(self, Self::Data)
     }
 
     /// Check if this is the bss section
-    pub fn is_bss(&self) -> bool {
-        matches!(self, Section::Bss)
+    #[must_use]
+    pub const fn is_bss(&self) -> bool {
+        matches!(self, Self::Bss)
     }
 
     /// Check if this is the rodata section
-    pub fn is_rodata(&self) -> bool {
-        matches!(self, Section::Rodata)
+    #[must_use]
+    pub const fn is_rodata(&self) -> bool {
+        matches!(self, Self::Rodata)
     }
 }

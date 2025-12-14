@@ -1,4 +1,4 @@
-//! Unit tests for ExecutableEdgeSet in SCCP propagator
+//! Unit tests for `ExecutableEdgeSet` in SCCP propagator
 //!
 //! Tests T061 from User Story 2
 
@@ -101,9 +101,8 @@ fn test_multiple_predecessors() {
 #[test]
 fn test_executable_predecessors_empty() {
     let edge_set = ExecutableEdgeSet::new();
-    let predecessors: Vec<usize> = edge_set.executable_predecessors(1).collect();
 
-    assert!(predecessors.is_empty(), "Block with no executable edges should have no predecessors");
+    assert!(edge_set.executable_predecessors(1).next().is_none(), "Block with no executable edges should have no predecessors");
 }
 
 #[test]
@@ -265,7 +264,7 @@ fn test_large_cfg() {
 
     // Verify chain structure
     for i in 1..=100 {
-        assert!(edge_set.has_executable_predecessor(i), "Block {} should have executable predecessor", i);
+        assert!(edge_set.has_executable_predecessor(i), "Block {i} should have executable predecessor");
         let predecessors: Vec<usize> = edge_set.executable_predecessors(i).collect();
         assert_eq!(predecessors.len(), 1);
         assert_eq!(predecessors[0], i - 1);

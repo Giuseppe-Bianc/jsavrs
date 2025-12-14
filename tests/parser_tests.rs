@@ -381,7 +381,7 @@ fn test_deep_nesting() {
 #[test]
 fn test_unary_operators_bp() {
     let token = Token { kind: TokenKind::Dot, span: dummy_span() };
-    assert_eq!(unary_binding_power(&token), (0, 0))
+    assert_eq!(unary_binding_power(&token), (0, 0));
 }
 
 // Test for line 128-132: Variable with Unicode identifier
@@ -503,7 +503,7 @@ fn test_invalid_binary_operator() {
         };
 
         let result = BinaryOp::get_op(&token);
-        assert!(result.is_err(), "Expected error for token: {:?}", kind);
+        assert!(result.is_err(), "Expected error for token: {kind:?}");
 
         // Verify error details
         let err = result.unwrap_err();
@@ -511,13 +511,12 @@ fn test_invalid_binary_operator() {
             CompileError::SyntaxError { message, span, help: _ } => {
                 assert_eq!(
                     message,
-                    Arc::from(format!("Invalid binary operator: {:?}", kind)),
-                    "Incorrect message for token: {:?}",
-                    kind
+                    Arc::from(format!("Invalid binary operator: {kind:?}")),
+                    "Incorrect message for token: {kind:?}",
                 );
-                assert_eq!(span, token.span, "Incorrect span for token: {:?}", kind);
+                assert_eq!(span, token.span, "Incorrect span for token: {kind:?}");
             }
-            _ => panic!("Unexpected error type for token: {:?}", kind),
+            _ => panic!("Unexpected error type for token: {kind:?}"),
         }
     }
 }
@@ -670,6 +669,7 @@ fn test_bitwise_operator_precedence() {
 }
 
 #[test]
+
 fn test_nested_parsing_errors() {
     let tokens = create_tokens(vec![
         TokenKind::OpenParen,
@@ -686,6 +686,7 @@ fn test_nested_parsing_errors() {
 }
 
 #[test]
+
 fn test_nested_unknown_binding_power() {
     let tokens = create_tokens(vec![
         TokenKind::IdentifierAscii("assssss".into()),
@@ -766,6 +767,7 @@ fn test_error_recovery_after_invalid_statement() {
 }
 
 #[test]
+
 fn test_function_parameter_errors() {
     let tokens = create_tokens(vec![
         TokenKind::KeywordFun,
@@ -1589,6 +1591,7 @@ fn test_empty_block_statement() {
 }
 
 #[test]
+
 fn test_var_no_name() {
     let input = "var ";
     let mut lexer = Lexer::new("test.vn", input);
@@ -1600,6 +1603,7 @@ fn test_var_no_name() {
 }
 
 #[test]
+
 fn test_var_no_initializer() {
     let input = "var eee: i32";
     let mut lexer = Lexer::new("test.vn", input);
@@ -1612,6 +1616,7 @@ fn test_var_no_initializer() {
 }
 
 #[test]
+
 fn test_unclosed_array_literal() {
     let input = "var eee: i32[2] = {1, 2, 3";
     let mut lexer = Lexer::new("test.vn", input);
@@ -1625,6 +1630,7 @@ fn test_unclosed_array_literal() {
 }
 
 #[test]
+
 fn test_var_invalid_type() {
     let input = "var eee: 5";
     let mut lexer = Lexer::new("test.vn", input);

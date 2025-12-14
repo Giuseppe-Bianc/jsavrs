@@ -32,6 +32,7 @@ const UNITS: [&str; 5] = ["B", "KB", "MB", "GB", "TB"];
 const UNIT_LEN: usize = UNITS.len() - 1;
 
 #[inline]
+#[allow(clippy::cast_precision_loss)]
 fn format_size(bytes: usize) -> (f64, &'static str) {
     let mut size = bytes as f64;
     let mut unit = 0;
@@ -44,7 +45,7 @@ fn format_size(bytes: usize) -> (f64, &'static str) {
     (size, UNITS[unit])
 }
 
-#[allow(clippy::explicit_auto_deref, clippy::unused_unit)]
+#[allow(clippy::explicit_auto_deref, clippy::unused_unit, clippy::unnecessary_wraps)]
 fn main() -> Result<(), CompileError> {
     #[cfg(feature = "dhat-heaps")]
     let _dhat = dhat::Profiler::new_heap();
@@ -65,7 +66,7 @@ fn main() -> Result<(), CompileError> {
 
     let size_bytes = input.len();
     let (size, unit) = format_size(size_bytes);
-    println!("total of bytes read: {} {}", size, unit);
+    println!("total of bytes read: {size} {unit}");
 
     let file_path_str: &str = file_path.to_str().unwrap_or_else(|| {
         handle_io_error("I/O", std::io::Error::new(std::io::ErrorKind::InvalidData, "Invalid file path"));
@@ -92,7 +93,7 @@ fn main() -> Result<(), CompileError> {
     let (statements, parer_errors) = parse.parse();
     println!("{parse_timer}");
     let num_statements = statements.len();
-    let num_statements_str = format!("{} statements found", num_statements);
+    let num_statements_str = format!("{num_statements} statements found");
     if !parer_errors.is_empty() {
         eprintln!("{}", error_reporter.report_errors(parer_errors));
         process::exit(1);
@@ -131,7 +132,7 @@ fn main() -> Result<(), CompileError> {
         Box::new(DeadCodeElimination::with_config(10, true, args.verbose, false)),
     ];
     if args.verbose {
-        println!("Generated NIR Module:\n{}", irmodule);
+        println!("Generated NIR Module:\n{irmodule}");
     }
     let mut module = irmodule;
 

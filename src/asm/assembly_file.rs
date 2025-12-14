@@ -1,6 +1,6 @@
 // src/asm/assembly_file.rs
 
-use super::*;
+use super::{Abi, AbiKind, AssemblySection, DataDirective, Instruction};
 use std::fmt;
 
 #[derive(Debug, Clone)]
@@ -14,6 +14,7 @@ pub struct AssemblyFile {
 }
 
 impl AssemblyFile {
+    #[must_use]
     pub fn new(abi: Abi) -> Self {
         let (bss_section, rodata_section) = match abi.kind {
             AbiKind::SystemV => (Some(AssemblySection::bss_section()), None),
@@ -31,31 +32,36 @@ impl AssemblyFile {
 
     // Getters
     /// Returns a reference to the ABI configuration.
-    pub fn abi(&self) -> &Abi {
+    #[must_use]
+    pub const fn abi(&self) -> &Abi {
         &self.abi
     }
 
     /// Returns a reference to the optional BSS section.
     ///
-    /// The BSS section is present for SystemV ABI and absent for Windows ABI.
-    pub fn bss_section(&self) -> Option<&AssemblySection> {
+    /// The BSS section is present for `SystemV` ABI and absent for Windows ABI.
+    #[must_use]
+    pub const fn bss_section(&self) -> Option<&AssemblySection> {
         self.bss_section.as_ref()
     }
 
     /// Returns a reference to the optional read-only data section.
     ///
-    /// The rodata section is present for Windows ABI and absent for SystemV ABI.
-    pub fn rodata_section(&self) -> Option<&AssemblySection> {
+    /// The rodata section is present for Windows ABI and absent for `SystemV` ABI.
+    #[must_use]
+    pub const fn rodata_section(&self) -> Option<&AssemblySection> {
         self.rodata_section.as_ref()
     }
 
     /// Returns a reference to the data section.
-    pub fn data_section(&self) -> &AssemblySection {
+    #[must_use]
+    pub const fn data_section(&self) -> &AssemblySection {
         &self.data_section
     }
 
     /// Returns a reference to the text (code) section.
-    pub fn text_section(&self) -> &AssemblySection {
+    #[must_use]
+    pub const fn text_section(&self) -> &AssemblySection {
         &self.text_section
     }
     pub fn data_sec_add_data(&mut self, label: impl Into<String>, directive: DataDirective) {
@@ -80,10 +86,10 @@ impl fmt::Display for AssemblyFile {
         writeln!(f, "; Assembly File - ABI: {}", self.abi)?;
         writeln!(f, "{}", self.data_section)?;
         if let Some(bss) = &self.bss_section {
-            writeln!(f, "{}", bss)?;
+            writeln!(f, "{bss}")?;
         }
         if let Some(rodata) = &self.rodata_section {
-            writeln!(f, "{}", rodata)?;
+            writeln!(f, "{rodata}")?;
         }
         writeln!(f, "{}", self.text_section)?;
         Ok(())

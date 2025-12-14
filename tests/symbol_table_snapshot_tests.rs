@@ -8,7 +8,7 @@ fn global_scope_declaration_and_lookup() {
     let mut table = SymbolTable::new();
     let var_symbol = create_var_symbol("x", true);
 
-    table.declare("x", var_symbol.clone()).unwrap();
+    table.declare("x", var_symbol).unwrap();
     assert_debug_snapshot!(table.lookup("x"));
 }
 
@@ -18,9 +18,9 @@ fn shadowing_across_scopes() {
     let global_var = create_var_symbol("x", false);
     let local_var = create_var_symbol("x", true);
 
-    table.declare("x", global_var.clone()).unwrap();
+    table.declare("x", global_var).unwrap();
     table.push_scope(ScopeKind::Block, None);
-    table.declare("x", local_var.clone()).unwrap();
+    table.declare("x", local_var).unwrap();
 
     // Should find local variable in inner scope
     assert_debug_snapshot!(table.lookup("x"));
@@ -59,7 +59,7 @@ fn function_symbol_tracking() {
 
     assert_debug_snapshot!(table.current_function());
 
-    table.enter_function(func.clone());
+    table.enter_function(func);
     assert_debug_snapshot!(table.current_function());
 
     table.exit_function();
@@ -105,8 +105,8 @@ fn mixed_symbol_types() {
     let var = create_var_symbol("var", true);
     let func = create_func_symbol("func");
 
-    table.declare("var", var.clone()).unwrap();
-    table.declare("func", func.clone()).unwrap();
+    table.declare("var", var).unwrap();
+    table.declare("func", func).unwrap();
 
     // Compare inner values instead of Symbol wrappers
     assert_debug_snapshot!(table.lookup_variable("var"));
@@ -123,7 +123,7 @@ fn precise_error_span_reporting() {
         name: "x".into(),
         ty: int_type(),
         mutable: true,
-        defined_at: span1.clone(),
+        defined_at: span1,
         last_assignment: None,
     });
 
@@ -131,7 +131,7 @@ fn precise_error_span_reporting() {
         name: "x".into(),
         ty: int_type(),
         mutable: false,
-        defined_at: span2.clone(),
+        defined_at: span2,
         last_assignment: None,
     });
 
@@ -145,9 +145,9 @@ fn function_symbol_in_nested_scopes() {
     let global_func = create_func_symbol("foo");
     let local_func = create_func_symbol("foo");
 
-    table.declare("foo", global_func.clone()).unwrap();
+    table.declare("foo", global_func).unwrap();
     table.push_scope(ScopeKind::Block, None);
-    table.declare("foo", local_func.clone()).unwrap();
+    table.declare("foo", local_func).unwrap();
 
     // Compare inner function symbols
     assert_debug_snapshot!(table.lookup_function("foo"));
@@ -162,8 +162,8 @@ fn lookup_specific_symbol_types() {
     let var = create_var_symbol("x", true);
     let func = create_func_symbol("y");
 
-    table.declare("x", var.clone()).unwrap();
-    table.declare("y", func.clone()).unwrap();
+    table.declare("x", var).unwrap();
+    table.declare("y", func).unwrap();
 
     // Compare inner values
     assert_debug_snapshot!(table.lookup_variable("x"));
@@ -181,14 +181,14 @@ fn duplicate_function_error_span() {
         name: "func".into(),
         parameters: Vec::new(),
         return_type: Type::Void,
-        defined_at: span1.clone(),
+        defined_at: span1,
     });
 
     let second_func = Symbol::Function(FunctionSymbol {
         name: "func".into(),
         parameters: Vec::new(),
         return_type: Type::Void,
-        defined_at: span2.clone(),
+        defined_at: span2,
     });
 
     table.declare("func", first_func).unwrap();
@@ -196,6 +196,7 @@ fn duplicate_function_error_span() {
 }
 
 #[test]
+
 fn duplicate_unknown_symbol_type_uses_default_span() {
     let mut table = SymbolTable::new();
 

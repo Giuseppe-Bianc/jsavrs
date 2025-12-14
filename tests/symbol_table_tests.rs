@@ -119,8 +119,8 @@ fn mixed_symbol_types() {
     table.declare("func", func.clone()).unwrap();
 
     // Compare inner values instead of Symbol wrappers
-    assert_eq!(table.lookup_variable("var"), var_from_symbol(var.clone()));
-    assert_eq!(table.lookup_function("func"), func_from_symbol(func.clone()));
+    assert_eq!(table.lookup_variable("var"), var_from_symbol(var));
+    assert_eq!(table.lookup_function("func"), func_from_symbol(func));
 }
 
 #[test]
@@ -141,7 +141,7 @@ fn precise_error_span_reporting() {
         name: "x".into(),
         ty: int_type(),
         mutable: false,
-        defined_at: span2.clone(),
+        defined_at: span2,
         last_assignment: None,
     });
 
@@ -165,10 +165,10 @@ fn function_symbol_in_nested_scopes() {
     table.declare("foo", local_func.clone()).unwrap();
 
     // Compare inner function symbols
-    assert_eq!(table.lookup_function("foo"), func_from_symbol(local_func.clone()));
+    assert_eq!(table.lookup_function("foo"), func_from_symbol(local_func));
     table.pop_scope();
 
-    assert_eq!(table.lookup_function("foo"), func_from_symbol(global_func.clone()));
+    assert_eq!(table.lookup_function("foo"), func_from_symbol(global_func));
 }
 
 #[test]
@@ -181,10 +181,10 @@ fn lookup_specific_symbol_types() {
     table.declare("y", func.clone()).unwrap();
 
     // Compare inner values
-    assert_eq!(table.lookup_variable("x"), var_from_symbol(var.clone()));
+    assert_eq!(table.lookup_variable("x"), var_from_symbol(var));
     assert_eq!(table.lookup_variable("y"), None);
     assert_eq!(table.lookup_function("x"), None);
-    assert_eq!(table.lookup_function("y"), func_from_symbol(func.clone()));
+    assert_eq!(table.lookup_function("y"), func_from_symbol(func));
 }
 
 #[test]
@@ -205,7 +205,7 @@ fn duplicate_variable_error_span() {
         name: "x".into(),
         ty: int_type(),
         mutable: false,
-        defined_at: span2.clone(),
+        defined_at: span2,
         last_assignment: None,
     });
 
@@ -239,7 +239,7 @@ fn duplicate_function_error_span() {
         name: "func".into(),
         parameters: Vec::new(),
         return_type: Type::Void,
-        defined_at: span2.clone(),
+        defined_at: span2,
     });
 
     table.declare("func", first_func).unwrap();
@@ -376,12 +376,12 @@ fn test_lookup_in_specific_scope() {
     // Verify lookups in deepest scope
     assert_eq!(table.lookup("a"), Some(global_var.clone()));
     assert_eq!(table.lookup("b"), Some(func_var.clone()));
-    assert_eq!(table.lookup("c"), Some(block_var.clone()));
+    assert_eq!(table.lookup("c"), Some(block_var));
 
     // Verify lookups after popping scopes
     table.pop_scope();
     assert_eq!(table.lookup("a"), Some(global_var.clone()));
-    assert_eq!(table.lookup("b"), Some(func_var.clone()));
+    assert_eq!(table.lookup("b"), Some(func_var));
     assert_eq!(table.lookup("c"), None);
 
     table.pop_scope();

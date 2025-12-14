@@ -14,17 +14,17 @@ fn test_x86_register_creation() {
     let gp32_reg = X86Register::GP32(GPRegister32::Eax);
     let gp16_reg = X86Register::GP16(GPRegister16::Ax);
     let gp8_reg = X86Register::GP8(GPRegister8::Al);
-    let _fpu_reg = X86Register::Fpu(FPURegister::St0);
-    let _mmx_reg = X86Register::Mmx(MMXRegister::Mm0);
+    /*let _fpu_reg = X86Register::Fpu(FPURegister::St0);
+    let _mmx_reg = X86Register::Mmx(MMXRegister::Mm0);*/
     let xmm_reg = X86Register::Xmm(XMMRegister::Xmm0);
     let ymm_reg = X86Register::Ymm(YMMRegister::Ymm0);
     let zmm_reg = X86Register::Zmm(ZMMRegister::Zmm0);
-    let _mask_reg = X86Register::Mask(MaskRegister::K0);
+    /*let _mask_reg = X86Register::Mask(MaskRegister::K0);
     let _seg_reg = X86Register::Segment(SegmentRegister::Cs);
     let _ctrl_reg = X86Register::Control(ControlRegister::Cr0);
     let _debug_reg = X86Register::Debug(DebugRegister::Dr0);
     let _flags_reg = X86Register::Flags(FlagsRegister::Rflags);
-    let _ip_reg = X86Register::InstructionPointer(InstructionPointer::Rip);
+    let _ip_reg = X86Register::InstructionPointer(InstructionPointer::Rip);*/
 
     // Verify they are different
     assert_ne!(gp64_reg, gp32_reg);
@@ -127,8 +127,8 @@ fn test_is_volatile_xmm_registers() {
             15 => X86Register::Xmm(XMMRegister::Xmm15),
             _ => panic!("Invalid XMM register index"),
         };
-        assert!(xmm_reg.is_volatile(Platform::Linux), "XMM{} should be volatile on Linux", i);
-        assert!(xmm_reg.is_volatile(Platform::MacOS), "XMM{} should be volatile on MacOS", i);
+        assert!(xmm_reg.is_volatile(Platform::Linux), "XMM{i} should be volatile on Linux");
+        assert!(xmm_reg.is_volatile(Platform::MacOS), "XMM{i} should be volatile on MacOS");
     }
 }
 
@@ -165,8 +165,8 @@ fn test_is_volatile_ymm_registers() {
             15 => X86Register::Ymm(YMMRegister::Ymm15),
             _ => panic!("Invalid YMM register index"),
         };
-        assert!(ymm_reg.is_volatile(Platform::Linux), "YMM{} should be volatile on Linux", i);
-        assert!(ymm_reg.is_volatile(Platform::MacOS), "YMM{} should be volatile on MacOS", i);
+        assert!(ymm_reg.is_volatile(Platform::Linux), "YMM{i} should be volatile on Linux");
+        assert!(ymm_reg.is_volatile(Platform::MacOS), "YMM{i} should be volatile on MacOS");
     }
 }
 
@@ -232,7 +232,7 @@ fn test_is_callee_saved_xmm() {
             15 => X86Register::Xmm(XMMRegister::Xmm15),
             _ => panic!("Invalid XMM register index"),
         };
-        assert!(xmm_reg.is_callee_saved(Platform::Windows), "XMM{} should be callee-saved on Windows", i);
+        assert!(xmm_reg.is_callee_saved(Platform::Windows), "XMM{i} should be callee-saved on Windows");
     }
 
     // On Windows, XMM0-XMM5 are not callee-saved
@@ -246,7 +246,7 @@ fn test_is_callee_saved_xmm() {
             5 => X86Register::Xmm(XMMRegister::Xmm5),
             _ => panic!("Invalid XMM register index"),
         };
-        assert!(!xmm_reg.is_callee_saved(Platform::Windows), "XMM{} should not be callee-saved on Windows", i);
+        assert!(!xmm_reg.is_callee_saved(Platform::Windows), "XMM{i} should not be callee-saved on Windows");
     }
 
     // On System V, no XMM registers are callee-saved
@@ -270,8 +270,8 @@ fn test_is_callee_saved_xmm() {
             15 => X86Register::Xmm(XMMRegister::Xmm15),
             _ => panic!("Invalid XMM register index"),
         };
-        assert!(!xmm_reg.is_callee_saved(Platform::Linux), "XMM{} should not be callee-saved on Linux", i);
-        assert!(!xmm_reg.is_callee_saved(Platform::MacOS), "XMM{} should not be callee-saved on MacOS", i);
+        assert!(!xmm_reg.is_callee_saved(Platform::Linux), "XMM{i} should not be callee-saved on Linux");
+        assert!(!xmm_reg.is_callee_saved(Platform::MacOS), "XMM{i} should not be callee-saved on MacOS");
     }
 }
 
@@ -459,7 +459,7 @@ fn test_is_parameter_register_linux() {
             7 => X86Register::Xmm(XMMRegister::Xmm7),
             _ => panic!("Invalid XMM register index"),
         };
-        assert!(xmm_reg.is_parameter_register(platform, i), "XMM{} should be {}th float param on Linux", i, i);
+        assert!(xmm_reg.is_parameter_register(platform, i), "XMM{i} should be {i}th float param on Linux");
     }
 
     // Test non-parameter registers

@@ -36,16 +36,16 @@ fn test_basic_block_display() {
     let mut block = BasicBlock::new("block1", dummy_span());
 
     // Empty block
-    assert_eq!(format!("{}", block), "block1:\n  unreachable\n");
+    assert_eq!(format!("{block}"), "block1:\n  unreachable\n");
 
     // With instructions
     let value = create_dummy_value();
-    let inst = Instruction::new(InstructionKind::Load { src: value.clone(), ty: IrType::I32 }, dummy_span());
+    let inst = Instruction::new(InstructionKind::Load { src: value, ty: IrType::I32 }, dummy_span());
     block.instructions.push(inst);
     block.set_terminator(Terminator::new(TerminatorKind::Branch { label: "exit".into() }, dummy_span()));
 
     assert_eq!(
-        format!("{}", block),
+        format!("{block}"),
         "block1:
   load i32 from 42i32
   br exit
@@ -68,7 +68,7 @@ fn test_function_display() {
     );
     // Add edges
 
-    let expected_output = r#"function test () -> void:
+    let expected_output = r"function test () -> void:
 blocks:
 // Scope: SCOPE_0
 entry_test:
@@ -82,7 +82,7 @@ block1:
 exit:
   ret 42i32 void
 
-"#;
+";
 
     assert_eq!(vec_to_string(vec![func]), expected_output);
 }
@@ -165,7 +165,7 @@ fn test_function_with_parameters() {
     ];
 
     let func = Function::new("func", params, IrType::Bool);
-    let output = format!("{}", func);
+    let output = format!("{func}");
 
     assert!(output.contains("function func (a: i32, b: f64) -> bool:"));
 }

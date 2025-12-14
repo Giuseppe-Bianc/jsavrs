@@ -364,7 +364,7 @@ fn test_generate_nested_expressions() {
             assert_eq!(ty, IrType::I32);
             assert_eq!(operand.kind, ValueKind::Literal(IrLiteralValue::I32(5)));
         }
-        other => panic!("Unexpected kind: {:?}", other),
+        other => panic!("Unexpected kind: {other:?}"),
     }
     let second_instruction = &entry_block.instructions[1];
     assert_binary_instruction!(
@@ -969,12 +969,13 @@ fn test_generate_unary_expression() {
                 assert_eq!(*ty, IrType::I32);
                 assert_eq!(operand.kind, ValueKind::Literal(IrLiteralValue::I32(42)));
             }
-            other => panic!("Unexpected kind: {:?}", other),
+            other => panic!("Unexpected kind: {other:?}"),
         }
     }
 }
 
 #[test]
+#[allow(clippy::match_same_arms)]
 fn test_generate_integer_literals() {
     let test_cases = vec![
         (Number::I8(42), IrLiteralValue::I8(42), IrType::I8),
@@ -1029,13 +1030,13 @@ fn test_generate_integer_literals() {
                     _ => panic!("Expected immediate value"),
                 }
             }
-            other => panic!("Unexpected terminator: {:?}", other),
+            other => panic!("Unexpected terminator: {other:?}"),
         }
     }
 }
 
-#[allow(clippy::approx_constant)]
 #[test]
+#[allow(clippy::approx_constant, clippy::match_same_arms)]
 fn test_generate_float_literals() {
     let test_cases = vec![
         (Number::Float32(3.14), IrLiteralValue::F32(3.14), IrType::F32),
@@ -1049,10 +1050,8 @@ fn test_generate_float_literals() {
             "test".into(),
             vec![],
             match num {
-                Number::Float32(_) => Type::F32,
-                Number::Float64(_) => Type::F64,
-                Number::Scientific32(_, _) => Type::F32,
-                Number::Scientific64(_, _) => Type::F64,
+                Number::Float32(_) | Number::Scientific32(_, _) => Type::F32,
+                Number::Float64(_) | Number::Scientific64(_, _) => Type::F64,
                 _ => Type::F32,
             },
             vec![Stmt::Return {
@@ -1078,12 +1077,13 @@ fn test_generate_float_literals() {
                     _ => panic!("Expected immediate value"),
                 }
             }
-            other => panic!("Unexpected terminator: {:?}", other),
+            other => panic!("Unexpected terminator: {other:?}"),
         }
     }
 }
 
 #[test]
+
 fn test_generate_boolean_literals() {
     let test_cases = vec![(true, IrLiteralValue::Bool(true)), (false, IrLiteralValue::Bool(false))];
 
@@ -1112,12 +1112,13 @@ fn test_generate_boolean_literals() {
                     _ => panic!("Expected immediate value"),
                 }
             }
-            other => panic!("Unexpected terminator: {:?}", other),
+            other => panic!("Unexpected terminator: {other:?}"),
         }
     }
 }
 
 #[test]
+
 fn test_generate_char_literal() {
     let ast = vec![function_declaration(
         "test".into(),
@@ -1143,11 +1144,12 @@ fn test_generate_char_literal() {
                 _ => panic!("Expected immediate value"),
             }
         }
-        other => panic!("Unexpected terminator: {:?}", other),
+        other => panic!("Unexpected terminator: {other:?}"),
     }
 }
 
 #[test]
+
 fn test_generate_nullptr_literal() {
     let ast = vec![function_declaration(
         "test".into(),
@@ -1169,6 +1171,7 @@ fn test_generate_nullptr_literal() {
 }
 
 #[test]
+
 fn test_generate_array_access_assignment() {
     // Creiamo un AST che dichiara un array e assegna un valore a un elemento
     let ast = vec![function_declaration(
@@ -1244,6 +1247,7 @@ fn test_generate_array_access_assignment() {
 }
 
 #[test]
+
 fn test_generate_simple_function_call() {
     let ast = vec![
         function_declaration(
@@ -1300,6 +1304,7 @@ fn test_generate_simple_function_call() {
 }
 
 #[test]
+
 fn test_generate_recursive_function_call() {
     let ast = vec![function_declaration(
         "factorial".into(),

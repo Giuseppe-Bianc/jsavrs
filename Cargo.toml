@@ -54,8 +54,6 @@ similar.opt-level = 3
 debug = 1
 
 
-#[lints.clippy]
-#pedantic = "warn"
-#nursery = "warn"
-#unwrap_used = "warn"
-#expect_used = "warn"
+[lints.clippy]
+pedantic = "warn"
+nursery = "warn"

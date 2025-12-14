@@ -26,7 +26,8 @@ pub enum Immediate {
 
 impl Immediate {
     /// Ottiene la dimensione in bit dell'immediato
-    pub fn size_bits(&self) -> usize {
+    #[must_use]
+    pub const fn size_bits(&self) -> usize {
         match self {
             Self::Imm8(_) | Self::Imm8u(_) => 8,
             Self::Imm16(_) | Self::Imm16u(_) => 16,
@@ -40,12 +41,15 @@ impl Immediate {
     /// Inputs: &self
     /// Outputs: usize — number of bytes (1, 2, 4, or 8).
     /// Side effects: none.
-    pub fn size_bytes(&self) -> usize {
+    #[must_use]
+    pub const fn size_bytes(&self) -> usize {
         self.size_bits() / 8
     }
 
     /// Converte l'immediato a i64
-    pub fn as_i64(&self) -> i64 {
+    #[must_use]
+    #[allow(clippy::checked_conversions, clippy::cast_lossless, clippy::cast_possible_wrap, clippy::cast_sign_loss)]
+    pub const fn as_i64(&self) -> i64 {
         match self {
             Self::Imm8(v) => *v as i64,
             Self::Imm8u(v) => *v as i64,
@@ -65,7 +69,9 @@ impl Immediate {
     /// variants this performs a widening cast. No overflow can occur because
     /// the target type is the largest supported width.
     /// Side effects: none.
-    pub fn as_u64(&self) -> u64 {
+    #[must_use]
+    #[allow(clippy::checked_conversions, clippy::cast_lossless, clippy::cast_possible_wrap, clippy::cast_sign_loss)]
+    pub const fn as_u64(&self) -> u64 {
         match self {
             Self::Imm8(v) => *v as u64,
             Self::Imm8u(v) => *v as u64,
@@ -79,7 +85,8 @@ impl Immediate {
     }
 
     /// Verifica se l'immediato è con segno
-    pub fn is_signed(&self) -> bool {
+    #[must_use]
+    pub const fn is_signed(&self) -> bool {
         matches!(self, Self::Imm8(_) | Self::Imm16(_) | Self::Imm32(_) | Self::Imm64(_))
     }
     /// Check whether the immediate fits in the given signed bit width.
@@ -92,7 +99,9 @@ impl Immediate {
     /// `true` (since all supported values are representable in i64).
     ///
     /// Side effects: none.
-    pub fn fits_in(&self, bits: usize) -> bool {
+    #[must_use]
+    #[allow(clippy::checked_conversions, clippy::cast_lossless)]
+    pub const fn fits_in(&self, bits: usize) -> bool {
         match bits {
             8 => {
                 let val = self.as_i64();
@@ -217,14 +226,14 @@ impl From<u64> for Immediate {
 impl std::fmt::Display for Immediate {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
         match self {
-            Self::Imm8(v) => write!(f, "{}", v),
-            Self::Imm8u(v) => write!(f, "0x{:02x}", v),
-            Self::Imm16(v) => write!(f, "{}", v),
-            Self::Imm16u(v) => write!(f, "0x{:04x}", v),
-            Self::Imm32(v) => write!(f, "{}", v),
-            Self::Imm32u(v) => write!(f, "0x{:08x}", v),
-            Self::Imm64(v) => write!(f, "{}", v),
-            Self::Imm64u(v) => write!(f, "0x{:016x}", v),
+            Self::Imm8(v) => write!(f, "{v}"),
+            Self::Imm8u(v) => write!(f, "0x{v:02x}"),
+            Self::Imm16(v) => write!(f, "{v}"),
+            Self::Imm16u(v) => write!(f, "0x{v:04x}"),
+            Self::Imm32(v) => write!(f, "{v}"),
+            Self::Imm32u(v) => write!(f, "0x{v:08x}"),
+            Self::Imm64(v) => write!(f, "{v}"),
+            Self::Imm64u(v) => write!(f, "0x{v:016x}"),
         }
     }
 }

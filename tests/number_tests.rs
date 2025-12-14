@@ -37,6 +37,7 @@ fn test_i16_display() {
 }
 
 #[test]
+#[allow(clippy::unreadable_literal)]
 fn test_i32_display() {
     assert_eq!(Number::I32(0).to_string(), "0i32");
     assert_eq!(Number::I32(123456).to_string(), "123456i32");
@@ -67,6 +68,7 @@ fn test_u16_display() {
 }
 
 #[test]
+#[allow(clippy::unreadable_literal)]
 fn test_u32_display() {
     assert_eq!(Number::U32(0).to_string(), "0u32");
     assert_eq!(Number::U32(123456).to_string(), "123456u32");
@@ -86,7 +88,7 @@ fn test_float32_display() {
 }
 
 #[test]
-#[allow(clippy::approx_constant)]
+#[allow(clippy::approx_constant, clippy::unreadable_literal)]
 fn test_float64_display() {
     assert_eq!(Number::Float64(0.0).to_string(), "0");
     assert_eq!(Number::Float64(-0.0).to_string(), "-0");
@@ -106,6 +108,7 @@ fn test_scientific32_display() {
 }
 
 #[test]
+#[allow(clippy::unreadable_literal)]
 fn test_scientific64_display() {
     assert_eq!(Number::Scientific64(1.23456789, 5).to_string(), "1.23456789e5");
     assert_eq!(Number::Scientific64(9.87, -3).to_string(), "9.87e-3");
@@ -147,13 +150,13 @@ fn test_display_trait_consistency() {
         Number::Scientific64(1.0, 1),
     ];
     for number in numbers {
-        assert_eq!(format!("{}", number), number.to_string());
+        assert_eq!(format!("{number}"), number.to_string());
     }
 }
 
 // PartialEq and Hash tests
 #[test]
-#[allow(clippy::approx_constant)]
+#[allow(clippy::approx_constant, clippy::unreadable_literal)]
 fn test_partial_eq_same_variants() {
     // Test equality for same variants with same values
     assert_eq!(Number::I8(42), Number::I8(42));
@@ -183,7 +186,7 @@ fn test_partial_eq_different_variants() {
 }
 
 #[test]
-#[allow(clippy::approx_constant)]
+#[allow(clippy::approx_constant, clippy::unreadable_literal)]
 fn test_partial_eq_same_variant_different_values() {
     // Test inequality for same variants with different values
     assert_ne!(Number::I8(42), Number::I8(24));
@@ -201,6 +204,7 @@ fn test_partial_eq_same_variant_different_values() {
 }
 
 #[test]
+#[allow(clippy::cast_lossless)]
 fn test_partial_eq_float_bitwise() {
     // Test that floating-point equality is bitwise
     // These two values are equal numerically but have different bit representations
@@ -222,7 +226,7 @@ fn test_partial_eq_float_bitwise() {
 }
 
 #[test]
-#[allow(clippy::approx_constant)]
+#[allow(clippy::approx_constant, clippy::unreadable_literal)]
 fn test_hash_consistency() {
     // Test that equal values produce the same hash
     let numbers = [

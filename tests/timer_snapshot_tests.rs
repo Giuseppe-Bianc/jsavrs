@@ -4,6 +4,7 @@ use jsavrs::time::times::Times;
 use jsavrs::time::value_label::ValueLabel;
 
 #[test]
+#[allow(clippy::unreadable_literal)]
 fn test_value_label_snapshots() {
     let test_cases = [
         (0.0, "ns"),
@@ -60,6 +61,6 @@ fn test_times_snapshots() {
 #[test]
 fn test_timer_formatting_snapshots() {
     // Test different formatters
-    let timer = Timer::with_formatter("Custom Format", |title, _, _| format!("[CUSTOM] {}: 123.456ms", title));
+    let timer = Timer::with_formatter("Custom Format", |title, _, _| format!("[CUSTOM] {title}: 123.456ms"));
     assert_snapshot!("timer_custom_formatter", &timer.to_string());
 }

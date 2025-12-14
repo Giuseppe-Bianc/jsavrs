@@ -14,9 +14,9 @@ pub enum Platform {
 impl fmt::Display for Platform {
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
         match self {
-            Platform::Windows => write!(f, "Windows"),
-            Platform::Linux => write!(f, "Linux"),
-            Platform::MacOS => write!(f, "macOS"),
+            Self::Windows => write!(f, "Windows"),
+            Self::Linux => write!(f, "Linux"),
+            Self::MacOS => write!(f, "macOS"),
         }
     }
 }

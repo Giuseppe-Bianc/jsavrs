@@ -29,6 +29,7 @@ fn test_i16_display() {
 }
 
 #[test]
+#[allow(clippy::unreadable_literal)]
 fn test_i32_display() {
     assert_snapshot!("i32_0", Number::I32(0).to_string());
     assert_snapshot!("i32_123456", Number::I32(123456).to_string());
@@ -59,6 +60,7 @@ fn test_u16_display() {
 }
 
 #[test]
+#[allow(clippy::unreadable_literal)]
 fn test_u32_display() {
     assert_snapshot!("u32_0", Number::U32(0).to_string());
     assert_snapshot!("u32_123456", Number::U32(123456).to_string());
@@ -77,7 +79,7 @@ fn test_float32_display_snapshot() {
     assert_snapshot!("float32_nan", Number::Float32(f32::NAN).to_string());
 }
 
-#[allow(clippy::approx_constant)]
+#[allow(clippy::approx_constant, clippy::unreadable_literal)]
 #[test]
 fn test_float64_display_snapshot() {
     assert_snapshot!("float64_0", Number::Float64(0.0).to_string());
@@ -98,6 +100,7 @@ fn test_scientific32_display_snapshot() {
 }
 
 #[test]
+#[allow(clippy::unreadable_literal)]
 fn test_scientific64_display_snapshot() {
     assert_snapshot!("scientific64_1_23456789e5", Number::Scientific64(1.23456789, 5).to_string());
     assert_snapshot!("scientific64_9_87e-3", Number::Scientific64(9.87, -3).to_string());

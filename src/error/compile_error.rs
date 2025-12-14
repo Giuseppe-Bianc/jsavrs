@@ -94,14 +94,15 @@ impl CompileError {
     /// };
     /// assert_eq!(err.message(), Some("Invalid token"));
     /// ```
+    #[must_use]
     pub fn message(&self) -> Option<&str> {
         match self {
-            CompileError::LexerError { message, .. }
-            | CompileError::SyntaxError { message, .. }
-            | CompileError::TypeError { message, .. }
-            | CompileError::IrGeneratorError { message, .. }
-            | CompileError::AsmGeneratorError { message } => Some(message),
-            _ => None,
+            Self::LexerError { message, .. }
+            | Self::SyntaxError { message, .. }
+            | Self::TypeError { message, .. }
+            | Self::IrGeneratorError { message, .. }
+            | Self::AsmGeneratorError { message } => Some(message),
+            Self::IoError(_) => None,
         }
     }
 
@@ -125,12 +126,13 @@ impl CompileError {
     /// };
     /// assert_eq!(err.span(), Some(&span));
     /// ```
-    pub fn span(&self) -> Option<&SourceSpan> {
+    #[must_use]
+    pub const fn span(&self) -> Option<&SourceSpan> {
         match self {
-            CompileError::LexerError { span, .. }
-            | CompileError::SyntaxError { span, .. }
-            | CompileError::TypeError { span, .. }
-            | CompileError::IrGeneratorError { span, .. } => Some(span),
+            Self::LexerError { span, .. }
+            | Self::SyntaxError { span, .. }
+            | Self::TypeError { span, .. }
+            | Self::IrGeneratorError { span, .. } => Some(span),
             _ => None,
         }
     }
@@ -153,12 +155,13 @@ impl CompileError {
     /// };
     /// assert_eq!(err.help(), Some("Try adding a type annotation"));
     /// ```
+    #[must_use]
     pub fn help(&self) -> Option<&str> {
         match self {
-            CompileError::LexerError { help, .. }
-            | CompileError::SyntaxError { help, .. }
-            | CompileError::TypeError { help, .. }
-            | CompileError::IrGeneratorError { help, .. } => help.as_deref(),
+            Self::LexerError { help, .. }
+            | Self::SyntaxError { help, .. }
+            | Self::TypeError { help, .. }
+            | Self::IrGeneratorError { help, .. } => help.as_deref(),
             _ => None,
         }
     }
@@ -185,12 +188,12 @@ impl CompileError {
     /// ```
     pub fn set_message(&mut self, new_message: Arc<str>) {
         match self {
-            CompileError::LexerError { message, .. }
-            | CompileError::SyntaxError { message, .. }
-            | CompileError::TypeError { message, .. }
-            | CompileError::IrGeneratorError { message, .. }
-            | CompileError::AsmGeneratorError { message } => *message = new_message,
-            _ => {}
+            Self::LexerError { message, .. }
+            | Self::SyntaxError { message, .. }
+            | Self::TypeError { message, .. }
+            | Self::IrGeneratorError { message, .. }
+            | Self::AsmGeneratorError { message } => *message = new_message,
+            Self::IoError(_) => {}
         }
     }
 
@@ -218,10 +221,10 @@ impl CompileError {
     /// ```
     pub fn set_span(&mut self, new_span: SourceSpan) {
         match self {
-            CompileError::LexerError { span, .. }
-            | CompileError::SyntaxError { span, .. }
-            | CompileError::TypeError { span, .. }
-            | CompileError::IrGeneratorError { span, .. } => *span = new_span,
+            Self::LexerError { span, .. }
+            | Self::SyntaxError { span, .. }
+            | Self::TypeError { span, .. }
+            | Self::IrGeneratorError { span, .. } => *span = new_span,
             _ => {}
         }
     }
@@ -248,10 +251,10 @@ impl CompileError {
     /// ```
     pub fn set_help(&mut self, new_help: Option<String>) {
         match self {
-            CompileError::LexerError { help, .. }
-            | CompileError::SyntaxError { help, .. }
-            | CompileError::TypeError { help, .. }
-            | CompileError::IrGeneratorError { help, .. } => *help = new_help,
+            Self::LexerError { help, .. }
+            | Self::SyntaxError { help, .. }
+            | Self::TypeError { help, .. }
+            | Self::IrGeneratorError { help, .. } => *help = new_help,
             _ => {}
         }
     }

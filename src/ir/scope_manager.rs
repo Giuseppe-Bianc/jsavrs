@@ -171,7 +171,6 @@ impl ScopeManager {
     /// # Panics
     /// Panics if the current scope ID is not found in the scopes map, which should never
     /// occur under normal operation as scope IDs are managed internally.
-    #[allow(clippy::unwrap_used)]
     pub fn lookup_mut(&mut self, name: &str) -> Option<&mut Value> {
         let mut current = self.current_scope;
 
@@ -213,7 +212,6 @@ impl ScopeManager {
     ///
     /// # Panics
     /// This method will panic if an internal scope reference is missing (should not occur under normal operation).
-    #[allow(clippy::unwrap_used)]
     pub fn append_manager(&mut self, other: &Self) {
         let root_id = self.root_scope;
 

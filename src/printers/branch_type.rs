@@ -121,7 +121,6 @@ pub fn get_indent(indent: &str, branch_type: &BranchType) -> String {
     result
 }
 
-#[allow(clippy::unwrap_used)]
 pub fn append_line(output: &mut String, indent: &str, branch_type: BranchType, style: &Style, text: &str) {
     let branch = branch_type.symbol();
     let styled_text = style.apply_to(text);

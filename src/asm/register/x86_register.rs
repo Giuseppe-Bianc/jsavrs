@@ -129,9 +129,10 @@ pub const CALLER_SAVED_XMM_WINDOWS: &[XMMRegister] =
 
 impl X86Register {
     /// Returns true if register is volatile (caller-saved) for given platform.
-    pub fn is_volatile(&self, platform: Platform) -> bool {
+    #[must_use]
+    pub const fn is_volatile(&self, platform: Platform) -> bool {
         match self {
-            X86Register::GP64(r) => match platform {
+            Self::GP64(r) => match platform {
                 Platform::Windows => matches!(
                     r,
                     GPRegister64::Rax
@@ -155,7 +156,7 @@ impl X86Register {
                         | GPRegister64::R11
                 ),
             },
-            X86Register::Xmm(r) => match platform {
+            Self::Xmm(r) => match platform {
                 Platform::Windows => matches!(
                     r,
                     XMMRegister::Xmm0
@@ -167,7 +168,7 @@ impl X86Register {
                 ),
                 Platform::Linux | Platform::MacOS => true, // Tutti volatili in System V
             },
-            X86Register::Ymm(r) => match platform {
+            Self::Ymm(r) => match platform {
                 Platform::Windows => matches!(
                     r,
                     YMMRegister::Ymm0
@@ -184,9 +185,10 @@ impl X86Register {
     }
 
     /// Returns true if register is callee-saved (non-volatile) for given platform.
-    pub fn is_callee_saved(&self, platform: Platform) -> bool {
+    #[must_use]
+    pub const fn is_callee_saved(&self, platform: Platform) -> bool {
         match self {
-            X86Register::GP64(r) => match platform {
+            Self::GP64(r) => match platform {
                 Platform::Windows => matches!(
                     r,
                     GPRegister64::Rbx
@@ -210,7 +212,7 @@ impl X86Register {
                         | GPRegister64::R15
                 ),
             },
-            X86Register::Xmm(r) => match platform {
+            Self::Xmm(r) => match platform {
                 Platform::Windows => matches!(
                     r,
                     XMMRegister::Xmm6
@@ -231,92 +233,100 @@ impl X86Register {
     }
 
     /// Returns register size in bits (8, 16, 32, 64, 80, 128, 256, 512).
-    pub fn size_bits(&self) -> usize {
+    #[must_use]
+    pub const fn size_bits(&self) -> usize {
         match self {
-            X86Register::GP64(_)
-            | X86Register::Flags(FlagsRegister::Rflags)
-            | X86Register::InstructionPointer(InstructionPointer::Rip) => 64,
-            X86Register::GP32(_)
-            | X86Register::Flags(FlagsRegister::Eflags)
-            | X86Register::InstructionPointer(InstructionPointer::Eip) => 32,
-            X86Register::GP16(_)
-            | X86Register::Flags(FlagsRegister::Flags)
-            | X86Register::InstructionPointer(InstructionPointer::Ip)
-            | X86Register::Segment(_) => 16,
-            X86Register::GP8(_) => 8,
-            X86Register::Fpu(_) => 80,
-            X86Register::Mmx(_) => 64,
-            X86Register::Xmm(_) => 128,
-            X86Register::Ymm(_) => 256,
-            X86Register::Zmm(_) => 512,
-            X86Register::Mask(_) => 64,
-            X86Register::Control(_) | X86Register::Debug(_) => 64,
+            Self::GP64(_)
+            | Self::Flags(FlagsRegister::Rflags)
+            | Self::InstructionPointer(InstructionPointer::Rip)
+            | Self::Mmx(_)
+            | Self::Mask(_)
+            | Self::Control(_)
+            | Self::Debug(_) => 64,
+            Self::GP32(_) | Self::Flags(FlagsRegister::Eflags) | Self::InstructionPointer(InstructionPointer::Eip) => {
+                32
+            }
+            Self::GP16(_)
+            | Self::Flags(FlagsRegister::Flags)
+            | Self::InstructionPointer(InstructionPointer::Ip)
+            | Self::Segment(_) => 16,
+            Self::GP8(_) => 8,
+            Self::Fpu(_) => 80,
+            Self::Xmm(_) => 128,
+            Self::Ymm(_) => 256,
+            Self::Zmm(_) => 512,
         }
     }
 
     /// Returns register size in bytes.
-    pub fn size_bytes(&self) -> usize {
+    #[must_use]
+    pub const fn size_bytes(&self) -> usize {
         self.size_bits() / 8
     }
 
     /// Returns true if this is a general purpose register
-    pub fn is_gp(&self) -> bool {
-        matches!(self, X86Register::GP64(_) | X86Register::GP32(_) | X86Register::GP16(_) | X86Register::GP8(_))
+    #[must_use]
+    pub const fn is_gp(&self) -> bool {
+        matches!(self, Self::GP64(_) | Self::GP32(_) | Self::GP16(_) | Self::GP8(_))
     }
 
     /// Returns true if this is a SIMD register (XMM, YMM, ZMM)
-    pub fn is_simd(&self) -> bool {
-        matches!(self, X86Register::Xmm(_) | X86Register::Ymm(_) | X86Register::Zmm(_))
+    #[must_use]
+    pub const fn is_simd(&self) -> bool {
+        matches!(self, Self::Xmm(_) | Self::Ymm(_) | Self::Zmm(_))
     }
 
     /// Returns true if this is a floating point register (FPU, XMM, YMM, ZMM)
-    pub fn is_float(&self) -> bool {
-        matches!(self, X86Register::Fpu(_) | X86Register::Xmm(_) | X86Register::Ymm(_) | X86Register::Zmm(_))
+    #[must_use]
+    pub const fn is_float(&self) -> bool {
+        matches!(self, Self::Fpu(_) | Self::Xmm(_) | Self::Ymm(_) | Self::Zmm(_))
     }
 
     /// Returns true if this is a special register (segment, control, debug, flags, IP)
-    pub fn is_special(&self) -> bool {
+    #[must_use]
+    pub const fn is_special(&self) -> bool {
         matches!(
             self,
-            X86Register::Segment(_)
-                | X86Register::Control(_)
-                | X86Register::Debug(_)
-                | X86Register::Flags(_)
-                | X86Register::InstructionPointer(_)
+            Self::Segment(_) | Self::Control(_) | Self::Debug(_) | Self::Flags(_) | Self::InstructionPointer(_)
         )
     }
 
     /// Returns true if this is a 64-bit register
-    pub fn is_64bit(&self) -> bool {
+    #[must_use]
+    pub const fn is_64bit(&self) -> bool {
         self.size_bits() == 64
     }
 
     /// Returns true if this is a 32-bit register
-    pub fn is_32bit(&self) -> bool {
+    #[must_use]
+    pub const fn is_32bit(&self) -> bool {
         self.size_bits() == 32
     }
 
     /// Returns true if this is a 16-bit register
-    pub fn is_16bit(&self) -> bool {
+    #[must_use]
+    pub const fn is_16bit(&self) -> bool {
         self.size_bits() == 16
     }
 
     /// Returns true if this is an 8-bit register
-    pub fn is_8bit(&self) -> bool {
+    #[must_use]
+    pub const fn is_8bit(&self) -> bool {
         self.size_bits() == 8
     }
 
     /// Checks if register is used for Nth parameter (0-indexed) on platform.    /// Checks if register is used for Nth parameter (0-indexed) on platform.
-    pub fn is_parameter_register(&self, platform: Platform, param_index: usize) -> bool {
+    #[must_use]
+    pub const fn is_parameter_register(&self, platform: Platform, param_index: usize) -> bool {
         match platform {
             Platform::Windows => {
                 // Windows x64 calling convention
                 match self {
-                    X86Register::GP64(r) => matches!(
+                    Self::GP64(r) => matches!(
                         (r, param_index),
                         (GPRegister64::Rcx, 0) | (GPRegister64::Rdx, 1) | (GPRegister64::R8, 2) | (GPRegister64::R9, 3)
                     ),
-                    X86Register::Xmm(r) => matches!(
+                    Self::Xmm(r) => matches!(
                         (r, param_index),
                         (XMMRegister::Xmm0, 0)
                             | (XMMRegister::Xmm1, 1)
@@ -329,7 +339,7 @@ impl X86Register {
             Platform::Linux | Platform::MacOS => {
                 // System V AMD64 ABI
                 match self {
-                    X86Register::GP64(r) => matches!(
+                    Self::GP64(r) => matches!(
                         (r, param_index),
                         (GPRegister64::Rdi, 0)
                             | (GPRegister64::Rsi, 1)
@@ -338,7 +348,7 @@ impl X86Register {
                             | (GPRegister64::R8, 4)
                             | (GPRegister64::R9, 5)
                     ),
-                    X86Register::Xmm(r) => {
+                    Self::Xmm(r) => {
                         param_index < 8
                             && matches!(
                                 (r, param_index),
@@ -359,38 +369,40 @@ impl X86Register {
     }
 
     /// Checks if register is used for return values on platform.
-    pub fn is_return_register(&self, platform: Platform) -> bool {
+    #[must_use]
+    pub const fn is_return_register(&self, platform: Platform) -> bool {
         match platform {
             Platform::Windows | Platform::Linux | Platform::MacOS => {
                 matches!(
                     self,
-                    X86Register::GP64(GPRegister64::Rax | GPRegister64::Rdx)
-                        | X86Register::Xmm(XMMRegister::Xmm0 | XMMRegister::Xmm1) // System V per struct
+                    Self::GP64(GPRegister64::Rax | GPRegister64::Rdx)
+                        | Self::Xmm(XMMRegister::Xmm0 | XMMRegister::Xmm1) // System V per struct
                 )
             }
         }
     }
 
     /// Returns NASM-compatible lowercase register name.
+    #[must_use]
     pub fn nasm_name(&self) -> String {
         match self {
-            X86Register::GP64(r) => format!("{:?}", r).to_lowercase(),
-            X86Register::GP32(r) => format!("{:?}", r).to_lowercase(),
-            X86Register::GP16(r) => format!("{:?}", r).to_lowercase(),
-            X86Register::GP8(r) => format!("{:?}", r).to_lowercase(),
-            X86Register::Fpu(r) => {
+            Self::GP64(r) => format!("{r:?}").to_lowercase(),
+            Self::GP32(r) => format!("{r:?}").to_lowercase(),
+            Self::GP16(r) => format!("{r:?}").to_lowercase(),
+            Self::GP8(r) => format!("{r:?}").to_lowercase(),
+            Self::Fpu(r) => {
                 format!("{r}")
             }
-            X86Register::Mmx(r) => format!("{:?}", r).to_lowercase(),
-            X86Register::Xmm(r) => format!("{:?}", r).to_lowercase(),
-            X86Register::Ymm(r) => format!("{:?}", r).to_lowercase(),
-            X86Register::Zmm(r) => format!("{:?}", r).to_lowercase(),
-            X86Register::Mask(r) => format!("{:?}", r).to_lowercase(),
-            X86Register::Segment(r) => format!("{:?}", r).to_lowercase(),
-            X86Register::Control(r) => format!("{:?}", r).to_lowercase(),
-            X86Register::Debug(r) => format!("{:?}", r).to_lowercase(),
-            X86Register::Flags(r) => format!("{:?}", r).to_lowercase(),
-            X86Register::InstructionPointer(r) => format!("{:?}", r).to_lowercase(),
+            Self::Mmx(r) => format!("{r:?}").to_lowercase(),
+            Self::Xmm(r) => format!("{r:?}").to_lowercase(),
+            Self::Ymm(r) => format!("{r:?}").to_lowercase(),
+            Self::Zmm(r) => format!("{r:?}").to_lowercase(),
+            Self::Mask(r) => format!("{r:?}").to_lowercase(),
+            Self::Segment(r) => format!("{r:?}").to_lowercase(),
+            Self::Control(r) => format!("{r:?}").to_lowercase(),
+            Self::Debug(r) => format!("{r:?}").to_lowercase(),
+            Self::Flags(r) => format!("{r:?}").to_lowercase(),
+            Self::InstructionPointer(r) => format!("{r:?}").to_lowercase(),
         }
     }
 }
@@ -429,16 +441,16 @@ impl_display_for_register!(
 impl fmt::Display for FPURegister {
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
         let idx = match self {
-            FPURegister::St0 => 0,
-            FPURegister::St1 => 1,
-            FPURegister::St2 => 2,
-            FPURegister::St3 => 3,
-            FPURegister::St4 => 4,
-            FPURegister::St5 => 5,
-            FPURegister::St6 => 6,
-            FPURegister::St7 => 7,
+            Self::St0 => 0,
+            Self::St1 => 1,
+            Self::St2 => 2,
+            Self::St3 => 3,
+            Self::St4 => 4,
+            Self::St5 => 5,
+            Self::St6 => 6,
+            Self::St7 => 7,
         };
-        write!(f, "st{}", idx)
+        write!(f, "st{idx}")
     }
 }
 

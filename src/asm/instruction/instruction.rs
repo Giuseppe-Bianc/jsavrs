@@ -1,12 +1,12 @@
 use super::operand::Operand;
 use std::fmt;
 
-/// Representation of all supported x86_64 instructions.
+/// Representation of all supported `x86_64` instructions.
 ///
 /// This enum models the instruction set used by the assembler/IR. Each
 /// variant corresponds to an instruction mnemonic and carries the operands
 /// required by that form (registers, immediates, memory references, labels,
-/// etc.). The enum is intentionally exhaustive for the subset of x86_64
+/// etc.). The enum is intentionally exhaustive for the subset of `x86_64`
 /// targeted by this project and is used for formatting, analysis and
 /// lowering/encoding phases.
 #[derive(Debug, Clone, PartialEq, Eq)]
@@ -211,7 +211,9 @@ pub enum Instruction {
 
 impl Instruction {
     /// Restituisce il mnemonic dell'istruzione
-    pub fn mnemonic(&self) -> &str {
+    #[must_use]
+    #[allow(clippy::too_many_lines)]
+    pub const fn mnemonic(&self) -> &str {
         match self {
             Self::Add { .. } => "add",
             Self::Sub { .. } => "sub",
@@ -266,8 +268,7 @@ impl Instruction {
             Self::Jp { .. } => "jp",
             Self::Jnp { .. } => "jnp",
             Self::Call { .. } => "call",
-            Self::Ret => "ret",
-            Self::RetImm { .. } => "ret",
+            Self::Ret | Self::RetImm { .. } => "ret",
             Self::Nop => "nop",
             Self::Hlt => "hlt",
             Self::Cpuid => "cpuid",
@@ -281,7 +282,7 @@ impl Instruction {
             Self::Movups { .. } => "movups",
             Self::Movupd { .. } => "movupd",
             Self::Movss { .. } => "movss",
-            Self::Movsd { .. } => "movsd",
+            Self::Movsd { .. } | Self::MovsdString => "movsd",
             Self::Movdqa { .. } => "movdqa",
             Self::Movdqu { .. } => "movdqu",
             Self::Addps { .. } => "addps",
@@ -366,7 +367,6 @@ impl Instruction {
             Self::Setbe { .. } => "setbe",
             Self::Movsb => "movsb",
             Self::Movsw => "movsw",
-            Self::MovsdString => "movsd",
             Self::Movsq => "movsq",
             Self::Stosb => "stosb",
             Self::Stosw => "stosw",
@@ -379,7 +379,8 @@ impl Instruction {
     /// Inputs: `&self`.
     /// Outputs: `&str` — the canonical lowercase mnemonic (e.g. "mov", "add").
     /// Side effects: none.
-    pub fn is_jump(&self) -> bool {
+    #[must_use]
+    pub const fn is_jump(&self) -> bool {
         matches!(
             self,
             Self::Jmp { .. }
@@ -408,14 +409,16 @@ impl Instruction {
     /// Inputs: `&self`.
     /// Outputs: `bool`.
     /// Side effects: none.
-    pub fn is_call(&self) -> bool {
+    #[must_use]
+    pub const fn is_call(&self) -> bool {
         matches!(self, Self::Call { .. })
     }
 
     /// Return true if this instruction is a return instruction.
     ///
     /// Covers both plain `ret` and `ret imm16` forms.
-    pub fn is_return(&self) -> bool {
+    #[must_use]
+    pub const fn is_return(&self) -> bool {
         matches!(self, Self::Ret | Self::RetImm { .. })
     }
 }
@@ -430,6 +433,7 @@ impl fmt::Display for Instruction {
     /// Inputs: `&self`, `Formatter`.
     /// Outputs: `fmt::Result` after writing the textual representation.
     /// Side effects: writes to the provided formatter.
+    #[allow(clippy::match_same_arms, clippy::too_many_lines)]
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
         match self {
             // Istruzioni binarie (dest, src)
@@ -537,9 +541,9 @@ impl fmt::Display for Instruction {
 
             // IMUL con varianti multiple
             Self::Imul { dest, src1, src2 } => match (dest, src2) {
-                (None, None) => write!(f, "imul {}", src1),
-                (Some(d), None) => write!(f, "imul {}, {}", d, src1),
-                (Some(d), Some(s2)) => write!(f, "imul {}, {}, {}", d, src1, s2),
+                (None, None) => write!(f, "imul {src1}"),
+                (Some(d), None) => write!(f, "imul {d}, {d}, {src1}"),
+                (Some(d), Some(s2)) => write!(f, "imul {d}, {d}, {src1}, {s2}"),
                 (None, Some(_)) => unreachable!(),
             },
 
@@ -569,7 +573,7 @@ impl fmt::Display for Instruction {
 
             // Return
             Self::Ret => write!(f, "ret"),
-            Self::RetImm { imm } => write!(f, "ret {}", imm),
+            Self::RetImm { imm } => write!(f, "ret {imm}"),
 
             // AVX a tre operandi
             Self::Vaddps { dest, src1, src2 }

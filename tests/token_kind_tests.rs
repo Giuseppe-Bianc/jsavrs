@@ -260,6 +260,7 @@ fn test_mixed_invalid_patterns() {
 }
 /// Tests that the function behaves correctly with all possible ASCII characters
 #[test]
+#[allow(clippy::cast_possible_truncation, clippy::cast_sign_loss)]
 fn test_all_ascii_characters() {
     // Test all ASCII characters individually
     for ascii_code in 0..=127 {
@@ -274,7 +275,7 @@ fn test_all_ascii_characters() {
             result,
             expected,
             "Character '{}' (ASCII {}) should be {}",
-            if c.is_ascii_control() { format!("\\x{:02X}", ascii_code) } else { c.to_string() },
+            if c.is_ascii_control() { format!("\\x{ascii_code:02X}") } else { c.to_string() },
             ascii_code,
             if expected { "valid" } else { "invalid" }
         );
@@ -946,6 +947,7 @@ fn test_decimal_starting_with_dot() {
 }
 
 #[test]
+
 fn test_invalid_scientific_notation() {
     let mut lex = TokenKind::lexer("1e2e3");
     assert_eq!(lex.next().unwrap(), Ok(Numeric(Scientific64(1.0, 2))));
@@ -1022,7 +1024,7 @@ fn test_identifier_ascii_normal() {
 #[test]
 fn test_identifier_ascii_empty() {
     let ident: Arc<str> = "".into();
-    assert_eq!(IdentifierAscii(ident.clone()).to_string(), "identifier ''");
+    assert_eq!(IdentifierAscii(ident).to_string(), "identifier ''");
 }
 
 #[test]

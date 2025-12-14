@@ -1,9 +1,13 @@
 // src/ir/generator.rs
 use super::ssa::SsaTransformer;
-use super::*;
+use super::{
+    BasicBlock, Function, Instruction, InstructionKind, IrBinaryOp, IrConstantValue, IrLiteralValue, IrParameter,
+    IrType, IrUnaryOp, Module, ParamAttributes, ScopeId, ScopeManager, Terminator, TerminatorKind, TypePromotionEngine,
+    Value,
+};
 use crate::error::compile_error::CompileError;
 use crate::location::source_span::{HasSpan, SourceSpan};
-use crate::parser::ast::*;
+use crate::parser::ast::{BinaryOp, Expr, LiteralValue, Parameter, Stmt, Type, UnaryOp};
 use crate::tokens::number::Number;
 use std::collections::HashMap;
 use std::fmt::Write;
@@ -25,6 +29,7 @@ const CONTINUE_OUTSIDE_LOOP: &str = "Continue outside loop";
 /// * `Break` - Represents a break statement that exits the current loop
 /// * `Continue` - Represents a continue statement that skips to the next iteration
 #[repr(u8)]
+#[derive(Debug, Clone, Copy, PartialEq, Eq)]
 enum LoopControl {
     /// Exit the current loop immediately
     Break,
@@ -75,6 +80,7 @@ impl ControlFlowStack {
     /// let stack = ControlFlowStack::new();
     /// assert_eq!(stack.break_stack.len(), 0);
     /// ```
+    #[must_use]
     pub fn new() -> Self {
         Self { break_stack: Vec::with_capacity(64), continue_stack: Vec::with_capacity(64) }
     }
@@ -163,14 +169,15 @@ struct TypeContext {
 
 #[allow(clippy::collapsible_if, clippy::collapsible_else_if)]
 impl IrGenerator {
-    /// Creates a new NIR generator instance with default settings
+    /// Creates a new IR generator instance with default settings
     ///
     /// # Returns
-    /// A new instance of NIrGenerator with:
+    /// A new instance of `IrGenerator` with:
     /// - Initialized scope manager
     /// - Default access controller  
     /// - Empty error collection
     /// - SSA transformation enabled by default
+    #[must_use]
     pub fn new() -> Self {
         let scope_manager = ScopeManager::new();
         //let access_controller = AccessController::new(&scope_manager);
@@ -194,7 +201,8 @@ impl IrGenerator {
     /// This is useful when you want to see the raw IR without SSA transformations applied.
     ///
     /// # Returns
-    /// A new instance of NIrGenerator with SSA transformation disabled
+    /// A new instance of `IrGenerator` with SSA transformation disabled
+    #[must_use]
     pub fn new_without_ssa() -> Self {
         let mut generator = Self::new();
         generator.apply_ssa = false;
@@ -300,7 +308,7 @@ impl IrGenerator {
         // Transform each function in the module
         for func in &mut module.functions {
             if let Err(e) = transformer.transform_function(func) {
-                self.new_error(Arc::from(format!("SSA transformation failed: {}", e)), SourceSpan::default());
+                self.new_error(Arc::from(format!("SSA transformation failed: {e}")), SourceSpan::default());
             }
         }
     }
@@ -363,6 +371,7 @@ impl IrGenerator {
     /// let params = vec![Parameter { name: "x".into(), type_annotation: Type::I32, span }];
     /// let func = generator.create_function("add_one", &params, Type::I32, span);
     /// ```
+    #[allow(clippy::needless_pass_by_value)]
     fn create_function(&self, name: &str, params: &[Parameter], return_type: Type, span: SourceSpan) -> Function {
         let ir_params = params
             .iter()
@@ -370,7 +379,7 @@ impl IrGenerator {
                 let ty = self.map_type(&param.type_annotation);
                 IrParameter {
                     name: param.name.clone(),
-                    ty: ty.clone(),
+                    ty,
                     attributes: ParamAttributes { source_span: Some(param.span.clone()), ..Default::default() },
                 }
             })
@@ -404,6 +413,7 @@ impl IrGenerator {
     /// let ir_type = generator.map_type(&ast_type);
     /// assert!(matches!(ir_type, IrType::I32));
     /// ```
+    #[allow(clippy::cast_possible_truncation, clippy::cast_sign_loss)]
     fn map_type(&self, ty: &Type) -> IrType {
         match ty {
             Type::I8 => IrType::I8,
@@ -488,6 +498,7 @@ impl IrGenerator {
     /// generator.finalize_block_connections(func);
     /// // All blocks are now properly connected in the CFG
     /// ```
+    #[allow(clippy::unused_self)]
     fn finalize_block_connections(&self, func: &mut Function) {
         // First, collect all the connections we need to make
         let mut connections = Vec::new();
@@ -521,6 +532,7 @@ impl IrGenerator {
     /// let statements = vec![/* AST statements */];
     /// generator.generate_function_body(&mut func, statements, span);
     /// ```
+    #[allow(clippy::match_same_arms)]
     fn generate_function_body(&mut self, func: &mut Function, body: Vec<Stmt>, span: SourceSpan) {
         self.control_flow_stack.clear();
 
@@ -535,7 +547,7 @@ impl IrGenerator {
         self.format_buffer.push_str("entry_");
         self.format_buffer.push_str(&func.name);
         let entry_label = self.format_buffer.clone();
-        self.start_block(func, &entry_label, span.clone());
+        self.start_block(func, &entry_label, span);
 
         // Add function parameters to symbol table
         for param in &func.parameters {
@@ -606,7 +618,7 @@ impl IrGenerator {
                 self.generate_expr(func, expr);
             }
             Stmt::VarDeclaration { variables, type_annotation, initializers, span, is_mutable } => {
-                self.generate_var_declaration(func, variables, type_annotation, initializers, is_mutable, span);
+                self.generate_var_declaration(func, &variables, type_annotation, &initializers, is_mutable, span);
             }
             Stmt::Return { value, span } => {
                 self.generate_return(func, value, span);
@@ -635,7 +647,7 @@ impl IrGenerator {
             Stmt::Continue { span } => {
                 self.handle_loop_control(func, span, LoopControl::Continue);
             }
-            other => self.new_error(Arc::from(format!("Unsupported statement: {:?}", other)), other.span().clone()),
+            other => self.new_error(Arc::from(format!("Unsupported statement: {other:?}")), other.span().clone()),
         }
     }
 
@@ -672,8 +684,9 @@ impl IrGenerator {
     ///     span
     /// );
     /// ```
+    #[allow(clippy::needless_pass_by_value)]
     fn generate_var_declaration(
-        &mut self, func: &mut Function, variables: Vec<Arc<str>>, type_annotation: Type, initializers: Vec<Expr>,
+        &mut self, func: &mut Function, variables: &[Arc<str>], type_annotation: Type, initializers: &[Expr],
         is_mutable: bool, span: SourceSpan,
     ) {
         let ty: IrType = self.map_type(&type_annotation);
@@ -829,7 +842,7 @@ impl IrGenerator {
 
         self.add_terminator(
             func,
-            Terminator::new(TerminatorKind::Branch { label: loop_start_label.clone().into() }, span.clone()),
+            Terminator::new(TerminatorKind::Branch { label: loop_start_label.clone() }, span.clone()),
         );
 
         self.start_block(func, &loop_start_label, span.clone());
@@ -839,8 +852,8 @@ impl IrGenerator {
             Terminator::new(
                 TerminatorKind::ConditionalBranch {
                     condition: cond_value,
-                    true_label: loop_body_label.clone().into(),
-                    false_label: loop_end_label.clone().into(),
+                    true_label: loop_body_label.clone(),
+                    false_label: loop_end_label.clone(),
                 },
                 span.clone(),
             ),
@@ -899,24 +912,21 @@ impl IrGenerator {
 
         self.add_terminator(
             func,
-            Terminator::new(TerminatorKind::Branch { label: loop_st_label.clone().into() }, span.clone()),
+            Terminator::new(TerminatorKind::Branch { label: loop_st_label.clone() }, span.clone()),
         );
 
         self.start_block(func, &loop_st_label, span.clone());
 
-        let cond_value = if let Some(cond) = condition {
-            self.generate_expr(func, cond)
-        } else {
-            Value::new_literal(IrLiteralValue::Bool(true))
-        };
+        let cond_value = condition
+            .map_or_else(|| Value::new_literal(IrLiteralValue::Bool(true)), |cond| self.generate_expr(func, cond));
 
         self.add_terminator(
             func,
             Terminator::new(
                 TerminatorKind::ConditionalBranch {
                     condition: cond_value,
-                    true_label: loop_bd_label.clone().into(),
-                    false_label: loop_end_label.clone().into(),
+                    true_label: loop_bd_label.clone(),
+                    false_label: loop_end_label.clone(),
                 },
                 span.clone(),
             ),
@@ -972,7 +982,7 @@ impl IrGenerator {
         };
 
         if let Some(label) = stack.last() {
-            self.add_terminator(func, Terminator::new(TerminatorKind::Branch { label: label.clone().into() }, span));
+            self.add_terminator(func, Terminator::new(TerminatorKind::Branch { label: label.clone() }, span));
         } else {
             self.new_error(Arc::from(message), span);
         }
@@ -1020,7 +1030,7 @@ impl IrGenerator {
 
     /// Generates IR code for array element access.
     ///
-    /// Calculates the element address using GetElementPtr (GEP) instruction,
+    /// Calculates the element address using `GetElementPtr` (GEP) instruction,
     /// then loads the value from that address. Handles both direct arrays and
     /// pointers to arrays.
     ///
@@ -1075,9 +1085,8 @@ impl IrGenerator {
 
         // Load the value from the pointer for use in expressions
         let load_tmp = self.new_temp();
-        let load_inst =
-            Instruction::new(InstructionKind::Load { src: ptr_value, ty: element_ty.clone() }, span.clone())
-                .with_result(Value::new_temporary(load_tmp, element_ty));
+        let load_inst = Instruction::new(InstructionKind::Load { src: ptr_value, ty: element_ty.clone() }, span)
+            .with_result(Value::new_temporary(load_tmp, element_ty));
 
         self.add_instruction(load_inst.clone());
         load_inst.result.unwrap()
@@ -1086,8 +1095,8 @@ impl IrGenerator {
     /// Generates IR code for an array literal.
     ///
     /// Allocates space for the array on the stack, generates code for each element,
-    /// and stores the elements at the appropriate indices using GetElementPtr and
-    /// Store instructions.
+    /// and stores the elements at the appropriate indices using `GetElementPtr` and
+    /// `Store` instructions.
     ///
     /// # Arguments
     ///
@@ -1105,6 +1114,11 @@ impl IrGenerator {
     /// // [1, 2, 3, 4, 5]
     /// let array_ptr = generator.generate_array_literal(func, elements, span);
     /// ```
+    #[allow(
+        clippy::cast_possible_truncation,
+        clippy::cast_possible_wrap,
+        clippy::needless_pass_by_value
+    )]
     fn generate_array_literal(&mut self, func: &mut Function, elements: Vec<Expr>, span: SourceSpan) -> Value {
         if elements.is_empty() {
             return Value::new_literal(IrLiteralValue::I64(0)); // Null pointer
@@ -1121,7 +1135,7 @@ impl IrGenerator {
         let array_ty = IrType::Array(Box::new(element_ty.clone()), array_size);
 
         let alloca_inst = Instruction::new(InstructionKind::Alloca { ty: array_ty.clone() }, span.clone())
-            .with_result(Value::new_temporary(array_temp, array_ty.clone()));
+            .with_result(Value::new_temporary(array_temp, array_ty));
 
         self.add_instruction(alloca_inst.clone());
         let array_ptr = alloca_inst.result.unwrap();
@@ -1229,7 +1243,7 @@ impl IrGenerator {
     /// // x + y
     /// let result = generator.generate_binary(func, x_expr, BinaryOp::Add, y_expr, span);
     /// ```
-    #[allow(clippy::unwrap_used, clippy::needless_pass_by_value)]
+    #[allow(clippy::needless_pass_by_value)]
     fn generate_binary(
         &mut self, func: &mut Function, left: Expr, op: BinaryOp, right: Expr, span: SourceSpan,
     ) -> Value {
@@ -1289,7 +1303,7 @@ impl IrGenerator {
     /// // -x
     /// let result = generator.generate_unary(func, UnaryOp::Neg, x_expr, span);
     /// ```
-    #[allow(clippy::unwrap_used, clippy::needless_pass_by_value)]
+    #[allow(clippy::needless_pass_by_value)]
     fn generate_unary(&mut self, func: &mut Function, op: UnaryOp, expr: Expr, span: SourceSpan) -> Value {
         let ir_op: IrUnaryOp = op.into();
         let operand = self.generate_expr(func, expr);
@@ -1527,7 +1541,6 @@ impl IrGenerator {
     /// // arr[5] = 42; (target generation)
     /// let ptr = generator.generate_array_access_target(func, arr_expr, index_expr, span);
     /// ```
-    #[allow(clippy::unwrap_used)]
     fn generate_array_access_target(
         &mut self, func: &mut Function, array: Expr, index: Expr, span: SourceSpan,
     ) -> Value {
@@ -1589,7 +1602,7 @@ impl IrGenerator {
     /// // result = add(x, y)
     /// let result = generator.generate_call(func, callee_expr, arg_exprs, span);
     /// ```
-    #[allow(clippy::unwrap_used, clippy::needless_pass_by_value)] // Due to detailed error handling
+    #[allow(clippy::needless_pass_by_value)] // Due to detailed error handling
     fn generate_call(&mut self, func: &mut Function, callee: Expr, arguments: Vec<Expr>, span: SourceSpan) -> Value {
         // Get the function name from the callee expression
         let func_name = if let Expr::Variable { name, .. } = &callee {

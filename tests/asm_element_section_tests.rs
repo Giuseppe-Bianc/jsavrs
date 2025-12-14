@@ -10,7 +10,7 @@ fn test_assembly_element_label() {
         panic!("Expected Label variant");
     }
 
-    assert_eq!(format!("{}", element), "start:");
+    assert_eq!(format!("{element}"), "start:");
 }
 
 #[test]
@@ -24,7 +24,7 @@ fn test_assembly_element_instruction() {
         panic!("Expected Instruction variant");
     }
 
-    assert_eq!(format!("{}", element), "    nop");
+    assert_eq!(format!("{element}"), "    nop");
 }
 
 #[test]
@@ -39,7 +39,7 @@ fn test_assembly_element_instruction_with_comment() {
         panic!("Expected InstructionWithComment variant");
     }
 
-    assert_eq!(format!("{}", element), "    ret    ; return from function");
+    assert_eq!(format!("{element}"), "    ret    ; return from function");
 }
 
 #[test]
@@ -53,7 +53,7 @@ fn test_assembly_element_data() {
         panic!("Expected Data variant");
     }
 
-    assert_eq!(format!("{}", element), "msg db \"Hello\", 0");
+    assert_eq!(format!("{element}"), "msg db \"Hello\", 0");
 }
 
 #[test]
@@ -66,26 +66,26 @@ fn test_assembly_element_comment() {
         panic!("Expected Comment variant");
     }
 
-    assert_eq!(format!("{}", element), "; This is a test");
+    assert_eq!(format!("{element}"), "; This is a test");
 }
 
 #[test]
 fn test_assembly_element_empty_line() {
     let element = AssemblyElement::EmptyLine;
 
-    if let AssemblyElement::EmptyLine = element {
+    if matches!(element, AssemblyElement::EmptyLine) {
         // Expected
     } else {
         panic!("Expected EmptyLine variant");
     }
 
-    assert_eq!(format!("{}", element), "");
+    assert_eq!(format!("{element}"), "");
 }
 
 #[test]
 fn test_assembly_element_debug() {
     let element = AssemblyElement::Label("start".to_string());
-    let debug_str = format!("{:?}", element);
+    let debug_str = format!("{element:?}");
     assert!(debug_str.contains("Label"));
     assert!(debug_str.contains("start"));
 }
@@ -161,7 +161,7 @@ fn test_assembly_section_add_elements() {
     // Add empty line
     section.add_empty_line();
     assert_eq!(section.elements.len(), 6);
-    if let AssemblyElement::EmptyLine = &section.elements[5] {
+    if matches!(&section.elements[5], AssemblyElement::EmptyLine) {
         // Expected
     } else {
         panic!("Expected EmptyLine");
@@ -174,7 +174,7 @@ fn test_assembly_section_display() {
     section.add_data("msg", DataDirective::new_asciz("Hello, World!"));
     section.add_data("size", DataDirective::new_equ_length_of("msg"));
 
-    let display = format!("{}", section);
+    let display = format!("{section}");
     assert!(display.starts_with("section .data"));
     assert!(display.contains("msg db \"Hello, World!\", 0"));
     assert!(display.contains("size equ $ - msg"));
@@ -191,13 +191,13 @@ fn test_assembly_section_clone_preserves_content() {
     let cloned = original.clone();
 
     assert_eq!(original.elements.len(), cloned.elements.len());
-    assert_eq!(format!("{}", original), format!("{}", cloned));
+    assert_eq!(format!("{original}"), format!("{cloned}"));
 }
 
 #[test]
 fn test_assembly_section_debug() {
     let section = AssemblySection::data_section();
-    let debug_str = format!("{:?}", section);
+    let debug_str = format!("{section:?}");
     assert!(debug_str.contains("AssemblySection"));
     assert!(debug_str.contains("Data"));
 }
@@ -210,7 +210,7 @@ fn test_assembly_section_multiple_elements_display() {
     section.add_instruction_with_comment(Instruction::Ret, "return with value in RAX");
     section.add_comment("Function implementation");
 
-    let display = format!("{}", section);
+    let display = format!("{section}");
     assert!(display.contains("start:"));
     assert!(display.contains("mov rax, 42"));
     assert!(display.contains("ret    ; return with value in RAX"));
@@ -219,26 +219,26 @@ fn test_assembly_section_multiple_elements_display() {
 
 #[test]
 fn test_assembly_element_empty_strings() {
-    let empty_label = AssemblyElement::Label("".to_string());
-    assert_eq!(format!("{}", empty_label), ":");
+    let empty_label = AssemblyElement::Label(String::new());
+    assert_eq!(format!("{empty_label}"), ":");
 
-    let empty_comment = AssemblyElement::Comment("".to_string());
-    assert_eq!(format!("{}", empty_comment), "; ");
+    let empty_comment = AssemblyElement::Comment(String::new());
+    assert_eq!(format!("{empty_comment}"), "; ");
 }
 
 #[test]
 fn test_assembly_element_special_characters() {
     let label_with_special = AssemblyElement::Label("loop.123_abc".to_string());
-    assert_eq!(format!("{}", label_with_special), "loop.123_abc:");
+    assert_eq!(format!("{label_with_special}"), "loop.123_abc:");
 
     let comment_with_special = AssemblyElement::Comment("Comment with spaces and symbols!@#".to_string());
-    assert_eq!(format!("{}", comment_with_special), "; Comment with spaces and symbols!@#");
+    assert_eq!(format!("{comment_with_special}"), "; Comment with spaces and symbols!@#");
 }
 
 #[test]
 fn test_assembly_section_empty() {
     let section = AssemblySection::text_section();
-    let display = format!("{}", section);
+    let display = format!("{section}");
     assert!(display.starts_with("section .text"));
     // Should only have the section declaration and no elements
 }
@@ -247,7 +247,7 @@ fn test_assembly_section_empty() {
 fn test_escape_string_function() {
     // Test the internal escape_string function behavior through the Ascii directive
     let directive = DataDirective::Ascii("Hello\nWorld\t\"Test\"\\Backslash".to_string());
-    let display = format!("{}", directive);
+    let display = format!("{directive}");
     assert!(display.contains("Hello\\\\nWorld"));
     assert!(display.contains("\\\\t\\\"Test\\\""));
     assert!(display.contains("\\\\Backslash"));

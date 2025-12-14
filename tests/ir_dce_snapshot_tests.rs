@@ -83,11 +83,10 @@ mod snapshot_tests {
 
         // Snapshot the transformation
         let snapshot = format!(
-            "=== IR Before DCE ===\n{}\n\n=== IR After DCE ===\n{}\n\n=== Statistics ===\n\
+            "=== IR Before DCE ===\n{ir_before}\n\n=== IR After DCE ===\n{ir_after}\n\n=== Statistics ===\n\
              Instructions in entry block before: 2\n\
              Instructions in entry block after: 1\n\
-             Expected: Dead instruction removed, live instruction preserved",
-            ir_before, ir_after
+             Expected: Dead instruction removed, live instruction preserved"
         );
 
         insta::assert_snapshot!("dead_instruction_removal", snapshot);
@@ -123,7 +122,7 @@ mod snapshot_tests {
         let instr2 = Instruction {
             kind: InstructionKind::Binary {
                 op: IrBinaryOp::Multiply,
-                left: t1.clone(),
+                left: t1,
                 right: Value::new_literal(IrLiteralValue::I32(3)),
                 ty: IrType::I32,
             },
@@ -137,7 +136,7 @@ mod snapshot_tests {
         let instr3 = Instruction {
             kind: InstructionKind::Binary {
                 op: IrBinaryOp::Subtract,
-                left: t2.clone(),
+                left: t2,
                 right: Value::new_literal(IrLiteralValue::I32(5)),
                 ty: IrType::I32,
             },

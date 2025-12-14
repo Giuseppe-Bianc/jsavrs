@@ -215,8 +215,8 @@ fn test_fpu_register_display_consistency() {
         (FPURegister::St7, "st7"),
     ];
 
-    for (reg, expected) in fpu_registers.iter() {
-        assert_eq!(format!("{}", reg), *expected);
+    for (reg, expected) in &fpu_registers {
+        assert_eq!(format!("{reg}"), *expected);
     }
 }
 
@@ -240,7 +240,7 @@ fn test_register_clone() {
 #[test]
 fn test_register_debug() {
     let reg = GPRegister64::Rbx;
-    let debug_str = format!("{:?}", reg);
+    let debug_str = format!("{reg:?}");
     assert!(debug_str.contains("Rbx"));
 }
 

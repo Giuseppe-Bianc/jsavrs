@@ -64,7 +64,7 @@ fn test_section_clone() {
 #[test]
 fn test_section_debug() {
     let section = Section::Rodata;
-    let debug_str = format!("{:?}", section);
+    let debug_str = format!("{section:?}");
     assert!(debug_str.contains("Rodata"));
 }
 
@@ -89,12 +89,12 @@ fn test_all_section_variants() {
     let sections = [Section::Text, Section::Data, Section::Bss, Section::Rodata];
     assert_eq!(sections.len(), 4);
 
-    for section in sections.iter() {
+    for section in &sections {
         let name = section.name();
         assert!(!name.is_empty());
         assert!(name.starts_with('.'));
 
-        let display = format!("{}", section);
+        let display = format!("{section}");
         assert!(display.contains("section"));
         assert!(display.contains(name));
     }

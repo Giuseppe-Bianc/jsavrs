@@ -1,9 +1,11 @@
 use super::immediate::Immediate;
 use super::memory_operand::MemoryOperand;
-use crate::asm::register::*;
+use crate::asm::register::{
+    GPRegister8, GPRegister16, GPRegister32, GPRegister64, X86Register, XMMRegister, YMMRegister,
+};
 use std::fmt;
 
-/// An operand used by x86_64 instructions.
+/// An operand used by `x86_64` instructions.
 ///
 /// Variants:
 /// - `Register(X86Register)`: a hardware register (GP/XMM/YMM, etc.).
@@ -28,32 +30,38 @@ impl Operand {
     /// Inputs: `reg: GPRegister64`.
     /// Outputs: `Operand::Register(X86Register::GP64(reg))`.
     /// Side effects: none.
-    pub fn reg64(reg: GPRegister64) -> Self {
+    #[must_use]
+    pub const fn reg64(reg: GPRegister64) -> Self {
         Self::Register(X86Register::GP64(reg))
     }
 
     /// Create a 32-bit general-purpose register operand.
-    pub fn reg32(reg: GPRegister32) -> Self {
+    #[must_use]
+    pub const fn reg32(reg: GPRegister32) -> Self {
         Self::Register(X86Register::GP32(reg))
     }
 
     /// Create a 16-bit general-purpose register operand.
-    pub fn reg16(reg: GPRegister16) -> Self {
+    #[must_use]
+    pub const fn reg16(reg: GPRegister16) -> Self {
         Self::Register(X86Register::GP16(reg))
     }
 
     /// Create an 8-bit general-purpose register operand.
-    pub fn reg8(reg: GPRegister8) -> Self {
+    #[must_use]
+    pub const fn reg8(reg: GPRegister8) -> Self {
         Self::Register(X86Register::GP8(reg))
     }
 
     /// Create an XMM register operand.
-    pub fn xmm(reg: XMMRegister) -> Self {
+    #[must_use]
+    pub const fn xmm(reg: XMMRegister) -> Self {
         Self::Register(X86Register::Xmm(reg))
     }
 
     /// Create a YMM register operand.
-    pub fn ymm(reg: YMMRegister) -> Self {
+    #[must_use]
+    pub const fn ymm(reg: YMMRegister) -> Self {
         Self::Register(X86Register::Ymm(reg))
     }
 
@@ -61,22 +69,26 @@ impl Operand {
     ///
     /// Inputs: `val: i8`.
     /// Outputs: `Operand::Immediate(Immediate::Imm8(val))`.
-    pub fn imm8(val: i8) -> Self {
+    #[must_use]
+    pub const fn imm8(val: i8) -> Self {
         Self::Immediate(Immediate::Imm8(val))
     }
 
     /// Create a 16-bit immediate operand.
-    pub fn imm16(val: i16) -> Self {
+    #[must_use]
+    pub const fn imm16(val: i16) -> Self {
         Self::Immediate(Immediate::Imm16(val))
     }
 
     /// Create a 32-bit immediate operand.
-    pub fn imm32(val: i32) -> Self {
+    #[must_use]
+    pub const fn imm32(val: i32) -> Self {
         Self::Immediate(Immediate::Imm32(val))
     }
 
     /// Create a 64-bit immediate operand.
-    pub fn imm64(val: i64) -> Self {
+    #[must_use]
+    pub const fn imm64(val: i64) -> Self {
         Self::Immediate(Immediate::Imm64(val))
     }
 
@@ -84,12 +96,14 @@ impl Operand {
     ///
     /// Inputs: `base: GPRegister64`.
     /// Outputs: `Operand::Memory(MemoryOperand::new(Some(base)))`.
-    pub fn mem(base: GPRegister64) -> Self {
+    #[must_use]
+    pub const fn mem(base: GPRegister64) -> Self {
         Self::Memory(MemoryOperand::new(Some(base)))
     }
 
     /// Create a memory operand with base and displacement (base + disp).
-    pub fn mem_disp(base: GPRegister64, disp: i32) -> Self {
+    #[must_use]
+    pub const fn mem_disp(base: GPRegister64, disp: i32) -> Self {
         Self::Memory(MemoryOperand::new(Some(base)).with_displacement(disp))
     }
 
@@ -102,22 +116,26 @@ impl Operand {
     }
 
     /// Returns true if the operand is a register.
-    pub fn is_register(&self) -> bool {
+    #[must_use]
+    pub const fn is_register(&self) -> bool {
         matches!(self, Self::Register(_))
     }
 
     /// Returns true if the operand is an immediate.
-    pub fn is_immediate(&self) -> bool {
+    #[must_use]
+    pub const fn is_immediate(&self) -> bool {
         matches!(self, Self::Immediate(_))
     }
 
     /// Returns true if the operand is a memory reference.
-    pub fn is_memory(&self) -> bool {
+    #[must_use]
+    pub const fn is_memory(&self) -> bool {
         matches!(self, Self::Memory(_))
     }
 
     /// Returns true if the operand is a label.
-    pub fn is_label(&self) -> bool {
+    #[must_use]
+    pub const fn is_label(&self) -> bool {
         matches!(self, Self::Label(_))
     }
 }
@@ -204,10 +222,10 @@ impl fmt::Display for Operand {
     /// their respective `Display` implementations.
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
         match self {
-            Self::Register(reg) => write!(f, "{}", reg),
-            Self::Immediate(imm) => write!(f, "{}", imm),
-            Self::Memory(mem) => write!(f, "{}", mem),
-            Self::Label(label) => write!(f, "{}", label),
+            Self::Register(reg) => write!(f, "{reg}"),
+            Self::Immediate(imm) => write!(f, "{imm}"),
+            Self::Memory(mem) => write!(f, "{mem}"),
+            Self::Label(label) => write!(f, "{label}"),
         }
     }
 }

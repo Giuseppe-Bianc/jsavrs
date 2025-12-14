@@ -130,8 +130,8 @@ fn test_not_widening_narrowing() {
     for cast_kind in test_cases {
         let promotion = TypePromotion::with_flags(IrType::I32, IrType::F32, cast_kind, false, false, span.clone());
 
-        assert!(!promotion.is_widening(), "CastKind::{:?} should not be considered widening", cast_kind);
-        assert!(!promotion.is_narrowing(), "CastKind::{:?} should not be considered narrowing", cast_kind);
+        assert!(!promotion.is_widening(), "CastKind::{cast_kind:?} should not be considered widening");
+        assert!(!promotion.is_narrowing(), "CastKind::{cast_kind:?} should not be considered narrowing");
     }
 }
 

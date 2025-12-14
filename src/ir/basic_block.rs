@@ -1,11 +1,14 @@
 // src/ir/basic_block.rs
 use super::types::ScopeId;
-use super::{instruction::*, terminator::*};
+use super::{
+    instruction::Instruction,
+    terminator::{Terminator, TerminatorKind},
+};
 use crate::location::source_span::SourceSpan;
 use std::fmt;
 use std::sync::Arc;
 
-#[derive(Debug, Clone, PartialEq)]
+#[derive(Debug, Clone, PartialEq, Eq)]
 pub struct BasicBlock {
     pub label: Arc<str>,
     pub source_span: SourceSpan,
@@ -15,6 +18,7 @@ pub struct BasicBlock {
 }
 
 impl BasicBlock {
+    #[must_use]
     pub fn new(label: &str, span: SourceSpan) -> Self {
         Self {
             label: label.into(),
@@ -26,17 +30,19 @@ impl BasicBlock {
     }
 
     #[inline]
-    pub fn with_scope(mut self, scope: ScopeId) -> Self {
+    #[must_use]
+    pub const fn with_scope(mut self, scope: ScopeId) -> Self {
         self.scope = Some(scope);
         self
     }
 
     #[inline]
-    pub fn terminator(&self) -> &Terminator {
+    #[must_use]
+    pub const fn terminator(&self) -> &Terminator {
         &self.terminator
     }
     #[inline]
-    pub fn terminator_mut(&mut self) -> &mut Terminator {
+    pub const fn terminator_mut(&mut self) -> &mut Terminator {
         &mut self.terminator
     }
     #[inline]
@@ -45,16 +51,17 @@ impl BasicBlock {
     }
 
     #[inline]
-    pub fn scope(&self) -> Option<ScopeId> {
+    #[must_use]
+    pub const fn scope(&self) -> Option<ScopeId> {
         self.scope
     }
 
     #[inline]
-    pub fn set_scope(&mut self, s: ScopeId) {
+    pub const fn set_scope(&mut self, s: ScopeId) {
         self.scope = Some(s);
     }
     #[inline]
-    pub fn clear_scope(&mut self) {
+    pub const fn clear_scope(&mut self) {
         self.scope = None;
     }
 }

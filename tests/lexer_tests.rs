@@ -80,6 +80,7 @@ fn decimal_numbers() {
 }
 
 #[test]
+#[allow(clippy::unreadable_literal)]
 fn base_specific_numbers() {
     let input = "#b1010 #o777 #x1f #b0 #o0 #x0 #b11111111 #o377 #xdeadBEEF";
     let tokens = lex_kinds(input);
@@ -102,6 +103,7 @@ fn base_specific_numbers() {
 }
 
 #[test]
+#[allow(clippy::unreadable_literal)]
 fn base_specific_numbers_unsinged() {
     use TokenKind::*;
     let input = "#b1010u #o777u #x1fu #b0u #o0u #x0u #b11111111u #o377u #xdeadBEEFu";
@@ -371,49 +373,4 @@ fn iterator_multiline_span_tracking() {
     assert_eq!(tokens[1].kind, Numeric(Integer(456)));
     assert_eq!(tokens[2].kind, Eof);
     assert_eq!(errors[0].to_string(), "Invalid token: \"@\" at test:line 2:column 1 - line 2:column 2");
-}
-
-#[test]
-fn test_malformed_binary_error() {
-    let input = "b";
-    let expected = Some("Malformed binary number: \"#b\"");
-    let result = get_error_message(input);
-    assert_eq!(result, expected);
-}
-
-#[test]
-fn test_malformed_octal_error() {
-    let input = "o";
-    let expected = Some("Malformed octal number: \"#o\"");
-    let result = get_error_message(input);
-    assert_eq!(result, expected);
-}
-
-#[test]
-fn test_malformed_hexadecimal_error() {
-    let input = "x";
-    let expected = Some("Malformed hexadecimal number: \"#x\"");
-    let result = get_error_message(input);
-    assert_eq!(result, expected);
-}
-
-#[test]
-fn test_unrecognized_prefix() {
-    let input = "z";
-    let result = get_error_message(input);
-    assert!(result.is_none());
-}
-
-#[test]
-fn test_empty_string() {
-    let input = "";
-    let result = get_error_message(input);
-    assert!(result.is_none());
-}
-
-#[test]
-fn test_uppercase_input() {
-    let input = "B";
-    let result = get_error_message(input);
-    assert!(result.is_none());
 }

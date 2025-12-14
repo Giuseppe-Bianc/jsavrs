@@ -45,7 +45,6 @@ impl OptimizationStats {
     }
 
     /// Formats statistics for human-readable display.
-    #[allow(clippy::unwrap_used)]
     #[must_use]
     pub fn format_report(&self, function_name: &str) -> String {
         let mut output = String::with_capacity(256);

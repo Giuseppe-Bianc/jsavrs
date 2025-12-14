@@ -47,7 +47,7 @@ fn test_ir_type_display() {
     ];
 
     for (ty, expected) in types {
-        let output = format!("{}", ty);
+        let output = format!("{ty}");
         assert_eq!(output, expected);
     }
 }

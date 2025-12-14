@@ -433,7 +433,6 @@ impl Phase for DeadCodeElimination {
 
 impl DeadCodeElimination {
     /// Prints optimization statistics.
-    #[allow(clippy::unwrap_used)]
     fn print_statistics(&self) {
         let dce_stats = self.get_statistics();
 

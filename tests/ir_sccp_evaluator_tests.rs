@@ -174,7 +174,7 @@ fn test_f32_nan_propagation() {
     if let LatticeValue::Constant(ConstantValue::F32(val)) = result {
         assert!(val.is_nan(), "NaN + 1.0 should be NaN");
     } else {
-        panic!("Expected Constant(F32), got {:?}", result);
+        panic!("Expected Constant(F32), got {result:?}");
     }
 
     // anything + NaN = NaN
@@ -182,7 +182,7 @@ fn test_f32_nan_propagation() {
     if let LatticeValue::Constant(ConstantValue::F32(val)) = result {
         assert!(val.is_nan(), "1.0 + NaN should be NaN");
     } else {
-        panic!("Expected Constant(F32), got {:?}", result);
+        panic!("Expected Constant(F32), got {result:?}");
     }
 
     // NaN * anything = NaN
@@ -190,7 +190,7 @@ fn test_f32_nan_propagation() {
     if let LatticeValue::Constant(ConstantValue::F32(val)) = result {
         assert!(val.is_nan(), "NaN * 2.0 should be NaN");
     } else {
-        panic!("Expected Constant(F32), got {:?}", result);
+        panic!("Expected Constant(F32), got {result:?}");
     }
 }
 
@@ -212,7 +212,7 @@ fn test_f64_nan_propagation() {
     if let LatticeValue::Constant(ConstantValue::F64(val)) = result {
         assert!(val.is_nan(), "NaN + 1.0 should be NaN");
     } else {
-        panic!("Expected Constant(F64), got {:?}", result);
+        panic!("Expected Constant(F64), got {result:?}");
     }
 }
 
@@ -236,7 +236,7 @@ fn test_f32_infinity_operations() {
     if let LatticeValue::Constant(ConstantValue::F32(val)) = result {
         assert!(val.is_infinite() && val.is_sign_positive(), "inf + 1 should be inf");
     } else {
-        panic!("Expected Constant(F32), got {:?}", result);
+        panic!("Expected Constant(F32), got {result:?}");
     }
 
     // inf * 2 = inf
@@ -244,7 +244,7 @@ fn test_f32_infinity_operations() {
     if let LatticeValue::Constant(ConstantValue::F32(val)) = result {
         assert!(val.is_infinite() && val.is_sign_positive(), "inf * 2 should be inf");
     } else {
-        panic!("Expected Constant(F32), got {:?}", result);
+        panic!("Expected Constant(F32), got {result:?}");
     }
 
     // inf + (-inf) = NaN
@@ -252,7 +252,7 @@ fn test_f32_infinity_operations() {
     if let LatticeValue::Constant(ConstantValue::F32(val)) = result {
         assert!(val.is_nan(), "inf + (-inf) should be NaN");
     } else {
-        panic!("Expected Constant(F32), got {:?}", result);
+        panic!("Expected Constant(F32), got {result:?}");
     }
 }
 
@@ -264,7 +264,7 @@ fn test_f64_infinity_operations() {
     if let LatticeValue::Constant(ConstantValue::F64(val)) = result {
         assert!(val.is_infinite() && val.is_sign_positive());
     } else {
-        panic!("Expected Constant(F64), got {:?}", result);
+        panic!("Expected Constant(F64), got {result:?}");
     }
 }
 
@@ -287,6 +287,7 @@ fn test_f64_infinity_check() {
 // ============================================================================
 
 #[test]
+#[allow(clippy::float_cmp)]
 fn test_f32_signed_zero() {
     let pos_zero = 0.0f32;
     let neg_zero = -0.0f32;
@@ -300,7 +301,7 @@ fn test_f32_signed_zero() {
     if let LatticeValue::Constant(ConstantValue::F32(val)) = result {
         assert_eq!(val, 0.0);
     } else {
-        panic!("Expected Constant(F32), got {:?}", result);
+        panic!("Expected Constant(F32), got {result:?}");
     }
 }
 
@@ -320,7 +321,7 @@ fn test_f32_negation_preserves_zero_sign() {
     if let LatticeValue::Constant(ConstantValue::F32(val)) = result {
         assert!(ConstantEvaluator::is_neg_zero_f32(val), "Negating +0.0 should give -0.0");
     } else {
-        panic!("Expected Constant(F32), got {:?}", result);
+        panic!("Expected Constant(F32), got {result:?}");
     }
 }
 
@@ -411,6 +412,7 @@ fn test_bitwise_shifts() {
 }
 
 #[test]
+#[allow(clippy::unreadable_literal)]
 fn test_bitwise_not() {
     assert_eq!(
         ConstantEvaluator::eval_bitwise_not_i8(0b00001111),

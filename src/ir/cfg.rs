@@ -14,22 +14,26 @@ pub struct ControlFlowGraph {
     reverse_post_order: Vec<NodeIndex>,
 }
 impl ControlFlowGraph {
+    #[must_use]
     pub fn new(entry_label: Arc<str>) -> Self {
-        ControlFlowGraph { graph: DiGraph::new(), entry_label, reverse_post_order: Vec::new() }
+        Self { graph: DiGraph::new(), entry_label, reverse_post_order: Vec::new() }
     }
 
-    pub fn graph(&self) -> &DiGraph<BasicBlock, ()> {
+    #[must_use]
+    pub const fn graph(&self) -> &DiGraph<BasicBlock, ()> {
         &self.graph
     }
 
-    pub fn graph_mut(&mut self) -> &mut DiGraph<BasicBlock, ()> {
+    pub const fn graph_mut(&mut self) -> &mut DiGraph<BasicBlock, ()> {
         &mut self.graph
     }
 
+    #[must_use]
     pub fn entry_label(&self) -> &str {
         &self.entry_label
     }
 
+    #[must_use]
     pub fn reverse_post_order(&self) -> &[NodeIndex] {
         &self.reverse_post_order
     }
@@ -46,11 +50,13 @@ impl ControlFlowGraph {
     }
 
     #[inline]
+    #[must_use]
     pub fn find_block_by_label(&self, label: &str) -> Option<NodeIndex> {
         self.graph.node_indices().find(|&idx| self.graph[idx].label.as_ref() == label)
     }
 
     /// Returns a reference to the block with the given label, if it exists.
+    #[must_use]
     pub fn get_block(&self, label: &str) -> Option<&BasicBlock> {
         self.find_block_by_label(label).map(|idx| &self.graph[idx])
     }
@@ -60,10 +66,12 @@ impl ControlFlowGraph {
         self.find_block_by_label(label).and_then(|idx| self.graph.node_weight_mut(idx))
     }
 
+    #[must_use]
     pub fn get_entry_block(&self) -> Option<&BasicBlock> {
         self.get_block(&self.entry_label)
     }
 
+    #[must_use]
     pub fn get_entry_block_index(&self) -> Option<NodeIndex> {
         self.find_block_by_label(&self.entry_label)
     }
@@ -123,6 +131,7 @@ impl ControlFlowGraph {
     ///
     /// This also removes all incoming and outgoing edges for the block.
     /// Callers should ensure the removal maintains CFG validity.
+    #[must_use]
     pub fn remove_block(&mut self, label: &str) -> bool {
         if let Some(idx) = self.find_block_by_label(label) {
             self.graph.remove_node(idx);
@@ -132,6 +141,7 @@ impl ControlFlowGraph {
         }
     }
 
+    #[must_use]
     pub fn dfs_post_order(&self) -> Box<dyn Iterator<Item = NodeIndex> + '_> {
         if let Some(entry_idx) = self.get_entry_block_index() {
             let mut dfs = Dfs::new(&self.graph, entry_idx);
@@ -141,6 +151,24 @@ impl ControlFlowGraph {
         }
     }
 
+    /// Verifies the integrity and well-formedness of the control flow graph.
+    ///
+    /// Performs validation checks to ensure the CFG meets expected invariants:
+    /// - An entry block with the expected label exists
+    /// - All blocks have valid terminator instructions
+    /// - All terminator target labels refer to existing blocks
+    ///
+    /// # Returns
+    ///
+    /// `Ok(())` if the CFG is valid, otherwise returns an error describing the
+    /// validation failure.
+    ///
+    /// # Errors
+    ///
+    /// Returns an error string if:
+    /// - The CFG has no entry block with the expected label
+    /// - Any block lacks a valid terminator instruction
+    /// - Any terminator refers to a non-existent target block
     pub fn verify(&self) -> Result<(), String> {
         // Verify that an entry block exists
         if self.get_entry_block().is_none() {

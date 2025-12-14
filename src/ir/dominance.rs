@@ -18,11 +18,22 @@ pub struct DominanceInfo {
 
 impl DominanceInfo {
     /// Creates new empty dominance information.
+    #[must_use]
     pub fn new() -> Self {
         Self { idom: HashMap::new(), dominance_frontiers: HashMap::new(), dom_tree_children: HashMap::new() }
     }
 
     /// Computes the dominator tree using the "A Simple, Fast Dominance Algorithm" by Keith D. Cooper, Timothy J. Harvey, and Ken Kennedy.
+    ///
+    /// # Errors
+    ///
+    /// Returns an error string if the CFG has no entry block.
+    ///
+    /// # Panics
+    ///
+    /// Panics if the internal dominator computation encounters an inconsistent state,
+    /// which should never occur in a well-formed CFG. This represents an internal
+    /// algorithm error rather than invalid input.
     pub fn compute_dominators(&mut self, cfg: &ControlFlowGraph) -> Result<(), String> {
         let entry_idx = cfg.get_entry_block_index().ok_or_else(|| "CFG has no entry block".to_string())?;
 
@@ -37,7 +48,7 @@ impl DominanceInfo {
 
         // Filter out the entry node as it's already initialized
         let post_order: Vec<NodeIndex> =
-            reverse_post_order.iter().filter(|&&node| node != entry_idx).cloned().collect();
+            reverse_post_order.iter().filter(|&&node| node != entry_idx).copied().collect();
 
         // Initialize all other nodes to have no immediate dominator
         for &node in &post_order {
@@ -106,6 +117,10 @@ impl DominanceInfo {
     }
 
     /// Computes dominance frontiers for all nodes in the CFG.
+    ///
+    /// # Errors
+    ///
+    /// Returns an error string if the CFG has no entry block.
     pub fn compute_dominance_frontiers(&mut self, cfg: &ControlFlowGraph) -> Result<(), String> {
         self.dominance_frontiers.clear();
 
@@ -155,6 +170,7 @@ impl DominanceInfo {
     }
 
     /// Intersects two dominator paths to find their common ancestor.
+    #[allow(clippy::expect_used, clippy::unused_self)]
     fn intersect(&self, node1: NodeIndex, node2: NodeIndex, idom: &HashMap<NodeIndex, Option<NodeIndex>>) -> NodeIndex {
         let mut finger1 = node1;
         let mut finger2 = node2;
@@ -178,6 +194,7 @@ impl DominanceInfo {
     }
 
     /// Checks if node1 dominates node2.
+    #[must_use]
     pub fn dominates(&self, node1: NodeIndex, node2: NodeIndex) -> bool {
         let mut current = node2;
 
@@ -198,16 +215,19 @@ impl DominanceInfo {
     }
 
     /// Gets the immediate dominator of a node, if it exists.
+    #[must_use]
     pub fn immediate_dominator(&self, node: NodeIndex) -> Option<NodeIndex> {
         self.idom.get(&node).and_then(|&x| x)
     }
 
     /// Gets the dominance frontier of a node.
+    #[must_use]
     pub fn dominance_frontier(&self, node: NodeIndex) -> Option<&HashSet<NodeIndex>> {
         self.dominance_frontiers.get(&node)
     }
 
     /// Gets the children of a node in the dominator tree.
+    #[must_use]
     pub fn dominator_tree_children(&self, node: NodeIndex) -> Option<&Vec<NodeIndex>> {
         self.dom_tree_children.get(&node)
     }

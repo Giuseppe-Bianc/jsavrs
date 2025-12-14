@@ -722,7 +722,6 @@ impl SCCPropagator {
     }
 
     /// Converts a `ValueId` to a usize key for `HashMap` lookup.
-    #[allow(clippy::unwrap_used)]
     fn value_id_to_key(value_id: &crate::ir::value::ValueId) -> usize {
         use std::collections::hash_map::DefaultHasher;
         use std::hash::{Hash, Hasher};

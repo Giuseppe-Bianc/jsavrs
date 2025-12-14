@@ -7,6 +7,7 @@ use jsavrs::ir::optimizer::{DeadCodeElimination, Phase};
 use jsavrs::lexer::{Lexer, lexer_tokenize_with_errors};
 use jsavrs::parser::jsav_parser::JsavParser;
 use jsavrs::semantic::type_checker::TypeChecker;
+use std::fmt::Write;
 use std::hint::black_box;
 use std::time::Duration;
 
@@ -49,7 +50,7 @@ pub fn benchmark_lexer(c: &mut Criterion) {
                 let mut lexer = Lexer::new("bench.vn", black_box(input.as_str()));
                 let (tokens, _lex_errors) = lexer_tokenize_with_errors(&mut lexer);
                 black_box(&tokens);
-            })
+            });
         });
     }
     lex_group.finish();
@@ -81,7 +82,7 @@ pub fn benchmark_parser(c: &mut Criterion) {
                 let parser = JsavParser::new(&tokens);
                 let ast_and_errors = parser.parse();
                 black_box(&ast_and_errors);
-            })
+            });
         });
     }
     parse_group.finish();
@@ -109,7 +110,7 @@ pub fn benchmark_parser_nodes(c: &mut Criterion) {
                 let parser = JsavParser::new(&tokens);
                 let ast_and_errors = parser.parse();
                 black_box(&ast_and_errors);
-            })
+            });
         });
     }
     node_group.finish();
@@ -142,7 +143,7 @@ pub fn benchmark_semantic_analysis(c: &mut Criterion) {
                 let mut type_checker = TypeChecker::new();
                 let semantic_errors = type_checker.check(&ast);
                 black_box(&semantic_errors);
-            })
+            });
         });
     }
     semantic_group.finish();
@@ -176,7 +177,7 @@ pub fn benchmark_ir_generation(c: &mut Criterion) {
                 let mut ir_generator = IrGenerator::new();
                 let (ir_module, _ir_errors) = ir_generator.generate(ast, "bench.vn");
                 black_box(&ir_module);
-            })
+            });
         });
     }
     ir_group.finish();
@@ -211,7 +212,7 @@ pub fn benchmark_end_to_end(c: &mut Criterion) {
                 let mut ir_generator = IrGenerator::new();
                 let (ir_module, _ir_errors) = ir_generator.generate(ast, "bench.vn");
                 black_box(&ir_module);
-            })
+            });
         });
     }
     pipeline_group.finish();
@@ -223,7 +224,7 @@ pub fn benchmark_dce_small(c: &mut Criterion) {
     configure_benchmark_group(&mut dce_group, 5, 15);
 
     // Small function with unreachable code and dead variables
-    let small_func = r#"
+    let small_func = r"
         fun test_small(x: i32): i32 {
             var dead1: i32 = 10;
             var dead2: i32 = 20;
@@ -233,7 +234,7 @@ pub fn benchmark_dce_small(c: &mut Criterion) {
             }
             return x;
         }
-    "#;
+    ";
 
     dce_group.bench_function("small_function", |b| {
         b.iter(|| {
@@ -249,7 +250,7 @@ pub fn benchmark_dce_small(c: &mut Criterion) {
             let mut dce = DeadCodeElimination::default();
             dce.run(&mut ir_module);
             black_box(&ir_module);
-        })
+        });
     });
 
     dce_group.finish();
@@ -264,8 +265,8 @@ pub fn benchmark_dce_medium(c: &mut Criterion) {
     let mut medium_func = String::from("fun test_medium(x: i32): i32 {\n");
     medium_func.push_str("    var result: i32 = x;\n");
     for i in 0..50 {
-        medium_func.push_str(&format!("    var dead{}: i32 = {} + x;\n", i, i));
-        medium_func.push_str(&format!("    var unused{}: i32 = dead{} + 1;\n", i, i));
+        writeln!(medium_func, "    var dead{i}: i32 = {i} + x;").unwrap();
+        writeln!(medium_func, "    var unused{i}: i32 = dead{i} + 1;").unwrap();
     }
     medium_func.push_str("    return result;\n");
     medium_func.push_str("}\n");
@@ -284,7 +285,7 @@ pub fn benchmark_dce_medium(c: &mut Criterion) {
             let mut dce = DeadCodeElimination::default();
             dce.run(&mut ir_module);
             black_box(&ir_module);
-        })
+        });
     });
 
     dce_group.finish();
@@ -298,8 +299,8 @@ pub fn benchmark_dce_large(c: &mut Criterion) {
     let mut large_func = String::from("fun test_large(x: i32): i32 {\n");
     large_func.push_str("    var result: i32 = x;\n");
     for i in 0..200 {
-        large_func.push_str(&format!("    var dead{}: i32 = {} + x;\n", i, i));
-        large_func.push_str(&format!("    var unused{}: i32 = dead{} + 1;\n", i, i));
+        write!(large_func, "    var dead{i}: i32 = {i} + x;").unwrap();
+        writeln!(large_func, "    var unused{i}: i32 = dead{i} + 1;").unwrap();
     }
     large_func.push_str("    return result;\n");
     large_func.push_str("}\n");
@@ -318,7 +319,7 @@ pub fn benchmark_dce_large(c: &mut Criterion) {
             let mut dce = DeadCodeElimination::default();
             dce.run(&mut ir_module);
             black_box(&ir_module);
-        })
+        });
     });
 
     dce_group.finish();
@@ -332,10 +333,10 @@ pub fn benchmark_dce_module(c: &mut Criterion) {
     // Module with 10 functions, each with dead code (simplified to avoid stack overflow)
     let mut module_code = String::new();
     for func_idx in 0..10 {
-        module_code.push_str(&format!("fun test_func{}(x: i32): i32 {{\n", func_idx));
+        writeln!(module_code, "fun test_func{func_idx}(x: i32): i32 {{").unwrap();
         module_code.push_str("    var result: i32 = x;\n");
         for i in 0..10 {
-            module_code.push_str(&format!("    var dead{}: i32 = {} + x;\n", i, i));
+            writeln!(module_code, "    var dead{i}: i32 = {i} + x;").unwrap();
         }
         module_code.push_str("    return result;\n");
         module_code.push_str("}\n\n");
@@ -355,7 +356,7 @@ pub fn benchmark_dce_module(c: &mut Criterion) {
             let mut dce = DeadCodeElimination::default();
             dce.run(&mut ir_module);
             black_box(&ir_module);
-        })
+        });
     });
 
     dce_group.finish();
@@ -368,9 +369,9 @@ pub fn benchmark_dce_worst_case(c: &mut Criterion) {
     // Deep nesting with cascading dead code (requires multiple iterations)
     let mut worst_case = String::from("fun test_worst_case(x: i32): i32 {\n");
     for i in 0..20 {
-        worst_case.push_str(&format!("    var v{}: i32 = x + {};\n", i, i));
+        writeln!(worst_case, "    var v{i}: i32 = x + {i};").unwrap();
         if i > 0 {
-            worst_case.push_str(&format!("    var chain{}: i32 = v{};\n", i, i - 1));
+            writeln!(worst_case, "    var chain{i}: i32 = v{};", i - 1).unwrap();
         }
     }
     worst_case.push_str("    return x;\n");
@@ -390,7 +391,7 @@ pub fn benchmark_dce_worst_case(c: &mut Criterion) {
             let mut dce = DeadCodeElimination::default();
             dce.run(&mut ir_module);
             black_box(&ir_module);
-        })
+        });
     });
 
     dce_group.finish();
@@ -413,7 +414,7 @@ fn generate_constant_chain_source(num_ops: usize) -> String {
     source.push_str("  var x: i32 = 1;\n");
 
     for i in 0..num_ops {
-        source.push_str(&format!("  x = x + {};\n", i + 1));
+        writeln!(source, "  x = x + {};", i + 1).unwrap();
     }
 
     source.push_str("  return x;\n}\n");
@@ -426,7 +427,7 @@ fn generate_constant_branch_source(num_branches: usize) -> String {
     source.push_str("  var result: i32 = 0;\n");
 
     for i in 0..num_branches {
-        source.push_str(&format!("  if true {{\n    result = result + {};\n  }}\n", i + 1));
+        writeln!(source, "  if true {{\n    result = result + {};\n  }}", i + 1).unwrap();
     }
 
     source.push_str("  return result;\n}\n");
@@ -493,7 +494,7 @@ pub fn benchmark_realistic_patterns(c: &mut Criterion) {
     configure_benchmark_group(&mut group, 2, 8);
 
     // Constant folding opportunities
-    let constant_folding_source = r#"
+    let constant_folding_source = r"
         fun compute(): i32 {
             var a: i32 = 10 + 20;
             var b: i32 = a * 2;
@@ -503,7 +504,7 @@ pub fn benchmark_realistic_patterns(c: &mut Criterion) {
             }
             return c;
         }
-    "#;
+    ";
 
     let test_cases = vec![("constant_folding", constant_folding_source)];
 

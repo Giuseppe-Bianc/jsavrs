@@ -8,7 +8,7 @@ use std::collections::HashMap;
 use std::fmt;
 use std::sync::Arc;
 
-#[derive(Debug, Clone, PartialEq, Default)]
+#[derive(Debug, Clone, PartialEq, Eq, Default)]
 pub struct FunctionAttributes {
     pub is_entry: bool,
     pub is_varargs: bool,
@@ -16,14 +16,14 @@ pub struct FunctionAttributes {
     pub source_span: Option<SourceSpan>,
 }
 
-#[derive(Debug, Clone, PartialEq)]
+#[derive(Debug, Clone, PartialEq, Eq)]
 pub struct IrParameter {
     pub name: Arc<str>,
     pub ty: IrType,
     pub attributes: ParamAttributes,
 }
 
-#[derive(Debug, Clone, PartialEq, Default)]
+#[derive(Debug, Clone, PartialEq, Eq, Default)]
 pub struct ParamAttributes {
     pub by_val: bool,
     pub no_alias: bool,
@@ -42,6 +42,7 @@ pub struct Function {
 }
 
 impl Function {
+    #[must_use]
     pub fn new(name: &str, params: Vec<IrParameter>, return_type: IrType) -> Self {
         Self {
             name: name.into(),
@@ -87,9 +88,26 @@ impl Function {
     }
 
     pub fn exit_scope(&mut self) {
-        self.scope_manager.exit_scope()
+        self.scope_manager.exit_scope();
     }
 
+    /// Verifies the integrity of the function's control flow graph.
+    ///
+    /// Performs validation checks on the function's CFG to ensure it is well-formed
+    /// and follows expected invariants.
+    ///
+    /// # Returns
+    ///
+    /// `Ok(())` if the function's CFG is valid, otherwise returns an error describing
+    /// the validation failure.
+    ///
+    /// # Errors
+    ///
+    /// Returns an error string if:
+    /// - The CFG structure is invalid or malformed
+    /// - Basic blocks contain invalid terminators
+    /// - Control flow edges are inconsistent
+    /// - Any other CFG invariants are violated
     pub fn verify(&self) -> Result<(), String> {
         self.cfg.verify()
     }
@@ -112,7 +130,7 @@ impl fmt::Display for Function {
         }
 
         for block in self.cfg.blocks() {
-            writeln!(f, "{}", block)?;
+            writeln!(f, "{block}")?;
         }
 
         Ok(())

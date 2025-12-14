@@ -89,6 +89,7 @@ fn test_exit_root_scope() {
 }
 // Test for nested scopes
 #[test]
+#[allow(clippy::similar_names)]
 fn test_nested_scopes() {
     // Input: creation of a ScopeManager and creation of nested scopes
     let mut manager = ScopeManager::new();
@@ -222,7 +223,7 @@ fn test_symbol_shadowing() {
     // creating a new scope, adding a symbol with the same name and looking it up
     let mut manager = ScopeManager::new();
     let root_value = Value::new_literal(IrLiteralValue::I32(42));
-    manager.add_symbol("x", root_value.clone());
+    manager.add_symbol("x", root_value);
     // Enter a new scope
     manager.enter_scope();
     let child_value = Value::new_literal(IrLiteralValue::I32(100));
@@ -295,7 +296,7 @@ fn test_lookup_mut_symbol_in_current_scope() {
     assert!(found_value.is_some(), "Should find the symbol 'x'");
     // Verify that the reference is to the correct value
     let found_value = found_value.unwrap();
-    assert_eq!(format!("{}", found_value), "42i32", "The value should be 42");
+    assert_eq!(format!("{found_value}"), "42i32", "The value should be 42");
 }
 // Test for lookup_mut of a symbol in a parent scope
 #[test]
@@ -315,7 +316,7 @@ fn test_lookup_mut_symbol_in_parent_scope() {
     assert!(found_value.is_some(), "Should find the symbol 'x' in the parent scope");
     // Verify that the reference is to the correct value
     let found_value = found_value.unwrap();
-    assert_eq!(format!("{}", found_value), "42i32", "The value should be 42");
+    assert_eq!(format!("{found_value}"), "42i32", "The value should be 42");
 }
 // Test for lookup_mut of a non-existent symbol
 #[test]
@@ -330,6 +331,7 @@ fn test_lookup_mut_nonexistent_symbol() {
 }
 // Test for getting all scopes
 #[test]
+#[allow(clippy::similar_names)]
 fn test_get_scopes() {
     // Input: creation of a ScopeManager with nested scopes and getting all scopes
     let mut manager = ScopeManager::new();
@@ -440,6 +442,7 @@ fn test_multiple_scopes_with_same_name() {
 
 // Test for empty nested scopes
 #[test]
+#[allow(clippy::similar_names)]
 fn test_empty_nested_scopes() {
     // Input: creation of nested scopes without symbols
     let mut manager = ScopeManager::new();
@@ -457,7 +460,7 @@ fn test_empty_nested_scopes() {
     assert_eq!(scopes.len(), 4, "There should be four scopes");
     // Verify that all scopes are empty
     for (id, scope) in scopes {
-        assert!(scope.symbols.is_empty(), "Scope {:?} should be empty", id);
+        assert!(scope.symbols.is_empty(), "Scope {id:?} should be empty");
     }
     // Verify the hierarchy
     let scope3 = &scopes[&scope3_id];
@@ -484,7 +487,7 @@ fn test_deeply_nested_scopes() {
         manager.enter_scope();
         // Add a symbol with a unique name in each scope
         let value = Value::new_literal(IrLiteralValue::I32(i));
-        manager.add_symbol(format!("x_{}", i), value);
+        manager.add_symbol(format!("x_{i}"), value);
     }
     // Expected behavior:
     // - There should be 101 scopes in total (root + 100 children)
@@ -498,14 +501,14 @@ fn test_deeply_nested_scopes() {
     assert_eq!(current_scope.depth, 100, "The current scope should have depth 100");
     // Verify that we can find all symbols
     for i in (0..100).rev() {
-        let found_value = manager.lookup(&format!("x_{}", i));
-        assert!(found_value.is_some(), "Should find the symbol 'x_{}'", i);
+        let found_value = manager.lookup(&format!("x_{i}"));
+        assert!(found_value.is_some(), "Should find the symbol 'x_{i}'");
         // Verify the value more specifically
         match found_value.unwrap().kind {
             ValueKind::Literal(IrLiteralValue::I32(val)) => {
-                assert_eq!(val, i, "The value of 'x_{}' should be {}", i, i);
+                assert_eq!(val, i, "The value of 'x_{i}' should be {i}");
             }
-            _ => panic!("The symbol 'x_{}' should be an I32 literal", i),
+            _ => panic!("The symbol 'x_{i}' should be an I32 literal"),
         }
     }
     // Exit all scopes
@@ -694,27 +697,28 @@ fn test_lookup_in_scope_with_multiple_children() {
 
 // Test for handling scopes with a large number of symbols
 #[test]
+
 fn test_scope_with_many_symbols() {
     // Input: creation of a scope with many symbols
     let mut manager = ScopeManager::new();
     // Add 1000 symbols
     for i in 0..1000 {
         let value = Value::new_literal(IrLiteralValue::I32(i));
-        manager.add_symbol(format!("symbol_{}", i), value);
+        manager.add_symbol(format!("symbol_{i}"), value);
     }
     // Expected behavior:
     // - All symbols should be added correctly
     // - It should be possible to retrieve them
     // Actual output:
     for i in 0..1000 {
-        let found_value = manager.lookup(&format!("symbol_{}", i));
-        assert!(found_value.is_some(), "Should find the symbol 'symbol_{}'", i);
+        let found_value = manager.lookup(&format!("symbol_{i}"));
+        assert!(found_value.is_some(), "Should find the symbol 'symbol_{i}'");
         // Verify the value more specifically
         match found_value.unwrap().kind {
             ValueKind::Literal(IrLiteralValue::I32(val)) => {
-                assert_eq!(val, i, "The value of 'symbol_{}' should be {}", i, i);
+                assert_eq!(val, i, "The value of 'symbol_{i}' should be {i}");
             }
-            _ => panic!("The symbol 'symbol_{}' should be an I32 literal", i),
+            _ => panic!("The symbol 'symbol_{i}' should be an I32 literal"),
         }
     }
     // Verify that the scope contains 1000 symbols

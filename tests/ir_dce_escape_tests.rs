@@ -24,7 +24,7 @@ mod escape_tests {
 
     fn create_test_function(name: &str) -> Function {
         let mut func = Function::new(name, vec![], IrType::Void);
-        let entry_label = format!("entry_{}", name);
+        let entry_label = format!("entry_{name}");
         func.add_block(&entry_label, dummy_span());
         func
     }
@@ -49,7 +49,7 @@ mod escape_tests {
         // Store to local (dead - never loaded)
         let store_instr = Instruction {
             kind: InstructionKind::Store {
-                dest: alloca_result.clone(),
+                dest: alloca_result,
                 value: Value::new_literal(IrLiteralValue::I32(42)),
             },
             result: None,
@@ -118,7 +118,7 @@ mod escape_tests {
         // Load from local (dead - result unused)
         let load_result = Value::new_temporary(2, IrType::I32);
         let load_instr = Instruction {
-            kind: InstructionKind::Load { src: alloca_result.clone(), ty: IrType::I32 },
+            kind: InstructionKind::Load { src: alloca_result, ty: IrType::I32 },
             result: Some(load_result),
             debug_info: dummy_debug_info(),
             scope: None,
@@ -264,7 +264,7 @@ mod escape_tests {
         let gep1_result = Value::new_temporary(2, IrType::Pointer(Box::new(IrType::I32)));
         let gep1_instr = Instruction {
             kind: InstructionKind::GetElementPtr {
-                base: alloca_result.clone(),
+                base: alloca_result,
                 index: Value::new_literal(IrLiteralValue::I32(0)),
                 element_ty: IrType::I32,
             },
@@ -277,11 +277,11 @@ mod escape_tests {
         let gep2_result = Value::new_temporary(3, IrType::Pointer(Box::new(IrType::I32)));
         let gep2_instr = Instruction {
             kind: InstructionKind::GetElementPtr {
-                base: gep1_result.clone(),
+                base: gep1_result,
                 index: Value::new_literal(IrLiteralValue::I32(1)),
                 element_ty: IrType::I32,
             },
-            result: Some(gep2_result.clone()),
+            result: Some(gep2_result),
             debug_info: dummy_debug_info(),
             scope: None,
         };
