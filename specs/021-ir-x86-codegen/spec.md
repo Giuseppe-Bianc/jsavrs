@@ -204,7 +204,9 @@ As a compiler developer analyzing code generation quality, I want statistics abo
 - **FR-015**: System MUST generate assembly for macOS x86-64 using System V AMD64 ABI with underscore name prefixing
 - **FR-016**: System MUST generate assembly for Windows x86-64 using Microsoft x64 calling convention
 - **FR-017**: System MUST use RDI, RSI, RDX, RCX, R8, R9 for integer parameters on System V
+- **FR-017a**: System MUST use XMM0-XMM7 for floating-point parameters on System V (tracked separately from integer registers)
 - **FR-018**: System MUST use RCX, RDX, R8, R9 for integer parameters on Windows x64
+- **FR-018a**: System MUST use XMM0-XMM3 for floating-point parameters on Windows x64, where each XMM register corresponds to the same parameter position as the integer register (slot-based)
 - **FR-019**: System MUST allocate 32-byte shadow space for Windows x64 function calls
 - **FR-020**: System MUST respect 128-byte red zone on System V platforms (not use stack below RSP without allocation)
 - **FR-021**: System MUST save and restore callee-saved registers (RBX, RBP, R12-R15 on all platforms; RDI, RSI additionally on Windows)
@@ -213,7 +215,7 @@ As a compiler developer analyzing code generation quality, I want statistics abo
 
 - **FR-022**: System MUST allocate variables to general-purpose registers RAX, RBX, RCX, RDX, RSI, RDI, R8-R15
 - **FR-023**: System MUST allocate floating-point values to SIMD registers XMM0-XMM15
-- **FR-024**: System MUST spill values to stack when register pressure exceeds available registers
+- **FR-024**: System MUST spill values to stack when register pressure exceeds available registers, using Linear Scan allocation with liveness analysis
 - **FR-025**: System MUST create stack frames with 16-byte alignment as required by x86-64 ABI
 - **FR-026**: System MUST calculate array element addresses as base + (index x element_size)
 - **FR-027**: System MUST calculate struct field addresses as base + field_offset
@@ -224,6 +226,7 @@ As a compiler developer analyzing code generation quality, I want statistics abo
 - **FR-029**: System MUST place excess parameters on stack in right-to-left order
 - **FR-030**: System MUST retrieve integer/pointer return values from RAX
 - **FR-031**: System MUST retrieve floating-point return values from XMM0
+- **FR-031a**: System MUST handle large return values (struct/array >16 bytes) via hidden pointer: caller allocates space and passes pointer as implicit first argument, callee writes result there
 - **FR-032**: System MUST generate function prologue saving RBP and callee-saved registers
 - **FR-033**: System MUST generate function epilogue restoring callee-saved registers and RBP
 - **FR-034**: System MUST support variadic functions with correct argument passing
@@ -236,7 +239,7 @@ As a compiler developer analyzing code generation quality, I want statistics abo
 - **FR-038**: System MUST produce .rodata section for read-only constants and string literals
 - **FR-039**: System MUST use Intel assembly syntax
 - **FR-040**: System MUST emit assembler directives for section declarations (section .text, etc.)
-- **FR-041**: System MUST emit global/extern directives for symbol visibility
+- **FR-041**: System MUST emit `global` directives for exported symbols and `extern` directives for each called function not defined in the module
 - **FR-042**: System MUST generate output compatible with NASM assembler
 
 **Control Flow**
@@ -244,7 +247,7 @@ As a compiler developer analyzing code generation quality, I want statistics abo
 - **FR-043**: System MUST create unique labels for each basic block
 - **FR-044**: System MUST generate jmp instructions for unconditional branches
 - **FR-045**: System MUST generate conditional jump instructions (je, jne, jl, jle, jg, jge, etc.) for conditional branches
-- **FR-046**: System MUST support switch statement implementation via jump tables or cascaded comparisons
+- **FR-046**: System MUST support switch statement implementation using jump tables for ≥4 contiguous cases, cascaded comparisons otherwise
 - **FR-047**: System MUST eliminate unnecessary jumps when execution falls through to next block
 
 **Debug Information**
@@ -289,6 +292,16 @@ As a compiler developer analyzing code generation quality, I want statistics abo
 - **SC-008**: Switch statements with up to 256 cases generate working code
 - **SC-009**: Debug comments appear for at least 80% of generated instructions
 - **SC-010**: Code generation statistics are accurate within 1% of actual instruction counts
+
+## Clarifications
+
+### Session 2025-12-16
+
+- Q: Which register allocation strategy to use? → A: Linear Scan allocation (liveness analysis + single-pass allocation)
+- Q: When to use jump table vs cascaded comparisons for switch? → A: Jump table for ≥4 contiguous cases, otherwise cascaded comparisons
+- Q: How to handle calls to external functions (not defined in module)? → A: Emit `extern symbol_name` for each called function not defined in the module
+- Q: How to pass floating-point parameters on each platform? → A: System V: floats in XMM0-XMM7 (tracked separately from integers); Windows: floats in same-slot XMM register corresponding to parameter position
+- Q: How to handle large return values (struct/array >16 bytes)? → A: Caller allocates space and passes hidden pointer as first argument; callee writes result there
 
 ## Assumptions
 
