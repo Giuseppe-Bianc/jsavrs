@@ -2,8 +2,12 @@
 name = "jsavrs"
 version = "0.1.0"
 edition = "2024"
-authors = ["Giuseppe Bianconi(Giuseppe-Bianc) <bianconig6@gmail.com>"]
-description = "A transpiler written in Rust that uses Logos for lexing."
+authors = ["Giuseppe Bianconi (Giuseppe-Bianc) <bianconig6@gmail.com>"]
+description = """
+A high-performance transpiler and compiler toolchain written in Rust.
+Features a lexer powered by Logos, SSA-based intermediate representation,
+dead code elimination (DCE), and SCCP optimization passes.
+"""
 license = "Apache-2.0"
 repository = "https://github.com/Giuseppe-Bianc/jsavrs"
 readme = "README.md"
@@ -52,7 +56,6 @@ similar.opt-level = 3
 
 [profile.release]
 debug = 1
-
 
 [lints.clippy]
 pedantic = "warn"
