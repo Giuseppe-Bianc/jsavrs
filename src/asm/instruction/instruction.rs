@@ -542,8 +542,8 @@ impl fmt::Display for Instruction {
             // IMUL con varianti multiple
             Self::Imul { dest, src1, src2 } => match (dest, src2) {
                 (None, None) => write!(f, "imul {src1}"),
-                (Some(d), None) => write!(f, "imul {d}, {d}, {src1}"),
-                (Some(d), Some(s2)) => write!(f, "imul {d}, {d}, {src1}, {s2}"),
+                (Some(d), None) => write!(f, "imul {d}, {src1}"),
+                (Some(d), Some(s2)) => write!(f, "imul {d}, {src1}, {s2}"),
                 (None, Some(_)) => unreachable!(),
             },
 

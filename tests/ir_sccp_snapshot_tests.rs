@@ -214,7 +214,7 @@ fn snapshot_constant_true_branch_transformation() {
          Note: Full IR rewriting requires IRRewriter integration",
     );
 
-    let snapshot_output = format!("BEFORE:\n{before_state}\n\nafter:\n{after_state}");
+    let snapshot_output = format!("BEFORE:\n{before_state}\n\nAFTER:\n{after_state}");
     assert_snapshot!(snapshot_output);
 }
 
@@ -282,7 +282,7 @@ fn snapshot_constant_false_branch_transformation() {
          Note: Full IR rewriting requires IRRewriter integration",
     );
 
-    let snapshot_output = format!("BEFORE:\n{before_state}\n\nafter:\n{after_state}");
+    let snapshot_output = format!("BEFORE:\n{before_state}\n\nAFTER:\n{after_state}");
     assert_snapshot!(snapshot_output);
 }
 
