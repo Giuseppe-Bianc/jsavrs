@@ -873,8 +873,8 @@ impl TypeChecker {
         Self::is_integer_type(ty) || matches!(ty, Type::F32 | Type::F64)
     }
 
-    #[allow(clippy::only_used_in_recursion)]
     #[inline]
+    #[allow(clippy::only_used_in_recursion)]
     fn function_has_return(&self, body: &[Stmt]) -> bool {
         for stmt in body {
             match stmt {

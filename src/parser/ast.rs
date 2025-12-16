@@ -8,17 +8,17 @@ use std::sync::Arc;
 
 #[derive(Debug, Clone, Hash, Eq, PartialEq)]
 pub enum Expr {
-    Binary { left: Box<Expr>, op: BinaryOp, right: Box<Expr>, span: SourceSpan },
-    Unary { op: UnaryOp, expr: Box<Expr>, span: SourceSpan },
-    Grouping { expr: Box<Expr>, span: SourceSpan },
+    Binary { left: Box<Self>, op: BinaryOp, right: Box<Self>, span: SourceSpan },
+    Unary { op: UnaryOp, expr: Box<Self>, span: SourceSpan },
+    Grouping { expr: Box<Self>, span: SourceSpan },
     Literal { value: LiteralValue, span: SourceSpan },
 
-    ArrayLiteral { elements: Vec<Expr>, span: SourceSpan },
+    ArrayLiteral { elements: Vec<Self>, span: SourceSpan },
 
     Variable { name: Arc<str>, span: SourceSpan },
-    Assign { target: Box<Expr>, value: Box<Expr>, span: SourceSpan },
-    Call { callee: Box<Expr>, arguments: Vec<Expr>, span: SourceSpan },
-    ArrayAccess { array: Box<Expr>, index: Box<Expr>, span: SourceSpan },
+    Assign { target: Box<Self>, value: Box<Self>, span: SourceSpan },
+    Call { callee: Box<Self>, arguments: Vec<Self>, span: SourceSpan },
+    ArrayAccess { array: Box<Self>, index: Box<Self>, span: SourceSpan },
     // Additional expressions as needed
 }
 

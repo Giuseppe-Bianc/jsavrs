@@ -362,16 +362,13 @@ impl<'a> JsavParser<'a> {
         }
 
         self.expect(&TokenKind::Colon, "after variable name(s)");
-        let type_ann = self.parse_type().map_or_else(
-            || {
-                self.report_peek_error(
-                    "Invalid type specification",
-                    Some("Try using a primitive type or a custom type identifier"),
-                );
-                Type::Void
-            },
-            |t| t,
-        );
+        let type_ann = self.parse_type().unwrap_or_else(|| {
+            self.report_peek_error(
+                "Invalid type specification",
+                Some("Try using a primitive type or a custom type identifier"),
+            );
+            Type::Void
+        });
 
         self.expect(&TokenKind::Equal, "after type annotation");
         let mut initializers = Vec::with_capacity(variables.len());
