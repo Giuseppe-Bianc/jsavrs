@@ -257,8 +257,8 @@ pub enum Type {
     String,
     Bool,
     Custom(Arc<str>),
-    Array(Box<Type>, Box<Expr>),
-    Vector(Box<Type>),
+    Array(Box<Self>, Box<Expr>),
+    Vector(Box<Self>),
     Void,
     NullPtr,
 }
