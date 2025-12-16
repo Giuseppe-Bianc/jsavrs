@@ -290,7 +290,7 @@ As a compiler developer analyzing code generation quality, I want statistics abo
 - **SC-006**: Function calls with up to 20 parameters execute correctly
 - **SC-007**: All IR data types (integers, floats, booleans, arrays, structs, pointers) are correctly represented in assembly
 - **SC-008**: Switch statements with up to 256 cases generate working code
-- **SC-009**: Debug comments appear for at least 80% of generated instructions
+- **SC-009**: Debug comments appear for at least 80% of emitted assembly instructions (measured as: instructions with associated comment / total instructions)
 - **SC-010**: Code generation statistics are accurate within 1% of actual instruction counts
 
 ## Clarifications
