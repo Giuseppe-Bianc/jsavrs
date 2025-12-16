@@ -874,7 +874,7 @@ impl TypeChecker {
     }
 
     #[inline]
-    #[allow(clippy::only_used_in_recursion)]
+    #[allow(clippy::only_used_in_recursion, clippy::self_only_used_in_recursion)]
     fn function_has_return(&self, body: &[Stmt]) -> bool {
         for stmt in body {
             match stmt {

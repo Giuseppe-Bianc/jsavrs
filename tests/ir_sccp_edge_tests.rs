@@ -102,7 +102,10 @@ fn test_multiple_predecessors() {
 fn test_executable_predecessors_empty() {
     let edge_set = ExecutableEdgeSet::new();
 
-    assert!(edge_set.executable_predecessors(1).next().is_none(), "Block with no executable edges should have no predecessors");
+    assert!(
+        edge_set.executable_predecessors(1).next().is_none(),
+        "Block with no executable edges should have no predecessors"
+    );
 }
 
 #[test]

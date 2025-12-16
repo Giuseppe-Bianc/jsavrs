@@ -48,10 +48,7 @@ mod escape_tests {
 
         // Store to local (dead - never loaded)
         let store_instr = Instruction {
-            kind: InstructionKind::Store {
-                dest: alloca_result,
-                value: Value::new_literal(IrLiteralValue::I32(42)),
-            },
+            kind: InstructionKind::Store { dest: alloca_result, value: Value::new_literal(IrLiteralValue::I32(42)) },
             result: None,
             debug_info: dummy_debug_info(),
             scope: None,

@@ -1114,11 +1114,7 @@ impl IrGenerator {
     /// // [1, 2, 3, 4, 5]
     /// let array_ptr = generator.generate_array_literal(func, elements, span);
     /// ```
-    #[allow(
-        clippy::cast_possible_truncation,
-        clippy::cast_possible_wrap,
-        clippy::needless_pass_by_value
-    )]
+    #[allow(clippy::cast_possible_truncation, clippy::cast_possible_wrap, clippy::needless_pass_by_value)]
     fn generate_array_literal(&mut self, func: &mut Function, elements: Vec<Expr>, span: SourceSpan) -> Value {
         if elements.is_empty() {
             return Value::new_literal(IrLiteralValue::I64(0)); // Null pointer

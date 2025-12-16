@@ -88,29 +88,29 @@ pub enum Stmt {
         name: Arc<str>,
         parameters: Vec<Parameter>,
         return_type: Type,
-        body: Vec<Stmt>,
+        body: Vec<Self>,
         span: SourceSpan,
     },
     If {
         condition: Expr,
-        then_branch: Vec<Stmt>,
-        else_branch: Option<Vec<Stmt>>,
+        then_branch: Vec<Self>,
+        else_branch: Option<Vec<Self>>,
         span: SourceSpan,
     },
     While {
         condition: Expr,
-        body: Vec<Stmt>,
+        body: Vec<Self>,
         span: SourceSpan,
     },
     For {
-        initializer: Option<Box<Stmt>>,
+        initializer: Option<Box<Self>>,
         condition: Option<Expr>,
         increment: Option<Expr>,
-        body: Vec<Stmt>,
+        body: Vec<Self>,
         span: SourceSpan,
     },
     Block {
-        statements: Vec<Stmt>,
+        statements: Vec<Self>,
         span: SourceSpan,
     },
     Return {
@@ -124,7 +124,7 @@ pub enum Stmt {
         span: SourceSpan,
     },
     MainFunction {
-        body: Vec<Stmt>,
+        body: Vec<Self>,
         span: SourceSpan,
     },
 }

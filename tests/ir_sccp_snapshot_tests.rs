@@ -63,7 +63,6 @@ fn snapshot_optimization_stats_format() {
     assert_snapshot!(formatted);
 }
 
-
 #[test]
 #[allow(clippy::approx_constant, clippy::unreadable_literal)]
 fn snapshot_constant_value_types() {
