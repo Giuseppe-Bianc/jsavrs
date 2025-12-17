@@ -7,7 +7,7 @@ pub enum Endianness {
     Big,
 }
 
-/// Symbol mangling style (m:<style>)
+/// Symbol mangling style `(m:<style>)`
 #[derive(Debug, Clone, PartialEq, Eq)]
 pub enum Mangling {
     Elf,

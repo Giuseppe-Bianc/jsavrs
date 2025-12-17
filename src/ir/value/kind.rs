@@ -9,7 +9,7 @@ use std::sync::Arc;
 ///
 /// Manual implementation optimized for performance:
 /// - Discriminant is written explicitly using small integers for better performance
-/// - Arc<str> strings are hashed by content (not pointer) for correctness
+/// - `Arc<str>` strings are hashed by content (not pointer) for correctness
 /// - Inline hint helps optimizer eliminate overhead in hot paths
 #[derive(Debug, Clone, PartialEq, Eq)]
 pub enum ValueKind {

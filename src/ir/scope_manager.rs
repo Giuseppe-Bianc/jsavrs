@@ -159,7 +159,7 @@ impl ScopeManager {
 
     /// Performs a mutable hierarchical lookup for a symbol by name.
     ///
-    /// Similar to [`lookup`], but returns a mutable reference to allow in-place modification
+    /// Similar to \[`lookup`\], but returns a mutable reference to allow in-place modification
     /// of the symbol's associated value.
     ///
     /// # Parameters

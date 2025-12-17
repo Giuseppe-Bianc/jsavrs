@@ -108,7 +108,7 @@ impl LivenessAnalyzer {
     ///
     /// Retrieves all values used by the instruction at `idx` and adds them to `gen_set`
     /// if they are not already present in `kill_set`. This implements the standard
-    /// dataflow equation: gen[B] = use[B] ∪ (in[B] - def[B]).
+    /// dataflow equation: gen\[B\] = use\[B\] ∪ (in\[B\] - def\[B\]).
     ///
     /// # Parameters
     ///
