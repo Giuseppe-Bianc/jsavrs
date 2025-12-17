@@ -294,16 +294,16 @@ impl ParsedDataLayout {
         }
 
         Ok(Self {
-            endianness,
-            mangling,
             pointer_layouts,
             integer_layouts,
             float_layouts,
             vector_layouts,
+            mangling,
+            native_int_widths,
             aggregate_layout,
             function_pointer_layout,
-            native_int_widths,
             stack_align_bits,
+            endianness,
         })
     }
 }
