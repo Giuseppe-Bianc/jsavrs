@@ -19,14 +19,14 @@ pub enum Mangling {
 /// Pointer layout for a specific address space
 #[derive(Debug, Clone)]
 pub struct PointerLayout {
-    /// Address space number (0 = default)
-    pub address_space: u32,
-
     /// Pointer size in bits
     pub size_bits: u32,
 
     /// ABI alignment in bits
     pub abi_align_bits: u32,
+
+    /// Address space number (0 = default)
+    pub address_space: u32,
 
     /// Preferred alignment in bits (None => same as ABI)
     pub pref_align_bits: Option<u32>,
@@ -99,16 +99,16 @@ use std::collections::HashMap;
 
 #[derive(Debug, Clone)]
 pub struct ParsedDataLayout {
-    endianness: Endianness,
-    mangling: Option<Mangling>,
     pointer_layouts: HashMap<u32, PointerLayout>,
     integer_layouts: HashMap<u32, IntegerLayout>,
     float_layouts: HashMap<u32, FloatLayout>,
     vector_layouts: HashMap<u32, VectorLayout>,
+    mangling: Option<Mangling>,
+    native_int_widths: Option<NativeIntWidths>,
     aggregate_layout: Option<AggregateLayout>,
     function_pointer_layout: Option<FunctionPointerLayout>,
-    native_int_widths: Option<NativeIntWidths>,
     stack_align_bits: Option<u32>,
+    endianness: Endianness,
 }
 
 impl ParsedDataLayout {
