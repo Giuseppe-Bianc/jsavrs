@@ -1,69 +1,9 @@
 // src/ir/module.rs
 use super::{Function, ScopeId};
+use crate::ir::data_layout::DataLayout;
 use std::fmt;
 use std::sync::Arc;
 
-/// Describes the data layout specification for target platforms.
-///
-/// The data layout defines memory alignment, endianness, pointer sizes, and
-/// other architecture-specific data representation details. Each variant
-/// corresponds to a specific target architecture and operating system.
-///
-/// # Layout String Format
-///
-/// The layout string follows LLVM's data layout specification format:
-/// - `e` = little-endian
-/// - `m:` = mangling style (e=ELF, w=Windows, o=Mach-O)
-/// - `p270`, `p271`, `p272` = pointer address spaces
-/// - `i64:64` = 64-bit integers are 64-bit aligned
-/// - `f80:128` = 80-bit floats are 128-bit aligned
-/// - `n8:16:32:64` = native integer widths
-/// - `S128` = stack alignment is 128 bits
-///
-/// # Examples
-///
-/// ```ignore
-/// let layout = DataLayout::LinuxX86_64;
-/// assert_eq!(layout.as_str(), "e-m:e-p270:32:32-p271:32:32-p272:64:64-i64:64-f80:128-n8:16:32:64-S128");
-/// ```
-#[derive(Debug, Clone, Copy, PartialEq, Eq, Hash)]
-pub enum DataLayout {
-    LinuxX86_64,
-    LinuxAArch64,
-    WindowsX86_64,
-    MacOSX86_64,
-    FreeBSDX86_64,
-    NetBSDX86_64,
-    OpenBSDX86_64,
-    DragonFlyX86_64,
-}
-
-impl DataLayout {
-    /// Returns the data layout string without allocation.
-    /// This can be used in const contexts unlike Display.
-    #[inline]
-    #[must_use]
-    pub const fn as_str(&self) -> &'static str {
-        match self {
-            Self::LinuxAArch64 => "e-m:e-i8:8:32-i16:16:32-i64:64-i128:128-n32:64-S128",
-            Self::WindowsX86_64 => "e-m:w-p270:32:32-p271:32:32-p272:64:64-i64:64-f80:128-n8:16:32:64-S128",
-            Self::LinuxX86_64
-            | Self::FreeBSDX86_64
-            | Self::NetBSDX86_64
-            | Self::OpenBSDX86_64
-            | Self::DragonFlyX86_64 => "e-m:e-p270:32:32-p271:32:32-p272:64:64-i64:64-f80:128-n8:16:32:64-S128",
-            Self::MacOSX86_64 => "e-m:o-p270:32:32-p271:32:32-p272:64:64-i64:64-f80:128-n8:16:32:64-S128",
-        }
-    }
-}
-
-// Then Display becomes:
-impl fmt::Display for DataLayout {
-    #[inline]
-    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
-        f.write_str(self.as_str())
-    }
-}
 /// Identifies the target triple specifying architecture, OS, and environment.
 ///
 /// Target triples follow the format `<arch>-<vendor>-<os>-<environment>`
