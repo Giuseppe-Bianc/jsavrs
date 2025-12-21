@@ -39,6 +39,7 @@ fn test_abi_kind_display_windows() {
 }
 
 #[test]
+#[allow(clippy::clone_on_copy)] // Testing clone explicitly
 fn test_abi_kind_clone() {
     let original = AbiKind::SystemV;
     let cloned = original.clone();
@@ -114,6 +115,7 @@ fn test_from_platform_matches_constants() {
 }
 
 #[test]
+#[allow(clippy::clone_on_copy)] // Testing clone explicitly
 fn test_abi_clone() {
     let original = Abi::SYSTEM_V_LINUX;
     let cloned = original.clone();
@@ -620,6 +622,7 @@ fn test_is_caller_saved_rbx_no_platforms() {
 }
 
 #[test]
+#[allow(clippy::similar_names)]
 fn test_caller_callee_saved_are_complementary_gp() {
     // For GP registers, caller-saved and callee-saved should be disjoint
     let systemv = Abi::SYSTEM_V_LINUX;
@@ -627,7 +630,7 @@ fn test_caller_callee_saved_are_complementary_gp() {
     let callee_saved = systemv.callee_saved_gp_registers();
 
     for reg in caller_saved {
-        assert!(!callee_saved.contains(reg), "{:?} should not be in both caller and callee saved", reg);
+        assert!(!callee_saved.contains(reg), "{reg:?} should not be in both caller and callee saved");
     }
 }
 
@@ -728,7 +731,7 @@ fn test_windows_variadic_info() {
 #[test]
 fn test_variadic_info_display() {
     let systemv_info = Abi::SYSTEM_V_LINUX.variadic_info();
-    let display = format!("{}", systemv_info);
+    let display = format!("{systemv_info}");
 
     assert!(display.contains("supported: true"));
     assert!(display.contains("requires_va_list: true"));
@@ -738,7 +741,7 @@ fn test_variadic_info_display() {
 #[test]
 fn test_variadic_info_display_windows() {
     let windows_info = Abi::WINDOWS.variadic_info();
-    let display = format!("{}", windows_info);
+    let display = format!("{windows_info}",);
 
     assert!(display.contains("supported: true"));
     assert!(display.contains("requires_va_list: true"));
@@ -748,7 +751,7 @@ fn test_variadic_info_display_windows() {
 #[test]
 fn test_variadic_info_debug() {
     let info = Abi::SYSTEM_V_LINUX.variadic_info();
-    let debug = format!("{:?}", info);
+    let debug = format!("{info:?}");
 
     assert!(debug.contains("VariadicInfo"));
     assert!(debug.contains("supported"));
@@ -774,6 +777,7 @@ fn test_name_is_static_str() {
 }
 
 #[test]
+#[allow(clippy::similar_names)]
 fn test_register_classification_consistency() {
     // A register cannot be both caller-saved and callee-saved
     let abis = [Abi::SYSTEM_V_LINUX, Abi::SYSTEM_V_MACOS, Abi::WINDOWS];
@@ -954,7 +958,7 @@ fn test_alignment_is_power_of_two() {
 
     for abi in &abis {
         let alignment = abi.alignment();
-        assert!(alignment.is_power_of_two(), "Alignment {} is not a power of two", alignment);
+        assert!(alignment.is_power_of_two(), "Alignment {alignment} is not a power of two");
     }
 }
 
