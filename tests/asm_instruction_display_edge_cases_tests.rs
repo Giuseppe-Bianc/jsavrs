@@ -1553,3 +1553,271 @@ fn test_control_instructions_formatting_consistency() {
         assert_eq!(display, display.to_lowercase(), "Mnemonic should be lowercase for {:?}", instr);
     }
 }
+
+// ============================================================================
+// SSE Scalar Subtraction Instructions - Subss/Subsd (Lines 294-295)
+// ============================================================================
+
+#[test]
+fn test_subss_instruction_display() {
+    // Test SUBSS (Subtract Scalar Single-Precision Floating-Point) instruction.
+    // SUBSS subtracts a single-precision floating-point value from another.
+    let instr = Instruction::Subss { dest: Operand::xmm(XMMRegister::Xmm0), src: Operand::xmm(XMMRegister::Xmm1) };
+    assert_eq!(instr.to_string(), "subss xmm0, xmm1", "SUBSS register-to-register display");
+    assert_eq!(instr.mnemonic(), "subss", "SUBSS mnemonic should be 'subss'");
+}
+
+#[test]
+fn test_subss_with_memory_operand() {
+    // Test SUBSS with memory operand as source.
+    let instr = Instruction::Subss { dest: Operand::xmm(XMMRegister::Xmm2), src: Operand::mem(GPRegister64::Rax) };
+    assert_eq!(instr.to_string(), "subss xmm2, QWORD PTR [rax]", "SUBSS with memory source");
+    assert_eq!(instr.mnemonic(), "subss");
+}
+
+#[test]
+fn test_subss_with_memory_displacement() {
+    // Test SUBSS with memory operand using displacement.
+    let instr =
+        Instruction::Subss { dest: Operand::xmm(XMMRegister::Xmm7), src: Operand::mem_disp(GPRegister64::Rbp, -16) };
+    assert_eq!(instr.to_string(), "subss xmm7, QWORD PTR [rbp - 16]", "SUBSS with negative displacement");
+}
+
+#[test]
+fn test_subss_with_positive_displacement() {
+    // Test SUBSS with positive memory displacement.
+    let instr =
+        Instruction::Subss { dest: Operand::xmm(XMMRegister::Xmm15), src: Operand::mem_disp(GPRegister64::Rsp, 64) };
+    assert_eq!(instr.to_string(), "subss xmm15, QWORD PTR [rsp + 64]", "SUBSS with positive displacement");
+}
+
+#[test]
+fn test_subsd_instruction_display() {
+    // Test SUBSD (Subtract Scalar Double-Precision Floating-Point) instruction.
+    // SUBSD subtracts a double-precision floating-point value from another.
+    let instr = Instruction::Subsd { dest: Operand::xmm(XMMRegister::Xmm3), src: Operand::xmm(XMMRegister::Xmm4) };
+    assert_eq!(instr.to_string(), "subsd xmm3, xmm4", "SUBSD register-to-register display");
+    assert_eq!(instr.mnemonic(), "subsd", "SUBSD mnemonic should be 'subsd'");
+}
+
+#[test]
+fn test_subsd_with_memory_operand() {
+    // Test SUBSD with memory operand as source.
+    let instr = Instruction::Subsd { dest: Operand::xmm(XMMRegister::Xmm5), src: Operand::mem(GPRegister64::Rbx) };
+    assert_eq!(instr.to_string(), "subsd xmm5, QWORD PTR [rbx]", "SUBSD with memory source");
+    assert_eq!(instr.mnemonic(), "subsd");
+}
+
+#[test]
+fn test_subsd_with_memory_displacement() {
+    // Test SUBSD with memory operand using displacement.
+    let instr =
+        Instruction::Subsd { dest: Operand::xmm(XMMRegister::Xmm8), src: Operand::mem_disp(GPRegister64::Rdx, -32) };
+    assert_eq!(instr.to_string(), "subsd xmm8, QWORD PTR [rdx - 32]", "SUBSD with negative displacement");
+}
+
+#[test]
+fn test_subsd_with_large_displacement() {
+    // Test SUBSD with large positive memory displacement.
+    let instr =
+        Instruction::Subsd { dest: Operand::xmm(XMMRegister::Xmm14), src: Operand::mem_disp(GPRegister64::Rsi, 256) };
+    assert_eq!(instr.to_string(), "subsd xmm14, QWORD PTR [rsi + 256]", "SUBSD with large displacement");
+}
+
+// ============================================================================
+// SSE Scalar Subtraction - Comprehensive Edge Cases
+// ============================================================================
+
+#[test]
+fn test_sse_scalar_sub_mnemonic_consistency() {
+    // Verify mnemonic consistency for SSE scalar subtraction instructions.
+    let subss = Instruction::Subss { dest: Operand::xmm(XMMRegister::Xmm0), src: Operand::xmm(XMMRegister::Xmm1) };
+    assert_eq!(subss.mnemonic(), "subss");
+    assert_eq!(subss.to_string(), "subss xmm0, xmm1");
+
+    let subsd = Instruction::Subsd { dest: Operand::xmm(XMMRegister::Xmm2), src: Operand::xmm(XMMRegister::Xmm3) };
+    assert_eq!(subsd.mnemonic(), "subsd");
+    assert_eq!(subsd.to_string(), "subsd xmm2, xmm3");
+}
+
+#[test]
+fn test_sse_scalar_sub_clone_and_equality() {
+    // Test Clone and PartialEq for SSE scalar subtraction instructions.
+    let subss1 = Instruction::Subss { dest: Operand::xmm(XMMRegister::Xmm10), src: Operand::xmm(XMMRegister::Xmm11) };
+    let subss2 = subss1.clone();
+    assert_eq!(subss1, subss2, "Cloned SUBSS should equal original");
+
+    let subsd1 = Instruction::Subsd { dest: Operand::xmm(XMMRegister::Xmm12), src: Operand::xmm(XMMRegister::Xmm13) };
+    let subsd2 = subsd1.clone();
+    assert_eq!(subsd1, subsd2, "Cloned SUBSD should equal original");
+}
+
+#[test]
+fn test_sse_scalar_sub_not_control_flow() {
+    // Verify SSE scalar subtraction instructions are not control flow instructions.
+    let subss = Instruction::Subss { dest: Operand::xmm(XMMRegister::Xmm0), src: Operand::xmm(XMMRegister::Xmm1) };
+    assert!(!subss.is_jump(), "SUBSS should not be a jump");
+    assert!(!subss.is_call(), "SUBSS should not be a call");
+    assert!(!subss.is_return(), "SUBSS should not be a return");
+
+    let subsd = Instruction::Subsd { dest: Operand::xmm(XMMRegister::Xmm2), src: Operand::xmm(XMMRegister::Xmm3) };
+    assert!(!subsd.is_jump(), "SUBSD should not be a jump");
+    assert!(!subsd.is_call(), "SUBSD should not be a call");
+    assert!(!subsd.is_return(), "SUBSD should not be a return");
+}
+
+#[test]
+fn test_sse_scalar_sub_debug_formatting() {
+    // Test Debug trait implementation for SSE scalar subtraction instructions.
+    let subss = Instruction::Subss { dest: Operand::xmm(XMMRegister::Xmm4), src: Operand::xmm(XMMRegister::Xmm5) };
+    let debug_str = format!("{:?}", subss);
+    assert!(debug_str.contains("Subss"), "Debug output should contain 'Subss'");
+    assert!(debug_str.contains("Xmm4"), "Debug output should contain dest register");
+    assert!(debug_str.contains("Xmm5"), "Debug output should contain src register");
+
+    let subsd = Instruction::Subsd { dest: Operand::xmm(XMMRegister::Xmm6), src: Operand::xmm(XMMRegister::Xmm7) };
+    let debug_str = format!("{:?}", subsd);
+    assert!(debug_str.contains("Subsd"), "Debug output should contain 'Subsd'");
+}
+
+#[test]
+fn test_sse_scalar_sub_in_collections() {
+    // Test that SSE scalar subtraction instructions work in collections.
+    let instructions = vec![
+        Instruction::Subss { dest: Operand::xmm(XMMRegister::Xmm0), src: Operand::xmm(XMMRegister::Xmm1) },
+        Instruction::Subsd { dest: Operand::xmm(XMMRegister::Xmm2), src: Operand::xmm(XMMRegister::Xmm3) },
+    ];
+
+    assert_eq!(instructions.len(), 2);
+    assert_eq!(instructions[0].mnemonic(), "subss");
+    assert_eq!(instructions[1].mnemonic(), "subsd");
+
+    // Test searching
+    let subss_search =
+        Instruction::Subss { dest: Operand::xmm(XMMRegister::Xmm0), src: Operand::xmm(XMMRegister::Xmm1) };
+    assert!(instructions.contains(&subss_search));
+}
+
+#[test]
+fn test_sse_scalar_sub_pattern_matching() {
+    // Test pattern matching for SSE scalar subtraction instructions.
+    let classify = |instr: Instruction| -> &str {
+        match instr {
+            Instruction::Subss { .. } => "scalar_single",
+            Instruction::Subsd { .. } => "scalar_double",
+            _ => "other",
+        }
+    };
+
+    let subss = Instruction::Subss { dest: Operand::xmm(XMMRegister::Xmm8), src: Operand::xmm(XMMRegister::Xmm9) };
+    assert_eq!(classify(subss), "scalar_single");
+
+    let subsd = Instruction::Subsd { dest: Operand::xmm(XMMRegister::Xmm10), src: Operand::xmm(XMMRegister::Xmm11) };
+    assert_eq!(classify(subsd), "scalar_double");
+}
+
+#[test]
+fn test_sse_scalar_sub_all_xmm_registers() {
+    // Test SUBSS and SUBSD with all available XMM registers.
+    // This ensures proper formatting across the entire register range.
+    let xmm_regs = vec![
+        XMMRegister::Xmm0,
+        XMMRegister::Xmm1,
+        XMMRegister::Xmm2,
+        XMMRegister::Xmm3,
+        XMMRegister::Xmm4,
+        XMMRegister::Xmm5,
+        XMMRegister::Xmm6,
+        XMMRegister::Xmm7,
+        XMMRegister::Xmm8,
+        XMMRegister::Xmm9,
+        XMMRegister::Xmm10,
+        XMMRegister::Xmm11,
+        XMMRegister::Xmm12,
+        XMMRegister::Xmm13,
+        XMMRegister::Xmm14,
+        XMMRegister::Xmm15,
+    ];
+
+    for (i, &dest_reg) in xmm_regs.iter().enumerate() {
+        let src_reg = xmm_regs[(i + 1) % xmm_regs.len()];
+
+        // Test SUBSS
+        let subss = Instruction::Subss { dest: Operand::xmm(dest_reg), src: Operand::xmm(src_reg) };
+        assert_eq!(subss.mnemonic(), "subss");
+        assert!(subss.to_string().starts_with("subss"));
+
+        // Test SUBSD
+        let subsd = Instruction::Subsd { dest: Operand::xmm(dest_reg), src: Operand::xmm(src_reg) };
+        assert_eq!(subsd.mnemonic(), "subsd");
+        assert!(subsd.to_string().starts_with("subsd"));
+    }
+}
+
+#[test]
+fn test_sse_scalar_sub_semantic_correctness() {
+    // Verify semantic properties of SSE scalar subtraction instructions.
+    // SUBSS operates on single-precision (32-bit) floating-point values.
+    let subss = Instruction::Subss { dest: Operand::xmm(XMMRegister::Xmm0), src: Operand::mem(GPRegister64::Rax) };
+    assert_eq!(subss.mnemonic(), "subss");
+    assert!(subss.to_string().contains("subss"), "SUBSS should format with 'subss' mnemonic");
+
+    // SUBSD operates on double-precision (64-bit) floating-point values.
+    let subsd = Instruction::Subsd { dest: Operand::xmm(XMMRegister::Xmm1), src: Operand::mem(GPRegister64::Rbx) };
+    assert_eq!(subsd.mnemonic(), "subsd");
+    assert!(subsd.to_string().contains("subsd"), "SUBSD should format with 'subsd' mnemonic");
+
+    // Verify they are distinct instructions
+    assert_ne!(subss, subsd, "SUBSS and SUBSD should be different instructions");
+}
+
+#[test]
+fn test_sse_scalar_sub_operand_ordering() {
+    // Verify that operand ordering is correct: dest, src (Intel syntax).
+    let subss = Instruction::Subss { dest: Operand::xmm(XMMRegister::Xmm2), src: Operand::xmm(XMMRegister::Xmm3) };
+    let display = subss.to_string();
+    // Intel syntax: dest comes first, then source
+    assert!(display.starts_with("subss xmm2,"), "Destination should come first");
+    assert!(display.ends_with("xmm3"), "Source should come last");
+
+    let subsd = Instruction::Subsd { dest: Operand::xmm(XMMRegister::Xmm4), src: Operand::xmm(XMMRegister::Xmm5) };
+    let display = subsd.to_string();
+    assert!(display.starts_with("subsd xmm4,"), "Destination should come first");
+    assert!(display.ends_with("xmm5"), "Source should come last");
+}
+
+#[test]
+fn test_sse_scalar_sub_with_all_memory_forms() {
+    // Test SUBSS and SUBSD with various memory addressing modes.
+
+    // Direct memory reference
+    let subss_mem = Instruction::Subss { dest: Operand::xmm(XMMRegister::Xmm0), src: Operand::mem(GPRegister64::Rdi) };
+    assert!(subss_mem.to_string().contains("[rdi]"));
+
+    // Memory with negative displacement
+    let subss_neg =
+        Instruction::Subss { dest: Operand::xmm(XMMRegister::Xmm1), src: Operand::mem_disp(GPRegister64::Rbp, -8) };
+    assert!(subss_neg.to_string().contains("rbp - 8"));
+
+    // Memory with large positive displacement
+    let subsd_pos =
+        Instruction::Subsd { dest: Operand::xmm(XMMRegister::Xmm2), src: Operand::mem_disp(GPRegister64::Rsp, 128) };
+    assert!(subsd_pos.to_string().contains("rsp + 128"));
+
+    // Memory with zero displacement (should omit displacement)
+    let subsd_zero = Instruction::Subsd { dest: Operand::xmm(XMMRegister::Xmm3), src: Operand::mem(GPRegister64::Rcx) };
+    assert!(subsd_zero.to_string().contains("[rcx]"));
+    assert!(!subsd_zero.to_string().contains("+ 0"));
+}
+
+#[test]
+fn test_sse_scalar_sub_lowercase_formatting() {
+    // Verify that mnemonics are lowercase (x86 convention).
+    let subss = Instruction::Subss { dest: Operand::xmm(XMMRegister::Xmm0), src: Operand::xmm(XMMRegister::Xmm1) };
+    let display = subss.to_string();
+    assert_eq!(display.split_whitespace().next().unwrap(), "subss", "Mnemonic should be lowercase");
+
+    let subsd = Instruction::Subsd { dest: Operand::xmm(XMMRegister::Xmm2), src: Operand::xmm(XMMRegister::Xmm3) };
+    let display = subsd.to_string();
+    assert_eq!(display.split_whitespace().next().unwrap(), "subsd", "Mnemonic should be lowercase");
+}
