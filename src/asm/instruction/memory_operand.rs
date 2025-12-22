@@ -125,7 +125,7 @@ impl fmt::Display for MemoryOperand {
                 if self.displacement > 0 {
                     write!(f, " + {}", self.displacement)?;
                 } else {
-                    write!(f, " - {}", -self.displacement)?;
+                    write!(f, " - {}", -(self.displacement as i64))?;
                 }
             } else {
                 write!(f, "{}", self.displacement)?;
