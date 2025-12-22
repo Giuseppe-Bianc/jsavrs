@@ -5,7 +5,7 @@
 //! - Line 547: The unreachable!() case for IMUL with (None, Some(_)) pattern
 //! - All instruction variant combinations for Display trait
 //! - Mnemonic method coverage for all instruction types
-//! - Helper methods (is_jump, is_call, is_return) for all variants
+//! - Helper methods (`is_jump`, `is_call`, `is_return`) for all variants
 //! - Edge cases in operand formatting
 
 use jsavrs::asm::Instruction;
@@ -35,7 +35,7 @@ fn test_imul_unreachable_case_none_dest_some_src2() {
         Instruction::Imul { dest: None, src1: Operand::reg64(GPRegister64::Rax), src2: Some(Operand::imm32(42)) };
 
     // This should panic with unreachable!()
-    let _ = format!("{}", instr);
+    let _ = format!("{instr}");
 }
 
 // ============================================================================
@@ -75,6 +75,7 @@ fn test_all_logical_instruction_mnemonics() {
 }
 
 #[test]
+#[allow(clippy::redundant_clone)]
 fn test_all_shift_rotate_instruction_mnemonics() {
     // Test mnemonics for all shift and rotate instructions
     let count = Operand::imm8(1);
@@ -120,6 +121,7 @@ fn test_all_movement_instruction_mnemonics() {
 }
 
 #[test]
+#[allow(clippy::redundant_clone)]
 fn test_all_jump_instruction_mnemonics() {
     // Test mnemonics for all jump instructions
     let target = Operand::label("label");
@@ -153,6 +155,7 @@ fn test_all_control_flow_instruction_mnemonics() {
 }
 
 #[test]
+#[allow(clippy::redundant_clone)]
 fn test_all_sse_movement_instruction_mnemonics() {
     // Test mnemonics for SSE/AVX movement instructions
     let dest = Operand::xmm(XMMRegister::Xmm0);
@@ -169,6 +172,7 @@ fn test_all_sse_movement_instruction_mnemonics() {
 }
 
 #[test]
+#[allow(clippy::redundant_clone)]
 fn test_all_sse_arithmetic_instruction_mnemonics() {
     // Test mnemonics for SSE arithmetic instructions
     let dest = Operand::xmm(XMMRegister::Xmm0);
@@ -193,6 +197,7 @@ fn test_all_sse_arithmetic_instruction_mnemonics() {
 }
 
 #[test]
+#[allow(clippy::redundant_clone)]
 fn test_all_sse_logical_instruction_mnemonics() {
     // Test mnemonics for SSE logical instructions
     let dest = Operand::xmm(XMMRegister::Xmm0);
@@ -209,6 +214,7 @@ fn test_all_sse_logical_instruction_mnemonics() {
 }
 
 #[test]
+#[allow(clippy::redundant_clone)]
 fn test_all_sse_conversion_instruction_mnemonics() {
     // Test mnemonics for SSE conversion instructions
     let xmm = Operand::xmm(XMMRegister::Xmm0);
@@ -223,6 +229,7 @@ fn test_all_sse_conversion_instruction_mnemonics() {
 }
 
 #[test]
+#[allow(clippy::redundant_clone)]
 fn test_all_avx_instruction_mnemonics() {
     // Test mnemonics for AVX instructions
     let dest = Operand::ymm(YMMRegister::Ymm0);
@@ -242,6 +249,7 @@ fn test_all_avx_instruction_mnemonics() {
 }
 
 #[test]
+#[allow(clippy::redundant_clone)]
 fn test_all_fpu_instruction_mnemonics() {
     // Test mnemonics for FPU x87 instructions
     let mem = Operand::mem_disp(GPRegister64::Rbp, -8);
@@ -260,6 +268,7 @@ fn test_all_fpu_instruction_mnemonics() {
 }
 
 #[test]
+#[allow(clippy::redundant_clone)]
 fn test_all_bit_manipulation_instruction_mnemonics() {
     // Test mnemonics for bit manipulation instructions
     let dest = Operand::reg64(GPRegister64::Rax);
@@ -277,6 +286,7 @@ fn test_all_bit_manipulation_instruction_mnemonics() {
 }
 
 #[test]
+#[allow(clippy::redundant_clone)]
 fn test_all_cmov_instruction_mnemonics() {
     // Test mnemonics for conditional move instructions
     let dest = Operand::reg64(GPRegister64::Rax);
@@ -295,6 +305,7 @@ fn test_all_cmov_instruction_mnemonics() {
 }
 
 #[test]
+#[allow(clippy::redundant_clone)]
 fn test_all_setcc_instruction_mnemonics() {
     // Test mnemonics for SETcc instructions
     let dest = Operand::reg8(GPRegister8::Al);
@@ -347,6 +358,7 @@ fn test_all_special_instruction_mnemonics() {
 // ============================================================================
 
 #[test]
+#[allow(clippy::redundant_clone)]
 fn test_is_jump_for_all_jump_instructions() {
     // Test is_jump() returns true for all jump instructions
     let target = Operand::label("test");
@@ -420,6 +432,7 @@ fn test_is_return_false_for_non_return_instructions() {
 // ============================================================================
 
 #[test]
+#[allow(clippy::redundant_clone)]
 fn test_display_all_shift_rotate_instructions() {
     // Test Display for all shift and rotate instructions with various counts
     let reg = Operand::reg64(GPRegister64::Rax);
@@ -437,6 +450,7 @@ fn test_display_all_shift_rotate_instructions() {
 }
 
 #[test]
+#[allow(clippy::redundant_clone)]
 fn test_display_fpu_instructions_with_and_without_operands() {
     // Test Display for FPU instructions with optional operands
     let mem = Operand::mem_disp(GPRegister64::Rbp, -8);
@@ -456,6 +470,7 @@ fn test_display_fpu_instructions_with_and_without_operands() {
     assert_eq!(format!("{}", Instruction::Faddp { src: None }), "faddp");
 }
 #[test]
+#[allow(clippy::redundant_clone)]
 fn test_display_avx_three_operand_instructions() {
     // Test Display for AVX instructions with three operands
     let dest = Operand::ymm(YMMRegister::Ymm0);
@@ -544,6 +559,7 @@ fn test_display_control_instructions() {
 // ============================================================================
 
 #[test]
+#[allow(clippy::unreadable_literal)]
 fn test_imul_with_all_register_sizes() {
     // Test IMUL with 8-bit, 16-bit, 32-bit, and 64-bit registers
     assert_eq!(
@@ -575,6 +591,7 @@ fn test_imul_with_all_register_sizes() {
 }
 
 #[test]
+#[allow(clippy::redundant_clone)]
 fn test_shift_instructions_with_various_counts() {
     // Test shift instructions with immediate count, CL register, and 1
     let reg = Operand::reg32(GPRegister32::Ebx);
@@ -654,6 +671,7 @@ fn test_memory_operands_with_various_displacements() {
 }
 
 #[test]
+#[allow(clippy::redundant_clone)]
 fn test_all_setcc_instructions_display() {
     // Test Display for all SETcc instructions
     let dest = Operand::reg8(GPRegister8::Al);
@@ -697,24 +715,6 @@ fn test_xchg_instruction_display() {
         "xchg eax, ecx"
     );
 }
-
-//! Comprehensive coverage tests for lines 470-471 of instruction.rs
-//!
-//! These tests specifically target the `Mulsd` and `Divps` instruction variants
-//! in the Display trait implementation to ensure 100% code coverage.
-//!
-//! Lines 470-471 contain:
-//! ```rust
-//! | Self::Mulsd { dest, src }
-//! | Self::Divps { dest, src }
-//! ```
-//!
-//! These are part of a large pattern match in the Display implementation that
-//! formats SSE/AVX arithmetic instructions with two operands (dest, src).
-
-use jsavrs::asm::Instruction;
-use jsavrs::asm::Operand;
-use jsavrs::asm::{GPRegister64, XMMRegister};
 
 // ============================================================================
 // Line 470: Mulsd Instruction Coverage
@@ -763,11 +763,8 @@ fn test_mulsd_display_all_xmm_registers() {
     for dest_reg in &registers {
         for src_reg in &registers {
             let instr = Instruction::Mulsd { dest: Operand::xmm(*dest_reg), src: Operand::xmm(*src_reg) };
-            let expected = format!(
-                "mulsd {}, {}",
-                format!("{:?}", dest_reg).to_lowercase(),
-                format!("{:?}", src_reg).to_lowercase()
-            );
+            let expected =
+                format!("mulsd {}, {}", format!("{dest_reg:?}").to_lowercase(), format!("{src_reg:?}").to_lowercase());
             assert_eq!(instr.to_string(), expected);
         }
     }
@@ -853,11 +850,8 @@ fn test_divps_display_all_xmm_registers() {
     for dest_reg in &registers {
         for src_reg in &registers {
             let instr = Instruction::Divps { dest: Operand::xmm(*dest_reg), src: Operand::xmm(*src_reg) };
-            let expected = format!(
-                "divps {}, {}",
-                format!("{:?}", dest_reg).to_lowercase(),
-                format!("{:?}", src_reg).to_lowercase()
-            );
+            let expected =
+                format!("divps {}, {}", format!("{dest_reg:?}").to_lowercase(), format!("{src_reg:?}").to_lowercase());
             assert_eq!(instr.to_string(), expected);
         }
     }
@@ -909,7 +903,7 @@ fn test_mulsd_clone_and_equality() {
     let instr1 = Instruction::Mulsd { dest: Operand::xmm(XMMRegister::Xmm0), src: Operand::xmm(XMMRegister::Xmm1) };
     let instr2 = instr1.clone();
     assert_eq!(instr1, instr2);
-    assert_eq!(format!("{}", instr1), format!("{}", instr2));
+    assert_eq!(format!("{instr1}"), format!("{instr2}"));
 }
 
 #[test]
@@ -918,7 +912,7 @@ fn test_divps_clone_and_equality() {
     let instr1 = Instruction::Divps { dest: Operand::xmm(XMMRegister::Xmm3), src: Operand::xmm(XMMRegister::Xmm4) };
     let instr2 = instr1.clone();
     assert_eq!(instr1, instr2);
-    assert_eq!(format!("{}", instr1), format!("{}", instr2));
+    assert_eq!(format!("{instr1}"), format!("{instr2}"));
 }
 
 #[test]
@@ -960,7 +954,7 @@ fn test_divps_is_not_jump_call_or_return() {
 fn test_mulsd_debug_format() {
     // Test Debug trait for Mulsd instruction
     let instr = Instruction::Mulsd { dest: Operand::xmm(XMMRegister::Xmm2), src: Operand::xmm(XMMRegister::Xmm3) };
-    let debug_str = format!("{:?}", instr);
+    let debug_str = format!("{instr:?}");
     assert!(debug_str.contains("Mulsd"));
 }
 
@@ -968,7 +962,7 @@ fn test_mulsd_debug_format() {
 fn test_divps_debug_format() {
     // Test Debug trait for Divps instruction
     let instr = Instruction::Divps { dest: Operand::xmm(XMMRegister::Xmm6), src: Operand::xmm(XMMRegister::Xmm7) };
-    let debug_str = format!("{:?}", instr);
+    let debug_str = format!("{instr:?}");
     assert!(debug_str.contains("Divps"));
 }
 
@@ -1000,8 +994,8 @@ fn test_mulsd_with_all_base_registers() {
 
     for base_reg in &base_registers {
         let instr = Instruction::Mulsd { dest: Operand::xmm(XMMRegister::Xmm0), src: Operand::mem(*base_reg) };
-        let base_name = format!("{:?}", base_reg).to_lowercase();
-        let expected = format!("mulsd xmm0, QWORD PTR [{}]", base_name);
+        let base_name = format!("{base_reg:?}").to_lowercase();
+        let expected = format!("mulsd xmm0, QWORD PTR [{base_name}]");
         assert_eq!(instr.to_string(), expected);
     }
 }
@@ -1030,8 +1024,8 @@ fn test_divps_with_all_base_registers() {
 
     for base_reg in &base_registers {
         let instr = Instruction::Divps { dest: Operand::xmm(XMMRegister::Xmm1), src: Operand::mem(*base_reg) };
-        let base_name = format!("{:?}", base_reg).to_lowercase();
-        let expected = format!("divps xmm1, QWORD PTR [{}]", base_name);
+        let base_name = format!("{base_reg:?}").to_lowercase();
+        let expected = format!("divps xmm1, QWORD PTR [{base_name}]");
         assert_eq!(instr.to_string(), expected);
     }
 }
