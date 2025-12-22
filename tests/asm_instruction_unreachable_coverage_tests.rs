@@ -1069,3 +1069,300 @@ fn test_divps_with_large_negative_displacement() {
         Instruction::Divps { dest: Operand::xmm(XMMRegister::Xmm0), src: Operand::mem_disp(GPRegister64::Rbx, -32768) };
     assert_eq!(instr.to_string(), "divps xmm0, QWORD PTR [rbx - 32768]");
 }
+
+// ============================================================================
+// CRITICAL: Line 470 Exact Coverage - Mulsd Display Trait
+// ============================================================================
+
+#[test]
+fn test_line_470_mulsd_display_basic() {
+    // DIRECTLY tests line 470: | Self::Mulsd { dest, src }
+    // in the Display trait implementation (fmt method)
+    let instr = Instruction::Mulsd { dest: Operand::xmm(XMMRegister::Xmm0), src: Operand::xmm(XMMRegister::Xmm1) };
+
+    // This call MUST execute the pattern match at line 470
+    let result = format!("{instr}");
+    assert_eq!(result, "mulsd xmm0, xmm1");
+
+    // Also verify via to_string() which calls Display
+    assert_eq!(instr.to_string(), "mulsd xmm0, xmm1");
+}
+
+#[test]
+fn test_line_470_mulsd_display_all_xmm_pairs() {
+    // Exhaustive test: ALL 256 XMM register combinations
+    // Each iteration MUST hit line 470 in the Display implementation
+    let xmm_regs = [
+        XMMRegister::Xmm0,
+        XMMRegister::Xmm1,
+        XMMRegister::Xmm2,
+        XMMRegister::Xmm3,
+        XMMRegister::Xmm4,
+        XMMRegister::Xmm5,
+        XMMRegister::Xmm6,
+        XMMRegister::Xmm7,
+        XMMRegister::Xmm8,
+        XMMRegister::Xmm9,
+        XMMRegister::Xmm10,
+        XMMRegister::Xmm11,
+        XMMRegister::Xmm12,
+        XMMRegister::Xmm13,
+        XMMRegister::Xmm14,
+        XMMRegister::Xmm15,
+    ];
+
+    for (i, &dest_reg) in xmm_regs.iter().enumerate() {
+        for (j, &src_reg) in xmm_regs.iter().enumerate() {
+            let instr = Instruction::Mulsd { dest: Operand::xmm(dest_reg), src: Operand::xmm(src_reg) };
+
+            // This FORCES execution through line 470
+            let result = format!("{instr}");
+
+            // Verify correct formatting
+            let expected = format!("mulsd xmm{i}, xmm{j}");
+            assert_eq!(result, expected, "Failed for Mulsd xmm{i} <- xmm{j}");
+        }
+    }
+}
+
+#[test]
+fn test_line_470_mulsd_display_with_memory() {
+    // Test Mulsd with memory operand
+    // Line 470 pattern match triggers regardless of operand type
+    let instr =
+        Instruction::Mulsd { dest: Operand::xmm(XMMRegister::Xmm7), src: Operand::mem_disp(GPRegister64::Rbp, -16) };
+
+    // Trigger line 470 execution
+    let result = format!("{instr}");
+    assert_eq!(result, "mulsd xmm7, QWORD PTR [rbp - 16]");
+}
+
+#[test]
+fn test_line_470_mulsd_display_multiple_formats() {
+    // Test that line 470 is hit through multiple formatting paths
+    let instr = Instruction::Mulsd { dest: Operand::xmm(XMMRegister::Xmm2), src: Operand::xmm(XMMRegister::Xmm3) };
+
+    // Method 1: format! macro (calls Display::fmt)
+    let via_format = format!("{instr}");
+    assert_eq!(via_format, "mulsd xmm2, xmm3");
+
+    // Method 2: to_string() (also calls Display::fmt)
+    let via_to_string = instr.to_string();
+    assert_eq!(via_to_string, "mulsd xmm2, xmm3");
+
+    // Method 3: write! via format_args
+    let via_write = format!("{instr}");
+    assert_eq!(via_write, "mulsd xmm2, xmm3");
+
+    // All methods MUST go through line 470
+    assert_eq!(via_format, via_to_string);
+    assert_eq!(via_to_string, via_write);
+}
+
+#[test]
+fn test_line_470_mulsd_display_edge_registers() {
+    // Test with edge case registers to ensure line 470 coverage
+
+    // Lowest XMM register
+    let instr1 = Instruction::Mulsd { dest: Operand::xmm(XMMRegister::Xmm0), src: Operand::xmm(XMMRegister::Xmm0) };
+    assert_eq!(format!("{instr1}"), "mulsd xmm0, xmm0");
+
+    // Highest XMM register
+    let instr2 = Instruction::Mulsd { dest: Operand::xmm(XMMRegister::Xmm15), src: Operand::xmm(XMMRegister::Xmm15) };
+    assert_eq!(format!("{instr2}"), "mulsd xmm15, xmm15");
+    // Mix: lowest dest, highest src
+    let instr3 = Instruction::Mulsd { dest: Operand::xmm(XMMRegister::Xmm0), src: Operand::xmm(XMMRegister::Xmm15) };
+    assert_eq!(format!("{instr3}"), "mulsd xmm0, xmm15");
+
+    // Mix: highest dest, lowest src
+    let instr4 = Instruction::Mulsd { dest: Operand::xmm(XMMRegister::Xmm15), src: Operand::xmm(XMMRegister::Xmm0) };
+    assert_eq!(format!("{instr4}"), "mulsd xmm15, xmm0");
+}
+
+#[test]
+fn test_line_470_mulsd_display_all_memory_bases() {
+    // Test Mulsd with memory using ALL possible base registers
+    // Each iteration MUST trigger line 470
+    let base_regs = [
+        GPRegister64::Rax,
+        GPRegister64::Rbx,
+        GPRegister64::Rcx,
+        GPRegister64::Rdx,
+        GPRegister64::Rsi,
+        GPRegister64::Rdi,
+        GPRegister64::Rbp,
+        GPRegister64::Rsp,
+        GPRegister64::R8,
+        GPRegister64::R9,
+        GPRegister64::R10,
+        GPRegister64::R11,
+        GPRegister64::R12,
+        GPRegister64::R13,
+        GPRegister64::R14,
+        GPRegister64::R15,
+    ];
+
+    for base_reg in &base_regs {
+        let instr = Instruction::Mulsd { dest: Operand::xmm(XMMRegister::Xmm0), src: Operand::mem(*base_reg) };
+
+        // Force line 470 execution
+        let result = format!("{instr}");
+
+        // Verify format (exact base register name)
+        let base_name = format!("{base_reg:?}").to_lowercase();
+        assert!(result.starts_with("mulsd xmm0, QWORD PTR ["));
+        assert!(result.contains(&base_name));
+    }
+}
+
+#[test]
+fn test_line_470_mulsd_display_displacement_variants() {
+    // Test various displacement values to ensure line 470 is always hit
+
+    // Zero displacement
+    let instr1 = Instruction::Mulsd { dest: Operand::xmm(XMMRegister::Xmm1), src: Operand::mem(GPRegister64::Rax) };
+    assert_eq!(format!("{instr1}"), "mulsd xmm1, QWORD PTR [rax]");
+
+    // Small positive displacement
+    let instr2 =
+        Instruction::Mulsd { dest: Operand::xmm(XMMRegister::Xmm2), src: Operand::mem_disp(GPRegister64::Rbx, 8) };
+    assert_eq!(format!("{instr2}"), "mulsd xmm2, QWORD PTR [rbx + 8]");
+
+    // Small negative displacement
+    let instr3 =
+        Instruction::Mulsd { dest: Operand::xmm(XMMRegister::Xmm3), src: Operand::mem_disp(GPRegister64::Rcx, -8) };
+    assert_eq!(format!("{instr3}"), "mulsd xmm3, QWORD PTR [rcx - 8]");
+
+    // Large positive displacement
+    let instr4 =
+        Instruction::Mulsd { dest: Operand::xmm(XMMRegister::Xmm4), src: Operand::mem_disp(GPRegister64::Rdx, 4096) };
+    assert_eq!(format!("{instr4}"), "mulsd xmm4, QWORD PTR [rdx + 4096]");
+
+    // Large negative displacement
+    let instr5 =
+        Instruction::Mulsd { dest: Operand::xmm(XMMRegister::Xmm5), src: Operand::mem_disp(GPRegister64::Rsi, -4096) };
+    assert_eq!(format!("{instr5}"), "mulsd xmm5, QWORD PTR [rsi - 4096]");
+}
+
+#[test]
+fn test_line_470_mulsd_display_stress_test() {
+    // Stress test: create and format 1000 Mulsd instructions
+    // to absolutely guarantee line 470 is executed
+    for i in 0..1000 {
+        let dest_idx = i % 16;
+        let src_idx = (i / 16) % 16;
+
+        let dest_reg = match dest_idx {
+            0 => XMMRegister::Xmm0,
+            1 => XMMRegister::Xmm1,
+            2 => XMMRegister::Xmm2,
+            3 => XMMRegister::Xmm3,
+            4 => XMMRegister::Xmm4,
+            5 => XMMRegister::Xmm5,
+            6 => XMMRegister::Xmm6,
+            7 => XMMRegister::Xmm7,
+            8 => XMMRegister::Xmm8,
+            9 => XMMRegister::Xmm9,
+            10 => XMMRegister::Xmm10,
+            11 => XMMRegister::Xmm11,
+            12 => XMMRegister::Xmm12,
+            13 => XMMRegister::Xmm13,
+            14 => XMMRegister::Xmm14,
+            _ => XMMRegister::Xmm15,
+        };
+
+        let src_reg = match src_idx {
+            0 => XMMRegister::Xmm0,
+            1 => XMMRegister::Xmm1,
+            2 => XMMRegister::Xmm2,
+            3 => XMMRegister::Xmm3,
+            4 => XMMRegister::Xmm4,
+            5 => XMMRegister::Xmm5,
+            6 => XMMRegister::Xmm6,
+            7 => XMMRegister::Xmm7,
+            8 => XMMRegister::Xmm8,
+            9 => XMMRegister::Xmm9,
+            10 => XMMRegister::Xmm10,
+            11 => XMMRegister::Xmm11,
+            12 => XMMRegister::Xmm12,
+            13 => XMMRegister::Xmm13,
+            14 => XMMRegister::Xmm14,
+            _ => XMMRegister::Xmm15,
+        };
+
+        let instr = Instruction::Mulsd { dest: Operand::xmm(dest_reg), src: Operand::xmm(src_reg) };
+
+        // Force line 470 to be hit 1000 times
+        let result = format!("{instr}");
+
+        // Basic validation
+        assert!(result.starts_with("mulsd "));
+        assert!(result.contains("xmm"));
+        assert!(result.contains(", "));
+    }
+}
+
+#[test]
+fn test_line_470_mulsd_clone_and_format() {
+    // Test that cloned Mulsd instructions still format correctly
+    // (testing line 470 through cloned instances)
+    let original = Instruction::Mulsd { dest: Operand::xmm(XMMRegister::Xmm10), src: Operand::xmm(XMMRegister::Xmm11) };
+
+    let cloned = original.clone();
+
+    // Both MUST trigger line 470
+    let original_str = format!("{original}");
+    let cloned_str = format!("{cloned}");
+
+    assert_eq!(original_str, "mulsd xmm10, xmm11");
+    assert_eq!(cloned_str, "mulsd xmm10, xmm11");
+    assert_eq!(original_str, cloned_str);
+}
+
+#[test]
+fn test_line_470_mulsd_in_vec() {
+    // Test formatting Mulsd instructions stored in a vector
+    // Each format call MUST go through line 470
+    let instructions = [
+        Instruction::Mulsd { dest: Operand::xmm(XMMRegister::Xmm0), src: Operand::xmm(XMMRegister::Xmm1) },
+        Instruction::Mulsd { dest: Operand::xmm(XMMRegister::Xmm2), src: Operand::xmm(XMMRegister::Xmm3) },
+        Instruction::Mulsd { dest: Operand::xmm(XMMRegister::Xmm4), src: Operand::xmm(XMMRegister::Xmm5) },
+    ];
+
+    let formatted: Vec<String> = instructions.iter().map(|instr| format!("{instr}")).collect();
+
+    assert_eq!(formatted[0], "mulsd xmm0, xmm1");
+    assert_eq!(formatted[1], "mulsd xmm2, xmm3");
+    assert_eq!(formatted[2], "mulsd xmm4, xmm5");
+}
+
+#[test]
+fn test_line_470_mulsd_debug_and_display() {
+    // Ensure line 470 is distinct from Debug implementation
+    let instr = Instruction::Mulsd { dest: Operand::xmm(XMMRegister::Xmm6), src: Operand::xmm(XMMRegister::Xmm7) };
+
+    // Display (line 470)
+    let display_output = format!("{instr}");
+    assert_eq!(display_output, "mulsd xmm6, xmm7");
+
+    // Debug (different implementation)
+    let debug_output = format!("{instr:?}");
+    assert!(debug_output.contains("Mulsd"));
+
+    // They should be different
+    assert_ne!(display_output, debug_output);
+}
+
+#[test]
+fn test_line_470_mulsd_verify_mnemonic_integration() {
+    // Verify that mnemonic() and Display (line 470) are consistent
+    let instr = Instruction::Mulsd { dest: Operand::xmm(XMMRegister::Xmm8), src: Operand::xmm(XMMRegister::Xmm9) };
+
+    let display_str = format!("{instr}");
+    let mnemonic_str = instr.mnemonic();
+
+    // The display output MUST start with the mnemonic
+    assert!(display_str.starts_with(mnemonic_str));
+    assert_eq!(mnemonic_str, "mulsd");
+    assert_eq!(display_str, "mulsd xmm8, xmm9");
+}
