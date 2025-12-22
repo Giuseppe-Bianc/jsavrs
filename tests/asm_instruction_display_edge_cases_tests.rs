@@ -1031,9 +1031,80 @@ fn test_mnemonic_for_string_instructions() {
     assert_eq!(Instruction::Stosq.mnemonic(), "stosq");
 }
 
+#[test]
+fn test_mnemonic_for_special_instructions() {
+    // Test that special instructions return correct mnemonics (lines 273-279)
+    assert_eq!(Instruction::Cdq.mnemonic(), "cdq");
+    assert_eq!(Instruction::Syscall.mnemonic(), "syscall");
+    assert_eq!(Instruction::Sysret.mnemonic(), "sysret");
+}
+
+#[test]
+fn test_mnemonic_for_sse_move_instructions() {
+    // Test SSE move instructions mnemonics (lines 276-279)
+    assert_eq!(
+        Instruction::Movaps { dest: Operand::xmm(XMMRegister::Xmm0), src: Operand::xmm(XMMRegister::Xmm1) }.mnemonic(),
+        "movaps"
+    );
+    assert_eq!(
+        Instruction::Movapd { dest: Operand::xmm(XMMRegister::Xmm2), src: Operand::xmm(XMMRegister::Xmm3) }.mnemonic(),
+        "movapd"
+    );
+    assert_eq!(
+        Instruction::Movups { dest: Operand::xmm(XMMRegister::Xmm4), src: Operand::xmm(XMMRegister::Xmm5) }.mnemonic(),
+        "movups"
+    );
+    assert_eq!(
+        Instruction::Movupd { dest: Operand::xmm(XMMRegister::Xmm6), src: Operand::xmm(XMMRegister::Xmm7) }.mnemonic(),
+        "movupd"
+    );
+}
+
 // ============================================================================
 // Edge Cases and Boundary Conditions
 // ============================================================================
+
+#[test]
+fn test_special_instruction_display() {
+    // Test display formatting for special instructions (Cdq, Syscall, Sysret)
+    let cdq = Instruction::Cdq;
+    assert_eq!(cdq.to_string(), "cdq");
+    assert_eq!(cdq.mnemonic(), "cdq");
+
+    let syscall = Instruction::Syscall;
+    assert_eq!(syscall.to_string(), "syscall");
+    assert_eq!(syscall.mnemonic(), "syscall");
+
+    let sysret = Instruction::Sysret;
+    assert_eq!(sysret.to_string(), "sysret");
+    assert_eq!(sysret.mnemonic(), "sysret");
+}
+
+#[test]
+fn test_sse_aligned_move_display() {
+    // Test SSE aligned move instructions display
+    let movaps = Instruction::Movaps { dest: Operand::xmm(XMMRegister::Xmm0), src: Operand::mem(GPRegister64::Rax) };
+    assert_eq!(movaps.to_string(), "movaps xmm0, QWORD PTR [rax]");
+    assert_eq!(movaps.mnemonic(), "movaps");
+
+    let movapd = Instruction::Movapd { dest: Operand::xmm(XMMRegister::Xmm1), src: Operand::xmm(XMMRegister::Xmm2) };
+    assert_eq!(movapd.to_string(), "movapd xmm1, xmm2");
+    assert_eq!(movapd.mnemonic(), "movapd");
+}
+
+#[test]
+fn test_sse_unaligned_move_display() {
+    // Test SSE unaligned move instructions display
+    let movups =
+        Instruction::Movups { dest: Operand::xmm(XMMRegister::Xmm3), src: Operand::mem_disp(GPRegister64::Rbx, 16) };
+    assert_eq!(movups.to_string(), "movups xmm3, QWORD PTR [rbx + 16]");
+    assert_eq!(movups.mnemonic(), "movups");
+
+    let movupd =
+        Instruction::Movupd { dest: Operand::mem_disp(GPRegister64::Rcx, -8), src: Operand::xmm(XMMRegister::Xmm4) };
+    assert_eq!(movupd.to_string(), "movupd QWORD PTR [rcx - 8], xmm4");
+    assert_eq!(movupd.mnemonic(), "movupd");
+}
 
 #[test]
 fn test_instruction_clone() {
