@@ -697,3 +697,381 @@ fn test_xchg_instruction_display() {
         "xchg eax, ecx"
     );
 }
+
+//! Comprehensive coverage tests for lines 470-471 of instruction.rs
+//!
+//! These tests specifically target the `Mulsd` and `Divps` instruction variants
+//! in the Display trait implementation to ensure 100% code coverage.
+//!
+//! Lines 470-471 contain:
+//! ```rust
+//! | Self::Mulsd { dest, src }
+//! | Self::Divps { dest, src }
+//! ```
+//!
+//! These are part of a large pattern match in the Display implementation that
+//! formats SSE/AVX arithmetic instructions with two operands (dest, src).
+
+use jsavrs::asm::Instruction;
+use jsavrs::asm::Operand;
+use jsavrs::asm::{GPRegister64, XMMRegister};
+
+// ============================================================================
+// Line 470: Mulsd Instruction Coverage
+// ============================================================================
+
+#[test]
+fn test_mulsd_display_xmm_to_xmm() {
+    // Test MULSD with XMM register to XMM register
+    // Line 470: Self::Mulsd { dest, src }
+    let instr = Instruction::Mulsd { dest: Operand::xmm(XMMRegister::Xmm0), src: Operand::xmm(XMMRegister::Xmm1) };
+    assert_eq!(instr.to_string(), "mulsd xmm0, xmm1");
+}
+
+#[test]
+fn test_mulsd_display_with_memory_operand() {
+    // Test MULSD with memory operand as source
+    // Line 470: Self::Mulsd { dest, src }
+    let instr =
+        Instruction::Mulsd { dest: Operand::xmm(XMMRegister::Xmm7), src: Operand::mem_disp(GPRegister64::Rbp, -16) };
+    assert_eq!(instr.to_string(), "mulsd xmm7, QWORD PTR [rbp - 16]");
+}
+
+#[test]
+fn test_mulsd_display_all_xmm_registers() {
+    // Test MULSD with various XMM register combinations
+    // Line 470: Self::Mulsd { dest, src }
+    let registers = [
+        XMMRegister::Xmm0,
+        XMMRegister::Xmm1,
+        XMMRegister::Xmm2,
+        XMMRegister::Xmm3,
+        XMMRegister::Xmm4,
+        XMMRegister::Xmm5,
+        XMMRegister::Xmm6,
+        XMMRegister::Xmm7,
+        XMMRegister::Xmm8,
+        XMMRegister::Xmm9,
+        XMMRegister::Xmm10,
+        XMMRegister::Xmm11,
+        XMMRegister::Xmm12,
+        XMMRegister::Xmm13,
+        XMMRegister::Xmm14,
+        XMMRegister::Xmm15,
+    ];
+
+    for dest_reg in &registers {
+        for src_reg in &registers {
+            let instr = Instruction::Mulsd { dest: Operand::xmm(*dest_reg), src: Operand::xmm(*src_reg) };
+            let expected = format!(
+                "mulsd {}, {}",
+                format!("{:?}", dest_reg).to_lowercase(),
+                format!("{:?}", src_reg).to_lowercase()
+            );
+            assert_eq!(instr.to_string(), expected);
+        }
+    }
+}
+
+#[test]
+fn test_mulsd_mnemonic() {
+    // Test that mnemonic() returns "mulsd" for Mulsd instruction
+    // This verifies the mnemonic method coverage for line 470
+    let instr = Instruction::Mulsd { dest: Operand::xmm(XMMRegister::Xmm0), src: Operand::xmm(XMMRegister::Xmm1) };
+    assert_eq!(instr.mnemonic(), "mulsd");
+}
+
+#[test]
+fn test_mulsd_with_memory_positive_displacement() {
+    // Test MULSD with positive memory displacement
+    // Line 470: Self::Mulsd { dest, src }
+    let instr =
+        Instruction::Mulsd { dest: Operand::xmm(XMMRegister::Xmm3), src: Operand::mem_disp(GPRegister64::Rsi, 128) };
+    assert_eq!(instr.to_string(), "mulsd xmm3, QWORD PTR [rsi + 128]");
+}
+
+#[test]
+fn test_mulsd_with_memory_zero_displacement() {
+    // Test MULSD with zero memory displacement
+    // Line 470: Self::Mulsd { dest, src }
+    let instr = Instruction::Mulsd { dest: Operand::xmm(XMMRegister::Xmm15), src: Operand::mem(GPRegister64::Rdx) };
+    assert_eq!(instr.to_string(), "mulsd xmm15, QWORD PTR [rdx]");
+}
+
+#[test]
+fn test_mulsd_with_high_registers() {
+    // Test MULSD with high XMM registers (xmm8-xmm15)
+    // Line 470: Self::Mulsd { dest, src }
+    let instr = Instruction::Mulsd { dest: Operand::xmm(XMMRegister::Xmm14), src: Operand::xmm(XMMRegister::Xmm13) };
+    assert_eq!(instr.to_string(), "mulsd xmm14, xmm13");
+}
+
+// ============================================================================
+// Line 471: Divps Instruction Coverage
+// ============================================================================
+
+#[test]
+fn test_divps_display_xmm_to_xmm() {
+    // Test DIVPS with XMM register to XMM register
+    // Line 471: Self::Divps { dest, src }
+    let instr = Instruction::Divps { dest: Operand::xmm(XMMRegister::Xmm0), src: Operand::xmm(XMMRegister::Xmm1) };
+    assert_eq!(instr.to_string(), "divps xmm0, xmm1");
+}
+
+#[test]
+fn test_divps_display_with_memory_operand() {
+    // Test DIVPS with memory operand as source
+    // Line 471: Self::Divps { dest, src }
+    let instr =
+        Instruction::Divps { dest: Operand::xmm(XMMRegister::Xmm5), src: Operand::mem_disp(GPRegister64::Rsp, 32) };
+    assert_eq!(instr.to_string(), "divps xmm5, QWORD PTR [rsp + 32]");
+}
+
+#[test]
+fn test_divps_display_all_xmm_registers() {
+    // Test DIVPS with various XMM register combinations
+    // Line 471: Self::Divps { dest, src }
+    let registers = [
+        XMMRegister::Xmm0,
+        XMMRegister::Xmm1,
+        XMMRegister::Xmm2,
+        XMMRegister::Xmm3,
+        XMMRegister::Xmm4,
+        XMMRegister::Xmm5,
+        XMMRegister::Xmm6,
+        XMMRegister::Xmm7,
+        XMMRegister::Xmm8,
+        XMMRegister::Xmm9,
+        XMMRegister::Xmm10,
+        XMMRegister::Xmm11,
+        XMMRegister::Xmm12,
+        XMMRegister::Xmm13,
+        XMMRegister::Xmm14,
+        XMMRegister::Xmm15,
+    ];
+
+    for dest_reg in &registers {
+        for src_reg in &registers {
+            let instr = Instruction::Divps { dest: Operand::xmm(*dest_reg), src: Operand::xmm(*src_reg) };
+            let expected = format!(
+                "divps {}, {}",
+                format!("{:?}", dest_reg).to_lowercase(),
+                format!("{:?}", src_reg).to_lowercase()
+            );
+            assert_eq!(instr.to_string(), expected);
+        }
+    }
+}
+
+#[test]
+fn test_divps_mnemonic() {
+    // Test that mnemonic() returns "divps" for Divps instruction
+    // This verifies the mnemonic method coverage for line 471
+    let instr = Instruction::Divps { dest: Operand::xmm(XMMRegister::Xmm0), src: Operand::xmm(XMMRegister::Xmm1) };
+    assert_eq!(instr.mnemonic(), "divps");
+}
+
+#[test]
+fn test_divps_with_memory_negative_displacement() {
+    // Test DIVPS with negative memory displacement
+    // Line 471: Self::Divps { dest, src }
+    let instr =
+        Instruction::Divps { dest: Operand::xmm(XMMRegister::Xmm9), src: Operand::mem_disp(GPRegister64::Rbp, -256) };
+    assert_eq!(instr.to_string(), "divps xmm9, QWORD PTR [rbp - 256]");
+}
+
+#[test]
+fn test_divps_with_memory_large_positive_displacement() {
+    // Test DIVPS with large positive memory displacement
+    // Line 471: Self::Divps { dest, src }
+    let instr = Instruction::Divps {
+        dest: Operand::xmm(XMMRegister::Xmm12),
+        src: Operand::mem_disp(GPRegister64::Rdi, 0x1000),
+    };
+    assert_eq!(instr.to_string(), "divps xmm12, QWORD PTR [rdi + 4096]");
+}
+
+#[test]
+fn test_divps_with_high_registers() {
+    // Test DIVPS with high XMM registers (xmm8-xmm15)
+    // Line 471: Self::Divps { dest, src }
+    let instr = Instruction::Divps { dest: Operand::xmm(XMMRegister::Xmm15), src: Operand::xmm(XMMRegister::Xmm8) };
+    assert_eq!(instr.to_string(), "divps xmm15, xmm8");
+}
+
+// ============================================================================
+// Edge Case Tests: Comparison and Cloning
+// ============================================================================
+
+#[test]
+fn test_mulsd_clone_and_equality() {
+    // Test Clone and PartialEq for Mulsd instruction
+    let instr1 = Instruction::Mulsd { dest: Operand::xmm(XMMRegister::Xmm0), src: Operand::xmm(XMMRegister::Xmm1) };
+    let instr2 = instr1.clone();
+    assert_eq!(instr1, instr2);
+    assert_eq!(format!("{}", instr1), format!("{}", instr2));
+}
+
+#[test]
+fn test_divps_clone_and_equality() {
+    // Test Clone and PartialEq for Divps instruction
+    let instr1 = Instruction::Divps { dest: Operand::xmm(XMMRegister::Xmm3), src: Operand::xmm(XMMRegister::Xmm4) };
+    let instr2 = instr1.clone();
+    assert_eq!(instr1, instr2);
+    assert_eq!(format!("{}", instr1), format!("{}", instr2));
+}
+
+#[test]
+fn test_mulsd_vs_divps_inequality() {
+    // Test that Mulsd and Divps are not equal even with same operands
+    let mulsd = Instruction::Mulsd { dest: Operand::xmm(XMMRegister::Xmm0), src: Operand::xmm(XMMRegister::Xmm1) };
+    let divps = Instruction::Divps { dest: Operand::xmm(XMMRegister::Xmm0), src: Operand::xmm(XMMRegister::Xmm1) };
+    assert_ne!(mulsd, divps);
+    assert_ne!(mulsd.mnemonic(), divps.mnemonic());
+}
+
+// ============================================================================
+// Helper Methods Coverage for Lines 470-471
+// ============================================================================
+
+#[test]
+fn test_mulsd_is_not_jump_call_or_return() {
+    // Test that Mulsd is not classified as jump, call, or return
+    let instr = Instruction::Mulsd { dest: Operand::xmm(XMMRegister::Xmm0), src: Operand::xmm(XMMRegister::Xmm1) };
+    assert!(!instr.is_jump());
+    assert!(!instr.is_call());
+    assert!(!instr.is_return());
+}
+
+#[test]
+fn test_divps_is_not_jump_call_or_return() {
+    // Test that Divps is not classified as jump, call, or return
+    let instr = Instruction::Divps { dest: Operand::xmm(XMMRegister::Xmm0), src: Operand::xmm(XMMRegister::Xmm1) };
+    assert!(!instr.is_jump());
+    assert!(!instr.is_call());
+    assert!(!instr.is_return());
+}
+
+// ============================================================================
+// Debug Trait Coverage
+// ============================================================================
+
+#[test]
+fn test_mulsd_debug_format() {
+    // Test Debug trait for Mulsd instruction
+    let instr = Instruction::Mulsd { dest: Operand::xmm(XMMRegister::Xmm2), src: Operand::xmm(XMMRegister::Xmm3) };
+    let debug_str = format!("{:?}", instr);
+    assert!(debug_str.contains("Mulsd"));
+}
+
+#[test]
+fn test_divps_debug_format() {
+    // Test Debug trait for Divps instruction
+    let instr = Instruction::Divps { dest: Operand::xmm(XMMRegister::Xmm6), src: Operand::xmm(XMMRegister::Xmm7) };
+    let debug_str = format!("{:?}", instr);
+    assert!(debug_str.contains("Divps"));
+}
+
+// ============================================================================
+// Complex Operand Combinations
+// ============================================================================
+
+#[test]
+fn test_mulsd_with_all_base_registers() {
+    // Test MULSD with memory operands using all possible base registers
+    let base_registers = [
+        GPRegister64::Rax,
+        GPRegister64::Rbx,
+        GPRegister64::Rcx,
+        GPRegister64::Rdx,
+        GPRegister64::Rsi,
+        GPRegister64::Rdi,
+        GPRegister64::Rbp,
+        GPRegister64::Rsp,
+        GPRegister64::R8,
+        GPRegister64::R9,
+        GPRegister64::R10,
+        GPRegister64::R11,
+        GPRegister64::R12,
+        GPRegister64::R13,
+        GPRegister64::R14,
+        GPRegister64::R15,
+    ];
+
+    for base_reg in &base_registers {
+        let instr = Instruction::Mulsd { dest: Operand::xmm(XMMRegister::Xmm0), src: Operand::mem(*base_reg) };
+        let base_name = format!("{:?}", base_reg).to_lowercase();
+        let expected = format!("mulsd xmm0, QWORD PTR [{}]", base_name);
+        assert_eq!(instr.to_string(), expected);
+    }
+}
+
+#[test]
+fn test_divps_with_all_base_registers() {
+    // Test DIVPS with memory operands using all possible base registers
+    let base_registers = [
+        GPRegister64::Rax,
+        GPRegister64::Rbx,
+        GPRegister64::Rcx,
+        GPRegister64::Rdx,
+        GPRegister64::Rsi,
+        GPRegister64::Rdi,
+        GPRegister64::Rbp,
+        GPRegister64::Rsp,
+        GPRegister64::R8,
+        GPRegister64::R9,
+        GPRegister64::R10,
+        GPRegister64::R11,
+        GPRegister64::R12,
+        GPRegister64::R13,
+        GPRegister64::R14,
+        GPRegister64::R15,
+    ];
+
+    for base_reg in &base_registers {
+        let instr = Instruction::Divps { dest: Operand::xmm(XMMRegister::Xmm1), src: Operand::mem(*base_reg) };
+        let base_name = format!("{:?}", base_reg).to_lowercase();
+        let expected = format!("divps xmm1, QWORD PTR [{}]", base_name);
+        assert_eq!(instr.to_string(), expected);
+    }
+}
+
+// ============================================================================
+// Boundary Value Tests
+// ============================================================================
+
+#[test]
+fn test_mulsd_with_max_positive_displacement() {
+    // Test MULSD with maximum positive i32 displacement
+    let instr = Instruction::Mulsd {
+        dest: Operand::xmm(XMMRegister::Xmm0),
+        src: Operand::mem_disp(GPRegister64::Rax, i32::MAX),
+    };
+    assert_eq!(instr.to_string(), format!("mulsd xmm0, QWORD PTR [rax + {}]", i32::MAX));
+}
+
+#[test]
+fn test_mulsd_with_large_negative_displacement() {
+    // Test MULSD with large negative displacement
+    let instr =
+        Instruction::Mulsd { dest: Operand::xmm(XMMRegister::Xmm0), src: Operand::mem_disp(GPRegister64::Rax, -65536) };
+    assert_eq!(instr.to_string(), "mulsd xmm0, QWORD PTR [rax - 65536]");
+}
+
+#[test]
+fn test_divps_with_max_positive_displacement() {
+    // Test DIVPS with maximum positive i32 displacement
+    let instr = Instruction::Divps {
+        dest: Operand::xmm(XMMRegister::Xmm0),
+        src: Operand::mem_disp(GPRegister64::Rbx, i32::MAX),
+    };
+    assert_eq!(instr.to_string(), format!("divps xmm0, QWORD PTR [rbx + {}]", i32::MAX));
+}
+
+#[test]
+fn test_divps_with_large_negative_displacement() {
+    // Test DIVPS with large negative displacement
+    let instr =
+        Instruction::Divps { dest: Operand::xmm(XMMRegister::Xmm0), src: Operand::mem_disp(GPRegister64::Rbx, -32768) };
+    assert_eq!(instr.to_string(), "divps xmm0, QWORD PTR [rbx - 32768]");
+}
