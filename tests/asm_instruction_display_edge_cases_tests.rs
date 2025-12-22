@@ -1357,8 +1357,8 @@ fn test_control_instructions_mnemonic_consistency() {
     ];
 
     for (instr, expected_mnemonic) in instructions {
-        assert_eq!(instr.mnemonic(), expected_mnemonic, "Mnemonic mismatch for {:?}", instr);
-        assert_eq!(instr.to_string(), expected_mnemonic, "Display mismatch for {:?}", instr);
+        assert_eq!(instr.mnemonic(), expected_mnemonic, "Mnemonic mismatch for {instr:?}");
+        assert_eq!(instr.to_string(), expected_mnemonic, "Display mismatch for {instr:?}");
     }
 }
 
@@ -1390,9 +1390,9 @@ fn test_control_instructions_not_jump_call_return() {
     let instructions = vec![Instruction::Hlt, Instruction::Cpuid, Instruction::Pause, Instruction::Cqo];
 
     for instr in instructions {
-        assert!(!instr.is_jump(), "{:?} should not be a jump", instr);
-        assert!(!instr.is_call(), "{:?} should not be a call", instr);
-        assert!(!instr.is_return(), "{:?} should not be a return", instr);
+        assert!(!instr.is_jump(), "{instr:?} should not be a jump");
+        assert!(!instr.is_call(), "{instr:?} should not be a call");
+        assert!(!instr.is_return(), "{instr:?} should not be a return");
     }
 }
 
@@ -1401,19 +1401,19 @@ fn test_control_instructions_debug_formatting() {
     // Test that control instructions have proper Debug trait implementation.
     // This is essential for debugging and logging purposes.
     let hlt = Instruction::Hlt;
-    let debug_str = format!("{:?}", hlt);
+    let debug_str = format!("{hlt:?}");
     assert!(debug_str.contains("Hlt"), "Debug output should contain 'Hlt'");
 
     let cpuid = Instruction::Cpuid;
-    let debug_str = format!("{:?}", cpuid);
+    let debug_str = format!("{cpuid:?}");
     assert!(debug_str.contains("Cpuid"), "Debug output should contain 'Cpuid'");
 
     let pause = Instruction::Pause;
-    let debug_str = format!("{:?}", pause);
+    let debug_str = format!("{pause:?}");
     assert!(debug_str.contains("Pause"), "Debug output should contain 'Pause'");
 
     let cqo = Instruction::Cqo;
-    let debug_str = format!("{:?}", cqo);
+    let debug_str = format!("{cqo:?}");
     assert!(debug_str.contains("Cqo"), "Debug output should contain 'Cqo'");
 }
 
@@ -1547,10 +1547,10 @@ fn test_control_instructions_formatting_consistency() {
     for instr in instructions {
         let display = instr.to_string();
         let mnemonic = instr.mnemonic();
-        assert_eq!(display, mnemonic, "Display and mnemonic should be identical for {:?}", instr);
+        assert_eq!(display, mnemonic, "Display and mnemonic should be identical for {instr:?}");
 
         // Verify lowercase (x86 convention)
-        assert_eq!(display, display.to_lowercase(), "Mnemonic should be lowercase for {:?}", instr);
+        assert_eq!(display, display.to_lowercase(), "Mnemonic should be lowercase for {instr:?}");
     }
 }
 
@@ -1629,6 +1629,7 @@ fn test_subsd_with_large_displacement() {
 // ============================================================================
 
 #[test]
+#[allow(clippy::similar_names)]
 fn test_sse_scalar_sub_mnemonic_consistency() {
     // Verify mnemonic consistency for SSE scalar subtraction instructions.
     let subss = Instruction::Subss { dest: Operand::xmm(XMMRegister::Xmm0), src: Operand::xmm(XMMRegister::Xmm1) };
@@ -1641,6 +1642,7 @@ fn test_sse_scalar_sub_mnemonic_consistency() {
 }
 
 #[test]
+#[allow(clippy::similar_names)]
 fn test_sse_scalar_sub_clone_and_equality() {
     // Test Clone and PartialEq for SSE scalar subtraction instructions.
     let subss1 = Instruction::Subss { dest: Operand::xmm(XMMRegister::Xmm10), src: Operand::xmm(XMMRegister::Xmm11) };
@@ -1653,6 +1655,7 @@ fn test_sse_scalar_sub_clone_and_equality() {
 }
 
 #[test]
+#[allow(clippy::similar_names)]
 fn test_sse_scalar_sub_not_control_flow() {
     // Verify SSE scalar subtraction instructions are not control flow instructions.
     let subss = Instruction::Subss { dest: Operand::xmm(XMMRegister::Xmm0), src: Operand::xmm(XMMRegister::Xmm1) };
@@ -1667,27 +1670,27 @@ fn test_sse_scalar_sub_not_control_flow() {
 }
 
 #[test]
+#[allow(clippy::similar_names)]
 fn test_sse_scalar_sub_debug_formatting() {
     // Test Debug trait implementation for SSE scalar subtraction instructions.
     let subss = Instruction::Subss { dest: Operand::xmm(XMMRegister::Xmm4), src: Operand::xmm(XMMRegister::Xmm5) };
-    let debug_str = format!("{:?}", subss);
+    let debug_str = format!("{subss:?}");
     assert!(debug_str.contains("Subss"), "Debug output should contain 'Subss'");
     assert!(debug_str.contains("Xmm4"), "Debug output should contain dest register");
     assert!(debug_str.contains("Xmm5"), "Debug output should contain src register");
 
     let subsd = Instruction::Subsd { dest: Operand::xmm(XMMRegister::Xmm6), src: Operand::xmm(XMMRegister::Xmm7) };
-    let debug_str = format!("{:?}", subsd);
+    let debug_str = format!("{subsd:?}");
     assert!(debug_str.contains("Subsd"), "Debug output should contain 'Subsd'");
 }
 
 #[test]
 fn test_sse_scalar_sub_in_collections() {
     // Test that SSE scalar subtraction instructions work in collections.
-    let instructions = vec![
+    let instructions = [
         Instruction::Subss { dest: Operand::xmm(XMMRegister::Xmm0), src: Operand::xmm(XMMRegister::Xmm1) },
         Instruction::Subsd { dest: Operand::xmm(XMMRegister::Xmm2), src: Operand::xmm(XMMRegister::Xmm3) },
     ];
-
     assert_eq!(instructions.len(), 2);
     assert_eq!(instructions[0].mnemonic(), "subss");
     assert_eq!(instructions[1].mnemonic(), "subsd");
@@ -1699,6 +1702,7 @@ fn test_sse_scalar_sub_in_collections() {
 }
 
 #[test]
+#[allow(clippy::similar_names)]
 fn test_sse_scalar_sub_pattern_matching() {
     // Test pattern matching for SSE scalar subtraction instructions.
     let classify = |instr: Instruction| -> &str {
@@ -1717,6 +1721,7 @@ fn test_sse_scalar_sub_pattern_matching() {
 }
 
 #[test]
+#[allow(clippy::similar_names)]
 fn test_sse_scalar_sub_all_xmm_registers() {
     // Test SUBSS and SUBSD with all available XMM registers.
     // This ensures proper formatting across the entire register range.
@@ -1755,6 +1760,7 @@ fn test_sse_scalar_sub_all_xmm_registers() {
 }
 
 #[test]
+#[allow(clippy::similar_names)]
 fn test_sse_scalar_sub_semantic_correctness() {
     // Verify semantic properties of SSE scalar subtraction instructions.
     // SUBSS operates on single-precision (32-bit) floating-point values.
@@ -1772,6 +1778,7 @@ fn test_sse_scalar_sub_semantic_correctness() {
 }
 
 #[test]
+#[allow(clippy::similar_names)]
 fn test_sse_scalar_sub_operand_ordering() {
     // Verify that operand ordering is correct: dest, src (Intel syntax).
     let subss = Instruction::Subss { dest: Operand::xmm(XMMRegister::Xmm2), src: Operand::xmm(XMMRegister::Xmm3) };
@@ -1811,6 +1818,7 @@ fn test_sse_scalar_sub_with_all_memory_forms() {
 }
 
 #[test]
+#[allow(clippy::similar_names)]
 fn test_sse_scalar_sub_lowercase_formatting() {
     // Verify that mnemonics are lowercase (x86 convention).
     let subss = Instruction::Subss { dest: Operand::xmm(XMMRegister::Xmm0), src: Operand::xmm(XMMRegister::Xmm1) };
@@ -1820,4 +1828,325 @@ fn test_sse_scalar_sub_lowercase_formatting() {
     let subsd = Instruction::Subsd { dest: Operand::xmm(XMMRegister::Xmm2), src: Operand::xmm(XMMRegister::Xmm3) };
     let display = subsd.to_string();
     assert_eq!(display.split_whitespace().next().unwrap(), "subsd", "Mnemonic should be lowercase");
+}
+
+// ============================================================================
+// SSE Packed Multiplication Instructions - Mulps/Mulpd (Lines 298-299)
+// ============================================================================
+
+#[test]
+fn test_mulps_instruction_display() {
+    // Test MULPS (Multiply Packed Single-Precision Floating-Point) instruction.
+    // MULPS multiplies four single-precision floating-point values in parallel.
+    let instr = Instruction::Mulps { dest: Operand::xmm(XMMRegister::Xmm0), src: Operand::xmm(XMMRegister::Xmm1) };
+    assert_eq!(instr.to_string(), "mulps xmm0, xmm1", "MULPS register-to-register display");
+    assert_eq!(instr.mnemonic(), "mulps", "MULPS mnemonic should be 'mulps'");
+}
+
+#[test]
+fn test_mulps_with_memory_operand() {
+    // Test MULPS with memory operand as source.
+    // Memory operand must be 128-bit aligned for optimal performance.
+    let instr = Instruction::Mulps { dest: Operand::xmm(XMMRegister::Xmm2), src: Operand::mem(GPRegister64::Rax) };
+    assert_eq!(instr.to_string(), "mulps xmm2, QWORD PTR [rax]", "MULPS with memory source");
+    assert_eq!(instr.mnemonic(), "mulps");
+}
+
+#[test]
+fn test_mulps_with_memory_displacement() {
+    // Test MULPS with memory operand using displacement.
+    let instr =
+        Instruction::Mulps { dest: Operand::xmm(XMMRegister::Xmm7), src: Operand::mem_disp(GPRegister64::Rbp, -16) };
+    assert_eq!(instr.to_string(), "mulps xmm7, QWORD PTR [rbp - 16]", "MULPS with negative displacement");
+}
+
+#[test]
+fn test_mulps_with_positive_displacement() {
+    // Test MULPS with positive memory displacement.
+    let instr =
+        Instruction::Mulps { dest: Operand::xmm(XMMRegister::Xmm15), src: Operand::mem_disp(GPRegister64::Rsp, 64) };
+    assert_eq!(instr.to_string(), "mulps xmm15, QWORD PTR [rsp + 64]", "MULPS with positive displacement");
+}
+
+#[test]
+fn test_mulpd_instruction_display() {
+    // Test MULPD (Multiply Packed Double-Precision Floating-Point) instruction.
+    // MULPD multiplies two double-precision floating-point values in parallel.
+    let instr = Instruction::Mulpd { dest: Operand::xmm(XMMRegister::Xmm3), src: Operand::xmm(XMMRegister::Xmm4) };
+    assert_eq!(instr.to_string(), "mulpd xmm3, xmm4", "MULPD register-to-register display");
+    assert_eq!(instr.mnemonic(), "mulpd", "MULPD mnemonic should be 'mulpd'");
+}
+
+#[test]
+fn test_mulpd_with_memory_operand() {
+    // Test MULPD with memory operand as source.
+    let instr = Instruction::Mulpd { dest: Operand::xmm(XMMRegister::Xmm5), src: Operand::mem(GPRegister64::Rbx) };
+    assert_eq!(instr.to_string(), "mulpd xmm5, QWORD PTR [rbx]", "MULPD with memory source");
+    assert_eq!(instr.mnemonic(), "mulpd");
+}
+
+#[test]
+fn test_mulpd_with_memory_displacement() {
+    // Test MULPD with memory operand using displacement.
+    let instr =
+        Instruction::Mulpd { dest: Operand::xmm(XMMRegister::Xmm8), src: Operand::mem_disp(GPRegister64::Rdx, -32) };
+    assert_eq!(instr.to_string(), "mulpd xmm8, QWORD PTR [rdx - 32]", "MULPD with negative displacement");
+}
+
+#[test]
+fn test_mulpd_with_large_displacement() {
+    // Test MULPD with large positive memory displacement.
+    let instr =
+        Instruction::Mulpd { dest: Operand::xmm(XMMRegister::Xmm14), src: Operand::mem_disp(GPRegister64::Rsi, 256) };
+    assert_eq!(instr.to_string(), "mulpd xmm14, QWORD PTR [rsi + 256]", "MULPD with large displacement");
+}
+
+// ============================================================================
+// SSE Packed Multiplication - Comprehensive Edge Cases
+// ============================================================================
+
+#[test]
+#[allow(clippy::similar_names)]
+fn test_sse_packed_mul_mnemonic_consistency() {
+    // Verify mnemonic consistency for SSE packed multiplication instructions.
+    let mulps = Instruction::Mulps { dest: Operand::xmm(XMMRegister::Xmm0), src: Operand::xmm(XMMRegister::Xmm1) };
+    assert_eq!(mulps.mnemonic(), "mulps");
+    assert_eq!(mulps.to_string(), "mulps xmm0, xmm1");
+
+    let mulpd = Instruction::Mulpd { dest: Operand::xmm(XMMRegister::Xmm2), src: Operand::xmm(XMMRegister::Xmm3) };
+    assert_eq!(mulpd.mnemonic(), "mulpd");
+    assert_eq!(mulpd.to_string(), "mulpd xmm2, xmm3");
+}
+
+#[test]
+#[allow(clippy::similar_names)]
+fn test_sse_packed_mul_clone_and_equality() {
+    // Test Clone and PartialEq for SSE packed multiplication instructions.
+    let mulps1 = Instruction::Mulps { dest: Operand::xmm(XMMRegister::Xmm10), src: Operand::xmm(XMMRegister::Xmm11) };
+    let mulps2 = mulps1.clone();
+    assert_eq!(mulps1, mulps2, "Cloned MULPS should equal original");
+
+    let mulpd1 = Instruction::Mulpd { dest: Operand::xmm(XMMRegister::Xmm12), src: Operand::xmm(XMMRegister::Xmm13) };
+    let mulpd2 = mulpd1.clone();
+    assert_eq!(mulpd1, mulpd2, "Cloned MULPD should equal original");
+}
+
+#[test]
+#[allow(clippy::similar_names)]
+fn test_sse_packed_mul_not_control_flow() {
+    // Verify SSE packed multiplication instructions are not control flow instructions.
+    let mulps = Instruction::Mulps { dest: Operand::xmm(XMMRegister::Xmm0), src: Operand::xmm(XMMRegister::Xmm1) };
+    assert!(!mulps.is_jump(), "MULPS should not be a jump");
+    assert!(!mulps.is_call(), "MULPS should not be a call");
+    assert!(!mulps.is_return(), "MULPS should not be a return");
+
+    let mulpd = Instruction::Mulpd { dest: Operand::xmm(XMMRegister::Xmm2), src: Operand::xmm(XMMRegister::Xmm3) };
+    assert!(!mulpd.is_jump(), "MULPD should not be a jump");
+    assert!(!mulpd.is_call(), "MULPD should not be a call");
+    assert!(!mulpd.is_return(), "MULPD should not be a return");
+}
+
+#[test]
+#[allow(clippy::similar_names)]
+fn test_sse_packed_mul_debug_formatting() {
+    // Test Debug trait implementation for SSE packed multiplication instructions.
+    let mulps = Instruction::Mulps { dest: Operand::xmm(XMMRegister::Xmm4), src: Operand::xmm(XMMRegister::Xmm5) };
+    let debug_str = format!("{mulps:?}");
+    assert!(debug_str.contains("Mulps"), "Debug output should contain 'Mulps'");
+    assert!(debug_str.contains("Xmm4"), "Debug output should contain dest register");
+    assert!(debug_str.contains("Xmm5"), "Debug output should contain src register");
+
+    let mulpd = Instruction::Mulpd { dest: Operand::xmm(XMMRegister::Xmm6), src: Operand::xmm(XMMRegister::Xmm7) };
+    let debug_str = format!("{mulpd:?}");
+    assert!(debug_str.contains("Mulpd"), "Debug output should contain 'Mulpd'");
+}
+
+#[test]
+fn test_sse_packed_mul_in_collections() {
+    // Test that SSE packed multiplication instructions work in collections.
+    let instructions = [
+        Instruction::Mulps { dest: Operand::xmm(XMMRegister::Xmm0), src: Operand::xmm(XMMRegister::Xmm1) },
+        Instruction::Mulpd { dest: Operand::xmm(XMMRegister::Xmm2), src: Operand::xmm(XMMRegister::Xmm3) },
+    ];
+
+    assert_eq!(instructions.len(), 2);
+    assert_eq!(instructions[0].mnemonic(), "mulps");
+    assert_eq!(instructions[1].mnemonic(), "mulpd");
+
+    // Test searching
+    let mulps_search =
+        Instruction::Mulps { dest: Operand::xmm(XMMRegister::Xmm0), src: Operand::xmm(XMMRegister::Xmm1) };
+    assert!(instructions.contains(&mulps_search));
+}
+
+#[test]
+#[allow(clippy::similar_names)]
+fn test_sse_packed_mul_pattern_matching() {
+    // Test pattern matching for SSE packed multiplication instructions.
+    let classify = |instr: Instruction| -> &str {
+        match instr {
+            Instruction::Mulps { .. } => "packed_single",
+            Instruction::Mulpd { .. } => "packed_double",
+            _ => "other",
+        }
+    };
+
+    let mulps = Instruction::Mulps { dest: Operand::xmm(XMMRegister::Xmm8), src: Operand::xmm(XMMRegister::Xmm9) };
+    assert_eq!(classify(mulps), "packed_single");
+
+    let mulpd = Instruction::Mulpd { dest: Operand::xmm(XMMRegister::Xmm10), src: Operand::xmm(XMMRegister::Xmm11) };
+    assert_eq!(classify(mulpd), "packed_double");
+}
+
+#[test]
+#[allow(clippy::similar_names)]
+fn test_sse_packed_mul_all_xmm_registers() {
+    // Test MULPS and MULPD with all available XMM registers.
+    // This ensures proper formatting across the entire register range.
+    let xmm_regs = vec![
+        XMMRegister::Xmm0,
+        XMMRegister::Xmm1,
+        XMMRegister::Xmm2,
+        XMMRegister::Xmm3,
+        XMMRegister::Xmm4,
+        XMMRegister::Xmm5,
+        XMMRegister::Xmm6,
+        XMMRegister::Xmm7,
+        XMMRegister::Xmm8,
+        XMMRegister::Xmm9,
+        XMMRegister::Xmm10,
+        XMMRegister::Xmm11,
+        XMMRegister::Xmm12,
+        XMMRegister::Xmm13,
+        XMMRegister::Xmm14,
+        XMMRegister::Xmm15,
+    ];
+
+    for (i, &dest_reg) in xmm_regs.iter().enumerate() {
+        let src_reg = xmm_regs[(i + 1) % xmm_regs.len()];
+
+        // Test MULPS
+        let mulps = Instruction::Mulps { dest: Operand::xmm(dest_reg), src: Operand::xmm(src_reg) };
+        assert_eq!(mulps.mnemonic(), "mulps");
+        assert!(mulps.to_string().starts_with("mulps"));
+
+        // Test MULPD
+        let mulpd = Instruction::Mulpd { dest: Operand::xmm(dest_reg), src: Operand::xmm(src_reg) };
+        assert_eq!(mulpd.mnemonic(), "mulpd");
+        assert!(mulpd.to_string().starts_with("mulpd"));
+    }
+}
+
+#[test]
+#[allow(clippy::similar_names)]
+fn test_sse_packed_mul_semantic_correctness() {
+    // Verify semantic properties of SSE packed multiplication instructions.
+    // MULPS operates on 4 single-precision (32-bit) floating-point values in parallel.
+    let mulps = Instruction::Mulps { dest: Operand::xmm(XMMRegister::Xmm0), src: Operand::mem(GPRegister64::Rax) };
+    assert_eq!(mulps.mnemonic(), "mulps");
+    assert!(mulps.to_string().contains("mulps"), "MULPS should format with 'mulps' mnemonic");
+
+    // MULPD operates on 2 double-precision (64-bit) floating-point values in parallel.
+    let mulpd = Instruction::Mulpd { dest: Operand::xmm(XMMRegister::Xmm1), src: Operand::mem(GPRegister64::Rbx) };
+    assert_eq!(mulpd.mnemonic(), "mulpd");
+    assert!(mulpd.to_string().contains("mulpd"), "MULPD should format with 'mulpd' mnemonic");
+
+    // Verify they are distinct instructions
+    assert_ne!(mulps, mulpd, "MULPS and MULPD should be different instructions");
+}
+
+#[test]
+#[allow(clippy::similar_names)]
+fn test_sse_packed_mul_operand_ordering() {
+    // Verify that operand ordering is correct: dest, src (Intel syntax).
+    let mulps = Instruction::Mulps { dest: Operand::xmm(XMMRegister::Xmm2), src: Operand::xmm(XMMRegister::Xmm3) };
+    let display = mulps.to_string();
+    // Intel syntax: dest comes first, then source
+    assert!(display.starts_with("mulps xmm2,"), "Destination should come first");
+    assert!(display.ends_with("xmm3"), "Source should come last");
+
+    let mulpd = Instruction::Mulpd { dest: Operand::xmm(XMMRegister::Xmm4), src: Operand::xmm(XMMRegister::Xmm5) };
+    let display = mulpd.to_string();
+    assert!(display.starts_with("mulpd xmm4,"), "Destination should come first");
+    assert!(display.ends_with("xmm5"), "Source should come last");
+}
+
+#[test]
+fn test_sse_packed_mul_with_all_memory_forms() {
+    // Test MULPS and MULPD with various memory addressing modes.
+
+    // Direct memory reference
+    let mulps_mem = Instruction::Mulps { dest: Operand::xmm(XMMRegister::Xmm0), src: Operand::mem(GPRegister64::Rdi) };
+    assert!(mulps_mem.to_string().contains("[rdi]"));
+
+    // Memory with negative displacement
+    let mulps_neg =
+        Instruction::Mulps { dest: Operand::xmm(XMMRegister::Xmm1), src: Operand::mem_disp(GPRegister64::Rbp, -8) };
+    assert!(mulps_neg.to_string().contains("rbp - 8"));
+
+    // Memory with large positive displacement
+    let mulpd_pos =
+        Instruction::Mulpd { dest: Operand::xmm(XMMRegister::Xmm2), src: Operand::mem_disp(GPRegister64::Rsp, 128) };
+    assert!(mulpd_pos.to_string().contains("rsp + 128"));
+
+    // Memory with zero displacement (should omit displacement)
+    let mulpd_zero = Instruction::Mulpd { dest: Operand::xmm(XMMRegister::Xmm3), src: Operand::mem(GPRegister64::Rcx) };
+    assert!(mulpd_zero.to_string().contains("[rcx]"));
+    assert!(!mulpd_zero.to_string().contains("+ 0"));
+}
+
+#[test]
+#[allow(clippy::similar_names)]
+fn test_sse_packed_mul_lowercase_formatting() {
+    // Verify that mnemonics are lowercase (x86 convention).
+    let mulps = Instruction::Mulps { dest: Operand::xmm(XMMRegister::Xmm0), src: Operand::xmm(XMMRegister::Xmm1) };
+    let display = mulps.to_string();
+    assert_eq!(display.split_whitespace().next().unwrap(), "mulps", "Mnemonic should be lowercase");
+
+    let mulpd = Instruction::Mulpd { dest: Operand::xmm(XMMRegister::Xmm2), src: Operand::xmm(XMMRegister::Xmm3) };
+    let display = mulpd.to_string();
+    assert_eq!(display.split_whitespace().next().unwrap(), "mulpd", "Mnemonic should be lowercase");
+}
+
+#[test]
+#[allow(clippy::similar_names)]
+fn test_sse_packed_mul_simd_parallelism() {
+    // Test that MULPS and MULPD instructions are properly represented
+    // for SIMD parallel multiplication operations.
+    // MULPS: 4 parallel 32-bit float multiplications
+    let mulps = Instruction::Mulps { dest: Operand::xmm(XMMRegister::Xmm0), src: Operand::xmm(XMMRegister::Xmm1) };
+    assert_eq!(mulps.mnemonic(), "mulps", "MULPS for 4x32-bit parallel ops");
+
+    // MULPD: 2 parallel 64-bit double multiplications
+    let mulpd = Instruction::Mulpd { dest: Operand::xmm(XMMRegister::Xmm2), src: Operand::xmm(XMMRegister::Xmm3) };
+    assert_eq!(mulpd.mnemonic(), "mulpd", "MULPD for 2x64-bit parallel ops");
+}
+
+#[test]
+#[allow(clippy::similar_names)]
+fn test_sse_packed_mul_vs_scalar() {
+    // Verify distinction between packed (PS/PD) and scalar (SS/SD) multiplication.
+    let mulps = Instruction::Mulps { dest: Operand::xmm(XMMRegister::Xmm0), src: Operand::xmm(XMMRegister::Xmm1) };
+    let mulss = Instruction::Mulss { dest: Operand::xmm(XMMRegister::Xmm0), src: Operand::xmm(XMMRegister::Xmm1) };
+    assert_ne!(mulps, mulss, "MULPS and MULSS are different instructions");
+    assert_eq!(mulps.mnemonic(), "mulps");
+    assert_eq!(mulss.mnemonic(), "mulss");
+
+    let mulpd = Instruction::Mulpd { dest: Operand::xmm(XMMRegister::Xmm2), src: Operand::xmm(XMMRegister::Xmm3) };
+    let mulsd = Instruction::Mulsd { dest: Operand::xmm(XMMRegister::Xmm2), src: Operand::xmm(XMMRegister::Xmm3) };
+    assert_ne!(mulpd, mulsd, "MULPD and MULSD are different instructions");
+    assert_eq!(mulpd.mnemonic(), "mulpd");
+    assert_eq!(mulsd.mnemonic(), "mulsd");
+}
+
+#[test]
+fn test_sse_packed_mul_boundary_registers() {
+    // Test with boundary XMM registers (first and last).
+    let mulps_first =
+        Instruction::Mulps { dest: Operand::xmm(XMMRegister::Xmm0), src: Operand::xmm(XMMRegister::Xmm15) };
+    assert_eq!(mulps_first.to_string(), "mulps xmm0, xmm15");
+
+    let mulpd_last =
+        Instruction::Mulpd { dest: Operand::xmm(XMMRegister::Xmm15), src: Operand::xmm(XMMRegister::Xmm0) };
+    assert_eq!(mulpd_last.to_string(), "mulpd xmm15, xmm0");
 }
