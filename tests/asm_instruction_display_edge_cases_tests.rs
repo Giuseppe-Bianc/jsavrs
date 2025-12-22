@@ -1294,3 +1294,262 @@ fn test_movaps_various_operands() {
     assert_eq!(movaps4.mnemonic(), "movaps");
     assert_eq!(movaps4.to_string(), "movaps xmm14, QWORD PTR [rbp - 32]");
 }
+
+// ============================================================================
+// Control Instructions - Hlt, Cpuid, Pause (Lines 273-275)
+// ============================================================================
+
+#[test]
+fn test_hlt_instruction_display() {
+    // Test HLT (Halt) instruction display and mnemonic.
+    // HLT stops instruction execution and places the processor in a HALT state.
+    // This is a privileged instruction typically used in operating systems.
+    let hlt = Instruction::Hlt;
+    assert_eq!(hlt.to_string(), "hlt", "HLT display should be 'hlt'");
+    assert_eq!(hlt.mnemonic(), "hlt", "HLT mnemonic should be 'hlt'");
+}
+
+#[test]
+fn test_cpuid_instruction_display() {
+    // Test CPUID instruction display and mnemonic.
+    // CPUID provides processor identification and feature information.
+    // It uses EAX as input and returns information in EAX, EBX, ECX, and EDX.
+    let cpuid = Instruction::Cpuid;
+    assert_eq!(cpuid.to_string(), "cpuid", "CPUID display should be 'cpuid'");
+    assert_eq!(cpuid.mnemonic(), "cpuid", "CPUID mnemonic should be 'cpuid'");
+}
+
+#[test]
+fn test_pause_instruction_display() {
+    // Test PAUSE instruction display and mnemonic.
+    // PAUSE improves performance in spin-wait loops by hinting the processor
+    // that the code sequence is a spin-wait loop. This reduces power consumption
+    // and improves performance on simultaneous multithreading processors.
+    let pause = Instruction::Pause;
+    assert_eq!(pause.to_string(), "pause", "PAUSE display should be 'pause'");
+    assert_eq!(pause.mnemonic(), "pause", "PAUSE mnemonic should be 'pause'");
+}
+
+#[test]
+fn test_cqo_instruction_display() {
+    // Test CQO (Convert Quadword to Octword) instruction display and mnemonic.
+    // CQO sign-extends RAX into RDX:RAX (used before signed division).
+    // This is the 64-bit version of the sign extension instructions.
+    let cqo = Instruction::Cqo;
+    assert_eq!(cqo.to_string(), "cqo", "CQO display should be 'cqo'");
+    assert_eq!(cqo.mnemonic(), "cqo", "CQO mnemonic should be 'cqo'");
+}
+
+// ============================================================================
+// Control Instructions - Comprehensive Edge Cases
+// ============================================================================
+
+#[test]
+fn test_control_instructions_mnemonic_consistency() {
+    // Verify that all control instructions have consistent mnemonic() results
+    // with their Display implementation for reliable code generation.
+    let instructions = vec![
+        (Instruction::Hlt, "hlt"),
+        (Instruction::Cpuid, "cpuid"),
+        (Instruction::Pause, "pause"),
+        (Instruction::Cqo, "cqo"),
+        (Instruction::Nop, "nop"),
+    ];
+
+    for (instr, expected_mnemonic) in instructions {
+        assert_eq!(instr.mnemonic(), expected_mnemonic, "Mnemonic mismatch for {:?}", instr);
+        assert_eq!(instr.to_string(), expected_mnemonic, "Display mismatch for {:?}", instr);
+    }
+}
+
+#[test]
+fn test_control_instructions_clone_and_equality() {
+    // Test that control instructions correctly implement Clone and PartialEq.
+    // This ensures they can be used in collections and compared reliably.
+    let hlt1 = Instruction::Hlt;
+    let hlt2 = hlt1.clone();
+    assert_eq!(hlt1, hlt2, "Cloned HLT should equal original");
+
+    let cpuid1 = Instruction::Cpuid;
+    let cpuid2 = cpuid1.clone();
+    assert_eq!(cpuid1, cpuid2, "Cloned CPUID should equal original");
+
+    let pause1 = Instruction::Pause;
+    let pause2 = pause1.clone();
+    assert_eq!(pause1, pause2, "Cloned PAUSE should equal original");
+
+    let cqo1 = Instruction::Cqo;
+    let cqo2 = cqo1.clone();
+    assert_eq!(cqo1, cqo2, "Cloned CQO should equal original");
+}
+
+#[test]
+fn test_control_instructions_not_jump_call_return() {
+    // Verify that control instructions (Hlt, Cpuid, Pause, Cqo) are not
+    // classified as jumps, calls, or returns.
+    let instructions = vec![Instruction::Hlt, Instruction::Cpuid, Instruction::Pause, Instruction::Cqo];
+
+    for instr in instructions {
+        assert!(!instr.is_jump(), "{:?} should not be a jump", instr);
+        assert!(!instr.is_call(), "{:?} should not be a call", instr);
+        assert!(!instr.is_return(), "{:?} should not be a return", instr);
+    }
+}
+
+#[test]
+fn test_control_instructions_debug_formatting() {
+    // Test that control instructions have proper Debug trait implementation.
+    // This is essential for debugging and logging purposes.
+    let hlt = Instruction::Hlt;
+    let debug_str = format!("{:?}", hlt);
+    assert!(debug_str.contains("Hlt"), "Debug output should contain 'Hlt'");
+
+    let cpuid = Instruction::Cpuid;
+    let debug_str = format!("{:?}", cpuid);
+    assert!(debug_str.contains("Cpuid"), "Debug output should contain 'Cpuid'");
+
+    let pause = Instruction::Pause;
+    let debug_str = format!("{:?}", pause);
+    assert!(debug_str.contains("Pause"), "Debug output should contain 'Pause'");
+
+    let cqo = Instruction::Cqo;
+    let debug_str = format!("{:?}", cqo);
+    assert!(debug_str.contains("Cqo"), "Debug output should contain 'Cqo'");
+}
+
+#[test]
+fn test_control_instructions_in_vectors() {
+    // Test that control instructions can be stored in collections.
+    // This verifies they work correctly in common Rust data structures.
+    let mut instructions =
+        vec![Instruction::Nop, Instruction::Hlt, Instruction::Cpuid, Instruction::Pause, Instruction::Cqo];
+
+    assert_eq!(instructions.len(), 5);
+    assert_eq!(instructions[1], Instruction::Hlt);
+    assert_eq!(instructions[2], Instruction::Cpuid);
+    assert_eq!(instructions[3], Instruction::Pause);
+    assert_eq!(instructions[4], Instruction::Cqo);
+
+    // Test that we can search for control instructions
+    assert!(instructions.contains(&Instruction::Hlt));
+    assert!(instructions.contains(&Instruction::Cpuid));
+    assert!(instructions.contains(&Instruction::Pause));
+    assert!(instructions.contains(&Instruction::Cqo));
+
+    // Test removal
+    instructions.retain(|i| !matches!(i, Instruction::Hlt));
+    assert!(!instructions.contains(&Instruction::Hlt));
+    assert_eq!(instructions.len(), 4);
+}
+
+#[test]
+fn test_control_instructions_match_patterns() {
+    // Test that control instructions can be matched correctly in pattern matching.
+    // This ensures proper enum variant discrimination.
+    let test_instruction = |instr: Instruction| -> &str {
+        match instr {
+            Instruction::Hlt => "halt",
+            Instruction::Cpuid => "cpu_info",
+            Instruction::Pause => "spin_wait",
+            Instruction::Cqo => "sign_extend",
+            _ => "other",
+        }
+    };
+
+    assert_eq!(test_instruction(Instruction::Hlt), "halt");
+    assert_eq!(test_instruction(Instruction::Cpuid), "cpu_info");
+    assert_eq!(test_instruction(Instruction::Pause), "spin_wait");
+    assert_eq!(test_instruction(Instruction::Cqo), "sign_extend");
+    assert_eq!(test_instruction(Instruction::Nop), "other");
+}
+
+// ============================================================================
+// Control Instructions - Semantic Correctness Tests
+// ============================================================================
+
+#[test]
+fn test_hlt_semantic_properties() {
+    // HLT instruction should halt execution - verify it's recognized correctly.
+    // In a real system, HLT requires CPL=0 (kernel mode).
+    let hlt = Instruction::Hlt;
+
+    // Verify basic properties
+    assert_eq!(hlt.mnemonic(), "hlt");
+
+    // HLT should not be confused with other control flow instructions
+    assert!(!hlt.is_jump());
+    assert!(!hlt.is_call());
+    assert!(!hlt.is_return());
+
+    // HLT is a terminating instruction (conceptually)
+    // but not in the same category as RET
+    assert_ne!(hlt, Instruction::Ret);
+}
+
+#[test]
+fn test_cpuid_semantic_properties() {
+    // CPUID provides CPU identification and feature information.
+    // It's a special instruction that accesses processor-specific data.
+    let cpuid = Instruction::Cpuid;
+
+    assert_eq!(cpuid.mnemonic(), "cpuid");
+
+    // CPUID is not a control flow instruction
+    assert!(!cpuid.is_jump());
+    assert!(!cpuid.is_call());
+    assert!(!cpuid.is_return());
+
+    // CPUID is a data query instruction, not a control instruction
+    assert_ne!(cpuid, Instruction::Nop);
+    assert_ne!(cpuid, Instruction::Hlt);
+}
+
+#[test]
+fn test_pause_semantic_properties() {
+    // PAUSE is a hint for spin-wait loops in multithreaded code.
+    // It improves processor efficiency and reduces power consumption.
+    let pause = Instruction::Pause;
+
+    assert_eq!(pause.mnemonic(), "pause");
+
+    // PAUSE does not affect control flow
+    assert!(!pause.is_jump());
+    assert!(!pause.is_call());
+    assert!(!pause.is_return());
+
+    // PAUSE is distinct from NOP although both are "hint" instructions
+    assert_ne!(pause, Instruction::Nop);
+}
+
+#[test]
+fn test_cqo_semantic_properties() {
+    // CQO sign-extends RAX into RDX:RAX for signed 64-bit division.
+    // It's the 64-bit equivalent of CDQ (32-bit) and CWD (16-bit).
+    let cqo = Instruction::Cqo;
+
+    assert_eq!(cqo.mnemonic(), "cqo");
+
+    // CQO is an arithmetic setup instruction, not control flow
+    assert!(!cqo.is_jump());
+    assert!(!cqo.is_call());
+    assert!(!cqo.is_return());
+
+    // CQO is related to but distinct from CDQ
+    assert_ne!(cqo, Instruction::Cdq);
+}
+
+#[test]
+fn test_control_instructions_formatting_consistency() {
+    // Ensure that Display and mnemonic() always produce identical output
+    // for control instructions, as they have no operands.
+    let instructions = vec![Instruction::Hlt, Instruction::Cpuid, Instruction::Pause, Instruction::Cqo];
+
+    for instr in instructions {
+        let display = instr.to_string();
+        let mnemonic = instr.mnemonic();
+        assert_eq!(display, mnemonic, "Display and mnemonic should be identical for {:?}", instr);
+
+        // Verify lowercase (x86 convention)
+        assert_eq!(display, display.to_lowercase(), "Mnemonic should be lowercase for {:?}", instr);
+    }
+}
