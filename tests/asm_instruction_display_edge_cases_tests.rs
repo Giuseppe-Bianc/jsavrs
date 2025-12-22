@@ -1142,3 +1142,155 @@ fn test_display_with_complex_memory_operands() {
     let instr = Instruction::Add { dest: Operand::mem_disp(GPRegister64::Rbp, -16), src: Operand::imm32(100) };
     assert_eq!(instr.to_string(), "add QWORD PTR [rbp - 16], 100");
 }
+
+// ============================================================================
+// Additional Coverage Tests for Lines 273-276
+// ============================================================================
+
+#[test]
+fn test_cdq_mnemonic_direct() {
+    // Direct test for Cdq mnemonic (line 273)
+    let cdq = Instruction::Cdq;
+    let mnemonic = cdq.mnemonic();
+    assert_eq!(mnemonic, "cdq");
+    assert_eq!(cdq.to_string(), "cdq");
+    // Verify it's not a jump, call, or return
+    assert!(!cdq.is_jump());
+    assert!(!cdq.is_call());
+    assert!(!cdq.is_return());
+}
+
+#[test]
+fn test_syscall_mnemonic_direct() {
+    // Direct test for Syscall mnemonic (line 274)
+    let syscall = Instruction::Syscall;
+    let mnemonic = syscall.mnemonic();
+    assert_eq!(mnemonic, "syscall");
+    assert_eq!(syscall.to_string(), "syscall");
+    // Verify it's not a jump, call, or return
+    assert!(!syscall.is_jump());
+    assert!(!syscall.is_call());
+    assert!(!syscall.is_return());
+}
+
+#[test]
+fn test_sysret_mnemonic_direct() {
+    // Direct test for Sysret mnemonic (line 275)
+    let sysret = Instruction::Sysret;
+    let mnemonic = sysret.mnemonic();
+    assert_eq!(mnemonic, "sysret");
+    assert_eq!(sysret.to_string(), "sysret");
+    // Verify it's not a jump, call, or return
+    assert!(!sysret.is_jump());
+    assert!(!sysret.is_call());
+    assert!(!sysret.is_return());
+}
+
+#[test]
+fn test_movaps_mnemonic_direct() {
+    // Direct test for Movaps mnemonic (line 276)
+    let movaps = Instruction::Movaps { dest: Operand::xmm(XMMRegister::Xmm0), src: Operand::xmm(XMMRegister::Xmm1) };
+    let mnemonic = movaps.mnemonic();
+    assert_eq!(mnemonic, "movaps");
+    assert_eq!(movaps.to_string(), "movaps xmm0, xmm1");
+    // Verify it's not a jump, call, or return
+    assert!(!movaps.is_jump());
+    assert!(!movaps.is_call());
+    assert!(!movaps.is_return());
+}
+
+#[test]
+fn test_special_instructions_batch_mnemonic() {
+    // Batch test for lines 273-276 to ensure all are covered
+    let instructions = vec![
+        (Instruction::Cdq, "cdq"),
+        (Instruction::Syscall, "syscall"),
+        (Instruction::Sysret, "sysret"),
+        (
+            Instruction::Movaps {
+                dest: Operand::xmm(XMMRegister::Xmm15),
+                src: Operand::mem_disp(GPRegister64::R15, 64),
+            },
+            "movaps",
+        ),
+    ];
+
+    for (instr, expected_mnemonic) in instructions {
+        assert_eq!(instr.mnemonic(), expected_mnemonic);
+        assert!(!instr.is_jump());
+        assert!(!instr.is_call());
+        assert!(!instr.is_return());
+    }
+}
+
+#[test]
+fn test_cdq_display_formatting() {
+    // Comprehensive test for Cdq display and formatting
+    let cdq = Instruction::Cdq;
+
+    // Test mnemonic
+    assert_eq!(cdq.mnemonic(), "cdq");
+
+    // Test Display trait
+    let display_str = format!("{cdq}");
+    assert_eq!(display_str, "cdq");
+
+    // Test Debug trait
+    let debug_str = format!("{cdq:?}");
+    assert!(debug_str.contains("Cdq"));
+
+    // Test clone
+    let cloned = cdq.clone();
+    assert_eq!(cdq, cloned);
+}
+
+#[test]
+fn test_syscall_sysret_display_formatting() {
+    // Comprehensive test for Syscall and Sysret
+    let syscall = Instruction::Syscall;
+    let sysret = Instruction::Sysret;
+
+    // Test mnemonics
+    assert_eq!(syscall.mnemonic(), "syscall");
+    assert_eq!(sysret.mnemonic(), "sysret");
+
+    // Test Display trait
+    assert_eq!(format!("{syscall}"), "syscall");
+    assert_eq!(format!("{sysret}"), "sysret");
+
+    // Test inequality
+    assert_ne!(syscall, sysret);
+
+    // Test clone and equality
+    let syscall_clone = syscall.clone();
+    let sysret_clone = sysret.clone();
+    assert_eq!(syscall, syscall_clone);
+    assert_eq!(sysret, sysret_clone);
+}
+
+#[test]
+fn test_movaps_various_operands() {
+    // Test Movaps with various operand combinations to ensure line 276 coverage
+
+    // Register to register
+    let movaps1 = Instruction::Movaps { dest: Operand::xmm(XMMRegister::Xmm0), src: Operand::xmm(XMMRegister::Xmm15) };
+    assert_eq!(movaps1.mnemonic(), "movaps");
+    assert_eq!(movaps1.to_string(), "movaps xmm0, xmm15");
+
+    // Memory to register
+    let movaps2 = Instruction::Movaps { dest: Operand::xmm(XMMRegister::Xmm7), src: Operand::mem(GPRegister64::Rbx) };
+    assert_eq!(movaps2.mnemonic(), "movaps");
+    assert_eq!(movaps2.to_string(), "movaps xmm7, QWORD PTR [rbx]");
+
+    // Register to memory with displacement
+    let movaps3 =
+        Instruction::Movaps { dest: Operand::mem_disp(GPRegister64::Rsp, 128), src: Operand::xmm(XMMRegister::Xmm3) };
+    assert_eq!(movaps3.mnemonic(), "movaps");
+    assert_eq!(movaps3.to_string(), "movaps QWORD PTR [rsp + 128], xmm3");
+
+    // Negative displacement
+    let movaps4 =
+        Instruction::Movaps { dest: Operand::xmm(XMMRegister::Xmm14), src: Operand::mem_disp(GPRegister64::Rbp, -32) };
+    assert_eq!(movaps4.mnemonic(), "movaps");
+    assert_eq!(movaps4.to_string(), "movaps xmm14, QWORD PTR [rbp - 32]");
+}
