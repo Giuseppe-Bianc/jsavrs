@@ -1,4 +1,4 @@
-//! Comprehensive test suite for the `Operand` type in the asm::instruction module.
+//! Comprehensive test suite for the `Operand` type in the `asm::instruction` module.
 //!
 //! This module tests all functionality related to assembly operands including
 //! register operands, immediate operands, memory operands, and label operands.
@@ -248,12 +248,14 @@ fn test_imm32_negative() {
 }
 
 #[test]
+#[allow(clippy::unreadable_literal)]
 fn test_imm32_max() {
     let op = Operand::imm32(i32::MAX);
     assert!(matches!(op, Operand::Immediate(Immediate::Imm32(2147483647))));
 }
 
 #[test]
+#[allow(clippy::unreadable_literal)]
 fn test_imm32_min() {
     let op = Operand::imm32(i32::MIN);
     assert!(matches!(op, Operand::Immediate(Immediate::Imm32(-2147483648))));
@@ -920,6 +922,7 @@ fn test_label_with_special_characters() {
 }
 
 #[test]
+#[allow(clippy::redundant_clone)]
 fn test_very_long_label() {
     let long_label = "a".repeat(1000);
     let op = Operand::label(long_label.clone());

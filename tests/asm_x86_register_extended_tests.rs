@@ -15,6 +15,7 @@ use jsavrs::asm::{
 // ============================================================================
 
 #[test]
+#[allow(clippy::clone_on_copy)]
 fn test_x86_register_clone_and_copy() {
     // Test that X86Register implements Clone and Copy traits properly
     let original = X86Register::GP64(GPRegister64::Rax);
@@ -49,12 +50,12 @@ fn test_x86_register_clone_and_copy() {
 fn test_x86_register_debug_format() {
     // Test Debug trait formatting
     let reg = X86Register::GP64(GPRegister64::Rax);
-    let debug_str = format!("{:?}", reg);
+    let debug_str = format!("{reg:?}");
     assert!(debug_str.contains("GP64"));
     assert!(debug_str.contains("Rax"));
 
     let xmm_reg = X86Register::Xmm(XMMRegister::Xmm15);
-    let xmm_debug = format!("{:?}", xmm_reg);
+    let xmm_debug = format!("{xmm_reg:?}");
     assert!(xmm_debug.contains("Xmm"));
     assert!(xmm_debug.contains("Xmm15"));
 }
@@ -115,10 +116,7 @@ fn test_non_parameter_registers() {
             for i in 0..10 {
                 assert!(
                     !x86_reg.is_parameter_register(platform, i),
-                    "{:?} should not be parameter {} on {:?}",
-                    reg,
-                    i,
-                    platform
+                    "{reg:?} should not be parameter {i} on {platform:?}"
                 );
             }
         }
@@ -158,7 +156,7 @@ fn test_non_gp_non_xmm_parameter_registers() {
     for platform in [Platform::Windows, Platform::Linux, Platform::MacOS] {
         for reg in &test_regs {
             for i in 0..10 {
-                assert!(!reg.is_parameter_register(platform, i), "{:?} should never be parameter register", reg);
+                assert!(!reg.is_parameter_register(platform, i), "{reg:?} should never be parameter register");
             }
         }
     }
@@ -195,8 +193,8 @@ fn test_all_gp8_registers_size() {
 
     for reg in gp8_regs {
         let x86_reg = X86Register::GP8(reg);
-        assert_eq!(x86_reg.size_bits(), 8, "{:?} should be 8 bits", reg);
-        assert_eq!(x86_reg.size_bytes(), 1, "{:?} should be 1 byte", reg);
+        assert_eq!(x86_reg.size_bits(), 8, "{reg:?} should be 8 bits");
+        assert_eq!(x86_reg.size_bytes(), 1, "{reg:?} should be 1 byte");
         assert!(x86_reg.is_8bit());
         assert!(x86_reg.is_gp());
         assert!(!x86_reg.is_simd());
@@ -265,13 +263,13 @@ fn test_all_ymm_registers_complete() {
 
     for (idx, reg) in ymm_regs.iter().enumerate() {
         let x86_reg = X86Register::Ymm(*reg);
-        assert_eq!(x86_reg.size_bits(), 256, "YMM{} should be 256 bits", idx);
-        assert_eq!(x86_reg.size_bytes(), 32, "YMM{} should be 32 bytes", idx);
+        assert_eq!(x86_reg.size_bits(), 256, "YMM{idx} should be 256 bits");
+        assert_eq!(x86_reg.size_bytes(), 32, "YMM{idx} should be 32 bytes");
         assert!(x86_reg.is_simd());
         assert!(x86_reg.is_float());
         assert!(!x86_reg.is_gp());
         assert!(!x86_reg.is_special());
-        assert_eq!(x86_reg.nasm_name(), format!("ymm{}", idx));
+        assert_eq!(x86_reg.nasm_name(), format!("ymm{idx}"));
     }
 }
 
@@ -314,13 +312,13 @@ fn test_all_zmm_registers_complete() {
 
     for (idx, reg) in zmm_regs.iter().enumerate() {
         let x86_reg = X86Register::Zmm(*reg);
-        assert_eq!(x86_reg.size_bits(), 512, "ZMM{} should be 512 bits", idx);
-        assert_eq!(x86_reg.size_bytes(), 64, "ZMM{} should be 64 bytes", idx);
+        assert_eq!(x86_reg.size_bits(), 512, "ZMM{idx} should be 512 bits");
+        assert_eq!(x86_reg.size_bytes(), 64, "ZMM{idx} should be 64 bytes");
         assert!(x86_reg.is_simd());
         assert!(x86_reg.is_float());
         assert!(!x86_reg.is_gp());
         assert!(!x86_reg.is_special());
-        assert_eq!(x86_reg.nasm_name(), format!("zmm{}", idx));
+        assert_eq!(x86_reg.nasm_name(), format!("zmm{idx}"));
     }
 }
 
@@ -352,15 +350,15 @@ fn test_ymm_volatility_all_registers() {
 
         // On Windows, YMM0-YMM5 are volatile
         if i < 6 {
-            assert!(x86_reg.is_volatile(Platform::Windows), "YMM{} should be volatile on Windows", i);
-            assert!(!x86_reg.is_callee_saved(Platform::Windows), "YMM{} should not be callee-saved on Windows", i);
+            assert!(x86_reg.is_volatile(Platform::Windows), "YMM{i} should be volatile on Windows");
+            assert!(!x86_reg.is_callee_saved(Platform::Windows), "YMM{i} should not be callee-saved on Windows");
         } else {
-            assert!(!x86_reg.is_volatile(Platform::Windows), "YMM{} should not be volatile on Windows", i);
+            assert!(!x86_reg.is_volatile(Platform::Windows), "YMM{i} should not be volatile on Windows");
         }
 
         // On Linux/MacOS, all YMM are volatile
-        assert!(x86_reg.is_volatile(Platform::Linux), "YMM{} should be volatile on Linux", i);
-        assert!(x86_reg.is_volatile(Platform::MacOS), "YMM{} should be volatile on MacOS", i);
+        assert!(x86_reg.is_volatile(Platform::Linux), "YMM{i} should be volatile on Linux");
+        assert!(x86_reg.is_volatile(Platform::MacOS), "YMM{i} should be volatile on MacOS");
     }
 }
 
@@ -400,7 +398,7 @@ fn test_volatile_callee_saved_consistency_gp64() {
             // RSP is special - it's callee-saved but not considered volatile
             if *reg != GPRegister64::Rsp {
                 // For normal registers, they should be either volatile OR callee-saved, not both
-                assert!(!(is_vol && is_callee), "{:?} cannot be both volatile and callee-saved on {:?}", reg, platform);
+                assert!(!(is_vol && is_callee), "{reg:?} cannot be both volatile and callee-saved on {platform:?}");
             }
         }
     }
@@ -435,7 +433,7 @@ fn test_volatile_callee_saved_consistency_xmm() {
             let is_callee = x86_reg.is_callee_saved(platform);
 
             // Cannot be both volatile and callee-saved
-            assert!(!(is_vol && is_callee), "{:?} cannot be both volatile and callee-saved on {:?}", reg, platform);
+            assert!(!(is_vol && is_callee), "{reg:?} cannot be both volatile and callee-saved on {platform:?}");
         }
     }
 }
@@ -660,9 +658,9 @@ fn test_display_matches_nasm_name() {
     ];
 
     for reg in test_regs {
-        let display_str = format!("{}", reg);
+        let display_str = format!("{reg}");
         let nasm_str = reg.nasm_name();
-        assert_eq!(display_str, nasm_str, "Display and nasm_name should match for {:?}", reg);
+        assert_eq!(display_str, nasm_str, "Display and nasm_name should match for {reg:?}");
     }
 }
 
@@ -689,7 +687,7 @@ fn test_display_all_gp64_registers() {
 
     for (reg, expected) in gp64_regs {
         let display = format!("{}", X86Register::GP64(reg));
-        assert_eq!(display, expected, "GP64 register {:?} display mismatch", reg);
+        assert_eq!(display, expected, "GP64 register {reg:?} display mismatch");
     }
 }
 
@@ -715,7 +713,7 @@ fn test_non_return_registers() {
 
     for platform in [Platform::Windows, Platform::Linux, Platform::MacOS] {
         for reg in &non_return_regs {
-            assert!(!reg.is_return_register(platform), "{:?} should not be return register on {:?}", reg, platform);
+            assert!(!reg.is_return_register(platform), "{reg:?} should not be return register on {platform:?}");
         }
     }
 }
@@ -747,6 +745,7 @@ fn test_int_param_regs_windows_contents() {
 }
 
 #[test]
+#[allow(clippy::needless_range_loop)]
 fn test_float_param_regs_systemv_contents() {
     assert_eq!(FLOAT_PARAM_REGS_SYSTEMV.len(), 8);
     for i in 0..8 {
@@ -766,6 +765,7 @@ fn test_float_param_regs_systemv_contents() {
 }
 
 #[test]
+#[allow(clippy::needless_range_loop)]
 fn test_float_param_regs_windows_contents() {
     assert_eq!(FLOAT_PARAM_REGS_WINDOWS.len(), 4);
     for i in 0..4 {
@@ -790,7 +790,7 @@ fn test_callee_saved_arrays_no_duplicates() {
     for (i, reg1) in CALLEE_SAVED_GP_SYSTEMV.iter().enumerate() {
         for (j, reg2) in CALLEE_SAVED_GP_SYSTEMV.iter().enumerate() {
             if i != j {
-                assert_ne!(reg1, reg2, "Duplicate found in CALLEE_SAVED_GP_SYSTEMV at indices {} and {}", i, j);
+                assert_ne!(reg1, reg2, "Duplicate found in CALLEE_SAVED_GP_SYSTEMV at indices {i} and {j}");
             }
         }
     }
@@ -798,7 +798,7 @@ fn test_callee_saved_arrays_no_duplicates() {
     for (i, reg1) in CALLEE_SAVED_GP_WINDOWS.iter().enumerate() {
         for (j, reg2) in CALLEE_SAVED_GP_WINDOWS.iter().enumerate() {
             if i != j {
-                assert_ne!(reg1, reg2, "Duplicate found in CALLEE_SAVED_GP_WINDOWS at indices {} and {}", i, j);
+                assert_ne!(reg1, reg2, "Duplicate found in CALLEE_SAVED_GP_WINDOWS at indices {i} and {j}");
             }
         }
     }
@@ -816,7 +816,7 @@ fn test_caller_saved_arrays_no_duplicates() {
     for (i, reg1) in CALLER_SAVED_GP_SYSTEMV.iter().enumerate() {
         for (j, reg2) in CALLER_SAVED_GP_SYSTEMV.iter().enumerate() {
             if i != j {
-                assert_ne!(reg1, reg2, "Duplicate found in CALLER_SAVED_GP_SYSTEMV at indices {} and {}", i, j);
+                assert_ne!(reg1, reg2, "Duplicate found in CALLER_SAVED_GP_SYSTEMV at indices {i} and {j}");
             }
         }
     }
@@ -824,7 +824,7 @@ fn test_caller_saved_arrays_no_duplicates() {
     for (i, reg1) in CALLER_SAVED_GP_WINDOWS.iter().enumerate() {
         for (j, reg2) in CALLER_SAVED_GP_WINDOWS.iter().enumerate() {
             if i != j {
-                assert_ne!(reg1, reg2, "Duplicate found in CALLER_SAVED_GP_WINDOWS at indices {} and {}", i, j);
+                assert_ne!(reg1, reg2, "Duplicate found in CALLER_SAVED_GP_WINDOWS at indices {i} and {j}");
             }
         }
     }
@@ -855,7 +855,7 @@ fn test_size_calculations_dont_overflow() {
         let bytes = reg.size_bytes();
 
         // Verify the relationship
-        assert_eq!(bytes * 8, bits, "Size relationship mismatch for {:?}", reg);
+        assert_eq!(bytes * 8, bits, "Size relationship mismatch for {reg:?}");
 
         // Ensure no overflow occurred (basic sanity check)
         assert!(bits > 0 && bits <= 512);
@@ -905,18 +905,13 @@ fn test_parameter_register_indices_match_arrays() {
     // Test Windows integer parameters
     for (idx, &reg) in INT_PARAM_REGS_WINDOWS.iter().enumerate() {
         let x86_reg = X86Register::GP64(reg);
-        assert!(
-            x86_reg.is_parameter_register(Platform::Windows, idx),
-            "{:?} should be parameter {} on Windows",
-            reg,
-            idx
-        );
+        assert!(x86_reg.is_parameter_register(Platform::Windows, idx), "{reg:?} should be parameter {idx} on Windows");
     }
 
     // Test System V integer parameters
     for (idx, &reg) in INT_PARAM_REGS_SYSTEMV.iter().enumerate() {
         let x86_reg = X86Register::GP64(reg);
-        assert!(x86_reg.is_parameter_register(Platform::Linux, idx), "{:?} should be parameter {} on Linux", reg, idx);
+        assert!(x86_reg.is_parameter_register(Platform::Linux, idx), "{reg:?} should be parameter {idx} on Linux");
     }
 
     // Test Windows float parameters
@@ -924,9 +919,7 @@ fn test_parameter_register_indices_match_arrays() {
         let x86_reg = X86Register::Xmm(reg);
         assert!(
             x86_reg.is_parameter_register(Platform::Windows, idx),
-            "{:?} should be float parameter {} on Windows",
-            reg,
-            idx
+            "{reg:?} should be float parameter {idx} on Windows",
         );
     }
 
@@ -935,9 +928,7 @@ fn test_parameter_register_indices_match_arrays() {
         let x86_reg = X86Register::Xmm(reg);
         assert!(
             x86_reg.is_parameter_register(Platform::Linux, idx),
-            "{:?} should be float parameter {} on Linux",
-            reg,
-            idx
+            "{reg:?} should be float parameter {idx} on Linux",
         );
     }
 }
@@ -949,7 +940,7 @@ fn test_return_registers_match_arrays() {
     for &reg in INT_RETURN_REGS {
         let x86_reg = X86Register::GP64(reg);
         for platform in [Platform::Windows, Platform::Linux, Platform::MacOS] {
-            assert!(x86_reg.is_return_register(platform), "{:?} should be return register on {:?}", reg, platform);
+            assert!(x86_reg.is_return_register(platform), "{reg:?} should be return register on {platform:?}");
         }
     }
 
@@ -957,12 +948,7 @@ fn test_return_registers_match_arrays() {
         let x86_reg = X86Register::Xmm(reg);
         // Based on implementation, XMM1 is also return on all platforms
         for platform in [Platform::Windows, Platform::Linux, Platform::MacOS] {
-            assert!(
-                x86_reg.is_return_register(platform),
-                "{:?} should be float return register on {:?}",
-                reg,
-                platform
-            );
+            assert!(x86_reg.is_return_register(platform), "{reg:?} should be float return register on {platform:?}");
         }
     }
 }
@@ -972,18 +958,18 @@ fn test_callee_saved_registers_match_arrays() {
     // Verify System V callee-saved GP registers
     for &reg in CALLEE_SAVED_GP_SYSTEMV {
         let x86_reg = X86Register::GP64(reg);
-        assert!(x86_reg.is_callee_saved(Platform::Linux), "{:?} should be callee-saved on Linux", reg);
+        assert!(x86_reg.is_callee_saved(Platform::Linux), "{reg:?} should be callee-saved on Linux");
     }
 
     // Verify Windows callee-saved GP registers
     for &reg in CALLEE_SAVED_GP_WINDOWS {
         let x86_reg = X86Register::GP64(reg);
-        assert!(x86_reg.is_callee_saved(Platform::Windows), "{:?} should be callee-saved on Windows", reg);
+        assert!(x86_reg.is_callee_saved(Platform::Windows), "{reg:?} should be callee-saved on Windows");
     }
 
     // Verify Windows callee-saved XMM registers
     for &reg in CALLEE_SAVED_XMM_WINDOWS {
         let x86_reg = X86Register::Xmm(reg);
-        assert!(x86_reg.is_callee_saved(Platform::Windows), "{:?} should be callee-saved on Windows", reg);
+        assert!(x86_reg.is_callee_saved(Platform::Windows), "{reg:?} should be callee-saved on Windows");
     }
 }

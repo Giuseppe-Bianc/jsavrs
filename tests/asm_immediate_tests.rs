@@ -1,4 +1,4 @@
-//! Comprehensive test suite for the `Immediate` type in the asm::instruction module.
+//! Comprehensive test suite for the `Immediate` type in the `asm::instruction` module.
 //!
 //! This module tests all functionality related to immediate (constant) operands
 //! including size calculations, type conversions, signedness checks, range validation,
@@ -222,6 +222,7 @@ fn test_imm8_negative_to_u64_wraps() {
 }
 
 #[test]
+#[allow(clippy::cast_sign_loss)]
 fn test_imm8_min_to_u64_wraps() {
     // -128 as u64 via i8 -> u64 cast
     let imm = Immediate::Imm8(-128);
@@ -290,6 +291,7 @@ fn test_imm64_negative_to_u64_wraps() {
 }
 
 #[test]
+#[allow(clippy::cast_sign_loss)]
 fn test_imm64_min_to_u64() {
     let imm = Immediate::Imm64(i64::MIN);
     assert_eq!(imm.as_u64(), i64::MIN as u64);
@@ -759,6 +761,7 @@ fn test_imm32_negative_display() {
 }
 
 #[test]
+#[allow(clippy::unreadable_literal)]
 fn test_imm32u_display_hex_format() {
     let imm = Immediate::Imm32u(0xDEADBEEF);
     assert_eq!(format!("{imm}"), "0xdeadbeef");
@@ -783,6 +786,7 @@ fn test_imm64_negative_display() {
 }
 
 #[test]
+#[allow(clippy::unreadable_literal)]
 fn test_imm64u_display_hex_format() {
     let imm = Immediate::Imm64u(0x123456789ABCDEF0);
     assert_eq!(format!("{imm}"), "0x123456789abcdef0");
