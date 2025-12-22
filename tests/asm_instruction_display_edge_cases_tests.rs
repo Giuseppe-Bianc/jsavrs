@@ -1081,6 +1081,7 @@ fn test_special_instruction_display() {
 }
 
 #[test]
+#[allow(clippy::similar_names)]
 fn test_sse_aligned_move_display() {
     // Test SSE aligned move instructions display
     let movaps = Instruction::Movaps { dest: Operand::xmm(XMMRegister::Xmm0), src: Operand::mem(GPRegister64::Rax) };
@@ -1093,6 +1094,7 @@ fn test_sse_aligned_move_display() {
 }
 
 #[test]
+#[allow(clippy::similar_names)]
 fn test_sse_unaligned_move_display() {
     // Test SSE unaligned move instructions display
     let movups =
