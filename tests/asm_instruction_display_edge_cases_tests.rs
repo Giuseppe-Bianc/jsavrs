@@ -2150,3 +2150,377 @@ fn test_sse_packed_mul_boundary_registers() {
         Instruction::Mulpd { dest: Operand::xmm(XMMRegister::Xmm15), src: Operand::xmm(XMMRegister::Xmm0) };
     assert_eq!(mulpd_last.to_string(), "mulpd xmm15, xmm0");
 }
+
+// ============================================================================
+// SSE Packed Division Instructions - Divps/Divpd (Lines 302-303)
+// ============================================================================
+
+#[test]
+fn test_divps_instruction_display() {
+    // Test DIVPS (Divide Packed Single-Precision Floating-Point) instruction.
+    // DIVPS divides four single-precision floating-point values in parallel.
+    let instr = Instruction::Divps { dest: Operand::xmm(XMMRegister::Xmm0), src: Operand::xmm(XMMRegister::Xmm1) };
+    assert_eq!(instr.to_string(), "divps xmm0, xmm1", "DIVPS register-to-register display");
+    assert_eq!(instr.mnemonic(), "divps", "DIVPS mnemonic should be 'divps'");
+}
+
+#[test]
+fn test_divps_with_memory_operand() {
+    // Test DIVPS with memory operand as source.
+    let instr = Instruction::Divps { dest: Operand::xmm(XMMRegister::Xmm2), src: Operand::mem(GPRegister64::Rax) };
+    assert_eq!(instr.to_string(), "divps xmm2, QWORD PTR [rax]", "DIVPS with memory source");
+    assert_eq!(instr.mnemonic(), "divps");
+}
+
+#[test]
+fn test_divps_with_memory_displacement() {
+    // Test DIVPS with memory operand using displacement.
+    let instr =
+        Instruction::Divps { dest: Operand::xmm(XMMRegister::Xmm7), src: Operand::mem_disp(GPRegister64::Rbp, -16) };
+    assert_eq!(instr.to_string(), "divps xmm7, QWORD PTR [rbp - 16]", "DIVPS with negative displacement");
+}
+
+#[test]
+fn test_divps_with_positive_displacement() {
+    // Test DIVPS with positive memory displacement.
+    let instr =
+        Instruction::Divps { dest: Operand::xmm(XMMRegister::Xmm15), src: Operand::mem_disp(GPRegister64::Rsp, 64) };
+    assert_eq!(instr.to_string(), "divps xmm15, QWORD PTR [rsp + 64]", "DIVPS with positive displacement");
+}
+
+#[test]
+fn test_divpd_instruction_display() {
+    // Test DIVPD (Divide Packed Double-Precision Floating-Point) instruction.
+    // DIVPD divides two double-precision floating-point values in parallel.
+    let instr = Instruction::Divpd { dest: Operand::xmm(XMMRegister::Xmm3), src: Operand::xmm(XMMRegister::Xmm4) };
+    assert_eq!(instr.to_string(), "divpd xmm3, xmm4", "DIVPD register-to-register display");
+    assert_eq!(instr.mnemonic(), "divpd", "DIVPD mnemonic should be 'divpd'");
+}
+
+#[test]
+fn test_divpd_with_memory_operand() {
+    // Test DIVPD with memory operand as source.
+    let instr = Instruction::Divpd { dest: Operand::xmm(XMMRegister::Xmm5), src: Operand::mem(GPRegister64::Rbx) };
+    assert_eq!(instr.to_string(), "divpd xmm5, QWORD PTR [rbx]", "DIVPD with memory source");
+    assert_eq!(instr.mnemonic(), "divpd");
+}
+
+#[test]
+fn test_divpd_with_memory_displacement() {
+    // Test DIVPD with memory operand using displacement.
+    let instr =
+        Instruction::Divpd { dest: Operand::xmm(XMMRegister::Xmm8), src: Operand::mem_disp(GPRegister64::Rdx, -32) };
+    assert_eq!(instr.to_string(), "divpd xmm8, QWORD PTR [rdx - 32]", "DIVPD with negative displacement");
+}
+
+#[test]
+fn test_divpd_with_large_displacement() {
+    // Test DIVPD with large positive memory displacement.
+    let instr =
+        Instruction::Divpd { dest: Operand::xmm(XMMRegister::Xmm14), src: Operand::mem_disp(GPRegister64::Rsi, 256) };
+    assert_eq!(instr.to_string(), "divpd xmm14, QWORD PTR [rsi + 256]", "DIVPD with large displacement");
+}
+
+// ============================================================================
+// SSE Logical AND Instructions - Andps/Andpd (Lines 306-307)
+// ============================================================================
+
+#[test]
+fn test_andps_instruction_display() {
+    // Test ANDPS (Logical AND Packed Single-Precision Floating-Point) instruction.
+    // ANDPS performs bitwise AND on four 32-bit values in parallel.
+    let instr = Instruction::Andps { dest: Operand::xmm(XMMRegister::Xmm0), src: Operand::xmm(XMMRegister::Xmm1) };
+    assert_eq!(instr.to_string(), "andps xmm0, xmm1", "ANDPS register-to-register display");
+    assert_eq!(instr.mnemonic(), "andps", "ANDPS mnemonic should be 'andps'");
+}
+
+#[test]
+fn test_andps_with_memory_operand() {
+    // Test ANDPS with memory operand as source.
+    let instr = Instruction::Andps { dest: Operand::xmm(XMMRegister::Xmm2), src: Operand::mem(GPRegister64::Rax) };
+    assert_eq!(instr.to_string(), "andps xmm2, QWORD PTR [rax]", "ANDPS with memory source");
+    assert_eq!(instr.mnemonic(), "andps");
+}
+
+#[test]
+fn test_andps_with_memory_displacement() {
+    // Test ANDPS with memory operand using displacement.
+    let instr =
+        Instruction::Andps { dest: Operand::xmm(XMMRegister::Xmm7), src: Operand::mem_disp(GPRegister64::Rbp, -16) };
+    assert_eq!(instr.to_string(), "andps xmm7, QWORD PTR [rbp - 16]", "ANDPS with negative displacement");
+}
+
+#[test]
+fn test_andps_with_positive_displacement() {
+    // Test ANDPS with positive memory displacement.
+    let instr =
+        Instruction::Andps { dest: Operand::xmm(XMMRegister::Xmm15), src: Operand::mem_disp(GPRegister64::Rsp, 64) };
+    assert_eq!(instr.to_string(), "andps xmm15, QWORD PTR [rsp + 64]", "ANDPS with positive displacement");
+}
+
+#[test]
+fn test_andpd_instruction_display() {
+    // Test ANDPD (Logical AND Packed Double-Precision Floating-Point) instruction.
+    // ANDPD performs bitwise AND on two 64-bit values in parallel.
+    let instr = Instruction::Andpd { dest: Operand::xmm(XMMRegister::Xmm3), src: Operand::xmm(XMMRegister::Xmm4) };
+    assert_eq!(instr.to_string(), "andpd xmm3, xmm4", "ANDPD register-to-register display");
+    assert_eq!(instr.mnemonic(), "andpd", "ANDPD mnemonic should be 'andpd'");
+}
+
+#[test]
+fn test_andpd_with_memory_operand() {
+    // Test ANDPD with memory operand as source.
+    let instr = Instruction::Andpd { dest: Operand::xmm(XMMRegister::Xmm5), src: Operand::mem(GPRegister64::Rbx) };
+    assert_eq!(instr.to_string(), "andpd xmm5, QWORD PTR [rbx]", "ANDPD with memory source");
+    assert_eq!(instr.mnemonic(), "andpd");
+}
+
+#[test]
+fn test_andpd_with_memory_displacement() {
+    // Test ANDPD with memory operand using displacement.
+    let instr =
+        Instruction::Andpd { dest: Operand::xmm(XMMRegister::Xmm8), src: Operand::mem_disp(GPRegister64::Rdx, -32) };
+    assert_eq!(instr.to_string(), "andpd xmm8, QWORD PTR [rdx - 32]", "ANDPD with negative displacement");
+}
+
+#[test]
+fn test_andpd_with_large_displacement() {
+    // Test ANDPD with large positive memory displacement.
+    let instr =
+        Instruction::Andpd { dest: Operand::xmm(XMMRegister::Xmm14), src: Operand::mem_disp(GPRegister64::Rsi, 256) };
+    assert_eq!(instr.to_string(), "andpd xmm14, QWORD PTR [rsi + 256]", "ANDPD with large displacement");
+}
+
+// ============================================================================
+// SSE Packed Division and Logical - Comprehensive Tests
+// ============================================================================
+
+#[test]
+#[allow(clippy::similar_names)]
+fn test_sse_div_and_mnemonic_consistency() {
+    // Verify mnemonic consistency for SSE division and logical instructions.
+    let divps = Instruction::Divps { dest: Operand::xmm(XMMRegister::Xmm0), src: Operand::xmm(XMMRegister::Xmm1) };
+    assert_eq!(divps.mnemonic(), "divps");
+    assert_eq!(divps.to_string(), "divps xmm0, xmm1");
+
+    let divpd = Instruction::Divpd { dest: Operand::xmm(XMMRegister::Xmm2), src: Operand::xmm(XMMRegister::Xmm3) };
+    assert_eq!(divpd.mnemonic(), "divpd");
+    assert_eq!(divpd.to_string(), "divpd xmm2, xmm3");
+
+    let andps = Instruction::Andps { dest: Operand::xmm(XMMRegister::Xmm4), src: Operand::xmm(XMMRegister::Xmm5) };
+    assert_eq!(andps.mnemonic(), "andps");
+    assert_eq!(andps.to_string(), "andps xmm4, xmm5");
+
+    let andpd = Instruction::Andpd { dest: Operand::xmm(XMMRegister::Xmm6), src: Operand::xmm(XMMRegister::Xmm7) };
+    assert_eq!(andpd.mnemonic(), "andpd");
+    assert_eq!(andpd.to_string(), "andpd xmm6, xmm7");
+}
+
+#[test]
+#[allow(clippy::similar_names)]
+fn test_sse_div_and_clone_and_equality() {
+    // Test Clone and PartialEq for division and logical instructions.
+    let divps1 = Instruction::Divps { dest: Operand::xmm(XMMRegister::Xmm10), src: Operand::xmm(XMMRegister::Xmm11) };
+    let divps2 = divps1.clone();
+    assert_eq!(divps1, divps2, "Cloned DIVPS should equal original");
+
+    let andps1 = Instruction::Andps { dest: Operand::xmm(XMMRegister::Xmm12), src: Operand::xmm(XMMRegister::Xmm13) };
+    let andps2 = andps1.clone();
+    assert_eq!(andps1, andps2, "Cloned ANDPS should equal original");
+}
+
+#[test]
+fn test_sse_div_and_not_control_flow() {
+    // Verify division and logical instructions are not control flow.
+    let instructions = vec![
+        Instruction::Divps { dest: Operand::xmm(XMMRegister::Xmm0), src: Operand::xmm(XMMRegister::Xmm1) },
+        Instruction::Divpd { dest: Operand::xmm(XMMRegister::Xmm2), src: Operand::xmm(XMMRegister::Xmm3) },
+        Instruction::Andps { dest: Operand::xmm(XMMRegister::Xmm4), src: Operand::xmm(XMMRegister::Xmm5) },
+        Instruction::Andpd { dest: Operand::xmm(XMMRegister::Xmm6), src: Operand::xmm(XMMRegister::Xmm7) },
+    ];
+
+    for instr in instructions {
+        assert!(!instr.is_jump(), "{instr:?} should not be a jump");
+        assert!(!instr.is_call(), "{instr:?} should not be a call");
+        assert!(!instr.is_return(), "{instr:?} should not be a return");
+    }
+}
+
+#[test]
+fn test_sse_div_and_debug_formatting() {
+    // Test Debug trait implementation.
+    let divps = Instruction::Divps { dest: Operand::xmm(XMMRegister::Xmm4), src: Operand::xmm(XMMRegister::Xmm5) };
+    let debug_str = format!("{divps:?}");
+    assert!(debug_str.contains("Divps"), "Debug output should contain 'Divps'");
+
+    let andpd = Instruction::Andpd { dest: Operand::xmm(XMMRegister::Xmm6), src: Operand::xmm(XMMRegister::Xmm7) };
+    let debug_str = format!("{andpd:?}");
+    assert!(debug_str.contains("Andpd"), "Debug output should contain 'Andpd'");
+}
+
+#[test]
+fn test_sse_div_and_in_collections() {
+    // Test that instructions work in collections.
+    let instructions = [
+        Instruction::Divps { dest: Operand::xmm(XMMRegister::Xmm0), src: Operand::xmm(XMMRegister::Xmm1) },
+        Instruction::Divpd { dest: Operand::xmm(XMMRegister::Xmm2), src: Operand::xmm(XMMRegister::Xmm3) },
+        Instruction::Andps { dest: Operand::xmm(XMMRegister::Xmm4), src: Operand::xmm(XMMRegister::Xmm5) },
+        Instruction::Andpd { dest: Operand::xmm(XMMRegister::Xmm6), src: Operand::xmm(XMMRegister::Xmm7) },
+    ];
+
+    assert_eq!(instructions.len(), 4);
+    assert_eq!(instructions[0].mnemonic(), "divps");
+    assert_eq!(instructions[1].mnemonic(), "divpd");
+    assert_eq!(instructions[2].mnemonic(), "andps");
+    assert_eq!(instructions[3].mnemonic(), "andpd");
+}
+
+#[test]
+fn test_sse_div_and_pattern_matching() {
+    // Test pattern matching for division and logical instructions.
+    let classify = |instr: Instruction| -> &str {
+        match instr {
+            Instruction::Divps { .. } => "div_packed_single",
+            Instruction::Divpd { .. } => "div_packed_double",
+            Instruction::Andps { .. } => "and_packed_single",
+            Instruction::Andpd { .. } => "and_packed_double",
+            _ => "other",
+        }
+    };
+
+    let divps = Instruction::Divps { dest: Operand::xmm(XMMRegister::Xmm8), src: Operand::xmm(XMMRegister::Xmm9) };
+    assert_eq!(classify(divps), "div_packed_single");
+
+    let andpd = Instruction::Andpd { dest: Operand::xmm(XMMRegister::Xmm10), src: Operand::xmm(XMMRegister::Xmm11) };
+    assert_eq!(classify(andpd), "and_packed_double");
+}
+
+#[test]
+#[allow(clippy::similar_names)]
+fn test_sse_div_simd_division() {
+    // Test SIMD division semantics.
+    // DIVPS: 4 parallel 32-bit float divisions
+    let divps = Instruction::Divps { dest: Operand::xmm(XMMRegister::Xmm0), src: Operand::xmm(XMMRegister::Xmm1) };
+    assert_eq!(divps.mnemonic(), "divps", "DIVPS for 4x32-bit parallel divisions");
+
+    // DIVPD: 2 parallel 64-bit double divisions
+    let divpd = Instruction::Divpd { dest: Operand::xmm(XMMRegister::Xmm2), src: Operand::xmm(XMMRegister::Xmm3) };
+    assert_eq!(divpd.mnemonic(), "divpd", "DIVPD for 2x64-bit parallel divisions");
+}
+
+#[test]
+#[allow(clippy::similar_names)]
+fn test_sse_and_bitwise_operations() {
+    // Test bitwise AND semantics for packed floating-point values.
+    // ANDPS: bitwise AND on 128-bit XMM register (4x32-bit lanes)
+    let andps = Instruction::Andps { dest: Operand::xmm(XMMRegister::Xmm0), src: Operand::xmm(XMMRegister::Xmm1) };
+    assert_eq!(andps.mnemonic(), "andps", "ANDPS for bitwise AND on packed single");
+
+    // ANDPD: bitwise AND on 128-bit XMM register (2x64-bit lanes)
+    let andpd = Instruction::Andpd { dest: Operand::xmm(XMMRegister::Xmm2), src: Operand::xmm(XMMRegister::Xmm3) };
+    assert_eq!(andpd.mnemonic(), "andpd", "ANDPD for bitwise AND on packed double");
+}
+
+#[test]
+fn test_sse_div_and_with_all_xmm_registers() {
+    // Test with all XMM registers for coverage.
+    let xmm_regs = vec![
+        XMMRegister::Xmm0,
+        XMMRegister::Xmm1,
+        XMMRegister::Xmm2,
+        XMMRegister::Xmm3,
+        XMMRegister::Xmm4,
+        XMMRegister::Xmm5,
+        XMMRegister::Xmm6,
+        XMMRegister::Xmm7,
+        XMMRegister::Xmm8,
+        XMMRegister::Xmm9,
+        XMMRegister::Xmm10,
+        XMMRegister::Xmm11,
+        XMMRegister::Xmm12,
+        XMMRegister::Xmm13,
+        XMMRegister::Xmm14,
+        XMMRegister::Xmm15,
+    ];
+
+    for (i, &dest_reg) in xmm_regs.iter().enumerate() {
+        let src_reg = xmm_regs[(i + 1) % xmm_regs.len()];
+
+        // Test DIVPS
+        let divps = Instruction::Divps { dest: Operand::xmm(dest_reg), src: Operand::xmm(src_reg) };
+        assert_eq!(divps.mnemonic(), "divps");
+        assert!(divps.to_string().starts_with("divps"));
+
+        // Test ANDPD
+        let andpd = Instruction::Andpd { dest: Operand::xmm(dest_reg), src: Operand::xmm(src_reg) };
+        assert_eq!(andpd.mnemonic(), "andpd");
+        assert!(andpd.to_string().starts_with("andpd"));
+    }
+}
+
+#[test]
+fn test_sse_div_and_operand_ordering() {
+    // Verify Intel syntax operand ordering (dest, src).
+    let divps = Instruction::Divps { dest: Operand::xmm(XMMRegister::Xmm2), src: Operand::xmm(XMMRegister::Xmm3) };
+    let display = divps.to_string();
+    assert!(display.starts_with("divps xmm2,"), "Destination should come first");
+    assert!(display.ends_with("xmm3"), "Source should come last");
+
+    let andpd = Instruction::Andpd { dest: Operand::xmm(XMMRegister::Xmm4), src: Operand::xmm(XMMRegister::Xmm5) };
+    let display = andpd.to_string();
+    assert!(display.starts_with("andpd xmm4,"), "Destination should come first");
+    assert!(display.ends_with("xmm5"), "Source should come last");
+}
+
+#[test]
+fn test_sse_div_and_with_memory_addressing() {
+    // Test various memory addressing modes.
+
+    // Direct memory reference
+    let divps_mem = Instruction::Divps { dest: Operand::xmm(XMMRegister::Xmm0), src: Operand::mem(GPRegister64::Rdi) };
+    assert!(divps_mem.to_string().contains("[rdi]"));
+
+    // Negative displacement
+    let divpd_neg =
+        Instruction::Divpd { dest: Operand::xmm(XMMRegister::Xmm1), src: Operand::mem_disp(GPRegister64::Rbp, -8) };
+    assert!(divpd_neg.to_string().contains("rbp - 8"));
+
+    // Large positive displacement
+    let andps_pos =
+        Instruction::Andps { dest: Operand::xmm(XMMRegister::Xmm2), src: Operand::mem_disp(GPRegister64::Rsp, 128) };
+    assert!(andps_pos.to_string().contains("rsp + 128"));
+
+    // Zero displacement
+    let andpd_zero = Instruction::Andpd { dest: Operand::xmm(XMMRegister::Xmm3), src: Operand::mem(GPRegister64::Rcx) };
+    assert!(andpd_zero.to_string().contains("[rcx]"));
+    assert!(!andpd_zero.to_string().contains("+ 0"));
+}
+
+#[test]
+fn test_sse_div_and_lowercase_formatting() {
+    // Verify lowercase mnemonics (x86 convention).
+    let instructions = vec![
+        Instruction::Divps { dest: Operand::xmm(XMMRegister::Xmm0), src: Operand::xmm(XMMRegister::Xmm1) },
+        Instruction::Divpd { dest: Operand::xmm(XMMRegister::Xmm2), src: Operand::xmm(XMMRegister::Xmm3) },
+        Instruction::Andps { dest: Operand::xmm(XMMRegister::Xmm4), src: Operand::xmm(XMMRegister::Xmm5) },
+        Instruction::Andpd { dest: Operand::xmm(XMMRegister::Xmm6), src: Operand::xmm(XMMRegister::Xmm7) },
+    ];
+
+    for instr in instructions {
+        let display = instr.to_string();
+        let mnemonic = display.split_whitespace().next().unwrap();
+        assert_eq!(mnemonic, mnemonic.to_lowercase(), "Mnemonic should be lowercase");
+    }
+}
+
+#[test]
+fn test_sse_div_and_boundary_registers() {
+    // Test with boundary XMM registers.
+    let divps_first =
+        Instruction::Divps { dest: Operand::xmm(XMMRegister::Xmm0), src: Operand::xmm(XMMRegister::Xmm15) };
+    assert_eq!(divps_first.to_string(), "divps xmm0, xmm15");
+
+    let andpd_last =
+        Instruction::Andpd { dest: Operand::xmm(XMMRegister::Xmm15), src: Operand::xmm(XMMRegister::Xmm0) };
+    assert_eq!(andpd_last.to_string(), "andpd xmm15, xmm0");
+}
