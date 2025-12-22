@@ -936,6 +936,42 @@ fn test_mnemonic_for_avx_instructions() {
         "vaddps"
     );
     assert_eq!(
+        Instruction::Vaddpd {
+            dest: Operand::xmm(XMMRegister::Xmm0),
+            src1: Operand::xmm(XMMRegister::Xmm1),
+            src2: Operand::xmm(XMMRegister::Xmm2)
+        }
+        .mnemonic(),
+        "vaddpd"
+    );
+    assert_eq!(
+        Instruction::Vaddss {
+            dest: Operand::xmm(XMMRegister::Xmm0),
+            src1: Operand::xmm(XMMRegister::Xmm1),
+            src2: Operand::xmm(XMMRegister::Xmm2)
+        }
+        .mnemonic(),
+        "vaddss"
+    );
+    assert_eq!(
+        Instruction::Vaddsd {
+            dest: Operand::xmm(XMMRegister::Xmm0),
+            src1: Operand::xmm(XMMRegister::Xmm1),
+            src2: Operand::xmm(XMMRegister::Xmm2)
+        }
+        .mnemonic(),
+        "vaddsd"
+    );
+    assert_eq!(
+        Instruction::Vsubps {
+            dest: Operand::xmm(XMMRegister::Xmm0),
+            src1: Operand::xmm(XMMRegister::Xmm1),
+            src2: Operand::xmm(XMMRegister::Xmm2)
+        }
+        .mnemonic(),
+        "vsubps"
+    );
+    assert_eq!(
         Instruction::Vsubpd {
             dest: Operand::xmm(XMMRegister::Xmm0),
             src1: Operand::xmm(XMMRegister::Xmm1),
@@ -952,6 +988,24 @@ fn test_mnemonic_for_avx_instructions() {
         }
         .mnemonic(),
         "vmulps"
+    );
+    assert_eq!(
+        Instruction::Vmulpd {
+            dest: Operand::xmm(XMMRegister::Xmm0),
+            src1: Operand::xmm(XMMRegister::Xmm1),
+            src2: Operand::xmm(XMMRegister::Xmm2)
+        }
+        .mnemonic(),
+        "vmulpd"
+    );
+    assert_eq!(
+        Instruction::Vdivps {
+            dest: Operand::xmm(XMMRegister::Xmm0),
+            src1: Operand::xmm(XMMRegister::Xmm1),
+            src2: Operand::xmm(XMMRegister::Xmm2)
+        }
+        .mnemonic(),
+        "vdivps"
     );
     assert_eq!(
         Instruction::Vdivpd {
