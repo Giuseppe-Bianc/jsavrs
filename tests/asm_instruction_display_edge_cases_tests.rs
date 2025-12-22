@@ -8,7 +8,7 @@
 //! - AVX three-operand instructions
 //! - FPU instructions with optional operands
 //! - String instructions
-//! - SETcc instructions
+//! - `SETcc` instructions
 //! - Bit manipulation instructions
 //! - Conditional move instructions
 
@@ -732,6 +732,7 @@ fn test_lzcnt_display() {
 }
 
 #[test]
+#[allow(clippy::unreadable_literal, clippy::cast_possible_wrap)]
 fn test_tzcnt_display() {
     // Test trailing zero count
     let instr =
@@ -993,7 +994,7 @@ fn test_instruction_clone() {
 fn test_instruction_debug() {
     // Test that Debug formatting works
     let instr = Instruction::Mov { dest: Operand::reg64(GPRegister64::Rax), src: Operand::reg64(GPRegister64::Rbx) };
-    let debug_str = format!("{:?}", instr);
+    let debug_str = format!("{instr:?}");
     assert!(debug_str.contains("Mov"));
 }
 
