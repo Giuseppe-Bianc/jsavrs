@@ -106,9 +106,9 @@ This detailed diff output ensures complete audit trail capabilities and facilita
 
 ### 5. Security Agent: Vulnerability Detection and Hardening
 
-**Primary Responsibility:** The Security Agent focuses on identifying, prioritizing, and remediating security vulnerabilities and risky coding patterns across the codebase. Its goal is to reduce the project's attack surface and ensure safe defaults for public APIs and tooling.
+**Primary Responsibility:** The Security Agent identifies, prioritizes, and remediates security vulnerabilities and insecure coding practices throughout the codebase. This process involves automated scanning, code reviews, and security testing to ensure that potential risks are systematically addressed. The objective is to minimize the project's attack surface and establish secure default configurations for public APIs and development tools, thereby enhancing the overall security posture and promoting adherence to best practices in software development.
 
-**Input Specifications:** The agent consumes source code, dependency manifests (e.g., `Cargo.toml`), CI configuration, and a threat model describing expected trust boundaries and attacker capabilities. It can optionally take security policies or compliance targets (e.g., SLSA levels, internal guidelines).
+**Input Specifications:** the agent consumes several inputs, including source code, dependency manifests (e.g., `Cargo.toml`), CI configurations, and a threat model that defines expected trust boundaries and attacker capabilities. In addition, it may process optional security policies or compliance targets, such as SLSA levels or internal organizational guidelines, to ensure adherence to established standards and requirements.
 
 **Output Deliverables:**
 
@@ -121,9 +121,9 @@ This detailed diff output ensures complete audit trail capabilities and facilita
 
 ### 6. Performance Agent: Profiling and Optimization
 
-**Primary Responsibility:** The Performance Agent analyzes runtime and compile-time performance characteristics, locates hotspots, and proposes targeted optimizations that preserve correctness while improving throughput, latency, or resource usage.
+**Primary Responsibility:** The Performance Agent is a specialized tool that evaluates both runtime and compile-time performance metrics, identifies performance hotspots, and recommends targeted optimizations. These optimizations are designed to maintain functional correctness while enhancing throughput, reducing latency, and optimizing resource utilization. By systematically analyzing performance characteristics, the agent enables developers to improve system efficiency without compromising reliability.
 
-**Input Specifications:** The agent accepts benchmarks, flamegraphs, compiled artifacts, and performance requirements (targets or SLOs). It can also ingest CI benchmark history to detect regressions.
+**Input Specifications:** The agent can process a variety of performance-related inputs, including benchmarks, flamegraphs, compiled artifacts, and performance requirements such as targets and service-level objectives (SLOs). In addition, it can ingest continuous integration (CI) benchmark history to identify and track performance regressions over time. By analyzing these artifacts and historical data, the agent provides actionable insights for maintaining and improving system performance.
 
 **Output Deliverables:**
 
