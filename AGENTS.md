@@ -26,30 +26,31 @@ The framework encompasses four distinct agent roles, each designed to address sp
 - Risk assessment and mitigation strategies
 - Timeline estimations and resource allocation recommendations
 
-**Technical Infrastructure:** The Planner Agent leverages extensive knowledge of the `jsavrs` codebase architecture, as documented in the project's technical specifications (`QWEN.md`), to ensure that generated plans align with existing architectural patterns and maintain system coherence.
+**Technical Infrastructure:** The Planner Agent leverages an extensive understanding of the architecture of the jsavrs codebase, as documented in the project’s technical specifications, specifically in QWEN.md. This architectural awareness enables the agent to generate plans that align with established design patterns, thereby preserving overall system coherence and ensuring compatibility with existing implementation practices
 
 ### 2. Coder Agent: Automated Code Implementation and Integration
 
-**Primary Responsibility:** The Coder Agent specializes in the translation of detailed specifications into production-quality Rust code. This agent maintains expertise in language-specific best practices, design patterns, and the specific coding conventions established within the `jsavrs` project.
+**Primary Responsibility:** The Coder Agent specializes in translating detailed technical specifications into production-quality Rust code. It demonstrates expertise in Rust-specific best practices, established software design patterns, and the coding conventions defined within the `jsavrs` project, ensuring that implementations are correct, maintainable, and aligned with project standards.
 
 **Input Specifications:** The agent receives precisely defined implementation requirements from the Planner Agent, including:
 
-- For every function in the codebase, provide a complete function signature that explicitly lists each parameter's name and data type. When a function exposes optional behavior or default configuration (e.g., via `Option`, builder patterns, or trait defaults), document that default behavior alongside the signature. Additionally, include a succinct description for each parameter (purpose, units, and any constraints such as valid ranges or allowed values). Ensure that signatures and descriptions conform to the project's typing conventions and documentation style guide.- Detailed algorithmic logic descriptions
+- For every function in the codebase, provide a full function signature, including the return type and a detailed listing of each parameter's name and data type. Include any default values or optional parameters where applicable, and ensure that type annotations are precise and consistent. If a function provides optional behavior or a default configuration such as through Option, builder patterns, or trait defaults ensure that the default behavior is clearly documented alongside the function signature. Proper documentation of defaults enhances code clarity and helps users understand the function's behavior without inspecting the implementation. Additionally, include a succinct description of each parameter, specifying its purpose, units, and any applicable constraints, such as valid ranges or allowed values.Ensure that all function signatures and parameter descriptions adhere strictly to the project’s established typing conventions and its documentation style guide, thereby promoting consistency, clarity, and maintainability across the codebase and related documentation.
+- Detailed algorithmic logic descriptions
 - Data structure definitions and relationships
 - Integration requirements with existing codebase components
 
 **Output Deliverables:** The agent generates syntactically correct, semantically coherent Rust code that adheres to established project conventions, including:
 
-- Complete function implementations with appropriate error handling
+- Complete all function implementations in the codebase, ensuring that robust and appropriate error handling mechanisms are incorporated. Error handling should address invalid inputs, unexpected runtime conditions, and failure states in a manner consistent with established coding standards and best practices, thereby improving reliability, maintainability, and overall system stability.
 - Comprehensive documentation following project standards
 - Integration points with existing modules and interfaces
 - Performance-optimized implementations where applicable
 
-**Technical Infrastructure:** The Coder Agent maintains deep expertise in Rust programming language semantics, memory management principles, and concurrent programming paradigms. It leverages static analysis of the existing codebase to ensure seamless integration and consistency with established patterns.
+**Technical Infrastructure:** The Coder Agent maintains deep expertise in the semantics of the Rust programming language, principles of memory management, and concurrent programming paradigms. It applies this expertise by leveraging static analysis of the existing codebase to ensure seamless integration, enforce correctness, and adhere to established architectural and coding patterns.
 
 ### 3. Tester Agent: Quality Assurance and Code Integrity Validation
 
-**Primary Responsibility:** The Tester Agent ensures comprehensive quality assurance through automated test generation, execution, and code quality analysis. This agent maintains responsibility for both functional correctness verification and structural code quality assessment.
+**Primary Responsibility:** The Tester Agent provides comprehensive quality assurance by automating test generation and execution, alongside systematic code quality analysis. Through these processes, it verifies functional correctness while evaluating the structural integrity, maintainability, and reliability of the codebase, thereby supporting robust and dependable software development.
 
 **Input Specifications:** The agent processes newly generated code artifacts along with their corresponding behavioral specifications, including:
 
