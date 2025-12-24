@@ -4,75 +4,101 @@
 **Created**: 2025-12-05  
 **Status**: Draft  
 **Input**: User description: "Constant Folding Optimizer with Sparse Conditional Constant Propagation
+
 ## Core Objectives
+
 Build a production-ready constant folding optimization phase that implements the Wegman-Zadeck Sparse Conditional Constant Propagation (SCCP) algorithm for the jsavrs compiler's intermediate representation. The optimizer must integrate seamlessly with the existing optimization pipeline and Dead Code Elimination phase while maintaining the SSA form invariants of the IR.
+
 ## Fundamental Requirements
+
 ### 1. Lattice-Based Value Analysis
+
 - Implement a three-level lattice system for tracking value states during propagation:
-  - **Bottom** (⊥): Represents uninitialized or unreachable values
-  - **Constant**: Represents values proven to be compile-time constants
-  - **Top** (⊤): Represents values that may vary at runtime (overdefined)
+    - **Bottom** (⊥): Represents uninitialized or unreachable values
+    - **Constant**: Represents values proven to be compile-time constants
+    - **Top** (⊤): Represents values that may vary at runtime (overdefined)
 - The lattice must support proper meet operations ensuring monotonic progression from Bottom → Constant → Top
 - Track lattice values for all SSA temporaries, local variables, and memory locations
+
 ### 2. Sparse Conditional Constant Propagation Algorithm
+
 - Implement the Wegman-Zadeck SCCP algorithm with two key worklists:
-  - **SSA Edge Worklist**: Tracks data flow dependencies requiring reprocessing
-  - **CFG Edge Worklist**: Tracks control flow edges that become executable
+    - **SSA Edge Worklist**: Tracks data flow dependencies requiring reprocessing
+    - **CFG Edge Worklist**: Tracks control flow edges that become executable
 - Process phi nodes correctly by computing the meet of all executable predecessor values
 - Mark CFG edges as executable only when control flow definitively reaches them
 - Propagate constants through the SSA def-use chains efficiently
+
 ### 3. Constant Evaluation Engine
+
 - Evaluate binary operations on constant operands at compile time
 - Evaluate unary operations on constant operands at compile time
 - Handle type-specific constant folding (integer arithmetic, floating-point, boolean logic)
 - Properly handle edge cases: division by zero, integer overflow, NaN propagation
 - Support bitwise operations with proper semantics
+
 ### 4. Conditional Branch Resolution
+
 - Identify branches with constant conditions that can be resolved at compile time
 - Mark unreachable CFG edges when branch conditions are proven constant
 - Update the executable edge set to reflect dead control flow paths
 - Maintain soundness by conservative analysis when conditions cannot be proven
+
 ### 5. IR Transformation and Rewriting
+
 - Replace instructions that compute constant values with direct constant assignments
 - Simplify phi nodes when all incoming values from executable edges are constant
 - Remove or mark unreachable basic blocks identified during SCCP
 - Preserve SSA form throughout all transformations
 - Maintain proper def-use chain integrity after constant propagation
+
 ### 6. Integration with Existing Infrastructure
+
 - Implement the `Phase` trait with proper `run()` method signature
 - Coordinate with the Dead Code Elimination phase to remove instructions made dead by constant propagation
 - Respect the module's `count_instructions()` interface for statistics tracking
 - Use the existing `ControlFlowGraph`, `DominanceInfo`, and SSA infrastructure
 - Work correctly with the existing scope management system
+
 ### 7. Modular Architecture
+
 - Split implementation across logically separated files within `src/ir/optimizer/constant_folding/`:
-  - **lattice.rs**: Lattice value representation and meet operations
-  - **evaluator.rs**: Constant expression evaluation logic
-  - **propagator.rs**: SCCP worklist algorithm implementation
-  - **rewriter.rs**: IR transformation and simplification logic
-  - **optimizer.rs**: Phase trait implementation and orchestration
+    - **lattice.rs**: Lattice value representation and meet operations
+    - **evaluator.rs**: Constant expression evaluation logic
+    - **propagator.rs**: SCCP worklist algorithm implementation
+    - **rewriter.rs**: IR transformation and simplification logic
+    - **optimizer.rs**: Phase trait implementation and orchestration
 - Each module should have clear, well-defined responsibilities
 - Avoid monolithic functions exceeding 150 lines
+
 ### 8. Correctness and Safety Guarantees
+
 - Never violate SSA form invariants during transformation
 - Maintain sound analysis—never assume a value is constant unless proven
 - Preserve observable program semantics (no behavior changes for non-constant computations)
 - Handle phi nodes correctly in the presence of unreachable predecessors
 - Correctly propagate undefined/uninitialized values as Bottom in the lattice
+
 ### 9. Performance Characteristics
+
 - Achieve sparse analysis by processing only reachable code and live values
 - Use efficient data structures (HashMap for lattice values, HashSet for executable edges)
 - Minimize CFG and instruction traversals through incremental worklist processing
 - Preallocate collections with estimated capacities based on IR size
 - Converge in a bounded number of iterations (typically 1-3 passes for most functions)
+
 ### 10. Diagnostic and Debugging Support
+
 - Provide optional verbose output controlled by configuration flags
 - Track optimization statistics: constants propagated, instructions simplified, branches resolved
 - Support the existing `OptimizationStats` pattern used by DCE
 - Emit warnings for numerical edge cases (overflow, division by zero) when detected
 - Include clear comments explaining lattice state transitions and algorithm invariants
+
 ## Rationale
+
 Constant folding with SCCP is a foundational optimization that enables numerous downstream transformations. By proving values constant at compile time, we enable:
+
 - Dead code elimination of conditional branches with known outcomes
 - Simplification of arithmetic that depends only on constants
 - Better register allocation through reduced live ranges
@@ -80,7 +106,9 @@ Constant folding with SCCP is a foundational optimization that enables numerous 
 The Wegman-Zadeck algorithm is specifically chosen because it operates in a single unified pass, simultaneously discovering constant values and unreachable code through its sparse lattice-based analysis. This is more efficient than naive iterative dataflow analysis and naturally integrates with SSA form.
 The modular architecture ensures maintainability and testability. Each component can be developed, tested, and reasoned about independently, while the orchestrator in `optimizer.rs` provides a clean interface to the rest of the compiler pipeline.
 Integration with the existing DCE phase creates a powerful optimization sequence: SCCP identifies constants and unreachable paths, then DCE removes the provably dead code, which may expose additional constant folding opportunities in subsequent optimization rounds.
+
 ## Non-Requirements (Explicitly Out of Scope)
+
 - Interprocedural constant propagation across function boundaries
 - Symbolic execution or constraint solving beyond simple constant evaluation
 - Optimization of memory operations (load/store forwarding)

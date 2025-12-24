@@ -18,6 +18,7 @@ This document defines the complete data model for the Sparse Conditional Constan
 **Location**: `src/ir/optimizer/constant_folding/lattice.rs`
 
 **Definition**:
+
 ```rust
 /// Lattice value for abstract interpretation in SCCP.
 /// 
@@ -39,17 +40,20 @@ pub enum LatticeValue {
 ```
 
 **Fields**:
+
 - `Bottom`: No associated data (unit variant)
 - `Constant(ConstantValue)`: Embedded constant value (see ConstantValue entity)
 - `Top`: No associated data (unit variant)
 
 **Validation Rules**:
+
 - Lattice ordering must be preserved: ⊥ ≤ Constant ≤ ⊤
 - Meet operation must be monotonic (never decrease in lattice)
 - Constant variants must contain valid ConstantValue instances
 
 **State Transitions**:
-```
+
+```text
 Initial State: Bottom (for locals) or Top (for parameters/globals)
     ↓
 Transition: Value proven constant through evaluation
@@ -126,6 +130,7 @@ impl LatticeValue {
 ```
 
 **Relationships**:
+
 - Contains one `ConstantValue` when in Constant state
 - Stored in `LatticeState` HashMap keyed by `ValueId`
 - Updated by `SCCPropagator` during worklist processing
@@ -139,6 +144,7 @@ impl LatticeValue {
 **Location**: `src/ir/optimizer/constant_folding/lattice.rs`
 
 **Definition**:
+
 ```rust
 /// Type-safe constant value representation.
 /// 
@@ -173,12 +179,14 @@ pub enum ConstantValue {
 **Fields**: Each variant contains the native Rust type for that constant kind.
 
 **Validation Rules**:
+
 - Integer values must be within type range (enforced by Rust type system)
 - Floating-point values may be NaN, Infinity, or -Infinity (all valid IEEE 754)
 - Char values must be valid Unicode scalar values (enforced by Rust `char` type)
 - No invalid bit patterns allowed (Rust type safety)
 
 **Operations**:
+
 ```rust
 impl ConstantValue {
     /// Get the IR type of this constant value.
@@ -216,11 +224,13 @@ impl ConstantValue {
 ```
 
 **Special Cases**:
+
 - **Floating-Point Equality**: Uses `f32::to_bits()` / `f64::to_bits()` for exact bit-level comparison (distinguishes NaN, -0.0 vs +0.0)
 - **NaN Handling**: NaN values are valid constants but never equal to any value (including themselves per IEEE 754)
 - **Infinity**: Positive and negative infinity are valid constants
 
 **Relationships**:
+
 - Embedded in `LatticeValue::Constant` variant
 - Produced by `ConstantEvaluator`
 - Converted to IR constants by `IRRewriter`
@@ -234,6 +244,7 @@ impl ConstantValue {
 **Location**: `src/ir/optimizer/constant_folding/propagator.rs`
 
 **Definition**:
+
 ```rust
 /// Global lattice state for all SSA values in a function.
 /// 
@@ -247,14 +258,17 @@ pub struct LatticeState {
 ```
 
 **Fields**:
+
 - `values: HashMap<ValueId, LatticeValue>`: Main state storage
 
 **Validation Rules**:
+
 - All SSA values in scope must have entries (or default to Bottom)
 - Lattice values must never decrease in ordering (monotonicity)
 - Updates must preserve SSA def-use relationships
 
 **Operations**:
+
 ```rust
 impl LatticeState {
     /// Create new empty lattice state with preallocated capacity.
@@ -292,6 +306,7 @@ impl LatticeState {
 ```
 
 **Relationships**:
+
 - Owned by `SCCPropagator`
 - Queried by `ConstantEvaluator` for operand values
 - Updated during worklist processing
@@ -305,6 +320,7 @@ impl LatticeState {
 **Location**: `src/ir/optimizer/constant_folding/evaluator.rs`
 
 **Definition**:
+
 ```rust
 /// Constant expression evaluator for SCCP.
 /// 
@@ -318,9 +334,11 @@ pub struct ConstantEvaluator {
 ```
 
 **Fields**:
+
 - `diagnostics: DiagnosticEmitter`: For emitting warnings on edge cases
 
 **Operations**:
+
 ```rust
 impl ConstantEvaluator {
     /// Evaluate binary operation on constant operands.
@@ -414,6 +432,7 @@ impl ConstantEvaluator {
 ```
 
 **Edge Case Handling**:
+
 - **Integer Overflow**: Returns `LatticeValue::Top` (no warning per spec)
 - **Division by Zero (Integer)**: Returns `LatticeValue::Top` + emits warning
 - **Division by Zero (Float)**: Returns Infinity (valid IEEE 754, no warning)
@@ -421,6 +440,7 @@ impl ConstantEvaluator {
 - **Type Mismatch**: Returns `LatticeValue::Top`
 
 **Relationships**:
+
 - Used by `SCCPropagator` to evaluate instructions
 - Receives operand lattice values from `LatticeState`
 - Produces `LatticeValue` results for SSA def-use propagation
@@ -434,6 +454,7 @@ impl ConstantEvaluator {
 **Location**: `src/ir/optimizer/constant_folding/propagator.rs`
 
 **Definition**:
+
 ```rust
 /// Control flow graph edge (from predecessor to successor block).
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Hash)]
@@ -444,16 +465,19 @@ pub struct CFGEdge {
 ```
 
 **Fields**:
+
 - `from: BlockId`: Source basic block identifier
 - `to: BlockId`: Destination basic block identifier
 
 **Validation Rules**:
+
 - Both `from` and `to` must be valid block IDs in the function's CFG
 - Self-edges (loops) are valid
 - Edges must correspond to actual terminator branches in IR
 
 **State Transitions**:
-```
+
+```text
 Initial State: All edges unmarked (except entry block successors → executable)
     ↓
 Transition: Block with this edge as predecessor becomes executable
@@ -463,6 +487,7 @@ Marked Executable (terminal state - never unmarked)
 ```
 
 **Relationships**:
+
 - Tracked in `ExecutableEdgeSet`
 - Determined by terminator evaluation in `SCCPropagator`
 - Used to filter phi node predecessors
@@ -476,6 +501,7 @@ Marked Executable (terminal state - never unmarked)
 **Location**: `src/ir/optimizer/constant_folding/propagator.rs`
 
 **Definition**:
+
 ```rust
 /// Set of CFG edges proven to be executable.
 /// 
@@ -488,9 +514,11 @@ pub struct ExecutableEdgeSet {
 ```
 
 **Fields**:
+
 - `edges: HashSet<CFGEdge>`: Set of executable edges
 
 **Operations**:
+
 ```rust
 impl ExecutableEdgeSet {
     /// Create empty set with preallocated capacity.
@@ -525,11 +553,13 @@ impl ExecutableEdgeSet {
 ```
 
 **Validation Rules**:
+
 - Edges are added monotonically (never removed)
 - Entry block successors are always executable
 - Edge marking must be consistent with terminator evaluation
 
 **Relationships**:
+
 - Owned by `SCCPropagator`
 - Updated when processing CFG worklist items
 - Queried when evaluating phi nodes
@@ -543,6 +573,7 @@ impl ExecutableEdgeSet {
 **Location**: `src/ir/optimizer/constant_folding/propagator.rs`
 
 **Definition**:
+
 ```rust
 /// FIFO worklist with automatic deduplication.
 /// 
@@ -556,13 +587,16 @@ pub struct Worklist<T: Hash + Eq + Clone> {
 ```
 
 **Fields**:
+
 - `queue: VecDeque<T>`: FIFO queue of work items
 - `pending: HashSet<T>`: Set of items currently in queue (for deduplication)
 
 **Type Parameters**:
+
 - `T`: Work item type (must be `Hash + Eq + Clone`)
 
 **Operations**:
+
 ```rust
 impl<T: Hash + Eq + Clone> Worklist<T> {
     /// Create empty worklist with preallocated capacity.
@@ -601,10 +635,12 @@ impl<T: Hash + Eq + Clone> Worklist<T> {
 ```
 
 **Validation Rules**:
+
 - `pending` set must always contain exactly the items in `queue`
 - No duplicate items in `queue`
 
 **Relationships**:
+
 - Instantiated as `Worklist<CFGEdge>` for CFG edge worklist
 - Instantiated as `Worklist<(ValueId, InstructionId)>` for SSA edge worklist
 - Owned by `SCCPropagator`
@@ -618,6 +654,7 @@ impl<T: Hash + Eq + Clone> Worklist<T> {
 **Location**: `src/ir/optimizer/constant_folding/propagator.rs`
 
 **Definition**:
+
 ```rust
 /// Sparse Conditional Constant Propagator.
 /// 
@@ -649,6 +686,7 @@ pub struct SCCPropagator {
 ```
 
 **Fields**:
+
 - `lattice`: Global lattice state (see LatticeState)
 - `executable_edges`: Set of executable CFG edges (see ExecutableEdgeSet)
 - `ssa_worklist`: Queue of SSA def-use edges requiring processing
@@ -658,6 +696,7 @@ pub struct SCCPropagator {
 - `iteration_count`: Tracks iterations for convergence metrics
 
 **Operations**:
+
 ```rust
 impl SCCPropagator {
     /// Create new propagator for a function.
@@ -864,11 +903,13 @@ impl SCCPropagator {
 ```
 
 **Validation Rules**:
+
 - Worklists must be empty at convergence
 - All executable blocks must have at least one executable incoming edge (except entry)
 - Lattice values must be monotonic throughout propagation
 
 **Relationships**:
+
 - Owns `LatticeState`, `ExecutableEdgeSet`, worklists, and `ConstantEvaluator`
 - Created and invoked by `ConstantFoldingOptimizer`
 - Produces lattice state consumed by `IRRewriter`
@@ -882,6 +923,7 @@ impl SCCPropagator {
 **Location**: `src/ir/optimizer/constant_folding/rewriter.rs`
 
 **Definition**:
+
 ```rust
 /// IR rewriter for applying SCCP optimization results.
 /// 
@@ -898,11 +940,13 @@ pub struct IRRewriter<'a> {
 ```
 
 **Fields**:
+
 - `lattice: &'a LatticeState`: Reference to final lattice state from propagator
 - `executable_edges: &'a ExecutableEdgeSet`: Reference to executable edges
 - `stats: OptimizationStats`: Accumulates optimization metrics
 
 **Operations**:
+
 ```rust
 impl<'a> IRRewriter<'a> {
     /// Create rewriter from propagation results.
@@ -1013,11 +1057,13 @@ impl<'a> IRRewriter<'a> {
 ```
 
 **Validation Rules**:
+
 - Must preserve SSA form (single assignment invariant)
 - Must not modify unreachable blocks (except marking)
 - Constant replacements must be type-correct
 
 **Relationships**:
+
 - Consumes `LatticeState` and `ExecutableEdgeSet` from `SCCPropagator`
 - Modifies `Function` IR in-place
 - Produces `OptimizationStats` for reporting
@@ -1031,6 +1077,7 @@ impl<'a> IRRewriter<'a> {
 **Location**: `src/ir/optimizer/constant_folding/optimizer.rs`
 
 **Definition**:
+
 ```rust
 /// Configuration for SCCP optimizer.
 #[derive(Debug, Clone)]
@@ -1044,10 +1091,12 @@ pub struct SCCPConfig {
 ```
 
 **Fields**:
+
 - `verbose: bool`: Enable detailed logging of lattice transitions and worklist operations
 - `max_iterations: usize`: Maximum propagation iterations (default 100)
 
 **Default Implementation**:
+
 ```rust
 impl Default for SCCPConfig {
     fn default() -> Self {
@@ -1060,6 +1109,7 @@ impl Default for SCCPConfig {
 ```
 
 **Relationships**:
+
 - Passed to `SCCPropagator` during construction
 - Configured by `ConstantFoldingOptimizer`
 
@@ -1072,6 +1122,7 @@ impl Default for SCCPConfig {
 **Location**: `src/ir/optimizer/constant_folding/optimizer.rs`
 
 **Definition**:
+
 ```rust
 /// Statistics about SCCP optimization pass.
 #[derive(Debug, Default, Clone)]
@@ -1096,6 +1147,7 @@ pub struct OptimizationStats {
 **Fields**: All fields are counters accumulated during optimization.
 
 **Operations**:
+
 ```rust
 impl OptimizationStats {
     /// Create empty statistics.
@@ -1131,6 +1183,7 @@ impl std::fmt::Display for OptimizationStats {
 ```
 
 **Relationships**:
+
 - Updated by `IRRewriter` during IR transformation
 - Owned by `ConstantFoldingOptimizer`
 - Reported to user after optimization
@@ -1144,6 +1197,7 @@ impl std::fmt::Display for OptimizationStats {
 **Location**: `src/ir/optimizer/constant_folding/optimizer.rs`
 
 **Definition**:
+
 ```rust
 /// Constant Folding Optimizer with Sparse Conditional Constant Propagation.
 /// 
@@ -1155,10 +1209,12 @@ pub struct ConstantFoldingOptimizer {
 ```
 
 **Fields**:
+
 - `config: SCCPConfig`: Configuration options
 - `stats: OptimizationStats`: Accumulated statistics across all functions
 
 **Operations**:
+
 ```rust
 impl ConstantFoldingOptimizer {
     /// Create new optimizer with default configuration.
@@ -1223,11 +1279,13 @@ impl Phase for ConstantFoldingOptimizer {
 ```
 
 **Validation Rules**:
+
 - Must not modify module structure (number of functions)
 - Must preserve SSA form for all functions
 - Must handle errors gracefully without panicking
 
 **Relationships**:
+
 - Implements `Phase` trait for pipeline integration
 - Orchestrates `SCCPropagator` and `IRRewriter`
 - Reports statistics to caller
@@ -1236,7 +1294,7 @@ impl Phase for ConstantFoldingOptimizer {
 
 ## Entity Relationships Diagram
 
-```
+```text
 ┌─────────────────────────────┐
 │ ConstantFoldingOptimizer    │ (Implements Phase trait)
 │ ├─ config: SCCPConfig       │
@@ -1280,7 +1338,8 @@ Worklist<T> ──stores──> VecDeque<T> + HashSet<T>
 ## State Transition Diagrams
 
 ### Lattice Value State Transitions
-```
+
+```text
                     ┌───────────┐
         ┌───────────│  Bottom   │◄─────────┐
         │           │    (⊥)    │          │ Uninitialized value
@@ -1306,7 +1365,8 @@ Worklist<T> ──stores──> VecDeque<T> + HashSet<T>
 ```
 
 ### CFG Edge State Transitions
-```
+
+```text
                 ┌─────────────────┐
                 │   Unmarked      │
                 │ (not executable)│
@@ -1328,7 +1388,8 @@ Worklist<T> ──stores──> VecDeque<T> + HashSet<T>
 ```
 
 ### SCCP Algorithm Flow
-```
+
+```text
 ┌─────────────────────────────────────────┐
 │ Initialize                              │
 │ - Parameters/globals → Top              │

@@ -21,6 +21,7 @@ pub struct ConstantEvaluator {
 **Purpose**: Evaluates constant expressions with proper error handling and diagnostics.
 
 **Fields**:
+
 - `diagnostics: DiagnosticEmitter` - For emitting warnings (division by zero, etc.)
 
 ---
@@ -30,6 +31,7 @@ pub struct ConstantEvaluator {
 ### Constructor
 
 #### `new`
+
 ```rust
 pub fn new() -> Self
 ```
@@ -39,6 +41,7 @@ pub fn new() -> Self
 **Returns**: `Self` - New evaluator instance
 
 **Examples**:
+
 ```rust
 let evaluator = ConstantEvaluator::new();
 ```
@@ -50,6 +53,7 @@ let evaluator = ConstantEvaluator::new();
 ### Binary Operations
 
 #### `evaluate_binary_op`
+
 ```rust
 pub fn evaluate_binary_op(
     &mut self,
@@ -62,33 +66,38 @@ pub fn evaluate_binary_op(
 **Description**: Evaluate binary operation on constant operands.
 
 **Parameters**:
+
 - `op: BinaryOp` - Operation to perform (Add, Sub, Mul, Div, Mod, And, Or, Xor, etc.)
 - `left: &ConstantValue` - Left operand constant
 - `right: &ConstantValue` - Right operand constant
 
-**Returns**: 
+**Returns**:
+
 - `LatticeValue::Constant(result)` - If evaluation succeeds
 - `LatticeValue::Top` - If overflow, type mismatch, or division by zero
 
 **Side Effects**:
+
 - Emits warning diagnostic on integer division by zero
 - No warning on integer overflow (per spec)
 - No warning on floating-point special values
 
 **Type Requirements**:
+
 - Left and right must have matching types (same variant)
 - Returns `Top` on type mismatch
 
 **Supported Operations by Type**:
 
-| Type | Add | Sub | Mul | Div | Mod | BitAnd | BitOr | BitXor | Shl | Shr | Eq | Lt | Gt |
-|------|-----|-----|-----|-----|-----|--------|-------|--------|-----|-----|----|----|----| 
-| I8-I64 | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ |
-| U8-U64 | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ |
-| F32/F64 | ✓ | ✓ | ✓ | ✓ | - | - | - | - | - | - | ✓ | ✓ | ✓ |
-| Bool | - | - | - | - | - | ✓ | ✓ | ✓ | - | - | ✓ | - | - |
+| Type    | Add | Sub | Mul | Div | Mod | BitAnd | BitOr | BitXor | Shl | Shr | Eq | Lt | Gt |
+| ------- | --- | --- | --- | --- | --- | ------ | ----- | ------ | --- | --- | -- | -- | -- |
+| I8-I64  | ✓   | ✓   | ✓   | ✓   | ✓   | ✓      | ✓     | ✓      | ✓   | ✓   | ✓  | ✓  | ✓  |
+| U8-U64  | ✓   | ✓   | ✓   | ✓   | ✓   | ✓      | ✓     | ✓      | ✓   | ✓   | ✓  | ✓  | ✓  |
+| F32/F64 | ✓   | ✓   | ✓   | ✓   | -   | -      | -     | -      | -   | -   | ✓  | ✓  | ✓  |
+| Bool    | -   | -   | -   | -   | -   | ✓      | ✓     | ✓      | -   | -   | ✓  | -  | -  |
 
 **Examples**:
+
 ```rust
 let mut evaluator = ConstantEvaluator::new();
 
@@ -141,6 +150,7 @@ assert_eq!(result, LatticeValue::Top);
 ### Unary Operations
 
 #### `evaluate_unary_op`
+
 ```rust
 pub fn evaluate_unary_op(
     &self,
@@ -152,23 +162,26 @@ pub fn evaluate_unary_op(
 **Description**: Evaluate unary operation on constant operand.
 
 **Parameters**:
+
 - `op: UnaryOp` - Operation to perform (Neg, Not, BitwiseNot)
 - `operand: &ConstantValue` - Operand constant
 
 **Returns**:
+
 - `LatticeValue::Constant(result)` - If evaluation succeeds
 - `LatticeValue::Top` - If overflow or type mismatch
 
 **Supported Operations by Type**:
 
-| Type | Neg | Not | BitwiseNot |
-|------|-----|-----|------------|
-| I8-I64 | ✓ | - | ✓ |
-| U8-U64 | - | - | ✓ |
-| F32/F64 | ✓ | - | - |
-| Bool | - | ✓ | - |
+| Type    | Neg | Not | BitwiseNot |
+| ------- | --- | --- | ---------- |
+| I8-I64  | ✓   | -   | ✓          |
+| U8-U64  | -   | -   | ✓          |
+| F32/F64 | ✓   | -   | -          |
+| Bool    | -   | ✓   | -          |
 
 **Examples**:
+
 ```rust
 let evaluator = ConstantEvaluator::new();
 
@@ -214,6 +227,7 @@ assert_eq!(result, LatticeValue::Constant(ConstantValue::U8(0b01010101)));
 **Rationale**: Conservative and quiet for production compiler. Overflow behavior is well-defined (wrapping or trapping) but cannot be determined at compile time.
 
 **Examples**:
+
 ```rust
 // Addition overflow
 Add(I8(127), I8(1)) → Top
@@ -239,6 +253,7 @@ Neg(I32(i32::MIN)) → Top
 **Floating-Point Division by Zero**: Returns `Infinity` or `-Infinity` (valid IEEE 754, no warning)
 
 **Examples**:
+
 ```rust
 // Integer division by zero (warning)
 Div(I32(42), I32(0)) → Top + warning
@@ -259,6 +274,7 @@ Div(F32(-1.0), F32(0.0)) → Constant(F32(NEG_INFINITY))
 **Signed Zero**: Distinguishes -0.0 and +0.0
 
 **Examples**:
+
 ```rust
 // NaN propagation
 Add(F32(NaN), F32(1.0)) → Constant(F32(NaN))
@@ -306,6 +322,7 @@ Mul(F32(-0.0), F32(1.0)) → Constant(F32(-0.0))
 ## Usage Examples
 
 ### Complete Evaluation Pipeline
+
 ```rust
 use jsavrs::ir::optimizer::constant_folding::{ConstantEvaluator, ConstantValue, LatticeValue};
 
@@ -330,6 +347,7 @@ if let LatticeValue::Constant(result1) = step1 {
 ```
 
 ### Comparison Operations
+
 ```rust
 let mut evaluator = ConstantEvaluator::new();
 

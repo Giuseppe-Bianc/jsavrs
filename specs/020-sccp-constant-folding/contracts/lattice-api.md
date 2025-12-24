@@ -24,6 +24,7 @@ pub enum LatticeValue {
 **Purpose**: Represents the abstract interpretation state of an SSA value.
 
 **Variants**:
+
 - `Bottom`: Unreachable or uninitialized value (⊥)
 - `Constant(ConstantValue)`: Proven compile-time constant
 - `Top`: Overdefined runtime-varying value (⊤)
@@ -56,6 +57,7 @@ pub enum ConstantValue {
 ### LatticeValue Methods
 
 #### `meet`
+
 ```rust
 pub fn meet(&self, other: &Self) -> Self
 ```
@@ -63,16 +65,19 @@ pub fn meet(&self, other: &Self) -> Self
 **Description**: Compute lattice meet (greatest lower bound).
 
 **Parameters**:
+
 - `other: &Self` - Other lattice value to meet with
 
 **Returns**: `Self` - Result of meet operation
 
 **Semantics**:
+
 - `Bottom ⊓ x = x` (Bottom is identity)
 - `Top ⊓ x = Top` (Top absorbs)
 - `Constant(v1) ⊓ Constant(v2) = Constant(v1)` if `v1 == v2`, else `Top`
 
 **Examples**:
+
 ```rust
 let bottom = LatticeValue::Bottom;
 let const_42 = LatticeValue::Constant(ConstantValue::I32(42));
@@ -90,6 +95,7 @@ assert_eq!(top.meet(&const_42), top);
 ---
 
 #### `is_constant`
+
 ```rust
 pub fn is_constant(&self) -> bool
 ```
@@ -99,6 +105,7 @@ pub fn is_constant(&self) -> bool
 **Returns**: `true` if `Constant` variant, `false` otherwise
 
 **Examples**:
+
 ```rust
 let const_val = LatticeValue::Constant(ConstantValue::Bool(true));
 assert!(const_val.is_constant());
@@ -110,6 +117,7 @@ assert!(!LatticeValue::Bottom.is_constant());
 ---
 
 #### `as_constant`
+
 ```rust
 pub fn as_constant(&self) -> Option<&ConstantValue>
 ```
@@ -119,6 +127,7 @@ pub fn as_constant(&self) -> Option<&ConstantValue>
 **Returns**: `Some(&ConstantValue)` if Constant, `None` otherwise
 
 **Examples**:
+
 ```rust
 let const_val = LatticeValue::Constant(ConstantValue::I32(42));
 if let Some(ConstantValue::I32(v)) = const_val.as_constant() {
@@ -131,6 +140,7 @@ if let Some(ConstantValue::I32(v)) = const_val.as_constant() {
 ---
 
 #### `is_bottom`
+
 ```rust
 pub fn is_bottom(&self) -> bool
 ```
@@ -144,6 +154,7 @@ pub fn is_bottom(&self) -> bool
 ---
 
 #### `is_top`
+
 ```rust
 pub fn is_top(&self) -> bool
 ```
@@ -159,6 +170,7 @@ pub fn is_top(&self) -> bool
 ### ConstantValue Methods
 
 #### `get_type`
+
 ```rust
 pub fn get_type(&self) -> IRType
 ```
@@ -168,6 +180,7 @@ pub fn get_type(&self) -> IRType
 **Returns**: `IRType` - Type enum matching the constant variant
 
 **Examples**:
+
 ```rust
 let const_val = ConstantValue::I32(42);
 assert_eq!(const_val.get_type(), IRType::I32);
@@ -178,6 +191,7 @@ assert_eq!(const_val.get_type(), IRType::I32);
 ---
 
 #### `types_match`
+
 ```rust
 pub fn types_match(&self, other: &Self) -> bool
 ```
@@ -185,11 +199,13 @@ pub fn types_match(&self, other: &Self) -> bool
 **Description**: Check if two constant values have the same type.
 
 **Parameters**:
+
 - `other: &Self` - Other constant to compare types with
 
 **Returns**: `true` if same variant (type), `false` otherwise
 
 **Examples**:
+
 ```rust
 let a = ConstantValue::I32(42);
 let b = ConstantValue::I32(10);
@@ -204,6 +220,7 @@ assert!(!a.types_match(&c));
 ---
 
 #### `as_bool`
+
 ```rust
 pub fn as_bool(&self) -> Option<bool>
 ```
@@ -213,6 +230,7 @@ pub fn as_bool(&self) -> Option<bool>
 **Returns**: `Some(bool)` if `Bool` variant, `None` otherwise
 
 **Examples**:
+
 ```rust
 let const_true = ConstantValue::Bool(true);
 assert_eq!(const_true.as_bool(), Some(true));
@@ -247,6 +265,7 @@ assert_eq!(const_int.as_bool(), None);
 ## Usage Examples
 
 ### Basic Lattice Operations
+
 ```rust
 use jsavrs::ir::optimizer::constant_folding::{LatticeValue, ConstantValue};
 
@@ -267,6 +286,7 @@ assert!(result3.is_top());
 ```
 
 ### Phi Node Evaluation (Conceptual)
+
 ```rust
 fn evaluate_phi(incoming_values: &[(BlockId, LatticeValue)]) -> LatticeValue {
     let mut result = LatticeValue::Bottom;
@@ -315,9 +335,9 @@ This module does not produce errors - all operations are infallible. Type mismat
 
 - **Meet Operation**: O(1) time, O(1) space
 - **Type Queries**: O(1) time, O(1) space
-- **Memory Overhead**: 
-  - `LatticeValue`: 16 bytes (enum discriminant + largest variant)
-  - `ConstantValue`: 8 bytes (enum discriminant + largest primitive)
+- **Memory Overhead**:
+    - `LatticeValue`: 16 bytes (enum discriminant + largest variant)
+    - `ConstantValue`: 8 bytes (enum discriminant + largest primitive)
 
 ---
 

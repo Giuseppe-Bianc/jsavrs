@@ -17,6 +17,7 @@
 **MVP Scope**: User Story 1 (Basic Constant Propagation) - delivers core SCCP functionality
 
 **Incremental Delivery**: Each user story adds capabilities:
+
 - US1: Constant propagation and folding
 - US2: Control flow analysis and branch resolution  
 - US3: Phi node simplification
@@ -245,7 +246,7 @@
 
 1. **Phase 1 (Setup)**: T001 → T002 → T003
 2. **Phase 2 (Foundation)**: T004-T019 (blocking for all user stories)
-3. **User Stories (Can be parallel)**: 
+3. **User Stories (Can be parallel)**:
    - US1 (T020-T048) - MVP
    - US2 (T049-T067) - Depends on US1 core propagator
    - US3 (T068-T078) - Depends on US2 phi handling
@@ -255,25 +256,30 @@
 ### Parallel Execution Opportunities
 
 **Phase 2 Foundational** (after T004-T008 lattice basics):
+
 - Group A: T009-T010 (LatticeState)
 - Group B: T011-T013 (ExecutableEdgeSet)  
 - Group C: T014-T015 (Worklist)
 - Group D: T016-T019 (Config/Stats/Errors)
 
 **User Story 1 Implementation**:
+
 - Group A: T020-T024 (ConstantEvaluator)
 - Group B: T025-T031 (SCCPropagator) - depends on Group A
 - Group C: T032-T035 (IRRewriter)
 - Group D: T036-T038 (Optimizer) - depends on B & C
 
 **User Story 1 Tests**:
+
 - T039-T048 can all run in parallel (different test files)
 
 **User Story 4 Implementation**:
+
 - T079-T092 are all parallel (different type implementations)
 - T093-T104 tests all parallel
 
 **Phase 7 Polish**:
+
 - T105-T110 (code improvements) parallel with T112-T114 (benchmarks)
 - T115-T118 (verification) sequential
 - T119-T120 (documentation) parallel
@@ -281,21 +287,24 @@
 ### Example Parallel Execution (User Story 1)
 
 **Wave 1** (after Foundation complete):
-```
+
+```text
 Developer A: T020-T024 (ConstantEvaluator)
 Developer B: T039-T043 (Lattice/Evaluator tests)
 Developer C: T032-T035 (IRRewriter)
 ```
 
 **Wave 2** (after Wave 1):
-```
+
+```text
 Developer A: T025-T031 (SCCPropagator)
 Developer B: T044-T045 (Propagator unit tests)
 Developer C: T036-T038 (Optimizer)
 ```
 
 **Wave 3** (after Wave 2):
-```
+
+```text
 Developer A: T046-T048 (Integration/snapshot tests)
 Developer B: Code review and refinement
 Developer C: Documentation
@@ -325,16 +334,19 @@ Developer C: Documentation
 ## Success Criteria per Phase
 
 ### Phase 1 Success
+
 - ✅ Module structure created
 - ✅ All files exist and compile (even if empty stubs)
 
 ### Phase 2 Success
+
 - ✅ All foundational types compile
 - ✅ Lattice meet operation passes property tests
 - ✅ Worklist deduplication works correctly
 - ✅ No dependencies on unimplemented IR features
 
 ### User Story 1 Success
+
 - ✅ Simple constant propagation works (x=5; y=10; z=x+y → z=15)
 - ✅ I32 arithmetic evaluated correctly
 - ✅ Overflow handled conservatively (→ Top)
@@ -343,6 +355,7 @@ Developer C: Documentation
 - ✅ Snapshot tests match expected IR transformations
 
 ### User Story 2 Success
+
 - ✅ Constant branch conditions resolved (if true → unconditional jump)
 - ✅ Unreachable blocks marked correctly
 - ✅ Switch statements with constant selectors optimized
@@ -350,12 +363,14 @@ Developer C: Documentation
 - ✅ All US2 tests pass
 
 ### User Story 3 Success
+
 - ✅ Phi nodes simplified when all values constant and same
 - ✅ Unreachable phi predecessors ignored
 - ✅ Mixed value phi nodes handled (→ Top)
 - ✅ All US3 tests pass
 
 ### User Story 4 Success
+
 - ✅ All integer types (I8-I64, U8-U64) evaluated correctly
 - ✅ Floating-point NaN/Infinity handled per IEEE 754
 - ✅ Char Unicode validity preserved
@@ -363,6 +378,7 @@ Developer C: Documentation
 - ✅ All US4 tests pass
 
 ### Phase 7 Success
+
 - ✅ Verbose output provides useful debugging information
 - ✅ Statistics accurately track optimizations
 - ✅ Performance benchmarks meet requirements (SC-003, SC-004)
@@ -375,12 +391,14 @@ Developer C: Documentation
 ## Notes for Implementers
 
 ### Testing Philosophy
+
 - **Write tests first** for each user story (TDD approach recommended)
 - **Snapshot tests** capture before/after IR transformations for regression prevention
 - **Property tests** verify lattice meet operation laws (commutativity, associativity, idempotency)
 - **Integration tests** validate end-to-end optimization pipeline
 
 ### Common Pitfalls to Avoid
+
 1. **SSA Form Violation**: Never modify LHS of assignments, only RHS
 2. **Lattice Non-Monotonicity**: Ensure values never decrease in ordering
 3. **Type Confusion**: Always check type compatibility before evaluation
@@ -388,12 +406,14 @@ Developer C: Documentation
 5. **Floating-Point Equality**: Use bit-level comparison for NaN/zero handling
 
 ### Performance Tips
+
 - **Preallocate** HashMap/HashSet with estimated capacities
 - **Reuse** worklists instead of creating new ones
 - **Profile** with criterion before optimizing
 - **Benchmark** convergence iterations separately from execution time
 
 ### Integration with Existing Code
+
 - **Phase trait**: Follow existing DCE implementation pattern
 - **Error handling**: Use existing `OptimizationError` enum
 - **Diagnostics**: Integrate with existing diagnostic emitter

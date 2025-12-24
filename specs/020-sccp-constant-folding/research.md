@@ -32,6 +32,7 @@ This research explicitly focuses on intraprocedural SCCP optimization, operating
 **Expected Outcomes:**
 
 The successful implementation of SCCP in the jsavrs compiler will enable:
+
 - Elimination of compile-time constant computations, reducing runtime arithmetic overhead
 - Resolution of constant conditional branches, enabling dead code elimination and reduced code size
 - Simplification of phi nodes in SSA form, improving downstream optimization effectiveness
@@ -41,6 +42,7 @@ The successful implementation of SCCP in the jsavrs compiler will enable:
 **Document Organization:**
 
 This research document progresses systematically through the following major sections:
+
 - **Algorithm Foundations**: Theoretical underpinnings including lattice theory, sparse analysis strategy, and convergence guarantees
 - **Constant Evaluation**: Type-safe evaluation strategies for all supported types with comprehensive edge case handling
 - **Control Flow Analysis**: Techniques for conditional branch resolution, switch optimization, and phi node handling
@@ -57,8 +59,9 @@ This structured approach ensures that all aspects of SCCP implementation are tho
 
 **Decision**: Implement a three-level lattice (Bottom ⊥, Constant, Top ⊤) for tracking value states during SCCP analysis.
 
-**Rationale**: 
+**Rationale**:
 Lattice-based abstract interpretation provides a mathematically sound framework for compile-time analysis. The three-level lattice is the minimal structure required for SCCP:
+
 - **Bottom (⊥)**: Represents unreachable/uninitialized values (least defined state)
 - **Constant(v)**: Represents values proven to be the specific compile-time constant `v`
 - **Top (⊤)**: Represents overdefined values that may vary at runtime (most defined state)
@@ -118,11 +121,13 @@ The monotonic lattice framework provides strong theoretical guarantees about alg
 4. **Completeness within Scope**: Within the domain of constant propagation (excluding complex symbolic reasoning), SCCP is complete—it finds all constants that can be discovered through straightforward evaluation without external knowledge or runtime profiling.
 
 **Alternatives Considered**:
+
 1. **Two-level lattice (Constant/Non-Constant)**: Simpler but cannot distinguish between uninitialized and overdefined values, leading to less precise analysis. Rejected because SCCP requires tracking unreachable code through ⊥ values.
 2. **Multi-level lattice with interval analysis**: More precise but significantly more complex and slower. Rejected because the specification explicitly scopes out symbolic execution and constraint solving beyond simple constant evaluation.
 
 **Meet Operation Semantics**:
 The meet (⊓) operation combines information from multiple sources (e.g., phi node predecessors):
+
 - ⊥ ⊓ x = x (⊥ is identity)
 - Constant(v1) ⊓ Constant(v2) = Constant(v1) if v1 == v2, else ⊤
 - ⊤ ⊓ x = ⊤ (⊤ absorbs everything)
@@ -170,6 +175,7 @@ The implementation of the meet operation must handle several practical concerns:
 **Lattice Join Operation (Not Used in SCCP):**
 
 While SCCP relies exclusively on the meet operation, it's worth noting that lattice theory also defines a join operation (⊔) that computes the least upper bound. For completeness:
+
 - ⊥ ⊔ x = x
 - Constant(v1) ⊔ Constant(v2) = Constant(v) if v1 == v2, else ⊤
 - ⊤ ⊔ x = ⊤
@@ -189,7 +195,8 @@ The meet operation's design ensures soundness through conservative approximation
 **Example Scenarios:**
 
 1. **Simple Merge with Agreement:**
-   ```
+
+   ```text
    if (condition) {
        x = 100;
    } else {
@@ -199,7 +206,8 @@ The meet operation's design ensures soundness through conservative approximation
    ```
 
 2. **Merge with Disagreement:**
-   ```
+
+   ```text
    if (condition) {
        x = 100;
    } else {
@@ -209,7 +217,8 @@ The meet operation's design ensures soundness through conservative approximation
    ```
 
 3. **Merge with Unreachable Path:**
-   ```
+
+   ```text
    if (true) {  // Constant condition
        x = 100;
    } else {
@@ -219,7 +228,8 @@ The meet operation's design ensures soundness through conservative approximation
    ```
 
 4. **Progressive Refinement:**
-   ```
+
+   ```text
    Initial state: ⊥
    After first path discovered: ⊥ ⊓ Constant(42) = Constant(42)
    After second path discovered: Constant(42) ⊓ Constant(42) = Constant(42)
@@ -298,14 +308,14 @@ The sparse analysis strategy achieves superior complexity bounds compared to tra
 
 **Sparse vs. Dense Analysis Trade-offs:**
 
-| Aspect | Sparse Analysis | Dense (Iterative) Analysis |
-|--------|----------------|----------------------------|
-| **Complexity** | O(n) average | O(n²) or worse |
-| **Memory** | SSA def-use chains + worklists | Lattice states only |
-| **Implementation** | More complex (worklist management) | Simpler (nested loops) |
-| **SSA Requirement** | Mandatory | Optional |
-| **Precision** | Identical | Identical |
-| **Incremental Updates** | Naturally supported | Requires full reanalysis |
+| Aspect                   | Sparse Analysis                    | Dense (Iterative) Analysis  |
+| ------------------------ | ---------------------------------- | --------------------------- |
+| **Complexity**           | O(n) average                       | O(n²) or worse              |
+| **Memory**               | SSA def-use chains + worklists     | Lattice states only         |
+| **Implementation**       | More complex (worklist management) | Simpler (nested loops)      |
+| **SSA Requirement**      | Mandatory                          | Optional                    |
+| **Precision**            | Identical                          | Identical                   |
+| **Incremental Updates**  | Naturally supported                | Requires full reanalysis    |
 
 **Implementation Strategy Details:**
 
@@ -366,10 +376,12 @@ Beyond the algorithmic strategy, several implementation optimizations enhance pe
 These optimizations, combined with the fundamental sparse analysis strategy, enable SCCP to scale efficiently to large functions while maintaining precise constant discovery capabilities.
 
 **Alternatives Considered**:
+
 1. **Iterative dataflow analysis**: Standard approach but O(n²) complexity. Rejected for performance reasons.
 2. **Graph-based propagation**: Similar to worklist but requires more complex graph traversal. Rejected because worklist is simpler and equally efficient for SSA form.
 
 **Implementation Strategy**:
+
 - Use `VecDeque<T>` for worklists (efficient queue operations)
 - Use `HashSet<(BlockId, BlockId)>` for tracking executable CFG edges
 - Use `HashMap<ValueId, LatticeValue>` for lattice state
@@ -380,13 +392,15 @@ These optimizations, combined with the fundamental sparse analysis strategy, ena
 
 **Rationale**:
 The Wegman-Zadeck algorithm (1991) is the standard approach for sparse constant propagation because it:
+
 1. Discovers constant values and unreachable code in a single unified pass
 2. Handles both data flow (SSA edges) and control flow (CFG edges) simultaneously
 3. Converges efficiently through monotonic lattice operations
 4. Integrates naturally with SSA form
 
 **Algorithm Outline**:
-```
+
+```text
 Initialize:
   - Set all SSA values to ⊥ (except parameters/globals → ⊤)
   - Mark entry block edges as executable
@@ -409,6 +423,7 @@ While CFG worklist or SSA worklist non-empty:
 ```
 
 **Alternatives Considered**:
+
 1. **Constant propagation followed by conditional branch elimination**: Two separate passes. Rejected because SCCP is more efficient and precise by analyzing both simultaneously.
 2. **Interprocedural SCCP**: More powerful but requires whole-program analysis. Rejected per specification (explicitly out of scope).
 
@@ -425,6 +440,7 @@ While lattice monotonicity guarantees convergence in finite iterations, patholog
 4. Proceed with best-effort optimization
 
 **Empirical Data**: Research on SCCP in LLVM and other compilers shows:
+
 - 95%+ of functions converge in ≤3 iterations
 - 99%+ converge in ≤10 iterations
 - Functions requiring >50 iterations are rare and typically have unusual control flow
@@ -490,6 +506,7 @@ Several implementation strategies can accelerate convergence beyond the baseline
 While the current design doesn't implement these optimizations (to maintain implementation clarity), they represent potential future enhancements for performance-critical scenarios.
 
 **Alternatives Considered**:
+
 1. **No iteration limit**: Risk of infinite loops on bugs. Rejected for production safety.
 2. **Fixed iteration limit with hard failure**: Too strict. Rejected because conservative termination is safer.
 
@@ -501,6 +518,7 @@ While the current design doesn't implement these optimizations (to maintain impl
 
 **Rationale**:
 Type safety is essential for compiler correctness. Different types have different semantics:
+
 - **Signed integers**: Two's complement with wrapping overflow
 - **Unsigned integers**: Modulo arithmetic
 - **Floating-point**: IEEE 754 semantics with NaN propagation
@@ -576,6 +594,7 @@ pub fn evaluate_binary_op(
 ```
 
 This exhaustive matching ensures that:
+
 - All type combinations are explicitly handled
 - Type mismatches are caught at compile time through Rust's type checker
 - No implicit conversions occur that could violate language semantics
@@ -592,10 +611,12 @@ Type-specific evaluation provides several critical correctness properties:
 5. **Platform Independence**: Results are consistent across target architectures (within IEEE 754 flexibility)
 
 **Alternatives Considered**:
+
 1. **Generic evaluation with dynamic type checks**: More compact but error-prone and slower. Rejected for type safety.
 2. **LLVM-style constant folding via external library**: Powerful but heavyweight dependency. Rejected to maintain self-contained implementation.
 
 **Implementation Strategy**:
+
 ```rust
 // evaluator.rs structure
 pub enum ConstantValue {
@@ -627,16 +648,19 @@ pub fn evaluate_binary_op(
 **Decision**: Mark integer overflow as overdefined (⊤) without warnings; emit warnings for division by zero; propagate NaN per IEEE 754.
 
 **Rationale** (from spec clarifications):
+
 1. **Integer overflow → overdefined (no warning)**: Production compilers must be quiet on normal code patterns. Overflow behavior is well-defined in many languages (wrapping or trapping), and warning on every overflow would create excessive diagnostic noise.
 2. **Division by zero → overdefined + warning**: This is typically a programmer error worthy of a diagnostic, even though some programs intentionally use guarded division.
 3. **NaN propagation → silent**: IEEE 754 defines NaN propagation semantics. This is expected behavior, not an error.
 
 **Alternatives Considered**:
+
 1. **Panic on overflow**: Too strict for production compiler. Rejected.
 2. **Assume wrapping semantics and propagate result**: Unsound if language uses trapping overflow. Rejected for safety.
 3. **Configurable overflow behavior**: More flexible but adds complexity. Deferred to future enhancement.
 
 **Implementation Notes**:
+
 - Use Rust's `checked_add`, `checked_mul`, etc. for overflow detection
 - Use `f32/f64` arithmetic directly (Rust follows IEEE 754)
 - Emit warnings via existing diagnostic infrastructure
@@ -647,6 +671,7 @@ pub fn evaluate_binary_op(
 
 **Rationale**:
 Floating-point constant folding must preserve observable program semantics, including:
+
 - NaN propagation
 - Infinity handling
 - Signed zero distinctions
@@ -655,10 +680,12 @@ Floating-point constant folding must preserve observable program semantics, incl
 Rust's f32/f64 types follow IEEE 754 by default, making them suitable for constant evaluation without additional libraries.
 
 **Alternatives Considered**:
+
 1. **Arbitrary precision libraries (e.g., rug, num-bigfloat)**: More precise but overkill for compile-time evaluation. Rejected for complexity.
 2. **Integer-only constant folding**: Simpler but misses significant optimization opportunities. Rejected because spec requires floating-point support.
 
 **Edge Cases**:
+
 - `0.0 / 0.0` → NaN (propagate silently)
 - `1.0 / 0.0` → Infinity (propagate silently)
 - `-0.0` vs `+0.0` distinction preserved
@@ -672,19 +699,23 @@ Rust's f32/f64 types follow IEEE 754 by default, making them suitable for consta
 
 **Rationale**:
 When a branch condition is proven constant, exactly one successor is reachable:
+
 - `if (true) { A } else { B }` → only A reachable
 - `if (false) { A } else { B }` → only B reachable
 
 By marking edges to unreachable blocks, we enable:
+
 1. Phi node simplification (ignore unreachable predecessors)
 2. Dead code identification for DCE phase
 3. Further constant propagation in remaining reachable code
 
 **Alternatives Considered**:
+
 1. **Leave branch resolution to DCE**: Less precise because DCE doesn't propagate constants. Rejected because SCCP is designed to do both.
 2. **Directly remove unreachable code during SCCP**: Violates specification requirement to coordinate with DCE. Rejected.
 
 **Implementation Strategy**:
+
 ```rust
 // In propagator.rs
 fn visit_terminator(&mut self, block: BlockId, term: &Terminator) {
@@ -716,6 +747,7 @@ fn visit_terminator(&mut self, block: BlockId, term: &Terminator) {
 
 **Rationale**:
 Switch statements are generalized branches with multiple targets. When the selector is constant, only one case is reachable:
+
 ```javascript
 switch (42) {
     case 10: A; break;
@@ -727,10 +759,12 @@ switch (42) {
 This enables aggressive dead case elimination.
 
 **Alternatives Considered**:
+
 1. **Conservative treatment (mark all cases potentially executable)**: Simpler but misses optimization opportunities. Rejected.
 2. **Range analysis for partial switch elimination**: More sophisticated but out of scope. Deferred.
 
 **Implementation Notes**:
+
 - Match selector lattice value against case constants
 - If match found, mark only that case target as executable
 - If no match and default exists, mark default as executable
@@ -742,12 +776,14 @@ This enables aggressive dead case elimination.
 
 **Rationale**:
 Phi nodes merge values from multiple control flow paths. In SSA form:
-```
+
+```text
 block_merge:
     x = phi [block_A: v1, block_B: v2, block_C: v3]
 ```
 
 The correct lattice value for `x` depends on which predecessors are reachable:
+
 1. If all executable predecessors provide the same constant → phi is that constant
 2. If executable predecessors provide different constants → phi is ⊤ (overdefined)
 3. If only one predecessor executable → phi equals that predecessor's value
@@ -756,10 +792,12 @@ The correct lattice value for `x` depends on which predecessors are reachable:
 Ignoring unreachable predecessors is essential for precision.
 
 **Alternatives Considered**:
+
 1. **Consider all predecessors regardless of reachability**: Conservative but imprecise. Rejected because SCCP's power comes from discovering unreachable paths.
 2. **Remove unreachable phi inputs during SCCP**: Cleaner but violates SSA form until rewriter phase. Rejected for phase separation.
 
 **Implementation Strategy**:
+
 ```rust
 fn evaluate_phi(&self, phi: &PhiNode, block: BlockId) -> LatticeValue {
     let mut result = LatticeValue::Bottom;
@@ -783,11 +821,13 @@ fn evaluate_phi(&self, phi: &PhiNode, block: BlockId) -> LatticeValue {
 
 **Rationale**:
 The jsavrs compiler uses the Phase trait as its optimization pipeline abstraction. By implementing this trait, SCCP integrates seamlessly with existing infrastructure:
+
 - Standard `run(module: &mut Module)` interface
 - Consistent with DCE and other optimization phases
 - Enables flexible optimization ordering
 
 **Research Findings** (from existing codebase):
+
 ```rust
 // src/ir/optimizer/phase.rs (existing)
 pub trait Phase {
@@ -797,6 +837,7 @@ pub trait Phase {
 ```
 
 **Implementation Strategy**:
+
 ```rust
 // src/ir/optimizer/constant_folding/optimizer.rs
 pub struct ConstantFoldingOptimizer {
@@ -819,6 +860,7 @@ impl Phase for ConstantFoldingOptimizer {
 ```
 
 **Alternatives Considered**:
+
 1. **Custom integration interface**: More flexible but breaks consistency. Rejected.
 2. **Inline optimization without phase abstraction**: Simpler but harder to compose with other passes. Rejected.
 
@@ -828,18 +870,21 @@ impl Phase for ConstantFoldingOptimizer {
 
 **Rationale** (from spec clarification):
 Clean separation of concerns:
+
 - **SCCP responsibility**: Analyze constants, mark unreachable code
 - **DCE responsibility**: Remove marked dead code
 
 This avoids coupling SCCP to code removal logic and maintains single-responsibility principle.
 
 **Implementation Strategy**:
+
 1. SCCP marks basic blocks as unreachable via metadata or dedicated field
 2. SCCP marks instructions as dead when replaced with constants
 3. DCE phase runs after SCCP and removes marked elements
 4. Enables iterative optimization: SCCP → DCE → SCCP → DCE...
 
 **Communication Mechanism**:
+
 ```rust
 // Basic block marking
 impl BasicBlock {
@@ -861,6 +906,7 @@ impl Instruction {
 ```
 
 **Alternatives Considered**:
+
 1. **SCCP removes dead code directly**: Violates spec requirement. Rejected.
 2. **Shared data structure for tracking dead code**: More complex coordination. Rejected for simplicity.
 3. **DCE analyzes reachability independently**: Less efficient (duplicate analysis). Rejected.
@@ -871,6 +917,7 @@ impl Instruction {
 
 **Rationale**:
 The jsavrs IR module already provides:
+
 - **ControlFlowGraph**: Successor/predecessor queries, edge iteration
 - **DominanceInfo**: Dominance relationships (useful for verification)
 - **SSA def-use chains**: Efficient value → users mapping
@@ -878,17 +925,20 @@ The jsavrs IR module already provides:
 Reusing this infrastructure avoids duplication and ensures consistency with the rest of the compiler.
 
 **Research Findings** (from existing codebase structure):
+
 - `src/ir/cfg.rs`: CFG implementation with petgraph
 - `src/ir/dominance.rs`: Dominance tree computation
 - `src/ir/ssa.rs`: SSA construction and verification
 - `src/ir/value/`: Value representation with use lists
 
 **Integration Points**:
+
 1. **CFG queries**: `cfg.successors(block)`, `cfg.predecessors(block)`
 2. **Def-use chains**: `value.users()` for SSA worklist propagation
 3. **Dominance verification**: Debug assertions to verify SSA integrity post-optimization
 
 **Alternatives Considered**:
+
 1. **Build custom CFG representation**: Redundant. Rejected.
 2. **Manual def-use tracking**: Error-prone and inefficient. Rejected.
 
@@ -900,11 +950,13 @@ Reusing this infrastructure avoids duplication and ensures consistency with the 
 
 **Rationale**:
 Rust enums provide perfect abstraction for lattice values:
+
 - Exhaustive matching ensures all cases handled
 - Type safety prevents mixing incompatible types
 - Zero-cost abstraction (compiled to efficient representation)
 
 **Implementation**:
+
 ```rust
 #[derive(Debug, Clone, PartialEq)]
 pub enum LatticeValue {
@@ -940,6 +992,7 @@ impl LatticeValue {
 ```
 
 **Alternatives Considered**:
+
 1. **Separate HashMap for constant values**: More memory but less ergonomic. Rejected.
 2. **Trait-based abstraction**: More flexible but adds indirection. Rejected for simplicity.
 
@@ -949,11 +1002,13 @@ impl LatticeValue {
 
 **Rationale**:
 Worklist efficiency is critical for SCCP performance:
+
 - **FIFO ordering**: Breadth-first propagation tends to converge faster
 - **Deduplication**: Avoid processing the same edge multiple times
 - **Efficient operations**: O(1) push/pop for VecDeque
 
 **Implementation**:
+
 ```rust
 pub struct Worklist<T: Hash + Eq> {
     queue: VecDeque<T>,
@@ -977,6 +1032,7 @@ impl<T: Hash + Eq + Clone> Worklist<T> {
 ```
 
 **Alternatives Considered**:
+
 1. **Priority queue**: More complex, unclear benefit. Rejected.
 2. **Simple Vec without deduplication**: Inefficient (duplicate work). Rejected.
 3. **LIFO (stack) ordering**: Depth-first propagation. Rejected because BFS typically better.
@@ -987,11 +1043,13 @@ impl<T: Hash + Eq + Clone> Worklist<T> {
 
 **Rationale**:
 Reducing allocations improves performance:
+
 - Lattice value map: `capacity = num_instructions * 1.5` (estimate for SSA values)
 - Executable edge set: `capacity = num_basic_blocks * 2` (estimate for edges)
 - Worklists: `capacity = num_instructions / 2` (estimate for active items)
 
 **Implementation**:
+
 ```rust
 pub fn new_for_function(function: &Function) -> SCCPropagator {
     let num_instructions = function.count_instructions();
@@ -1007,6 +1065,7 @@ pub fn new_for_function(function: &Function) -> SCCPropagator {
 ```
 
 **Alternatives Considered**:
+
 1. **No preallocation**: Simpler but slower due to repeated reallocation. Rejected.
 2. **Fixed large capacities**: Wasteful for small functions. Rejected.
 3. **Adaptive growth**: More complex. Deferred for now.
@@ -1019,11 +1078,13 @@ pub fn new_for_function(function: &Function) -> SCCPropagator {
 
 **Rationale**:
 Modular testing enables:
+
 - Independent development and testing of components
 - Clear test organization and discoverability
 - Faster test execution (parallel test runner)
 
 **Test Coverage Requirements**:
+
 1. **Lattice tests** (`ir_sccp_lattice_tests.rs`):
    - Meet operation for all value combinations
    - Ordering verification (Bottom ≤ Constant ≤ Top)
@@ -1050,6 +1111,7 @@ Modular testing enables:
    - Unreachable block marking
 
 **Implementation Example**:
+
 ```rust
 // tests/ir_sccp_evaluator_tests.rs
 #[cfg(test)]
@@ -1084,12 +1146,14 @@ mod i32_arithmetic {
 
 **Rationale**:
 Snapshot tests are ideal for compiler optimizations because:
+
 - Capture entire IR structure automatically
 - Detect unintended changes in output
 - Easy to review and approve expected changes
 - Regression prevention
 
 **Test Structure** (`ir_sccp_snapshot_tests.rs`):
+
 ```rust
 #[cfg(test)]
 mod sccp_snapshots {
@@ -1128,12 +1192,14 @@ function test():
 ```
 
 **Snapshot Update Workflow**:
+
 1. Run `cargo test` (tests fail on new/changed output)
 2. Review diff with `cargo insta review`
 3. Accept changes if correct
 4. Commit updated snapshots with code
 
 **Alternatives Considered**:
+
 1. **Manual assertion-based tests**: More verbose and brittle. Rejected.
 2. **Golden file testing**: Similar to insta but less ergonomic. Rejected.
 
@@ -1145,6 +1211,7 @@ function test():
 Integration tests ensure that SCCP correctly coordinates with DCE and that the combined effect achieves expected optimizations.
 
 **Test Structure** (`ir_sccp_integration_tests.rs`):
+
 ```rust
 #[test]
 fn test_sccp_dce_integration() {
@@ -1182,6 +1249,7 @@ function test():
 ```
 
 **Alternatives Considered**:
+
 1. **Separate SCCP and DCE tests only**: Misses integration issues. Rejected.
 2. **Full compiler pipeline tests**: Too slow and high-level. Rejected for unit-level focus.
 
@@ -1193,6 +1261,7 @@ function test():
 Performance requirements (SC-003: 3 iterations for 95% of functions, SC-004: <1s for 10k instructions) require empirical validation.
 
 **Benchmark Structure** (`benches/sccp_benchmark.rs`):
+
 ```rust
 use criterion::{black_box, criterion_group, criterion_main, Criterion, BenchmarkId};
 
@@ -1227,12 +1296,14 @@ criterion_main!(benches);
 ```
 
 **Metrics Tracked**:
+
 1. Execution time vs. function size (verify linear complexity)
 2. Iterations to convergence (verify ≤3 for typical functions)
 3. Memory allocation (verify preallocation effectiveness)
 4. Comparison with/without preallocation
 
 **Alternatives Considered**:
+
 1. **Manual timing with std::time::Instant**: Less rigorous. Rejected.
 2. **No benchmarking**: Can't verify performance requirements. Rejected.
 
@@ -1244,6 +1315,7 @@ criterion_main!(benches);
 
 **Rationale** (from spec FR-016):
 Debugging SCCP requires understanding:
+
 - Why a value became constant vs. overdefined
 - Which worklist items were processed
 - How control flow edges were marked
@@ -1251,6 +1323,7 @@ Debugging SCCP requires understanding:
 Verbose output provides this insight without impacting production performance.
 
 **Implementation**:
+
 ```rust
 pub struct SCCPConfig {
     pub verbose: bool,
@@ -1282,6 +1355,7 @@ impl SCCPropagator {
 ```
 
 **Alternatives Considered**:
+
 1. **Always-on logging**: Too verbose for production. Rejected.
 2. **Separate debug build**: Inconvenient for users. Rejected.
 3. **Tracing framework integration**: More sophisticated but heavier dependency. Deferred.
@@ -1292,12 +1366,14 @@ impl SCCPropagator {
 
 **Rationale**:
 Statistics help:
+
 - Verify optimization effectiveness
 - Identify optimization opportunities
 - Debug convergence issues
 - Provide user feedback on compilation
 
 **Implementation**:
+
 ```rust
 #[derive(Debug, Default)]
 pub struct OptimizationStats {
@@ -1316,18 +1392,21 @@ impl ConstantFoldingOptimizer {
 ```
 
 **Alternatives Considered**:
+
 1. **No statistics tracking**: Harder to verify and debug. Rejected.
 2. **Detailed per-instruction stats**: Too verbose. Rejected.
 
 ## Open Questions and Future Enhancements
 
 ### Resolved Questions (from spec clarifications)
+
 1. ✅ **Overflow handling**: Mark as overdefined, no warning
 2. ✅ **DCE coordination**: SCCP marks, DCE removes
 3. ✅ **Verbose output content**: Lattice transitions, worklist ops, reachability
 4. ✅ **Function entry initialization**: Parameters/globals → Top, locals → Bottom
 
 ### Potential Future Enhancements (out of current scope)
+
 1. **Interprocedural SCCP**: Propagate constants across function boundaries
 2. **Range analysis**: Track value ranges instead of just constant/non-constant
 3. **Symbolic execution integration**: Constraint-based constant discovery
@@ -1429,6 +1508,7 @@ By grounding the design phase in this thorough research, we ensure that implemen
 **Validation and Review:**
 
 This research document should be reviewed by:
+
 - Compiler architecture experts to validate algorithmic approach
 - Rust developers to verify language idiom and best practice adherence
 - Performance engineers to confirm scalability assumptions

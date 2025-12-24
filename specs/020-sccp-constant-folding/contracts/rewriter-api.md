@@ -60,6 +60,7 @@ pub struct OptimizationStats {
 **Purpose**: Tracks optimization metrics.
 
 **Fields**:
+
 - `constants_propagated` - Number of instructions replaced with constants
 - `branches_resolved` - Number of conditional branches converted to unconditional
 - `phi_nodes_simplified` - Number of phi nodes replaced with constants
@@ -73,6 +74,7 @@ pub struct OptimizationStats {
 ### Constructor
 
 #### `new`
+
 ```rust
 pub fn new(
     lattice: &'a LatticeState,
@@ -83,12 +85,14 @@ pub fn new(
 **Description**: Create rewriter from SCCP analysis results.
 
 **Parameters**:
+
 - `lattice: &'a LatticeState` - Final lattice values from propagator
 - `executable_edges: &'a ExecutableEdgeSet` - Executable CFG edges
 
 **Returns**: `Self` - New rewriter instance
 
 **Examples**:
+
 ```rust
 let rewriter = IRRewriter::new(
     propagator.get_lattice_state(),
@@ -103,6 +107,7 @@ let rewriter = IRRewriter::new(
 ### IR Transformation
 
 #### `rewrite_function`
+
 ```rust
 pub fn rewrite_function(&mut self, function: &mut Function) -> Result<(), RewriteError>
 ```
@@ -110,13 +115,16 @@ pub fn rewrite_function(&mut self, function: &mut Function) -> Result<(), Rewrit
 **Description**: Rewrite entire function based on SCCP results.
 
 **Parameters**:
+
 - `function: &mut Function` - Function to transform (mutated in-place)
 
 **Returns**:
+
 - `Ok(())` - Rewriting succeeded
 - `Err(RewriteError)` - SSA violation, type mismatch, or invalid IR
 
 **Transformations Applied**:
+
 1. Mark unreachable blocks (no executable incoming edges)
 2. Replace constant-valued instructions with constant assignments
 3. Simplify phi nodes with constant incoming values
@@ -125,6 +133,7 @@ pub fn rewrite_function(&mut self, function: &mut Function) -> Result<(), Rewrit
 **SSA Preservation**: Maintains single-assignment invariant and dominance relations
 
 **Examples**:
+
 ```rust
 let mut rewriter = IRRewriter::new(lattice, edges);
 rewriter.rewrite_function(&mut function)?;
@@ -140,6 +149,7 @@ println!("Propagated {} constants", stats.constants_propagated);
 ### Statistics
 
 #### `get_stats`
+
 ```rust
 pub fn get_stats(&self) -> &OptimizationStats
 ```
@@ -149,6 +159,7 @@ pub fn get_stats(&self) -> &OptimizationStats
 **Returns**: `&OptimizationStats` - Reference to statistics
 
 **Examples**:
+
 ```rust
 let stats = rewriter.get_stats();
 println!("{}", stats); // Uses Display impl
@@ -165,6 +176,7 @@ println!("{}", stats); // Uses Display impl
 **Trigger**: Instruction result value has lattice value `Constant(v)`
 
 **Transformation**:
+
 ```text
 Before:
   %result = add %x, %y    // lattice[%result] = Constant(I32(42))
@@ -174,11 +186,13 @@ After:
 ```
 
 **Constraints**:
+
 - Result value type must match constant type
 - Only applied to reachable instructions
 - Preserves SSA def-use chains
 
 **Examples**:
+
 ```rust
 // Before SCCP:
 // %1 = const 10
@@ -198,6 +212,7 @@ After:
 **Trigger**: All executable incoming values are the same constant
 
 **Transformation**:
+
 ```text
 Before:
   %result = phi [bb1: %v1, bb2: %v2, bb3: %v3]
@@ -211,11 +226,13 @@ After:
 ```
 
 **Constraints**:
+
 - Only considers executable predecessor edges
 - All executable incoming values must be identical constants
 - Result type must match constant type
 
 **Examples**:
+
 ```rust
 // Before (after SCCP marks edges):
 // bb1:
@@ -239,6 +256,7 @@ After:
 **Trigger**: Conditional branch condition has lattice value `Constant(Bool(b))`
 
 **Transformation (condition = true)**:
+
 ```text
 Before:
   br %cond, label %true_block, label %false_block
@@ -249,6 +267,7 @@ After:
 ```
 
 **Transformation (condition = false)**:
+
 ```text
 Before:
   br %cond, label %true_block, label %false_block
@@ -259,10 +278,12 @@ After:
 ```
 
 **Constraints**:
+
 - Only applied to reachable blocks
 - Condition must be proven constant (not just likely)
 
 **Examples**:
+
 ```rust
 // Before:
 // %cond = const true
@@ -280,6 +301,7 @@ After:
 **Trigger**: Block has no executable incoming CFG edges (except entry block)
 
 **Transformation**:
+
 ```text
 Before:
   bb5:  // No executable predecessors
@@ -297,10 +319,12 @@ After:
 **DCE Coordination**: Marked blocks removed by subsequent DCE pass
 
 **Constraints**:
+
 - Entry block never marked unreachable
 - Blocks are marked but NOT deleted by rewriter
 
 **Examples**:
+
 ```rust
 // Before:
 // bb1:
@@ -352,6 +376,7 @@ After:
 ## Usage Examples
 
 ### Complete Optimization Pipeline
+
 ```rust
 use jsavrs::ir::optimizer::constant_folding::{
     SCCPropagator, SCCPConfig, IRRewriter
@@ -376,6 +401,7 @@ println!("{}", stats);
 ```
 
 ### Incremental Rewriting
+
 ```rust
 let mut rewriter = IRRewriter::new(lattice, edges);
 

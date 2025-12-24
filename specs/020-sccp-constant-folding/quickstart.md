@@ -31,6 +31,7 @@ println!("SCCP: {} constants propagated", stats.constants_propagated);
 ```
 
 **Output**:
+
 ```text
 SCCP: 42 constants propagated, 5 branches resolved, 
       3 phi nodes simplified, 2 blocks marked unreachable, 
@@ -81,6 +82,7 @@ sccp.run(&mut module)?;
 ```
 
 **Verbose Output** (stderr):
+
 ```text
 [SCCP] Value v42: Bottom → Constant(I32(10))
 [SCCP] Value v43: Constant(I32(10)) → Constant(I32(10))
@@ -97,6 +99,7 @@ sccp.run(&mut module)?;
 **Scenario**: Optimize arithmetic on constant literals
 
 **Input IR**:
+
 ```rust
 function example():
     %1 = const 10
@@ -107,12 +110,14 @@ function example():
 ```
 
 **Code**:
+
 ```rust
 let mut sccp = ConstantFoldingOptimizer::new();
 sccp.run(&mut module)?;
 ```
 
 **Output IR**:
+
 ```rust
 function example():
     %1 = const 10
@@ -123,6 +128,7 @@ function example():
 ```
 
 **Statistics**:
+
 - Constants propagated: 2
 - Iterations: 1
 
@@ -133,6 +139,7 @@ function example():
 **Scenario**: Eliminate dead paths based on constant conditions
 
 **Input IR**:
+
 ```rust
 function example():
     %cond = const true
@@ -146,6 +153,7 @@ function example():
 ```
 
 **Code**:
+
 ```rust
 let mut sccp = ConstantFoldingOptimizer::new();
 sccp.run(&mut module)?;
@@ -156,6 +164,7 @@ dce.run(&mut module)?;
 ```
 
 **Output IR** (after SCCP):
+
 ```rust
 function example():
     %cond = const true
@@ -169,6 +178,7 @@ function example():
 ```
 
 **Output IR** (after SCCP + DCE):
+
 ```rust
 function example():
     %cond = const true
@@ -181,6 +191,7 @@ function example():
 ```
 
 **Statistics**:
+
 - Branches resolved: 1
 - Blocks marked unreachable: 1
 - Blocks removed (DCE): 1
@@ -192,6 +203,7 @@ function example():
 **Scenario**: Simplify phi nodes when all incoming values are constant
 
 **Input IR**:
+
 ```rust
 function example(%flag):
     br %flag, label %left, label %right
@@ -210,12 +222,14 @@ function example(%flag):
 ```
 
 **Code**:
+
 ```rust
 let mut sccp = ConstantFoldingOptimizer::new();
 sccp.run(&mut module)?;
 ```
 
 **Output IR**:
+
 ```rust
 function example(%flag):
     br %flag, label %left, label %right
@@ -234,6 +248,7 @@ function example(%flag):
 ```
 
 **Statistics**:
+
 - Phi nodes simplified: 1
 
 ---
@@ -243,6 +258,7 @@ function example(%flag):
 **Scenario**: Resolve nested conditional branches with constant conditions
 
 **Input IR**:
+
 ```rust
 function example():
     %outer_cond = const true
@@ -263,6 +279,7 @@ function example():
 ```
 
 **Code**:
+
 ```rust
 let mut sccp = ConstantFoldingOptimizer::new();
 sccp.run(&mut module)?;
@@ -272,6 +289,7 @@ dce.run(&mut module)?;
 ```
 
 **Output IR** (after SCCP + DCE):
+
 ```rust
 function example():
     %outer_cond = const true
@@ -286,6 +304,7 @@ function example():
 ```
 
 **Statistics**:
+
 - Branches resolved: 2
 - Blocks marked unreachable: 2 (%inner_true, %outer_false)
 - Blocks removed (DCE): 2
@@ -418,18 +437,21 @@ sccp.run(&mut module)?;
 ```text
 [SCCP] Value v42: Bottom → Constant(I32(10))
 ```
+
 - Value `v42` was initially uninitialized (Bottom)
 - SCCP proved it always has the constant value 10
 
 ```text
 [SCCP] CFG worklist: added edge bb2 → bb5
 ```
+
 - Control flow edge from block 2 to block 5 became executable
 - Block 5 will be analyzed in next iteration
 
 ```text
 [SCCP] Block bb7 unreachable (no executable predecessors)
 ```
+
 - No control flow path reaches block 7
 - Block will be marked for DCE
 
@@ -457,23 +479,25 @@ if stats.iterations > 10 {
 ### When to Use SCCP
 
 **Recommended**:
+
 - Functions with constant literals and arithmetic
 - Code with conditional branches on constants
 - Programs with dead code paths
 
 **Less Beneficial**:
+
 - Functions with no constants
 - Heavily dynamic code (all runtime values)
 - Small functions (overhead may outweigh benefits)
 
 ### Performance Expectations
 
-| Function Size | Typical Time | Iterations |
-|---------------|--------------|------------|
-| <100 instructions | <1 ms | 1-2 |
-| 100-1000 instructions | 1-10 ms | 2-3 |
-| 1000-10000 instructions | 10-100 ms | 2-4 |
-| >10000 instructions | 100-1000 ms | 3-5 |
+| Function Size           | Typical Time  | Iterations |
+| ----------------------- | ------------- | ---------- |
+| <100 instructions       | <1 ms         | 1-2        |
+| 100-1000 instructions   | 1-10 ms       | 2-3        |
+| 1000-10000 instructions | 10-100 ms     | 2-4        |
+| >10000 instructions     | 100-1000 ms   | 3-5        |
 
 ### Memory Usage
 
@@ -489,10 +513,12 @@ if stats.iterations > 10 {
 **Symptom**: `iterations > 10` in statistics
 
 **Causes**:
+
 - Complex control flow with many nested branches
 - Large phi nodes with many predecessors
 
 **Solutions**:
+
 - Increase `max_iterations` if function is valid
 - Review IR for unnecessary complexity
 - Consider function splitting
@@ -502,11 +528,13 @@ if stats.iterations > 10 {
 **Symptom**: `constants_propagated == 0`
 
 **Causes**:
+
 - No constant expressions in function
 - All values are runtime-dependent
 - Previous optimizations already folded constants
 
 **Solutions**:
+
 - Verify input IR has constant literals
 - Check if earlier passes already optimized
 - This is normal for some functions
@@ -516,10 +544,12 @@ if stats.iterations > 10 {
 **Symptom**: Dominance errors, multiple definitions
 
 **Causes**:
+
 - Bug in rewriter (report as issue)
 - Corrupted IR before SCCP
 
 **Solutions**:
+
 - Verify IR before running SCCP
 - Enable debug assertions
 - Report bug with minimal reproducer
@@ -590,20 +620,20 @@ fn test_sccp_branch_resolution() {
 
 ### Configuration Options
 
-| Option | Type | Default | Description |
-|--------|------|---------|-------------|
-| `verbose` | `bool` | `false` | Enable diagnostic output |
-| `max_iterations` | `usize` | `100` | Maximum propagation iterations |
+| Option           | Type    | Default | Description                        |
+| ---------------- | ------- | ------- | ---------------------------------- |
+| `verbose`        | `bool`  | `false` | Enable diagnostic output           |
+| `max_iterations` | `usize` | `100`   | Maximum propagation iterations     |
 
 ### Statistics Fields
 
-| Field | Type | Description |
-|-------|------|-------------|
-| `constants_propagated` | `usize` | Instructions replaced with constants |
-| `branches_resolved` | `usize` | Conditional branches converted to unconditional |
-| `phi_nodes_simplified` | `usize` | Phi nodes replaced with constants |
-| `blocks_marked_unreachable` | `usize` | Blocks marked for DCE |
-| `iterations` | `usize` | SCCP iterations to convergence |
+| Field                       | Type    | Description                                     |
+| --------------------------- | ------- | ----------------------------------------------- |
+| `constants_propagated`      | `usize` | Instructions replaced with constants            |
+| `branches_resolved`         | `usize` | Conditional branches converted to unconditional |
+| `phi_nodes_simplified`      | `usize` | Phi nodes replaced with constants               |
+| `blocks_marked_unreachable` | `usize` | Blocks marked for DCE                           |
+| `iterations`                | `usize` | SCCP iterations to convergence                  |
 
 ---
 

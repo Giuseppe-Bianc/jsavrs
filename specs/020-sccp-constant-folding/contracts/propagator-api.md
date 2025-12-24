@@ -35,10 +35,12 @@ pub struct SCCPConfig {
 **Purpose**: Configuration options for SCCP behavior.
 
 **Fields**:
+
 - `verbose: bool` - Enable detailed diagnostic output
 - `max_iterations: usize` - Maximum propagation iterations before timeout
 
 **Default**:
+
 ```rust
 SCCPConfig {
     verbose: false,
@@ -76,6 +78,7 @@ pub enum SCCPError {
 ### Constructor
 
 #### `new_for_function`
+
 ```rust
 pub fn new_for_function(function: &Function, config: SCCPConfig) -> Self
 ```
@@ -83,17 +86,20 @@ pub fn new_for_function(function: &Function, config: SCCPConfig) -> Self
 **Description**: Create new propagator for analyzing a function.
 
 **Parameters**:
+
 - `function: &Function` - Function to analyze (used for capacity estimation)
 - `config: SCCPConfig` - Configuration options
 
 **Returns**: `Self` - New propagator instance with preallocated data structures
 
 **Preallocation Strategy**:
+
 - Lattice map: `num_instructions * 1.5`
 - Executable edges: `num_blocks * 2`
 - Worklists: `num_instructions / 2` and `num_blocks`
 
 **Examples**:
+
 ```rust
 let config = SCCPConfig::default();
 let propagator = SCCPropagator::new_for_function(&function, config);
@@ -106,6 +112,7 @@ let propagator = SCCPropagator::new_for_function(&function, config);
 ### Analysis
 
 #### `propagate`
+
 ```rust
 pub fn propagate(&mut self, function: &Function) -> Result<(), SCCPError>
 ```
@@ -113,13 +120,16 @@ pub fn propagate(&mut self, function: &Function) -> Result<(), SCCPError>
 **Description**: Run SCCP analysis to convergence or maximum iterations.
 
 **Parameters**:
+
 - `function: &Function` - Function to analyze
 
-**Returns**: 
+**Returns**:
+
 - `Ok(())` - Converged successfully
 - `Err(SCCPError::MaxIterationsExceeded)` - Exceeded iteration limit
 
 **Algorithm**:
+
 1. Initialize lattice: parameters/globals → Top, locals → Bottom
 2. Mark entry block edges as executable
 3. Main loop (until worklists empty):
@@ -128,11 +138,13 @@ pub fn propagate(&mut self, function: &Function) -> Result<(), SCCPError>
 4. Check iteration limit
 
 **Side Effects**:
+
 - Updates internal lattice state
 - Marks CFG edges as executable
 - Emits verbose diagnostics if configured
 
 **Examples**:
+
 ```rust
 let mut propagator = SCCPropagator::new_for_function(&function, config);
 propagator.propagate(&function)?;
@@ -151,6 +163,7 @@ let edges = propagator.get_executable_edges();
 ### Results Access
 
 #### `get_lattice_state`
+
 ```rust
 pub fn get_lattice_state(&self) -> &LatticeState
 ```
@@ -160,6 +173,7 @@ pub fn get_lattice_state(&self) -> &LatticeState
 **Returns**: `&LatticeState` - Reference to lattice mapping
 
 **Examples**:
+
 ```rust
 let lattice = propagator.get_lattice_state();
 let value_lattice = lattice.get(some_value_id);
@@ -170,6 +184,7 @@ let value_lattice = lattice.get(some_value_id);
 ---
 
 #### `get_executable_edges`
+
 ```rust
 pub fn get_executable_edges(&self) -> &ExecutableEdgeSet
 ```
@@ -179,6 +194,7 @@ pub fn get_executable_edges(&self) -> &ExecutableEdgeSet
 **Returns**: `&ExecutableEdgeSet` - Reference to executable edge set
 
 **Examples**:
+
 ```rust
 let edges = propagator.get_executable_edges();
 if edges.is_executable(CFGEdge { from: block1, to: block2 }) {
@@ -191,6 +207,7 @@ if edges.is_executable(CFGEdge { from: block1, to: block2 }) {
 ---
 
 #### `iteration_count`
+
 ```rust
 pub fn iteration_count(&self) -> usize
 ```
@@ -200,6 +217,7 @@ pub fn iteration_count(&self) -> usize
 **Returns**: `usize` - Iteration count
 
 **Examples**:
+
 ```rust
 let iterations = propagator.iteration_count();
 println!("Converged in {} iterations", iterations);
@@ -226,6 +244,7 @@ impl LatticeState {
 **Purpose**: Maps SSA values to their lattice values.
 
 **Methods**:
+
 - `get(value_id) -> LatticeValue` - Get lattice value (defaults to Bottom)
 
 ---
@@ -247,6 +266,7 @@ impl ExecutableEdgeSet {
 **Purpose**: Tracks which CFG edges are executable.
 
 **Methods**:
+
 - `is_executable(edge) -> bool` - Check if specific edge is executable
 - `has_executable_predecessor(block) -> bool` - Check if block is reachable
 - `executable_predecessors(block) -> Iterator` - Iterate executable predecessors
@@ -266,6 +286,7 @@ pub struct CFGEdge {
 **Purpose**: Represents a control flow edge.
 
 **Fields**:
+
 - `from: BlockId` - Source block
 - `to: BlockId` - Destination block
 
@@ -276,18 +297,21 @@ pub struct CFGEdge {
 When `config.verbose = true`, the propagator emits detailed logs:
 
 ### Lattice Value Transitions
+
 ```text
 [SCCP] Value v42: Bottom → Constant(I32(10))
 [SCPP] Value v43: Constant(I32(10)) → Top
 ```
 
 ### Worklist Operations
+
 ```text
 [SCCP] CFG worklist: added edge bb2 → bb5
 [SCCP] SSA worklist: added (v42, instr_100)
 ```
 
 ### Block Reachability
+
 ```text
 [SCCP] Block bb5 marked executable
 [SCCP] Block bb7 unreachable (no executable predecessors)
@@ -300,6 +324,7 @@ When `config.verbose = true`, the propagator emits detailed logs:
 ## Usage Examples
 
 ### Basic SCCP Analysis
+
 ```rust
 use jsavrs::ir::optimizer::constant_folding::{SCCPropagator, SCCPConfig};
 
@@ -317,6 +342,7 @@ println!("Converged in {} iterations", propagator.iteration_count());
 ```
 
 ### Verbose Analysis
+
 ```rust
 let config = SCCPConfig {
     verbose: true,
@@ -329,6 +355,7 @@ propagator.propagate(&function)?;
 ```
 
 ### Querying Results
+
 ```rust
 let lattice = propagator.get_lattice_state();
 
@@ -358,6 +385,7 @@ for block in function.basic_blocks() {
 ## Algorithm Details
 
 ### Initialization Phase
+
 ```text
 1. For each function parameter:
      lattice[param] = Top (unknown runtime value)
@@ -373,6 +401,7 @@ for block in function.basic_blocks() {
 ```
 
 ### Main Propagation Loop
+
 ```text
 while CFG worklist not empty OR SSA worklist not empty:
     
@@ -398,6 +427,7 @@ while CFG worklist not empty OR SSA worklist not empty:
 ```
 
 ### Phi Node Evaluation
+
 ```text
 result_lattice = Bottom
 
@@ -412,6 +442,7 @@ lattice[phi.result] = result_lattice
 ```
 
 ### Terminator Evaluation
+
 ```text
 match terminator:
     Branch(target):
@@ -465,9 +496,9 @@ match terminator:
 ## Error Handling
 
 - **MaxIterationsExceeded**: Pathological functions exceeding iteration limit
-  - **Recovery**: Mark all uncertain values as Top, proceed conservatively
+    - **Recovery**: Mark all uncertain values as Top, proceed conservatively
 - **Invalid IDs**: Programming errors (should not occur in valid IR)
-  - **Recovery**: Return error immediately
+    - **Recovery**: Return error immediately
 
 ---
 
