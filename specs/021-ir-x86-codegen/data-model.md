@@ -12,7 +12,7 @@ This document defines the data structures and relationships for the IR to x86-64
 
 ## Entity Relationship Diagram
 
-```
+```text
 ┌─────────────────┐         ┌─────────────────┐
 │   ir::Module    │────────▶│  ir::Function   │
 │                 │   1:N   │                 │
@@ -90,11 +90,13 @@ pub struct CodeGenOptions {
 ```
 
 **Relationships**:
+
 - Uses `ir::Module` as input (1:1 per generation call)
 - Produces `AssemblyFile` as output (1:1)
 - Contains `CodeGenStats` for metrics (1:1)
 
 **Validation Rules**:
+
 - Platform must be one of: Linux, macOS, Windows
 - IR module must be validated before generation
 
@@ -147,6 +149,7 @@ pub struct StackFrame {
 ```
 
 **Relationships**:
+
 - References `ir::Function` (1:1)
 - Contains `RegisterMapping` (1:1)
 - Contains `StackFrame` (1:1)
@@ -212,6 +215,7 @@ pub enum RegisterClass {
 ```
 
 **Relationships**:
+
 - Computed from `ir::Function` (N:1)
 - Produces `LiveInterval` for each IR value (1:N)
 
@@ -261,6 +265,7 @@ impl Ord for IntervalRef {
 ```
 
 **Relationships**:
+
 - Takes `LivenessInfo` as input (1:1)
 - Produces `RegisterMapping` (1:1)
 
@@ -313,6 +318,7 @@ pub struct SpillSlot {
 ```
 
 **Relationships**:
+
 - Maps `ValueId` → `PhysicalRegister` or `SpillSlot` (N:1)
 
 ---
@@ -371,6 +377,7 @@ impl ParallelCopy {
 ```
 
 **Relationships**:
+
 - Uses `RegisterMapping` for physical locations (1:1)
 - Produces `ParallelCopy` per predecessor block (N:1)
 
@@ -412,6 +419,7 @@ impl InstructionEmitter<'_> {
 ```
 
 **Relationships**:
+
 - Writes to `AssemblyFile` (N:1)
 - Reads from `GenerationContext` (1:1)
 
@@ -521,7 +529,7 @@ pub struct SpillSlotId(pub u32);
 
 ### Code Generation Pipeline States
 
-```
+```text
 ┌─────────┐     ┌──────────┐     ┌───────────┐     ┌─────────┐
 │  Init   │────▶│ Analyzing│────▶│ Allocating│────▶│Resolving│
 └─────────┘     └──────────┘     └───────────┘     └─────────┘
@@ -531,14 +539,14 @@ pub struct SpillSlotId(pub u32);
                 └──────────┘     └───────────┘
 ```
 
-| State | Description | Outputs |
-|-------|-------------|---------|
-| Init | Load IR, validate, set up context | GenerationContext |
-| Analyzing | Compute liveness information | LivenessInfo |
-| Allocating | Run Linear Scan allocation | RegisterMapping |
-| Resolving | Resolve phi nodes | ParallelCopy per block |
-| Emitting | Generate x86-64 instructions | AssemblyFile |
-| Complete | Finalize, collect stats | Final AssemblyFile + Stats |
+| State      | Description                       | Outputs                      |
+| ---------- | --------------------------------- | ---------------------------- |
+| Init       | Load IR, validate, set up context | GenerationContext            |
+| Analyzing  | Compute liveness information      | LivenessInfo                 |
+| Allocating | Run Linear Scan allocation        | RegisterMapping              |
+| Resolving  | Resolve phi nodes                 | ParallelCopy per block       |
+| Emitting   | Generate x86-64 instructions      | AssemblyFile                 |
+| Complete   | Finalize, collect stats           | Final AssemblyFile + Stats   |
 
 ---
 
@@ -569,17 +577,17 @@ pub struct SpillSlotId(pub u32);
 
 The code generator reuses these existing types:
 
-| Type | Module | Description |
-|------|--------|-------------|
-| `ir::Module` | `src/ir/module.rs` | IR module container |
-| `ir::Function` | `src/ir/function.rs` | IR function with CFG |
-| `ir::BasicBlock` | `src/ir/basic_block.rs` | Block with instructions |
-| `ir::Instruction` | `src/ir/instruction.rs` | IR operations |
-| `ir::IrType` | `src/ir/types.rs` | IR type system |
-| `ir::Value` | `src/ir/value/` | IR values |
-| `Abi` | `src/asm/abi.rs` | ABI configuration |
-| `Platform` | `src/asm/platform.rs` | Target platform |
-| `GPRegister64` | `src/asm/register/` | GP registers |
-| `XMMRegister` | `src/asm/register/` | SIMD registers |
-| `AssemblyFile` | `src/asm/assembly_file.rs` | Assembly output |
-| `Instruction` | `src/asm/instruction/` | x86 instructions |
+| Type              | Module                     | Description             |
+| ----------------- | -------------------------- | ----------------------- |
+| `ir::Module`      | `src/ir/module.rs`         | IR module container     |
+| `ir::Function`    | `src/ir/function.rs`       | IR function with CFG    |
+| `ir::BasicBlock`  | `src/ir/basic_block.rs`    | Block with instructions |
+| `ir::Instruction` | `src/ir/instruction.rs`    | IR operations           |
+| `ir::IrType`      | `src/ir/types.rs`          | IR type system          |
+| `ir::Value`       | `src/ir/value/`            | IR values               |
+| `Abi`             | `src/asm/abi.rs`           | ABI configuration       |
+| `Platform`        | `src/asm/platform.rs`      | Target platform         |
+| `GPRegister64`    | `src/asm/register/`        | GP registers            |
+| `XMMRegister`     | `src/asm/register/`        | SIMD registers          |
+| `AssemblyFile`    | `src/asm/assembly_file.rs` | Assembly output         |
+| `Instruction`     | `src/asm/instruction/`     | x86 instructions        |

@@ -23,17 +23,17 @@ Build a code generator that transforms validated IR modules into NASM-compatible
 
 *GATE: Must pass before Phase 0 research. Re-check after Phase 1 design.*
 
-| Principle | Status | Notes |
-|-----------|--------|-------|
-| Safety First | ✅ PASS | Pure Rust with no unsafe; ownership model for IR/ASM data |
-| Performance Excellence | ✅ PASS | Linear Scan O(n) allocation; streaming output buffers |
-| Cross-Platform Compatibility | ✅ PASS | Three target platforms with trait-based ABI abstraction |
-| Modular Extensibility | ✅ PASS | Pipeline architecture with clear phase separation |
-| Test-Driven Reliability | ✅ PASS | Unit + insta snapshots + NASM validation |
-| Snapshot Validation | ✅ PASS | Golden file comparison via insta |
-| Documentation Rigor | ✅ PASS | Rustdoc for all public APIs |
-| Collaboration First | ✅ PASS | Public GitHub repo with CI |
-| Quality Through Community | ✅ PASS | PR review process |
+| Principle                      | Status  | Notes                                                      |
+| ------------------------------ | ------- | ---------------------------------------------------------- |
+| Safety First                   | ✅ PASS | Pure Rust with no unsafe; ownership model for IR/ASM data  |
+| Performance Excellence         | ✅ PASS | Linear Scan O(n) allocation; streaming output buffers      |
+| Cross-Platform Compatibility   | ✅ PASS | Three target platforms with trait-based ABI abstraction    |
+| Modular Extensibility          | ✅ PASS | Pipeline architecture with clear phase separation          |
+| Test-Driven Reliability        | ✅ PASS | Unit + insta snapshots + NASM validation                   |
+| Snapshot Validation            | ✅ PASS | Golden file comparison via insta                           |
+| Documentation Rigor            | ✅ PASS | Rustdoc for all public APIs                                |
+| Collaboration First            | ✅ PASS | Public GitHub repo with CI                                 |
+| Quality Through Community      | ✅ PASS | PR review process                                          |
 
 **Gate Result**: ✅ PASSED - All principles satisfied
 
@@ -132,19 +132,19 @@ No constitution violations requiring justification.
 
 The codebase already provides:
 
-| Component | Location | Purpose | Reusability |
-|-----------|----------|---------|-------------|
-| `Abi` | `src/asm/abi.rs` | ABI definitions with register lists, red zone, shadow space | ✅ Direct use |
-| `Platform` | `src/asm/platform.rs` | Target platform enum | ✅ Direct use |
-| `GPRegister64`, `XMMRegister` | `src/asm/register/` | Physical register definitions | ✅ Direct use |
-| `Instruction` | `src/asm/instruction/` | x86 instruction representation | ✅ Direct use |
-| `AssemblyFile` | `src/asm/assembly_file.rs` | Assembly output container | ✅ Extend |
-| `AssemblySection` | `src/asm/section.rs` | Section management | ✅ Direct use |
-| `DataDirective` | `src/asm/data_directive.rs` | Data directives (db, dw, etc.) | ✅ Direct use |
-| `ir::Module` | `src/ir/module.rs` | IR module with functions | ✅ Input |
-| `ir::Function` | `src/ir/function.rs` | IR function with CFG | ✅ Input |
-| `ir::BasicBlock` | `src/ir/basic_block.rs` | Instructions + terminator | ✅ Input |
-| `ir::Instruction` | `src/ir/instruction.rs` | IR operations | ✅ Input |
+| Component                     | Location                    | Purpose                                                     | Reusability   |
+| ----------------------------- | --------------------------- | ----------------------------------------------------------- | ------------- |
+| `Abi`                         | `src/asm/abi.rs`            | ABI definitions with register lists, red zone, shadow space | ✅ Direct use |
+| `Platform`                    | `src/asm/platform.rs`       | Target platform enum                                        | ✅ Direct use |
+| `GPRegister64`, `XMMRegister` | `src/asm/register/`         | Physical register definitions                               | ✅ Direct use |
+| `Instruction`                 | `src/asm/instruction/`      | x86 instruction representation                              | ✅ Direct use |
+| `AssemblyFile`                | `src/asm/assembly_file.rs`  | Assembly output container                                   | ✅ Extend     |
+| `AssemblySection`             | `src/asm/section.rs`        | Section management                                          | ✅ Direct use |
+| `DataDirective`               | `src/asm/data_directive.rs` | Data directives (db, dw, etc.)                              | ✅ Direct use |
+| `ir::Module`                  | `src/ir/module.rs`          | IR module with functions                                    | ✅ Input      |
+| `ir::Function`                | `src/ir/function.rs`        | IR function with CFG                                        | ✅ Input      |
+| `ir::BasicBlock`              | `src/ir/basic_block.rs`     | Instructions + terminator                                   | ✅ Input      |
+| `ir::Instruction`             | `src/ir/instruction.rs`     | IR operations                                               | ✅ Input      |
 
 ---
 
@@ -183,7 +183,7 @@ pub fn generate_with_options(
 
 ### Pipeline Architecture
 
-```
+```text
 ┌─────────────┐    ┌──────────────┐    ┌─────────────┐    ┌─────────────┐
 │  IR Module  │───▶│   Platform   │───▶│  Liveness   │───▶│  Linear     │
 │  (input)    │    │  Detection   │    │  Analysis   │    │  Scan       │
@@ -207,27 +207,27 @@ See [quickstart.md](quickstart.md) for getting started guide.
 
 ### High-Level Task Breakdown
 
-| Priority | Component | Description | Estimated Effort |
-|----------|-----------|-------------|------------------|
-| P1 | `codegen/context.rs` | Generation context and state | Small |
-| P1 | `codegen/error.rs` | Error types | Small |
-| P1 | `lowering/mod.rs` | Basic instruction selection | Medium |
-| P1 | `lowering/arithmetic.rs` | Arithmetic operations | Medium |
-| P1 | `codegen/emitter.rs` | Instruction emission | Medium |
-| P1 | `codegen/mod.rs` | Pipeline orchestration | Medium |
-| P2 | `regalloc/liveness.rs` | Liveness analysis | Medium |
-| P2 | `regalloc/interval.rs` | Live interval representation | Small |
-| P2 | `regalloc/mod.rs` | Linear Scan allocator | Large |
-| P2 | `regalloc/spill.rs` | Spill slot management | Medium |
-| P2 | `phi/mod.rs` | Phi resolution | Medium |
-| P2 | `phi/parallel_copy.rs` | Copy sequentialization | Medium |
-| P2 | `lowering/memory.rs` | Load/store operations | Medium |
-| P2 | `lowering/control.rs` | Control flow | Medium |
-| P2 | `lowering/data.rs` | Global data emission | Small |
-| P2 | `lowering/conversion.rs` | Type conversions | Medium |
-| P3 | `codegen/stats.rs` | Generation statistics | Small |
-| P3 | Debug comments | Source location preservation | Small |
-| P3 | Fall-through optimization | Eliminate unnecessary jumps | Small |
+| Priority | Component                  | Description                      | Estimated Effort |
+|----------|----------------------------|----------------------------------|------------------|
+| P1       | `codegen/context.rs`       | Generation context and state     | Small            |
+| P1       | `codegen/error.rs`         | Error types                      | Small            |
+| P1       | `lowering/mod.rs`          | Basic instruction selection      | Medium           |
+| P1       | `lowering/arithmetic.rs`   | Arithmetic operations            | Medium           |
+| P1       | `codegen/emitter.rs`       | Instruction emission             | Medium           |
+| P1       | `codegen/mod.rs`           | Pipeline orchestration           | Medium           |
+| P2       | `regalloc/liveness.rs`     | Liveness analysis                | Medium           |
+| P2       | `regalloc/interval.rs`     | Live interval representation     | Small            |
+| P2       | `regalloc/mod.rs`          | Linear Scan allocator            | Large            |
+| P2       | `regalloc/spill.rs`        | Spill slot management            | Medium           |
+| P2       | `phi/mod.rs`               | Phi resolution                   | Medium           |
+| P2       | `phi/parallel_copy.rs`     | Copy sequentialization           | Medium           |
+| P2       | `lowering/memory.rs`       | Load/store operations            | Medium           |
+| P2       | `lowering/control.rs`      | Control flow                     | Medium           |
+| P2       | `lowering/data.rs`         | Global data emission             | Small            |
+| P2       | `lowering/conversion.rs`   | Type conversions                 | Medium           |
+| P3       | `codegen/stats.rs`         | Generation statistics            | Small            |
+| P3       | Debug comments             | Source location preservation     | Small            |
+| P3       | Fall-through optimization  | Eliminate unnecessary jumps      | Small            |
 
 ### Test Strategy
 
@@ -260,12 +260,12 @@ None required - implementation uses only Rust standard library.
 
 ## Risks and Mitigations
 
-| Risk | Likelihood | Impact | Mitigation |
-|------|------------|--------|------------|
-| Complex phi resolution edge cases | Medium | Medium | Comprehensive test suite with cycle detection |
-| Register pressure causing excessive spills | Low | Medium | Implement spill weight heuristics |
-| Platform ABI compliance issues | Medium | High | Golden file tests against known-good output |
-| NASM syntax incompatibilities | Low | Medium | CI validation with actual NASM assembly |
+|                    Risk                     |  Likelihood  | Impact   |                  Mitigation                    |
+| --------------------------------------------| ------------ | -------- | ---------------------------------------------- |
+| Complex phi resolution edge cases           | Medium       | Medium   | Comprehensive test suite with cycle detection  |
+| Register pressure causing excessive spills  | Low          | Medium   | Implement spill weight heuristics              |
+| Platform ABI compliance issues              | Medium       | High     | Golden file tests against known-good output    |
+| NASM syntax incompatibilities               | Low          | Medium   | CI validation with actual NASM assembly        |
 
 ---
 

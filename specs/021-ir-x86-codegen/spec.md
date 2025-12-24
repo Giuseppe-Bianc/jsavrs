@@ -182,7 +182,7 @@ As a compiler developer analyzing code generation quality, I want statistics abo
 
 ### Functional Requirements
 
-**Core Translation**
+#### **Core Translation**
 
 - **FR-001**: System MUST accept IR modules containing functions with control flow graphs, basic blocks, and instructions
 - **FR-002**: System MUST convert arithmetic IR instructions (add, sub, mul, div, rem, and, or, xor, shl, shr) into equivalent x86-64 instructions
@@ -198,7 +198,7 @@ As a compiler developer analyzing code generation quality, I want statistics abo
 - **FR-012**: System MUST translate structs as memory regions with fields at computed offsets respecting alignment
 - **FR-013**: System MUST resolve SSA phi nodes into move instructions placed at predecessor block ends
 
-**Platform Support**
+#### **Platform Support**
 
 - **FR-014**: System MUST generate assembly for Linux x86-64 using System V AMD64 ABI
 - **FR-015**: System MUST generate assembly for macOS x86-64 using System V AMD64 ABI with underscore name prefixing
@@ -211,7 +211,7 @@ As a compiler developer analyzing code generation quality, I want statistics abo
 - **FR-020**: System MUST respect 128-byte red zone on System V platforms (not use stack below RSP without allocation)
 - **FR-021**: System MUST save and restore callee-saved registers (RBX, RBP, R12-R15 on all platforms; RDI, RSI additionally on Windows)
 
-**Register and Memory Management**
+#### **Register and Memory Management**
 
 - **FR-022**: System MUST allocate variables to general-purpose registers RAX, RBX, RCX, RDX, RSI, RDI, R8-R15
 - **FR-023**: System MUST allocate floating-point values to SIMD registers XMM0-XMM15
@@ -220,7 +220,7 @@ As a compiler developer analyzing code generation quality, I want statistics abo
 - **FR-026**: System MUST calculate array element addresses as base + (index x element_size)
 - **FR-027**: System MUST calculate struct field addresses as base + field_offset
 
-**Function Calls**
+#### **Function Calls**
 
 - **FR-028**: System MUST place function parameters in platform-designated registers
 - **FR-029**: System MUST place excess parameters on stack in right-to-left order
@@ -231,7 +231,7 @@ As a compiler developer analyzing code generation quality, I want statistics abo
 - **FR-033**: System MUST generate function epilogue restoring callee-saved registers and RBP
 - **FR-034**: System MUST support variadic functions with correct argument passing
 
-**Output Generation**
+#### **Output Generation**
 
 - **FR-035**: System MUST produce .text section containing executable code
 - **FR-036**: System MUST produce .data section for initialized global data
@@ -242,7 +242,7 @@ As a compiler developer analyzing code generation quality, I want statistics abo
 - **FR-041**: System MUST emit `global` directives for exported symbols and `extern` directives for each called function not defined in the module
 - **FR-042**: System MUST generate output compatible with NASM assembler
 
-**Control Flow**
+#### **Control Flow**
 
 - **FR-043**: System MUST create unique labels for each basic block
 - **FR-044**: System MUST generate jmp instructions for unconditional branches
@@ -250,19 +250,19 @@ As a compiler developer analyzing code generation quality, I want statistics abo
 - **FR-046**: System MUST support switch statement implementation using jump tables for ≥4 contiguous cases, cascaded comparisons otherwise
 - **FR-047**: System MUST eliminate unnecessary jumps when execution falls through to next block
 
-**Debug Information**
+#### **Debug Information**
 
 - **FR-048**: System MUST include comments with original variable names where available
 - **FR-049**: System MUST include comments marking basic block boundaries
 - **FR-050**: System SHOULD preserve source location information in comments when available in IR
 
-**Data Handling**
+#### **Data Handling**
 
 - **FR-051**: System MUST emit string literals with null termination
 - **FR-052**: System MUST emit appropriate data directives (db, dw, dd, dq) matching data sizes
 - **FR-053**: System MUST respect alignment requirements for data types
 
-**Integration and Error Handling**
+#### **Integration and Error Handling**
 
 - **FR-054**: System MUST accept IR that has been validated by previous compilation phases
 - **FR-055**: System MUST report clear error messages when IR constructs cannot be translated

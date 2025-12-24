@@ -320,7 +320,7 @@
 
 ### Phase Dependencies
 
-```
+```text
 Phase 1 (Setup) ─────────────────────────────────────────┐
                                                           │
 Phase 2 (Foundational) ◄──────────────────────────────────┘
@@ -357,18 +357,18 @@ Phase 2 (Foundational) ◄──────────────────
 
 ### User Story Dependencies
 
-| Story | Depends On | Can Parallel With |
-|-------|------------|-------------------|
-| US1 (Basic Assembly) | Foundational | None (MVP) |
-| US2 (Platform ABI) | US1 | US3 |
-| US3 (Prologue/Epilogue) | US1 | US2 |
-| US4 (Register Alloc) | US1, US3 | US6 |
-| US5 (Phi Resolution) | US4 | US6 |
-| US6 (Data Sections) | US1 | US4, US5 |
-| US7 (Function Calls) | US2, US3 | US8 |
-| US8 (Debug Comments) | US1 | US9, US10 |
-| US9 (Control Flow Opt) | US1, US3 | US8, US10 |
-| US10 (Statistics) | US1 | US8, US9 |
+| Story                    |  Depends On  | Can Parallel With |
+| ------------------------ | ------------ | ----------------- |
+| US1 (Basic Assembly)     | Foundational | None (MVP)        |
+| US2 (Platform ABI)       | US1          | US3               |
+| US3 (Prologue/Epilogue)  | US1          | US2               |
+| US4 (Register Alloc)     | US1, US3     | US6               |
+| US5 (Phi Resolution)     | US4          | US6               |
+| US6 (Data Sections)      | US1          | US4, US5          |
+| US7 (Function Calls)     | US2, US3     | US8               |
+| US8 (Debug Comments)     | US1          | US9, US10         |
+| US9 (Control Flow Opt)   | US1, US3     | US8, US10         |
+| US10 (Statistics)        | US1          | US8, US9          |
 
 ### Parallel Opportunities Within User Stories
 
@@ -406,16 +406,17 @@ Task T019 → T020 → T021 → T022 → T023 → T024 → T025 → T026 → T02
 
 ### Incremental Delivery
 
-| Milestone | User Stories | Capability |
-|-----------|--------------|------------|
-| MVP | US1 | Basic IR → assembly |
-| Alpha | US1-3 | Platform-aware with proper frames |
-| Beta | US1-7 | Full function calls and register allocation |
-| Release | US1-10 | Complete with debug info and stats |
+| Milestone | User Stories | Capability                                      |
+| --------- | ------------ | ----------------------------------------------- |
+| MVP       | US1          | Basic IR → assembly                             |
+| Alpha     | US1-3        | Platform-aware with proper frames               |
+| Beta      | US1-7        | Full function calls and register allocation     |
+| Release   | US1-10       | Complete with debug info and stats              |
 
 ### P1 Stories Complete Threshold
 
 After completing US1, US2, US3:
+
 - Basic assembly generation ✓
 - All 3 platforms supported ✓
 - Correct function frames ✓

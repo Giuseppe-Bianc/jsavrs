@@ -13,9 +13,11 @@ This document captures research findings for implementing the IR to x86-64 code 
 ## 1. Linear Scan Register Allocation
 
 ### Decision
+
 Implement Linear Scan register allocation with liveness analysis using a greedy single-pass algorithm.
 
 ### Rationale
+
 - **O(n) complexity**: Linear time vs O(n²) for graph coloring, suitable for large functions
 - **Production-proven**: Used in V8, HotSpot JIT, and LLVM's fast register allocator
 - **Quality/speed tradeoff**: Produces ~10-15% more spills than graph coloring but 5-10x faster
@@ -23,7 +25,7 @@ Implement Linear Scan register allocation with liveness analysis using a greedy 
 
 ### Algorithm Overview
 
-```
+```text
 1. Compute liveness intervals for all IR values
 2. Sort intervals by start position
 3. Maintain active list of currently live intervals
@@ -54,27 +56,31 @@ struct LinearScanAllocator {
 ```
 
 ### Spill Weight Heuristics
+
 When deciding which interval to spill:
+
 1. Prefer intervals with longer remaining lifetime
 2. Prefer intervals with fewer uses (less reload cost)
 3. Avoid spilling intervals used in hot loops
 
 ### Alternatives Considered
 
-| Algorithm | Complexity | Code Quality | Why Rejected |
-|-----------|------------|--------------|--------------|
-| Graph Coloring | O(n²) | Optimal | Too complex for initial implementation |
-| Naive (always spill) | O(n) | Poor | Excessive memory traffic |
-| PBQP | O(n³) | Near-optimal | Overkill for this project |
+| Algorithm            | Complexity | Code Quality | Why Rejected                            |
+| -------------------- | ---------- | ------------ | --------------------------------------- |
+| Graph Coloring       | O(n²)      | Optimal      | Too complex for initial implementation  |
+| Naive (always spill) | O(n)       | Poor         | Excessive memory traffic                |
+| PBQP                 | O(n³)      | Near-optimal | Overkill for this project               |
 
 ---
 
 ## 2. SSA Phi Node Resolution
 
 ### Decision
+
 Resolve phi nodes using the parallel copy approach with cycle detection and sequentialization.
 
 ### Rationale
+
 - **Correctness**: Handles all cases including swap patterns
 - **Efficiency**: Minimizes temporary registers/memory
 - **Well-documented**: Standard approach in SSA literature
@@ -89,7 +95,7 @@ Resolve phi nodes using the parallel copy approach with cycle detection and sequ
 
 ### Example: Swap Pattern
 
-```
+```nasm
 ; IR phi nodes in block3:
 ; %x = phi [%a from block1] [%b from block2]
 ; %y = phi [%b from block1] [%a from block2]
@@ -123,43 +129,45 @@ impl ParallelCopy {
 
 ### Alternatives Considered
 
-| Approach | Why Rejected |
-|----------|--------------|
-| Naive sequential insertion | Incorrect for swap patterns |
-| Always use temporaries | Wastes registers |
-| Out-of-SSA before codegen | Requires separate pass, less clean |
+| Approach                    | Why Rejected                        |
+| --------------------------- | ----------------------------------- |
+| Naive sequential insertion  | Incorrect for swap patterns         |
+| Always use temporaries      | Wastes registers                    |
+| Out-of-SSA before codegen   | Requires separate pass, less clean  |
 
 ---
 
 ## 3. x86-64 Instruction Selection
 
 ### Decision
+
 Use pattern-based instruction selection with direct mapping from IR operations to x86-64 instructions.
 
 ### Rationale
+
 - **Simplicity**: Direct 1:1 or 1:few mappings for most operations
 - **Extensibility**: Easy to add new patterns
 - **Debuggability**: Clear correspondence between IR and assembly
 
 ### Instruction Mapping Table
 
-| IR Operation | x86-64 Instruction(s) | Notes |
-|--------------|----------------------|-------|
-| `add i32` | `add eax, ebx` | 2-address form |
-| `add i64` | `add rax, rbx` | 64-bit |
-| `sub` | `sub` | Same as add |
-| `mul i32` | `imul eax, ebx` | Signed multiply |
-| `mul u32` | `imul eax, ebx` | Same instruction |
-| `div i32` | `cdq; idiv ebx` | Signed, uses EDX:EAX |
-| `div u32` | `xor edx, edx; div ebx` | Unsigned |
-| `rem` | Same as div | Result in EDX |
-| `and/or/xor` | `and/or/xor` | Direct mapping |
-| `shl/shr` | `shl/shr` | CL for variable shift |
-| `load i32` | `mov eax, [addr]` | Size from type |
-| `store i32` | `mov [addr], eax` | Size from type |
-| `cmp + br` | `cmp; jcc` | Fuse compare+branch |
-| `call` | `call label` | ABI-dependent setup |
-| `ret` | `ret` | After epilogue |
+| IR Operation   | x86-64 Instruction(s)      | Notes                     |
+| -------------- | -------------------------- | ------------------------- |
+| `add i32`      | `add eax, ebx`             | 2-address form            |
+| `add i64`      | `add rax, rbx`             | 64-bit                    |
+| `sub`          | `sub`                      | Same as add               |
+| `mul i32`      | `imul eax, ebx`            | Signed multiply           |
+| `mul u32`      | `imul eax, ebx`            | Same instruction          |
+| `div i32`      | `cdq; idiv ebx`            | Signed, uses EDX:EAX      |
+| `div u32`      | `xor edx, edx; div ebx`    | Unsigned                  |
+| `rem`          | Same as div                | Result in EDX             |
+| `and/or/xor`   | `and/or/xor`               | Direct mapping            |
+| `shl/shr`      | `shl/shr`                  | CL for variable shift     |
+| `load i32`     | `mov eax, [addr]`          | Size from type            |
+| `store i32`    | `mov [addr], eax`          | Size from type            |
+| `cmp + br`     | `cmp; jcc`                 | Fuse compare+branch       |
+| `call`         | `call label`               | ABI-dependent setup       |
+| `ret`          | `ret`                      | After epilogue            |
 
 ### Addressing Modes
 
@@ -178,31 +186,33 @@ enum Operand {
 
 ### Type Size Mapping
 
-| IR Type | Register | Memory Size | Instruction Suffix |
-|---------|----------|-------------|-------------------|
-| i8/u8/bool/char | AL, BL, ... | byte | b |
-| i16/u16 | AX, BX, ... | word | w |
-| i32/u32 | EAX, EBX, ... | dword | d |
-| i64/u64/ptr | RAX, RBX, ... | qword | q |
-| f32 | XMM0-15 | dword | ss |
-| f64 | XMM0-15 | qword | sd |
+| IR Type         | Register      | Memory Size | Instruction Suffix |
+| --------------- | ------------- | ----------- | ------------------ |
+| i8/u8/bool/char | AL, BL, ...   | byte        | b                  |
+| i16/u16         | AX, BX, ...   | word        | w                  |
+| i32/u32         | EAX, EBX, ... | dword       | d                  |
+| i64/u64/ptr     | RAX, RBX, ... | qword       | q                  |
+| f32             | XMM0-15       | dword       | ss                 |
+| f64             | XMM0-15       | qword       | sd                 |
 
 ### Alternatives Considered
 
-| Approach | Why Rejected |
-|----------|--------------|
-| Tree pattern matching (BURG) | Overkill for x86-64 |
-| Macro expansion | Less control over output |
-| Peephole-only | Misses optimization opportunities |
+| Approach                      | Why Rejected                      |
+| ----------------------------- | --------------------------------- |
+| Tree pattern matching (BURG)  | Overkill for x86-64               |
+| Macro expansion               | Less control over output          |
+| Peephole-only                 | Misses optimization opportunities |
 
 ---
 
 ## 4. NASM Syntax and Directives
 
 ### Decision
+
 Use Intel syntax with NASM-specific directives for maximum compatibility.
 
 ### Rationale
+
 - **Explicit requirement**: Spec requires NASM compatibility (FR-042)
 - **Readability**: Intel syntax is more readable than AT&T
 - **Portability**: NASM runs on all target platforms
@@ -238,11 +248,11 @@ align 16            ; Alignment directive
 
 ### Platform-Specific Differences
 
-| Aspect | Linux | macOS | Windows |
-|--------|-------|-------|---------|
-| Symbol prefix | none | `_` | none |
-| Section names | .rodata | .rodata | .rdata |
-| Default format | elf64 | macho64 | win64 |
+| Aspect          | Linux   | macOS   | Windows |
+| --------------- | ------- | ------- | ------- |
+| Symbol prefix   | none    | `_`     | none    |
+| Section names   | .rodata | .rodata | .rdata  |
+| Default format  | elf64   | macho64 | win64   |
 
 ### NASM Command Line
 
@@ -262,6 +272,7 @@ nasm -f win64 -o output.obj input.asm
 ## 5. Function Prologue and Epilogue
 
 ### Decision
+
 Generate standard frame pointer prologues with callee-saved register preservation.
 
 ### Standard Prologue (all platforms)
@@ -316,20 +327,20 @@ ret
 
 ### Platform Differences
 
-| Register | System V | Windows |
-|----------|----------|---------|
-| RAX | Caller-saved | Caller-saved |
-| RCX | Caller-saved | Caller-saved |
-| RDX | Caller-saved | Caller-saved |
-| RBX | **Callee-saved** | **Callee-saved** |
-| RSP | **Callee-saved** | **Callee-saved** |
-| RBP | **Callee-saved** | **Callee-saved** |
-| RSI | Caller-saved | **Callee-saved** |
-| RDI | Caller-saved | **Callee-saved** |
-| R8-R11 | Caller-saved | Caller-saved |
-| R12-R15 | **Callee-saved** | **Callee-saved** |
-| XMM0-5 | Caller-saved | Caller-saved |
-| XMM6-15 | Caller-saved | **Callee-saved** |
+| Register    | System V         | Windows          |
+|-------------|------------------|------------------|
+| RAX         | Caller-saved     | Caller-saved     |
+| RCX         | Caller-saved     | Caller-saved     |
+| RDX         | Caller-saved     | Caller-saved     |
+| RBX         | **Callee-saved** | **Callee-saved** |
+| RSP         | **Callee-saved** | **Callee-saved** |
+| RBP         | **Callee-saved** | **Callee-saved** |
+| RSI         | Caller-saved     | **Callee-saved** |
+| RDI         | Caller-saved     | **Callee-saved** |
+| R8-R11      | Caller-saved     | Caller-saved     |
+| R12-R15     | **Callee-saved** | **Callee-saved** |
+| XMM0-5      | Caller-saved     | Caller-saved     |
+| XMM6-15     | Caller-saved     | **Callee-saved** |
 
 ### Strategy
 
@@ -343,6 +354,7 @@ ret
 ## 7. Jump Table Implementation
 
 ### Decision
+
 Use indexed jump tables for switch statements with ≥4 contiguous cases.
 
 ### Jump Table Format
@@ -376,6 +388,7 @@ section .text
 ### Sparse Case Handling
 
 For non-contiguous cases, normalize the index:
+
 ```nasm
     sub rax, min_case   ; Normalize to 0-based
     cmp rax, range
@@ -386,14 +399,14 @@ For non-contiguous cases, normalize the index:
 
 ## Summary of Decisions
 
-| Topic | Decision | Key Benefit |
-|-------|----------|-------------|
-| Register Allocation | Linear Scan | O(n) complexity, production-proven |
-| Phi Resolution | Parallel copy + sequentialization | Handles all cases correctly |
-| Instruction Selection | Pattern-based direct mapping | Simple, debuggable |
-| Assembly Syntax | NASM Intel | Required by spec, readable |
-| Prologue/Epilogue | Standard frame pointer | Debuggable, ABI-compliant |
-| Switch Statements | Jump table ≥4 cases | Efficient for dense switches |
+| Topic                | Decision                            | Key Benefit                        |
+| -------------------- | ----------------------------------- | ---------------------------------- |
+| Register Allocation  | Linear Scan                         | O(n) complexity, production-proven |
+| Phi Resolution       | Parallel copy + sequentialization   | Handles all cases correctly        |
+| Instruction Selection| Pattern-based direct mapping        | Simple, debuggable                 |
+| Assembly Syntax      | NASM Intel                          | Required by spec, readable         |
+| Prologue/Epilogue    | Standard frame pointer              | Debuggable, ABI-compliant          |
+| Switch Statements    | Jump table ≥4 cases                 | Efficient for dense switches       |
 
 ---
 
@@ -404,4 +417,4 @@ For non-contiguous cases, normalize the index:
 3. Briggs et al., "Practical Improvements to the Construction and Destruction of SSA Form", SPE 1998
 4. System V AMD64 ABI Specification
 5. Microsoft x64 Calling Convention Documentation
-6. NASM Documentation: https://www.nasm.us/doc/
+6. NASM Documentation: <https://www.nasm.us/doc/>

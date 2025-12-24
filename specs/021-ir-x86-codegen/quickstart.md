@@ -119,6 +119,7 @@ let (assembly, _) = codegen::generate_with_options(&module, options)?;
 ```
 
 Output with debug comments:
+
 ```nasm
 main:
     push rbp
