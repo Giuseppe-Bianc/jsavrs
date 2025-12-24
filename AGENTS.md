@@ -72,8 +72,8 @@ The framework encompasses four distinct agent roles, each designed to address sp
 - **Cargo Test Framework:** For standard unit and integration testing
 - **Insta Snapshot Testing:** For regression testing and output validation
 - **Similarity-rs Code Analysis:** For duplicate code detection and structural analysis
-  - Installation verification: `cargo install similarity-rs` followed by `similarity-rs --help`
-  - **Critical Exclusion Policy:** The agent must systematically exclude `tests` and `benches` directories and the `ignored` directory if present from duplicate code analysis to prevent false positive detections in non-production code artifacts. To implement this exclusion policy, the agent shall utilize the `--skip-test` parameter for test directories.
+    - Installation verification: `cargo install similarity-rs` followed by `similarity-rs --help`
+    - **Critical Exclusion Policy:** The agent must systematically exclude `tests` and `benches` directories and the `ignored` directory if present from duplicate code analysis to prevent false positive detections in non-production code artifacts. To implement this exclusion policy, the agent shall utilize the `--skip-test` parameter for test directories.
 
 ### 4. Refactor Agent: Code Quality Enhancement and Architectural Improvement
 
