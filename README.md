@@ -53,28 +53,31 @@ Whether you're a developer looking for a customizable compiler or someone intere
 The following procedure outlines the steps necessary to obtain, compile, and verify the `jsavrs` compiler framework. These instructions assume familiarity with command-line operations and basic software development practices.
 
 1. **Repository Acquisition**
-   
    The initial step involves obtaining a local copy of the source code repository. This is accomplished through the Git version control system, which facilitates tracking of changes and collaboration among developers. Execute the following commands in your terminal:
+
    ```bash
    git clone https://github.com/Giuseppe-Bianc/jsavrs.git
    cd jsavrs
    ```
+
    The first command creates a local copy of the repository in a directory named `jsavrs`, while the second command changes the current working directory to this newly created directory.
 
 2. **Project Compilation**
-   
    Once the repository has been obtained, the source code must be compiled into executable form. This process is managed by Cargo, which resolves dependencies, compiles source files, and links the resulting object files. For an optimized production build, execute:
+
    ```bash
    cargo build --release
    ```
+
    This command instructs Cargo to compile the project in release mode, which applies performance optimizations at the cost of increased compilation time. The resulting executable files are placed in the `target/release` directory within the project structure.
 
 3. **Verification Through Testing**
-   
    To ensure the correct functioning of the compiled framework, the included test suite should be executed. This comprehensive suite validates the behavior of individual components and their interactions, providing assurance of the system's reliability. Execute the following command:
+
    ```bash
    cargo test
    ```
+
    Cargo will compile and run all tests, reporting the results in a structured format. Successful completion of the test suite indicates that the framework is functioning as intended in the current environment.
 
 ## Usage
@@ -93,36 +96,40 @@ In this example, `input_file.vn` represents a source file written in a language 
 
 The compiler framework provides numerous options for customizing the compilation process. These options enable users to control output generation, diagnostic reporting, optimization levels, and other aspects of compilation behavior.
 
-* **Output Directory Specification**
-  
+- **Output Directory Specification**
   By default, the compiler places generated files in a predetermined location. Users may specify an alternative output directory using the `--output` parameter:
+
   ```bash
   ./jsavrs input_file.vn --output ./build
   ```
+
   This command directs the compiler to place all generated files in the `./build` directory, creating it if necessary. This functionality facilitates integration with complex build systems and project structures.
 
-* **Verbose Logging**
-  
+- **Verbose Logging**
   For diagnostic purposes or detailed understanding of the compilation process, the `--verbose` flag enables comprehensive logging:
+
   ```bash
   ./jsavrs input_file.vn --verbose
   ```
+
   When enabled, this option produces detailed information about each compilation phase, including intermediate representations, optimization decisions, and resource utilization metrics. This information is valuable for performance analysis, debugging, and educational purposes.
 
-* **Multiple File Compilation**
-  
+- **Multiple File Compilation**
   The compiler supports processing multiple source files in a single invocation:
+  
   ```bash
   ./jsavrs file1.vn file2.vn file3.vn
   ```
+
   This capability is particularly useful for projects with modular codebases, ensuring consistent compilation settings across all components and potentially enabling cross-module optimizations.
 
-* **Comprehensive Option Reference**
-  
+- **Comprehensive Option Reference**
   A complete listing of available command-line options and their functions can be obtained using the built-in help system:
+
   ```bash
   ./jsavrs --help
   ```
+
   This command displays detailed documentation for all supported parameters, including syntax, default values, and usage examples. This reference serves as the definitive guide for compiler configuration.
 
 ## Testing
@@ -130,6 +137,7 @@ The compiler framework provides numerous options for customizing the compilation
 The `jsavrs` project incorporates a comprehensive testing methodology designed to ensure correctness, reliability, and performance. The test suite encompasses multiple levels of verification, including unit tests for individual functions, integration tests for component interactions, and regression tests for known issues. This multi-faceted approach to quality assurance provides confidence in the compiler's behavior across diverse scenarios and input conditions.
 
 To execute the complete test suite, utilize the following command:
+
 ```bash
 cargo test
 ```
@@ -163,11 +171,13 @@ maintainable, and reliable codebase.
 The `jsavrs` project incorporates snapshot testing through the `insta` library to verify the correctness of compiler outputs and intermediate representations. Snapshot testing captures the output of a function or process and compares it against a previously approved reference, ensuring that changes to the codebase do not inadvertently alter expected behavior. This approach is particularly valuable for compiler development, where outputs such as abstract syntax trees, intermediate representations, and generated code must maintain consistency across modifications.
 
 To execute snapshot tests alongside the standard test suite:
+
 ```bash
 cargo test
 ```
 
 When snapshot tests detect differences between current output and stored references, the `insta` tool provides facilities for reviewing and accepting changes:
+
 ```bash
 cargo insta review
 # or in alternative cargo insta test  --review
@@ -201,31 +211,30 @@ All submissions undergo a thorough review process to ensure they align with the 
 ### Contribution Process
 
 1. **Repository Forking**
-   
    Begin by creating a personal fork of the project repository. This establishes an independent development environment where changes can be implemented and tested without affecting the main codebase.
 
 2. **Branch Creation**
-   
    Create a dedicated branch for your contribution, employing a naming convention that reflects the nature of the work:
+
    ```bash
    git checkout -b feature/your-feature-name
    ```
+
    This isolation prevents interference with other development efforts and simplifies the eventual integration process.
 
 3. **Implementation**
-   
    Develop your modifications following established coding standards, architectural patterns, and best practices. Ensure that your implementation addresses the intended requirements while maintaining compatibility with existing functionality.
 
 4. **Testing**
-   
    Develop appropriate tests to verify the correctness of your implementation. Execute the complete test suite to confirm that your changes do not introduce regressions:
+
    ```bash
    cargo test
    ```
+
    Comprehensive testing is essential to validate the functionality and reliability of contributions.
 
 5. **Pull Request Submission**
-   
    Once your implementation is complete and tested, submit a pull request for review. Provide a detailed description of your changes, including the rationale, approach, and any relevant considerations that may assist reviewers in evaluating your submission.
 
 ### Code Style Standards

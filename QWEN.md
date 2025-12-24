@@ -21,6 +21,7 @@ The project follows a classic compiler architecture with distinct phases:
 6. **Command Line Interface** (`src/cli.rs`): Built with `clap` for parsing command-line arguments, enforcing `.vn` file extension, and providing verbose output options.
 
 ### Key Features
+
 - High-performance implementation in Rust
 - Cross-platform compatibility (Windows, macOS, Linux)
 - Modular and extensible architecture
@@ -29,7 +30,7 @@ The project follows a classic compiler architecture with distinct phases:
 
 ## Project Structure
 
-```
+```text
 jsavrs/
 ├── src/                  # Source code
 │   ├── cli.rs            # Command-line interface
@@ -74,33 +75,37 @@ jsavrs/
 - **Testing**: Built-in Rust testing framework with insta for snapshot testing
 - **Benchmarking**: Criterion.rs for performance benchmarking
 - **Error Handling**: Thiserror for ergonomic error type definitions
-- **Dependencies**: 
-  - clap (CLI parsing with derive macros)
-  - console (terminal styling and formatting)
-  - logos (lexer with high-performance tokenization)
-  - thiserror (error handling with automatic implementation)
-  - regex (regular expression support)
-  - lazy_static (lazy initialization of static values)
-  - uuid (universally unique identifier generation)
-  - petgraph (graph data structures for IR representation)
-  - insta (snapshot testing for output validation)
-  - criterion (performance benchmarking and optimization validation)
+- **Dependencies**:
+
+    - clap (CLI parsing with derive macros)
+    - console (terminal styling and formatting)
+    - logos (lexer with high-performance tokenization)
+    - thiserror (error handling with automatic implementation)
+    - regex (regular expression support)
+    - lazy_static (lazy initialization of static values)
+    - uuid (universally unique identifier generation)
+    - petgraph (graph data structures for IR representation)
+    - insta (snapshot testing for output validation)
+    - criterion (performance benchmarking and optimization validation)
 
 ## Language Features (.vn files)
 
 The compiler supports a rich custom language with these features:
 
 ### Functions
+
 - Typed parameters and return types with explicit type annotations
 - Support for main function as program entry point
 - Function declarations with `fun` keyword
 
 ### Variables and Constants
+
 - Explicit typing with `var` (mutable) and `const` (immutable) declarations
 - Type inference for initializers
 - Support for multiple variable declarations in a single statement
 
 ### Numeric Types
+
 - Signed integers: i8, i16, i32, i64
 - Unsigned integers: u8, u16, u32, u64
 - Floating-point: f32, f64
@@ -109,27 +114,32 @@ The compiler supports a rich custom language with these features:
 - Base-specific literals: binary (#b1010), octal (#o755), hexadecimal (#xdeadbeef)
 
 ### Data Types
+
 - Character literals ('A', '\n', '\u{1F600}')
 - String literals ("Hello, World!")
 - Boolean values (true, false)
 - Null pointer literal (nullptr)
 
 ### Control Structures
+
 - Conditional statements (if/else)
 - Loop constructs (while, for)
 - Break and continue statements for loop control
 - Block scoping with curly braces
 
 ### Arrays and Collections
+
 - Fixed-size arrays with explicit sizing (var arr: i64[5] = {1, 2, 3, 4, 5})
 - Multi-dimensional arrays
 - Array access with bracket notation
 
 ### Comments
+
 - Single-line comments (// This is a comment)
-- Multi-line comments (/* This is a multi-line comment */)
+- Multi-line comments (/*This is a multi-line comment*/)
 
 Example syntax:
+
 ```rust
 fun add(num1: i8, num2: i8): i8 {
     return num1 + num2
@@ -159,11 +169,13 @@ main {
 ## Development Workflow
 
 ### Prerequisites
+
 - Rust toolchain (rustup recommended for version management)
 - Cargo package manager (included with Rust)
 - Git for version control
 
 ### Building
+
 ```bash
 # Development build with debug symbols
 cargo build
@@ -176,6 +188,7 @@ cargo build --all-features
 ```
 
 ### Running
+
 ```bash
 # Run with input file
 cargo run -- -i input.vn
@@ -188,6 +201,7 @@ cargo run --release -- -i input.vn
 ```
 
 ### Testing
+
 ```bash
 # Run all tests (unit, integration, and documentation)
 cargo test
@@ -206,6 +220,7 @@ cargo insta review
 ```
 
 ### Code Quality
+
 ```bash
 # Format code according to rustfmt standards
 cargo fmt
@@ -221,6 +236,7 @@ cargo doc --open
 ```
 
 ### Profiling and Performance Analysis
+
 ```bash
 # Run with time tracking for performance analysis
 cargo run --release -- -i large_toy_program.vn -v

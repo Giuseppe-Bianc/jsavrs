@@ -28,26 +28,26 @@ Before working on larger changes, open an issue first to discuss the design—th
 The repository is written in Rust. Follow these guidelines to keep the codebase consistent and maintainable.
 
 - Rust edition and tooling
-  - Target Rust stable. Ensure your toolchain is up-to-date and compatible with the project.
-  - Use `rustfmt` for formatting and `clippy` for lints. The project includes a `rustfmt.toml` file with preferred formatting options.
+    - Target Rust stable. Ensure your toolchain is up-to-date and compatible with the project.
+    - Use `rustfmt` for formatting and `clippy` for lints. The project includes a `rustfmt.toml` file with preferred formatting options.
 
 - Style
-  - Aim for idiomatic Rust: prefer safe code, explicit error handling using `Result`/`Option`, and avoid unnecessary `unsafe` blocks. If `unsafe` is required, document why and keep it minimal.
-  - Keep functions small and focused. Prefer composition to duplication.
-  - Use descriptive names for functions, structs, enums, and variables. Add `///` rustdoc comments for public types and functions.
+    - Aim for idiomatic Rust: prefer safe code, explicit error handling using `Result`/`Option`, and avoid unnecessary `unsafe` blocks. If `unsafe` is required, document why and keep it minimal.
+    - Keep functions small and focused. Prefer composition to duplication.
+    - Use descriptive names for functions, structs, enums, and variables. Add `///` rustdoc comments for public types and functions.
 
 - Modules and organization
-  - Group related code in appropriate modules under `src/` (e.g., `ir/`, `parser/`, `semantic/`).
-  - Expose a minimal public API from `lib.rs`. Keep internal details private when possible.
+    - Group related code in appropriate modules under `src/` (e.g., `ir/`, `parser/`, `semantic/`).
+    - Expose a minimal public API from `lib.rs`. Keep internal details private when possible.
 
 - Tests
-  - Add unit tests next to modules where convenient (use `#[cfg(test)] mod tests { ... }`), and integration tests in the `tests/` directory.
-  - Snapshot tests are used in this project—follow existing snapshot patterns in `tests/` when adding new tests.
-  - Benchmarks live in `benches/` and use Criterion. Keep microbenchmarks stable and document what they measure.
+    - Add unit tests next to modules where convenient (use `#[cfg(test)] mod tests { ... }`), and integration tests in the `tests/` directory.
+    - Snapshot tests are used in this project—follow existing snapshot patterns in `tests/` when adding new tests.
+    - Benchmarks live in `benches/` and use Criterion. Keep microbenchmarks stable and document what they measure.
 
 - Commit messages
-  - Use clear, imperative commit messages (e.g., "Add SSA optimization for constant folding").
-  - For larger changes, squash or organize commits logically before opening a PR.
+    - Use clear, imperative commit messages (e.g., "Add SSA optimization for constant folding").
+    - For larger changes, squash or organize commits logically before opening a PR.
 
 Automated checks (recommended before PR):
 
@@ -63,7 +63,7 @@ This section explains how to set up a development environment on Windows (PowerS
 
 Prerequisites
 
-- Rust toolchain (stable): install from https://rustup.rs and ensure `cargo` and `rustc` are on PATH.
+- Rust toolchain (stable): install from <https://rustup.rs> and ensure `cargo` and `rustc` are on PATH.
 - LLVM/clang (optional): required only for certain integrations or if you want to use local LLVM tools. Most build/test tasks use Rust only.
 
 Quick start (PowerShell)
