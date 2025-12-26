@@ -93,7 +93,9 @@ impl LineTracker {
             // Between lines: calculate column from preceding line start
             Err(line) => {
                 let line_index = line.saturating_sub(1);
-                let column = offset - self.line_starts[line_index] + 1;
+                let line_start = self.line_starts[line_index];
+                let line_slice = &self.source[line_start..offset];
+                let column = line_slice.chars().count() + 1;
                 SourceLocation::new(line_index + 1, column, offset)
             }
         }
@@ -129,12 +131,13 @@ impl LineTracker {
     /// Gets a specific line from the source (1-indexed)
     #[must_use]
     pub fn get_line(&self, line_number: usize) -> Option<&str> {
-        // Convert to 0-indexed and get line start offset
-        let start_index = *self.line_starts.get(line_number.checked_sub(1)?)?;
+        let line_idx = line_number.checked_sub(1)?;
+        let start = *self.line_starts.get(line_idx)?;
 
-        // Find line end (next newline or EOF)
-        let end_index = self.source[start_index..].find('\n').map_or(self.source.len(), |rel| start_index + rel);
+        // Usa il prossimo line_start o EOF
+        let end =
+            self.line_starts.get(line_idx + 1).map_or(self.source.len(), |&next_start| next_start.saturating_sub(1));
 
-        Some(&self.source[start_index..end_index])
+        Some(&self.source[start..end])
     }
 }
