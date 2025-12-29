@@ -22,9 +22,9 @@ impl ErrorReporter {
     /// Returns a formatted string containing all compile errors with source context
     #[must_use]
     pub fn report_errors(&self, errors: Vec<CompileError>) -> String {
-        errors
-            .into_iter()
-            .map(|error| match error {
+        let mut output = String::with_capacity(errors.len() * 200);
+        for error in errors {
+            let formatted = match error {
                 CompileError::LexerError { message, span, help } => {
                     self.format_error("LEX", &message, &span, help.as_deref())
                 }
@@ -39,8 +39,10 @@ impl ErrorReporter {
                 }
                 CompileError::AsmGeneratorError { message } => format_simple_error("ASM GEN", &message),
                 CompileError::IoError(e) => format_simple_error("I/O", &e),
-            })
-            .collect()
+            };
+            output.push_str(&formatted);
+        }
+        output
     }
 
     /// Formats an error with source context and visual indicators
