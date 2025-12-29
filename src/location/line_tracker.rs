@@ -93,9 +93,7 @@ impl LineTracker {
             // Between lines: calculate column from preceding line start
             Err(line) => {
                 let line_index = line.saturating_sub(1);
-                let line_start = self.line_starts[line_index];
-                let line_slice = &self.source[line_start..offset];
-                let column = line_slice.chars().count() + 1;
+                let column = offset - self.line_starts[line_index] + 1;
                 SourceLocation::new(line_index + 1, column, offset)
             }
         }
