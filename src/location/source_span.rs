@@ -105,8 +105,8 @@ impl SourceSpan {
     pub fn merged(&self, other: &Self) -> Option<Self> {
         (self.file_path == other.file_path).then(|| Self {
             file_path: self.file_path.clone(),
-            start: self.clone().start.min(other.start),
-            end: self.clone().end.max(other.end),
+            start: self.start.min(other.start),
+            end: self.end.max(other.end),
         })
     }
 }
@@ -165,17 +165,18 @@ impl std::fmt::Display for SourceSpan {
 /// ```
 #[must_use]
 pub fn truncate_path(path: &Path, depth: usize) -> String {
-    let components: Vec<_> = path.components().collect();
-    let len = components.len();
+    let components = path.components();
+    let count = components.clone().count();
 
-    let truncated = if len <= depth {
-        PathBuf::from_iter(&components)
-    } else {
-        let tail = &components[len - depth..];
-        PathBuf::from("..").join(PathBuf::from_iter(tail))
-    };
+    if count <= depth {
+        return path.display().to_string();
+    }
 
-    truncated.display().to_string()
+    // Skip iniziali, evitando collect()
+    let skip_count = count - depth;
+    let tail: PathBuf = components.skip(skip_count).collect();
+
+    PathBuf::from("..").join(tail).display().to_string()
 }
 
 /// Trait for types that have an associated source span.
