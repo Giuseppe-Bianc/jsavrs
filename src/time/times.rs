@@ -2,6 +2,9 @@
 use crate::time::time_values::TimeValues;
 use crate::time::value_label::ValueLabel;
 
+const VERTICAL_SEP: usize = 3;
+const TITLE_PADDING: usize = 4;
+
 #[derive(Debug, Clone)]
 pub struct TimeLabels {
     pub seconds: &'static str,
@@ -57,12 +60,12 @@ pub fn simple_format(title: &str, _: usize, time: &ValueLabel) -> String {
 #[must_use]
 pub fn big_format(title: &str, title_len: usize, time: &ValueLabel) -> String {
     let time_str = format!("Time = {time}");
-    let total_len = title_len + time_str.len() + 3; // +3 for separators
+    let total_len = title_len + time_str.len() + VERTICAL_SEP; // +3 for separators
     let title_section = format!(
         "|{: ^title_len$}|{: ^time_len$}|",
         title,
         time_str,
-        title_len = title_len.saturating_sub(4), // Prevent underflow
+        title_len = title_len.saturating_sub(TITLE_PADDING), // Prevent underflow
         time_len = time_str.len() + 1
     );
     format!("\n{:-<total_len$}\n{}\n{:-<total_len$}", "", title_section, "")
