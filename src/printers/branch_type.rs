@@ -100,15 +100,12 @@ pub fn print_children<T, F>(children: &[T], indent: &str, output: &mut String, s
 where
     F: FnMut(&T, &str, BranchType, &mut String, &StyleManager),
 {
-    let len = children.len();
-    if len == 0 {
-        return;
+    if let Some((last, rest)) = children.split_last() {
+        for child in rest {
+            print_fn(child, indent, BranchType::Middle, output, styles);
+        }
+        print_fn(last, indent, BranchType::Last, output, styles);
     }
-
-    for child in &children[..len - 1] {
-        print_fn(child, indent, BranchType::Middle, output, styles);
-    }
-    print_fn(&children[len - 1], indent, BranchType::Last, output, styles);
 }
 
 // Keep existing helper functions
