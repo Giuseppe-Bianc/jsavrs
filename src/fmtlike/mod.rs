@@ -133,11 +133,12 @@ use std::fmt;
 /// assert_eq!(format!("{}", team), "Alice(30), Bob(25)");
 /// ```
 pub fn write_comma_separated<T: fmt::Display>(f: &mut fmt::Formatter<'_>, items: &[T]) -> fmt::Result {
-    for (i, item) in items.iter().enumerate() {
-        if i > 0 {
+    if let Some((first, rest)) = items.split_first() {
+        first.fmt(f)?;
+        for item in rest {
             f.write_str(", ")?;
+            item.fmt(f)?;
         }
-        item.fmt(f)?;
     }
     Ok(())
 }
