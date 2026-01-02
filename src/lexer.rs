@@ -11,6 +11,7 @@
 /// * Termination: Finalizes token output, ensuring proper stream termination
 use crate::{
     error::compile_error::CompileError,
+    error::error_code::ErrorCode,
     location::line_tracker::LineTracker,
     tokens::{token::Token, token_kind::TokenKind},
 };
@@ -112,6 +113,7 @@ impl<'a> Lexer<'a> {
         Some(match kind_result {
             Ok(kind) => Ok(Token { kind, span }),
             Err(()) => Err(CompileError::LexerError {
+                code: Some(ErrorCode::E0001),
                 message: Arc::from(format!("Invalid token: {:?}", self.inner.slice())),
                 span,
                 help: None,
@@ -199,12 +201,17 @@ pub fn post_process_tokens(tokens: Vec<Token>, errors: Vec<CompileError>) -> (Ve
     let mut replacements = HashMap::new();
 
     for (eidx, error) in errors.iter().enumerate() {
-        if let CompileError::LexerError { message, span, help } = error
-            && let Some(msg) = extract_malformed_base_number_message(message.as_ref())
+        if let CompileError::LexerError { message, span, help, .. } = error
+            && let Some((msg, error_code)) = extract_malformed_base_number_message(message.as_ref())
         {
             replacements.insert(
                 eidx,
-                CompileError::LexerError { message: Arc::from(msg), span: span.clone(), help: help.clone() },
+                CompileError::LexerError {
+                    code: Some(error_code),
+                    message: Arc::from(msg),
+                    span: span.clone(),
+                    help: help.clone(),
+                },
             );
         }
     }
@@ -226,19 +233,20 @@ fn apply_error_replacements(
 
 /// Extracts the appropriate error message for malformed base numbers.
 ///
-/// Converts generic error messages into specific, user-friendly messages.
+/// Converts generic error messages into specific, user-friendly messages
+/// and returns the corresponding error code.
 ///
 /// # Parameters
 /// * `msg` - The error message from logos
 ///
 /// # Returns
-/// Optional specific error message if the input matches a malformed base number pattern
+/// Optional tuple of (specific error message, error code) if the input matches a malformed base number pattern
 #[inline]
-const fn extract_malformed_base_number_message(msg: &str) -> Option<&'static str> {
+const fn extract_malformed_base_number_message(msg: &str) -> Option<(&'static str, ErrorCode)> {
     match msg.as_bytes() {
-        b"Invalid token: \"#b\"" => Some("Malformed binary number: \"#b\""),
-        b"Invalid token: \"#o\"" => Some("Malformed octal number: \"#o\""),
-        b"Invalid token: \"#x\"" => Some("Malformed hexadecimal number: \"#x\""),
+        b"Invalid token: \"#b\"" => Some(("Malformed binary number: \"#b\"", ErrorCode::E0002)),
+        b"Invalid token: \"#o\"" => Some(("Malformed octal number: \"#o\"", ErrorCode::E0003)),
+        b"Invalid token: \"#x\"" => Some(("Malformed hexadecimal number: \"#x\"", ErrorCode::E0004)),
         _ => None,
     }
 }

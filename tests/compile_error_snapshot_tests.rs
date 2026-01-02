@@ -15,7 +15,7 @@ fn test_io_error_display() {
 
 #[test]
 fn test_asm_generator_error_display() {
-    let error = CompileError::AsmGeneratorError { message: "Invalid assembly code".into() };
+    let error = CompileError::AsmGeneratorError { code: None, message: "Invalid assembly code".into() };
     assert_snapshot!(error);
 }
 

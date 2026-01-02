@@ -1,5 +1,6 @@
 //src/parser/ast.rs
 use crate::error::compile_error::CompileError;
+use crate::error::error_code::ErrorCode;
 use crate::location::source_span::{HasSpan, SourceSpan};
 use crate::tokens::number::Number;
 use crate::tokens::token::Token;
@@ -224,6 +225,7 @@ impl BinaryOp {
             TokenKind::ShiftRight => Self::ShiftRight,
             _ => {
                 return Err(CompileError::SyntaxError {
+                    code: Some(ErrorCode::E1005),
                     message: Arc::from(format!("Invalid binary operator: {:?}", token.kind)),
                     span: token.clone().span,
                     help: None,

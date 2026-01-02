@@ -13,6 +13,7 @@ fn lexer_error_single_line() {
     let reporter = ErrorReporter::new(line_tracker);
 
     let errors = vec![CompileError::LexerError {
+        code: None,
         message: "Invalid character '#'".into(),
         span: create_span("test", 1, 5, 1, 6),
         help: None,
@@ -37,6 +38,7 @@ fn lexer_error_single_line_with_error() {
     let reporter = ErrorReporter::new(line_tracker);
 
     let errors = vec![CompileError::LexerError {
+        code: None,
         message: "Invalid character '#'".into(),
         span: create_span("test", 1, 5, 1, 6),
         help: Some("This is a test error".to_string()),
@@ -62,6 +64,7 @@ fn type_error_single_line() {
     let reporter = ErrorReporter::new(line_tracker);
 
     let errors = vec![CompileError::TypeError {
+        code: None,
         message: "Invalid character '#'".into(),
         span: create_span("test", 1, 5, 1, 6),
         help: None,
@@ -86,6 +89,7 @@ fn type_error_single_line_with_error() {
     let reporter = ErrorReporter::new(line_tracker);
 
     let errors = vec![CompileError::TypeError {
+        code: None,
         message: "Invalid character '#'".into(),
         span: create_span("test", 1, 5, 1, 6),
         help: Some("This is a test error".to_string()),
@@ -111,6 +115,7 @@ fn ir_gen_error_single_line() {
     let reporter = ErrorReporter::new(line_tracker);
 
     let errors = vec![CompileError::IrGeneratorError {
+        code: None,
         message: "Invalid character '#'".into(),
         span: create_span("test", 1, 5, 1, 6),
         help: None,
@@ -135,6 +140,7 @@ fn ir_gen_error_single_line_with_error() {
     let reporter = ErrorReporter::new(line_tracker);
 
     let errors = vec![CompileError::IrGeneratorError {
+        code: None,
         message: "Invalid character '#'".into(),
         span: create_span("test", 1, 5, 1, 6),
         help: Some("This is a test error".to_string()),
@@ -159,7 +165,7 @@ fn asm_gen_error_single_line() {
     let line_tracker = LineTracker::new("test", source.to_string());
     let reporter = ErrorReporter::new(line_tracker);
 
-    let errors = vec![CompileError::AsmGeneratorError { message: "invalid asm".into() }];
+    let errors = vec![CompileError::AsmGeneratorError { code: None, message: "invalid asm".into() }];
 
     let report = reporter.report_errors(errors);
     let stripped = strip_ansi_codes(&report);
@@ -177,6 +183,7 @@ fn syntax_error_multi_line() {
     let reporter = ErrorReporter::new(line_tracker);
 
     let errors = vec![CompileError::SyntaxError {
+        code: None,
         message: "Mismatched brackets".into(),
         span: create_span("test", 1, 12, 3, 5),
         help: None,
@@ -202,6 +209,7 @@ fn syntax_error_multi_line_with_error() {
     let reporter = ErrorReporter::new(line_tracker);
 
     let errors = vec![CompileError::SyntaxError {
+        code: None,
         message: "Mismatched brackets".into(),
         span: create_span("test", 1, 12, 3, 5),
         help: Some("Check your brackets".to_string()),
@@ -244,11 +252,13 @@ fn multiple_errors() {
     let errors = vec![
         CompileError::IoError(io::Error::new(io::ErrorKind::PermissionDenied, "Access denied")),
         CompileError::LexerError {
+            code: None,
             message: "Unterminated string".into(),
             span: create_span("test", 2, 7, 2, 8),
             help: None,
         },
         CompileError::SyntaxError {
+            code: None,
             message: "Expected semicolon".into(),
             span: create_span("test", 1, 10, 1, 11),
             help: None,
@@ -280,6 +290,7 @@ fn line_out_of_bounds() {
     let reporter = ErrorReporter::new(line_tracker);
 
     let errors = vec![CompileError::LexerError {
+        code: None,
         message: "Invalid token".into(),
         span: create_span("test", 5, 1, 5, 2), // Linea inesistente
         help: None,

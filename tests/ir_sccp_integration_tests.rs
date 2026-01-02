@@ -285,16 +285,16 @@ fn test_switch_constant_selector() {
 
     // Set return terminators for each case
     let ret_10 = Value::new_literal(IrLiteralValue::I32(10));
-    let case1_term = Terminator::new(TerminatorKind::Return { value: ret_10, ty: IrType::I32 }, SourceSpan::default());
-    func.set_terminator("case_1", case1_term);
+    let case1 = Terminator::new(TerminatorKind::Return { value: ret_10, ty: IrType::I32 }, SourceSpan::default());
+    func.set_terminator("case_1", case1);
 
     let ret_20 = Value::new_literal(IrLiteralValue::I32(20));
-    let case2_term = Terminator::new(TerminatorKind::Return { value: ret_20, ty: IrType::I32 }, SourceSpan::default());
-    func.set_terminator("case_2", case2_term);
+    let case2 = Terminator::new(TerminatorKind::Return { value: ret_20, ty: IrType::I32 }, SourceSpan::default());
+    func.set_terminator("case_2", case2);
 
     let ret_30 = Value::new_literal(IrLiteralValue::I32(30));
-    let case3_term = Terminator::new(TerminatorKind::Return { value: ret_30, ty: IrType::I32 }, SourceSpan::default());
-    func.set_terminator("case_3", case3_term);
+    let case3 = Terminator::new(TerminatorKind::Return { value: ret_30, ty: IrType::I32 }, SourceSpan::default());
+    func.set_terminator("case_3", case3);
 
     let ret_99 = Value::new_literal(IrLiteralValue::I32(99));
     let default_term =

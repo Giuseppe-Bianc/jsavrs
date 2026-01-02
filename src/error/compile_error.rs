@@ -1,6 +1,7 @@
 use std::sync::Arc;
 
 // src/error/compile_error.rs
+use crate::error::error_code::ErrorCode;
 use crate::location::source_span::SourceSpan;
 use thiserror::Error;
 
@@ -15,58 +16,70 @@ use thiserror::Error;
 /// - General I/O errors
 ///
 /// Each variant carries context-specific information about the error's nature and location.
+/// Optionally, variants can include an [`ErrorCode`] for standardized error identification.
 #[derive(Debug, Error)]
 pub enum CompileError {
     /// Lexical analysis error indicating invalid token sequences.
     ///
     /// Contains:
+    /// - `code`: Optional standardized error code (E0xxx range)
     /// - `message`: Human-readable error description
     /// - `span`: Source location where the error occurred
     /// - `help`: Optional guidance for fixing the error
-    #[error("{message} at {span}{}",
+    #[error("{}{message} at {span}{}",
+        .code.map_or(String::new(), |c| format!("[{}] ", c.code())),
         .help.as_ref().map_or(String::new(), |h| format!("\nhelp: {h}"))
     )]
-    LexerError { message: Arc<str>, span: SourceSpan, help: Option<String> },
+    LexerError { code: Option<ErrorCode>, message: Arc<str>, span: SourceSpan, help: Option<String> },
 
     /// Syntax error indicating invalid program structure.
     ///
     /// Contains:
+    /// - `code`: Optional standardized error code (E1xxx range)
     /// - `message`: Description of the syntax violation
     /// - `span`: Location of the problematic syntax
     /// - `help`: Optional guidance for fixing the error
-    #[error("Syntax error: {message} at {span}{}",
+    #[error("{}Syntax error: {message} at {span}{}",
+        .code.map_or(String::new(), |c| format!("[{}] ", c.code())),
         .help.as_ref().map_or(String::new(), |h| format!("\nhelp: {h}"))
     )]
-    SyntaxError { message: Arc<str>, span: SourceSpan, help: Option<String> },
+    SyntaxError { code: Option<ErrorCode>, message: Arc<str>, span: SourceSpan, help: Option<String> },
 
     /// Type checking error indicating type mismatches or unsupported operations.
     ///
     /// Contains:
+    /// - `code`: Optional standardized error code (E2xxx range)
     /// - `message`: Description of the type error
     /// - `span`: Location where the type error occurred
     /// - `help`: Optional guidance for fixing the error
-    #[error("Type error: {message} at {span}{}",
+    #[error("{}Type error: {message} at {span}{}",
+        .code.map_or(String::new(), |c| format!("[{}] ", c.code())),
         .help.as_ref().map_or(String::new(), |h| format!("\nhelp: {h}"))
     )]
-    TypeError { message: Arc<str>, span: SourceSpan, help: Option<String> },
+    TypeError { code: Option<ErrorCode>, message: Arc<str>, span: SourceSpan, help: Option<String> },
 
     /// Error during intermediate representation (IR) generation.
     ///
     /// Contains:
+    /// - `code`: Optional standardized error code (E3xxx range)
     /// - `message`: Description of the IR generation failure
     /// - `span`: Location associated with the error
     /// - `help`: Optional guidance for fixing the error
-    #[error("Ir generator error: {message} at {span}{}",
+    #[error("{}IR generator error: {message} at {span}{}",
+        .code.map_or(String::new(), |c| format!("[{}] ", c.code())),
         .help.as_ref().map_or(String::new(), |h| format!("\nhelp: {h}"))
     )]
-    IrGeneratorError { message: Arc<str>, span: SourceSpan, help: Option<String> },
+    IrGeneratorError { code: Option<ErrorCode>, message: Arc<str>, span: SourceSpan, help: Option<String> },
 
     /// Error during assembly code generation.
     ///
     /// Contains:
+    /// - `code`: Optional standardized error code (E4xxx range)
     /// - `message`: Description of the assembly generation failure
-    #[error("Assembly generation error: {message}")]
-    AsmGeneratorError { message: Arc<str> },
+    #[error("{}Assembly generation error: {message}",
+        .code.map_or(String::new(), |c| format!("[{}] ", c.code()))
+    )]
+    AsmGeneratorError { code: Option<ErrorCode>, message: Arc<str> },
 
     /// I/O operation failure during compilation (e.g., file access issues).
     ///
@@ -76,6 +89,38 @@ pub enum CompileError {
 }
 
 impl CompileError {
+    /// Returns the error code if one is associated with this error.
+    ///
+    /// # Returns
+    /// - `Some(&ErrorCode)` for errors with associated codes
+    /// - `None` for errors without codes or I/O errors
+    ///
+    /// # Examples
+    /// ```
+    /// use jsavrs::error::compile_error::CompileError;
+    /// use jsavrs::error::error_code::ErrorCode;
+    /// use jsavrs::location::source_span::SourceSpan;
+    /// use std::sync::Arc;
+    /// let err = CompileError::TypeError {
+    ///     code: Some(ErrorCode::E2023),
+    ///     message: Arc::from("Undefined variable 'x'"),
+    ///     span: SourceSpan::default(),
+    ///     help: None,
+    /// };
+    /// assert_eq!(err.error_code(), Some(&ErrorCode::E2023));
+    /// ```
+    #[must_use]
+    pub const fn error_code(&self) -> Option<&ErrorCode> {
+        match self {
+            Self::LexerError { code, .. }
+            | Self::SyntaxError { code, .. }
+            | Self::TypeError { code, .. }
+            | Self::IrGeneratorError { code, .. }
+            | Self::AsmGeneratorError { code, .. } => code.as_ref(),
+            Self::IoError(_) => None,
+        }
+    }
+
     /// Returns the error message for variants that carry messages.
     ///
     /// Returns:
@@ -88,6 +133,7 @@ impl CompileError {
     /// use jsavrs::location::source_span::SourceSpan;
     /// use std::sync::Arc;
     /// let err = CompileError::LexerError {
+    ///     code: None,
     ///     message: Arc::from("Invalid token"),
     ///     span: SourceSpan::default(),
     ///     help: None,
@@ -101,7 +147,7 @@ impl CompileError {
             | Self::SyntaxError { message, .. }
             | Self::TypeError { message, .. }
             | Self::IrGeneratorError { message, .. }
-            | Self::AsmGeneratorError { message } => Some(message),
+            | Self::AsmGeneratorError { message, .. } => Some(message),
             Self::IoError(_) => None,
         }
     }
@@ -120,6 +166,7 @@ impl CompileError {
     /// use jsavrs::location::source_span::SourceSpan;
     /// let span = SourceSpan::new(Arc::from("file"), SourceLocation::new(1,1,1), SourceLocation::new(1,1,1));
     /// let err = CompileError::SyntaxError {
+    ///     code: None,
     ///     message: Arc::from("Unexpected token"),
     ///     span: span.clone(),
     ///     help: None,
@@ -149,6 +196,7 @@ impl CompileError {
     /// use jsavrs::location::source_span::SourceSpan;
     /// use std::sync::Arc;
     /// let err = CompileError::TypeError {
+    ///     code: None,
     ///     message: Arc::from("Type mismatch"),
     ///     span: SourceSpan::default(),
     ///     help: Some("Try adding a type annotation".to_string()),
@@ -179,6 +227,7 @@ impl CompileError {
     /// use jsavrs::location::source_span::SourceSpan;
     /// use std::sync::Arc;
     /// let mut err = CompileError::LexerError {
+    ///     code: None,
     ///     message: Arc::from("Old message"),
     ///     span: SourceSpan::default(),
     ///     help: None,
@@ -192,7 +241,7 @@ impl CompileError {
             | Self::SyntaxError { message, .. }
             | Self::TypeError { message, .. }
             | Self::IrGeneratorError { message, .. }
-            | Self::AsmGeneratorError { message } => *message = new_message,
+            | Self::AsmGeneratorError { message, .. } => *message = new_message,
             Self::IoError(_) => {}
         }
     }
@@ -211,6 +260,7 @@ impl CompileError {
     /// use jsavrs::location::source_location::SourceLocation;
     /// use jsavrs::location::source_span::SourceSpan;
     /// let mut err = CompileError::SyntaxError {
+    ///     code: None,
     ///     message: Arc::from(""),
     ///     span: SourceSpan::new(Arc::from("file"), SourceLocation::new(1,1,1), SourceLocation::new(1,1,1)),
     ///     help: None,
@@ -242,6 +292,7 @@ impl CompileError {
     /// use jsavrs::location::source_span::SourceSpan;
     /// use std::sync::Arc;
     /// let mut err = CompileError::TypeError {
+    ///     code: None,
     ///     message: Arc::from("Type mismatch"),
     ///     span: SourceSpan::default(),
     ///     help: None,

@@ -150,16 +150,16 @@ fn number_edge_cases() {
     assert_eq!(tokens[0].kind, Eof);
     assert_eq!(
         errors[0].to_string(),
-        "Invalid token: \"#b1111111111111111111111111111111111111111111111111111111111111111\" at test:line 1:column 1 - line 1:column 67"
+        "[E0001] Invalid token: \"#b1111111111111111111111111111111111111111111111111111111111111111\" at test:line 1:column 1 - line 1:column 67"
     );
 }
 
 #[test]
 fn empty_base_numbers() {
     let cases = vec![
-        ("#b", "Malformed binary number: \"#b\" at test:line 1:column 1 - line 1:column 3"),
-        ("#o", "Malformed octal number: \"#o\" at test:line 1:column 1 - line 1:column 3"),
-        ("#x", "Malformed hexadecimal number: \"#x\" at test:line 1:column 1 - line 1:column 3"),
+        ("#b", "[E0002] Malformed binary number: \"#b\" at test:line 1:column 1 - line 1:column 3"),
+        ("#o", "[E0003] Malformed octal number: \"#o\" at test:line 1:column 1 - line 1:column 3"),
+        ("#x", "[E0004] Malformed hexadecimal number: \"#x\" at test:line 1:column 1 - line 1:column 3"),
     ];
 
     for (input, expected_msg) in cases {
@@ -257,9 +257,9 @@ fn types() {
 #[test]
 fn invalid_tokens() {
     let cases = vec![
-        ("@", "Invalid token: \"@\" at test:line 1:column 1 - line 1:column 2"),
-        ("`", "Invalid token: \"`\" at test:line 1:column 1 - line 1:column 2"),
-        ("~", "Invalid token: \"~\" at test:line 1:column 1 - line 1:column 2"),
+        ("@", "[E0001] Invalid token: \"@\" at test:line 1:column 1 - line 1:column 2"),
+        ("`", "[E0001] Invalid token: \"`\" at test:line 1:column 1 - line 1:column 2"),
+        ("~", "[E0001] Invalid token: \"~\" at test:line 1:column 1 - line 1:column 2"),
     ];
 
     for (input, expected) in cases {
@@ -327,7 +327,7 @@ fn iterator_single_invalid_token() {
     assert_eq!(tokens.len(), 1);
     assert_eq!(errors.len(), 1);
     assert_eq!(tokens[0].kind, Eof);
-    assert_eq!(errors[0].to_string(), "Invalid token: \"@\" at test:line 1:column 1 - line 1:column 2");
+    assert_eq!(errors[0].to_string(), "[E0001] Invalid token: \"@\" at test:line 1:column 1 - line 1:column 2");
 }
 
 #[test]
@@ -337,8 +337,8 @@ fn iterator_multiple_invalid_tokens() {
     assert_eq!(tokens.len(), 1);
     assert_eq!(errors.len(), 2);
     assert_eq!(tokens[0].kind, Eof);
-    assert_eq!(errors[0].to_string(), "Invalid token: \"@\" at test:line 1:column 1 - line 1:column 2");
-    assert_eq!(errors[1].to_string(), "Invalid token: \"$\" at test:line 1:column 3 - line 1:column 4");
+    assert_eq!(errors[0].to_string(), "[E0001] Invalid token: \"@\" at test:line 1:column 1 - line 1:column 2");
+    assert_eq!(errors[1].to_string(), "[E0001] Invalid token: \"$\" at test:line 1:column 3 - line 1:column 4");
 }
 
 #[test]
@@ -350,7 +350,7 @@ fn iterator_mixed_valid_invalid_valid() {
     assert_eq!(tokens[0].kind, IdentifierAscii("a".into()));
     assert_eq!(tokens[1].kind, IdentifierAscii("b".into()));
     assert_eq!(tokens[2].kind, Eof);
-    assert_eq!(errors[0].to_string(), "Invalid token: \"@\" at test:line 1:column 3 - line 1:column 4");
+    assert_eq!(errors[0].to_string(), "[E0001] Invalid token: \"@\" at test:line 1:column 3 - line 1:column 4");
 }
 
 #[test]
@@ -372,5 +372,5 @@ fn iterator_multiline_span_tracking() {
     assert_eq!(tokens[0].kind, Numeric(Integer(123)));
     assert_eq!(tokens[1].kind, Numeric(Integer(456)));
     assert_eq!(tokens[2].kind, Eof);
-    assert_eq!(errors[0].to_string(), "Invalid token: \"@\" at test:line 2:column 1 - line 2:column 2");
+    assert_eq!(errors[0].to_string(), "[E0001] Invalid token: \"@\" at test:line 2:column 1 - line 2:column 2");
 }

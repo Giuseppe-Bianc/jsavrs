@@ -13,7 +13,7 @@ fn test_io_error_display() {
 
 #[test]
 fn test_asm_generator_error_display() {
-    let error = CompileError::AsmGeneratorError { message: "Invalid assembly code".into() };
+    let error = CompileError::AsmGeneratorError { code: None, message: "Invalid assembly code".into() };
     assert_eq!(format!("{error}"), "Assembly generation error: Invalid assembly code");
 }
 
@@ -42,7 +42,7 @@ fn test_type_error_display_with_help() {
 #[test]
 fn test_ir_error_display_with_help() {
     make_error!(error, IrGeneratorError, 4, Some("Check the IR generation".into()));
-    let expected = "Ir generator error: Unexpected token \"@\" at test_file:line 4:column 1 - line 4:column 2\nhelp: Check the IR generation";
+    let expected = "IR generator error: Unexpected token \"@\" at test_file:line 4:column 1 - line 4:column 2\nhelp: Check the IR generation";
     assert_eq!(format!("{error}"), expected);
 }
 

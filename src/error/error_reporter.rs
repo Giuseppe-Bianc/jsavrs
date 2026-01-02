@@ -25,19 +25,19 @@ impl ErrorReporter {
         let mut output = String::with_capacity(errors.len() * 200);
         for error in errors {
             let formatted = match error {
-                CompileError::LexerError { message, span, help } => {
+                CompileError::LexerError { message, span, help, .. } => {
                     self.format_error("LEX", &message, &span, help.as_deref())
                 }
-                CompileError::SyntaxError { message, span, help } => {
+                CompileError::SyntaxError { message, span, help, .. } => {
                     self.format_error("SYNTAX", &message, &span, help.as_deref())
                 }
-                CompileError::TypeError { message, span, help } => {
+                CompileError::TypeError { message, span, help, .. } => {
                     self.format_error("TYPE", &message, &span, help.as_deref())
                 }
-                CompileError::IrGeneratorError { message, span, help } => {
+                CompileError::IrGeneratorError { message, span, help, .. } => {
                     self.format_error("IR GEN", &message, &span, help.as_deref())
                 }
-                CompileError::AsmGeneratorError { message } => format_simple_error("ASM GEN", &message),
+                CompileError::AsmGeneratorError { message, .. } => format_simple_error("ASM GEN", &message),
                 CompileError::IoError(e) => format_simple_error("I/O", &e),
             };
             output.push_str(&formatted);

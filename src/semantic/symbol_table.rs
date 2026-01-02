@@ -1,5 +1,6 @@
 // src/semantic/symbol_table.rs
 use crate::error::compile_error::CompileError;
+use crate::error::error_code::ErrorCode;
 use crate::location::source_span::SourceSpan;
 use crate::parser::ast::{Parameter, Type};
 use std::collections::HashMap;
@@ -232,6 +233,7 @@ impl SymbolTable {
 
         if current_scope.symbols.contains_key(name) {
             return Err(CompileError::TypeError {
+                code: Some(ErrorCode::E2032),
                 message: Arc::from(format!(
                     "Identifier '{}' already declared in this {:?} scope",
                     name, current_scope.kind

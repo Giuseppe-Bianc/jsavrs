@@ -6,6 +6,7 @@ use super::{
     Value,
 };
 use crate::error::compile_error::CompileError;
+use crate::error::error_code::ErrorCode;
 use crate::location::source_span::{HasSpan, SourceSpan};
 use crate::parser::ast::{BinaryOp, Expr, LiteralValue, Parameter, Stmt, Type, UnaryOp};
 use crate::tokens::number::Number;
@@ -281,7 +282,11 @@ impl IrGenerator {
                     module.add_function(func);
                 }
                 other => {
-                    self.new_error(Arc::from("Unsupported top-level statement"), other.span().clone());
+                    self.new_error(
+                        Some(ErrorCode::E3003),
+                        Arc::from("Unsupported top-level statement"),
+                        other.span().clone(),
+                    );
                 }
             }
         }
@@ -308,7 +313,11 @@ impl IrGenerator {
         // Transform each function in the module
         for func in &mut module.functions {
             if let Err(e) = transformer.transform_function(func) {
-                self.new_error(Arc::from(format!("SSA transformation failed: {e}")), SourceSpan::default());
+                self.new_error(
+                    Some(ErrorCode::E3007),
+                    Arc::from(format!("SSA transformation failed: {e}")),
+                    SourceSpan::default(),
+                );
             }
         }
     }
@@ -316,10 +325,11 @@ impl IrGenerator {
     /// Adds a new compilation error to the generator's error collection
     ///
     /// # Parameters
+    /// * `code` - Optional error code for categorization
     /// * `message` - Human-readable description of the error
     /// * `span` - Source location where the error occurred
-    fn new_error(&mut self, message: Arc<str>, span: SourceSpan) {
-        self.errors.push(CompileError::IrGeneratorError { message, span, help: None });
+    fn new_error(&mut self, code: Option<ErrorCode>, message: Arc<str>, span: SourceSpan) {
+        self.errors.push(CompileError::IrGeneratorError { code, message, span, help: None });
     }
 
     /// Adds a branch terminator to the current block if it doesn't already have one.
@@ -647,7 +657,11 @@ impl IrGenerator {
             Stmt::Continue { span } => {
                 self.handle_loop_control(func, span, LoopControl::Continue);
             }
-            other => self.new_error(Arc::from(format!("Unsupported statement: {other:?}")), other.span().clone()),
+            other => self.new_error(
+                Some(ErrorCode::E3003),
+                Arc::from(format!("Unsupported statement: {other:?}")),
+                other.span().clone(),
+            ),
         }
     }
 
@@ -717,7 +731,11 @@ impl IrGenerator {
                     let value = self.generate_expr(func, init.clone());
                     self.scope_manager.add_symbol(var.clone(), value.with_debug_info(Some(var.clone()), span.clone()));
                 } else {
-                    self.new_error(Arc::from(format!("Constant '{var}' must be initialized")), span.clone());
+                    self.new_error(
+                        Some(ErrorCode::E3003),
+                        Arc::from(format!("Constant '{var}' must be initialized")),
+                        span.clone(),
+                    );
                 }
             }
         }
@@ -976,15 +994,15 @@ impl IrGenerator {
     /// generator.handle_loop_control(func, span, LoopControl::Break);
     /// ```
     fn handle_loop_control(&mut self, func: &mut Function, span: SourceSpan, control: LoopControl) {
-        let (stack, message) = match control {
-            LoopControl::Break => (&self.control_flow_stack.break_stack, BREAK_OUTSIDE_LOOP),
-            LoopControl::Continue => (&self.control_flow_stack.continue_stack, CONTINUE_OUTSIDE_LOOP),
+        let (stack, message, error_code) = match control {
+            LoopControl::Break => (&self.control_flow_stack.break_stack, BREAK_OUTSIDE_LOOP, ErrorCode::E3001),
+            LoopControl::Continue => (&self.control_flow_stack.continue_stack, CONTINUE_OUTSIDE_LOOP, ErrorCode::E3002),
         };
 
         if let Some(label) = stack.last() {
             self.add_terminator(func, Terminator::new(TerminatorKind::Branch { label: label.clone() }, span));
         } else {
-            self.new_error(Arc::from(message), span);
+            self.new_error(Some(error_code), Arc::from(message), span);
         }
     }
 
@@ -1022,7 +1040,7 @@ impl IrGenerator {
             Expr::ArrayAccess { array, index, span } => self.generate_array_access(func, *array, *index, span),
             Expr::Call { callee, arguments, span } => self.generate_call(func, *callee, arguments, span),
             other => {
-                self.new_error(Arc::from("Unsupported expression type"), other.span().clone());
+                self.new_error(Some(ErrorCode::E3003), Arc::from("Unsupported expression type"), other.span().clone());
                 Value::new_literal(IrLiteralValue::I32(0))
             }
         }
@@ -1068,7 +1086,11 @@ impl IrGenerator {
             IrType::Array(elem_ty, _) => *elem_ty.clone(),
             other => {
                 // Unexpected case: report but continue with safe fallback (i32)
-                self.new_error(Arc::from(format!("Array access on non-array type: {other}")), span.clone());
+                self.new_error(
+                    Some(ErrorCode::E3003),
+                    Arc::from(format!("Array access on non-array type: {other}")),
+                    span.clone(),
+                );
                 IrType::I32
             }
         };
@@ -1339,7 +1361,7 @@ impl IrGenerator {
     #[allow(clippy::needless_pass_by_value)]
     fn generate_variable(&mut self, name: Arc<str>, span: SourceSpan) -> Value {
         self.scope_manager.lookup(&name).cloned().unwrap_or_else(|| {
-            self.new_error(Arc::from(format!("Undefined variable '{name}'")), span.clone());
+            self.new_error(Some(ErrorCode::E3004), Arc::from(format!("Undefined variable '{name}'")), span.clone());
             Value::new_literal(IrLiteralValue::I32(0)).with_debug_info(None, span)
         })
     }
@@ -1552,7 +1574,11 @@ impl IrGenerator {
             IrType::Array(elem_ty, _) => *elem_ty.clone(),
             other => {
                 // Unexpected case: report but continue with safe fallback (i32)
-                self.new_error(Arc::from(format!("Array access on non-array type: {other}")), span.clone());
+                self.new_error(
+                    Some(ErrorCode::E3003),
+                    Arc::from(format!("Array access on non-array type: {other}")),
+                    span.clone(),
+                );
                 IrType::I32
             }
         };
@@ -1604,7 +1630,11 @@ impl IrGenerator {
         let func_name = if let Expr::Variable { name, .. } = &callee {
             name.clone()
         } else {
-            self.new_error(Arc::from("Unsupported callee expression type"), callee.span().clone());
+            self.new_error(
+                Some(ErrorCode::E3003),
+                Arc::from("Unsupported callee expression type"),
+                callee.span().clone(),
+            );
             return Value::new_literal(IrLiteralValue::I32(0));
         };
 
@@ -1623,6 +1653,7 @@ impl IrGenerator {
             } else {
                 // If we can't determine the return type, fall back to default
                 self.new_error(
+                    Some(ErrorCode::E3003),
                     Arc::from(format!("Function '{func_name}' does not have a valid function pointer type")),
                     span.clone(),
                 );
@@ -1634,6 +1665,7 @@ impl IrGenerator {
             // If function is not in symbol table, we might be calling a function
             // that is defined later or externally. Use a default return type.
             self.new_error(
+                Some(ErrorCode::E3004),
                 Arc::from(format!("Function '{func_name}' not found in symbol table, using default return type")),
                 span.clone(),
             );

@@ -33,6 +33,7 @@
 
 // src/semantic/type_checker.rs
 use crate::error::compile_error::CompileError;
+use crate::error::error_code::ErrorCode;
 use crate::location::source_span::{HasSpan, SourceSpan};
 use crate::parser::ast::{BinaryOp, Expr, LiteralValue, Parameter, Stmt, Type, UnaryOp};
 use crate::semantic::symbol_table::{FunctionSymbol, ScopeKind, Symbol, SymbolTable, VariableSymbol};
@@ -106,14 +107,15 @@ impl TypeChecker {
         Self { symbol_table: SymbolTable::new(), errors: Vec::new(), in_loop: false, return_type_stack: Vec::new() }
     }
 
-    /// Records a type error with the given message and source location.
+    /// Records a type error with an optional error code.
     ///
     /// # Arguments
     ///
+    /// * `code` - Optional error code for the error
     /// * `message` - Error message describing the type violation
     /// * `span` - Source location where the error occurred
-    fn type_error(&mut self, message: impl Into<Arc<str>>, span: &SourceSpan) {
-        self.errors.push(CompileError::TypeError { message: message.into(), span: span.clone(), help: None });
+    fn type_error_with_code(&mut self, code: Option<ErrorCode>, message: impl Into<Arc<str>>, span: &SourceSpan) {
+        self.errors.push(CompileError::TypeError { code, message: message.into(), span: span.clone(), help: None });
     }
 
     /// Performs type checking on a list of statements.
@@ -192,7 +194,8 @@ impl TypeChecker {
         span: &SourceSpan,
     ) {
         if variables.len() != initializers.len() {
-            self.type_error(
+            self.type_error_with_code(
+                Some(ErrorCode::E2001),
                 format!(
                     "Variable declaration requires {} initializers but {} were provided",
                     variables.len(),
@@ -208,7 +211,8 @@ impl TypeChecker {
             // Solo se l'espressione ha prodotto un tipo valido
             if let Some(init_type) = init_type {
                 if !self.is_assignable(&init_type, type_annotation) {
-                    self.type_error(
+                    self.type_error_with_code(
+                        Some(ErrorCode::E2002),
                         format!("Cannot assign {init_type} to {type_annotation} for variable '{var_name}'"),
                         init_expr.span(),
                     );
@@ -254,7 +258,8 @@ impl TypeChecker {
         }
         self.visit_statements(body);
         if *return_type != Type::Void && !self.function_has_return(body) {
-            self.type_error(
+            self.type_error_with_code(
+                Some(ErrorCode::E2003),
                 format!(
                     "Function '{name}' may not return value in all code paths (expected return type: {return_type})"
                 ),
@@ -272,7 +277,8 @@ impl TypeChecker {
     fn check_condition(&mut self, condition: &Expr, construct: &str) {
         if let Some(cond_type) = self.visit_expr(condition) {
             if cond_type != Type::Bool {
-                self.type_error(
+                self.type_error_with_code(
+                    Some(ErrorCode::E2004),
                     format!("Condition in {construct} must be boolean, found {cond_type}"),
                     condition.span(),
                 );
@@ -332,18 +338,23 @@ impl TypeChecker {
 
     fn visit_return(&mut self, value: Option<&Expr>, span: &SourceSpan) {
         if self.return_type_stack.is_empty() {
-            self.type_error("Return statement must be inside function body", span);
+            self.type_error_with_code(Some(ErrorCode::E2005), "Return statement must be inside function body", span);
             return;
         }
         let expected_type = self.return_type_stack.last().cloned().unwrap_or(Type::Void);
         match (value, &expected_type) {
             (Some(expr), Type::Void) => {
-                self.type_error("Cannot return a value from void function", expr.span());
+                self.type_error_with_code(
+                    Some(ErrorCode::E2006),
+                    "Cannot return a value from void function",
+                    expr.span(),
+                );
             }
             (Some(expr), _) => {
                 if let Some(actual_type) = self.visit_expr(expr) {
                     if !self.is_assignable(&actual_type, &expected_type) {
-                        self.type_error(
+                        self.type_error_with_code(
+                            Some(ErrorCode::E2007),
                             format!("Return type mismatch: expected {expected_type} found {actual_type}"),
                             expr.span(),
                         );
@@ -352,20 +363,24 @@ impl TypeChecker {
             }
             (None, Type::Void) => {}
             (None, _) => {
-                self.type_error(format!("Return type mismatch, expected {expected_type} found Void"), span);
+                self.type_error_with_code(
+                    Some(ErrorCode::E2008),
+                    format!("Return type mismatch, expected {expected_type} found Void"),
+                    span,
+                );
             }
         }
     }
 
     fn visit_break(&mut self, span: &SourceSpan) {
         if !self.in_loop {
-            self.type_error("Break statement outside loop", span);
+            self.type_error_with_code(Some(ErrorCode::E2009), "Break statement outside loop", span);
         }
     }
 
     fn visit_continue(&mut self, span: &SourceSpan) {
         if !self.in_loop {
-            self.type_error("Continue statement outside loop", span);
+            self.type_error_with_code(Some(ErrorCode::E2010), "Continue statement outside loop", span);
         }
     }
 
@@ -383,6 +398,7 @@ impl TypeChecker {
         }
     }
 
+    #[allow(clippy::too_many_lines)]
     fn visit_binary_expr(&mut self, left: &Expr, op: &BinaryOp, right: &Expr, span: &SourceSpan) -> Option<Type> {
         let mut left_type = self.visit_expr(left)?;
         let mut right_type = self.visit_expr(right)?;
@@ -401,7 +417,8 @@ impl TypeChecker {
                 left_type = common_type.clone();
                 right_type = common_type;
             } else {
-                self.type_error(
+                self.type_error_with_code(
+                    Some(ErrorCode::E2011),
                     format!(
                         "Bitwise operator '{op:?}' require integer operand types, found {left_type} and {right_type}"
                     ),
@@ -431,34 +448,41 @@ impl TypeChecker {
             right_type = common_type;
         }
         if !self.are_compatible(&left_type, &right_type) {
-            let message = match op {
-                BinaryOp::And | BinaryOp::Or => {
+            let (code, message) = match op {
+                BinaryOp::And | BinaryOp::Or => (
+                    ErrorCode::E2012,
                     format!(
                         "Logical operator '{op:?}' requires boolean operands types, found {left_type} and {right_type}"
-                    )
-                }
-                BinaryOp::Add | BinaryOp::Subtract | BinaryOp::Multiply | BinaryOp::Divide | BinaryOp::Modulo => {
-                    format!("Binary operator '{op:?}' requires numeric operands, found {left_type} and {right_type}")
-                }
+                    ),
+                ),
+                BinaryOp::Add | BinaryOp::Subtract | BinaryOp::Multiply | BinaryOp::Divide | BinaryOp::Modulo => (
+                    ErrorCode::E2013,
+                    format!("Binary operator '{op:?}' requires numeric operands, found {left_type} and {right_type}"),
+                ),
                 BinaryOp::Equal
                 | BinaryOp::NotEqual
                 | BinaryOp::Less
                 | BinaryOp::LessEqual
                 | BinaryOp::Greater
-                | BinaryOp::GreaterEqual => {
+                | BinaryOp::GreaterEqual => (
+                    ErrorCode::E2014,
                     format!(
                         "Comparison operator '{op:?}' requires compatible types, found {left_type} and {right_type}"
-                    )
-                }
-                _ => format!("Type mismatch in binary operation: {left_type} and {right_type}"),
+                    ),
+                ),
+                _ => (ErrorCode::E2015, format!("Type mismatch in binary operation: {left_type} and {right_type}")),
             };
-            self.type_error(message, span);
+            self.type_error_with_code(Some(code), message, span);
             return None;
         }
         Some(match op {
             BinaryOp::Add | BinaryOp::Subtract | BinaryOp::Multiply | BinaryOp::Divide | BinaryOp::Modulo => {
                 if !Self::is_numeric(&left_type) {
-                    self.type_error(format!("Arithmetic operation not supported for {left_type}"), left.span());
+                    self.type_error_with_code(
+                        Some(ErrorCode::E2016),
+                        format!("Arithmetic operation not supported for {left_type}"),
+                        left.span(),
+                    );
                 }
                 left_type
             }
@@ -470,7 +494,11 @@ impl TypeChecker {
             | BinaryOp::GreaterEqual => Type::Bool,
             BinaryOp::And | BinaryOp::Or => {
                 if left_type != Type::Bool {
-                    self.type_error(format!("Logical operation requires bool, found {left_type}"), left.span());
+                    self.type_error_with_code(
+                        Some(ErrorCode::E2017),
+                        format!("Logical operation requires bool, found {left_type}"),
+                        left.span(),
+                    );
                 }
                 Type::Bool
             }
@@ -487,14 +515,19 @@ impl TypeChecker {
         match op {
             UnaryOp::Negate => {
                 if !Self::is_numeric(&expr_type) {
-                    self.type_error(format!("Negation requires numeric type operand, found {expr_type}"), expr.span());
+                    self.type_error_with_code(
+                        Some(ErrorCode::E2018),
+                        format!("Negation requires numeric type operand, found {expr_type}"),
+                        expr.span(),
+                    );
                     return None;
                 }
                 Some(expr_type)
             }
             UnaryOp::Not => {
                 if expr_type != Type::Bool {
-                    self.type_error(
+                    self.type_error_with_code(
+                        Some(ErrorCode::E2019),
                         format!("Logical not requires boolean type operand, found {expr_type}"),
                         expr.span(),
                     );
@@ -535,7 +568,11 @@ impl TypeChecker {
     #[allow(clippy::cast_possible_wrap)]
     fn visit_array_literal(&mut self, elements: &[Expr], span: &SourceSpan) -> Option<Type> {
         if elements.is_empty() {
-            self.type_error("Array literals must have at least one element for type inference", span);
+            self.type_error_with_code(
+                Some(ErrorCode::E2020),
+                "Array literals must have at least one element for type inference",
+                span,
+            );
             return None; // Ritorna None dopo aver segnalato l'errore
         }
         let len = elements.len();
@@ -544,7 +581,8 @@ impl TypeChecker {
             if let Some(ty) = self.visit_expr(element) {
                 if let Some(prev) = &element_type {
                     if !self.is_same_type(prev, &ty) {
-                        self.type_error(
+                        self.type_error_with_code(
+                            Some(ErrorCode::E2021),
                             format!("All array elements must be same type, found mixed types: {prev} and {ty}"),
                             element.span(),
                         );
@@ -615,9 +653,13 @@ impl TypeChecker {
             Some(var.ty)
         } else {
             if self.symbol_table.lookup_function(name).is_some() {
-                self.type_error(format!("'{name}' is a function and cannot be used as variable"), span);
+                self.type_error_with_code(
+                    Some(ErrorCode::E2022),
+                    format!("'{name}' is a function and cannot be used as variable"),
+                    span,
+                );
             } else {
-                self.type_error(format!("Undefined variable '{name}'"), span);
+                self.type_error_with_code(Some(ErrorCode::E2023), format!("Undefined variable '{name}'"), span);
             }
             None
         }
@@ -628,12 +670,16 @@ impl TypeChecker {
             Expr::Variable { name, span } => {
                 if let Some(var) = self.symbol_table.lookup_variable(name) {
                     if !var.mutable {
-                        self.type_error(format!("Cannot assign to immutable variable '{name}'"), span);
+                        self.type_error_with_code(
+                            Some(ErrorCode::E2024),
+                            format!("Cannot assign to immutable variable '{name}'"),
+                            span,
+                        );
                         return None;
                     }
                     var.ty
                 } else {
-                    self.type_error(format!("Undefined variable '{name}'"), span);
+                    self.type_error_with_code(Some(ErrorCode::E2025), format!("Undefined variable '{name}'"), span);
                     return None;
                 }
             }
@@ -654,7 +700,7 @@ impl TypeChecker {
                 }
                 _ => format!("Cannot assign {value_type} to {target_type}"),
             };
-            self.type_error(message, value.span());
+            self.type_error_with_code(Some(ErrorCode::E2002), message, value.span());
         }
         Some(target_type)
     }
@@ -664,21 +710,26 @@ impl TypeChecker {
         let callee_name = if let Expr::Variable { name, .. } = callee {
             name
         } else {
-            self.type_error("Callee must be a function name", callee.span());
+            self.type_error_with_code(Some(ErrorCode::E2026), "Callee must be a function name", callee.span());
             for arg in arguments {
                 self.visit_expr(arg);
             }
             return None;
         };
         let Some(func) = self.symbol_table.lookup_function(callee_name) else {
-            self.type_error(format!("Undefined function: '{callee_name}'"), callee.span());
+            self.type_error_with_code(
+                Some(ErrorCode::E2027),
+                format!("Undefined function: '{callee_name}'"),
+                callee.span(),
+            );
             for arg in arguments {
                 self.visit_expr(arg);
             }
             return None;
         };
         if arguments.len() != func.parameters.len() {
-            self.type_error(
+            self.type_error_with_code(
+                Some(ErrorCode::E2028),
                 format!(
                     "Function '{}' expects {} arguments, found {}",
                     callee_name,
@@ -691,7 +742,8 @@ impl TypeChecker {
         for (i, (arg, param)) in arguments.iter().zip(&func.parameters).enumerate() {
             if let Some(arg_type) = self.visit_expr(arg) {
                 if !self.is_assignable(&arg_type, &param.type_annotation) {
-                    self.type_error(
+                    self.type_error_with_code(
+                        Some(ErrorCode::E2029),
                         format!(
                             "Argument {} type mismatch: expected {}, found {}",
                             i + 1,
@@ -710,13 +762,21 @@ impl TypeChecker {
         let array_type = self.visit_expr(array)?;
         let index_type = self.visit_expr(index)?;
         if !Self::is_integer_type(&index_type) {
-            self.type_error(format!("Array index must be integer type, found {index_type}"), index.span());
+            self.type_error_with_code(
+                Some(ErrorCode::E2030),
+                format!("Array index must be integer type, found {index_type}"),
+                index.span(),
+            );
             return None;
         }
         if let Type::Array(element_type, _) = array_type {
             Some(*element_type)
         } else {
-            self.type_error(format!("Cannot index into non-array type {array_type}"), array.span());
+            self.type_error_with_code(
+                Some(ErrorCode::E2031),
+                format!("Cannot index into non-array type {array_type}"),
+                array.span(),
+            );
             None
         }
     }

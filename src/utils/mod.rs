@@ -340,21 +340,37 @@ pub fn t_span(line: usize) -> SourceSpan {
 macro_rules! make_error {
     // Immutable binding
     ($var:ident, $error_type:ident, $line:expr) => {
-        let $var =
-            CompileError::$error_type { message: "Unexpected token \"@\"".into(), span: t_span($line), help: None };
+        let $var = CompileError::$error_type {
+            code: None,
+            message: "Unexpected token \"@\"".into(),
+            span: t_span($line),
+            help: None,
+        };
     };
     ($var:ident, $error_type:ident, $line:expr, $help:expr) => {
-        let $var =
-            CompileError::$error_type { message: "Unexpected token \"@\"".into(), span: t_span($line), help: $help };
+        let $var = CompileError::$error_type {
+            code: None,
+            message: "Unexpected token \"@\"".into(),
+            span: t_span($line),
+            help: $help,
+        };
     };
     // Mutable binding
     (mut $var:ident, $error_type:ident, $line:expr) => {
-        let mut $var =
-            CompileError::$error_type { message: "Unexpected token \"@\"".into(), span: t_span($line), help: None };
+        let mut $var = CompileError::$error_type {
+            code: None,
+            message: "Unexpected token \"@\"".into(),
+            span: t_span($line),
+            help: None,
+        };
     };
     (mut $var:ident, $error_type:ident, $line:expr, $help:expr) => {
-        let mut $var =
-            CompileError::$error_type { message: "Unexpected token \"@\"".into(), span: t_span($line), help: $help };
+        let mut $var = CompileError::$error_type {
+            code: None,
+            message: "Unexpected token \"@\"".into(),
+            span: t_span($line),
+            help: $help,
+        };
     };
 }
 
@@ -363,11 +379,11 @@ macro_rules! make_error {
 macro_rules! make_error_lineless {
     // Immutable binding
     ($var:ident, $error_type:ident) => {
-        let $var = CompileError::$error_type { message: "Unexpected token \"@\"".into() };
+        let $var = CompileError::$error_type { code: None, message: "Unexpected token \"@\"".into() };
     };
     // Mutable binding
     (mut $var:ident, $error_type:ident) => {
-        let mut $var = CompileError::$error_type { message: "Unexpected token \"@\"".into() };
+        let mut $var = CompileError::$error_type { code: None, message: "Unexpected token \"@\"".into() };
     };
 }
 

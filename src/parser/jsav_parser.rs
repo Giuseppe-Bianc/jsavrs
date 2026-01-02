@@ -1,5 +1,6 @@
 // src/parser/jsav_parser.rs
 use crate::error::compile_error::CompileError;
+use crate::error::error_code::ErrorCode;
 use crate::location::source_span::{HasSpan, SourceSpan};
 use crate::parser::ast::{BinaryOp, Expr, Parameter, Stmt, Type, UnaryOp};
 use crate::parser::precedence::{binding_power, unary_binding_power};
@@ -21,6 +22,7 @@ impl<'a> JsavParser<'a> {
         if self.recursion_depth > Self::MAX_RECURSION_DEPTH {
             if let Some(token) = self.peek() {
                 self.errors.push(CompileError::SyntaxError {
+                    code: Some(ErrorCode::E1001),
                     message: "Maximum recursion depth exceeded".into(),
                     span: token.span.clone(),
                     help: Some("Simplify the expression or break it into smaller parts".to_string()),
@@ -303,6 +305,7 @@ impl<'a> JsavParser<'a> {
                     "Invalid type specification, expected primitive type or custom identifier",
                     &token,
                     Some("Try using a primitive type (like i32, f64) or a custom type identifier"),
+                    Some(ErrorCode::E1002),
                 );
                 return None;
             }
@@ -357,6 +360,7 @@ impl<'a> JsavParser<'a> {
                 "Expected at least one variable name",
                 &start_token,
                 Some("Provide at least one variable name after 'var' or 'const'"),
+                Some(ErrorCode::E1008),
             );
             return None;
         }
@@ -392,6 +396,7 @@ impl<'a> JsavParser<'a> {
                 format!("Declaration mismatch: {} variables but {} initializers", variables.len(), initializers.len()),
                 &start_token,
                 Some("Each variable must have exactly one initializer expression"),
+                Some(ErrorCode::E2001),
             );
         }
 
@@ -406,7 +411,7 @@ impl<'a> JsavParser<'a> {
 
     fn report_peek_error(&mut self, message: &str, help: Option<&str>) {
         if let Some(token) = &self.peek().cloned() {
-            self.syntax_error(message, token, help);
+            self.syntax_error(message, token, help, Some(ErrorCode::E1004));
         }
     }
 
@@ -424,6 +429,7 @@ impl<'a> JsavParser<'a> {
                     "Expected identifier",
                     &token,
                     Some("An identifier must start with a letter/underscore and contain only alphanumeric characters"),
+                    Some(ErrorCode::E1008),
                 );
                 None
             }
@@ -487,6 +493,7 @@ impl<'a> JsavParser<'a> {
                     "Unexpected token",
                     &token,
                     Some("Expected an expression (number, string, variable, or operator)"),
+                    Some(ErrorCode::E1004),
                 );
                 None
             }
@@ -531,6 +538,7 @@ impl<'a> JsavParser<'a> {
                     "Unexpected operator",
                     &token,
                     Some("This operator is not supported in this context"),
+                    Some(ErrorCode::E1004),
                 );
                 None
             }
@@ -599,6 +607,7 @@ impl<'a> JsavParser<'a> {
             let help_msg = "Only variables and array elements can be assigned to. Consider using a variable name or an array access expression.";
 
             self.errors.push(CompileError::SyntaxError {
+                code: Some(ErrorCode::E1003),
                 message: "Invalid left-hand side in assignment".into(),
                 span: left.span().clone(),
                 help: Some(help_msg.to_string()),
@@ -636,9 +645,12 @@ impl<'a> JsavParser<'a> {
         self.previous().and_then(|end| start_token.span.merged(&end.span)).unwrap_or_else(|| start_token.span.clone()) // Only clone when necessary
     }
 
-    fn syntax_error(&mut self, message: impl Into<String>, token: &Token, help: Option<&str>) {
+    fn syntax_error(
+        &mut self, message: impl Into<String>, token: &Token, help: Option<&str>, error_code: Option<ErrorCode>,
+    ) {
         let message_str = message.into();
         self.errors.push(CompileError::SyntaxError {
+            code: error_code,
             message: Arc::from(format!("{}: {}", message_str, &token.kind)),
             span: token.span.clone(),
             help: help.map(std::string::ToString::to_string),
@@ -658,7 +670,12 @@ impl<'a> JsavParser<'a> {
 
             let error_message = Arc::from(format!("Expected {expected} in {context}, found {found_str}."));
             let help_message = format!("Try adding a {expected}");
-            self.errors.push(CompileError::SyntaxError { message: error_message, span, help: Some(help_message) });
+            self.errors.push(CompileError::SyntaxError {
+                code: Some(ErrorCode::E1004),
+                message: error_message,
+                span,
+                help: Some(help_message),
+            });
             false
         }
     }
