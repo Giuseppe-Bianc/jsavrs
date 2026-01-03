@@ -1,4 +1,5 @@
 use crate::error::compile_error::CompileError;
+use crate::error::error_code::ErrorCode;
 use crate::location::line_tracker::LineTracker;
 use crate::location::source_span::SourceSpan;
 use console::style;
@@ -9,8 +10,14 @@ pub struct ErrorReporter {
     line_tracker: LineTracker,
 }
 
-fn format_simple_error(error_type: &str, message: impl std::fmt::Display) -> String {
-    format!("{} {}: {}\n", style("ERROR:").red().bold(), style(error_type).red(), style(message).yellow())
+fn format_simple_error(error_type: &str, message: impl std::fmt::Display, code: Option<ErrorCode>) -> String {
+    format!(
+        "{}{}{}: {}\n",
+        style("ERROR").red().bold(),
+        code.map(|c| format!(" [{}] ", style(c.code()).red().bold())).unwrap_or_default(),
+        style(error_type).red(),
+        style(message).yellow()
+    )
 }
 
 impl ErrorReporter {
@@ -22,23 +29,23 @@ impl ErrorReporter {
     /// Returns a formatted string containing all compile errors with source context
     #[must_use]
     pub fn report_errors(&self, errors: Vec<CompileError>) -> String {
-        let mut output = String::with_capacity(errors.len() * 200);
+        let mut output = String::with_capacity(errors.len() * 500);
         for error in errors {
             let formatted = match error {
-                CompileError::LexerError { message, span, help, .. } => {
-                    self.format_error("LEX", &message, &span, help.as_deref())
+                CompileError::LexerError { message, span, help, code } => {
+                    self.format_error("LEX", &message, &span, help.as_deref(), code)
                 }
-                CompileError::SyntaxError { message, span, help, .. } => {
-                    self.format_error("SYNTAX", &message, &span, help.as_deref())
+                CompileError::SyntaxError { message, span, help, code } => {
+                    self.format_error("SYNTAX", &message, &span, help.as_deref(), code)
                 }
-                CompileError::TypeError { message, span, help, .. } => {
-                    self.format_error("TYPE", &message, &span, help.as_deref())
+                CompileError::TypeError { message, span, help, code } => {
+                    self.format_error("TYPE", &message, &span, help.as_deref(), code)
                 }
-                CompileError::IrGeneratorError { message, span, help, .. } => {
-                    self.format_error("IR GEN", &message, &span, help.as_deref())
+                CompileError::IrGeneratorError { message, span, help, code } => {
+                    self.format_error("IR GEN", &message, &span, help.as_deref(), code)
                 }
-                CompileError::AsmGeneratorError { message, .. } => format_simple_error("ASM GEN", &message),
-                CompileError::IoError(e) => format_simple_error("I/O", &e),
+                CompileError::AsmGeneratorError { message, code } => format_simple_error("ASM GEN", &message, code),
+                CompileError::IoError(e) => format_simple_error("I/O", &e, None),
             };
             output.push_str(&formatted);
         }
@@ -46,7 +53,9 @@ impl ErrorReporter {
     }
 
     /// Formats an error with source context and visual indicators
-    fn format_error(&self, category: &str, message: &str, span: &SourceSpan, help: Option<&str>) -> String {
+    fn format_error(
+        &self, category: &str, message: &str, span: &SourceSpan, help: Option<&str>, code: Option<ErrorCode>,
+    ) -> String {
         let start_line = span.start.line;
         let start_col = span.start.column;
         let end_line = span.end.line;
@@ -55,13 +64,16 @@ impl ErrorReporter {
         // Get the source line where the error starts
         let source_line = self.line_tracker.get_line(start_line).unwrap_or_default();
 
-        let mut output = String::new();
+        let estimated_capacity =
+            100 + message.len() + category.len() + source_line.len() + help.map_or(0, |h| h.len() + 20) + 50;
+        let mut output = String::with_capacity(estimated_capacity);
 
         // Header with error information
         let _ = writeln!(
             &mut output,
-            "{} {}: {}\n{} {}",
+            "{}{}{}: {}\n{} {}",
             style("ERROR").red().bold(),
+            code.map(|c| format!(" [{}] ", style(c.code()).red().bold())).unwrap_or_default(),
             style(category).red(),
             style(message).yellow(),
             style("Location:").blue(),

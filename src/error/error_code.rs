@@ -1352,12 +1352,8 @@ impl ErrorCode {
     #[must_use]
     pub const fn suggestions(&self) -> &'static [&'static str] {
         match self {
-            Self::E0002 => {
-                &["Add binary digits after #b: #b1010", "Check for invalid digits (only 0 and 1 allowed)"]
-            }
-            Self::E0003 => {
-                &["Add octal digits after #o: #o755", "Check for invalid digits (only 0-7 allowed)"]
-            }
+            Self::E0002 => &["Add binary digits after #b: #b1010", "Check for invalid digits (only 0 and 1 allowed)"],
+            Self::E0003 => &["Add octal digits after #o: #o755", "Check for invalid digits (only 0-7 allowed)"],
             Self::E0004 => {
                 &["Add hexadecimal digits after #x: #xDEAD", "Check for invalid digits (only 0-9, a-f, A-F allowed)"]
             }
@@ -1370,9 +1366,7 @@ impl ErrorCode {
                 "Check for typos in the variable name",
                 "Ensure the variable is in scope",
             ],
-            Self::E2024 => {
-                &["Use 'var' instead of 'const' for mutable variables", "Remove the reassignment"]
-            }
+            Self::E2024 => &["Use 'var' instead of 'const' for mutable variables", "Remove the reassignment"],
             Self::E2009 | Self::E2010 => {
                 &["Move the statement inside a while or for loop", "Use return to exit a function instead"]
             }
