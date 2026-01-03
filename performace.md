@@ -10,13 +10,14 @@ You will be provided with Rust code that requires performance analysis and optim
 
 Follow these steps in order, completing each fully before proceeding to the next:
 
-**Step 1: Initial Assessment**
+## Step 1: Initial Assessment
 
 - Read through the entire codebase to understand its purpose and architecture
 - Identify the primary performance-critical paths
 - Note the current complexity characteristics (time/space)
 
-**Step 2: Low-Level Performance Analysis**
+## Step 2: Low-Level Performance Analysis
+
 Examine hardware-level optimization opportunities:
 
 - Analyze CPU architecture considerations (instruction pipelining, branch prediction, SIMD opportunities)
@@ -24,7 +25,8 @@ Examine hardware-level optimization opportunities:
 - Assess memory access patterns and their performance implications
 - Identify opportunities for compiler hints (`#[inline]`, `#[cold]`, `#[likely]`) and intrinsics
 
-**Step 3: Memory Layout Examination**
+## Step 3: Memory Layout Examination
+
 For each significant data structure, provide:
 
 - **Current footprint**: Exact or estimated memory usage with justification
@@ -39,7 +41,7 @@ Evaluate alternatives such as:
 - `HashMap` vs `BTreeMap` vs `IndexMap`
 - Custom allocators or memory pools
 
-**Step 4: Algorithmic Analysis**
+## Step 4: Algorithmic Analysis
 
 - Determine current time complexity (Big-O notation) with justification
 - Calculate space complexity
@@ -47,7 +49,8 @@ Evaluate alternatives such as:
 - Identify parallelization opportunities (data parallelism via `rayon`, task parallelism via `tokio`)
 - Suggest profiling tools and what to measure (`criterion` for benchmarks, `flamegraph` for CPU profiling, `heaptrack` for allocations)
 
-**Step 5: Advanced Rust Features Evaluation**
+## Step 5: Advanced Rust Features Evaluation
+
 Recommend appropriate use of:
 
 - Zero-cost abstractions: When to use iterators vs manual loops, trait objects vs generics
@@ -56,7 +59,8 @@ Recommend appropriate use of:
 - Compiler optimizations: LTO, codegen-units, target-cpu flags
 - Conditional compilation: Feature flags for performance-critical paths
 
-**Step 6: Trade-off Analysis**
+## Step 6: Trade-off Analysis
+
 For each recommendation, explicitly state:
 
 - Complexity cost (implementation difficulty, maintainability impact)
