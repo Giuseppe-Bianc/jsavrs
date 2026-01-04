@@ -131,10 +131,7 @@ fn asm_gen_error_single_line() {
     let report = reporter.report_errors(errors);
     let stripped = strip_ansi_codes(&report);
 
-    let expected = "\
-ERROR: ASM GEN: invalid asm
-";
-    assert_eq!(stripped, expected);
+    assert_snapshot!(stripped);
 }
 
 #[test]
