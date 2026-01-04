@@ -171,7 +171,7 @@ fn asm_gen_error_single_line() {
     let stripped = strip_ansi_codes(&report);
 
     let expected = "\
-ERROR: ASM GEN: invalid asm
+ERROR ASM GEN: invalid asm
 ";
     assert_eq!(stripped, expected);
 }
@@ -239,7 +239,7 @@ fn io_error() {
     let report = reporter.report_errors(errors);
     let stripped = strip_ansi_codes(&report);
 
-    assert_eq!(stripped, "ERROR: I/O: File not found\n");
+    assert_eq!(stripped, "ERROR I/O: File not found\n");
 }
 
 // Test: Errori multipli (Lex + Syntax + IO)
@@ -269,7 +269,7 @@ fn multiple_errors() {
     let stripped = strip_ansi_codes(&report);
 
     let expected = "\
-ERROR: I/O: Access denied
+ERROR I/O: Access denied
 ERROR LEX: Unterminated string
 Location: test:line 2:column 7 - line 2:column 8
    2 │ print x
