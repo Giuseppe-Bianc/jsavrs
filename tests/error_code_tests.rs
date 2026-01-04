@@ -75,7 +75,7 @@ fn test_compiler_phase_display() {
     assert_eq!(format!("{}", CompilerPhase::System), "system");
 }
 
-/// Test CompilerPhase equality.
+/// Test `CompilerPhase` equality.
 #[test]
 fn test_compiler_phase_equality() {
     assert_eq!(CompilerPhase::Lexer, CompilerPhase::Lexer);
@@ -85,7 +85,7 @@ fn test_compiler_phase_equality() {
     assert_ne!(CompilerPhase::Semantic, CompilerPhase::System);
 }
 
-/// Test CompilerPhase Clone.
+/// Test `CompilerPhase` Clone.
 #[test]
 fn test_compiler_phase_clone() {
     let original = CompilerPhase::Parser;
@@ -93,7 +93,7 @@ fn test_compiler_phase_clone() {
     assert_eq!(original, cloned);
 }
 
-/// Test CompilerPhase Debug formatting.
+/// Test `CompilerPhase` Debug formatting.
 #[test]
 fn test_compiler_phase_debug() {
     assert_eq!(format!("{:?}", CompilerPhase::Lexer), "Lexer");
@@ -104,7 +104,7 @@ fn test_compiler_phase_debug() {
     assert_eq!(format!("{:?}", CompilerPhase::System), "System");
 }
 
-/// Test CompilerPhase Hash implementation.
+/// Test `CompilerPhase` Hash implementation.
 #[test]
 fn test_compiler_phase_hash() {
     use std::collections::HashSet;
@@ -353,7 +353,7 @@ fn test_semantic_errors_phase() {
     }
 }
 
-/// Test that all IR errors map to IrGeneration phase.
+/// Test that all IR errors map to `IrGeneration` phase.
 #[test]
 fn test_ir_errors_phase() {
     let ir_errors = [
@@ -372,7 +372,7 @@ fn test_ir_errors_phase() {
     }
 }
 
-/// Test that all codegen errors map to CodeGeneration phase.
+/// Test that all codegen errors map to `CodeGeneration` phase.
 #[test]
 fn test_codegen_errors_phase() {
     let codegen_errors = [ErrorCode::E4001, ErrorCode::E4002, ErrorCode::E4003, ErrorCode::E4004, ErrorCode::E4005];
@@ -707,7 +707,7 @@ fn test_display_various_categories() {
     assert!(format!("{}", ErrorCode::E5001).starts_with("E5001:"));
 }
 
-/// Test ErrorCode implements std::error::Error.
+/// Test `ErrorCode` implements `std::error::Error`.
 #[test]
 fn test_error_trait() {
     let error: &dyn std::error::Error = &ErrorCode::E2023;
@@ -715,7 +715,7 @@ fn test_error_trait() {
     assert!(error.source().is_none());
 }
 
-/// Test ErrorCode Debug implementation.
+/// Test `ErrorCode` Debug implementation.
 #[test]
 fn test_debug_impl() {
     assert_eq!(format!("{:?}", ErrorCode::E0001), "E0001");
@@ -723,7 +723,7 @@ fn test_debug_impl() {
     assert_eq!(format!("{:?}", ErrorCode::E5005), "E5005");
 }
 
-/// Test ErrorCode Clone implementation.
+/// Test `ErrorCode` Clone implementation.
 #[test]
 fn test_clone_impl() {
     let original = ErrorCode::E2023;
@@ -731,7 +731,7 @@ fn test_clone_impl() {
     assert_eq!(original, cloned);
 }
 
-/// Test ErrorCode Copy implementation.
+/// Test `ErrorCode` Copy implementation.
 #[test]
 fn test_copy_impl() {
     let original = ErrorCode::E2023;
@@ -739,7 +739,7 @@ fn test_copy_impl() {
     assert_eq!(original, copied); // original still usable
 }
 
-/// Test ErrorCode Hash implementation.
+/// Test `ErrorCode` Hash implementation.
 #[test]
 fn test_hash_impl() {
     use std::collections::HashSet;
@@ -756,7 +756,7 @@ fn test_hash_impl() {
     assert!(!set.contains(&ErrorCode::E1001));
 }
 
-/// Test ErrorCode PartialEq implementation.
+/// Test `ErrorCode` `PartialEq` implementation.
 #[test]
 fn test_partial_eq_impl() {
     assert_eq!(ErrorCode::E0001, ErrorCode::E0001);
@@ -764,7 +764,7 @@ fn test_partial_eq_impl() {
     assert_ne!(ErrorCode::E0001, ErrorCode::E1001);
 }
 
-/// Test ErrorCode Eq implementation (reflexive, symmetric, transitive).
+/// Test `ErrorCode` Eq implementation (reflexive, symmetric, transitive).
 #[test]
 fn test_eq_properties() {
     let a = ErrorCode::E2023;
@@ -944,7 +944,7 @@ fn test_error_workflow() {
     assert!(!suggestions.is_empty());
 }
 
-/// Test using ErrorCode in error reporting context.
+/// Test using `ErrorCode` in error reporting context.
 #[test]
 fn test_error_reporting_context() {
     let code = ErrorCode::E0005;
@@ -961,16 +961,11 @@ fn test_error_reporting_context() {
 /// Test collecting multiple errors.
 #[test]
 fn test_multiple_error_collection() {
-    let errors = vec![ErrorCode::E0001, ErrorCode::E1004, ErrorCode::E2023, ErrorCode::E2024];
+    let errors = [ErrorCode::E0001, ErrorCode::E1004, ErrorCode::E2023, ErrorCode::E2024];
 
-    // Count by phase
-    let lexer_errors: Vec<_> = errors.iter().filter(|e| e.phase() == CompilerPhase::Lexer).collect();
-    let parser_errors: Vec<_> = errors.iter().filter(|e| e.phase() == CompilerPhase::Parser).collect();
-    let semantic_errors: Vec<_> = errors.iter().filter(|e| e.phase() == CompilerPhase::Semantic).collect();
-
-    assert_eq!(lexer_errors.len(), 1);
-    assert_eq!(parser_errors.len(), 1);
-    assert_eq!(semantic_errors.len(), 2);
+    assert_eq!(errors.iter().filter(|e| e.phase() == CompilerPhase::Lexer).count(), 1);
+    assert_eq!(errors.iter().filter(|e| e.phase() == CompilerPhase::Parser).count(), 1);
+    assert_eq!(errors.iter().filter(|e| e.phase() == CompilerPhase::Semantic).count(), 2);
 }
 
 /// Test error code as map key.
@@ -1038,7 +1033,7 @@ fn test_alternate_debug_format() {
 /// Test that severity ordering is total.
 #[test]
 fn test_severity_total_ordering() {
-    let mut severities = vec![Severity::Fatal, Severity::Note, Severity::Error, Severity::Warning];
+    let mut severities = [Severity::Fatal, Severity::Note, Severity::Error, Severity::Warning];
 
     severities.sort();
 
