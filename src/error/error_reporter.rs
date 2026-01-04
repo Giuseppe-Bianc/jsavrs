@@ -14,7 +14,7 @@ fn format_simple_error(error_type: &str, message: impl std::fmt::Display, code: 
     format!(
         "{}{}{}: {}\n",
         style("ERROR").red().bold(),
-        code.map(|c| format!(" [{}] ", style(c.code()).red().bold())).unwrap_or_default(),
+        code.map(|c| format!(" [{}] ", style(c.code()).red().bold())).unwrap_or_else(|| ": ".to_string()),
         style(error_type).red(),
         style(message).yellow()
     )
@@ -73,7 +73,7 @@ impl ErrorReporter {
             &mut output,
             "{}{}{}: {}\n{} {}",
             style("ERROR").red().bold(),
-            code.map(|c| format!(" [{}] ", style(c.code()).red().bold())).unwrap_or_default(),
+            code.map(|c| format!(" [{}] ", style(c.code()).red().bold())).unwrap_or_else(|| " ".to_string()),
             style(category).red(),
             style(message).yellow(),
             style("Location:").blue(),

@@ -312,7 +312,7 @@ fn report_error_from_lexer() {
     let stripped = strip_ansi_codes(&report);
 
     let expected = "\
-ERROR LEX: Invalid token: \"@\"
+ERROR [E0001] LEX: Invalid token: \"@\"
 Location: test:line 1:column 1 - line 1:column 2
    1 │ @
      │ ^
