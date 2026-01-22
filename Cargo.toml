@@ -46,7 +46,7 @@ criterion = "0.8.1"
 [features]
 dhat-heaps = []
 
-[[bench]] 
+[[bench]]
 name = "jsavrs_benchmark"
 harness = false
 
