@@ -46,7 +46,7 @@ criterion = "0.8.1"
 [features]
 dhat-heaps = []
 
-[[bench]]
+[[bench]] 
 name = "jsavrs_benchmark"
 harness = false
 
@@ -56,6 +56,7 @@ similar.opt-level = 3
 
 [profile.release]
 debug = 1
+panic = "abort"
 
 [lints.clippy]
 pedantic = "warn"
