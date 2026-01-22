@@ -60,3 +60,5 @@ debug = 1
 [lints.clippy]
 pedantic = "warn"
 nursery = "warn"
+# Performance
+inefficient_to_string = "warn"
