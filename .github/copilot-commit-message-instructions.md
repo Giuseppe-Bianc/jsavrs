@@ -38,7 +38,19 @@ Select the appropriate type that best describes the change:
 
 Include the affected module, component, or area in parentheses after the type:
 
-- Examples: `feat(auth):`, `fix(database):`, `refactor(api/users):`
+**Scope naming conventions:**
+
+- Use lowercase with hyphens for multi-word scopes: `user-profile`, `api-client`
+- For nested scopes, use forward slash separator: `api/users`, `ui/components/button`
+- Limit nesting to 2-3 levels maximum for readability
+- Use singular form for single entities: `user`, `order`, `database`
+- Use plural when referring to collections or modules: `utils`, `helpers`, `tests`
+- Keep scopes concise (prefer `auth` over `authentication`)
+
+**Examples:**
+
+- Single-level: `feat(auth):`, `fix(database):`, `docs(readme):`
+- Nested: `refactor(api/users):`, `test(ui/components):`, `fix(api/v2/orders):`
 
 ## DESCRIPTION LINE REQUIREMENTS
 
