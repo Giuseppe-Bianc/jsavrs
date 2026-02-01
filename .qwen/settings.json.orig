@@ -1,21 +1,6 @@
 {
-  "contextFileName": "AGENTS.md",
-  "projectType": "rust",
-  "language": "rust",
-  "additionalContextFiles": [
-    "README.md",
-    "Cargo.toml",
-    "rustfmt.toml"
-  ],
-  "ignore": [
-    "target/",
-    "benches/",
-    ".git/"
-  ],
-  "codingStandards": {
-    "lineLength": 120,
-    "indentation": 4,
-    "formatter": "rustfmt"
+  "context": {
+    "fileName": "AGENTS.md"
   },
   "mcpServers": {
     "github": {
@@ -35,22 +20,27 @@
     "context7": {
       "httpUrl": "https://mcp.context7.com/mcp",
       "headers": {
-        "CONTEXT7_API_KEY": "${CONTEXT7_API_KEY}"
+        "CONTEXT7_API_KEY": "${CONTEXT7_API_KEY}",
+        "Accept": "application/json, text/event-stream"
       }
-    }/*, 
-    "serena": {
-      "type": "stdio",
-      "command": "uvx",
-      "args": [
-        "--from",
-        "git+https://github.com/oraios/serena",
-        "serena",
-        "start-mcp-server",
-        "--context",
-        "ide-assistant",
-        "--project",
-        "$(pwd)"
-      ]
-    }*/
-  }
+    }
+  },
+  "projectType": "rust",
+  "language": "rust",
+  "additionalContextFiles": [
+    "README.md",
+    "Cargo.toml",
+    "rustfmt.toml"
+  ],
+  "ignore": [
+    "target/",
+    "benches/",
+    ".git/"
+  ],
+  "codingStandards": {
+    "lineLength": 120,
+    "indentation": 4,
+    "formatter": "rustfmt"
+  },
+  "$version": 2
 }

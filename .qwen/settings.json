@@ -25,22 +25,5 @@
       }
     }
   },
-  "projectType": "rust",
-  "language": "rust",
-  "additionalContextFiles": [
-    "README.md",
-    "Cargo.toml",
-    "rustfmt.toml"
-  ],
-  "ignore": [
-    "target/",
-    "benches/",
-    ".git/"
-  ],
-  "codingStandards": {
-    "lineLength": 120,
-    "indentation": 4,
-    "formatter": "rustfmt"
-  },
   "$version": 2
 }
