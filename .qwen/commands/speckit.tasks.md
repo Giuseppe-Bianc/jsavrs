@@ -1,9 +1,5 @@
 ---
 description: Generate an actionable, dependency-ordered tasks.md for the feature based on available design artifacts.
----
-
----
-description: Generate an actionable, dependency-ordered tasks.md for the feature based on available design artifacts.
 handoffs: 
   - label: Analyze For Consistency
     agent: speckit.analyze
@@ -14,6 +10,7 @@ handoffs:
     prompt: Start the implementation in phases
     send: true
 ---
+
 
 ## User Input
 
@@ -136,7 +133,6 @@ Every task MUST strictly follow this format:
 - **Phase 1**: Setup (project initialization)
 - **Phase 2**: Foundational (blocking prerequisites - MUST complete before user stories)
 - **Phase 3+**: User Stories in priority order (P1, P2, P3...)
-  - Within each story: Tests (if requested) → Models → Services → Endpoints → Integration
-  - Each phase should be a complete, independently testable increment
+    - Within each story: Tests (if requested) → Models → Services → Endpoints → Integration
+    - Each phase should be a complete, independently testable increment
 - **Final Phase**: Polish & Cross-Cutting Concerns
-
