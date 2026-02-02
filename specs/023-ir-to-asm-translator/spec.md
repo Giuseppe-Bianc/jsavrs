@@ -5,6 +5,18 @@
 **Status**: Draft
 **Input**: User description: "Progettare un traduttore che converta un IR proprietario, definito e mantenuto nella cartella `src/ir`, in codice assembly x86-64. L'obiettivo principale è consentire la generazione di file assembly corretti, completi e semanticamente coerenti a partire dalle strutture dell'IR, mantenendo una corrispondenza chiara tra le astrazioni di alto livello dell'IR e le istruzioni assembly prodotte. Il traduttore deve basarsi in modo integrato sul codice già presente nella cartella `src/asm`, che rappresenta il fondamento concettuale e strutturale per la generazione dell'assembly. Le specifiche del progetto devono garantire che tale codice venga riutilizzato e orchestrato, evitando duplicazioni logiche o bypass delle astrazioni già esistenti. Il risultato della traduzione deve essere codice assembly x86-64 sintatticamente valido e direttamente assemblabile con NASM, senza necessità di modifiche manuali successive. La generazione dell'output deve rispettare le convenzioni dell'architettura target (registri, chiamate di funzione, gestione dello stack, sezioni del file assembly), assicurando coerenza e prevedibilità del comportamento del codice prodotto. Dal punto di vista funzionale, il traduttore deve: * Interpretare in modo deterministico le strutture dell'IR e trasformarle in istruzioni assembly equivalenti. * Gestire il flusso di controllo (sequenze, salti, condizioni) e i dati (registri, memoria, costanti) definiti nell'IR. * Produrre un output leggibile e strutturato, facilitando il debugging e l'analisi del codice assembly generato. * Essere progettato per essere estendibile, così da supportare future evoluzioni dell'IR senza richiedere una riscrittura sostanziale. Poiché sia l'IR sia il generatore di assembly sono sviluppati in Rust, le specifiche devono riflettere uno stile progettuale idiomatico per questo linguaggio: separazione chiara delle responsabilità, uso coerente di strutture e astrazioni, e un'architettura che favorisca sicurezza, chiarezza e manutenibilità del codice."
 
+## Clarifications
+
+### Session 2026-02-02
+
+- Q: What is explicitly out of scope for this translator? → A: D (All of the above: no optimizations, no register allocator, no linking/runtime)
+
+- Q: Which ABI/calling convention do we want to assume as the target for assembly generation? → A: C (Support both: System V AMD64 and Windows x64, selectable via a target flag)
+
+- Q: How should we handle IR constructs with no direct equivalent in x86-64? → A: B (Emit a compile-time error; fail fast)
+
+- Q: Do you want the translator to generate maps/annotations between IR nodes and assembly lines (source maps)? → A: C (Make mapping optional via flag, default off)
+
 ## User Scenarios & Testing *(mandatory)*
 
 ### User Story 1 - Translate IR to Valid Assembly (Priority: P1)
@@ -89,7 +101,21 @@ As a compiler developer, I want the translator to be designed for extensibility 
 - What occurs when the IR contains invalid or malformed structures?
 - How does the system handle extremely large IR inputs that might cause performance issues?
 
+- Policy: For IR constructs with no direct equivalent on x86-64, the translator must abort the translation and issue a clear diagnostic error (fail-fast). No best-effort code will be generated, nor will runtime helper calls be inserted for these cases; any workarounds must be handled upstream or introduced via later extensions.
+
 ## Requirements *(mandatory)*
+
+### Out of Scope
+
+- This translator explicitly excludes the following tasks: IR or peephole optimizations, register allocation, and linking/runtime integration. The component is solely responsible for deterministically transforming the IR into NASM-compatible assembly, leaving optimizations and register allocation to other stages of the toolchain.
+
+### Target ABIs
+
+- The translator must support both target ABIs: `System V AMD64` (Linux/macOS) and `Windows x64` (Microsoft calling convention). The target ABI must be selectable via a generator configuration/compilation flag; if not specified, the default behavior is the plantform default.
+
+### IR→ASM Mapping (Diagnostics)
+
+- The translator must offer the optional generation of maps/annotations that connect IR nodes to lines/labels in the produced assembly file. This feature must be enabled via an output flag (`--emit-mapping`), and is disabled by default. The format can be inline comments in the `.asm` file or a separate `.map` file; the initial implementation must document the chosen format.
 
 ### Functional Requirements
 
