@@ -17,6 +17,16 @@
 
 - Q: Do you want the translator to generate maps/annotations between IR nodes and assembly lines (source maps)? → A: C (Make mapping optional via flag, default off)
 
+- Q: How should error handling and logging be implemented in the translator? → A: A (Focus on error handling and logging for production use)
+
+- Q: What type of logging approach should the translator use? → A: A (Structured logging with configurable levels (trace/debug/info/warn/error))
+
+- Q: What are the performance requirements for the translator? → A: B (Target 100ms average translation time per function with 1GB RAM limit)
+
+- Q: What level of input validation should be implemented? → A: A (Basic input validation with bounds checking and format verification)
+
+- Q: Should the translator support debugging of generated assembly? → A: C (Generate assembly with standard debugging symbols (DWARF on Unix, PDB on Windows))
+
 ## User Scenarios & Testing *(mandatory)*
 
 ### User Story 1 - Translate IR to Valid Assembly (Priority: P1)
@@ -132,6 +142,14 @@ As a compiler developer, I want the translator to be designed for extensibility 
 - **FR-011**: System MUST generate appropriate assembly file sections that conform to NASM requirements
 - **FR-012**: System MUST preserve the relationship between high-level IR concepts and their low-level assembly implementations
 
+### Non-Functional Requirements
+
+- **NFR-001**: System MUST implement comprehensive error handling with detailed diagnostics for production use
+- **NFR-002**: System MUST use structured logging with configurable levels (trace/debug/info/warn/error)
+- **NFR-003**: System MUST achieve target performance of 100ms average translation time per function with 1GB RAM limit
+- **NFR-004**: System MUST perform basic input validation with bounds checking and format verification
+- **NFR-005**: System MUST generate assembly with standard debugging symbols (DWARF on Unix, PDB on Windows) to enable debugging of the generated code
+
 ### Key Entities
 
 - **IR Structures**: Represent the intermediate representation elements from src/ir that need to be translated to assembly, including expressions, statements, control flow constructs, and data types
@@ -152,3 +170,8 @@ As a compiler developer, I want the translator to be designed for extensibility 
 - **SC-005**: The system successfully integrates with existing src/asm components without introducing redundant code
 - **SC-006**: Generated assembly code is readable and debuggable, with clear correspondence to IR constructs
 - **SC-007**: The system accommodates new IR features with minimal architectural changes (less than 20% of core translation logic modified per new IR construct)
+- **SC-008**: Error handling provides detailed diagnostics for at least 95% of failure scenarios
+- **SC-009**: Logging system captures appropriate information at all configurable levels without performance degradation
+- **SC-010**: Translation performance stays within 100ms average per function with memory usage under 1GB
+- **SC-011**: Input validation detects and handles at least 95% of malformed IR inputs appropriately
+- **SC-012**: Generated assembly includes appropriate debugging symbols that enable debugging tools to map back to source
