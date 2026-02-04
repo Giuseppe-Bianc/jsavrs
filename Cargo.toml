@@ -25,7 +25,7 @@ path = "src/main.rs"
 bench = false  # Non includere i test del bin nei benchmark
 
 [dependencies]
-clap = { version = "4.5.56", features = ["cargo", "derive"] }
+clap = { version = "4.5.57", features = ["cargo", "derive"] }
 console = "0.16.2"
 logos = "0.16.1"
 thiserror = "2.0.18"
