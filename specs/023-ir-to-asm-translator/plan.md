@@ -1,6 +1,6 @@
 # Implementation Plan: IR to x86-64 Assembly Translator
 
-**Branch**: `023-ir-to-asm-translator` | **Date**: 3 febbraio 2026 | **Spec**: [Link to spec.md](../spec.md)
+**Branch**: `023-ir-to-asm-translator` | **Date**: 3-02-2026 | **Spec**: [Link to spec.md](../spec.md)
 **Input**: Feature specification from `/specs/023-ir-to-asm-translator/spec.md`
 
 **Note**: This template is filled in by the `/speckit.plan` command. See `.specify/templates/commands/plan.md` for the execution workflow.
