@@ -1,7 +1,7 @@
 # Feature Specification: IR to x86-64 Assembly Translator
 
 **Feature Branch**: `023-ir-to-asm-translator`
-**Created**: domenica 1 febbraio 2026
+**Created**: 1-02-2026
 **Status**: Draft
 **Input**: User description: "Progettare un traduttore che converta un IR proprietario, definito e mantenuto nella cartella `src/ir`, in codice assembly x86-64. L'obiettivo principale è consentire la generazione di file assembly corretti, completi e semanticamente coerenti a partire dalle strutture dell'IR, mantenendo una corrispondenza chiara tra le astrazioni di alto livello dell'IR e le istruzioni assembly prodotte. Il traduttore deve basarsi in modo integrato sul codice già presente nella cartella `src/asm`, che rappresenta il fondamento concettuale e strutturale per la generazione dell'assembly. Le specifiche del progetto devono garantire che tale codice venga riutilizzato e orchestrato, evitando duplicazioni logiche o bypass delle astrazioni già esistenti. Il risultato della traduzione deve essere codice assembly x86-64 sintatticamente valido e direttamente assemblabile con NASM, senza necessità di modifiche manuali successive. La generazione dell'output deve rispettare le convenzioni dell'architettura target (registri, chiamate di funzione, gestione dello stack, sezioni del file assembly), assicurando coerenza e prevedibilità del comportamento del codice prodotto. Dal punto di vista funzionale, il traduttore deve: * Interpretare in modo deterministico le strutture dell'IR e trasformarle in istruzioni assembly equivalenti. * Gestire il flusso di controllo (sequenze, salti, condizioni) e i dati (registri, memoria, costanti) definiti nell'IR. * Produrre un output leggibile e strutturato, facilitando il debugging e l'analisi del codice assembly generato. * Essere progettato per essere estendibile, così da supportare future evoluzioni dell'IR senza richiedere una riscrittura sostanziale. Poiché sia l'IR sia il generatore di assembly sono sviluppati in Rust, le specifiche devono riflettere uno stile progettuale idiomatico per questo linguaggio: separazione chiara delle responsabilità, uso coerente di strutture e astrazioni, e un'architettura che favorisca sicurezza, chiarezza e manutenibilità del codice."
 
@@ -147,7 +147,16 @@ As a compiler developer, I want the translator to be designed for extensibility 
 - **NFR-001**: System MUST implement comprehensive error handling with detailed diagnostics for production use
 - **NFR-002**: System MUST use structured logging with configurable levels (trace/debug/info/warn/error)
 - **NFR-003**: System MUST achieve target performance of 100ms average translation time per function with 1GB RAM limit
-- **NFR-004**: System MUST perform basic input validation with bounds checking and format verification
+- **NFR-004**: System MUST perform input validation including:
+  - **Structural validation**: All IR nodes are well-formed per the IR schema
+  - **Reference validation**: All symbol references (functions, labels, variables) resolve to defined entities
+  - **Type validation**: Operations are type-consistent (e.g., no arithmetic on function pointers)
+  - **Bounds checking**: 
+    - Register indices are valid for x86-64 (0-15 for GP, 0-7 for legacy)
+    - Immediate values fit within instruction encoding limits (-2^31 to 2^31-1 for 32-bit, etc.)
+    - Stack offsets are within reasonable limits (±2^31 bytes)
+  - **ABI validation**: Function signatures are compatible with selected calling convention
+  - Early failure: Invalid input must be rejected before translation begins
 - **NFR-005**: System MUST generate assembly with standard debugging symbols (DWARF on Unix, PDB on Windows) to enable debugging of the generated code
 
 ### Key Entities
