@@ -21,7 +21,7 @@ This document describes the data model for the IR to x86-64 Assembly Translator 
 **Validation rules**:
 
 - Must have valid ABI configuration
-- Must handle all InstructionKind variants defined in this specification
+- Must handle all InstructionKind variants (BinaryOp, Load, Store, Call, Return, Allocate, Constant) defined in this specification
 - Must handle all BinaryOp variants (Add, Sub, Mul, Div, And, Or, Xor, Shl, Shr, Eq, Ne, Lt, Le, Gt, Ge)
 - Must handle all Terminator variants (Return, Jump, ConditionalJump, Unreachable)
 - Must return TranslationError with code E4001 for unsupported or malformed IR constructs
@@ -83,8 +83,8 @@ This document describes the data model for the IR to x86-64 Assembly Translator 
 - `asm_name` must be valid assembly identifier
 - If `address` is `Some`:
     - Value must be non-zero (0x0 reserved for null)
-    - For function symbols, must be aligned to instruction boundary (typically 16-byte for x86-64)
-    - For data symbols, must be aligned according to type requirements
+    - For function symbols, should be aligned to 16-byte boundaries for performance (x86-64 supports byte-aligned execution)
+    - For data symbols, must be aligned according to type requirements (1/2/4/8 bytes for 8/16/32/64-bit types respectively)
     - Must fall within valid address space for target architecture (< 2^48 for x86-64 canonical addresses)
 - `address` is `None` for:
     - Symbols with stack-relative addresses
@@ -104,6 +104,7 @@ This document describes the data model for the IR to x86-64 Assembly Translator 
 
 - Counter may skip values if temps are deallocated, ensuring unique naming across function lifetime
 - Vec maintains active temps for validation that new allocations don't conflict with reserved registers
+- When conflict detected with reserved registers, allocator must skip to next available temporary name
 **Relationships**: Used by `TranslationContext`
 **Validation rules**:
 - Must generate unique temporary names
@@ -395,4 +396,4 @@ This document describes the data model for the IR to x86-64 Assembly Translator 
 - `format_version: u32` - Version of mapping format
 **Relationships**: Output when `emit_mapping` is enabled
 **Validation rules**: Must follow specified format "IR_LINE:COL → ASM_LINE:LABEL"
-**State transitions**: Built incrementally during translation when enable
+**State transitions**: Built incrementally during translation when enabled
