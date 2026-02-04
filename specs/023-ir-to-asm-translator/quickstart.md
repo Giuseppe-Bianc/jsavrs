@@ -1,14 +1,17 @@
 # Quickstart Guide: IR to x86-64 Assembly Translator
 
 ## Overview
+
 This guide provides a quick introduction to using the IR to x86-64 Assembly Translator module in the jsavrs compiler. The translator converts IR structures from `src/ir/` into NASM-compatible x86-64 assembly using existing `src/asm/` infrastructure.
 
 ## Prerequisites
+
 - Rust 1.93.0 or later
 - NASM assembler for assembling generated code
 - jsavrs compiler with IR module available
 
 ## Installation
+
 The translator module is built into the jsavrs compiler. No additional installation is required beyond the standard jsavrs build process:
 
 ```bash
@@ -23,6 +26,7 @@ cargo build --release
 ## Basic Usage
 
 ### Translating an IR Module
+
 To translate an IR module to x86-64 assembly:
 
 ```rust
@@ -38,6 +42,7 @@ println!("{}", asm_code);
 ```
 
 ### Command Line Interface
+
 The translator can also be accessed through the command line:
 
 ```bash
@@ -55,6 +60,7 @@ jsavrs translate --input my_module.ir --output my_module.asm --emit-mapping
 ## Configuration Options
 
 ### Target ABI Selection
+
 The translator supports two major x86-64 ABIs:
 
 - `system-v`: System V AMD64 ABI (used on Linux/macOS)
@@ -75,6 +81,7 @@ let asm_code = translator.translate_module(&ir_module)?;
 ```
 
 ### Source Mapping
+
 Enable source mapping to generate a `.map` file that connects IR nodes to assembly lines:
 
 ```bash
@@ -86,6 +93,7 @@ This creates a `my_module.map` file with the format "IR_LINE:COL → ASM_LINE:LA
 ## Example Translation
 
 ### Sample IR Structure
+
 Consider a simple IR function:
 
 ```rust
@@ -116,6 +124,7 @@ let ir_func = IrFunction {
 ```
 
 ### Generated Assembly (System V ABI)
+
 The translator would generate assembly similar to:
 
 ```nasm
@@ -137,6 +146,7 @@ add:
 ```
 
 ### Generated Assembly (Windows x64 ABI)
+
 With Windows ABI, it would generate:
 
 ```nasm
@@ -160,6 +170,7 @@ add:
 ```
 
 ## Error Handling
+
 The translator uses comprehensive error handling:
 
 ```rust
@@ -180,11 +191,13 @@ match Translator::translate_module(&ir_module) {
 ```
 
 ## Performance Tips
+
 - The translator targets <100ms per function with <1GB memory usage
 - For large modules, consider processing functions individually
 - Use release builds for optimal translation performance
 
 ## Integration with Existing Codebase
+
 The translator integrates seamlessly with existing jsavrs components:
 
 ```rust
@@ -204,6 +217,7 @@ let mut asm_file = AssemblyFile::parse(&asm_text)?;
 ```
 
 ## Testing
+
 Run the translator tests to verify functionality:
 
 ```bash
@@ -218,6 +232,7 @@ cargo insta review
 ```
 
 ## Troubleshooting
+
 - If translation fails with unsupported IR constructs, the translator will emit a clear diagnostic error with location information
 - If assembly doesn't assemble with NASM, check that the target ABI matches your intended platform
 - For performance issues, use the benchmarking tools to identify bottlenecks
