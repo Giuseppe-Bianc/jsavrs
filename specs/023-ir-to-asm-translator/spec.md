@@ -1,7 +1,7 @@
 # Feature Specification: IR to x86-64 Assembly Translator
 
 **Feature Branch**: `023-ir-to-asm-translator`
-**Created**: 1-02-2026
+**Created**: 2026-02-01
 **Status**: Draft
 **Input**: User description: "Progettare un traduttore che converta un IR proprietario, definito e mantenuto nella cartella `src/ir`, in codice assembly x86-64. L'obiettivo principale è consentire la generazione di file assembly corretti, completi e semanticamente coerenti a partire dalle strutture dell'IR, mantenendo una corrispondenza chiara tra le astrazioni di alto livello dell'IR e le istruzioni assembly prodotte. Il traduttore deve basarsi in modo integrato sul codice già presente nella cartella `src/asm`, che rappresenta il fondamento concettuale e strutturale per la generazione dell'assembly. Le specifiche del progetto devono garantire che tale codice venga riutilizzato e orchestrato, evitando duplicazioni logiche o bypass delle astrazioni già esistenti. Il risultato della traduzione deve essere codice assembly x86-64 sintatticamente valido e direttamente assemblabile con NASM, senza necessità di modifiche manuali successive. La generazione dell'output deve rispettare le convenzioni dell'architettura target (registri, chiamate di funzione, gestione dello stack, sezioni del file assembly), assicurando coerenza e prevedibilità del comportamento del codice prodotto. Dal punto di vista funzionale, il traduttore deve:
 
@@ -157,9 +157,19 @@ As a compiler developer, I want the translator to be designed for extensibility 
     - **Reference validation**: All symbol references (functions, labels, variables) resolve to defined entities
     - **Type validation**: Operations are type-consistent (e.g., no arithmetic on function pointers)
     - **Bounds checking**:
-        - Register indices are valid for x86-64 (0-15 for GP, 0-7 for legacy)
-        - Immediate values fit within instruction encoding limits (-2^31 to 2^31-1 for 32-bit, etc.)
-        - Stack offsets are within reasonable limits (±2^31 bytes)
+        - Register indices are valid for x86-64:
+            - General-purpose registers: 0-15 (RAX-R15, including legacy AL-DI as 0-7)
+            - XMM registers (SSE): 0-15 (XMM0-XMM15)
+            - YMM registers (AVX): 0-15 (YMM0-YMM15)
+            - FPU registers (x87): 0-7 (ST0-ST7)
+        - Immediate values fit within instruction-specific encoding limits:
+            - 8-bit immediates: -128 to 255 (sign/zero extended depending on instruction)
+            - 16-bit immediates: -32,768 to 65,535
+            - 32-bit immediates: -2^31 to 2^31-1 (most arithmetic/logical operations)
+            - 64-bit immediates: 0 to 2^64-1 (MOV instruction only; other instructions limited to 32-bit sign-extended)
+        - Stack offsets are within x86-64 addressing limits:
+            - Architectural limit: ±2^31 bytes (32-bit signed displacement)
+            - Practical sanity threshold: ±16 MB (configurable; catches excessive stack usage early)
     - **ABI validation**: Function signatures are compatible with selected calling convention
     - Early failure: Invalid input must be rejected before translation begins
 - **NFR-005**: System MUST generate assembly with standard debugging symbols (DWARF on Unix, PDB on Windows) to enable debugging of the generated code

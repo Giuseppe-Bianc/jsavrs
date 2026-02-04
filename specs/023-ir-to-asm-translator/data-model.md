@@ -21,7 +21,11 @@ This document describes the data model for the IR to x86-64 Assembly Translator 
 **Validation rules**:
 
 - Must have valid ABI configuration
-- Must handle all IR constructs or fail with appropriate error
+- Must handle all InstructionKind variants defined in this specification
+- Must handle all BinaryOp variants (Add, Sub, Mul, Div, And, Or, Xor, Shl, Shr, Eq, Ne, Lt, Le, Gt, Ge)
+- Must handle all Terminator variants (Return, Jump, ConditionalJump, Unreachable)
+- Must return TranslationError with code E4001 for unsupported or malformed IR constructs
+- Must validate that all referenced BasicBlockIds exist within the function being translated
 **State transitions**: N/A (stateless function)
 
 ### TranslationConfig
@@ -58,7 +62,12 @@ This document describes the data model for the IR to x86-64 Assembly Translator 
 **State transitions**:
 - Initialized at start of module translation
 - Updated during function translation
-- Reset between functions if needed
+- Between functions:
+    - `current_function` is set to the new function signature
+    - `label_counter` is reset to 0 to ensure unique labels per function
+    - `register_allocator` is reset to clear temporary allocations
+    - `symbol_table` persists and accumulates across all functions in the module
+    - `abi` remains unchanged throughout module translation
 
 ### SymbolInfo
 
@@ -68,11 +77,19 @@ This document describes the data model for the IR to x86-64 Assembly Translator 
 - `name: String` - Original symbol name
 - `asm_name: String` - Mapped assembly name
 - `kind: SymbolKind` - Type of symbol (function, variable, constant)
-- `address: Option<u64>` - Memory address if applicable
+- `address: Option<u64>` - Absolute memory address if known (None for unresolved/stack-relative symbols)
 **Relationships**: Stored in `TranslationContext.symbol_table`
 **Validation rules**:
 - `asm_name` must be valid assembly identifier
-- Address must be valid if provided
+- If `address` is `Some`:
+    - Value must be non-zero (0x0 reserved for null)
+    - For function symbols, must be aligned to instruction boundary (typically 16-byte for x86-64)
+    - For data symbols, must be aligned according to type requirements
+    - Must fall within valid address space for target architecture (< 2^48 for x86-64 canonical addresses)
+- `address` is `None` for:
+    - Symbols with stack-relative addresses
+    - External/imported symbols not yet resolved
+    - Symbols during initial registration before address assignment
 **State transitions**: Created when symbol is first encountered
 
 ### TempRegisterAllocator
@@ -81,7 +98,12 @@ This document describes the data model for the IR to x86-64 Assembly Translator 
 **Fields**:
 
 - `next_temp: u32` - Next temporary register number to allocate
-- `allocated_temps: Vec<String>` - Track allocated temporaries
+- `allocated_temps: Vec<String>` - Track allocated temporaries for conflict detection with reserved registers
+
+**Notes**:
+
+- Counter may skip values if temps are deallocated, ensuring unique naming across function lifetime
+- Vec maintains active temps for validation that new allocations don't conflict with reserved registers
 **Relationships**: Used by `TranslationContext`
 **Validation rules**:
 - Must generate unique temporary names
@@ -256,9 +278,11 @@ This document describes the data model for the IR to x86-64 Assembly Translator 
 
 - `label: String` - Data label
 - `directive: String` - Data directive (e.g., "dd", "dq")
-- `value: String` - Data value
+- `value: DataValue` - Data value (typed)
 **Relationships**: Part of `AssemblyFile.data_section`
-**Validation rules**: Must be valid NASM data directive
+**Validation rules**:
+- Must be valid NASM data directive (dd, dq, dw, db, etc.)
+- value type must be compatible with directive size
 **State transitions**: N/A (immutable struct)
 
 ### BssDirective
@@ -271,7 +295,13 @@ This document describes the data model for the IR to x86-64 Assembly Translator 
 - `size: u32` - Size to reserve
 **Relationships**: Part of `AssemblyFile.bss_section`
 **Validation rules**: Must be valid NASM bss directive
-**State transitions**: N/A (immutable struct)
+**State transitions**:
+- Initialized with empty sections at start of module translation
+- Text section populated as functions are translated (instructions added sequentially)
+- Data section populated when global constants/strings are encountered
+- BSS section populated for uninitialized global variables
+- Once translation completes, AssemblyFile is finalized (immutable)
+- Finalized AssemblyFile is rendered to NASM syntax string for output
 
 ## ABI-Specific Entities
 
@@ -365,4 +395,4 @@ This document describes the data model for the IR to x86-64 Assembly Translator 
 - `format_version: u32` - Version of mapping format
 **Relationships**: Output when `emit_mapping` is enabled
 **Validation rules**: Must follow specified format "IR_LINE:COL → ASM_LINE:LABEL"
-**State transitions**: Built incrementally during translation when enabled
+**State transitions**: Built incrementally during translation when enable

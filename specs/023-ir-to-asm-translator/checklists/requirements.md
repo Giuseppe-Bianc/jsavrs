@@ -1,7 +1,7 @@
 # Specification Quality Checklist: IR to x86-64 Assembly Translator
 
 **Purpose**: Validate specification completeness and quality before proceeding to planning
-**Created**: 1-02-2026
+**Created**: 2026-02-01
 **Feature**: [Link to spec.md](../spec.md)
 
 ## Content Quality
