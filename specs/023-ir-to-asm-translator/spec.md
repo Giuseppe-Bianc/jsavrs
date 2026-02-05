@@ -201,12 +201,12 @@ As a compiler developer, I want the translator to be designed for extensibility 
 ### Measurable Outcomes
 
 - **SC-001**: 100% of valid IR inputs produce syntactically correct x86-64 assembly that assembles successfully with NASM
-- **SC-002**: Generated assembly code maintains functional equivalence to the original IR with 99% accuracy in execution behavior
-- **SC-003**: Translation process completes within acceptable timeframes (under 30 seconds for typical compilation units)
-- **SC-004**: At least 95% of x86-64 architecture conventions are correctly implemented in generated assembly
+- **SC-002**: Generated assembly code maintains functional equivalence to the original IR with 99% accuracy in execution behavior, measured via automated test suite comparing output values of compiled IR vs assembled/executed assembly across 100+ test cases per InstructionKind category
+- **SC-003**: Translation process completes within acceptable timeframes: 100ms average per function (per NFR-003) with total module translation under 30 seconds for typical compilation units (≤300 functions)
+- **SC-004**: At least 95% of x86-64 architecture conventions are correctly implemented in generated assembly, covering: (1) register usage per ABI (callee-saved: RBX, RBP, R12-R15; caller-saved: RAX, RCX, RDX, RSI, RDI, R8-R11), (2) stack alignment (16-byte before CALL), (3) red zone avoidance on Windows, (4) parameter passing order, (5) return value placement
 - **SC-005**: The system successfully integrates with existing src/asm components without introducing redundant code
 - **SC-006**: Generated assembly code is readable and debuggable, with clear correspondence to IR constructs
-- **SC-007**: The system accommodates new IR features with minimal architectural changes (less than 20% of core translation logic modified per new IR construct)
+- **SC-007**: The system accommodates new IR features with minimal architectural changes (less than 20% of core translation logic modified per new IR construct, measured as: LOC changes in instruction_translator.rs + terminator_translator.rs ÷ total LOC of those files at baseline)
 - **SC-008**: Error handling provides detailed diagnostics for at least 95% of failure scenarios
 - **SC-009**: Logging system captures appropriate information at all configurable levels without performance degradation
 - **SC-010**: Translation performance stays within 100ms average per function with memory usage under 1GB
