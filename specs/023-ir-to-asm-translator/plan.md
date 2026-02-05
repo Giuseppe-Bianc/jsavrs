@@ -12,7 +12,7 @@ Implementation of a translator module that converts IR structures from `src/ir/`
 ## Technical Context
 
 **Language/Version**: Rust 1.93.0
-**Primary Dependencies**: petgraph, thiserror, uuid (existing in codebase), insta = "1.40" (for testing), criterion = "0.5" (for benchmarks)
+**Primary Dependencies**: petgraph, thiserror, uuid (existing in codebase), insta = "1.46.2" (for testing), criterion = "0.8.1" (for benchmarks)
 **Storage**: Files (assembly output, optional mapping files)
 **Testing**: cargo test, insta for snapshot testing, criterion for performance benchmarks
 **Target Platform**: x86-64 (Windows, Linux, macOS) with support for both System V and Windows x64 ABIs
