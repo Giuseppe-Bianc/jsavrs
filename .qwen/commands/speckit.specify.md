@@ -201,7 +201,7 @@ Given that feature description, do this:
 - Focus on **WHAT** users need and **WHY**.
 - Avoid HOW to implement (no tech stack, APIs, code structure).
 - Written for business stakeholders, not developers.
-- DO NOT create any checklists that are embedded in the spec. That will be a separate command.
+- DO NOT embed checklists directly within the spec.md file. Instead, create checklists as separate files in the `checklists/` directory (as specified in step 6.a).
 
 ### Section Requirements
 
