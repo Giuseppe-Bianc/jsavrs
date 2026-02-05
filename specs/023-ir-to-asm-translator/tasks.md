@@ -48,7 +48,7 @@ description: "Task list for IR to x86-64 Assembly Translator implementation"
 - [ ] T002 [P] Create initial module files: mod.rs, context.rs, function_translator.rs, block_translator.rs, instruction_translator.rs, terminator_translator.rs
 - [ ] T003 [P] Create src/translator/codegen/ directory and abi_adapter.rs file
 - [ ] T004 Add translator module to src/lib.rs exports
-- [ ] T005 Configure insta and criterion dependencies in Cargo.toml if not already present
+- [ ] T005 Verify insta (1.46.2) and criterion (0.8.1) dependencies are correctly configured (already present in Cargo.toml)
 
 ---
 
@@ -128,7 +128,11 @@ Examples of foundational tasks (adjust based on your project):
 - [ ] T032 [US3] Add proper register allocation following x86-64 conventions
 - [ ] T033 [US3] Implement stack frame management with proper prologue/epilogue
 - [ ] T034 [US3] Add calling convention compliance for parameter passing
-- [ ] T035 [US3] Implement proper x86-64 section organization (.text, .data, .bss)
+- [ ] T035 [US3] Implement proper x86-64 section organization in src/translator/section_emitter.rs:
+    - T035a: Generate .text section with executable code and proper alignment
+    - T035b: Generate .data section for initialized global/static data
+    - T035c: Generate .bss section for uninitialized data with proper reservations
+    - T035d: Emit NASM-compatible section directives (section .text, section .data, section .bss)
 - [ ] T036 [US3] Add architecture-specific validation tests in tests/translator_abi.rs
 
 **Checkpoint**: At this point, User Stories 1, 2 AND 3 should all work independently
@@ -176,12 +180,24 @@ Examples of foundational tasks (adjust based on your project):
 
 - [ ] T048 [P] Add comprehensive error handling with detailed diagnostics throughout translator
 - [ ] T049 [P] Implement structured logging with configurable levels (trace/debug/info/warn/error)
-- [ ] T050 [P] Add input validation including structural, reference, type, and bounds checking
+- [ ] T050 Add input validation framework in src/translator/validation.rs
+- [ ] T050a [P] Implement structural validation in src/translator/validation.rs: verify all IR nodes are well-formed per IR schema
+- [ ] T050b [P] Implement reference validation in src/translator/validation.rs: verify all symbol references (functions, labels, variables) resolve to defined entities
+- [ ] T050c [P] Implement type validation in src/translator/validation.rs: verify operations are type-consistent (e.g., no arithmetic on function pointers)
+- [ ] T050d [P] Implement bounds checking in src/translator/validation.rs: validate register indices (0-15 GP, 0-15 XMM/YMM, 0-7 FPU), immediate value ranges, stack offset limits (±16MB practical threshold)
+- [ ] T050e [P] Implement ABI validation in src/translator/validation.rs: verify function signatures are compatible with selected calling convention
+- [ ] T050f Add validation tests covering each category in tests/translator_validation.rs
 - [ ] T051 [P] Implement source mapping generation when --emit-mapping flag is enabled
 - [ ] T052 [P] Add debug symbol generation (DWARF on Unix, PDB on Windows)
 - [ ] T053 [P] Performance optimization to meet <100ms per function target
 - [ ] T054 [P] Add comprehensive tests for error scenarios in tests/translator_errors.rs
-- [ ] T055 [P] Documentation updates for the translator module
+- [ ] T054a [P] Add tests for malformed/invalid IR structures in tests/translator_edge_cases.rs
+- [ ] T054b [P] Add tests for complex IR inputs at complexity limits in tests/translator_edge_cases.rs
+- [ ] T054c [P] Add performance tests for large IR inputs in tests/translator_edge_cases.rs
+- [ ] T055 [P] Documentation updates for the translator module:
+    - T055a: Add rustdoc comments for all public API functions, structs, and enums in src/translator/
+    - T055b: Add module-level documentation (//! comments) for each file in src/translator/
+    - T055c: Add usage examples in rustdoc (# Examples sections) for key public APIs
 - [ ] T056 [P] Update quickstart.md with usage examples
 - [ ] T057 Run performance benchmarks to validate <100ms target in benches/jsavrs_benchmark.rs
 - [ ] T058 Run quickstart.md validation to ensure examples work correctly

@@ -32,6 +32,13 @@
 
 - Q: Should the translator support debugging of generated assembly? → A: C (Generate assembly with standard debugging symbols (DWARF on Unix, PDB on Windows))
 
+### Session 2026-02-05
+
+- Q: Which InstructionKind constructs are supported in the MVP? → A: A (All InstructionKind defined in src/ir except Phi)
+- Q: How should the translator handle type conversions/promotions between operands of different sizes? → A: A (Assume IR is type-consistent; emit error if incompatible operands)
+- Q: Which component in src/asm should be the main integration point for the translator? → A: B (Defer to planning phase; document discovered components in plan)
+- Q: How should the translator handle global variables and constants in assembly data sections? → A: A (Constants in `.rodata`, mutable globals in `.data`, uninitialized in `.bss`)
+
 ## User Scenarios & Testing *(mandatory)*
 
 ### User Story 1 - Translate IR to Valid Assembly (Priority: P1)
@@ -122,7 +129,9 @@ As a compiler developer, I want the translator to be designed for extensibility 
 
 ### Out of Scope
 
-- This translator explicitly excludes the following tasks: IR or peephole optimizations, register allocation, and linking/runtime integration. The component is solely responsible for deterministically transforming the IR into NASM-compatible assembly, leaving optimizations and register allocation to other stages of the toolchain.
+- This translator explicitly excludes the following tasks: IR or peephole optimizations, register allocation, Phi elimination, and linking/runtime integration. The component is solely responsible for deterministically transforming the IR into NASM-compatible assembly, leaving optimizations and register allocation to other stages of the toolchain.
+
+- **Phi Elimination**: The IR supports SSA form with `Phi` instructions (`InstructionKind::Phi`). The translator assumes Phi nodes have been eliminated in a prior lowering pass (e.g., through parallel copy insertion or critical edge splitting). If a Phi instruction is encountered during translation, the translator MUST emit error `E4001` and abort. Phi elimination is the responsibility of the IR lowering pipeline, not the assembly translator.
 
 ### Target ABIs
 
@@ -134,6 +143,7 @@ As a compiler developer, I want the translator to be designed for extensibility 
 
 ### Functional Requirements
 
+- **FR-000**: System MUST support translation of ALL `InstructionKind` variants defined in `src/ir` except `Phi` (which requires prior elimination per Phi Elimination policy). This includes arithmetic, logical, memory, control flow, comparison, conversion, and call instructions.
 - **FR-001**: System MUST translate IR structures from src/ir into syntactically correct x86-64 assembly code
 - **FR-002**: System MUST generate assembly code that is directly assemblable with NASM without requiring manual modifications
 - **FR-003**: System MUST maintain semantic consistency between IR abstractions and generated assembly instructions
@@ -146,6 +156,7 @@ As a compiler developer, I want the translator to be designed for extensibility 
 - **FR-010**: System MUST interpret IR structures deterministically to ensure consistent translation results
 - **FR-011**: System MUST generate appropriate assembly file sections that conform to NASM requirements
 - **FR-012**: System MUST preserve the relationship between high-level IR concepts and their low-level assembly implementations
+- **FR-013**: System MUST place global data in appropriate sections: constants in `.rodata` (read-only), mutable global variables in `.data`, and uninitialized variables in `.bss`
 
 ### Non-Functional Requirements
 
@@ -155,7 +166,7 @@ As a compiler developer, I want the translator to be designed for extensibility 
 - **NFR-004**: System MUST perform input validation including:
     - **Structural validation**: All IR nodes are well-formed per the IR schema
     - **Reference validation**: All symbol references (functions, labels, variables) resolve to defined entities
-    - **Type validation**: Operations are type-consistent (e.g., no arithmetic on function pointers)
+    - **Type validation**: Operations are type-consistent (e.g., no arithmetic on function pointers). The translator assumes the IR is already type-consistent with explicit conversion instructions (ZExt, SExt, Trunc, etc.); operands of incompatible sizes without explicit conversion MUST trigger error `E4002` and abort translation.
     - **Bounds checking**:
         - Register indices are valid for x86-64:
             - General-purpose registers: 0-15 (RAX-R15, including legacy AL-DI as 0-7)
@@ -172,7 +183,9 @@ As a compiler developer, I want the translator to be designed for extensibility 
             - Practical sanity threshold: ±16 MB (configurable; catches excessive stack usage early)
     - **ABI validation**: Function signatures are compatible with selected calling convention
     - Early failure: Invalid input must be rejected before translation begins
-- **NFR-005**: System MUST generate assembly with standard debugging symbols (DWARF on Unix, PDB on Windows) to enable debugging of the generated code
+- **NFR-005**: System MUST generate assembly with debugging information to enable debugging of the generated code
+    - **MVP scope**: Generate NASM-compatible debug directives (e.g., `%line` directives, symbolic labels) that work cross-platform and can be consumed by assemblers/linkers to produce debug info
+    - **Post-MVP**: Native DWARF section generation on Unix; PDB generation on Windows is explicitly deferred due to toolchain complexity (requires cv2pdb or similar external tooling)
 
 ### Key Entities
 
@@ -198,4 +211,4 @@ As a compiler developer, I want the translator to be designed for extensibility 
 - **SC-009**: Logging system captures appropriate information at all configurable levels without performance degradation
 - **SC-010**: Translation performance stays within 100ms average per function with memory usage under 1GB
 - **SC-011**: Input validation detects and handles at least 95% of malformed IR inputs appropriately
-- **SC-012**: Generated assembly includes appropriate debugging symbols that enable debugging tools to map back to source
+- **SC-012**: Generated assembly includes NASM debug directives (`%line`, symbolic labels) that enable basic source-level debugging; native DWARF/PDB generation is tracked as post-MVP enhancement

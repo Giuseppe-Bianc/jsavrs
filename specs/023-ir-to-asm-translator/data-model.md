@@ -171,8 +171,11 @@ This document describes the data model for the IR to x86-64 Assembly Translator 
 - `Return(Option<Value>)` - Return statement
 - `Allocate` - Memory allocation
 - `Constant(Constant)` - Constant value
+- `Phi { ty: IrType, incoming: Vec<(BasicBlockId, Value)> }` - SSA phi-function (**requires pre-translation elimination**, see Out of Scope)
 **Relationships**: Used in `Instruction`
-**Validation rules**: Each variant must have appropriate associated data
+**Validation rules**:
+- Each variant must have appropriate associated data
+- **Phi nodes**: The translator does NOT handle Phi directly; IR must be lowered through Phi elimination before translation
 **State transitions**: N/A (immutable enum)
 
 ### BinaryOp
