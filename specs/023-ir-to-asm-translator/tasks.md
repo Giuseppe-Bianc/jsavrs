@@ -62,7 +62,7 @@ Examples of foundational tasks (adjust based on your project):
 
 - [ ] T006 Define core data structures in src/translator/mod.rs (Translator, TranslationConfig, TranslationError)
 - [ ] T007 [P] Implement TranslationConfig struct with target_abi, emit_mapping, debug_symbols fields
-- [ ] T008 [P] Implement TranslationError and ErrorCode enums with E4001 variant
+- [ ] T008 [P] Implement TranslationError and ErrorCode enums with E4001 (Phi instruction encountered) and E4002 (type incompatibility) variants
 - [ ] T009 Create TranslationContext struct in src/translator/context.rs with ABI, symbol_table, register_allocator, etc.
 - [ ] T010 Define assembly-related data structures (AssemblyInstruction, AssemblyOperand, MemoryLocation)
 - [ ] T011 [P] Implement AbiAdapter in src/translator/codegen/abi_adapter.rs
@@ -84,9 +84,31 @@ Examples of foundational tasks (adjust based on your project):
 - [ ] T014 [P] [US1] Implement basic Translator::translate_module function in src/translator/mod.rs
 - [ ] T015 [P] [US1] Implement FunctionTranslator in src/translator/function_translator.rs
 - [ ] T016 [US1] Implement BlockTranslator in src/translator/block_translator.rs
-- [ ] T017 [US1] Implement InstructionTranslator in src/translator/instruction_translator.rs with basic arithmetic operations
+- [ ] T017 [US1] Implement InstructionTranslator in src/translator/instruction_translator.rs with dispatch for ALL InstructionKind variants (except Phi):
+    - T017a: Implement Alloca instruction translation (stack allocation)
+    - T017b: Implement Store instruction translation (memory write)
+    - T017c: Implement Load instruction translation (memory read)
+    - T017d: Implement Binary instruction translation dispatcher
+    - T017e: Implement Unary instruction translation (Negate, Not)
+    - T017f: Implement Call instruction translation
+    - T017g: Implement GetElementPtr instruction translation
+    - T017h: Implement Cast instruction translation dispatcher
+    - T017i: Implement Vector instruction translation dispatcher (SIMD ops)
+    - T017j: Add error E4001 emission when Phi instruction encountered
 - [ ] T018 [US1] Implement TerminatorTranslator in src/translator/terminator_translator.rs
-- [ ] T019 [US1] Add basic IR to assembly mapping for BinaryOp variants (Add, Sub, Mul, Div)
+- [ ] T019 [US1] Implement all IrBinaryOp variants in instruction_translator.rs:
+    - T019a: Arithmetic ops: Add, Subtract, Multiply, Divide, Modulo
+    - T019b: Comparison ops: Equal, NotEqual, Less, LessEqual, Greater, GreaterEqual
+    - T019c: Logical ops: And, Or
+    - T019d: Bitwise ops: BitwiseAnd, BitwiseOr, BitwiseXor, ShiftLeft, ShiftRight
+- [ ] T019e [US1] Implement all CastKind variants in instruction_translator.rs:
+    - Integer casts: IntZeroExtend, IntSignExtend, IntTruncate, IntBitcast
+    - Int/Float conversions: IntToFloat, FloatToInt, FloatTruncate, FloatExtend
+    - Bool conversions: BoolToInt, IntToBool, BoolToFloat, FloatToBool
+    - Char conversions: CharToInt, IntToChar, CharToString, StringToChar
+    - String conversions: StringToInt, StringToFloat, StringToBool, IntToString, FloatToString, BoolToString
+    - Bitcast for same-size type reinterpretation
+- [ ] T019f [US1] Implement VectorOp variants in instruction_translator.rs: Add, Sub, Mul, Div, DotProduct, Shuffle
 - [ ] T020 [US1] Implement assembly emission to AssemblyFile structure
 - [ ] T021 [US1] Add NASM syntax validation to ensure output assembles correctly
 - [ ] T022 [US1] Create basic test case with simple function in tests/translator_basic.rs
@@ -180,17 +202,20 @@ Examples of foundational tasks (adjust based on your project):
 
 - [ ] T048 [P] Add comprehensive error handling with detailed diagnostics throughout translator
 - [ ] T049 [P] Implement structured logging with configurable levels (trace/debug/info/warn/error)
-- [ ] T050 Add input validation framework in src/translator/validation.rs
-- [ ] T050a [P] Implement structural validation in src/translator/validation.rs: verify all IR nodes are well-formed per IR schema
-- [ ] T050b [P] Implement reference validation in src/translator/validation.rs: verify all symbol references (functions, labels, variables) resolve to defined entities
-- [ ] T050c [P] Implement type validation in src/translator/validation.rs: verify operations are type-consistent (e.g., no arithmetic on function pointers)
-- [ ] T050d [P] Implement bounds checking in src/translator/validation.rs: validate register indices (0-15 GP, 0-15 XMM/YMM, 0-7 FPU), immediate value ranges, stack offset limits (±16MB practical threshold)
-- [ ] T050e [P] Implement ABI validation in src/translator/validation.rs: verify function signatures are compatible with selected calling convention
-- [ ] T050f Add validation tests covering each category in tests/translator_validation.rs
+- [ ] T050 Input validation framework in src/translator/validation.rs (container for T050a-T050f):
+    - T050a [P]: Structural validation — verify all IR nodes are well-formed per IR schema
+    - T050b [P]: Reference validation — verify all symbol references (functions, labels, variables) resolve to defined entities
+    - T050c [P]: Type validation — verify operations are type-consistent (e.g., no arithmetic on function pointers)
+    - T050d [P]: Bounds checking — validate register indices (0-15 GP, 0-15 XMM/YMM, 0-7 FPU), immediate value ranges, stack offset limits (±16MB practical threshold)
+    - T050e [P]: ABI validation — verify function signatures are compatible with selected calling convention
+    - T050f: Validation tests covering each category in tests/translator_validation.rs
 - [ ] T051 [P] Implement source mapping generation when --emit-mapping flag is enabled
 - [ ] T052 [P] Add debug symbol generation (DWARF on Unix, PDB on Windows)
 - [ ] T053 [P] Performance optimization to meet <100ms per function target
-- [ ] T054 [P] Add comprehensive tests for error scenarios in tests/translator_errors.rs
+- [ ] T054 [P] Add comprehensive tests for error scenarios in tests/translator_errors.rs:
+    - T054-E4001: Test that Phi instruction triggers E4001 error with abort
+    - T054-E4002: Test that type-incompatible operands trigger E4002 error with abort
+    - T054-general: Test other error conditions (invalid references, bounds violations)
 - [ ] T054a [P] Add tests for malformed/invalid IR structures in tests/translator_edge_cases.rs
 - [ ] T054b [P] Add tests for complex IR inputs at complexity limits in tests/translator_edge_cases.rs
 - [ ] T054c [P] Add performance tests for large IR inputs in tests/translator_edge_cases.rs
@@ -201,6 +226,14 @@ Examples of foundational tasks (adjust based on your project):
 - [ ] T056 [P] Update quickstart.md with usage examples
 - [ ] T057 Run performance benchmarks to validate <100ms target in benches/jsavrs_benchmark.rs
 - [ ] T058 Run quickstart.md validation to ensure examples work correctly
+- [ ] T059 [P] [FR-008] Implement readable assembly output formatting in src/translator/output_formatter.rs:
+    - Add inline comments linking assembly instructions to IR source nodes
+    - Insert blank lines between basic blocks for visual separation
+    - Generate section headers with descriptive comments
+- [ ] T060 [P] [FR-010] Add determinism validation tests in tests/translator_determinism.rs:
+    - Verify identical IR input produces byte-identical assembly output across multiple runs
+    - Test with randomized HashMap iteration order (use deterministic seed)
+    - Validate label/symbol naming is deterministic
 
 ---
 
@@ -219,7 +252,7 @@ Examples of foundational tasks (adjust based on your project):
 
 - **User Story 1 (P1)**: Can start after Foundational (Phase 2) - No dependencies on other stories
 - **User Story 2 (P2)**: Can start after Foundational (Phase 2) - Builds on US1 components
-- **User Story 3 (P3)**: Can start after Foundational (Phase 2) - May integrate with US1/US2 but should be independently testable
+- **User Story 3 (P2)**: Can start after Foundational (Phase 2) - May integrate with US1/US2 but should be independently testable
 - **User Story 4 (P4)**: Can start after Foundational (Phase 2) - Integrates with existing src/asm
 - **User Story 5 (P5)**: Can start after Foundational (Phase 2) - May build on other stories but should be independently testable
 
