@@ -1,7 +1,7 @@
 //! Liveness and reachability analysis.
 
-use crate::ir::{Function, InstructionKind, Terminator, TerminatorKind, Value};
 use crate::ir::value::ValueId;
+use crate::ir::{Function, InstructionKind, Terminator, TerminatorKind, Value};
 use petgraph::graph::NodeIndex;
 use std::collections::{HashMap, HashSet};
 
@@ -139,9 +139,10 @@ impl LivenessAnalyzer {
 
         let cfg = function.cfg.graph();
 
+        const LIVE_VALUES_PER_SUCCESSOR_ESTIMATE: usize = 5;
         // Initialize all live sets to empty
         for block_idx in cfg.node_indices() {
-            let capacity = cfg.neighbors(block_idx).count() * 5; // estimate
+            let capacity = cfg.neighbors(block_idx).count() * LIVE_VALUES_PER_SUCCESSOR_ESTIMATE;
             self.live_in.entry(block_idx).or_insert_with(|| HashSet::with_capacity(capacity));
             self.live_out.entry(block_idx).or_insert_with(|| HashSet::with_capacity(capacity));
         }
@@ -297,6 +298,23 @@ where
 }
 
 /// Computes reverse post-order traversal of the CFG.
+///
+/// Reverse post-order (RPO) provides an efficient traversal order for dataflow
+/// analysis: for forward problems, RPO processes predecessors before successors;
+/// for backward problems (like liveness), reversed RPO achieves the same property.
+///
+/// # Parameters
+///
+/// - `function`: The IR function whose CFG will be traversed.
+///
+/// # Returns
+///
+/// A vector of `NodeIndex` in reverse post-order, starting from the entry block.
+///
+/// # Panics
+///
+/// Panics if `function.cfg.get_entry_block_index()` returns `None`, indicating
+/// the function has no entry block. This should never occur for well-formed IR.
 #[allow(clippy::expect_used)]
 fn compute_reverse_post_order(function: &Function) -> Vec<NodeIndex> {
     use petgraph::visit::{DfsEvent, depth_first_search};
