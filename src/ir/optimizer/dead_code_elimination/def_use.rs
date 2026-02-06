@@ -42,6 +42,16 @@ impl DefUseChains {
     }
 
     /// Records that an instruction defines a value.
+    ///
+    /// # Arguments
+    ///
+    /// * `inst_idx` - The index of the instruction that produces the definition.
+    /// * `value` - A reference to the [`Value`] being defined. Only the `ValueId`
+    ///   is stored internally for efficiency.
+    ///
+    /// # Note
+    ///
+    /// If the instruction already has a recorded definition, it will be overwritten.
     #[inline]
     pub fn add_definition(&mut self, inst_idx: InstructionIndex, value: &Value) {
         // Store only the inexpensive `ValueId` to avoid hashing/cloning full `Value`
@@ -89,12 +99,28 @@ impl DefUseChains {
     }
 
     /// Checks if the given value has any uses.
+    ///
+    /// # Arguments
+    ///
+    /// * `value_id` - The [`ValueId`] to check for uses.
+    ///
+    /// # Returns
+    ///
+    /// `true` if at least one instruction uses this value, `false` otherwise.
     #[inline]
     pub fn has_uses(&self, value_id: ValueId) -> bool {
         self.value_to_uses.get(&value_id).is_some_and(|uses| !uses.is_empty())
     }
 
     /// Convenience wrapper to check uses by `Value` reference.
+    ///
+    /// # Arguments
+    ///
+    /// * `value` - A reference to the [`Value`] to check for uses.
+    ///
+    /// # Returns
+    ///
+    /// `true` if at least one instruction uses this value, `false` otherwise.
     #[inline]
     pub fn has_uses_value(&self, value: &Value) -> bool {
         self.has_uses(value.id)
@@ -141,6 +167,11 @@ impl LivenessInfo {
     }
 
     /// Returns whether this value is live (has at least one use).
+    ///
+    /// # Returns
+    ///
+    /// `true` if the value has at least one use (i.e., `last_use` is `Some`),
+    /// `false` otherwise.
     pub const fn is_live(&self) -> bool {
         self.last_use.is_some()
     }

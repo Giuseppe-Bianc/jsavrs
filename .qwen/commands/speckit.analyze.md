@@ -84,8 +84,17 @@ Focus on high-signal findings. Limit to 50 findings total; aggregate remainder i
 
 #### B. Ambiguity Detection
 
-- Flag vague adjectives (fast, scalable, secure, intuitive, robust) lacking measurable criteria
-- Flag unresolved placeholders (TODO, TBD, FIXME, XXX, HACK, TKTK, ???, `<placeholder>`, etc.)
+- Flag vague adjectives lacking measurable criteria, including but not limited to:
+    - **Performance**: fast, scalable, efficient, performant, responsive, optimized, lightweight, low-latency, real-time
+    - **Reliability**: robust, reliable, stable, resilient, fault-tolerant, highly-available
+    - **Security**: secure, safe, protected, hardened
+    - **Usability**: intuitive, user-friendly, easy-to-use, simple, clean, seamless, polished
+    - **Maintainability**: maintainable, extensible, flexible, modular, well-structured
+    - **Quality**: high-quality, production-ready, enterprise-grade, world-class, best-in-class
+    - **Comparatives without baseline**: better, faster, improved, enhanced, superior
+    - Require numeric thresholds, SLOs, or testable acceptance criteria for each flagged term
+
+- Flag unresolved placeholders (case-insensitive detection): BUG, FIXME, HACK, NOTE, OPTIMIZE, TODO, TBD, TKTK, WIP, XXX, ???, `<placeholder>`, etc.
 
 #### C. Underspecification
 
@@ -146,6 +155,11 @@ Output a Markdown report (no file writes) with the following structure:
 - Total Requirements
 - Total Tasks
 - Coverage % (requirements with ≥1 task / total requirements)
+    - Formula: `(count of requirements with at least one mapped task) / (count of all requirements)` × 100
+    - Includes both functional and non-functional requirements in denominator
+    - Format: Percentage rounded to 1 decimal place (e.g., `75.0%`)
+    - Edge case: If total requirements = 0, display `N/A` and flag as CRITICAL issue
+    - Must match count from Coverage Summary Table where "Has Task?" = YES
 - Ambiguity Count
 - Duplication Count
 - Critical Issues Count
