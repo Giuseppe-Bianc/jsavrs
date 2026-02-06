@@ -197,7 +197,7 @@ impl DeadCodeElimination {
             InstructionKind::Load { src, .. } => is_dead && self.can_remove_load(src, escape_analyzer, inst_idx),
 
             InstructionKind::Alloca { .. } => {
-                instruction.result.as_ref().is_some_and(|result| !analyzer.def_use_chains.has_uses(result))
+                instruction.result.as_ref().is_some_and(|result| !analyzer.def_use_chains.has_uses_value(result))
             }
 
             InstructionKind::Call { .. } => {
