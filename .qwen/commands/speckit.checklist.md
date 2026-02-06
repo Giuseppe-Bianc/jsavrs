@@ -219,6 +219,479 @@ You **MUST** consider the user input before proceeding (if not empty).
 
 To avoid clutter, use descriptive types and clean up obsolete checklists when done.
 
+## Patterns: Best Practices for Requirements Validation Checklists
+
+### Pattern 1: Question-Based Requirement Validation
+
+**Objective**: Evaluate the presence, quality, and completeness of requirements documentation rather than implementation correctness.
+
+**Context of Application**: Use when creating any checklist item intended to assess whether requirements are properly documented, specified, or defined.
+
+**Key Characteristics**:
+
+- Phrased as questions about the requirements themselves
+- Focuses on documentation quality dimensions (completeness, clarity, consistency, measurability, coverage)
+- References source documentation (spec sections, plan documents)
+- Includes quality dimension markers in brackets
+- Uses traceability markers ([Spec §X.Y], [Gap], [Ambiguity], etc.)
+
+**Operational Guidance**:
+
+1. Start with interrogative forms: "Are...", "Is...", "Does...", "Can..."
+2. Target the requirement artifact, not the system: "Are requirements defined for..." not "Does the system..."
+3. Specify what quality dimension you're testing: [Completeness], [Clarity], [Consistency], [Measurability], [Coverage]
+4. Add traceability: reference spec sections when validating existing content, use [Gap] when checking for missing content
+5. Make it answerable by reading the spec/plan alone, without needing to see implementation
+
+**Example Applications**:
+
+- "Are error handling requirements defined for all API failure modes? [Gap]"
+- "Is 'prominent display' quantified with specific sizing/positioning? [Clarity, Spec §FR-4]"
+- "Are hover state requirements consistent across all interactive elements? [Consistency]"
+
+---
+
+### Pattern 2: Domain-Specific Checklist Organization
+
+**Objective**: Group related requirement validation items by technical domain to enable focused review and appropriate expertise application.
+
+**Context of Application**: Use when organizing checklists for complex features spanning multiple technical domains or when different stakeholders need to review different aspects.
+
+**Key Characteristics**:
+
+- Separate checklist files per domain (ux.md, api.md, security.md, performance.md)
+- Domain-specific quality dimensions and concerns
+- Consistent structure across domains but domain-appropriate content
+- Short, memorable filenames indicating purpose
+
+**Operational Guidance**:
+
+1. Identify primary technical domains from feature context (UX, API, security, performance, accessibility, etc.)
+2. Create separate checklist files using pattern `[domain].md`
+3. Within each domain, use standard quality dimension categories but with domain-specific items
+4. Ensure cross-domain consistency requirements are captured (e.g., "Are API error codes consistent with UX error messaging?")
+5. Allow multiple checklists per feature to enable parallel review by different experts
+
+**Example Applications**:
+
+- UX checklist focuses on visual hierarchy, interaction states, accessibility requirements
+- API checklist focuses on error formats, versioning, authentication consistency
+- Performance checklist focuses on quantified metrics, load scenarios, degradation requirements
+- Security checklist focuses on authentication coverage, data protection, threat model alignment
+
+---
+
+### Pattern 3: Progressive Context Loading
+
+**Objective**: Minimize cognitive load and processing time by loading only the portions of source documentation relevant to the active focus areas.
+
+**Context of Application**: Use when generating checklists from large specification documents, plans, or task lists.
+
+**Key Characteristics**:
+
+- Loads targeted sections rather than entire documents
+- Summarizes long sections into concise bullets
+- Uses follow-on retrieval only when gaps are detected
+- Generates interim summary items for oversized sources
+
+**Operational Guidance**:
+
+1. Parse user input and clarifying answers to identify 2-4 focus areas
+2. Map focus areas to relevant sections in spec.md, plan.md, tasks.md
+3. Load only those sections initially
+4. Summarize multi-paragraph sections into requirement bullets
+5. If checklist generation reveals knowledge gaps, perform targeted follow-on retrieval
+6. For documents >500 lines, create summary points instead of embedding raw text
+
+**Example Applications**:
+
+- User requests security checklist → load only security-related spec sections, threat model, authentication requirements
+- User requests UX checklist → load UI/UX sections, accessibility requirements, interaction specifications
+- Detect gap in error handling during generation → perform targeted retrieval of error handling sections
+
+---
+
+### Pattern 4: Signal-Based Dynamic Questioning
+
+**Objective**: Generate contextually relevant clarifying questions by extracting and analyzing signals from user input and source documents rather than using pre-baked question templates.
+
+**Context of Application**: Use during the clarification phase when user input is ambiguous or when additional context would materially change checklist content.
+
+**Key Characteristics**:
+
+- Questions derived from actual content, not generic templates
+- Focuses on information that changes checklist scope, depth, or focus
+- Skips questions where answers are already clear in user input
+- Limits to 3-5 total questions maximum
+- Includes justification for follow-up questions beyond initial three
+
+**Operational Guidance**:
+
+1. Extract signals from user input: domain keywords, risk indicators, stakeholder hints, deliverables
+2. Extract signals from spec/plan: missing scenario classes, ambiguous terms, undefined non-functionals
+3. Cluster signals into 2-4 candidate focus areas ranked by relevance
+4. Identify what's already unambiguous in $ARGUMENTS
+5. Generate questions only for: scope refinement, risk prioritization, depth calibration, audience framing, boundary exclusion, scenario gaps
+6. Format with option tables when appropriate (2-5 options, columns: Option | Candidate | Why It Matters)
+7. Stop at 3 questions unless ≥2 scenario classes remain unclear, then ask max 2 more with justifications
+
+**Example Applications**:
+
+- Detected keywords "auth", "compliance" → Q1: "Which compliance frameworks should security requirements align with?"
+- No recovery flows in spec → Q2: "Are rollback/partial failure paths in scope for this checklist?"
+- Ambiguous depth → Q3: "Is this a lightweight pre-commit sanity list or formal release gate?"
+
+---
+
+### Pattern 5: Traceability-First Item Construction
+
+**Objective**: Ensure every checklist item can be traced back to specific sections of source documentation or explicitly marked as identifying gaps.
+
+**Context of Application**: Use when writing all checklist items to enable efficient validation and gap analysis.
+
+**Key Characteristics**:
+
+- Minimum 80% of items include traceability references
+- Uses spec section references [Spec §X.Y] for existing requirements
+- Uses markers [Gap], [Ambiguity], [Conflict], [Assumption] for issues
+- Enables direct navigation to source for validation
+- Facilitates gap/issue reporting
+
+**Operational Guidance**:
+
+1. When validating existing requirements: include [Spec §X.Y] reference pointing to the section being evaluated
+2. When checking for missing requirements: use [Gap] marker
+3. When identifying unclear requirements: use [Ambiguity, Spec §X.Y]
+4. When identifying conflicting requirements: use [Conflict] and reference both sections
+5. When checking assumptions: use [Assumption] or [Assumption, Spec §X.Y]
+6. If spec has no section IDs: create checklist item "Is a requirement & acceptance criteria ID scheme established? [Traceability]"
+7. Ensure ≥80% compliance across the entire checklist
+
+**Example Applications**:
+
+- "Is 'fast loading' quantified with specific timing thresholds? [Clarity, Spec §NFR-2]"
+- "Are rollback requirements defined for migration failures? [Gap]"
+- "Do navigation requirements conflict between §FR-10 and §FR-10a? [Conflict]"
+- "Is the assumption of 'always available podcast API' validated? [Assumption, Spec §INT-3]"
+
+---
+
+### Pattern 6: Scenario Class Coverage Validation
+
+**Objective**: Systematically ensure requirements exist for all relevant scenario types (primary, alternate, exception, recovery, non-functional) rather than just happy-path flows.
+
+**Context of Application**: Use when generating checklists for any feature involving user interactions, state changes, external dependencies, or non-trivial complexity.
+
+**Key Characteristics**:
+
+- Validates requirement coverage across scenario taxonomy: Primary, Alternate, Exception/Error, Recovery, Non-Functional
+- Distinguishes between intentionally excluded and missing scenario classes
+- Emphasizes resilience and rollback for state-mutating operations
+- Tests whether requirements for each scenario class are complete, clear, and consistent
+
+**Operational Guidance**:
+
+1. Identify which scenario classes apply to the feature domain
+2. For each applicable class, create checklist item: "Are [scenario type] requirements complete, clear, and consistent?"
+3. For potentially missing classes, ask: "Are [scenario type] requirements intentionally excluded or missing? [Gap]"
+4. For state-mutating operations (data writes, migrations, deployments): always include "Are rollback/recovery requirements defined? [Gap]"
+5. For external dependencies: include "Are timeout/retry requirements defined for [dependency]? [Coverage, Gap]"
+6. For user-facing features: include "Are zero-state/empty-state requirements defined? [Coverage, Edge Case]"
+
+**Example Applications**:
+
+- "Are exception/error flow requirements defined for payment processing? [Coverage, Gap]"
+- "Are recovery requirements documented for database migration failures? [Gap, Exception Flow]"
+- "Are alternate path requirements specified for offline scenarios? [Coverage, Alternate Flow]"
+- "Are performance degradation requirements defined for high-load conditions? [Coverage, Non-Functional]"
+
+## Anti-Patterns: Common Mistakes to Avoid
+
+### Anti-Pattern 1: Implementation Verification Items
+
+**Description**: Writing checklist items that test whether the implemented system behaves correctly rather than whether the requirements are properly documented.
+
+**Reasons to Avoid**:
+
+- Fundamentally misunderstands the purpose of requirements validation checklists
+- Cannot be completed by reading specification documents alone
+- Requires access to running system or codebase
+- Conflates requirements phase with testing/QA phase
+- Makes checklist unusable during requirements review or before implementation exists
+
+**Negative Consequences**:
+
+- Checklist becomes unusable for its intended purpose (pre-implementation requirements validation)
+- Cannot be completed by product managers, analysts, or reviewers without technical implementation access
+- Delays discovery of requirement gaps until implementation phase when changes are costly
+- Creates confusion about checklist purpose among stakeholders
+- Wastes time creating items that duplicate QA test plans
+
+**Correct Alternative**: Use Question-Based Requirement Validation pattern (Pattern 1). Transform verification items into questions about requirement documentation quality.
+
+**Examples of This Anti-Pattern**:
+
+- ❌ "Verify landing page displays 3 episode cards"
+- ❌ "Test hover states work correctly on desktop"
+- ❌ "Confirm API returns 401 for unauthorized requests"
+- ❌ "Check that logo click navigates to home page"
+
+**Corrected Versions**:
+
+- ✅ "Are the number and layout of featured episodes explicitly specified? [Completeness, Spec §FR-001]"
+- ✅ "Are hover state requirements consistently defined for all interactive elements? [Consistency, Spec §FR-003]"
+- ✅ "Are authentication error responses specified for all protected endpoints? [Completeness, Gap]"
+- ✅ "Are navigation requirements clear for all clickable brand elements? [Clarity, Spec §FR-010]"
+
+---
+
+### Anti-Pattern 2: Imperative Verification Verbs
+
+**Description**: Starting checklist items with action verbs that imply executing tests or performing system verification (Verify, Test, Confirm, Check, Execute, Run, Validate [system behavior]).
+
+**Reasons to Avoid**:
+
+- Grammatically signals implementation testing rather than documentation review
+- Primes reader to think about system behavior instead of specification quality
+- Encourages confusion between requirements validation and QA activities
+- Makes items sound like test cases rather than documentation quality checks
+
+**Negative Consequences**:
+
+- Readers misinterpret checklist purpose and attempt to execute items as tests
+- Reinforces incorrect mental model of checklist as test plan
+- Makes items incompletable during requirements phase
+- Stakeholders defer checklist completion until implementation exists
+- Team develops duplicate testing artifacts unnecessarily
+
+**Correct Alternative**: Use interrogative question format (Pattern 1): "Are...", "Is...", "Does [the spec] define...", "Can [requirement] be measured..."
+
+**Examples of This Anti-Pattern**:
+
+- ❌ "Verify error messages are user-friendly"
+- ❌ "Test that the API handles concurrent requests"
+- ❌ "Confirm loading spinner appears during data fetch"
+- ❌ "Check navigation works on mobile devices"
+- ❌ "Validate input sanitization prevents XSS"
+
+**Corrected Versions**:
+
+- ✅ "Are user-friendly error message requirements specified with examples? [Clarity, Gap]"
+- ✅ "Are concurrent request handling requirements defined? [Completeness, Gap]"
+- ✅ "Are loading state requirements specified for asynchronous operations? [Coverage, Gap]"
+- ✅ "Are mobile navigation requirements explicitly documented? [Completeness, Spec §FR-NAV]"
+- ✅ "Are input sanitization requirements defined to prevent XSS? [Security, Gap]"
+
+---
+
+### Anti-Pattern 3: Traceability-Free Items
+
+**Description**: Writing checklist items without references to source documentation sections or gap/issue markers, making validation and follow-up impossible.
+
+**Reasons to Avoid**:
+
+- Reviewer cannot efficiently locate referenced requirements to validate the item
+- No way to distinguish between "checking existing requirement quality" vs "identifying missing requirement"
+- Impossible to generate actionable gap reports or issue lists
+- Breaks ability to trace checklist completion back to spec improvements
+- Violates the 80% minimum traceability requirement
+
+**Negative Consequences**:
+
+- Checklist completion requires exhaustive spec searching, wasting reviewer time
+- Cannot generate spec improvement action items from checklist results
+- No data on where spec gaps exist
+- Difficult to measure checklist effectiveness or spec coverage
+- Undermines checklist value as requirements quality diagnostic tool
+
+**Correct Alternative**: Use Traceability-First Item Construction pattern (Pattern 5). Include [Spec §X.Y] for existing requirements or [Gap], [Ambiguity], [Conflict], [Assumption] markers.
+
+**Examples of This Anti-Pattern**:
+
+- ❌ "Are performance requirements quantified?"
+- ❌ "Is error handling documented?"
+- ❌ "Are accessibility requirements included?"
+- ❌ "Is the authentication flow defined?"
+
+**Corrected Versions**:
+
+- ✅ "Are performance requirements quantified with specific metrics? [Clarity, Spec §NFR-2]"
+- ✅ "Are error handling requirements defined for all failure modes? [Gap]"
+- ✅ "Are accessibility requirements specified for all interactive elements? [Completeness, Spec §ACC-1]"
+- ✅ "Is the authentication flow defined with state transitions? [Clarity, Spec §SEC-3]"
+
+---
+
+### Anti-Pattern 4: Vague or Unmeasurable Quality Questions
+
+**Description**: Asking whether requirements are "good", "adequate", "sufficient", or "appropriate" without specifying measurable quality criteria or dimension.
+
+**Reasons to Avoid**:
+
+- Subjective terms lead to inconsistent checklist completion across reviewers
+- No clear pass/fail criteria for the item
+- Doesn't guide reviewer on what specifically to check
+- Fails to identify the specific quality dimension being tested
+- Provides no actionable feedback on how to improve requirements
+
+**Negative Consequences**:
+
+- Different reviewers interpret items differently, producing inconsistent results
+- Items get checked off despite requirement quality issues
+- No guidance provided to spec authors on what needs improvement
+- Checklist loses diagnostic value
+- Doesn't surface specific quality gaps (missing metrics, ambiguous terms, etc.)
+
+**Correct Alternative**: Specify the exact quality dimension being tested and make it measurable. Use patterns from Pattern 1 examples with explicit dimensions: [Completeness], [Clarity], [Consistency], [Measurability], [Coverage].
+
+**Examples of This Anti-Pattern**:
+
+- ❌ "Are the requirements good enough?"
+- ❌ "Is the security approach adequate?"
+- ❌ "Are performance considerations sufficient?"
+- ❌ "Is error handling appropriate?"
+- ❌ "Are the UX requirements satisfactory?"
+
+**Corrected Versions**:
+
+- ✅ "Are all functional requirements mapped to acceptance criteria? [Completeness, Traceability]"
+- ✅ "Are authentication requirements specified for all protected resources? [Coverage, Spec §SEC-2]"
+- ✅ "Are performance targets quantified with specific latency thresholds? [Measurability, Spec §NFR-1]"
+- ✅ "Are error response formats specified for all API failure scenarios? [Completeness, Gap]"
+- ✅ "Is 'intuitive navigation' defined with measurable usability criteria? [Clarity, Spec §UX-4]"
+
+---
+
+### Anti-Pattern 5: Monolithic Single-Domain Checklists
+
+**Description**: Creating one massive checklist that combines all domains (UX, API, security, performance, etc.) into a single file regardless of feature complexity.
+
+**Reasons to Avoid**:
+
+- Single file becomes unwieldy for complex features (40+ items)
+- Cannot distribute review tasks to domain experts efficiently
+- Difficult to navigate and find relevant items
+- Mixes concerns that may have different reviewers or timelines
+- Loses ability to track domain-specific coverage
+
+**Negative Consequences**:
+
+- Checklist review becomes time-consuming and overwhelming
+- Domain experts cannot focus on their area without scanning irrelevant items
+- Parallel review by multiple experts becomes impractical
+- Higher likelihood of items being skipped or overlooked
+- Cannot retire/archive domain-specific checklists independently
+
+**Correct Alternative**: Use Domain-Specific Checklist Organization pattern (Pattern 2). Create separate checklist files per domain (ux.md, api.md, security.md) for complex features.
+
+**When This Anti-Pattern Applies**:
+
+- Feature spans 3+ distinct technical domains
+- Feature has 30+ total checklist items
+- Multiple specialists need to review different aspects
+- Domains have different review timelines (e.g., security review after UX review)
+
+**Corrected Approach**:
+
+- Create `ux.md` with 15 items focused on visual hierarchy, interaction states, accessibility
+- Create `api.md` with 12 items focused on error formats, authentication, versioning
+- Create `security.md` with 8 items focused on threat model, data protection, authorization
+- Allows UX designer, backend engineer, and security specialist to work in parallel
+
+---
+
+### Anti-Pattern 6: Pre-Implementation Assumption Overload
+
+**Description**: Writing checklist items that assume implementation details, technology choices, or design decisions that haven't been finalized in requirements phase.
+
+**Reasons to Avoid**:
+
+- Requirements should be implementation-agnostic where possible
+- Checklist becomes obsolete if technology choices change
+- Prematurely constrains implementation options
+- Confuses requirements validation with design review
+- May reference frameworks, libraries, or patterns not yet selected
+
+**Negative Consequences**:
+
+- Checklist must be rewritten if implementation approach changes
+- Distracts from validating actual business/functional requirements
+- May invalidate checklist before requirements phase completes
+- Creates false dependencies on technical decisions
+- Reduces reusability of checklist items across similar features
+
+**Correct Alternative**: Focus on requirement quality independent of implementation. Ask about required capabilities, constraints, and quality attributes rather than specific technologies or patterns.
+
+**Examples of This Anti-Pattern**:
+
+- ❌ "Are React component prop types documented? [Spec §TECH-5]"
+- ❌ "Are Redux action creators specified for state mutations? [Completeness]"
+- ❌ "Is the REST API versioning strategy using URL paths? [Clarity]"
+- ❌ "Are PostgreSQL transaction isolation levels defined? [Gap]"
+
+**Corrected Versions**:
+
+- ✅ "Are component interface contracts (inputs/outputs) documented? [Completeness, Spec §ARCH-5]"
+- ✅ "Are state mutation requirements and invariants specified? [Clarity, Gap]"
+- ✅ "Is the API versioning strategy documented? [Completeness, Spec §API-2]"
+- ✅ "Are transaction isolation requirements defined for concurrent operations? [Consistency, Gap]"
+
+---
+
+### Anti-Pattern 7: Scenario Class Blind Spots
+
+**Description**: Focusing exclusively on primary/happy-path requirements while neglecting to validate whether alternate, exception, recovery, and non-functional scenario requirements exist.
+
+**Reasons to Avoid**:
+
+- Most requirement gaps occur in non-primary scenarios
+- Exception and recovery paths are often completely undocumented
+- Non-functional requirements (performance, security) frequently omitted
+- Real-world failures occur in alternate and exception paths
+- Production issues traced to missing edge case requirements
+
+**Negative Consequences**:
+
+- Checklist gives false sense of completeness while major gaps remain
+- Teams discover missing requirements during implementation (costly)
+- Production incidents occur due to unspecified error handling
+- Recovery procedures undefined, leading to operational failures
+- Non-functional requirement gaps discovered during load testing or security audit
+
+**Correct Alternative**: Use Scenario Class Coverage Validation pattern (Pattern 6). Systematically validate requirement coverage across Primary, Alternate, Exception, Recovery, and Non-Functional scenario classes.
+
+**Examples of This Anti-Pattern** (missing scenario coverage):
+
+```markdown
+## Requirement Completeness
+- [ ] CHK001 - Are user registration fields specified? [Spec §FR-1]
+- [ ] CHK002 - Are login flow steps documented? [Spec §FR-2]
+- [ ] CHK003 - Are dashboard layout requirements defined? [Spec §FR-3]
+```
+
+**Corrected Version** (comprehensive scenario coverage):
+
+```markdown
+## Requirement Completeness
+- [ ] CHK001 - Are user registration fields specified? [Spec §FR-1]
+- [ ] CHK002 - Are login flow steps documented? [Spec §FR-2]
+- [ ] CHK003 - Are dashboard layout requirements defined? [Spec §FR-3]
+
+## Exception & Error Coverage
+- [ ] CHK004 - Are authentication failure scenarios and error messages defined? [Gap, Exception Flow]
+- [ ] CHK005 - Are requirements specified for invalid registration input? [Gap]
+- [ ] CHK006 - Are network timeout/failure requirements documented? [Gap, Exception Flow]
+
+## Recovery & Resilience
+- [ ] CHK007 - Are session timeout and re-authentication requirements defined? [Gap, Recovery]
+- [ ] CHK008 - Are password reset flow requirements specified? [Coverage, Alternate Flow]
+
+## Non-Functional Requirements
+- [ ] CHK009 - Are authentication performance targets quantified? [Gap, Performance]
+- [ ] CHK010 - Are password strength and storage requirements defined? [Gap, Security]
+- [ ] CHK011 - Are accessibility requirements specified for login forms? [Gap, Accessibility]
+```
+
 ## Example Checklist Types & Sample Items
 
 **UX Requirements Quality:** `ux.md`
