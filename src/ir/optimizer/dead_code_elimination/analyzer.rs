@@ -1,6 +1,7 @@
 //! Liveness and reachability analysis.
 
 use crate::ir::{Function, InstructionKind, Terminator, TerminatorKind, Value};
+use crate::ir::value::ValueId;
 use petgraph::graph::NodeIndex;
 use std::collections::{HashMap, HashSet};
 
@@ -16,17 +17,17 @@ pub struct LivenessAnalyzer {
     /// Def-use chains for tracking value dependencies.
     pub def_use_chains: DefUseChains,
 
-    /// Gen sets: values used before being defined in each block.
-    gen_sets: HashMap<NodeIndex, HashSet<Value>>,
+    /// Gen sets: ids of values used before being defined in each block.
+    gen_sets: HashMap<NodeIndex, HashSet<ValueId>>,
 
-    /// Kill sets: values defined in each block.
-    kill_sets: HashMap<NodeIndex, HashSet<Value>>,
+    /// Kill sets: ids of values defined in each block.
+    kill_sets: HashMap<NodeIndex, HashSet<ValueId>>,
 
-    /// Live-in sets: values live at the start of each block.
-    live_in: HashMap<NodeIndex, HashSet<Value>>,
+    /// Live-in sets: ids of values live at the start of each block.
+    live_in: HashMap<NodeIndex, HashSet<ValueId>>,
 
-    /// Live-out sets: values live at the end of each block.
-    live_out: HashMap<NodeIndex, HashSet<Value>>,
+    /// Live-out sets: ids of values live at the end of each block.
+    live_out: HashMap<NodeIndex, HashSet<ValueId>>,
 }
 
 impl Drop for LivenessAnalyzer {
@@ -91,7 +92,7 @@ impl LivenessAnalyzer {
                 self.process_instruction_uses(&mut gen_set, &kill_set, &inst_idx);
 
                 if let Some(defined_value) = self.def_use_chains.get_defined_value(&inst_idx) {
-                    kill_set.insert(defined_value.clone());
+                    kill_set.insert(defined_value);
                 }
             }
 
@@ -125,10 +126,10 @@ impl LivenessAnalyzer {
     /// which is expected behavior for instructions that define values without using any
     /// (e.g., `Alloca` instructions).
     fn process_instruction_uses(
-        &self, gen_set: &mut HashSet<Value>, kill_set: &HashSet<Value>, idx: &InstructionIndex,
+        &self, gen_set: &mut HashSet<ValueId>, kill_set: &HashSet<ValueId>, idx: &InstructionIndex,
     ) {
         if let Some(used_values) = self.def_use_chains.get_instruction_to_used_values().get(idx) {
-            gen_set.extend(used_values.iter().filter(|v| !kill_set.contains(*v)).cloned());
+            gen_set.extend(used_values.iter().copied().filter(|v| !kill_set.contains(v)));
         }
     }
 
@@ -158,7 +159,7 @@ impl LivenessAnalyzer {
                 let mut new_live_out = HashSet::new();
                 for successor in function.cfg.graph().neighbors(block_idx) {
                     if let Some(succ_live_in) = self.live_in.get(&successor) {
-                        new_live_out.extend(succ_live_in.iter().cloned());
+                        new_live_out.extend(succ_live_in.iter().copied());
                     }
                 }
 
@@ -168,9 +169,9 @@ impl LivenessAnalyzer {
                 let mut new_live_in = gen_set.cloned().unwrap_or_default();
 
                 if let Some(kill) = kill_set {
-                    new_live_in.extend(new_live_out.iter().filter(|v| !kill.contains(v)).cloned());
+                    new_live_in.extend(new_live_out.iter().filter(|v| !kill.contains(v)).copied());
                 } else {
-                    new_live_in.extend(new_live_out.iter().cloned());
+                    new_live_in.extend(new_live_out.iter().copied());
                 }
 
                 let changed_in = self.live_in.get(&block_idx) != Some(&new_live_in);

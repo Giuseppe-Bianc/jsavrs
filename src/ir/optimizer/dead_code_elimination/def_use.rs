@@ -1,6 +1,7 @@
 //! Definition-use chain tracking for liveness analysis.
 
 use crate::ir::Value;
+use crate::ir::value::ValueId;
 use std::collections::{HashMap, HashSet};
 
 use super::InstructionIndex;
@@ -11,14 +12,14 @@ use super::InstructionIndex;
 /// to the values it defines and uses. Essential for liveness analysis.
 #[derive(Debug, Clone)]
 pub struct DefUseChains {
-    /// Maps each value to the set of instruction indices that use it.
-    value_to_uses: HashMap<Value, HashSet<InstructionIndex>>,
+    /// Maps each value id to the set of instruction indices that use it.
+    value_to_uses: HashMap<ValueId, HashSet<InstructionIndex>>,
 
-    /// Maps each instruction to the values it uses.
-    instruction_to_used_values: HashMap<InstructionIndex, HashSet<Value>>,
+    /// Maps each instruction to the ids of the values it uses.
+    instruction_to_used_values: HashMap<InstructionIndex, HashSet<ValueId>>,
 
-    /// Maps each instruction to the value it defines (if any).
-    instruction_to_defined_value: HashMap<InstructionIndex, Value>,
+    /// Maps each instruction to the id of the value it defines (if any).
+    instruction_to_defined_value: HashMap<InstructionIndex, ValueId>,
 }
 
 impl Drop for DefUseChains {
@@ -43,20 +44,22 @@ impl DefUseChains {
     /// Records that an instruction defines a value.
     #[inline]
     pub fn add_definition(&mut self, inst_idx: InstructionIndex, value: &Value) {
-        self.instruction_to_defined_value.insert(inst_idx, value.clone());
+        // Store only the inexpensive `ValueId` to avoid hashing/cloning full `Value`
+        self.instruction_to_defined_value.insert(inst_idx, value.id);
     }
 
     /// Records that an instruction uses a value.
     #[inline]
     pub fn add_use(&mut self, inst_idx: InstructionIndex, value: &Value) {
-        self.instruction_to_used_values.entry(inst_idx).or_default().insert(value.clone());
-        self.value_to_uses.entry(value.clone()).or_default().insert(inst_idx);
+        let id = value.id;
+        self.instruction_to_used_values.entry(inst_idx).or_default().insert(id);
+        self.value_to_uses.entry(id).or_default().insert(inst_idx);
     }
 
     /// Returns the set of instructions that use the given value.
     #[allow(dead_code)]
     pub fn get_uses(&self, value: &Value) -> HashSet<InstructionIndex> {
-        self.value_to_uses.get(value).cloned().unwrap_or_default()
+        self.value_to_uses.get(&value.id).cloned().unwrap_or_default()
     }
 
     /// Returns a reference to the mapping of instructions to the values they use.
@@ -68,7 +71,7 @@ impl DefUseChains {
     ///
     /// A reference to the `HashMap` mapping each instruction index to the set of values it uses.
     #[inline]
-    pub const fn get_instruction_to_used_values(&self) -> &HashMap<InstructionIndex, HashSet<Value>> {
+    pub const fn get_instruction_to_used_values(&self) -> &HashMap<InstructionIndex, HashSet<ValueId>> {
         &self.instruction_to_used_values
     }
 
@@ -81,14 +84,20 @@ impl DefUseChains {
     /// # Returns
     ///
     /// `Some(&value)` if the instruction defines a value, `None` otherwise.
-    pub fn get_defined_value(&self, inst_idx: &InstructionIndex) -> Option<&Value> {
-        self.instruction_to_defined_value.get(inst_idx)
+    pub fn get_defined_value(&self, inst_idx: &InstructionIndex) -> Option<ValueId> {
+        self.instruction_to_defined_value.get(inst_idx).copied()
     }
 
     /// Checks if the given value has any uses.
     #[inline]
-    pub fn has_uses(&self, value: &Value) -> bool {
-        self.value_to_uses.get(value).is_some_and(|uses| !uses.is_empty())
+    pub fn has_uses(&self, value_id: ValueId) -> bool {
+        self.value_to_uses.get(&value_id).is_some_and(|uses| !uses.is_empty())
+    }
+
+    /// Convenience wrapper to check uses by `Value` reference.
+    #[inline]
+    pub fn has_uses_value(&self, value: &Value) -> bool {
+        self.has_uses(value.id)
     }
 }
 
