@@ -8,6 +8,8 @@ use std::collections::{HashMap, HashSet};
 use super::InstructionIndex;
 use super::def_use::DefUseChains;
 
+const LIVE_VALUES_PER_SUCCESSOR_ESTIMATE: usize = 5;
+
 /// Liveness analyzer using backward dataflow analysis.
 ///
 /// Computes which values are live at each program point using def-use chains
@@ -138,8 +140,6 @@ impl LivenessAnalyzer {
         const MAX_ITERATIONS: usize = 10;
 
         let cfg = function.cfg.graph();
-
-        const LIVE_VALUES_PER_SUCCESSOR_ESTIMATE: usize = 5;
         // Initialize all live sets to empty
         for block_idx in cfg.node_indices() {
             let capacity = cfg.neighbors(block_idx).count() * LIVE_VALUES_PER_SUCCESSOR_ESTIMATE;
