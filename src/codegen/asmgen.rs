@@ -34,6 +34,7 @@ pub struct AsmGen {
 }
 
 impl AsmGen {
+    #[must_use]
     pub fn new(ir: Module) -> Self {
         let target_triple = ir.target_triple;
         Self { ir, errors: Vec::new(), assembly_file: AssemblyFile::new(Self::target_triple_to_abi(target_triple)) }
@@ -81,7 +82,7 @@ impl AsmGen {
     ///     }
     /// }
     /// ```
-
+    #[must_use]
     pub fn gen_asm(self) -> (AssemblyFile, Vec<CompileError>) {
         println!("Generating assembly for abi: {:?}", self.assembly_file.abi());
         (self.assembly_file, self.errors)
