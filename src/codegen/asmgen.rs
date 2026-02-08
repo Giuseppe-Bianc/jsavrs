@@ -1,21 +1,42 @@
-use crate::{asm::{Abi, AssemblyFile}, error::compile_error::CompileError, ir::{Module, TargetTriple}};
-
+use crate::{
+    asm::{Abi, AssemblyFile},
+    error::compile_error::CompileError,
+    ir::{Module, TargetTriple},
+};
 
 #[allow(dead_code)]
+/// Assembly code generator for translating IR to target-specific assembly.
+///
+/// `AsmGen` consumes an intermediate representation [`Module`] and produces an
+/// [`AssemblyFile`] configured for the appropriate target ABI. Errors encountered
+/// during code generation are accumulated in the `errors` vector.
+///
+/// # Lifecycle
+///
+/// 1. Create an instance via [`AsmGen::new`] with an IR module.
+/// 2. Call [`AsmGen::gen_asm`] to consume the generator and retrieve output.
+///
+/// # Example
+///
+/// ```ignore
+/// let generator = AsmGen::new(ir_module);
+/// let (assembly, errors) = generator.gen_asm();
+/// ```
 pub struct AsmGen {
+    /// The intermediate representation module to be translated into assembly.
+    /// Contains the target triple, function definitions, and global data.
     ir: Module,
+    /// Accumulated compilation errors encountered during assembly generation.
+    /// Empty if generation succeeds without issues.
     errors: Vec<CompileError>,
-    assembly_file: AssemblyFile
+    /// The output assembly file being constructed, configured for the target ABI.
+    assembly_file: AssemblyFile,
 }
 
 impl AsmGen {
     pub fn new(ir: Module) -> Self {
         let target_triple = ir.target_triple;
-        Self {
-            ir,
-            errors: Vec::new(),
-            assembly_file: AssemblyFile::new(Self::target_triple_to_abi(target_triple)),
-        }
+        Self { ir, errors: Vec::new(), assembly_file: AssemblyFile::new(Self::target_triple_to_abi(target_triple)) }
     }
 
     fn target_triple_to_abi(target_triple: TargetTriple) -> Abi {
@@ -28,9 +49,38 @@ impl AsmGen {
             | TargetTriple::AArch64PcWindowsGnu
             | TargetTriple::I686PcWindowsGnu
             | TargetTriple::I686UnknownLinuxGnu
-            | TargetTriple::Wasm32UnknownEmscripten => todo!("ABI for target triple {:?} not supported yet", target_triple),
+            | TargetTriple::Wasm32UnknownEmscripten => {
+                todo!("ABI for target triple {:?} not supported yet", target_triple)
+            }
         }
     }
+
+    /// Consumes the generator and produces the final assembly output.
+    ///
+    /// This method finalizes assembly generation, returning the constructed
+    /// [`AssemblyFile`] along with any errors encountered during the process.
+    ///
+    /// # Returns
+    ///
+    /// A tuple containing:
+    /// - `AssemblyFile`: The generated assembly code configured for the target ABI.
+    /// - `Vec<CompileError>`: Any errors encountered during generation. Empty if
+    ///   generation succeeded without issues.
+    ///
+    /// # Example
+    ///
+    /// ```ignore
+    /// let generator = AsmGen::new(ir_module);
+    /// let (assembly, errors) = generator.gen_asm();
+    ///
+    /// if errors.is_empty() {
+    ///     // Write assembly to file or pass to assembler
+    /// } else {
+    ///     for error in &errors {
+    ///         eprintln!("Compilation error: {}", error);
+    ///     }
+    /// }
+    /// ```
 
     pub fn gen_asm(self) -> (AssemblyFile, Vec<CompileError>) {
         println!("Generating assembly for abi: {:?}", self.assembly_file.abi());

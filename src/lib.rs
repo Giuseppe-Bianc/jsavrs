@@ -16,15 +16,15 @@
 /// * `parser` - Converts tokens into abstract syntax trees (AST)
 /// * `semantic` - Performs semantic analysis and type checking
 /// * `ir` - Manages intermediate representation of the code
-/// * `printers` - Handles code generation and printing to various formats
+/// * `printers` - Handles pretty-printing and formatted output of AST/IR for debugging
 /// * `asm` - Manages assembly code generation
 /// * `fmtlike` - Provides utilities for formatting and pretty-printing
-/// * `codegen` - Handles code generation for various backends
+/// * `codegen` - Orchestrates code generation, dispatching to backend-specific emitters (e.g., asm)
 /// * `error` - Defines error types and error handling utilities
 /// * `cli` - Provides command-line interface functionality
 pub mod asm;
-pub mod codegen;
 pub mod cli;
+pub mod codegen;
 pub mod error;
 pub mod fmtlike;
 pub mod ir;
