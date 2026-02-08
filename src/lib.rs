@@ -18,9 +18,12 @@
 /// * `ir` - Manages intermediate representation of the code
 /// * `printers` - Handles code generation and printing to various formats
 /// * `asm` - Manages assembly code generation
+/// * `fmtlike` - Provides utilities for formatting and pretty-printing
+/// * `codegen` - Handles code generation for various backends
 /// * `error` - Defines error types and error handling utilities
 /// * `cli` - Provides command-line interface functionality
 pub mod asm;
+pub mod codegen;
 pub mod cli;
 pub mod error;
 pub mod fmtlike;

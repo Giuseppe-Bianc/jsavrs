@@ -3,6 +3,7 @@ use clap::Parser;
 use console::style;
 // use jsavrs::asm::{Abi, AssemblyFile, DataDirective, GPRegister64, Immediate, Instruction, Operand, X86Register};
 use jsavrs::cli::Args;
+use jsavrs::codegen::asmgen::AsmGen;
 use jsavrs::error::error_reporter::ErrorReporter;
 use jsavrs::ir::optimizer::constant_folding::optimizer::ConstantFoldingOptimizer;
 use jsavrs::ir::{Phase, generator::IrGenerator, optimizer::DeadCodeElimination, run_pipeline};
@@ -164,6 +165,12 @@ fn main() -> Result<(), CompileError> {
     );
 
     println!("file:\n{}", assembly_file);*/
-
+    let asm_gen: AsmGen = AsmGen::new(module);
+    let (_assembly_file, asm_errors) = asm_gen.gen_asm();
+    if !asm_errors.is_empty() {
+        eprintln!("{}", error_reporter.report_errors(asm_errors));
+        process::exit(1);
+    }
+    
     Ok(())
 }
