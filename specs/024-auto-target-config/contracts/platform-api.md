@@ -70,10 +70,49 @@ pub fn platform_config_for(os: &str, arch: &str) -> PlatformConfig;
 ```
 
 **Properties**:
+
 - **Pure**: No side effects, no I/O, no allocations
 - **Deterministic**: Same inputs always produce same outputs
 - **Total**: Always returns a valid `PlatformConfig` (never panics, never returns `Result`)
 - **Visibility**: `pub` (exported from `jsavrs::ir`)
+
+---
+
+### `platform_config_with_warnings`
+
+```rust
+/// Returns the platform configuration for the given OS and architecture strings,
+/// emitting `eprintln!` warnings for unsupported combinations.
+///
+/// This function combines the pure mapping logic of `platform_config_for()` with
+/// warning emission for unsupported platforms. It exists to make warning behavior
+/// deterministically testable from any host OS.
+///
+/// # Warnings
+///
+/// - Emits `eprintln!("warning: unsupported host OS '{}', ...")`
+///   when `os` is not `"windows"`, `"linux"`, or `"macos"`.
+/// - Emits `eprintln!("warning: unsupported host architecture '{}', ...")`
+///   when `arch` is not `"x86_64"`.
+///
+/// # Examples
+///
+/// ```
+/// use jsavrs::ir::platform::platform_config_with_warnings;
+///
+/// // On any host, this will emit a warning and return Linux x86_64 config:
+/// let config = platform_config_with_warnings("freebsd", "x86_64");
+/// ```
+#[must_use]
+pub fn platform_config_with_warnings(os: &str, arch: &str) -> PlatformConfig;
+```
+
+**Properties**:
+
+- **Impure**: May emit `eprintln!` warnings (side effect on stderr)
+- **Deterministic**: Same inputs always produce same outputs and same warnings
+- **Total**: Always returns a valid `PlatformConfig` (never panics)
+- **Visibility**: `pub` (enables deterministic testing of warning paths from any host)
 
 ---
 
@@ -82,10 +121,8 @@ pub fn platform_config_for(os: &str, arch: &str) -> PlatformConfig;
 ```rust
 /// Detects the host platform and returns the corresponding configuration.
 ///
-/// Calls `platform_config_for()` with `std::env::consts::OS` and
-/// `std::env::consts::ARCH`. Emits `eprintln!` warnings when:
-/// - The host OS is not one of `"windows"`, `"linux"`, `"macos"`
-/// - The host architecture is not `"x86_64"`
+/// Thin wrapper: calls `platform_config_with_warnings()` with
+/// `std::env::consts::OS` and `std::env::consts::ARCH`.
 ///
 /// # Examples
 ///
@@ -100,7 +137,8 @@ pub fn detect_host_platform() -> PlatformConfig;
 ```
 
 **Properties**:
-- **Impure**: May emit `eprintln!` warnings (side effect on stderr)
+
+- **Impure**: Delegates to `platform_config_with_warnings()`, which may emit warnings
 - **Deterministic on a given host**: Always returns the same config for a given binary
 - **Visibility**: `pub` (used internally by `Module::new()`, available for direct use)
 
@@ -109,6 +147,7 @@ pub fn detect_host_platform() -> PlatformConfig;
 ## Integration Point: `Module::new()`
 
 **Before** (0.1.0):
+
 ```rust
 pub fn new(name: impl Into<Arc<str>>, root_scope: Option<ScopeId>) -> Self {
     Self {
@@ -122,6 +161,7 @@ pub fn new(name: impl Into<Arc<str>>, root_scope: Option<ScopeId>) -> Self {
 ```
 
 **After** (0.2.0):
+
 ```rust
 pub fn new(name: impl Into<Arc<str>>, root_scope: Option<ScopeId>) -> Self {
     let platform = crate::ir::platform::detect_host_platform();
@@ -148,8 +188,10 @@ pub use platform::platform_config_for;
 ```
 
 **Public API surface**:
+
 - `jsavrs::ir::platform::PlatformConfig`
 - `jsavrs::ir::platform::platform_config_for`
+- `jsavrs::ir::platform::platform_config_with_warnings`
 - `jsavrs::ir::platform::detect_host_platform`
 - `jsavrs::ir::platform_config_for` (re-exported)
 

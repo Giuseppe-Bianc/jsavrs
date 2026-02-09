@@ -18,10 +18,12 @@
 **Derive traits**: `Debug`, `Clone`, `Copy`, `PartialEq`, `Eq`, `Hash`
 
 **Invariants**:
+
 - A `PlatformConfig` MUST always contain a consistent (DataLayout, TargetTriple) pair — i.e., the DataLayout's mangling mode matches the TargetTriple's platform.
 - Only `platform_config_for()` and `detect_host_platform()` construct this type, ensuring the invariant is maintained at the point of construction.
 
 **Validation rules**:
+
 - No runtime validation needed — the mapping is hardcoded and exhaustive.
 - The struct is `Copy`, so no ownership concerns.
 
@@ -87,7 +89,7 @@
 
 ## Relationships
 
-```
+```text
 PlatformConfig 1:1 DataLayout
 PlatformConfig 1:1 TargetTriple
 Module 1:1 DataLayout (via PlatformConfig or manual override)

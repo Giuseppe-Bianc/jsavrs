@@ -67,6 +67,7 @@ module.set_target_triple(TargetTriple::X86_64UnknownLinuxGnu);
 ### New Tests for Auto-Detection
 
 The new test file `tests/auto_target_config.rs` covers:
+
 1. Deterministic mapping for all 3 platforms (3 tests)
 2. Host-OS detection via `Module::new()` (1 test)
 3. Manual override preservation (1 test)

@@ -7,33 +7,33 @@
 
 ## Summary
 
-Implement automatic host-OS detection for `Module` construction so that `DataLayout` and `TargetTriple` fields are set to platform-correct values (Windows, Linux, macOS on x86_64) instead of hardcoded Linux defaults. A new pure function `platform_config_for(os, arch)` in `src/ir/platform.rs` provides deterministic, testable mapping; a wrapper `detect_host_platform()` calls it with `std::env::consts::OS` and `std::env::consts::ARCH`. The `Module::new()` constructor is updated to call `detect_host_platform()`. Unsupported OS/arch combinations fall back to Linux x86_64 with `eprintln!` warnings. This is a **semver-breaking change** (version 0.1.0 → 0.2.0). Existing tests and 63 snapshot files must be adapted.
+Implement automatic host-OS detection for `Module` construction so that `DataLayout` and `TargetTriple` fields are set to platform-correct values (Windows, Linux, macOS on x86_64) instead of hardcoded Linux defaults. A new pure function `platform_config_for(os, arch)` in `src/ir/platform.rs` provides deterministic, testable mapping; a wrapper `detect_host_platform()` calls it with `std::env::consts::OS` and `std::env::consts::ARCH`. The `Module::new()` constructor is updated to call `detect_host_platform()`. Unsupported OS/arch combinations fall back to Linux x86_64 with `eprintln!` warnings. This is a **semver-breaking change** (version 0.1.0 → 0.2.0). Existing tests and snapshot files must be adapted (DCE + generator snapshot tests pinned to explicit Linux targets).
 
 ## Technical Context
 
 **Language/Version**: Rust 1.93.0 (edition 2024)
-**Primary Dependencies**: None for new code (stdlib only: `std::env::consts::OS`, `std::env::consts::ARCH`)
+**Primary Dependencies**: None for new production code (stdlib only: `std::env::consts::OS`, `std::env::consts::ARCH`). Dev-dependency: `gag` crate for stderr capture in edge-case integration tests (T028–T029).
 **Storage**: N/A
 **Testing**: `cargo test` + `insta` snapshots (dev-dependency)
 **Target Platform**: Windows x86_64, Linux x86_64, macOS x86_64 (CI: ubuntu-latest, windows-latest, macos-latest)
 **Project Type**: Single Rust crate (compiler)
 **Performance Goals**: Zero runtime overhead — `platform_config_for` is a pure `const`-eligible function returning `Copy` enums
-**Constraints**: Zero external dependencies for new module; breaking change requires semver major bump
-**Scale/Scope**: 1 new file (`src/ir/platform.rs`, ~80 LOC), 1 modified file (`src/ir/module.rs`, ~5 lines changed), 1 modified file (`src/ir/mod.rs`, 2 lines added), 1 new test file (`tests/auto_target_config.rs`, ~200 LOC), 6+ existing test assertions updated in `tests/ir_module_test.rs`, 63 snapshot files regenerated, `Cargo.toml` version bump
+**Constraints**: Zero external dependencies for new production module; breaking change requires semver-significant version bump (0.x → 0.y for pre-1.0). `gag` crate added as dev-dependency only for stderr capture in integration tests.
+**Scale/Scope**: 1 new file (`src/ir/platform.rs`, ~80 LOC), 1 modified file (`src/ir/module.rs`, ~5 lines changed), 1 modified file (`src/ir/mod.rs`, 2 lines added), 1 new test file (`tests/auto_target_config.rs`, ~250 LOC), 5 tasks updating 6+ existing test assertions in `tests/ir_module_test.rs`, 1 task pinning `tests/ir_generator_snapshot_tests.rs` to Linux targets, snapshot files regenerated, `Cargo.toml` version bump, 14 new integration tests
 
 ### Existing Codebase State
 
 | Entity | File | Status |
 |--------|------|--------|
-| `DataLayout::WindowsX86_64` | `src/ir/data_layout.rs:414` | Already exists with correct LLVM string `e-m:w-...` |
-| `DataLayout::MacOSX86_64` | `src/ir/data_layout.rs:415` | Already exists with correct LLVM string `e-m:o-...` |
+| `DataLayout::WindowsX86_64` | `src/ir/data_layout.rs:415` | Already exists with correct LLVM string `e-m:w-...` |
+| `DataLayout::MacOSX86_64` | `src/ir/data_layout.rs:416` | Already exists with correct LLVM string `e-m:o-...` |
 | `DataLayout::LinuxX86_64` | `src/ir/data_layout.rs:412` | Already exists with correct LLVM string `e-m:e-...` |
 | `TargetTriple::X86_64PcWindowsGnu` | `src/ir/module.rs:36` | Already exists |
 | `TargetTriple::X86_64AppleDarwin` | `src/ir/module.rs:37` | Already exists |
 | `TargetTriple::X86_64UnknownLinuxGnu` | `src/ir/module.rs:35` | Already exists |
-| `Module::new()` | `src/ir/module.rs:109-118` | Hardcoded to `LinuxX86_64` — **must change** |
-| `Module::set_data_layout()` | `src/ir/module.rs:129` | Already exists — no change needed |
-| `Module::set_target_triple()` | `src/ir/module.rs:132` | Already exists — no change needed |
+| `Module::new()` | `src/ir/module.rs:111-118` | Hardcoded to `LinuxX86_64` — **must change** |
+| `Module::set_data_layout()` | `src/ir/module.rs:131` | Already exists — no change needed |
+| `Module::set_target_triple()` | `src/ir/module.rs:135` | Already exists — no change needed |
 | IR generator call site | `src/ir/generator.rs:248` | Only production call to `Module::new()` — inherits fix |
 
 ## Constitution Check
@@ -46,8 +46,8 @@ Implement automatic host-OS detection for `Module` construction so that `DataLay
 | **Performance Excellence** | Yes | PASS | `platform_config_for` is `const`-eligible, returns `Copy` enums. Zero runtime cost vs. current hardcoded approach. |
 | **Cross-Platform Compatibility** | Yes | PASS | This feature IS the cross-platform fix — replaces incorrect Linux-only default. CI on 3 platforms. |
 | **Modular Extensibility** | Yes | PASS | New `platform.rs` module follows existing pattern. Pure function easily extendable for new platforms/architectures. |
-| **Test-Driven Reliability** | Yes | PASS | 11 new integration tests + adaptation of existing tests. Deterministic testing of all 3 platforms from any host. |
-| **Snapshot Validation** | Yes | PASS | 63 snapshot files will be regenerated via `cargo insta review`. Snapshot content becomes OS-dependent or tests set explicit targets. |
+| **Test-Driven Reliability** | Yes | PASS | 14 new integration tests + adaptation of existing tests. Deterministic testing of all 3 platforms from any host. |
+| **Snapshot Validation** | Yes | PASS | Snapshot files will be regenerated via `cargo insta review`. All snapshot-producing tests pin explicit Linux targets to ensure deterministic output across platforms. |
 | **Documentation Rigor** | Yes | PASS | Full rustdoc on all public items. research.md + data-model.md generated. |
 | **Code Quality Standards** | Yes | PASS | `cargo fmt` + `cargo clippy` compliance. No new warnings. |
 
@@ -79,9 +79,10 @@ src/
 │   ├── data_layout.rs   # UNCHANGED: variants already exist
 │   └── ...
 tests/
-├── auto_target_config.rs  # NEW: 11 integration tests
-├── ir_module_test.rs      # MODIFIED: adapt 6+ assertions for auto-detected defaults
-├── snapshots/             # MODIFIED: 63 snapshot files regenerated
+├── auto_target_config.rs           # NEW: 14 integration tests
+├── ir_module_test.rs               # MODIFIED: adapt 6+ assertions for auto-detected defaults
+├── ir_generator_snapshot_tests.rs  # MODIFIED: pin Module to Linux target after generate() calls
+├── snapshots/                      # MODIFIED: snapshot files regenerated
 └── ...
 Cargo.toml                 # MODIFIED: version 0.1.0 → 0.2.0
 ```

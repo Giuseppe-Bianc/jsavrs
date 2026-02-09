@@ -82,7 +82,7 @@ Even after automatic detection is in place, developers must still be able to exp
 - **FR-002**: The system MUST support three distinct platform configurations: Windows x86_64, Linux x86_64, and macOS x86_64.
 - **FR-003**: The system MUST guarantee that the DataLayout and TargetTriple assigned to a Module are always internally consistent (i.e., they correspond to the same platform).
 - **FR-004**: The system MUST provide a mechanism to query the detected platform configuration independently of Module creation, enabling deterministic testing of all supported platforms from any single host.
-- **FR-005**: The system MUST fall back to the Linux x86_64 configuration when the host operating system is not explicitly recognized, emitting a warning to stderr via `eprintln!`.
+- **FR-005**: The system MUST fall back to the Linux x86_64 configuration when the host operating system is not explicitly recognized, emitting a warning to stderr via `eprintln!`. When the host architecture is not x86_64 but the OS is recognized, the system MUST select the x86_64 variant for the detected OS and emit a warning to stderr via `eprintln!`.
 - **FR-006**: The system MUST preserve the ability to manually override DataLayout and TargetTriple after automatic assignment.
 - **FR-007**: All tests validating this behaviour MUST be placed in the `tests/` directory and MUST be executable deterministically regardless of the host operating system.
 
@@ -91,7 +91,7 @@ Even after automatic detection is in place, developers must still be able to exp
 - **Module**: Top-level compilation unit that contains functions, data layout, and target triple. Automatic detection populates its DataLayout and TargetTriple at creation time.
 - **DataLayout**: Platform-specific specification describing data type sizes, alignments, and memory layout conventions. One variant per supported platform.
 - **TargetTriple**: Platform identifier in `<arch>-<vendor>-<os>-<environment>` format. One variant per supported platform.
-- **Platform Configuration**: The paired combination of a DataLayout and a TargetTriple representing a single supported target environment. The system exposes a mapping from detected OS to platform configuration.
+- **Platform Configuration** (also: `PlatformConfig`): The paired combination of a DataLayout and a TargetTriple representing a single supported target environment. The system exposes a pure mapping function (`platform_config_for`) from detected OS/arch strings to platform configuration, and a wrapper (`platform_config_with_warnings`) that additionally emits `eprintln!` warnings for unsupported inputs. A convenience function (`detect_host_platform`) calls the wrapper with the host's runtime OS and architecture values.
 
 ## Assumptions
 
