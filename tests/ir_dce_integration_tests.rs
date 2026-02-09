@@ -281,8 +281,8 @@ mod integration_tests {
 
     use jsavrs::ir::optimizer::{Phase, dead_code_elimination::DeadCodeElimination};
     use jsavrs::ir::{
-        Function, Instruction, InstructionKind, IrBinaryOp, IrLiteralValue, IrType, Module, Terminator, TerminatorKind,
-        Value,
+        DataLayout, Function, Instruction, InstructionKind, IrBinaryOp, IrLiteralValue, IrType, Module, TargetTriple,
+        Terminator, TerminatorKind, Value,
     };
     use jsavrs::location::{source_location::SourceLocation, source_span::SourceSpan};
     use std::sync::Arc;
@@ -364,6 +364,8 @@ mod integration_tests {
         );
 
         let mut module = Module::new("test_module", None);
+        module.set_data_layout(DataLayout::LinuxX86_64);
+        module.set_target_triple(TargetTriple::X86_64UnknownLinuxGnu);
         module.add_function(func);
 
         let mut dce = DeadCodeElimination::with_config(10, true, true, false);
@@ -414,6 +416,8 @@ mod integration_tests {
         );
 
         let mut module = Module::new("test_module", None);
+        module.set_data_layout(DataLayout::LinuxX86_64);
+        module.set_target_triple(TargetTriple::X86_64UnknownLinuxGnu);
         module.add_function(func);
 
         let mut dce = DeadCodeElimination::with_config(10, true, true, false);
@@ -472,6 +476,8 @@ mod integration_tests {
         );
 
         let mut module = Module::new("perf_module", None);
+        module.set_data_layout(DataLayout::LinuxX86_64);
+        module.set_target_triple(TargetTriple::X86_64UnknownLinuxGnu);
         module.add_function(func);
 
         // Measure DCE performance
@@ -503,6 +509,8 @@ mod integration_tests {
     #[test]
     fn test_multi_function_module() {
         let mut module = Module::new("multi_func_module", None);
+        module.set_data_layout(DataLayout::LinuxX86_64);
+        module.set_target_triple(TargetTriple::X86_64UnknownLinuxGnu);
 
         // Function 1: has dead code
         let mut func1 = create_test_function("func1");
@@ -581,6 +589,8 @@ mod integration_tests {
     #[test]
     fn test_module_with_external_functions() {
         let mut module = Module::new("extern_module", None);
+        module.set_data_layout(DataLayout::LinuxX86_64);
+        module.set_target_triple(TargetTriple::X86_64UnknownLinuxGnu);
 
         // External function declaration (no body - empty CFG)
         let external_func = Function::new("external_printf", vec![], IrType::Void);
@@ -635,6 +645,8 @@ mod integration_tests {
     #[test]
     fn test_cfg_integrity_after_optimization() {
         let mut module = Module::new("cfg_integrity", None);
+        module.set_data_layout(DataLayout::LinuxX86_64);
+        module.set_target_triple(TargetTriple::X86_64UnknownLinuxGnu);
 
         // Create function with multiple blocks and control flow
         let mut func = Function::new("cfg_test", vec![], IrType::I32);
@@ -710,6 +722,8 @@ mod integration_tests {
     #[test]
     fn test_entirely_dead_function() {
         let mut module = Module::new("entirely_dead", None);
+        module.set_data_layout(DataLayout::LinuxX86_64);
+        module.set_target_triple(TargetTriple::X86_64UnknownLinuxGnu);
 
         // Create function with entry that immediately returns, followed by unreachable blocks
         let mut func = Function::new("dead_func", vec![], IrType::I32);
@@ -829,7 +843,10 @@ mod integration_tests {
     fn test_debug_information_preservation() {
         use jsavrs::ir::instruction::{DebugInfo, Instruction, InstructionKind};
         use jsavrs::ir::optimizer::{DeadCodeElimination, Phase};
-        use jsavrs::ir::{Function, IrBinaryOp, IrLiteralValue, IrType, Module, Terminator, TerminatorKind, Value};
+        use jsavrs::ir::{
+            DataLayout, Function, IrBinaryOp, IrLiteralValue, IrType, Module, TargetTriple, Terminator, TerminatorKind,
+            Value,
+        };
         use jsavrs::location::{source_location::SourceLocation, source_span::SourceSpan};
         use std::sync::Arc;
 
@@ -903,6 +920,8 @@ mod integration_tests {
 
         // Run DCE
         let mut module = Module::new("test_module", None);
+        module.set_data_layout(DataLayout::LinuxX86_64);
+        module.set_target_triple(TargetTriple::X86_64UnknownLinuxGnu);
         module.add_function(func);
 
         let mut dce = DeadCodeElimination::default();
@@ -948,7 +967,8 @@ mod integration_tests {
         use jsavrs::ir::instruction::{DebugInfo, Instruction, InstructionKind};
         use jsavrs::ir::optimizer::{DeadCodeElimination, Phase};
         use jsavrs::ir::{
-            Function, IrBinaryOp, IrLiteralValue, IrType, Module, ScopeId, Terminator, TerminatorKind, Value,
+            DataLayout, Function, IrBinaryOp, IrLiteralValue, IrType, Module, ScopeId, TargetTriple, Terminator,
+            TerminatorKind, Value,
         };
         use jsavrs::location::{source_location::SourceLocation, source_span::SourceSpan};
         use std::sync::Arc;
@@ -1032,6 +1052,8 @@ mod integration_tests {
 
         // Run DCE
         let mut module = Module::new("test_module", None);
+        module.set_data_layout(DataLayout::LinuxX86_64);
+        module.set_target_triple(TargetTriple::X86_64UnknownLinuxGnu);
         module.add_function(func);
 
         let mut dce = DeadCodeElimination::default();

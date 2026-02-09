@@ -71,6 +71,8 @@ mod snapshot_tests {
         );
 
         let mut module = jsavrs::ir::Module::new("snapshot_test", None);
+        module.set_data_layout(jsavrs::ir::DataLayout::LinuxX86_64);
+        module.set_target_triple(jsavrs::ir::TargetTriple::X86_64UnknownLinuxGnu);
         module.add_function(func);
         let ir_before = module_redacted(module.clone());
 
@@ -97,6 +99,7 @@ mod snapshot_tests {
     /// FR-010: Fixed-point iteration
     /// SC-003: Multiple iteration tracking
     #[test]
+    #[allow(clippy::too_many_lines)]
     fn test_multi_iteration_optimization_snapshot() {
         let mut func = Function::new("multi_iter_test", vec![], IrType::I32);
         let entry_label = "entry_multi_iter_test"; // Must match CFG default entry label pattern
@@ -162,6 +165,8 @@ mod snapshot_tests {
         let entry_block_before = func.cfg.get_block(entry_label).expect("entry block").instructions.len();
 
         let mut module = jsavrs::ir::Module::new("multi_iter_snapshot", None);
+        module.set_data_layout(jsavrs::ir::DataLayout::LinuxX86_64);
+        module.set_target_triple(jsavrs::ir::TargetTriple::X86_64UnknownLinuxGnu);
         module.add_function(func);
         let ir_before = module_redacted(module.clone());
 

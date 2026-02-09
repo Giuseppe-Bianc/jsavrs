@@ -15,7 +15,9 @@ fn test_generate_void_function() {
     )];
 
     let mut generator = IrGenerator::new();
-    let (functions, _ir_errors) = generator.generate(ast, "test_file.vn");
+    let (mut functions, _ir_errors) = generator.generate(ast, "test_file.vn");
+    functions.set_data_layout(jsavrs::ir::DataLayout::LinuxX86_64);
+    functions.set_target_triple(jsavrs::ir::TargetTriple::X86_64UnknownLinuxGnu);
     assert_snapshot!(module_redacted(functions));
     //assert_return_literal!(entry_block, IrType::Void, IrLiteralValue::I32(0));
 }
@@ -26,7 +28,9 @@ fn test_generate_main_function() {
         vec![Stmt::MainFunction { body: vec![Stmt::Return { value: None, span: dummy_span() }], span: dummy_span() }];
 
     let mut generator = IrGenerator::new();
-    let (functions, _ir_errors) = generator.generate(ast, "test_file.vn");
+    let (mut functions, _ir_errors) = generator.generate(ast, "test_file.vn");
+    functions.set_data_layout(jsavrs::ir::DataLayout::LinuxX86_64);
+    functions.set_target_triple(jsavrs::ir::TargetTriple::X86_64UnknownLinuxGnu);
     assert_eq!(functions.functions.len(), 1);
 
     assert_snapshot!(module_redacted(functions));
@@ -45,7 +49,9 @@ fn test_generate_binary_expression() {
     )];
 
     let mut generator = IrGenerator::new();
-    let (functions, _ir_errors) = generator.generate(ast, "test_file.vn");
+    let (mut functions, _ir_errors) = generator.generate(ast, "test_file.vn");
+    functions.set_data_layout(jsavrs::ir::DataLayout::LinuxX86_64);
+    functions.set_target_triple(jsavrs::ir::TargetTriple::X86_64UnknownLinuxGnu);
     assert_snapshot!(module_redacted(functions));
 }
 
@@ -62,7 +68,9 @@ fn test_generate_variable_assignment() {
     )];
 
     let mut generator = IrGenerator::new();
-    let (functions, _ir_errors) = generator.generate(ast, "test_file.vn");
+    let (mut functions, _ir_errors) = generator.generate(ast, "test_file.vn");
+    functions.set_data_layout(jsavrs::ir::DataLayout::LinuxX86_64);
+    functions.set_target_triple(jsavrs::ir::TargetTriple::X86_64UnknownLinuxGnu);
 
     assert_snapshot!(module_redacted(functions));
 }
@@ -82,7 +90,9 @@ fn test_generate_if_statement() {
     )];
 
     let mut generator = IrGenerator::new();
-    let (functions, _ir_errors) = generator.generate(ast, "test_file.vn");
+    let (mut functions, _ir_errors) = generator.generate(ast, "test_file.vn");
+    functions.set_data_layout(jsavrs::ir::DataLayout::LinuxX86_64);
+    functions.set_target_triple(jsavrs::ir::TargetTriple::X86_64UnknownLinuxGnu);
     assert_snapshot!(module_redacted(functions));
 }
 
@@ -103,7 +113,9 @@ fn test_generate_nested_expressions() {
     )];
 
     let mut generator = IrGenerator::new();
-    let (functions, _ir_errors) = generator.generate(ast, "test_file.vn");
+    let (mut functions, _ir_errors) = generator.generate(ast, "test_file.vn");
+    functions.set_data_layout(jsavrs::ir::DataLayout::LinuxX86_64);
+    functions.set_target_triple(jsavrs::ir::TargetTriple::X86_64UnknownLinuxGnu);
     assert_snapshot!(module_redacted(functions));
 }
 
@@ -117,7 +129,9 @@ fn test_generate_custom_type() {
     )];
 
     let mut generator = IrGenerator::new();
-    let (functions, _ir_errors) = generator.generate(ast, "test_file.vn");
+    let (mut functions, _ir_errors) = generator.generate(ast, "test_file.vn");
+    functions.set_data_layout(jsavrs::ir::DataLayout::LinuxX86_64);
+    functions.set_target_triple(jsavrs::ir::TargetTriple::X86_64UnknownLinuxGnu);
     assert_snapshot!(module_redacted(functions));
 }
 
@@ -136,7 +150,9 @@ fn test_generate_array_type() {
     )];
 
     let mut generator = IrGenerator::new();
-    let (functions, _ir_errors) = generator.generate(ast, "test_file.vn");
+    let (mut functions, _ir_errors) = generator.generate(ast, "test_file.vn");
+    functions.set_data_layout(jsavrs::ir::DataLayout::LinuxX86_64);
+    functions.set_target_triple(jsavrs::ir::TargetTriple::X86_64UnknownLinuxGnu);
     assert_snapshot!(module_redacted(functions));
 }
 
@@ -151,7 +167,9 @@ fn test_generate_missing_return() {
     }];
 
     let mut generator = IrGenerator::new();
-    let (functions, _ir_errors) = generator.generate(ast, "test_file.vn");
+    let (mut functions, _ir_errors) = generator.generate(ast, "test_file.vn");
+    functions.set_data_layout(jsavrs::ir::DataLayout::LinuxX86_64);
+    functions.set_target_triple(jsavrs::ir::TargetTriple::X86_64UnknownLinuxGnu);
     assert_snapshot!(module_redacted(functions));
 }
 
@@ -173,7 +191,9 @@ fn test_generate_multiple_functions() {
     ];
 
     let mut generator = IrGenerator::new();
-    let (functions, _ir_errors) = generator.generate(ast, "test_file.vn");
+    let (mut functions, _ir_errors) = generator.generate(ast, "test_file.vn");
+    functions.set_data_layout(jsavrs::ir::DataLayout::LinuxX86_64);
+    functions.set_target_triple(jsavrs::ir::TargetTriple::X86_64UnknownLinuxGnu);
     assert_snapshot!(module_redacted(functions));
 }
 
@@ -188,7 +208,9 @@ fn test_generate_string_literal() {
     }];
 
     let mut generator = IrGenerator::new();
-    let (functions, _ir_errors) = generator.generate(ast, "test_file.vn");
+    let (mut functions, _ir_errors) = generator.generate(ast, "test_file.vn");
+    functions.set_data_layout(jsavrs::ir::DataLayout::LinuxX86_64);
+    functions.set_target_triple(jsavrs::ir::TargetTriple::X86_64UnknownLinuxGnu);
     assert_snapshot!(module_redacted(functions));
 }
 
@@ -203,7 +225,9 @@ fn test_generate_nullptr() {
     }];
 
     let mut generator = IrGenerator::new();
-    let (functions, _ir_errors) = generator.generate(ast, "test_file.vn");
+    let (mut functions, _ir_errors) = generator.generate(ast, "test_file.vn");
+    functions.set_data_layout(jsavrs::ir::DataLayout::LinuxX86_64);
+    functions.set_target_triple(jsavrs::ir::TargetTriple::X86_64UnknownLinuxGnu);
     assert_snapshot!(module_redacted(functions));
 }
 
@@ -232,7 +256,9 @@ fn test_generate_simple_block() {
     )];
 
     let mut generator = IrGenerator::new();
-    let (functions, _ir_errors) = generator.generate(ast, "test_file.vn");
+    let (mut functions, _ir_errors) = generator.generate(ast, "test_file.vn");
+    functions.set_data_layout(jsavrs::ir::DataLayout::LinuxX86_64);
+    functions.set_target_triple(jsavrs::ir::TargetTriple::X86_64UnknownLinuxGnu);
     assert_snapshot!(module_redacted(functions));
 }
 
@@ -260,7 +286,9 @@ fn test_generate_simple_while_loop() {
     )];
 
     let mut generator = IrGenerator::new_without_ssa();
-    let (functions, _ir_errors) = generator.generate(ast, "test_file.vn");
+    let (mut functions, _ir_errors) = generator.generate(ast, "test_file.vn");
+    functions.set_data_layout(jsavrs::ir::DataLayout::LinuxX86_64);
+    functions.set_target_triple(jsavrs::ir::TargetTriple::X86_64UnknownLinuxGnu);
     assert_snapshot!(module_redacted(functions));
 }
 
@@ -290,7 +318,9 @@ fn test_generate_for_loop_basic() {
     )];
 
     let mut generator = IrGenerator::new_without_ssa();
-    let (functions, _ir_errors) = generator.generate(ast, "test_file.vn");
+    let (mut functions, _ir_errors) = generator.generate(ast, "test_file.vn");
+    functions.set_data_layout(jsavrs::ir::DataLayout::LinuxX86_64);
+    functions.set_target_triple(jsavrs::ir::TargetTriple::X86_64UnknownLinuxGnu);
     assert_snapshot!(module_redacted(functions));
 }
 
@@ -316,7 +346,9 @@ fn test_generate_for_loop_with_break() {
     )];
 
     let mut generator = IrGenerator::new();
-    let (functions, _ir_errors) = generator.generate(ast, "test_file.vn");
+    let (mut functions, _ir_errors) = generator.generate(ast, "test_file.vn");
+    functions.set_data_layout(jsavrs::ir::DataLayout::LinuxX86_64);
+    functions.set_target_triple(jsavrs::ir::TargetTriple::X86_64UnknownLinuxGnu);
     assert_snapshot!(module_redacted(functions));
 }
 
@@ -342,7 +374,9 @@ fn test_generate_for_loop_with_continue() {
     )];
 
     let mut generator = IrGenerator::new();
-    let (functions, _ir_errors) = generator.generate(ast, "test_file.vn");
+    let (mut functions, _ir_errors) = generator.generate(ast, "test_file.vn");
+    functions.set_data_layout(jsavrs::ir::DataLayout::LinuxX86_64);
+    functions.set_target_triple(jsavrs::ir::TargetTriple::X86_64UnknownLinuxGnu);
     assert_snapshot!(module_redacted(functions));
 }
 
@@ -359,7 +393,9 @@ fn test_generate_grouping_expression() {
     )];
 
     let mut generator = IrGenerator::new();
-    let (functions, _ir_errors) = generator.generate(ast, "test_file.vn");
+    let (mut functions, _ir_errors) = generator.generate(ast, "test_file.vn");
+    functions.set_data_layout(jsavrs::ir::DataLayout::LinuxX86_64);
+    functions.set_target_triple(jsavrs::ir::TargetTriple::X86_64UnknownLinuxGnu);
     assert_snapshot!(module_redacted(functions));
 }
 
@@ -379,7 +415,9 @@ fn test_generate_array_literal_with_elements() {
     )];
 
     let mut generator = IrGenerator::new();
-    let (functions, _ir_errors) = generator.generate(ast, "test_file.vn");
+    let (mut functions, _ir_errors) = generator.generate(ast, "test_file.vn");
+    functions.set_data_layout(jsavrs::ir::DataLayout::LinuxX86_64);
+    functions.set_target_triple(jsavrs::ir::TargetTriple::X86_64UnknownLinuxGnu);
     assert_snapshot!(module_redacted(functions));
 }
 
@@ -393,7 +431,9 @@ fn test_default_implementation() {
     )];
 
     let mut generator = IrGenerator::default();
-    let (functions, _ir_errors) = generator.generate(ast, "test_file.vn");
+    let (mut functions, _ir_errors) = generator.generate(ast, "test_file.vn");
+    functions.set_data_layout(jsavrs::ir::DataLayout::LinuxX86_64);
+    functions.set_target_triple(jsavrs::ir::TargetTriple::X86_64UnknownLinuxGnu);
     assert_snapshot!(module_redacted(functions));
 }
 
@@ -432,7 +472,9 @@ fn test_generate_binary_all_operations() {
         )];
 
         let mut generator = IrGenerator::default();
-        let (functions, _ir_errors) = generator.generate(ast, "test_file.vn");
+        let (mut functions, _ir_errors) = generator.generate(ast, "test_file.vn");
+        functions.set_data_layout(jsavrs::ir::DataLayout::LinuxX86_64);
+        functions.set_target_triple(jsavrs::ir::TargetTriple::X86_64UnknownLinuxGnu);
         assert_snapshot!(module_redacted(functions));
     }
 }
@@ -450,7 +492,9 @@ fn test_generate_unary_expression() {
         )];
 
         let mut generator = IrGenerator::default();
-        let (functions, _ir_errors) = generator.generate(ast, "test_file.vn");
+        let (mut functions, _ir_errors) = generator.generate(ast, "test_file.vn");
+        functions.set_data_layout(jsavrs::ir::DataLayout::LinuxX86_64);
+        functions.set_target_triple(jsavrs::ir::TargetTriple::X86_64UnknownLinuxGnu);
         assert_snapshot!(module_redacted(functions));
     }
 }
@@ -491,7 +535,9 @@ fn test_generate_integer_literals() {
         )];
 
         let mut generator = IrGenerator::default();
-        let (functions, _ir_errors) = generator.generate(ast, "test_file.vn");
+        let (mut functions, _ir_errors) = generator.generate(ast, "test_file.vn");
+        functions.set_data_layout(jsavrs::ir::DataLayout::LinuxX86_64);
+        functions.set_target_triple(jsavrs::ir::TargetTriple::X86_64UnknownLinuxGnu);
         assert_snapshot!(module_redacted(functions));
     }
 }
@@ -522,7 +568,9 @@ fn test_generate_float_literals() {
         )];
 
         let mut generator = IrGenerator::default();
-        let (functions, _ir_errors) = generator.generate(ast, "test_file.vn");
+        let (mut functions, _ir_errors) = generator.generate(ast, "test_file.vn");
+        functions.set_data_layout(jsavrs::ir::DataLayout::LinuxX86_64);
+        functions.set_target_triple(jsavrs::ir::TargetTriple::X86_64UnknownLinuxGnu);
         assert_snapshot!(module_redacted(functions));
     }
 }
@@ -540,7 +588,9 @@ fn test_generate_boolean_literals() {
         )];
 
         let mut generator = IrGenerator::default();
-        let (functions, _ir_errors) = generator.generate(ast, "test_file.vn");
+        let (mut functions, _ir_errors) = generator.generate(ast, "test_file.vn");
+        functions.set_data_layout(jsavrs::ir::DataLayout::LinuxX86_64);
+        functions.set_target_triple(jsavrs::ir::TargetTriple::X86_64UnknownLinuxGnu);
         assert_snapshot!(module_redacted(functions));
     }
 }
@@ -555,7 +605,9 @@ fn test_generate_char_literal() {
     )];
 
     let mut generator = IrGenerator::default();
-    let (functions, _ir_errors) = generator.generate(ast, "test_file.vn");
+    let (mut functions, _ir_errors) = generator.generate(ast, "test_file.vn");
+    functions.set_data_layout(jsavrs::ir::DataLayout::LinuxX86_64);
+    functions.set_target_triple(jsavrs::ir::TargetTriple::X86_64UnknownLinuxGnu);
     assert_snapshot!(module_redacted(functions));
 }
 
@@ -569,7 +621,9 @@ fn test_generate_nullptr_literal() {
     )];
 
     let mut generator = IrGenerator::default();
-    let (functions, _ir_errors) = generator.generate(ast, "test_file.vn");
+    let (mut functions, _ir_errors) = generator.generate(ast, "test_file.vn");
+    functions.set_data_layout(jsavrs::ir::DataLayout::LinuxX86_64);
+    functions.set_target_triple(jsavrs::ir::TargetTriple::X86_64UnknownLinuxGnu);
     assert_snapshot!(module_redacted(functions));
 }
 
@@ -600,7 +654,9 @@ fn test_generate_simple_function_call() {
     ];
 
     let mut generator = IrGenerator::new();
-    let (functions, _ir_errors) = generator.generate(ast, "test_file.vn");
+    let (mut functions, _ir_errors) = generator.generate(ast, "test_file.vn");
+    functions.set_data_layout(jsavrs::ir::DataLayout::LinuxX86_64);
+    functions.set_target_triple(jsavrs::ir::TargetTriple::X86_64UnknownLinuxGnu);
     assert_snapshot!(module_redacted(functions));
 }
 
@@ -629,7 +685,9 @@ fn test_generate_recursive_function_call() {
     )];
 
     let mut generator = IrGenerator::new();
-    let (functions, _ir_errors) = generator.generate(ast, "test_file.vn");
+    let (mut functions, _ir_errors) = generator.generate(ast, "test_file.vn");
+    functions.set_data_layout(jsavrs::ir::DataLayout::LinuxX86_64);
+    functions.set_target_triple(jsavrs::ir::TargetTriple::X86_64UnknownLinuxGnu);
     assert_snapshot!(module_redacted(functions));
 }
 
@@ -669,6 +727,8 @@ fn test_generate_multiple_function_calls() {
     ];
 
     let mut generator = IrGenerator::new();
-    let (functions, _ir_errors) = generator.generate(ast, "test_file.vn");
+    let (mut functions, _ir_errors) = generator.generate(ast, "test_file.vn");
+    functions.set_data_layout(jsavrs::ir::DataLayout::LinuxX86_64);
+    functions.set_target_triple(jsavrs::ir::TargetTriple::X86_64UnknownLinuxGnu);
     assert_snapshot!(module_redacted(functions));
 }

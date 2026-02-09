@@ -69,6 +69,8 @@ mod escape_tests {
         assert_eq!(entry_block.instructions.len(), 2, "Should have 2 instructions before DCE (alloca + store)");
 
         let mut module = jsavrs::ir::Module::new("test_module", None);
+        module.set_data_layout(jsavrs::ir::DataLayout::LinuxX86_64);
+        module.set_target_triple(jsavrs::ir::TargetTriple::X86_64UnknownLinuxGnu);
         module.add_function(func);
 
         let mut dce = DeadCodeElimination::default();
@@ -137,6 +139,8 @@ mod escape_tests {
         assert_eq!(entry_block.instructions.len(), 3, "Should have 3 instructions before DCE");
 
         let mut module = jsavrs::ir::Module::new("test_module", None);
+        module.set_data_layout(jsavrs::ir::DataLayout::LinuxX86_64);
+        module.set_target_triple(jsavrs::ir::TargetTriple::X86_64UnknownLinuxGnu);
         module.add_function(func);
 
         let mut dce = DeadCodeElimination::default();
@@ -184,6 +188,8 @@ mod escape_tests {
         assert_eq!(entry_block.instructions.len(), 1, "Should have 1 store instruction before DCE");
 
         let mut module = jsavrs::ir::Module::new("test_module", None);
+        module.set_data_layout(jsavrs::ir::DataLayout::LinuxX86_64);
+        module.set_target_triple(jsavrs::ir::TargetTriple::X86_64UnknownLinuxGnu);
         module.add_function(func);
 
         let mut dce = DeadCodeElimination::default();
@@ -226,6 +232,8 @@ mod escape_tests {
         assert_eq!(entry_block.instructions.len(), 1, "Should have 1 alloca instruction before DCE");
 
         let mut module = jsavrs::ir::Module::new("test_module", None);
+        module.set_data_layout(jsavrs::ir::DataLayout::LinuxX86_64);
+        module.set_target_triple(jsavrs::ir::TargetTriple::X86_64UnknownLinuxGnu);
         module.add_function(func);
 
         let mut dce = DeadCodeElimination::default();
@@ -299,6 +307,8 @@ mod escape_tests {
         assert_eq!(entry_block.instructions.len(), 3, "Should have 3 instructions before DCE (alloca + 2 GEPs)");
 
         let mut module = jsavrs::ir::Module::new("test_module", None);
+        module.set_data_layout(jsavrs::ir::DataLayout::LinuxX86_64);
+        module.set_target_triple(jsavrs::ir::TargetTriple::X86_64UnknownLinuxGnu);
         module.add_function(func);
 
         let mut dce = DeadCodeElimination::default();

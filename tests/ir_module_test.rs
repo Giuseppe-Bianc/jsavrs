@@ -25,23 +25,30 @@ fn test_new_module_with_defaults() {
     assert_eq!(module.name(), "test_module");
     assert_eq!(module.functions().len(), 0);
 
-    // Verifica delle impostazioni predefinite
-    assert_eq!(*module.data_layout(), DataLayout::LinuxX86_64);
-    assert_eq!(*module.target_triple(), TargetTriple::X86_64UnknownLinuxGnu);
+    // Verifica che le impostazioni riflettano l'host OS (auto-detected)
+    let expected_platform = jsavrs::ir::platform::detect_host_platform();
+    assert_eq!(*module.data_layout(), expected_platform.data_layout);
+    assert_eq!(*module.target_triple(), expected_platform.target_triple);
 
-    // Verifica della rappresentazione testuale
+    // Verifica della rappresentazione testuale con target esplicito Linux
+    let mut pinned = Module::new("test_module".to_string(), Some(ScopeId::new()));
+    pinned.set_data_layout(DataLayout::LinuxX86_64);
+    pinned.set_target_triple(TargetTriple::X86_64UnknownLinuxGnu);
     let expected = r#"module test_module {
   data_layout = "e-m:e-p270:32:32-p271:32:32-p272:64:64-i64:64-f80:128-n8:16:32:64-S128";
   target_triple = "x86_64-unknown-linux-gnu";
   // No functions
 }"#;
-    assert_eq!(module.to_string(), expected);
+    assert_eq!(pinned.to_string(), expected);
 }
 
 #[test]
 fn test_add_function() {
     // Test: Aggiunta di una funzione al modulo
     let mut module = Module::new("test_module".to_string(), Some(ScopeId::new()));
+    // Pin to Linux for deterministic display string
+    module.set_data_layout(DataLayout::LinuxX86_64);
+    module.set_target_triple(TargetTriple::X86_64UnknownLinuxGnu);
     let mut function = create_test_function("test_func");
     function.add_block("entry_test_func", SourceSpan::default());
     module.add_function(function.clone());
@@ -95,8 +102,9 @@ fn test_set_data_layout() {
     // Test: Impostazione di diversi layout di dati
     let mut module = Module::new("test_module".to_string(), Some(ScopeId::new()));
 
-    // Verifica layout predefinito
-    assert_eq!(*module.data_layout(), DataLayout::LinuxX86_64);
+    // Verifica layout predefinito (auto-detected dall'host)
+    let expected_platform = jsavrs::ir::platform::detect_host_platform();
+    assert_eq!(*module.data_layout(), expected_platform.data_layout);
 
     // Imposta e verifica Windows layout
     module.set_data_layout(DataLayout::WindowsX86_64);
@@ -105,6 +113,9 @@ fn test_set_data_layout() {
     // Imposta e verifica macOS layout
     module.set_data_layout(DataLayout::MacOSX86_64);
     assert_eq!(*module.data_layout(), DataLayout::MacOSX86_64);
+
+    // Pin target_triple per la rappresentazione testuale deterministica
+    module.set_target_triple(TargetTriple::X86_64UnknownLinuxGnu);
 
     // Verifica rappresentazione testuale
     let expected = r#"module test_module {
@@ -120,8 +131,9 @@ fn test_set_target_triple() {
     // Test: Impostazione di diverse triplette di destinazione
     let mut module = Module::new("test_module".to_string(), Some(ScopeId::new()));
 
-    // Verifica tripletta predefinita
-    assert_eq!(*module.target_triple(), TargetTriple::X86_64UnknownLinuxGnu);
+    // Verifica tripletta predefinita (auto-detected dall'host)
+    let expected_platform = jsavrs::ir::platform::detect_host_platform();
+    assert_eq!(*module.target_triple(), expected_platform.target_triple);
 
     // Imposta e verifica Windows tripletta
     module.set_target_triple(TargetTriple::X86_64PcWindowsGnu);
@@ -130,6 +142,9 @@ fn test_set_target_triple() {
     // Imposta e verifica macOS tripletta
     module.set_target_triple(TargetTriple::X86_64AppleDarwin);
     assert_eq!(*module.target_triple(), TargetTriple::X86_64AppleDarwin);
+
+    // Pin data_layout per la rappresentazione testuale deterministica
+    module.set_data_layout(DataLayout::LinuxX86_64);
 
     // Verifica rappresentazione testuale
     let expected = r#"module test_module {
@@ -191,7 +206,10 @@ fn test_get_function_mut() {
 #[test]
 fn test_empty_module_display() {
     // Test: Rappresentazione testuale di un modulo vuoto
-    let module = Module::new("empty_module".to_string(), Some(ScopeId::new()));
+    // Pin to Linux for deterministic display string
+    let mut module = Module::new("empty_module".to_string(), Some(ScopeId::new()));
+    module.set_data_layout(DataLayout::LinuxX86_64);
+    module.set_target_triple(TargetTriple::X86_64UnknownLinuxGnu);
 
     let expected = r#"module empty_module {
   data_layout = "e-m:e-p270:32:32-p271:32:32-p272:64:64-i64:64-f80:128-n8:16:32:64-S128";
