@@ -164,13 +164,14 @@ fn main() -> Result<(), CompileError> {
         "move 200 -> rcx",
     );
 
-    println!("file:\n{}", assembly_file);*/
+    */
     let asm_gen: AsmGen = AsmGen::new(module);
-    let (_assembly_file, asm_errors) = asm_gen.gen_asm();
+    let (assembly_file, asm_errors) = asm_gen.gen_asm();
     if !asm_errors.is_empty() {
         eprintln!("{}", error_reporter.report_errors(asm_errors));
         process::exit(1);
     }
+    println!("file:\n{}", assembly_file);
 
     Ok(())
 }

@@ -79,6 +79,10 @@ impl AssemblyFile {
     pub fn text_sec_add_instruction_with_comment(&mut self, instr: Instruction, comment: impl Into<String>) {
         self.text_section.add_instruction_with_comment(instr, comment);
     }
+
+    pub fn text_sec_add_global_label(&mut self, global_label: impl Into<String>) {
+        self.text_section.add_global_label(global_label);
+    }
 }
 
 impl fmt::Display for AssemblyFile {

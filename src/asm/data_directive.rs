@@ -4,7 +4,7 @@
 /// data directives (db, dw, dd, dq), string declarations, space reservations, and
 /// complete assembly sections with their elements.
 use super::{Instruction, Section};
-use std::fmt;
+use std::{fmt, sync::Arc};
 
 /// Represents an expression used in EQU directives.
 ///
@@ -415,6 +415,8 @@ pub struct AssemblySection {
     /// The type of section (text, data, bss, or rodata).
     pub section: Section,
 
+    pub global_labels: Option<Vec<Arc<str>>>,
+
     /// The ordered list of elements within this section.
     ///
     /// Elements are stored in the order they should appear in the final
@@ -439,6 +441,11 @@ impl fmt::Display for AssemblySection {
     /// elements in order, each on its own line.
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
         writeln!(f, "{}", self.section)?;
+        if let Some(global_labels) = &self.global_labels {
+            for label in global_labels {
+                writeln!(f, "    global {label}")?;
+            }
+        }
         for element in &self.elements {
             writeln!(f, "{element}")?;
         }
@@ -459,7 +466,7 @@ impl AssemblySection {
     /// A new `AssemblySection` with no elements.
     #[must_use]
     pub const fn new(section: Section) -> Self {
-        Self { section, elements: Vec::new() }
+        Self { section, global_labels: None, elements: Vec::new() }
     }
 
     /// Adds a label to this section.
@@ -599,6 +606,12 @@ impl AssemblySection {
     #[must_use]
     pub const fn rodata_section() -> Self {
         Self::new(Section::Rodata)
+    }
+
+    pub fn add_global_label(&mut self, label: impl Into<String>) {
+        if self.section == Section::Text {
+            self.global_labels.get_or_insert_with(Vec::new).push(Arc::from(label.into()));
+        }
     }
 }
 

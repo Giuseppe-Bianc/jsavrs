@@ -83,8 +83,17 @@ impl AsmGen {
     /// }
     /// ```
     #[must_use]
-    pub fn gen_asm(self) -> (AssemblyFile, Vec<CompileError>) {
+    pub fn gen_asm(mut self) -> (AssemblyFile, Vec<CompileError>) {
         println!("Generating assembly for abi: {:?}", self.assembly_file.abi());
-        (self.assembly_file, self.errors)
+        self.ir.functions().iter().for_each(|func| {
+            let func_name = &func.name;
+            println!("Processing function: {}", func_name);
+            if func_name.as_ref() == "main" {
+                println!("Found main function, adding global label");
+                self.assembly_file.text_sec_add_global_label(func_name.to_string());
+            }
+            self.assembly_file.text_sec_add_label(func_name.to_string());
+        });
+        (self.assembly_file.clone(), self.errors)
     }
 }
