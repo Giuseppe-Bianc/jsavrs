@@ -65,6 +65,8 @@ mod reachability_tests {
 
         // Run DCE optimization
         let mut module = jsavrs::ir::Module::new("test_module", None);
+        module.set_data_layout(jsavrs::ir::DataLayout::LinuxX86_64);
+        module.set_target_triple(jsavrs::ir::TargetTriple::X86_64UnknownLinuxGnu);
         module.add_function(func);
 
         let mut dce = DeadCodeElimination::default();
@@ -130,6 +132,8 @@ mod reachability_tests {
 
         // Run DCE
         let mut module = jsavrs::ir::Module::new("test_module", None);
+        module.set_data_layout(jsavrs::ir::DataLayout::LinuxX86_64);
+        module.set_target_triple(jsavrs::ir::TargetTriple::X86_64UnknownLinuxGnu);
         module.add_function(func);
 
         let mut dce = DeadCodeElimination::default();
@@ -202,6 +206,8 @@ mod reachability_tests {
 
         // Run DCE
         let mut module = jsavrs::ir::Module::new("test_module", None);
+        module.set_data_layout(jsavrs::ir::DataLayout::LinuxX86_64);
+        module.set_target_triple(jsavrs::ir::TargetTriple::X86_64UnknownLinuxGnu);
         module.add_function(func);
 
         let mut dce = DeadCodeElimination::default();
@@ -261,6 +267,8 @@ mod reachability_tests {
 
         // Run DCE
         let mut module = jsavrs::ir::Module::new("test_module", None);
+        module.set_data_layout(jsavrs::ir::DataLayout::LinuxX86_64);
+        module.set_target_triple(jsavrs::ir::TargetTriple::X86_64UnknownLinuxGnu);
         module.add_function(func);
 
         let mut dce = DeadCodeElimination::default();
@@ -374,6 +382,8 @@ mod reachability_tests {
 
         // Run DCE optimization
         let mut module = jsavrs::ir::Module::new("test_module", None);
+        module.set_data_layout(jsavrs::ir::DataLayout::LinuxX86_64);
+        module.set_target_triple(jsavrs::ir::TargetTriple::X86_64UnknownLinuxGnu);
         module.add_function(func);
 
         let mut dce = DeadCodeElimination::default();
@@ -433,6 +443,8 @@ mod reachability_tests {
 
         // Run DCE with verbose warnings enabled to test T028
         let mut module = jsavrs::ir::Module::new("test_module", None);
+        module.set_data_layout(jsavrs::ir::DataLayout::LinuxX86_64);
+        module.set_target_triple(jsavrs::ir::TargetTriple::X86_64UnknownLinuxGnu);
         module.add_function(func);
 
         let mut dce = DeadCodeElimination::with_config(10, true, true, true);
@@ -489,6 +501,8 @@ mod reachability_tests {
 
         // Run DCE
         let mut module = jsavrs::ir::Module::new("test_module", None);
+        module.set_data_layout(jsavrs::ir::DataLayout::LinuxX86_64);
+        module.set_target_triple(jsavrs::ir::TargetTriple::X86_64UnknownLinuxGnu);
         module.add_function(func);
 
         let mut dce = DeadCodeElimination::default();
@@ -540,6 +554,8 @@ mod reachability_tests {
 
         // Run DCE
         let mut module = jsavrs::ir::Module::new("test_module", None);
+        module.set_data_layout(jsavrs::ir::DataLayout::LinuxX86_64);
+        module.set_target_triple(jsavrs::ir::TargetTriple::X86_64UnknownLinuxGnu);
         module.add_function(func);
 
         let mut dce = DeadCodeElimination::default();
@@ -607,6 +623,8 @@ mod reachability_tests {
 
         // Run DCE
         let mut module = jsavrs::ir::Module::new("test_module", None);
+        module.set_data_layout(jsavrs::ir::DataLayout::LinuxX86_64);
+        module.set_target_triple(jsavrs::ir::TargetTriple::X86_64UnknownLinuxGnu);
         module.add_function(func);
 
         let mut dce = DeadCodeElimination::default();
@@ -680,6 +698,8 @@ mod reachability_tests {
 
         // Run DCE
         let mut module = jsavrs::ir::Module::new("test_module", None);
+        module.set_data_layout(jsavrs::ir::DataLayout::LinuxX86_64);
+        module.set_target_triple(jsavrs::ir::TargetTriple::X86_64UnknownLinuxGnu);
         module.add_function(func);
 
         let mut dce = DeadCodeElimination::default();
@@ -748,6 +768,8 @@ mod reachability_tests {
 
         // Run DCE
         let mut module = jsavrs::ir::Module::new("test_module", None);
+        module.set_data_layout(jsavrs::ir::DataLayout::LinuxX86_64);
+        module.set_target_triple(jsavrs::ir::TargetTriple::X86_64UnknownLinuxGnu);
         module.add_function(func);
 
         let mut dce = DeadCodeElimination::default();
@@ -794,6 +816,8 @@ mod reachability_tests {
 
         // Run DCE
         let mut module = jsavrs::ir::Module::new("test_module", None);
+        module.set_data_layout(jsavrs::ir::DataLayout::LinuxX86_64);
+        module.set_target_triple(jsavrs::ir::TargetTriple::X86_64UnknownLinuxGnu);
         module.add_function(func);
 
         let mut dce = DeadCodeElimination::default();
@@ -871,6 +895,8 @@ mod reachability_tests {
 
         // Run DCE
         let mut module = jsavrs::ir::Module::new("test_module", None);
+        module.set_data_layout(jsavrs::ir::DataLayout::LinuxX86_64);
+        module.set_target_triple(jsavrs::ir::TargetTriple::X86_64UnknownLinuxGnu);
         module.add_function(func);
 
         let mut dce = DeadCodeElimination::default();

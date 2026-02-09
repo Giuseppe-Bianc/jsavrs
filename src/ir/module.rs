@@ -106,14 +106,20 @@ pub struct Module {
 }
 
 impl Module {
-    /// Creates a new module with the specified name and default settings.
+    /// Creates a new module with the specified name and host-detected platform settings.
+    ///
+    /// The `DataLayout` and `TargetTriple` are automatically set based on the host
+    /// operating system and architecture via [`crate::ir::platform::detect_host_platform()`].
+    /// Use [`set_data_layout()`](Self::set_data_layout) and
+    /// [`set_target_triple()`](Self::set_target_triple) to override for cross-compilation.
     #[inline]
     pub fn new(name: impl Into<Arc<str>>, root_scope: Option<ScopeId>) -> Self {
+        let platform = crate::ir::platform::detect_host_platform();
         Self {
             name: name.into(),
             functions: Vec::new(),
-            data_layout: DataLayout::LinuxX86_64,
-            target_triple: TargetTriple::X86_64UnknownLinuxGnu,
+            data_layout: platform.data_layout,
+            target_triple: platform.target_triple,
             root_scope,
         }
     }

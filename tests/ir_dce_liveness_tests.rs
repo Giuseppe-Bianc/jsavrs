@@ -58,6 +58,8 @@ mod liveness_tests {
         assert_eq!(entry_block.instructions.len(), 1, "Should have 1 instruction before DCE");
 
         let mut module = jsavrs::ir::Module::new("test_module", None);
+        module.set_data_layout(jsavrs::ir::DataLayout::LinuxX86_64);
+        module.set_target_triple(jsavrs::ir::TargetTriple::X86_64UnknownLinuxGnu);
         module.add_function(func);
         let mut dce = DeadCodeElimination::default();
         dce.run(&mut module);
@@ -135,6 +137,8 @@ mod liveness_tests {
         assert_eq!(entry_block.instructions.len(), 3, "Should have 3 instructions before DCE");
 
         let mut module = jsavrs::ir::Module::new("test_module", None);
+        module.set_data_layout(jsavrs::ir::DataLayout::LinuxX86_64);
+        module.set_target_triple(jsavrs::ir::TargetTriple::X86_64UnknownLinuxGnu);
         module.add_function(func);
 
         let mut dce = DeadCodeElimination::default();
@@ -231,6 +235,8 @@ mod liveness_tests {
         assert_eq!(merge_block.instructions.len(), 1, "Should have 1 phi instruction before DCE");
 
         let mut module = jsavrs::ir::Module::new("test_module", None);
+        module.set_data_layout(jsavrs::ir::DataLayout::LinuxX86_64);
+        module.set_target_triple(jsavrs::ir::TargetTriple::X86_64UnknownLinuxGnu);
         module.add_function(func);
 
         let mut dce = DeadCodeElimination::default();
@@ -286,6 +292,8 @@ mod liveness_tests {
         assert_eq!(entry_block.instructions.len(), 1, "Should have 1 call before DCE");
 
         let mut module = jsavrs::ir::Module::new("test_module", None);
+        module.set_data_layout(jsavrs::ir::DataLayout::LinuxX86_64);
+        module.set_target_triple(jsavrs::ir::TargetTriple::X86_64UnknownLinuxGnu);
         module.add_function(func);
 
         let mut dce = DeadCodeElimination::default();

@@ -19,8 +19,8 @@
 
 **Purpose**: Version bump, project-level configuration for breaking change, and dev-dependency additions
 
-- [ ] T001 Bump crate version from 0.1.0 to 0.2.0 in Cargo.toml
-- [ ] T001b [P] Add `gag` crate as dev-dependency in Cargo.toml (`gag = "1"` under `[dev-dependencies]`) for stderr capture in T028–T029 integration tests
+- [x] T001 Bump crate version from 0.1.0 to 0.2.0 in Cargo.toml
+- [x] T001b [P] Add `gag` crate as dev-dependency in Cargo.toml (`gag = "1"` under `[dev-dependencies]`) for stderr capture in T028–T029 integration tests
 
 ---
 
@@ -30,11 +30,11 @@
 
 **⚠️ CRITICAL**: No user story work can begin until this phase is complete
 
-- [ ] T002 Create `PlatformConfig` struct and `platform_config_for()` pure function in src/ir/platform.rs per contracts/platform-api.md
-- [ ] T003 Implement `platform_config_with_warnings()` function with `eprintln!` warnings for unsupported OS/arch in src/ir/platform.rs per contracts/platform-api.md
-- [ ] T004 Implement `detect_host_platform()` as thin wrapper calling `platform_config_with_warnings(std::env::consts::OS, std::env::consts::ARCH)` in src/ir/platform.rs per contracts/platform-api.md
-- [ ] T005 Add `pub mod platform;` declaration and `pub use platform::platform_config_for;` re-export in src/ir/mod.rs
-- [ ] T006 Update `Module::new()` to call `detect_host_platform()` instead of hardcoded Linux defaults in src/ir/module.rs
+- [x] T002 Create `PlatformConfig` struct and `platform_config_for()` pure function in src/ir/platform.rs per contracts/platform-api.md
+- [x] T003 Implement `platform_config_with_warnings()` function with `eprintln!` warnings for unsupported OS/arch in src/ir/platform.rs per contracts/platform-api.md
+- [x] T004 Implement `detect_host_platform()` as thin wrapper calling `platform_config_with_warnings(std::env::consts::OS, std::env::consts::ARCH)` in src/ir/platform.rs per contracts/platform-api.md
+- [x] T005 Add `pub mod platform;` declaration and `pub use platform::platform_config_for;` re-export in src/ir/mod.rs
+- [x] T006 Update `Module::new()` to call `detect_host_platform()` instead of hardcoded Linux defaults in src/ir/module.rs
 
 **Checkpoint**: `platform_config_for()` and `platform_config_with_warnings()` are public, `detect_host_platform()` works, `Module::new()` uses auto-detection. `cargo build` succeeds.
 
@@ -48,22 +48,22 @@
 
 ### Tests for User Story 1
 
-- [ ] T007 [P] [US1] Write test `test_module_new_reflects_host_os` verifying `Module::new()` returns host-appropriate DataLayout/TargetTriple via conditional assertions on `std::env::consts::OS` in tests/auto_target_config.rs
+- [x] T007 [P] [US1] Write test `test_module_new_reflects_host_os` verifying `Module::new()` returns host-appropriate DataLayout/TargetTriple via conditional assertions on `std::env::consts::OS` in tests/auto_target_config.rs
 
 ### Existing Test Adaptation for User Story 1
 
-- [ ] T008 [US1] Update `test_new_module_with_defaults` assertion and display string in tests/ir_module_test.rs to accept auto-detected defaults via conditional OS checks or explicit setter calls
-- [ ] T009 [US1] Update `test_add_function` display string assertion in tests/ir_module_test.rs to use explicit Linux target before string comparison
-- [ ] T010 [US1] Update `test_set_data_layout` initial-default assertion in tests/ir_module_test.rs to accept auto-detected defaults
-- [ ] T011 [US1] Update `test_set_target_triple` initial-default assertion in tests/ir_module_test.rs to accept auto-detected defaults
-- [ ] T012 [US1] Update `test_empty_module_display` display string assertion in tests/ir_module_test.rs to use explicit Linux target before string comparison
-- [ ] T013 [P] [US1] Pin Module to explicit Linux target in tests/ir_dce_snapshot_tests.rs (2 call sites) after `Module::new()` calls
-- [ ] T014 [P] [US1] Pin Module to explicit Linux target in tests/ir_dce_reachability_tests.rs (13 call sites) after `Module::new()` calls
-- [ ] T015 [P] [US1] Pin Module to explicit Linux target in tests/ir_dce_liveness_tests.rs (4 call sites) after `Module::new()` calls
-- [ ] T016 [P] [US1] Pin Module to explicit Linux target in tests/ir_dce_integration_tests.rs (9 call sites) after `Module::new()` calls
-- [ ] T017 [P] [US1] Pin Module to explicit Linux target in tests/ir_dce_escape_tests.rs (5 call sites) after `Module::new()` calls
-- [ ] T017b [P] [US1] Pin Module to explicit Linux target in tests/ir_generator_snapshot_tests.rs after all `generator.generate()` calls by calling `set_data_layout(DataLayout::LinuxX86_64)` + `set_target_triple(TargetTriple::X86_64UnknownLinuxGnu)` on the returned Module before snapshot assertions (59 snapshot files affected)
-- [ ] T018 [US1] Regenerate snapshot files via `cargo insta test --accept` in tests/snapshots/
+- [x] T008 [US1] Update `test_new_module_with_defaults` assertion and display string in tests/ir_module_test.rs to accept auto-detected defaults via conditional OS checks or explicit setter calls
+- [x] T009 [US1] Update `test_add_function` display string assertion in tests/ir_module_test.rs to use explicit Linux target before string comparison
+- [x] T010 [US1] Update `test_set_data_layout` initial-default assertion in tests/ir_module_test.rs to accept auto-detected defaults
+- [x] T011 [US1] Update `test_set_target_triple` initial-default assertion in tests/ir_module_test.rs to accept auto-detected defaults
+- [x] T012 [US1] Update `test_empty_module_display` display string assertion in tests/ir_module_test.rs to use explicit Linux target before string comparison
+- [x] T013 [P] [US1] Pin Module to explicit Linux target in tests/ir_dce_snapshot_tests.rs (2 call sites) after `Module::new()` calls
+- [x] T014 [P] [US1] Pin Module to explicit Linux target in tests/ir_dce_reachability_tests.rs (13 call sites) after `Module::new()` calls
+- [x] T015 [P] [US1] Pin Module to explicit Linux target in tests/ir_dce_liveness_tests.rs (4 call sites) after `Module::new()` calls
+- [x] T016 [P] [US1] Pin Module to explicit Linux target in tests/ir_dce_integration_tests.rs (9 call sites) after `Module::new()` calls
+- [x] T017 [P] [US1] Pin Module to explicit Linux target in tests/ir_dce_escape_tests.rs (5 call sites) after `Module::new()` calls
+- [x] T017b [P] [US1] Pin Module to explicit Linux target in tests/ir_generator_snapshot_tests.rs after all `generator.generate()` calls by calling `set_data_layout(DataLayout::LinuxX86_64)` + `set_target_triple(TargetTriple::X86_64UnknownLinuxGnu)` on the returned Module before snapshot assertions (59 snapshot files affected)
+- [x] T018 [US1] Regenerate snapshot files via `cargo insta test --accept` in tests/snapshots/
 
 **Checkpoint**: `cargo test` passes on current host OS. `Module::new()` produces host-correct config. All existing tests pass with zero regressions (SC-005).
 
@@ -77,9 +77,9 @@
 
 ### Tests for User Story 2
 
-- [ ] T019 [P] [US2] Write test `test_platform_config_for_windows` calling `platform_config_for("windows", "x86_64")` and asserting `WindowsX86_64` + `X86_64PcWindowsGnu` in tests/auto_target_config.rs
-- [ ] T020 [P] [US2] Write test `test_platform_config_for_linux` calling `platform_config_for("linux", "x86_64")` and asserting `LinuxX86_64` + `X86_64UnknownLinuxGnu` in tests/auto_target_config.rs
-- [ ] T021 [P] [US2] Write test `test_platform_config_for_macos` calling `platform_config_for("macos", "x86_64")` and asserting `MacOSX86_64` + `X86_64AppleDarwin` in tests/auto_target_config.rs
+- [x] T019 [P] [US2] Write test `test_platform_config_for_windows` calling `platform_config_for("windows", "x86_64")` and asserting `WindowsX86_64` + `X86_64PcWindowsGnu` in tests/auto_target_config.rs
+- [x] T020 [P] [US2] Write test `test_platform_config_for_linux` calling `platform_config_for("linux", "x86_64")` and asserting `LinuxX86_64` + `X86_64UnknownLinuxGnu` in tests/auto_target_config.rs
+- [x] T021 [P] [US2] Write test `test_platform_config_for_macos` calling `platform_config_for("macos", "x86_64")` and asserting `MacOSX86_64` + `X86_64AppleDarwin` in tests/auto_target_config.rs
 
 **Checkpoint**: All 3 deterministic platform tests pass from any single host OS (SC-004).
 
@@ -93,9 +93,9 @@
 
 ### Tests for User Story 3
 
-- [ ] T022 [P] [US3] Write test `test_windows_config_consistency` asserting `WindowsX86_64` DataLayout pairs with `X86_64PcWindowsGnu` TargetTriple and data layout string contains `m:w` in tests/auto_target_config.rs
-- [ ] T023 [P] [US3] Write test `test_linux_config_consistency` asserting `LinuxX86_64` DataLayout pairs with `X86_64UnknownLinuxGnu` TargetTriple and data layout string contains `m:e` in tests/auto_target_config.rs
-- [ ] T024 [P] [US3] Write test `test_macos_config_consistency` asserting `MacOSX86_64` DataLayout pairs with `X86_64AppleDarwin` TargetTriple and data layout string contains `m:o` in tests/auto_target_config.rs
+- [x] T022 [P] [US3] Write test `test_windows_config_consistency` asserting `WindowsX86_64` DataLayout pairs with `X86_64PcWindowsGnu` TargetTriple and data layout string contains `m:w` in tests/auto_target_config.rs
+- [x] T023 [P] [US3] Write test `test_linux_config_consistency` asserting `LinuxX86_64` DataLayout pairs with `X86_64UnknownLinuxGnu` TargetTriple and data layout string contains `m:e` in tests/auto_target_config.rs
+- [x] T024 [P] [US3] Write test `test_macos_config_consistency` asserting `MacOSX86_64` DataLayout pairs with `X86_64AppleDarwin` TargetTriple and data layout string contains `m:o` in tests/auto_target_config.rs
 
 **Checkpoint**: All 3 consistency tests pass, confirming FR-003.
 
@@ -109,7 +109,7 @@
 
 ### Tests for User Story 4
 
-- [ ] T025 [US4] Write test `test_manual_override_after_auto_detection` creating Module, calling `set_data_layout(LinuxX86_64)` + `set_target_triple(X86_64UnknownLinuxGnu)`, and asserting overrides persist in tests/auto_target_config.rs
+- [x] T025 [US4] Write test `test_manual_override_after_auto_detection` creating Module, calling `set_data_layout(LinuxX86_64)` + `set_target_triple(X86_64UnknownLinuxGnu)`, and asserting overrides persist in tests/auto_target_config.rs
 
 **Checkpoint**: Manual override test passes on all platforms (SC-006).
 
@@ -121,12 +121,12 @@
 
 ### Tests for Edge Cases
 
-- [ ] T026 [P] Write test `test_unsupported_os_falls_back_to_linux` calling `platform_config_for("freebsd", "x86_64")` and asserting `LinuxX86_64` + `X86_64UnknownLinuxGnu` in tests/auto_target_config.rs
-- [ ] T027 [P] Write test `test_unsupported_arch_uses_x86_64_config_linux` calling `platform_config_for("linux", "aarch64")` and asserting `LinuxX86_64` + `X86_64UnknownLinuxGnu` in tests/auto_target_config.rs
-- [ ] T027b [P] Write test `test_unsupported_arch_uses_x86_64_config_macos` calling `platform_config_for("macos", "aarch64")` and asserting `MacOSX86_64` + `X86_64AppleDarwin` in tests/auto_target_config.rs (validates spec edge case: unsupported arch returns x86_64 variant for the **detected** OS, not Linux fallback)
-- [ ] T027c [P] Write test `test_unsupported_arch_uses_x86_64_config_windows` calling `platform_config_for("windows", "aarch64")` and asserting `WindowsX86_64` + `X86_64PcWindowsGnu` in tests/auto_target_config.rs
-- [ ] T028 [P] Write test `test_unsupported_os_emits_stderr_warning` calling `platform_config_with_warnings("freebsd", "x86_64")` and capturing stderr to assert output contains `"warning: unsupported host OS 'freebsd'"` in tests/auto_target_config.rs. **Stderr capture strategy**: use `gag` crate (`BufferRedirect::stderr()`) added as dev-dependency to capture `eprintln!` output in-process.
-- [ ] T029 [P] Write test `test_unsupported_arch_emits_stderr_warning` calling `platform_config_with_warnings("linux", "aarch64")` and capturing stderr to assert output contains `"warning: unsupported host architecture 'aarch64'"` in tests/auto_target_config.rs. **Stderr capture strategy**: use `gag` crate (`BufferRedirect::stderr()`) added as dev-dependency to capture `eprintln!` output in-process.
+- [x] T026 [P] Write test `test_unsupported_os_falls_back_to_linux` calling `platform_config_for("freebsd", "x86_64")` and asserting `LinuxX86_64` + `X86_64UnknownLinuxGnu` in tests/auto_target_config.rs
+- [x] T027 [P] Write test `test_unsupported_arch_uses_x86_64_config_linux` calling `platform_config_for("linux", "aarch64")` and asserting `LinuxX86_64` + `X86_64UnknownLinuxGnu` in tests/auto_target_config.rs
+- [x] T027b [P] Write test `test_unsupported_arch_uses_x86_64_config_macos` calling `platform_config_for("macos", "aarch64")` and asserting `MacOSX86_64` + `X86_64AppleDarwin` in tests/auto_target_config.rs (validates spec edge case: unsupported arch returns x86_64 variant for the **detected** OS, not Linux fallback)
+- [x] T027c [P] Write test `test_unsupported_arch_uses_x86_64_config_windows` calling `platform_config_for("windows", "aarch64")` and asserting `WindowsX86_64` + `X86_64PcWindowsGnu` in tests/auto_target_config.rs
+- [x] T028 [P] Write test `test_unsupported_os_emits_stderr_warning` calling `platform_config_with_warnings("freebsd", "x86_64")` and capturing stderr to assert output contains `"warning: unsupported host OS 'freebsd'"` in tests/auto_target_config.rs. **Stderr capture strategy**: use `gag` crate (`BufferRedirect::stderr()`) added as dev-dependency to capture `eprintln!` output in-process.
+- [x] T029 [P] Write test `test_unsupported_arch_emits_stderr_warning` calling `platform_config_with_warnings("linux", "aarch64")` and capturing stderr to assert output contains `"warning: unsupported host architecture 'aarch64'"` in tests/auto_target_config.rs. **Stderr capture strategy**: use `gag` crate (`BufferRedirect::stderr()`) added as dev-dependency to capture `eprintln!` output in-process.
 
 **Checkpoint**: All 6 edge case tests pass, confirming FR-005 fallback behavior, OS-aware architecture fallback, **and** warning emission.
 
@@ -136,10 +136,10 @@
 
 **Purpose**: Quality gates, documentation, and CI validation
 
-- [ ] T030 Run `cargo fmt --check` to verify formatting compliance across all modified files
-- [ ] T031 Run `cargo clippy -- -D warnings` to verify zero clippy warnings across all modified files
-- [ ] T032 Run full `cargo test` to confirm zero regressions across entire test suite
-- [ ] T033 Validate quickstart.md scenarios by running `cargo test --test auto_target_config` in specs/024-auto-target-config/quickstart.md
+- [x] T030 Run `cargo fmt --check` to verify formatting compliance across all modified files
+- [x] T031 Run `cargo clippy -- -D warnings` to verify zero clippy warnings across all modified files
+- [x] T032 Run full `cargo test` to confirm zero regressions across entire test suite
+- [x] T033 Validate quickstart.md scenarios by running `cargo test --test auto_target_config` in specs/024-auto-target-config/quickstart.md
 
 ---
 
