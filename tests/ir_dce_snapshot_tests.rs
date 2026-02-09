@@ -99,6 +99,7 @@ mod snapshot_tests {
     /// FR-010: Fixed-point iteration
     /// SC-003: Multiple iteration tracking
     #[test]
+    #[allow(clippy::too_many_lines)]
     fn test_multi_iteration_optimization_snapshot() {
         let mut func = Function::new("multi_iter_test", vec![], IrType::I32);
         let entry_label = "entry_multi_iter_test"; // Must match CFG default entry label pattern

@@ -2,9 +2,9 @@
 //! Integration tests for automatic target configuration (feature 024).
 //!
 //! These tests validate:
-//! - US1: Module::new() reflects host OS
-//! - US2: Deterministic cross-platform testing via platform_config_for()
-//! - US3: DataLayout / TargetTriple consistency per platform
+//! - US1: `Module::new()` reflects host OS
+//! - US2: Deterministic cross-platform testing via `platform_config_for()`
+//! - US3: `DataLayout` / `TargetTriple` consistency per platform
 //! - US4: Manual override after auto-detection
 //! - Edge cases: unsupported OS, unsupported architecture, warnings
 
@@ -165,7 +165,7 @@ fn test_unsupported_arch_uses_x86_64_config_windows() {
 // captures its stderr via `std::process::Command`.
 
 #[test]
-#[ignore]
+#[ignore = "invoked as subprocess by parent test"]
 fn subprocess_emit_unsupported_os_warning() {
     // Invoked only as a subprocess by `test_unsupported_os_emits_stderr_warning`.
     let _ = platform_config_with_warnings("freebsd", "x86_64");
@@ -184,7 +184,7 @@ fn test_unsupported_os_emits_stderr_warning() {
 }
 
 #[test]
-#[ignore]
+#[ignore = "invoked as subprocess by parent test"]
 fn subprocess_emit_unsupported_arch_warning() {
     // Invoked only as a subprocess by `test_unsupported_arch_emits_stderr_warning`.
     let _ = platform_config_with_warnings("linux", "aarch64");
