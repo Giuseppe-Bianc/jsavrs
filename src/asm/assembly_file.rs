@@ -1,6 +1,7 @@
 // src/asm/assembly_file.rs
 
 use super::{Abi, AbiKind, AssemblySection, DataDirective, Instruction};
+use chrono::Utc;
 use std::fmt;
 
 #[derive(Debug, Clone)]
@@ -88,6 +89,9 @@ impl AssemblyFile {
 impl fmt::Display for AssemblyFile {
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
         writeln!(f, "; Assembly File - ABI: {}", self.abi)?;
+        let now = Utc::now();
+        let iso_8601 = now.to_rfc3339_opts(chrono::SecondsFormat::Millis, true);
+        writeln!(f, "; Generated on: {iso_8601}")?;
         writeln!(f, "{}", self.data_section)?;
         if let Some(bss) = &self.bss_section {
             writeln!(f, "{bss}")?;

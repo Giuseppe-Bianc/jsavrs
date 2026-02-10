@@ -87,7 +87,6 @@ impl AsmGen {
         println!("Generating assembly for abi: {:?}", self.assembly_file.abi());
         self.ir.functions().iter().for_each(|func| {
             let func_name = &func.name;
-            println!("Processing function: {func_name}");
             if func_name.as_ref() == "main" {
                 println!("Found main function, adding global label");
                 self.assembly_file.text_sec_add_global_label(func_name.to_string());
