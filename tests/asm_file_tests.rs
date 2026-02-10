@@ -119,7 +119,19 @@ fn test_assembly_file_clone() {
     let asm_file = AssemblyFile::new(abi);
     let cloned_file = asm_file.clone();
 
-    assert_eq!(format!("{asm_file}"), format!("{cloned_file}"));
+    // Compare structural fields instead of Display output, because Display
+    // calls Utc::now() on each invocation, producing different timestamps.
+    assert_eq!(format!("{asm_file:?}"), format!("{cloned_file:?}"));
+
+    // Also verify that both Display outputs are structurally identical
+    // except for the timestamp line.
+    let original_display = format!("{asm_file}");
+    let cloned_display = format!("{cloned_file}");
+    let original_lines: Vec<&str> =
+        original_display.lines().filter(|l| !l.starts_with("; Generated on:")).map(str::trim).collect();
+    let cloned_lines: Vec<&str> =
+        cloned_display.lines().filter(|l| !l.starts_with("; Generated on:")).map(str::trim).collect();
+    assert_eq!(original_lines, cloned_lines);
 }
 
 #[test]
