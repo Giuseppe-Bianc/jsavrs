@@ -25,6 +25,33 @@ use std::sync::Arc;
 use std::sync::LazyLock;
 use std::sync::Mutex;
 
+use std::process::{Command, Stdio};
+
+/// Funzione helper per recuperare l'hash SHA-1 del commit corrente.
+/// Restituisce `Some(hash)` se riesce, altrimenti `None`.
+pub fn get_git_commit_hash() -> Option<String> {
+    let output = Command::new("git")
+        .args(["rev-parse", "HEAD"])
+        .stdout(Stdio::piped())
+        .stderr(Stdio::null())
+        .output()
+        .ok()?; // ritorna None se il comando fallisce
+
+    if !output.status.success() {
+        return None;
+    }
+
+    let hash = String::from_utf8(output.stdout).ok()?;
+    let hash = hash.trim();
+
+    // Verifica formato SHA-1
+    if hash.len() == 40 && hash.chars().all(|c| c.is_ascii_hexdigit()) {
+        Some(hash.to_string())
+    } else {
+        None
+    }
+}
+
 static ANSI_REGEX: LazyLock<Regex> = LazyLock::new(|| {
     #[allow(clippy::expect_used)]
     Regex::new(r"\x1B\[[0-?]*[ -/]*[@-~]").expect("ANSI regex pattern is valid")
