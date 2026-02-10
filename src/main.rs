@@ -171,7 +171,7 @@ fn main() -> Result<(), CompileError> {
         eprintln!("{}", error_reporter.report_errors(asm_errors));
         process::exit(1);
     }
-    println!("file:\n{}", assembly_file);
+    println!("file:\n{assembly_file}");
 
     Ok(())
 }
