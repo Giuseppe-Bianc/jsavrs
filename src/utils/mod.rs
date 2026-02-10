@@ -29,7 +29,8 @@ use std::process::{Command, Stdio};
 
 /// Funzione helper per recuperare l'hash SHA-1 del commit corrente.
 /// Restituisce `Some(hash)` se riesce, altrimenti `None`.
-pub fn get_git_commit_hash() -> Option<String> {
+#[must_use]
+pub fn get_git_commit_hash() -> Option<String> {    
     let output = Command::new("git")
         .args(["rev-parse", "HEAD"])
         .stdout(Stdio::piped())
