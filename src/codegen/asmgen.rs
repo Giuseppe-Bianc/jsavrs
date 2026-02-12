@@ -1,7 +1,7 @@
 use crate::{
     asm::{Abi, AssemblyFile},
     error::compile_error::CompileError,
-    ir::{Module, TargetTriple},
+    ir::{Function, Module, TargetTriple},
 };
 
 #[allow(dead_code)]
@@ -85,14 +85,19 @@ impl AsmGen {
     #[must_use]
     pub fn gen_asm(mut self) -> (AssemblyFile, Vec<CompileError>) {
         println!("Generating assembly for abi: {:?}", self.assembly_file.abi());
-        self.ir.functions().iter().for_each(|func| {
-            let func_name = &func.name;
-            if func_name.as_ref() == "main" {
-                println!("Found main function, adding global label");
-                self.assembly_file.text_sec_add_global_label(func_name.to_string());
-            }
-            self.assembly_file.text_sec_add_label(func_name.to_string());
-        });
+        let functions = std::mem::take(&mut self.ir.functions);
+        for func in &functions {
+            self.gen_function(func);
+        }
         (self.assembly_file.clone(), self.errors)
+    }
+
+    fn gen_function(&mut self, func: &Function) {
+        let func_name = &func.name;
+        if func_name.as_ref() == "main" {
+            self.assembly_file.text_sec_add_global_label(func_name.to_string());
+        }
+        self.assembly_file.text_sec_add_label(func_name.to_string());
+        
     }
 }
