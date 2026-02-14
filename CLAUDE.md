@@ -160,4 +160,4 @@ Errors are categorized by phase:
 - IR generation errors (`E3000` series)
 
 Error reporting is handled by `src/error/` modules with detailed span information for precise error location.
-See AGENTS.md for project context and guidelines.
+See @AGENTS.md for project context and guidelines.

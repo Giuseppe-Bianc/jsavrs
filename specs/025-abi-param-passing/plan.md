@@ -17,7 +17,7 @@ Extend the `gen_function` method in `AsmGen` to perform ABI-compliant parameter 
 **Project Type**: Single monolithic Rust crate (lib + bin)  
 **Performance Goals**: Deterministic O(n) code generation per function where n = number of parameters  
 **Constraints**: Zero external dependencies beyond existing Cargo.toml; no `unwrap()` in production paths; all failures via `Result<T, CompileError>`; 16-byte stack alignment at all times  
-**Scale/Scope**: ~8 new source files under `src/codegen/`, ~12+ integration test files under `tests/`
+**Scale/Scope**: ~7 new source files under `src/codegen/`, ~12+ integration test files under `tests/`
 
 ### Existing Infrastructure (already present)
 

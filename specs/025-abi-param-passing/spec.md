@@ -45,7 +45,7 @@ A compiler developer compiles any function and the code generator must produce a
 **Acceptance Scenarios**:
 
 1. **Given** a function targeting Windows x64 that uses callee-saved registers RBX and R12, **When** assembly is generated, **Then** the prologue pushes RBP, RBX, R12, sets up the frame pointer, and allocates stack space including 32 bytes of shadow space.
-2. **Given** a function targeting System V that uses no callee-saved registers and has no locals, **When** assembly is generated, **Then** the prologue always includes the frame pointer setup (`push RBP; mov RBP, RSP`) and the red zone may be used for small locals without adjusting RSP.
+2. **Given** a function targeting System V that uses no callee-saved registers and has no locals, **When** assembly is generated, **Then** the prologue always includes the frame pointer setup (`push RBP; mov RBP, RSP`) and the red zone may be used for locals whose total size does not exceed 128 bytes without adjusting RSP.
 3. **Given** any function, **When** assembly is generated, **Then** the epilogue restores all callee-saved registers in the reverse order they were saved, restores the stack pointer, and issues a `ret` instruction.
 4. **Given** a function that uses callee-saved registers RSI and RDI on Windows, **When** assembly is generated, **Then** those registers are NOT preserved (they are caller-saved on Windows x64).
 
@@ -53,18 +53,18 @@ A compiler developer compiles any function and the code generator must produce a
 
 ### User Story 3 - Return Value Placement (Priority: P2)
 
-A compiler developer compiles a function that returns a value. The code generator must place the return value in the ABI-specified return register. Integer return values up to 64 bits go in RAX. Integer return values up to 128 bits use the RAX:RDX register pair. Floating-point return values go in XMM0, and 128-bit floating-point returns use XMM0:XMM1.
+A compiler developer compiles a function that returns a value. The code generator must place the return value in the ABI-specified return register. Integer return values up to 64 bits go in RAX (using the appropriate sub-register: EAX for 32-bit, RAX for 64-bit). Floating-point return values go in XMM0. Note: 128-bit return types (RAX:RDX for integers, XMM0:XMM1 for floats) are reserved for future implementation when I128/U128/F128 types are added to IrType.
 
 **Why this priority**: Return values are essential for function output but can be tested after basic parameter passing and prologue/epilogue are working, since a function must first set up correctly before it can return correctly.
 
-**Independent Test**: Can be fully tested by compiling functions with different return types (integer 32-bit, integer 64-bit, integer 128-bit, float, double) and verifying the return register assignment in generated assembly.
+**Independent Test**: Can be fully tested by compiling functions with different return types (integer 32-bit, integer 64-bit, float, double) and verifying the return register assignment in generated assembly.
 
 **Acceptance Scenarios**:
 
 1. **Given** a function returning a 32-bit integer, **When** assembly is generated, **Then** the return value is placed in EAX (lower 32 bits of RAX).
 2. **Given** a function returning a 64-bit integer, **When** assembly is generated, **Then** the return value is placed in RAX.
-3. **Given** a function returning a 128-bit integer, **When** assembly is generated, **Then** the return value is split across RAX (low 64 bits) and RDX (high 64 bits).
-4. **Given** a function returning a double-precision float, **When** assembly is generated, **Then** the return value is placed in XMM0.
+3. **Given** a function returning a double-precision float, **When** assembly is generated, **Then** the return value is placed in XMM0.
+4. **Given** a function returning a single-precision float (f32), **When** assembly is generated, **Then** the return value is placed in XMM0.
 
 ---
 
@@ -106,11 +106,11 @@ A compiler developer compiles a function with a mix of integer and floating-poin
 - What happens when a function has zero parameters? The prologue/epilogue must still be generated correctly without any parameter mapping.
 - What happens when a function has zero local variables? Stack allocation should be minimal (shadow space on Windows, no RSP adjustment needed on System V for leaf functions using the red zone).
 - What happens when all callee-saved registers are used? The prologue must push all of them and the epilogue must pop all of them in reverse order, with stack alignment maintained at 16 bytes.
-- How does the system handle a function with only stack-spilled parameters (more parameters than available registers)? All excess parameters must be read from their correct RBP-relative stack offsets (starting at `[RBP+16]`, incrementing by 8 bytes per parameter).
+- How does the system handle a function with only stack-spilled parameters (more parameters than available registers)? All excess parameters must be read from their correct RBP-relative stack offsets. On System V the first stack parameter starts at `[RBP+16]`; on Windows x64 it starts at `[RBP+48]` (after 32 bytes of shadow space). Subsequent parameters increment by 8 bytes.
 - What happens when the stack allocation size must be aligned to 16 bytes? The generated code must ensure the stack pointer remains 16-byte aligned at all times, inserting padding if necessary.
 - What happens with a void function (no return value)? No return register assignment is generated, but the epilogue and `ret` instruction are still emitted.
-- What happens when a parameter has an unsupported type (String, Array, Struct)? The code generator must emit a compile error indicating that the type is not supported for ABI parameter passing.
-- What happens when the target triple is not x86_64 (e.g., AArch64, i686, Wasm32)? The code generator must emit a `CompileError` with a clear diagnostic message and skip code generation for that function, without panicking.
+- What happens when a parameter has an unsupported type (String, Array, Struct)? The code generator must emit a `CompileError` indicating that the type is not supported for ABI parameter passing.
+- What happens when the target triple is not x86_64 (e.g., AArch64, i686, Wasm32)? The code generator must emit a `CompileError` (error code `E3002`) with a diagnostic message of the form `"unsupported target architecture '{arch}' for ABI parameter passing; only x86_64 is supported"` and skip code generation for that function, without panicking.
 
 ## Requirements *(mandatory)*
 
@@ -118,27 +118,27 @@ A compiler developer compiles a function with a mix of integer and floating-poin
 
 - **FR-001**: The code generator MUST map integer parameters to the correct ABI-specified registers based on the target platform — RDI/RSI/RDX/RCX/R8/R9 for System V, RCX/RDX/R8/R9 for Windows x64.
 - **FR-002**: The code generator MUST map floating-point parameters to the correct ABI-specified XMM registers — XMM0–XMM7 for System V, XMM0–XMM3 (positional) for Windows x64.
-- **FR-003**: The code generator MUST spill parameters that exceed the register capacity to the stack and access them using RBP-relative offsets (e.g., `[RBP+16]` for the first stack parameter, `[RBP+24]` for the second, etc.).
+- **FR-003**: The code generator MUST spill parameters that exceed the register capacity to the stack and access them using RBP-relative offsets. On System V, the first stack parameter is at `[RBP+16]` and subsequent parameters at `[RBP+24]`, `[RBP+32]`, etc. On Windows x64, the first stack parameter is at `[RBP+48]` (after 32 bytes of shadow space) and subsequent parameters at `[RBP+56]`, `[RBP+64]`, etc.
 - **FR-004**: The code generator MUST use independent register allocation sequences for integer and floating-point parameters on System V, and shared positional slots on Windows x64.
-- **FR-005**: The code generator MUST always emit a frame pointer setup (`push RBP; mov RBP, RSP`) in the function prologue, followed by stack space allocation for locals and preservation of all callee-saved registers that the function body will modify. Frame pointer omission is not supported in this feature.
+- **FR-005**: The code generator MUST always emit a frame pointer setup (`push RBP; mov RBP, RSP`) in the function prologue, followed by stack space allocation for locals and preservation of all callee-saved registers that the function body will modify. The set of used callee-saved registers MUST be determined by a conservative whole-function scan of the IR body: any callee-saved register that appears as a destination in any IR instruction is considered modified and must be preserved. Frame pointer omission is not supported in this feature.
 - **FR-006**: The code generator MUST emit a function epilogue that restores all preserved callee-saved registers in reverse order, restores the stack pointer, and issues a `ret` instruction.
 - **FR-007**: The code generator MUST allocate 32 bytes of shadow space in the function prologue on Windows x64 targets.
-- **FR-008**: The code generator MUST respect the 128-byte red zone on System V targets for leaf functions, avoiding unnecessary RSP adjustments when locals fit within the red zone.
-- **FR-009**: The code generator MUST place integer return values in RAX (up to 64 bits) or the RAX:RDX pair (up to 128 bits).
-- **FR-010**: The code generator MUST place floating-point return values in XMM0 (up to 64 bits) or XMM0:XMM1 (up to 128 bits).
+- **FR-008**: The code generator MUST respect the 128-byte red zone on System V targets for leaf functions whose total local variable size does not exceed 128 bytes, avoiding unnecessary RSP adjustments. When the function is not a leaf function or total local size exceeds 128 bytes, the code generator MUST adjust RSP explicitly. A *leaf function* is defined as a function whose IR body contains no `Call` or `Invoke` instructions.
+- **FR-009**: The code generator MUST place integer return values in the appropriate sub-register of RAX based on bit width — EAX for 32-bit or narrower, RAX for 64-bit. 128-bit integer returns (RAX:RDX pair) are reserved for future implementation when I128/U128 types are added to IrType.
+- **FR-010**: The code generator MUST place floating-point return values in XMM0 (F32 and F64). 128-bit floating-point returns (XMM0:XMM1) are reserved for future implementation when F128 types are added to IrType.
 - **FR-011**: The code generator MUST ensure the stack pointer is 16-byte aligned at all times, inserting padding bytes as needed.
-- **FR-012**: The code generator MUST distinguish between callee-saved and caller-saved registers according to the target ABI and only preserve callee-saved registers that the function modifies.
-- **FR-013**: The code generator MUST handle functions with zero parameters by generating a valid prologue/epilogue without parameter mapping.
+- **FR-012**: The code generator MUST distinguish between callee-saved and caller-saved registers according to the target ABI and only preserve callee-saved registers that the function modifies. Modification detection MUST use a conservative approach: scan all IR instructions in the function body and collect the set of destination registers, then intersect with the ABI's callee-saved register set.
+- **FR-013**: The code generator MUST handle functions with zero parameters by generating a valid prologue/epilogue (as defined by FR-005 and FR-006) without parameter mapping.
 - **FR-014**: The code generator MUST handle void functions (no return value) by omitting return register assignment while still emitting a valid epilogue.
-- **FR-015**: The code generator MUST classify `Pointer`, `Bool`, and `Char` IR parameter types as integer types for register assignment purposes, and MUST emit a compile error for `String`, `Array`, and `Struct` parameter types (unsupported in this feature).
+- **FR-015**: The code generator MUST classify `Pointer`, `Bool`, and `Char` IR parameter types as integer types for register assignment purposes, and MUST emit a compile error (error code `E3001`) for `String`, `Array`, and `Struct` parameter types (unsupported in this feature).
 - **FR-016**: The code generator MUST ignore the `by_val` attribute on parameters and classify each parameter solely by its `IrType` for register assignment. The `by_val` attribute is only semantically relevant for aggregate types, which are out of scope.
-- **FR-017**: The code generator MUST emit a `CompileError` and skip function code generation when the target triple does not map to a supported ABI (i.e., non-x86_64 targets). The compiler MUST NOT panic for unsupported targets.
+- **FR-017**: The code generator MUST emit a `CompileError` (error code `E3002`) and skip function code generation when the target triple does not map to a supported ABI (i.e., non-x86_64 targets). The compiler MUST NOT panic for unsupported targets.
 
 ### Key Entities
 
-- **Parameter**: An input value to a function, characterized by its position (ordinal index), data type (integer or floating-point), and size (8, 16, 32, 64, or 128 bits). Each parameter is assigned to either a register or a stack slot. For classification purposes, `Pointer`, `Bool`, and `Char` types are treated as integer types; `String`, `Array`, and `Struct` types are unsupported and produce a compile error.
+- **Parameter**: An input value to a function, characterized by its position (ordinal index), data type (integer or floating-point), and size (8, 16, 32, or 64 bits). Each parameter is assigned to either a register or a stack slot. For classification purposes, `Pointer`, `Bool`, and `Char` types are treated as integer types; `String`, `Array`, and `Struct` types are unsupported and produce a compile error.
 - **Register Assignment**: The mapping of a parameter to a specific hardware register (general-purpose or XMM) based on the ABI, parameter position, and data type.
-- **Stack Slot**: A memory location on the stack, identified by an RBP-relative offset (e.g., `[RBP+16]`), used for parameters that exceed register capacity. The first stack parameter is at `[RBP+16]` (after the saved RBP and return address), with subsequent parameters at 8-byte increments.
+- **Stack Slot**: A memory location on the stack, identified by an RBP-relative offset, used for parameters that exceed register capacity. On System V, the first stack parameter is at `[RBP+16]` (after the saved RBP and return address). On Windows x64, the first stack parameter is at `[RBP+48]` (after the saved RBP, return address, and 32 bytes of shadow space). Subsequent parameters are at 8-byte increments from the first stack slot.
 - **Callee-Saved Register Set**: The set of registers that a function must preserve across a call (RBX, RBP, R12–R15 on both ABIs; additionally RSI, RDI on Windows x64).
 - **Function Prologue**: The instruction sequence at function entry responsible for frame setup, stack allocation, and register preservation.
 - **Function Epilogue**: The instruction sequence at function exit responsible for register restoration, stack de-allocation, and returning control to the caller.
@@ -153,7 +153,7 @@ A compiler developer compiles a function with a mix of integer and floating-poin
 - **SC-003**: Every generated function contains a valid prologue and epilogue — callee-saved registers are preserved and restored in the correct order, stack alignment is maintained at 16 bytes throughout.
 - **SC-004**: All existing compiler tests continue to pass after the change (zero regressions).
 - **SC-005**: Functions with mixed integer and floating-point parameters produce correct independent (System V) or positional (Windows) register assignments for both ABIs.
-- **SC-006**: Return values are placed in the correct register(s) for all supported return types — integer (RAX, RAX:RDX), floating-point (XMM0, XMM0:XMM1), and void (no register assignment).
+- **SC-006**: Return values are placed in the correct register(s) for all supported return types — integer (EAX for 32-bit or narrower, RAX for 64-bit), floating-point (XMM0 for F32 and F64), and void (no register assignment). Note: 128-bit return register pairs (RAX:RDX, XMM0:XMM1) are reserved for future implementation.
 
 ## Assumptions
 
