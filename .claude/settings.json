@@ -1,0 +1,8 @@
+// npx @chongdashu/cc-statusline@latest init to update the status line command
+{
+    "statusLine": {
+        "type": "command",
+        "command": "bash .claude/statusline.sh",
+        "padding": 0
+    }
+}
