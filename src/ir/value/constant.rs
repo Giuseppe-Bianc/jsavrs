@@ -4,43 +4,45 @@ use std::fmt;
 use std::hash::{Hash, Hasher};
 use std::sync::Arc;
 
-#[derive(Debug, Clone)]
+/// Represents compile-time constant values in the intermediate representation.
+///
+/// `IrConstantValue` encapsulates immutable values that are known at compile time
+/// and can be embedded directly into the generated IR. These values are reference-counted
+/// for efficient cloning and sharing across the IR graph.
+///
+/// # Variants
+///
+/// * `String` - A string literal constant
+/// * `Array` - A constant array with statically-known elements
+/// * `Struct` - A named struct constant with field values
+///
+/// # Examples
+///
+/// ```ignore
+/// use crate::ir::value::constant::IrConstantValue;
+/// use std::sync::Arc;
+///
+/// let string_const = IrConstantValue::String {
+///     string: Arc::from("hello"),
+/// };
+/// ```
+#[derive(Debug, Clone, PartialEq, Eq)]
 pub enum IrConstantValue {
-    String { string: Arc<str> },
-    Array { elements: Vec<Value> },
-    Struct { name: Arc<str>, elements: Vec<Value> },
+    /// A string literal constant.
+    ///
+    /// Uses `Arc<str>` for efficient sharing without heap allocation per clone.
+     String { string: Arc<str> },
+    /// A constant array with elements known at compile time.
+    ///
+    /// Elements are stored as `Value` to support heterogeneous constant types.
+     Array { elements: Vec<Value> },
+    /// A named struct constant with initialized field values.
+    ///
+    /// * `name` - The struct type name (e.g., `"Point"`, `"Color"`)
+    /// * `elements` - Field values in declaration order
+     Struct { name: Arc<str>, elements: Vec<Value> },
 }
 
-impl PartialEq for IrConstantValue {
-    fn eq(&self, other: &Self) -> bool {
-        match (self, other) {
-            (Self::String { string: a }, Self::String { string: b }) => a == b,
-            (Self::Array { elements: a }, Self::Array { elements: b }) => {
-                // Short-circuit if lengths differ to avoid expensive element comparisons
-                if a.len() != b.len() {
-                    return false;
-                }
-                // Compare elements only if lengths match
-                a == b
-            },
-            (Self::Struct { name: a_name, elements: a_elements }, Self::Struct { name: b_name, elements: b_elements }) => {
-                // Check name first as it's cheaper than comparing elements
-                if a_name != b_name {
-                    return false;
-                }
-                // Short-circuit if lengths differ to avoid expensive element comparisons
-                if a_elements.len() != b_elements.len() {
-                    return false;
-                }
-                // Compare elements only if names and lengths match
-                a_elements == b_elements
-            },
-            _ => false, // Different variants are not equal
-        }
-    }
-}
-
-impl Eq for IrConstantValue {}
 
 impl Hash for IrConstantValue {
     #[inline]

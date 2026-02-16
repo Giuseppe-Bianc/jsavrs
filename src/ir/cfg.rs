@@ -12,6 +12,8 @@ pub struct ControlFlowGraph {
     graph: DiGraph<BasicBlock, ()>,
     pub entry_label: Arc<str>,
     reverse_post_order: Vec<NodeIndex>,
+    /// Tracks whether `reverse_post_order` is valid with respect to current graph topology.
+    /// Set to `false` when nodes or edges are added/removed; lazily recomputed on access.
     reverse_post_order_valid: bool,
 }
 impl ControlFlowGraph {
