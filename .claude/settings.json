@@ -6,12 +6,27 @@
   },
   "permissions": {
     "deny": [
+      "Read(**/.env)",
+      "Read(**/.env.*)",
       "Read(./target/**)",
       "Read(./benches/**)",
       "Read(./.git/**)",
       "Read(./.cargo/**)",
       "Read(./.idea/**)",
       "Read(./.vscode/**)"
+    ]
+  },
+  "hooks": {
+    "PostToolUse": [
+      {
+        "matcher": "Edit|Write",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "cargo fmt --all"
+          }
+        ]
+      }
     ]
   }
 }
