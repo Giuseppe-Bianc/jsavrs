@@ -12,11 +12,17 @@ pub struct ControlFlowGraph {
     graph: DiGraph<BasicBlock, ()>,
     pub entry_label: Arc<str>,
     reverse_post_order: Vec<NodeIndex>,
+    reverse_post_order_valid: bool,
 }
 impl ControlFlowGraph {
     #[must_use]
     pub fn new(entry_label: Arc<str>) -> Self {
-        Self { graph: DiGraph::new(), entry_label, reverse_post_order: Vec::new() }
+        Self {
+            graph: DiGraph::new(),
+            entry_label,
+            reverse_post_order: Vec::new(),
+            reverse_post_order_valid: false,
+        }
     }
 
     #[must_use]
@@ -34,19 +40,23 @@ impl ControlFlowGraph {
     }
 
     #[must_use]
-    pub fn reverse_post_order(&self) -> &[NodeIndex] {
+    pub fn reverse_post_order(&mut self) -> &[NodeIndex] {
+        if !self.reverse_post_order_valid {
+            self.recompute_reverse_post_order();
+            self.reverse_post_order_valid = true;
+        }
         &self.reverse_post_order
     }
 
     pub fn add_block(&mut self, block: BasicBlock) -> NodeIndex {
         let idx = self.graph.add_node(block);
-        self.recompute_reverse_post_order();
+        self.reverse_post_order_valid = false;
         idx
     }
 
     pub fn add_edge(&mut self, from: NodeIndex, to: NodeIndex) {
         self.graph.add_edge(from, to, ());
-        self.recompute_reverse_post_order();
+        self.reverse_post_order_valid = false;
     }
 
     #[inline]
@@ -135,6 +145,7 @@ impl ControlFlowGraph {
     pub fn remove_block(&mut self, label: &str) -> bool {
         if let Some(idx) = self.find_block_by_label(label) {
             self.graph.remove_node(idx);
+            self.reverse_post_order_valid = false;
             true
         } else {
             false

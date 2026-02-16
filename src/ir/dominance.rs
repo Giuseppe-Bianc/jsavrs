@@ -34,7 +34,7 @@ impl DominanceInfo {
     /// Panics if the internal dominator computation encounters an inconsistent state,
     /// which should never occur in a well-formed CFG. This represents an internal
     /// algorithm error rather than invalid input.
-    pub fn compute_dominators(&mut self, cfg: &ControlFlowGraph) -> Result<(), String> {
+    pub fn compute_dominators(&mut self, cfg: &mut ControlFlowGraph) -> Result<(), String> {
         let entry_idx = cfg.get_entry_block_index().ok_or_else(|| "CFG has no entry block".to_string())?;
 
         // Initialize idom mappings

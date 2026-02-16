@@ -21,7 +21,7 @@ fn test_dominance_simple_linear() {
     cfg.add_edge(block1_idx, block2_idx);
 
     let mut dominance = DominanceInfo::new();
-    let result = dominance.compute_dominators(&cfg);
+    let result = dominance.compute_dominators(&mut cfg);
     assert!(result.is_ok());
 
     // Entry dominates itself
@@ -59,7 +59,7 @@ fn test_dominance_if_else() {
     cfg.add_edge(else_idx, merge_idx);
 
     let mut dominance = DominanceInfo::new();
-    let result = dominance.compute_dominators(&cfg);
+    let result = dominance.compute_dominators(&mut cfg);
     assert!(result.is_ok());
 
     // Entry dominates itself
@@ -100,7 +100,7 @@ fn test_dominance_while_loop() {
     cfg.add_edge(body_idx, header_idx); // Back edge to header
 
     let mut dominance = DominanceInfo::new();
-    let result = dominance.compute_dominators(&cfg);
+    let result = dominance.compute_dominators(&mut cfg);
     assert!(result.is_ok());
 
     // Entry dominates itself
@@ -141,7 +141,7 @@ fn test_compute_dominance_frontiers() {
     cfg.add_edge(else_idx, merge_idx);
 
     let mut dominance = DominanceInfo::new();
-    let result = dominance.compute_dominators(&cfg);
+    let result = dominance.compute_dominators(&mut cfg);
     assert!(result.is_ok());
 
     let result = dominance.compute_dominance_frontiers(&cfg);
@@ -176,7 +176,7 @@ fn test_compute_dominators_simple() {
     cfg.add_edge(block1_idx, block2_idx);
 
     let mut dominance = DominanceInfo::new();
-    let result = dominance.compute_dominators(&cfg);
+    let result = dominance.compute_dominators(&mut cfg);
     assert!(result.is_ok());
 
     // Entry dominates itself

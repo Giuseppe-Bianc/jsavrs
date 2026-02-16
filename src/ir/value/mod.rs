@@ -49,7 +49,12 @@ impl PartialEq for Value {
     #[inline]
     fn eq(&self, other: &Self) -> bool {
         // Compare only semantic fields
-        self.kind == other.kind && self.ty == other.ty
+        // Short-circuit if types don't match to avoid expensive kind comparisons
+        if self.ty != other.ty {
+            return false;
+        }
+        
+        self.kind == other.kind
     }
 }
 
@@ -60,8 +65,9 @@ impl Hash for Value {
     fn hash<H: Hasher>(&self, state: &mut H) {
         // Hash only semantic fields for correctness with PartialEq/Eq
         // Exclude id, debug_info, and scope as they don't affect value semantics
-        self.kind.hash(state);
+        // Hash type first as it's typically faster to compute than kind
         self.ty.hash(state);
+        self.kind.hash(state);
     }
 }
 

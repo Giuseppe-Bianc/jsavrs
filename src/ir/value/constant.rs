@@ -4,12 +4,43 @@ use std::fmt;
 use std::hash::{Hash, Hasher};
 use std::sync::Arc;
 
-#[derive(Debug, Clone, PartialEq, Eq)]
+#[derive(Debug, Clone)]
 pub enum IrConstantValue {
     String { string: Arc<str> },
     Array { elements: Vec<Value> },
     Struct { name: Arc<str>, elements: Vec<Value> },
 }
+
+impl PartialEq for IrConstantValue {
+    fn eq(&self, other: &Self) -> bool {
+        match (self, other) {
+            (Self::String { string: a }, Self::String { string: b }) => a == b,
+            (Self::Array { elements: a }, Self::Array { elements: b }) => {
+                // Short-circuit if lengths differ to avoid expensive element comparisons
+                if a.len() != b.len() {
+                    return false;
+                }
+                // Compare elements only if lengths match
+                a == b
+            },
+            (Self::Struct { name: a_name, elements: a_elements }, Self::Struct { name: b_name, elements: b_elements }) => {
+                // Check name first as it's cheaper than comparing elements
+                if a_name != b_name {
+                    return false;
+                }
+                // Short-circuit if lengths differ to avoid expensive element comparisons
+                if a_elements.len() != b_elements.len() {
+                    return false;
+                }
+                // Compare elements only if names and lengths match
+                a_elements == b_elements
+            },
+            _ => false, // Different variants are not equal
+        }
+    }
+}
+
+impl Eq for IrConstantValue {}
 
 impl Hash for IrConstantValue {
     #[inline]

@@ -73,7 +73,7 @@ impl SsaTransformer {
         self.clear_transformation_data();
 
         // Compute dominance information
-        self.dominance_info.compute_dominators(&func.cfg).map_err(|e| format!("Failed to compute dominators: {e}"))?;
+        self.dominance_info.compute_dominators(&mut func.cfg).map_err(|e| format!("Failed to compute dominators: {e}"))?;
         self.dominance_info
             .compute_dominance_frontiers(&func.cfg)
             .map_err(|e| format!("Failed to compute dominance frontiers: {e}"))?;

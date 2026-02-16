@@ -84,7 +84,7 @@ impl AsmGen {
     /// ```
     #[must_use]
     pub fn gen_asm(mut self) -> (AssemblyFile, Vec<CompileError>) {
-        println!("Generating assembly for abi: {:?}", self.assembly_file.abi());
+        //println!("Generating assembly for abi: {:?}", self.assembly_file.abi());
         let functions = std::mem::take(&mut self.ir.functions);
         for func in &functions {
             self.gen_function(func);
@@ -98,6 +98,5 @@ impl AsmGen {
             self.assembly_file.text_sec_add_global_label(func_name.to_string());
         }
         self.assembly_file.text_sec_add_label(func_name.to_string());
-        
     }
 }
