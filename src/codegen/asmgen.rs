@@ -19,6 +19,10 @@ use crate::{
 /// # Example
 ///
 /// ```
+/// use jsavrs::codegen::asmgen::AsmGen;
+/// use jsavrs::ir::Module;
+/// let ir_module = Module::new("my_program", None);
+/// 
 /// let generator = AsmGen::new(ir_module);
 /// let (assembly, errors) = generator.gen_asm();
 /// ```

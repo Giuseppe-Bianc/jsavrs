@@ -18,7 +18,7 @@ categories = ["compilers", "parsing"]
 name = "jsavrs"
 path = "src/lib.rs"
 bench = false  # Non includere i test della lib nei benchmark
-doctest = false
+doctest = false # Disabilita i doctest per la libreria
 
 
 [[bin]]

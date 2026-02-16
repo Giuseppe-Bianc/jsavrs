@@ -27,6 +27,7 @@ use std::sync::Arc;
 /// # Examples
 ///
 /// ```
+/// use jsavrs::ir::TargetTriple;
 /// let triple = TargetTriple::X86_64UnknownLinuxGnu;
 /// assert_eq!(triple.as_str(), "x86_64-unknown-linux-gnu");
 /// ```
