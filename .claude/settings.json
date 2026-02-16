@@ -3,5 +3,12 @@
     "type": "command",
     "command": "bash .claude/statusline.sh",
     "padding": 0
+  },
+  "permissions": {
+    "deny": [
+      "Read(./target/**)",
+      "Read(./benches/**)",
+      "Read(./.git/**)"
+    ]
   }
 }
