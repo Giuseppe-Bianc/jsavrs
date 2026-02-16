@@ -52,7 +52,7 @@ enum LoopControl {
 ///
 /// # Examples
 ///
-/// ```ignore
+/// ```
 /// let mut stack = ControlFlowStack::new();
 /// stack.break_stack.push("loop_end_1".to_string());
 /// stack.continue_stack.push("loop_start_1".to_string());
@@ -77,7 +77,7 @@ impl ControlFlowStack {
     ///
     /// # Examples
     ///
-    /// ```ignore
+    /// ```
     /// let stack = ControlFlowStack::new();
     /// assert_eq!(stack.break_stack.len(), 0);
     /// ```
@@ -93,7 +93,7 @@ impl ControlFlowStack {
     ///
     /// # Examples
     ///
-    /// ```ignore
+    /// ```
     /// let mut stack = ControlFlowStack::new();
     /// stack.break_stack.push("label".into());
     /// stack.clear();
@@ -152,7 +152,7 @@ pub struct IrGenerator {
 ///
 /// # Examples
 ///
-/// ```ignore
+/// ```
 /// let mut context = TypeContext::default();
 /// context.structs.insert(
 ///     "Point".to_string(),
@@ -221,7 +221,7 @@ impl IrGenerator {
     ///
     /// # Examples
     ///
-    /// ```ignore
+    /// ```
     /// if generator.block_needs_terminator() {
     ///     generator.add_terminator(func, Terminator::new(/* ... */));
     /// }
@@ -348,7 +348,7 @@ impl IrGenerator {
     ///
     /// # Examples
     ///
-    /// ```ignore
+    /// ```
     /// // Ensure the current block branches to the merge point
     /// generator.add_branch_if_needed(func, "merge_1", span);
     /// ```
@@ -377,7 +377,7 @@ impl IrGenerator {
     ///
     /// # Examples
     ///
-    /// ```ignore
+    /// ```
     /// let params = vec![Parameter { name: "x".into(), type_annotation: Type::I32, span }];
     /// let func = generator.create_function("add_one", &params, Type::I32, span);
     /// ```
@@ -418,7 +418,7 @@ impl IrGenerator {
     ///
     /// # Examples
     ///
-    /// ```ignore
+    /// ```
     /// let ast_type = Type::I32;
     /// let ir_type = generator.map_type(&ast_type);
     /// assert!(matches!(ir_type, IrType::I32));
@@ -472,7 +472,7 @@ impl IrGenerator {
     ///
     /// # Examples
     ///
-    /// ```ignore
+    /// ```
     /// generator.finalize_current_block(func);
     /// // Current block is now committed to the CFG
     /// ```
@@ -504,7 +504,7 @@ impl IrGenerator {
     ///
     /// # Examples
     ///
-    /// ```ignore
+    /// ```
     /// generator.finalize_block_connections(func);
     /// // All blocks are now properly connected in the CFG
     /// ```
@@ -538,7 +538,7 @@ impl IrGenerator {
     ///
     /// # Examples
     ///
-    /// ```ignore
+    /// ```
     /// let statements = vec![/* AST statements */];
     /// generator.generate_function_body(&mut func, statements, span);
     /// ```
@@ -617,7 +617,7 @@ impl IrGenerator {
     ///
     /// # Examples
     ///
-    /// ```ignore
+    /// ```
     /// for stmt in body_statements {
     ///     generator.generate_stmt(&mut func, stmt);
     /// }
@@ -687,7 +687,7 @@ impl IrGenerator {
     ///
     /// # Examples
     ///
-    /// ```ignore
+    /// ```
     /// // let mut x: i32 = 42;
     /// generator.generate_var_declaration(
     ///     func,
@@ -754,7 +754,7 @@ impl IrGenerator {
     ///
     /// # Examples
     ///
-    /// ```ignore
+    /// ```
     /// // return 42;
     /// generator.generate_return(func, Some(expr_42), span);
     /// // return;
@@ -786,7 +786,7 @@ impl IrGenerator {
     ///
     /// # Examples
     ///
-    /// ```ignore
+    /// ```
     /// // if (x > 0) { ... } else { ... }
     /// generator.generate_if(func, condition, then_stmts, Some(else_stmts), span);
     /// ```
@@ -849,7 +849,7 @@ impl IrGenerator {
     ///
     /// # Examples
     ///
-    /// ```ignore
+    /// ```
     /// // while (i < 10) { ... }
     /// generator.generate_while(func, condition, body_stmts, span);
     /// ```
@@ -911,7 +911,7 @@ impl IrGenerator {
     ///
     /// # Examples
     ///
-    /// ```ignore
+    /// ```
     /// // for (let i = 0; i < 10; i++) { ... }
     /// generator.generate_for(func, Some(init), Some(cond), Some(inc), body, span);
     /// ```
@@ -990,7 +990,7 @@ impl IrGenerator {
     ///
     /// # Examples
     ///
-    /// ```ignore
+    /// ```
     /// generator.handle_loop_control(func, span, LoopControl::Break);
     /// ```
     fn handle_loop_control(&mut self, func: &mut Function, span: SourceSpan, control: LoopControl) {
@@ -1023,7 +1023,7 @@ impl IrGenerator {
     ///
     /// # Examples
     ///
-    /// ```ignore
+    /// ```
     /// let value = generator.generate_expr(func, expr);
     /// // Use value in subsequent IR instructions
     /// ```
@@ -1069,7 +1069,7 @@ impl IrGenerator {
     ///
     /// # Examples
     ///
-    /// ```ignore
+    /// ```
     /// // arr[5]
     /// let value = generator.generate_array_access(func, arr_expr, index_expr, span);
     /// ```
@@ -1132,7 +1132,7 @@ impl IrGenerator {
     ///
     /// # Examples
     ///
-    /// ```ignore
+    /// ```
     /// // [1, 2, 3, 4, 5]
     /// let array_ptr = generator.generate_array_literal(func, elements, span);
     /// ```
@@ -1200,7 +1200,7 @@ impl IrGenerator {
     ///
     /// # Examples
     ///
-    /// ```ignore
+    /// ```
     /// let value = generator.generate_literal(LiteralValue::Number(Number::I32(42)), span);
     /// ```
     #[allow(clippy::unused_self)]
@@ -1257,7 +1257,7 @@ impl IrGenerator {
     ///
     /// # Examples
     ///
-    /// ```ignore
+    /// ```
     /// // x + y
     /// let result = generator.generate_binary(func, x_expr, BinaryOp::Add, y_expr, span);
     /// ```
@@ -1317,7 +1317,7 @@ impl IrGenerator {
     ///
     /// # Examples
     ///
-    /// ```ignore
+    /// ```
     /// // -x
     /// let result = generator.generate_unary(func, UnaryOp::Neg, x_expr, span);
     /// ```
@@ -1355,7 +1355,7 @@ impl IrGenerator {
     ///
     /// # Examples
     ///
-    /// ```ignore
+    /// ```
     /// let var_value = generator.generate_variable("x".into(), span);
     /// ```
     #[allow(clippy::needless_pass_by_value)]
@@ -1385,7 +1385,7 @@ impl IrGenerator {
     ///
     /// # Examples
     ///
-    /// ```ignore
+    /// ```
     /// // x = 42
     /// let value = generator.generate_assign(func, x_expr, value_expr, span);
     /// ```
@@ -1416,7 +1416,7 @@ impl IrGenerator {
     ///
     /// # Examples
     ///
-    /// ```ignore
+    /// ```
     /// let temp_id = generator.new_temp();
     /// let temp_value = Value::new_temporary(temp_id, IrType::I32);
     /// ```
@@ -1442,7 +1442,7 @@ impl IrGenerator {
     ///
     /// # Examples
     ///
-    /// ```ignore
+    /// ```
     /// let label = generator.new_block_label("loop_body");
     /// // Returns something like "loop_body_1"
     /// ```
@@ -1468,7 +1468,7 @@ impl IrGenerator {
     ///
     /// # Examples
     ///
-    /// ```ignore
+    /// ```
     /// generator.start_block(func, "then_1", span);
     /// // Now generating code in the "then_1" block
     /// ```
@@ -1498,7 +1498,7 @@ impl IrGenerator {
     ///
     /// # Examples
     ///
-    /// ```ignore
+    /// ```
     /// let add_inst = Instruction::new(InstructionKind::Binary { /* ... */ }, span);
     /// generator.add_instruction(add_inst);
     /// ```
@@ -1521,7 +1521,7 @@ impl IrGenerator {
     ///
     /// # Examples
     ///
-    /// ```ignore
+    /// ```
     /// let ret = Terminator::new(TerminatorKind::Return { value, ty }, span);
     /// generator.add_terminator(func, ret);
     /// ```
@@ -1555,7 +1555,7 @@ impl IrGenerator {
     ///
     /// # Examples
     ///
-    /// ```ignore
+    /// ```
     /// // arr[5] = 42; (target generation)
     /// let ptr = generator.generate_array_access_target(func, arr_expr, index_expr, span);
     /// ```
@@ -1620,7 +1620,7 @@ impl IrGenerator {
     ///
     /// # Examples
     ///
-    /// ```ignore
+    /// ```
     /// // result = add(x, y)
     /// let result = generator.generate_call(func, callee_expr, arg_exprs, span);
     /// ```

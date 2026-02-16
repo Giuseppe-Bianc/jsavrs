@@ -383,7 +383,7 @@ impl ParsedDataLayout {
 ///
 /// # Example
 ///
-/// ```ignore
+/// ```
 /// let layout = DataLayout::LinuxX86_64;
 /// assert_eq!(
 ///     layout.as_str(),

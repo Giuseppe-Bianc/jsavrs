@@ -18,6 +18,8 @@ categories = ["compilers", "parsing"]
 name = "jsavrs"
 path = "src/lib.rs"
 bench = false  # Non includere i test della lib nei benchmark
+doctest = false
+
 
 [[bin]]
 name = "jsavrs"

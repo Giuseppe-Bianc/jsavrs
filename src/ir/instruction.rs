@@ -56,7 +56,7 @@ use std::fmt;
 ///
 /// # Examples
 ///
-/// ```ignore
+/// ```
 /// // Sign extension: -1_i8 (0xFF) becomes -1_i32 (0xFFFFFFFF)
 /// let cast = CastKind::IntSignExtend;
 ///
@@ -131,7 +131,7 @@ pub enum CastKind {
 ///
 /// # Examples
 ///
-/// ```ignore
+/// ```
 /// // Vector addition: [1, 2, 3] + [4, 5, 6] = [5, 7, 9]
 /// let op = VectorOp::Add;
 ///
@@ -178,7 +178,7 @@ impl fmt::Display for VectorOp {
 ///
 /// # Examples
 ///
-/// ```ignore
+/// ```
 /// let instruction = Instruction {
 ///     kind: InstructionKind::BinaryOp { op: IrBinaryOp::Add, lhs, rhs },
 ///     result: Some(result_value),

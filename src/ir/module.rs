@@ -26,7 +26,7 @@ use std::sync::Arc;
 ///
 /// # Examples
 ///
-/// ```ignore
+/// ```
 /// let triple = TargetTriple::X86_64UnknownLinuxGnu;
 /// assert_eq!(triple.as_str(), "x86_64-unknown-linux-gnu");
 /// ```
@@ -89,7 +89,7 @@ impl fmt::Display for TargetTriple {
 ///
 /// # Examples
 ///
-/// ```ignore
+/// ```
 /// use jsavrs::ir::Module;
 ///
 /// let module = Module::new("my_program", None);

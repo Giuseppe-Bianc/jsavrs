@@ -19,12 +19,7 @@ pub struct ControlFlowGraph {
 impl ControlFlowGraph {
     #[must_use]
     pub fn new(entry_label: Arc<str>) -> Self {
-        Self {
-            graph: DiGraph::new(),
-            entry_label,
-            reverse_post_order: Vec::new(),
-            reverse_post_order_valid: false,
-        }
+        Self { graph: DiGraph::new(), entry_label, reverse_post_order: Vec::new(), reverse_post_order_valid: false }
     }
 
     #[must_use]

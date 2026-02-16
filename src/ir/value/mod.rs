@@ -53,7 +53,7 @@ impl PartialEq for Value {
         if self.ty != other.ty {
             return false;
         }
-        
+
         self.kind == other.kind
     }
 }

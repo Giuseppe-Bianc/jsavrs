@@ -18,7 +18,7 @@ use crate::{
 ///
 /// # Example
 ///
-/// ```ignore
+/// ```
 /// let generator = AsmGen::new(ir_module);
 /// let (assembly, errors) = generator.gen_asm();
 /// ```
@@ -70,7 +70,7 @@ impl AsmGen {
     ///
     /// # Example
     ///
-    /// ```ignore
+    /// ```
     /// let generator = AsmGen::new(ir_module);
     /// let (assembly, errors) = generator.gen_asm();
     ///

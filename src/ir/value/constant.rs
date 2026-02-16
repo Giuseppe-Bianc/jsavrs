@@ -18,7 +18,7 @@ use std::sync::Arc;
 ///
 /// # Examples
 ///
-/// ```ignore
+/// ```
 /// use crate::ir::value::constant::IrConstantValue;
 /// use std::sync::Arc;
 ///
@@ -31,18 +31,17 @@ pub enum IrConstantValue {
     /// A string literal constant.
     ///
     /// Uses `Arc<str>` for efficient sharing without heap allocation per clone.
-     String { string: Arc<str> },
+    String { string: Arc<str> },
     /// A constant array with elements known at compile time.
     ///
     /// Elements are stored as `Value` to support heterogeneous constant types.
-     Array { elements: Vec<Value> },
+    Array { elements: Vec<Value> },
     /// A named struct constant with initialized field values.
     ///
     /// * `name` - The struct type name (e.g., `"Point"`, `"Color"`)
     /// * `elements` - Field values in declaration order
-     Struct { name: Arc<str>, elements: Vec<Value> },
+    Struct { name: Arc<str>, elements: Vec<Value> },
 }
-
 
 impl Hash for IrConstantValue {
     #[inline]

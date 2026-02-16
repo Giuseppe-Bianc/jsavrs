@@ -61,7 +61,7 @@ const HELP_STR: &str = r"
 ///
 /// # Examples
 ///
-/// ```ignore
+/// ```
 /// use jsavrs::cli::custom_styles;
 ///
 /// let styles = custom_styles();
@@ -95,7 +95,7 @@ pub fn custom_styles() -> Styles {
 ///
 /// # Examples
 ///
-/// ```ignore
+/// ```
 /// assert!(parse_vn_file("program.vn").is_ok());
 /// assert!(parse_vn_file("program.VN").is_ok());  // case-insensitive
 /// assert!(parse_vn_file("program.txt").is_err());
@@ -118,7 +118,7 @@ fn parse_vn_file(s: &str) -> Result<PathBuf, String> {
 ///
 /// # Examples
 ///
-/// ```ignore
+/// ```
 /// use jsavrs::cli::Args;
 /// use clap::Parser;
 ///

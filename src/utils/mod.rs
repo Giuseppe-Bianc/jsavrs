@@ -30,13 +30,9 @@ use std::process::{Command, Stdio};
 /// Funzione helper per recuperare l'hash SHA-1 del commit corrente.
 /// Restituisce `Some(hash)` se riesce, altrimenti `None`.
 #[must_use]
-pub fn get_git_commit_hash() -> Option<String> {    
-    let output = Command::new("git")
-        .args(["rev-parse", "HEAD"])
-        .stdout(Stdio::piped())
-        .stderr(Stdio::null())
-        .output()
-        .ok()?; // ritorna None se il comando fallisce
+pub fn get_git_commit_hash() -> Option<String> {
+    let output =
+        Command::new("git").args(["rev-parse", "HEAD"]).stdout(Stdio::piped()).stderr(Stdio::null()).output().ok()?; // ritorna None se il comando fallisce
 
     if !output.status.success() {
         return None;
@@ -46,11 +42,7 @@ pub fn get_git_commit_hash() -> Option<String> {
     let hash = hash.trim();
 
     // Verifica formato SHA-1
-    if hash.len() == 40 && hash.chars().all(|c| c.is_ascii_hexdigit()) {
-        Some(hash.to_string())
-    } else {
-        None
-    }
+    if hash.len() == 40 && hash.chars().all(|c| c.is_ascii_hexdigit()) { Some(hash.to_string()) } else { None }
 }
 
 static ANSI_REGEX: LazyLock<Regex> = LazyLock::new(|| {
@@ -74,7 +66,7 @@ static UUID_REGEX: LazyLock<Regex> = LazyLock::new(|| {
 ///
 /// # Examples
 ///
-/// ```ignore
+/// ```
 /// let expr = Expr::Literal {
 ///     value: LiteralValue::Bool(true),
 ///     span: dummy_span(),
@@ -100,7 +92,7 @@ pub fn dummy_span() -> SourceSpan {
 ///
 /// # Examples
 ///
-/// ```ignore
+/// ```
 /// let colored = "\x1B[31mError\x1B[0m";
 /// let plain = strip_ansi_codes(colored);
 /// assert_eq!(plain, "Error");
@@ -236,7 +228,7 @@ pub fn char_lit(c: &str) -> Expr {
 ///
 /// # Examples
 ///
-/// ```ignore
+/// ```
 /// let expr = binary_expr(
 ///     num_lit_i32(2),
 ///     BinaryOp::Add,
@@ -262,7 +254,7 @@ pub fn binary_expr(left: Expr, op: BinaryOp, right: Expr) -> Expr {
 ///
 /// # Examples
 ///
-/// ```ignore
+/// ```
 /// let expr = unary_expr(UnaryOp::Negate, num_lit_i32(5));
 /// // Represents: -5
 /// ```
@@ -283,7 +275,7 @@ pub fn unary_expr(op: UnaryOp, expr: Expr) -> Expr {
 ///
 /// # Examples
 ///
-/// ```ignore
+/// ```
 /// let expr = grouping_expr(binary_expr(
 ///     num_lit_i32(2),
 ///     BinaryOp::Add,
