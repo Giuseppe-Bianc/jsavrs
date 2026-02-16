@@ -65,7 +65,7 @@ use std::sync::{Arc, Mutex, OnceLock};
 ///
 /// # Examples
 ///
-/// ```ignore
+/// ```rust,no_run
 /// let mut checker = TypeChecker::new();
 /// let errors = checker.check(&statements);
 /// ```
@@ -99,7 +99,7 @@ impl TypeChecker {
     ///
     /// # Examples
     ///
-    /// ```ignore
+    /// ```rust,no_run
     /// let mut checker = TypeChecker::new();
     /// ```
     #[must_use]
@@ -135,7 +135,7 @@ impl TypeChecker {
     ///
     /// # Examples
     ///
-    /// ```ignore
+    /// ```rust,no_run
     /// let mut checker = TypeChecker::new();
     /// let errors = checker.check(&statements);
     ///
