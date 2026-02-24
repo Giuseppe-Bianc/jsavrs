@@ -37,7 +37,7 @@ regex = "1.12.3"
 uuid = { version = "1.21.0", features = ["v4"] }
 petgraph = "0.8.3"
 dhat = "0.3.3"
-chrono = "0.4.43"
+chrono = "0.4.44"
 
 [dev-dependencies]
 assert_cmd = "2.1.2"
