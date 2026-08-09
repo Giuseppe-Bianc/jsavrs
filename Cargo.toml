@@ -40,7 +40,7 @@ dhat = "0.3.3"
 chrono = "0.4.44"
 
 [dev-dependencies]
-assert_cmd = "2.1.2"
+assert_cmd = "2.2.0"
 insta = { version = "1.46.3", features = ["yaml", "redactions", "filters"] }
 predicates = "3.1.4"
 criterion = "0.8.2"
